@@ -1,3 +1,4 @@
+import { renderHome } from "./home.js";
 import { createWorldChrome } from "./game-chrome.js";
 import { articles } from "./data/articles.js";
 import { photos, birdVideo } from "./data/photos.js";
@@ -152,7 +153,7 @@ function navigate(route, replace = false) {
   main.focus({ preventScroll: true });
 }
 function heading(eyebrow, title, description = "") {
-  return `<header class="page-heading"><p class="eyebrow">${eyebrow}</p><h1>${title}</h1>${description ? `<p class="lede">${description}</p>` : ""}${flourish()}</header>`;
+  return `<header class="page-heading"><p class="eyebrow">${eyebrow}</p><h1>${title}</h1>${description ? `<p class="lede">${description}</p>` : ""}</header>`;
 }
 function articleCard(a) {
   return `<a class="article-card" href="${url(`encyclopedia/${a.id}/`)}">${a.category === "おもち観察室" ? `<div class="observation-card-art">${birdSvg()}<small>案内イラスト</small></div>` : image(a.photos?.[0])}<div><span class="eyebrow">${esc(a.category)}</span><h3>${esc(a.title)}</h3><p>${a.summary}</p></div><span class="card-arrow" aria-hidden="true">↗</span></a>`;
@@ -189,10 +190,9 @@ function atlasDoor() {
   return `<a class="challenge-banner morph-discovery-link" href="${url("colors/")}"><span><span class="eyebrow">写真でくらべる、小さな羽の世界</span><h2><ruby>文鳥<rt>ぶんちょう</rt></ruby>の<ruby>羽色<rt>はねいろ</rt></ruby>ずかん</h2><p>5つの色・模様と、こどもからおとなへのちがい。大きな実写写真と出典から、見えること・まだわからないことを学ぼう。</p></span><span class="big-arrow" aria-hidden="true">↗</span></a>`;
 }
 function home() {
-  const hero = photos.find((p) => p.id === "photo-39") || photos[0];
-  const d = articles[new Date().getDate() % Math.max(1, articles.length)];
-  return `<section class="hero"><div class="hero-copy"><p class="eyebrow">おもちと学ぶ文鳥図鑑</p><h1 class="sr-only">${SITE_NAME}</h1>${logoSvg("hero-logo")}<p class="hero-line">ちいさな鳥と、<br>おおきな「どうして？」。</p><p>見て、知って、つくって、暮らす。<br>文鳥のふしぎが芽ぶく、小さな植物園へ。</p><a class="button" href="${url("encyclopedia/")}">文鳥を知る <span aria-hidden="true">↗</span></a></div><figure class="hero-photo">${image(hero?.id, "", true)}<figcaption>図鑑の文鳥写真 · おもち本人の写真ではありません</figcaption><span class="photo-seal" aria-hidden="true">JAVA<br>SPARROW</span></figure><div class="hero-vine" aria-hidden="true">${flourish()}</div></section><section class="portal-section section"><div class="section-intro"><p class="eyebrow">ひらく、4つの扉</p><h2>今日は、どこへ行こう？</h2></div><div class="portals"><a href="${url("encyclopedia/")}" class="portal"><span class="portal-number">01</span><span class="portal-illustration">${birdSvg("gray")}</span><h3>文鳥を知る</h3><p>写真と図で、体と暮らしを発見。</p><span aria-hidden="true">図鑑をひらく →</span></a><a href="${url("omochi/")}" class="portal"><span class="portal-number">02</span><span class="portal-illustration">${birdSvg()}</span><h3>おもちを観察する</h3><p>白文鳥おもちの、ほんとうの記録。</p><span aria-hidden="true">観察室へ →</span></a><a href="${url("studio/")}" class="portal"><span class="portal-number">03</span><span class="portal-art" aria-hidden="true">❧</span><h3>アートをつくる</h3><p>鳥と花で、わたしだけの一枚。</p><span aria-hidden="true">アート工房へ →</span></a><a href="${url("game/")}" class="portal"><span class="portal-number">04</span><span class="portal-illustration pair">${birdSvg()}${birdSvg("gray")}</span><h3>文鳥と暮らすゲーム</h3><p>おしゃべりから育つ、家族の物語。</p><span aria-hidden="true">暮らしの続きへ →</span></a></div></section><section class="section" aria-label="羽色ずかんの案内">${atlasDoor()}</section><section class="discovery section"><div><p class="eyebrow">今日の発見</p><h2>${esc(d?.title || "文鳥に会いに行こう")}</h2><p>${d?.summary || ""}</p><a class="text-link" href="${url(`encyclopedia/${d?.id || ""}/`)}">もう少し、知ってみる <span aria-hidden="true">→</span></a><div class="mission"><span class="eyebrow">観察ミッション</span><p>${d?.mission || "写真の文鳥のくちばしと足を、よく見比べてみよう。"}</p><small>無理にさわらず、静かに見守ろう。</small></div></div><figure>${image(d?.photos?.[0])}<figcaption>写真から見つけたことを、言葉にしてみよう。</figcaption></figure></section><section class="section"><div class="section-intro"><p class="eyebrow">小さな研究のはじまり</p><h2>見る深さは、自分で選べる。</h2></div><ol class="learning-steps"><li><b>01　まず見る</b><p>大きな写真と、短いひとこと。</p></li><li><b>02　基本を知る</b><p>ふりがなと読み上げで、しくみを知る。</p></li><li><b>03　もっと調べる</b><p>専門用語や出典まで、じっくり。</p></li></ol><a class="challenge-banner" href="${url("challenge/")}"><span><span class="eyebrow">文鳥チャレンジ</span><h3>きみは、文鳥はかせ？</h3><p>${quizzes.length}問のクイズ。まちがいも、発見のたね。</p></span><span class="big-arrow" aria-hidden="true">↗</span></a></section>`;
+  return renderHome({ photos, articles, quizzes, url, image, atlasDoor, esc });
 }
+
 function encyclopedia() {
   return `${heading("文鳥を知る", "写真から、ふしぎをひらこう。", "同じ文鳥でも、色や姿、しぐさはいろいろ。気になる扉からどうぞ。")} ${atlasDoor()}<div class="encyclopedia-tools"><label class="search-field"><span>図鑑をさがす</span><input id="article-search" type="search" placeholder="くちばし、水浴び、食べ物…"></label><div class="filter-chips" role="group" aria-label="図鑑の分類"><button class="chip active" data-category="all">すべて</button>${[...new Set(articles.map((a) => a.category))].map((c) => `<button class="chip" data-category="${esc(c)}">${esc(c)}</button>`).join("")}<button class="chip" data-category="favorites">♡ お気に入り</button></div></div><p id="result-count" role="status"></p><div id="article-grid" class="article-grid"></div><a class="text-link" href="${url("body/")}">図から見つける「からだ探検」 →</a>`;
 }

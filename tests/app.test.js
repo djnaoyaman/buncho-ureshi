@@ -55,11 +55,11 @@ test("integrated DOM navigation, learning tools, quiz and truthful observation f
   const doc = window.document;
   assert.equal(
     doc.querySelector("main h1").textContent,
-    "文鳥♬文鳥♬文鳥って嬉しいな♪",
+    "ちいさな鳥。ひろがる、世界。",
   );
   assert.ok(
     doc
-      .querySelector(".hero-photo img")
+      .querySelector(".art-cover-photo img")
       .getAttribute("src")
       .includes("/buncho-ureshi/photos/"),
   );
@@ -259,7 +259,7 @@ test("corrupt local settings, favorites and observations are normalized without 
       "(prefers-reduced-motion: reduce)",
     ).matches;
     assert.equal(doc.querySelector("main h1").textContent,
-      "文鳥♬文鳥♬文鳥って嬉しいな♪");
+      "ちいさな鳥。ひろがる、世界。");
     assert.equal(doc.documentElement.dataset.ruby, "on");
     assert.equal(doc.documentElement.dataset.motion, expectedMotion ? "on" : "off");
     assert.deepEqual(JSON.parse(window.localStorage.getItem("buncho-settings")), {
