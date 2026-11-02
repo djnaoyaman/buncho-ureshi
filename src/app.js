@@ -5,8 +5,10 @@ import { SITE_NAME, esc, birdSvg, logoSvg, flourish } from "./visuals.js";
 import { readLocal, writeLocal } from "./storage.js";
 import { mountGame, gameBirdSvg } from "./game.js";
 import { mountStudio } from "./studio.js";
+import { routeMetadata } from "./metadata.js";
 const BASE = document.querySelector("base").getAttribute("href");
 const url = (route = "") => BASE + route.replace(/^\//, "");
+const secureLicenseUrl = value => value?.replace(/^http:\/\/creativecommons\.org\//, "https://creativecommons.org/");
 const photoUrl = (p) => url(p.src.replace(/^\//, ""));
 const image = (id, cls = "", eager = false) => {
   const p = photos.find((p) => p.id === id) || photos[0];
@@ -15,21 +17,16 @@ const image = (id, cls = "", eager = false) => {
     : birdSvg();
 };
 const storedSettings=readLocal("buncho-settings", {});
-const settings={ruby:typeof storedSettings.ruby==='boolean'?storedSettings.ruby:true,motion:typeof storedSettings.motion==='boolean'?storedSettings.motion:!matchMedia("(prefers-reduced-motion: reduce)").matches};
+// Furigana is always visible. Migrate legacy ruby:false without touching other saves.
+const settings={ruby:true,motion:typeof storedSettings.motion==='boolean'?storedSettings.motion:!matchMedia("(prefers-reduced-motion: reduce)").matches};
 let favorites=[...new Set(readLocal("buncho-favorites", []).filter(id=>typeof id==='string'&&articles.some(a=>a.id===id)))];
 const readObservations=()=>readLocal("buncho-observations",[]).filter(n=>n&&typeof n==='object'&&typeof n.note==='string'&&n.note.trim()&&n.note.length<=600&&typeof n.date==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(n.date)&&Number.isFinite(Date.parse(n.date))&&new Date(n.date).toISOString().slice(0,10)===n.date).slice(0,100).map(n=>({date:n.date,note:n.note}));
 let teardown = () => {},
   studioSeed = null;
 const main = document.querySelector("main");
 function applySettings() {
-  document.documentElement.dataset.ruby = settings.ruby ? "on" : "off";
+  document.documentElement.dataset.ruby = "on";
   document.documentElement.dataset.motion = settings.motion ? "on" : "off";
-  document
-    .querySelector("#ruby-toggle")
-    .setAttribute("aria-pressed", String(settings.ruby));
-  document.querySelector("#ruby-toggle").textContent = settings.ruby
-    ? "ふりがな：あり"
-    : "ふりがな：なし";
   writeLocal("buncho-settings", settings);
 }
 const plain = (s) => {
@@ -57,6 +54,76 @@ function speak(text) {
 }
 function announce(text) {
   document.querySelector("#status").textContent = text;
+}
+let pageShareGeneration = 0;
+function resetPageTools() {
+  pageShareGeneration += 1;
+  const status = document.querySelector("#page-share-status");
+  if (status) status.textContent = "";
+  const fallback = document.querySelector("#page-share-fallback");
+  if (fallback) fallback.hidden = true;
+  document.querySelectorAll("#page-share, #page-copy-url").forEach(button => { button.disabled = false; });
+}
+function mountPageTools() {
+  const footer = document.querySelector(".site-footer");
+  const tools = document.createElement("section");
+  tools.className = "page-tools";
+  tools.setAttribute("aria-label", "ページの操作");
+  tools.innerHTML = `<div class="page-tools-buttons"><button type="button" id="page-share">このページを共有</button><button type="button" id="page-copy-url">URLをコピー</button><button type="button" id="page-top">ページの先頭へ ↑</button></div><p id="page-share-status" role="status" aria-live="polite"></p><div id="page-share-fallback" hidden><label for="page-share-url">このページのURL（選択してコピーできます）</label><input id="page-share-url" type="url" readonly spellcheck="false" aria-describedby="page-share-status"></div>`;
+  footer.querySelector(".footer-bottom").before(tools);
+  const status = tools.querySelector("#page-share-status");
+  const fallback = tools.querySelector("#page-share-fallback");
+  const input = tools.querySelector("#page-share-url");
+  const buttons = [...tools.querySelectorAll("#page-share, #page-copy-url")];
+  async function sharePage(nativeShare) {
+    if (buttons.some(button => button.disabled)) return;
+    const generation = pageShareGeneration;
+    // Canonical links exclude search terms, QA switches and local saved data.
+    const pageURL = new URL(document.querySelector('link[rel="canonical"]').href);
+    pageURL.search = "";
+    pageURL.hash = "";
+    const payload = { title: document.title, url: pageURL.href };
+    buttons.forEach(button => { button.disabled = true; });
+    status.textContent = "";
+    fallback.hidden = true;
+    const current = () => generation === pageShareGeneration;
+    try {
+      if (nativeShare && typeof navigator.share === "function") {
+        try {
+          await navigator.share(payload);
+          if (current()) status.textContent = "端末の共有操作が完了しました。送信先での受信は、このサイトでは確認できません。";
+          return;
+        } catch (error) {
+          if (!current()) return;
+          if (error?.name === "AbortError") {
+            status.textContent = "共有をキャンセルしました。";
+            return;
+          }
+          // Unsupported data or a denied share permission still allows copying.
+        }
+      }
+      try {
+        if (typeof navigator.clipboard?.writeText !== "function") throw new Error("clipboard-unavailable");
+        await navigator.clipboard.writeText(payload.url);
+        if (current()) status.textContent = "このページのURLをコピーしました。貼り付け先は自分で選んでください。";
+      } catch {
+        if (!current()) return;
+        fallback.hidden = false;
+        input.value = payload.url;
+        status.textContent = "自動コピーを使えません。下のURLを選択して、端末の「コピー」を使ってください。";
+        input.focus();
+        input.select();
+      }
+    } finally {
+      if (current()) buttons.forEach(button => { button.disabled = false; });
+    }
+  }
+  tools.querySelector("#page-share").onclick = () => sharePage(true);
+  tools.querySelector("#page-copy-url").onclick = () => sharePage(false);
+  tools.querySelector("#page-top").onclick = () => {
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    main.focus({ preventScroll: true });
+  };
 }
 function navigate(route, replace = false) {
   teardown();
@@ -157,7 +224,7 @@ function photoCredits(ids) {
     .filter(Boolean)
     .map(
       (p) =>
-        `<li><a href="${esc(p.source)}" target="_blank" rel="noopener noreferrer">${esc(p.alt)}</a> — ${esc(p.author)} / <a href="${esc(p.licenseUrl)}" target="_blank" rel="noopener noreferrer">${esc(p.license)}</a></li>`,
+        `<li><a href="${esc(p.source)}" target="_blank" rel="noopener noreferrer">${esc(p.alt)}</a> — ${esc(p.author)} / <a href="${esc(secureLicenseUrl(p.licenseUrl))}" target="_blank" rel="noopener noreferrer">${esc(p.license)}</a></li>`,
     )
     .join("");
 }
@@ -183,7 +250,7 @@ function article(a) {
     .join("")}</div></article>`;
 }
 function videoBlock() {
-  return `<figure class="bird-video"><video controls playsinline preload="none" aria-label="${esc(birdVideo.alt)}" ><source src="${url("photos/cinnamon-song.mp4")}" type="video/mp4"><source src="${url(birdVideo.src.replace(/^\//, ""))}" type="video/webm">この端末で映像を再生できない場合も、下の説明と図鑑を読めます。</video><figcaption>${esc(birdVideo.alt)}<br>実際の文鳥の録音を含む12秒の映像。再生すると音が出ます。MP4版は形式変換のみ（CC BY-SA 3.0）。<br>${esc(birdVideo.credit)} · <a href="${esc(birdVideo.source)}" target="_blank" rel="noopener noreferrer">元の映像</a> · <a href="${esc(birdVideo.licenseUrl)}" target="_blank" rel="noopener noreferrer">利用条件</a></figcaption><div class="video-buttons"><button data-video-play>声をきく</button><button data-video-stop>再生を止める</button><button data-video-mute aria-pressed="false">音を消す</button></div></figure>`;
+  return `<figure class="bird-video"><video controls playsinline preload="none" aria-label="${esc(birdVideo.alt)}" ><source src="${url("photos/cinnamon-song.mp4")}" type="video/mp4"><source src="${url(birdVideo.src.replace(/^\//, ""))}" type="video/webm">この端末で映像を再生できない場合も、下の説明と図鑑を読めます。</video><figcaption>${esc(birdVideo.alt)}<br>実際の文鳥の録音を含む12秒の映像。再生すると音が出ます。MP4版は形式変換のみ（CC BY-SA 3.0）。<br>${esc(birdVideo.credit)} · <a href="${esc(birdVideo.source)}" target="_blank" rel="noopener noreferrer">元の映像</a> · <a href="${esc(secureLicenseUrl(birdVideo.licenseUrl))}" target="_blank" rel="noopener noreferrer">利用条件</a></figcaption><div class="video-buttons"><button data-video-play>声をきく</button><button data-video-stop>再生を止める</button><button data-video-mute aria-pressed="false">音を消す</button></div></figure>`;
 }
 function paragraphs(s) {
   return s?.includes("<p>")
@@ -211,7 +278,7 @@ function bodyPartDetail(id) {
   const p = photos.find((p) => p.id === part.photoId);
   const [x, y, width, height] = part.crop;
   const photoImage = `<image href="${photoUrl(p)}" x="0" y="0" width="${p.width}" height="${p.height}"/>`;
-  return `<p class="eyebrow">写真で拡大 · ${esc(part.label)}</p><h2>${esc(a.title)}</h2><figure class="part-photo"><svg class="part-zoom" role="img" aria-label="${esc(part.label)}を拡大した実写写真${id === "ear" ? "。耳の穴は羽毛にかくれて見えません" : ""}" viewBox="${part.crop.join(" ")}" width="${width}" height="${height}">${photoImage}</svg><figcaption>${esc(part.note)}<br>一般の文鳥の写真です。おもち本人ではありません。</figcaption></figure><details class="part-context"><summary>写真全体と、拡大した範囲を見る</summary><svg class="part-context-image" role="img" aria-label="${esc(p.alt)} 赤い枠は拡大した範囲です。" viewBox="0 0 ${p.width} ${p.height}" width="${p.width}" height="${p.height}">${photoImage}<rect x="${x}" y="${y}" width="${width}" height="${height}" fill="none" stroke="white" stroke-width="10"/><rect x="${x}" y="${y}" width="${width}" height="${height}" fill="none" stroke="#963f42" stroke-width="5"/></svg><p>赤い枠の部分を大きく表示しています。</p></details><p class="part-credit">写真：${esc(p.author)} · <a href="${esc(p.source)}" target="_blank" rel="noopener noreferrer">元の写真</a> · <a href="${esc(p.licenseUrl)}" target="_blank" rel="noopener noreferrer">${esc(p.license)}</a><br>表示上の加工：切り抜き拡大・全体図への枠の追加。写真部分の利用条件は元のライセンスに従います。</p><p>${a.summary}</p><a class="button" href="${url(`encyclopedia/${a.id}/`)}">くわしく調べる →</a>`;
+  return `<p class="eyebrow">写真で拡大 · ${esc(part.label)}</p><h2>${esc(a.title)}</h2><figure class="part-photo"><svg class="part-zoom" role="img" aria-label="${esc(part.label)}を拡大した実写写真${id === "ear" ? "。耳の穴は羽毛にかくれて見えません" : ""}" viewBox="${part.crop.join(" ")}" width="${width}" height="${height}">${photoImage}</svg><figcaption>${esc(part.note)}<br>一般の文鳥の写真です。おもち本人ではありません。</figcaption></figure><details class="part-context"><summary>写真全体と、拡大した範囲を見る</summary><svg class="part-context-image" role="img" aria-label="${esc(p.alt)} 赤い枠は拡大した範囲です。" viewBox="0 0 ${p.width} ${p.height}" width="${p.width}" height="${p.height}">${photoImage}<rect x="${x}" y="${y}" width="${width}" height="${height}" fill="none" stroke="white" stroke-width="10"/><rect x="${x}" y="${y}" width="${width}" height="${height}" fill="none" stroke="#963f42" stroke-width="5"/></svg><p>赤い枠の部分を大きく表示しています。</p></details><p class="part-credit">写真：${esc(p.author)} · <a href="${esc(p.source)}" target="_blank" rel="noopener noreferrer">元の写真</a> · <a href="${esc(secureLicenseUrl(p.licenseUrl))}" target="_blank" rel="noopener noreferrer">${esc(p.license)}</a><br>表示上の加工：切り抜き拡大・全体図への枠の追加。写真部分の利用条件は元のライセンスに従います。</p><p>${a.summary}</p><a class="button" href="${url(`encyclopedia/${a.id}/`)}">くわしく調べる →</a>`;
 }
 function bodyPage() {
   const parts = [
@@ -276,12 +343,13 @@ function bindQuiz() {
   draw();
 }
 function credits() {
-  return `${heading("出典と素材", "小さな発見を支える、たくさんの仕事。", "学びの根拠と、写真を届けてくれた作者へ。")}<div class="prose"><p>このサイトの実写写真は、各作者が示したライセンスに従って使用しています。一般の文鳥を撮ったもので、おもち本人の写真ではありません。アート作品では必要な帰属表示を画像の下部に含めます。</p><p>原著作物の権利は各作者に帰属します。写真の利用・加工・共有は、それぞれのライセンスをご確認ください。図鑑写真は画質調整・縮小のみ。工房での色の変更はアート表現です。</p><p>オリジナルの鳥・植物・ロゴの図形と合成BGM・操作音は、このサイト用の制作物です。合成音を本物の文鳥の鳴き声として使用していません。</p></div><h2>写真 ${photos.length}点</h2><div class="credits-grid">${photos.map((p) => `<figure data-photo-credit="${esc(p.id)}">${image(p.id)}<figcaption><b>${esc(p.alt)}</b><dl class="credit-metadata"><div><dt>作品名</dt><dd>${esc(p.title)}</dd></div><div><dt>作者</dt><dd>${esc(p.author)}</dd></div><div><dt>クレジット</dt><dd>${esc(p.credit)}</dd></div><div><dt>取得・確認日</dt><dd>${esc(p.acquiredAt)}</dd></div><div><dt>サイト用の準備・加工</dt><dd>${esc(p.modifications)}</dd></div></dl><a href="${esc(p.source)}" target="_blank" rel="noopener noreferrer">元の写真と利用条件</a> · <a href="${esc(p.licenseUrl)}" target="_blank" rel="noopener noreferrer">${esc(p.license)}</a></figcaption></figure>`).join("")}</div><h2>本物の声の映像</h2>${videoBlock()}<h2>記事の情報源</h2><ul class="source-list">${[...new Map(articles.flatMap((a) => a.sources).map((s) => [s.url || s.title, s])).values()].map((s) => `<li>${s.url ? `<a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">${esc(s.title)}</a>` : esc(s.title)}</li>`).join("")}</ul>`;
+  return `${heading("出典と素材", "小さな発見を支える、たくさんの仕事。", "学びの根拠と、写真を届けてくれた作者へ。")}<div class="prose"><p>このサイトの実写写真は、各作者が示したライセンスに従って使用しています。一般の文鳥を撮ったもので、おもち本人の写真ではありません。アート作品では必要な帰属表示を画像の下部に含めます。</p><p>原著作物の権利は各作者に帰属します。写真の利用・加工・共有は、それぞれのライセンスをご確認ください。図鑑写真は画質調整・縮小のみ。工房での色の変更はアート表現です。</p><p>オリジナルの鳥・植物・ロゴの図形と合成BGM・操作音は、このサイト用の制作物です。合成音を本物の文鳥の鳴き声として使用していません。</p></div><h2>写真 ${photos.length}点</h2><div class="credits-grid">${photos.map((p) => `<figure data-photo-credit="${esc(p.id)}">${image(p.id)}<figcaption><b>${esc(p.alt)}</b><dl class="credit-metadata"><div><dt>作品名</dt><dd>${esc(p.title)}</dd></div><div><dt>作者</dt><dd>${esc(p.author)}</dd></div><div><dt>クレジット</dt><dd>${esc(p.credit)}</dd></div><div><dt>取得・確認日</dt><dd>${esc(p.acquiredAt)}</dd></div><div><dt>サイト用の準備・加工</dt><dd>${esc(p.modifications)}</dd></div></dl><a href="${esc(p.source)}" target="_blank" rel="noopener noreferrer">元の写真と利用条件</a> · <a href="${esc(secureLicenseUrl(p.licenseUrl))}" target="_blank" rel="noopener noreferrer">${esc(p.license)}</a></figcaption></figure>`).join("")}</div><h2>本物の声の映像</h2>${videoBlock()}<h2>記事の情報源</h2><ul class="source-list">${[...new Map(articles.flatMap((a) => a.sources).map((s) => [s.url || s.title, s])).values()].map((s) => `<li>${s.url ? `<a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">${esc(s.title)}</a>` : esc(s.title)}</li>`).join("")}</ul>`;
 }
 function help() {
-  return `${heading("遊び方と設定", "いつでも、戻ってこられる場所。")}<div class="help-layout"><nav class="article-toc"><a href="#help-reading">読む</a><a href="#help-studio">つくる</a><a href="#help-game">暮らす</a><a href="#help-storage">保存</a></nav><div class="prose"><section id="help-reading"><h2>写真から、じっくり読むまで</h2><p>図鑑は「まず見る」「基本を知る」「もっと調べる」の三段階。ふりがなは上のボタンで切り替えられます。「解説をきく」は端末の読み上げ機能を使います。声が入っていない端末でも本文はそのまま読めます。</p><p>♡でつけたお気に入りは図鑑の絞り込みから見つけられます。メニューのサイト内検索は、図鑑の本文だけでなくアート工房・ゲーム・保存の手引きなども調べます。図鑑内の検索では記事を絞り込めます。</p></section><section id="help-studio"><h2>文鳥アート工房</h2><p>まずは見本を選びましょう。写真や鳥、花を加えて、指やマウスで動かせます。動かすボタン・大きさ・回転でも調整できます。重なり順を変え、タイトルを入れたら、正方形か縦長で保存。写真のクレジットも一緒に入ります。</p><p>音は再生ボタンを押したときだけ始まります。BGMも操作音も、サイト用に作った合成音です。本物の文鳥の鳴き声や既存の曲ではありません。共有非対応の端末では画像を保存して共有できます。</p></section><section id="help-game"><h2>おもちの文鳥ぐらし</h2><p>文鳥たちは性格、気分、欲求、相手との関係と記憶から行動を選びます。名前を呼んだり、水浴びに誘ったりして、暮らしを見守ってください。会話は話題と状態に応じたルールで作るもので、何でも理解できるAIではありません。</p><p>おもちの性格・会話・家族・日記はゲームだけの創作です。現実のおもちの観察記録ではありません。成長・つがい・繁殖は簡略化した表現で、現実の飼育手順ではありません。</p><p>閉じている間は動作せず、次に開いたときに経過時間をまとめて計算します。長期間の不在でも鳥は自分で食事や休息をとり、不在への罰・死亡・強い苦痛はありません。詳しい時間と上限はゲームの「設定・遊び方」に表示します。</p></section><section id="help-storage"><h2>端末内の保存について</h2><p>会員登録やログインは不要。ゲーム、ふりがな、お気に入り、観察ノートはこのブラウザの端末内保存です。端末間の自動同期はなく、閲覧データの消去やプライベートブラウズ終了で失われる場合があります。大切なゲームは設定から定期的に書き出してください。</p><p>読み込むのは、自分が保存したゲーム用JSONファイルだけにしましょう。形式を確認し、不正なデータは現在の世界を置き換えません。複数タブでは一度に一つの更新だけを受け付けます。</p></section><section><h2>読みやすさ</h2><label class="setting-line"><input id="motion-toggle" type="checkbox" ${settings.motion ? "checked" : ""}> 小さな動きを表示する</label><p>動きを減らす端末設定にも対応。どのボタンもキーボードのTabとEnterで操作できます。</p></section><section><h2>鳥との暮らしで困ったら</h2><p>体調や飼育の判断は鳥を診療する獣医師へ。サイトやゲームは診断・治療の代わりにはなりません。いつもとの違いが気になるときは、大人と一緒に相談してください。</p></section></div></div>`;
+  return `${heading("遊び方と設定", "いつでも、戻ってこられる場所。")}<div class="help-layout"><nav class="article-toc"><a href="#help-reading">読む</a><a href="#help-studio">つくる</a><a href="#help-game">暮らす</a><a href="#help-storage">保存</a><a href="#help-access">また来る・共有</a></nav><div class="prose"><section id="help-reading"><h2>写真から、じっくり読むまで</h2><p>図鑑は「まず見る」「基本を知る」「もっと調べる」の三段階。ふりがなはいつも表示されます。「解説をきく」は端末の読み上げ機能を使います。声が入っていない端末でも本文はそのまま読めます。</p><p>♡でつけたお気に入りは図鑑の絞り込みから見つけられます。メニューのサイト内検索は、図鑑の本文だけでなくアート工房・ゲーム・保存の手引きなども調べます。図鑑内の検索では記事を絞り込めます。</p></section><section id="help-studio"><h2>文鳥アート工房</h2><p>まずは見本を選びましょう。写真や鳥、花を加えて、指やマウスで動かせます。動かすボタン・大きさ・回転でも調整できます。重なり順を変え、タイトルを入れたら、正方形か縦長で保存。写真のクレジットも一緒に入ります。</p><p>音は再生ボタンを押したときだけ始まります。BGMも操作音も、サイト用に作った合成音です。本物の文鳥の鳴き声や既存の曲ではありません。共有非対応の端末では画像を保存して共有できます。</p></section><section id="help-game"><h2>おもちの文鳥ぐらし</h2><p>文鳥たちは性格、気分、欲求、相手との関係と記憶から行動を選びます。名前を呼んだり、水浴びに誘ったりして、暮らしを見守ってください。会話は話題と状態に応じたルールで作るもので、何でも理解できるAIではありません。</p><p>おもちの性格・会話・家族・日記はゲームだけの創作です。現実のおもちの観察記録ではありません。成長・つがい・繁殖は簡略化した表現で、現実の飼育手順ではありません。</p><p>閉じている間は動作せず、次に開いたときに経過時間をまとめて計算します。長期間の不在でも鳥は自分で食事や休息をとり、不在への罰・死亡・強い苦痛はありません。詳しい時間と上限はゲームの「設定・遊び方」に表示します。</p></section><section id="help-storage"><h2>端末内の保存について</h2><p>アクセス解析ツール・広告用の追跡コードは未導入です。解析の導入は別途の確認が必要なため、現在は行っていません。</p><p>会員登録やログインは不要。ゲーム、作品、動きの設定、お気に入り、観察ノートはこのブラウザの端末内保存です。端末間の自動同期はなく、閲覧データの消去やプライベートブラウズ終了で失われる場合があります。大切なゲームは設定から定期的に書き出してください。</p><p>読み込むのは、自分が保存したゲーム用JSONファイルだけにしましょう。形式を確認し、不正なデータは現在の世界を置き換えません。複数タブでは一度に一つの更新だけを受け付けます。</p></section><section id="help-access"><h2>また来る・ページを共有する</h2><p>好きなページはブラウザのブックマークに登録できます。パソコンではブラウザのメニューから「ブックマークに追加」などを選びます。スマートフォンでは、次の方法でホーム画面から開きやすくできます。表示名や手順は端末・ブラウザの版によって異なります。</p><ul><li><b>iPhone・iPadのSafari：</b>ブラウザの「共有」メニューから「ホーム画面に追加」を選び、内容を確認して追加します。<a href="https://support.apple.com/ja-jp/guide/iphone/iphea86e5236/ios" target="_blank" rel="noopener noreferrer">Appleの手順</a></li><li><b>AndroidのChrome：</b>ブラウザのメニューから「ホーム画面に追加」を選びます。「ショートカットを作成」などが表示されたら、案内に従って追加してください。<a href="https://support.google.com/chrome/answer/15085120?hl=ja&amp;co=GENIE.Platform%3DAndroid" target="_blank" rel="noopener noreferrer">Chromeの手順</a></li></ul><p><b>このサイトを開くにはインターネット接続が必要です。オフラインでの利用には対応していません。</b>ホーム画面への追加は、ゲームや作品のバックアップ・端末間同期ではありません。ブラウザとは別の保存領域になる場合もあるため、大切なゲームは追加前にJSONを書き出し、作品はPNGで保存してください。</p><p>ページ下の「このページを共有」は端末の共有画面を開きます。「URLをコピー」はページのアドレスだけをコピーします。機能が使えない場合は、表示されたURLを選んで手動でコピーできます。実行や送信先は自分で選び、このサイトが勝手に投稿することはありません。検索語・URLの追加パラメーターや、観察ノート・作品・ゲームの保存データは共有URLには入りません。アート作品の画像共有は、工房内の共有ボタンを使ってください。</p></section><section><h2>読みやすさ</h2><label class="setting-line"><input id="motion-toggle" type="checkbox" ${settings.motion ? "checked" : ""}> 小さな動きを表示する</label><p>動きを減らす端末設定にも対応。どのボタンもキーボードのTabとEnterで操作できます。</p></section><section><h2>鳥との暮らしで困ったら</h2><p>体調や飼育の判断は鳥を診療する獣医師へ。サイトやゲームは診断・治療の代わりにはなりません。いつもとの違いが気になるときは、大人と一緒に相談してください。</p></section></div></div>`;
 }
 function render(route) {
+  resetPageTools();
   document
     .querySelectorAll("[data-nav]")
     .forEach((a) =>
@@ -348,31 +416,40 @@ function render(route) {
       heading("道に迷ったら", "文鳥たちの庭へ戻ろう。") +
       `<p>この場所にはページがありません。</p><a class="button" href="${url()}">トップへ戻る</a>`;
   }
-  document.title = (title ? title + " | " : "") + SITE_NAME;
   main.innerHTML = view;
-  const description = plain(
-    main.querySelector(".lede,.article-summary")?.innerHTML ||
-      title ||
-      "おもちと学ぶ文鳥図鑑。写真で知る、アートをつくる、文鳥たちの暮らしを見守る。",
-  );
-  const canonical = location.origin + location.pathname;
-  document.querySelector('meta[name="description"]').content = description;
-  document.querySelector('meta[property="og:title"]').content = document.title;
-  document.querySelector('meta[property="og:description"]').content =
-    description;
-  document.querySelector('meta[property="og:url"]').content = canonical;
-  document.querySelector('meta[property="og:type"]').content =
-    route.startsWith("encyclopedia/") && slug ? "article" : "website";
-  document.querySelector('link[rel="canonical"]').href = canonical;
-  let robots = document.querySelector('meta[name="robots"]');
-  if (notFound) {
-    if (!robots) {
-      robots = document.createElement("meta");
-      robots.name = "robots";
-      document.head.append(robots);
+  const metadata = routeMetadata(route, { query, notFound });
+  document.title = metadata.title;
+  const setMeta = (attribute, name, content) => {
+    let tag = document.querySelector(`meta[${attribute}="${name}"]`);
+    if (!tag) {
+      tag = document.createElement("meta");
+      tag.setAttribute(attribute, name);
+      document.head.append(tag);
     }
-    robots.content = "noindex, follow";
-  } else robots?.remove();
+    tag.content = content;
+  };
+  setMeta("name", "description", metadata.description);
+  setMeta("name", "robots", metadata.robots);
+  for (const [name, content] of Object.entries({
+    "og:title": metadata.title, "og:description": metadata.description,
+    "og:url": metadata.canonical, "og:type": metadata.ogType,
+    "og:image": metadata.imageURL, "og:image:alt": metadata.imageAlt,
+    "og:site_name": SITE_NAME,
+  })) setMeta("property", name, content);
+  for (const [name, content] of Object.entries({
+    "twitter:card": "summary_large_image", "twitter:title": metadata.title,
+    "twitter:description": metadata.description, "twitter:image": metadata.imageURL,
+    "twitter:image:alt": metadata.imageAlt,
+  })) setMeta("name", name, content);
+  document.querySelector('link[rel="canonical"]').href = metadata.canonical;
+  let schema = document.querySelector("#site-jsonld");
+  if (!schema) {
+    schema = document.createElement("script");
+    schema.id = "site-jsonld";
+    schema.type = "application/ld+json";
+    document.head.append(schema);
+  }
+  schema.textContent = JSON.stringify(metadata.structuredData).replace(/</g, "\\u003c");
   main
     .querySelectorAll('a[href^="#"]')
     .forEach((a) =>
@@ -521,11 +598,8 @@ function render(route) {
     };
   }
 }
+mountPageTools();
 document.querySelector("#brand").innerHTML = logoSvg("header-logo");
-document.querySelector("#ruby-toggle").onclick = () => {
-  settings.ruby = !settings.ruby;
-  applySettings();
-};
 document.querySelector("#menu-toggle").onclick = (e) => {
   const menu = document.querySelector("#menu");
   menu.hidden = !menu.hidden;

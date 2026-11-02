@@ -86,8 +86,8 @@ test("integrated DOM navigation, learning tools, quiz and truthful observation f
     doc.querySelector("#favorite").getAttribute("aria-pressed"),
     "true",
   );
-  doc.querySelector("#ruby-toggle").click();
-  assert.equal(doc.documentElement.dataset.ruby, "off");
+  assert.equal(doc.querySelector("#ruby-toggle"), null);
+  assert.equal(doc.documentElement.dataset.ruby, "on");
   doc.querySelector("#speak").click();
   assert.ok(spoken.some((s) => s.includes("文鳥")));
   assert.ok(spoken.every((s) => !s.includes("<ruby>")));
@@ -155,7 +155,7 @@ test("integrated DOM navigation, learning tools, quiz and truthful observation f
   assert.match(doc.querySelector('meta[name="robots"]').content, /noindex/);
   assert.equal(new URL(doc.querySelector('link[rel="canonical"]').href).pathname, "/buncho-ureshi/not-a-page/");
   navigate("help/");
-  assert.equal(doc.querySelector('meta[name="robots"]'), null);
+  assert.equal(doc.querySelector('meta[name="robots"]').content, "index, follow, max-image-preview:large");
   await window.happyDOM.abort();
   await window.happyDOM.close();
 });
@@ -335,9 +335,9 @@ test("corrupt local settings, favorites and observations are normalized without 
     navigate("help/");
     doc.querySelector("#motion-toggle").checked = false;
     doc.querySelector("#motion-toggle").dispatchEvent(new window.Event("change"));
-    doc.querySelector("#ruby-toggle").click();
+    assert.equal(doc.querySelector("#ruby-toggle"), null);
     assert.deepEqual(JSON.parse(window.localStorage.getItem("buncho-settings")), {
-      ruby: false,
+      ruby: true,
       motion: false,
     });
     navigate("challenge/");
@@ -465,6 +465,123 @@ test("site-wide search, truthful selected-part crops and literal photo credits",
     assert.equal(doc.querySelector("main [onerror]"), null);
   } finally {
     Object.assign(photos[0], originalPhoto);
+    await window.happyDOM.abort();
+    await window.happyDOM.close();
+  }
+});
+
+test("launch metadata, safe page sharing, access help and always-on legacy ruby migration", async () => {
+  const { routeMetadata } = await import("../src/metadata.js");
+  const window = new Window({
+    url: "https://djnaoyaman.github.io/buncho-ureshi/",
+    settings: { disableCSSFileLoading: true, disableJavaScriptFileLoading: true, disableJavaScriptEvaluation: true },
+  });
+  for (const key of ["window", "document", "location", "history", "navigator", "localStorage", "matchMedia", "Image", "FormData"])
+    Object.defineProperty(globalThis, key, { configurable: true, value: key === "window" ? window : key === "matchMedia" ? window.matchMedia.bind(window) : window[key] });
+  const originalGame = '{"untouched":"game backup placeholder for preservation check"}';
+  const favorite = articles[0].id;
+  const note = [{ date: "2026-11-02", note: "残す観察" }];
+  window.localStorage.setItem("buncho-settings", JSON.stringify({ ruby: false, motion: false }));
+  window.localStorage.setItem("buncho-favorites", JSON.stringify([favorite]));
+  window.localStorage.setItem("buncho-observations", JSON.stringify(note));
+  window.localStorage.setItem("buncho-test-unrelated-save", originalGame);
+  try {
+    window.document.write(await readFile(new URL("../dist/index.html", import.meta.url), "utf8"));
+    const doc = window.document;
+    await import("../src/app.js?dom-launch-migration");
+    const navigate = route => {
+      const link = doc.createElement("a");
+      link.href = "/buncho-ureshi/" + route;
+      doc.body.append(link); link.click(); link.remove();
+    };
+    const settle = () => new Promise(resolve => setImmediate(resolve));
+    const setAPI = (name, value) => Object.defineProperty(window.navigator, name, { configurable: true, value });
+    const assertRuby = () => {
+      assert.equal(doc.querySelector("#ruby-toggle"), null);
+      assert.equal(doc.documentElement.dataset.ruby, "on");
+      assert.deepEqual(JSON.parse(window.localStorage.getItem("buncho-settings")), { ruby: true, motion: false });
+    };
+    assertRuby();
+    assert.equal(window.localStorage.getItem("buncho-test-unrelated-save"), originalGame);
+    assert.deepEqual(JSON.parse(window.localStorage.getItem("buncho-favorites")), [favorite]);
+    assert.deepEqual(JSON.parse(window.localStorage.getItem("buncho-observations")), note);
+    for (const route of ["", "encyclopedia/", `encyclopedia/${favorite}/`, "body/", "help/", "credits/", "missing-page/"]) {
+      navigate(route);
+      const meta = routeMetadata(route);
+      assert.equal(doc.title, meta.title);
+      assert.equal(doc.querySelector('meta[name="description"]').content, meta.description);
+      assert.equal(doc.querySelector('meta[name="robots"]').content, meta.robots);
+      assert.equal(doc.querySelector('link[rel="canonical"]').href, meta.canonical);
+      for (const [name, value] of [["twitter:title", meta.title], ["twitter:description", meta.description], ["twitter:image", meta.imageURL], ["twitter:image:alt", meta.imageAlt]])
+        assert.equal(doc.querySelector(`meta[name="${name}"]`).content, value);
+      assert.deepEqual(JSON.parse(doc.querySelector("#site-jsonld").textContent), meta.structuredData);
+      assertRuby();
+    }
+    navigate("?q=" + encodeURIComponent("非公開にしたい検索語") + "&qa=1");
+    history.replaceState({}, "", location.href + "#private");
+    assert.equal(doc.querySelector('meta[name="robots"]').content, "noindex, follow");
+    assert.equal(doc.querySelector('link[rel="canonical"]').href, "https://djnaoyaman.github.io/buncho-ureshi/");
+    const writes = [];
+    setAPI("clipboard", { writeText: async value => { writes.push(value); } });
+    doc.querySelector("#page-copy-url").click(); await settle();
+    assert.deepEqual(writes, ["https://djnaoyaman.github.io/buncho-ureshi/"]);
+    assert.match(doc.querySelector("#page-share-status").textContent, /コピーしました/);
+    assert.equal(doc.querySelector("#page-share-fallback").hidden, true);
+
+    navigate("encyclopedia/" + favorite + "/");
+    const shared = [];
+    setAPI("share", async payload => { shared.push(payload); });
+    doc.querySelector("#page-share").click(); await settle();
+    assert.deepEqual(shared, [{ title: doc.title, url: routeMetadata(`encyclopedia/${favorite}/`).canonical }]);
+    assert.equal(shared[0].files, undefined);
+    assert.match(doc.querySelector("#page-share-status").textContent, /共有操作が完了/);
+    setAPI("share", async () => { const error = new Error("cancel"); error.name = "AbortError"; throw error; });
+    doc.querySelector("#page-share").click(); await settle();
+    assert.match(doc.querySelector("#page-share-status").textContent, /キャンセル/);
+    assert.equal(writes.length, 1, "cancel does not copy or send anything else");
+    setAPI("share", undefined);
+    setAPI("clipboard", { writeText: async () => { throw new Error("permission denied"); } });
+    doc.querySelector("#page-share").click(); await settle();
+    assert.equal(doc.querySelector("#page-share-fallback").hidden, false);
+    assert.equal(doc.querySelector("#page-share-url").value, routeMetadata(`encyclopedia/${favorite}/`).canonical);
+    assert.equal(doc.querySelector("#page-share-url").readOnly, true);
+    assert.equal(doc.activeElement.id, "page-share-url");
+    assert.match(doc.querySelector("#page-share-status").textContent, /自動コピーを使えません/);
+    setAPI("clipboard", undefined);
+    doc.querySelector("#page-copy-url").click(); await settle();
+    assert.equal(doc.querySelector("#page-share-fallback").hidden, false);
+
+    // A delayed permission dialog cannot overwrite a newly navigated page's UI.
+    let finishCopy;
+    setAPI("clipboard", { writeText: () => new Promise(resolve => { finishCopy = resolve; }) });
+    doc.querySelector("#page-copy-url").click();
+    navigate("help/");
+    finishCopy(); await settle();
+    assert.equal(doc.querySelector("#page-share-status").textContent, "");
+    assert.equal(doc.querySelector("#page-share-fallback").hidden, true);
+    assert.equal(doc.querySelector("#page-copy-url").disabled, false);
+    assert.match(doc.querySelector("#help-access").textContent, /ホーム画面に追加/);
+    assert.match(doc.querySelector("#help-access").textContent, /オフラインでの利用には対応していません/);
+    assert.match(doc.querySelector("#help-storage").textContent, /アクセス解析.*未導入/);
+    assert.match(doc.querySelector("#help-reading").textContent, /ふりがなはいつも表示/);
+    assert.doesNotMatch(doc.querySelector("#help-reading").textContent, /切り替え/);
+    let scroll;
+    window.scrollTo = options => { scroll = options; };
+    doc.querySelector("#page-top").click();
+    assert.equal(scroll.top, 0);
+    assert.equal(doc.activeElement.id, "main");
+    doc.querySelector("#motion-toggle").checked = true;
+    doc.querySelector("#motion-toggle").dispatchEvent(new window.Event("change"));
+    assert.deepEqual(JSON.parse(window.localStorage.getItem("buncho-settings")), { ruby: true, motion: true });
+    assert.equal(doc.documentElement.dataset.ruby, "on");
+    // Re-initialize the app from the same saved settings as a reload would.
+    window.document.write(await readFile(new URL("../dist/index.html", import.meta.url), "utf8"));
+    await import("../src/app.js?dom-launch-reload");
+    assert.equal(doc.documentElement.dataset.ruby, "on");
+    assert.equal(doc.querySelector("#ruby-toggle"), null);
+    assert.deepEqual(JSON.parse(window.localStorage.getItem("buncho-settings")), { ruby: true, motion: true });
+    assert.equal(window.localStorage.getItem("buncho-test-unrelated-save"), originalGame);
+  } finally {
     await window.happyDOM.abort();
     await window.happyDOM.close();
   }
