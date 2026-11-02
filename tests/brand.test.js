@@ -37,3 +37,11 @@ test('header and home use the approved bitmap with full accessible name and expl
   }
   assert.match(IMAGE_ALT,/赤いくちばしの白文鳥と深緑/);assert.doesNotMatch(IMAGE_ALT,/植物/);
 });
+
+
+test('all page shells request the exact current logo-fit stylesheet version',async()=>{
+  const version=hash(await read('src/style.css')).slice(0,12);
+  for(const path of ['dist/index.html','dist/game/index.html','dist/studio/index.html','dist/colors/index.html','dist/404.html']){
+    assert.ok((await read(path)).toString().includes(`href="src/style.css?v=${version}"`),path);
+  }
+});

@@ -5,18 +5,42 @@ import { SITE_NAME } from '../../src/visuals.js';
 test('approved 04 decodes without stretching and remains visible from 320px to desktop',async({page},info)=>{
   await page.route(/youtube|youtu\.be|googlevideo|ytimg/i,route=>route.abort());
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
-  for(const width of [320,375,768,1440]){
-    await page.setViewportSize({width,height:900});await page.goto('./');
+  for(const [width,height] of [[320,900],[375,900],[390,844],[844,390],[768,900],[1440,900]]){
+    await page.setViewportSize({width,height});await page.goto('./');
     for(const selector of ['#brand img','.hero-logo']){
       const logo=page.locator(selector);await expect(logo).toBeVisible();await expect(logo).toHaveAttribute('alt',SITE_NAME);
       const result=await logo.evaluate(async img=>{await img.decode();const r=img.getBoundingClientRect();return {w:img.naturalWidth,h:img.naturalHeight,x:r.x,y:r.y,width:r.width,height:r.height};});
       expect([result.w,result.h]).toEqual([1120,645]);expect(result.width/result.height).toBeCloseTo(1120/645,2);
-      expect(result.width).toBeGreaterThan(140);expect(result.x).toBeGreaterThanOrEqual(0);expect(result.x+result.width).toBeLessThanOrEqual(width+1);
+      expect(result.width).toBeGreaterThan(selector==='#brand img'?120:220);expect(result.x).toBeGreaterThanOrEqual(0);expect(result.x+result.width).toBeLessThanOrEqual(width+1);
     }
     const box=await page.locator('#brand').boundingBox(),menu=await page.locator('#menu-toggle').boundingBox();
     expect(box.x+box.width).toBeLessThanOrEqual(menu.x+1);
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
-    if(width===375||width===1440)await info.attach(`approved-04-home-${width}`,{body:await page.screenshot(),contentType:'image/png'});
+    const header=await page.locator('.site-header').boundingBox();
+    expect(header.height).toBeLessThanOrEqual(width<=600?96:110);
+    expect(await page.locator('.hero-logo').evaluate(e=>e.getBoundingClientRect().width)).toBeLessThanOrEqual(width<=600?270:380);
+    await page.evaluate(()=>scrollTo(0,0));
+    const captureHeight=await page.locator('.hero-copy').evaluate(e=>Math.ceil(Math.max(innerHeight,e.getBoundingClientRect().bottom+20)));
+    const screenshot=await page.screenshot({scale:'css',clip:{x:0,y:0,width,height:captureHeight}});
+    // Inspect rendered PNG pixels, not only CSS declarations. The 4 inset corners
+    // contain source paper, so they must now match their actual ivory backdrop.
+    const pixels=await page.evaluate(async encoded=>{
+      const image=new Image();image.src='data:image/png;base64,'+encoded;await image.decode();
+      const canvas=document.createElement('canvas');canvas.width=image.width;canvas.height=image.height;
+      const c=canvas.getContext('2d');c.drawImage(image,0,0);
+      return [...document.querySelectorAll('#brand img,.hero-logo')].map(e=>{
+        const r=e.getBoundingClientRect(),style=getComputedStyle(e),parent=getComputedStyle(e.closest('.site-header,.hero-copy'));
+        const corners=[[r.x+2,r.y+2],[r.right-3,r.y+2],[r.x+2,r.bottom-3],[r.right-3,r.bottom-3]].filter(([x,y])=>x>=0&&y>=0&&x<image.width&&y<image.height);
+        return {blend:style.mixBlendMode,filter:style.filter,isolation:parent.isolation,background:parent.backgroundColor,
+          corners:corners.map(([x,y])=>[...c.getImageData(Math.floor(x),Math.floor(y),1,1).data])};
+      });
+    },screenshot.toString('base64'));
+    for(const item of pixels){
+      expect(item.blend).toBe('multiply');expect(item.isolation).toBe('isolate');expect(item.background).toBe('rgb(246, 243, 232)');
+      expect(item.corners.length).toBe(4);
+      for(const pixel of item.corners)for(const [i,value] of [246,243,232].entries())expect(Math.abs(pixel[i]-value)).toBeLessThanOrEqual(2);
+    }
+    await info.attach(`integrated-04-home-${width}x${height}`,{body:screenshot,contentType:'image/png'});
   }
   expect(errors).toEqual([]);
 });
@@ -34,4 +58,25 @@ test('served selected-master hash and derivatives are exact, and platform icon r
     expect(await page.evaluate(async path=>{const img=new Image();img.src=new URL(path,document.baseURI);await img.decode();return[img.naturalWidth,img.naturalHeight];},path)).toEqual([size,size]);
   }
   expect(await page.evaluate(async()=>{const img=new Image();img.src=new URL('ogp.png',document.baseURI);await img.decode();return[img.naturalWidth,img.naturalHeight];})).toEqual([1200,630]);
+});
+
+
+test('logo integration stays local to light UI surfaces and supports contrast preferences',async({page},info)=>{
+  await page.route(/youtube|youtu\.be|googlevideo|ytimg/i,route=>route.abort());
+  await page.setViewportSize({width:375,height:900});
+  for(const route of ['./','colors/','game/','studio/','404.html']){
+    await page.goto(route);await expect(page.locator('#brand img')).toBeVisible();
+    expect(await page.locator('#brand img').evaluate(e=>getComputedStyle(e).mixBlendMode)).toBe('multiply');
+    const unexpected=await page.locator('img,canvas').evaluateAll(els=>els.filter(e=>getComputedStyle(e).mixBlendMode!=='normal'&&!e.matches('.site-header .header-logo,.hero-copy > .hero-logo')).length);
+    expect(unexpected).toBe(0);
+  }
+  await page.goto('./');await page.emulateMedia({colorScheme:'dark'});
+  expect(await page.locator('.site-header').evaluate(e=>getComputedStyle(e).backgroundColor)).toBe('rgb(246, 243, 232)');
+  await page.emulateMedia({forcedColors:'active'});
+  for(const selector of ['#brand img','.hero-logo']){
+    expect(await page.locator(selector).evaluate(e=>getComputedStyle(e).mixBlendMode)).toBe('normal');
+    expect(await page.locator(selector).evaluate(e=>getComputedStyle(e).filter)).toBe('none');
+    await expect(page.locator(selector)).toHaveAttribute('alt',SITE_NAME);
+  }
+  await info.attach('integrated-04-forced-colors-375',{body:await page.screenshot(),contentType:'image/png'});
 });

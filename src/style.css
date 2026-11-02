@@ -1768,12 +1768,21 @@ input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), select, te
   :root { --page-gutter: 14px; }
 }
 
-/* Approved refined 04: preserve the raster wordmark's intrinsic proportions. */
-.brand { width: 200px; flex-basis: 200px; }
+/* Approved refined 04: original pixels/ratio, fitted to these light UI surfaces only.
+   Normalize the scanned-paper white point before multiply; do not apply to canvas,
+   social cards, icons, photographs or dark artwork backgrounds. */
+.site-header, .hero-copy { background: var(--ivory); isolation: isolate; }
+.site-header .brand-art.header-logo,
+.hero-copy > .brand-art.hero-logo { mix-blend-mode: multiply; filter: brightness(1.035); }
+.brand { width: 150px; flex-basis: 150px; }
 .brand-art.header-logo { width: 100%; height: auto; object-fit: contain; }
-.brand-art.hero-logo { width: 100%; max-width: 520px; height: auto; margin: 0 auto 1.1rem; }
+.brand-art.hero-logo { width: 100%; max-width: 380px; height: auto; margin: .75rem auto 1.1rem; }
 @media (max-width: 600px) {
-  .brand { width: 174px; flex-basis: 174px; }
-  .brand-art.hero-logo { max-width: 420px; margin: 0 auto 1rem; }
+  .brand { width: 136px; flex-basis: 136px; }
+  .brand-art.hero-logo { max-width: 270px; margin: .65rem auto 1rem; }
 }
-@media (max-width: 350px) { .brand { width: 151px; flex-basis: 151px; } }
+@media (max-width: 350px) { .brand { width: 128px; flex-basis: 128px; } }
+@media (forced-colors: active) {
+  .site-header .brand-art.header-logo,
+  .hero-copy > .brand-art.hero-logo { mix-blend-mode: normal; filter: none; }
+}

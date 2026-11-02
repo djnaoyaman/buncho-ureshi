@@ -34,3 +34,7 @@
 - 実施済み: `npm test` の Node / DOM 契約テスト、`npm run check`。正確な合格数は統合担当の最終 CI に合わせて記録します。
 - 登録済み、ここでは未実行: `tests/browser/brand.spec.js` の 320 / 375 / 768 / 1440px、実 decode、比率・表示・重なり・配信ハッシュ検査。工房の実 PNG 内の緑の文字・赤いくちばし、正方形と縦長の保存検査も追加。
 - 実ブラウザの合格、実端末のホーム画面、SNS キャッシュの更新をこの文書だけで保証しません。公開担当が exact-commit CI と公開配信を検証します。
+
+## 2026-11-02 — light-surface integration
+
+The owner reported that the white raster rectangles and repeated oversized lockups looked detached from the ivory page. The approved master and all16 derivative bytes remain unchanged. Only header/hero light surfaces apply isolated multiply compositing with a1.035 white-point compensation; this is a CSS presentation effect, not a transparent-file export. Header widths150/136/128px and hero caps380/270px preserve the full intrinsic ratio and musical notes. Forced-colors mode uses the original normal-composited image. Studio exports, Open Graph images, platform icons and factual photos retain their existing controlled rendering; no global blend/filter is introduced. Real screenshot corner pixels, mobile/header-plus-hero views, full names, route scope and final asset hashes are tested.
