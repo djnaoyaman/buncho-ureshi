@@ -70,6 +70,7 @@ async function installAudit(context) {
           const createGain = audio.createGain.bind(audio);
           audio.createGain = () => {
             const gain = createGain(), setTarget = gain.gain.setTargetAtTime.bind(gain.gain);
+            if (!window.__studioMasterGain) window.__studioMasterGain = gain;
             gain.gain.setTargetAtTime = (value, ...a) => { audit.gains.push(value); return setTarget(value, ...a); };
             return gain;
           };
@@ -307,12 +308,13 @@ test('audio is opt-in; user playback, mute, volume, stop and SFX controls affect
   await expect.poll(() => page.evaluate(() => window.__studioAudit.starts)).toBeGreaterThan(0);
   await action(page, 'mute').click();
   await expect(action(page, 'mute')).toHaveAttribute('aria-pressed', 'true');
-  await expect.poll(() => page.evaluate(() => window.__studioAudit.gains.at(-1))).toBe(0);
+  // Read the actual native master gain, not an instance-method wrapper that WebKit may recreate.
+  await expect.poll(() => page.evaluate(() => window.__studioMasterGain?.gain.value)).toBeLessThan(0.0001);
   await setRange(page, 'volume', 50);
   await action(page, 'mute').click();
   await expect(action(page, 'mute')).toHaveAttribute('aria-pressed', 'false');
   await expect(control(page, 'audio-status')).toHaveText('ミュートを解除しました。');
-  await expect.poll(() => page.evaluate(() => window.__studioAudit.gains.at(-1))).toBeCloseTo(0.11, 5);
+  await expect.poll(() => page.evaluate(() => window.__studioMasterGain?.gain.value)).toBeCloseTo(0.11, 5);
   await action(page, 'stop').click();
   await expect(control(page, 'audio-status')).toContainText('停止');
   const stopped = await page.evaluate(() => window.__studioAudit.starts);

@@ -63,7 +63,7 @@ test('article body, deeper explanations, source links and dates are visible stat
 });
 
 test('main-route static introductions are specific, linked and truthful before JavaScript runs',async()=>{
-  const terms={'':'写真でまず見る','encyclopedia/':'情報源','body/':'耳の穴','omochi/':'本人の写真や観察エピソードは未提供','challenge/':'正解の解説','studio/':'正方形や縦長','game/':'近い血縁同士は繁殖せず','credits/':'写真の作者と利用条件','help/':'端末間では自動同期しません'};
+  const terms={'':'写真でまず見る','encyclopedia/':'情報源','body/':'耳の穴','omochi/':'本人の実写写真はこのサイトでは公開していません','challenge/':'正解の解説','studio/':'正方形や縦長','game/':'近い血縁同士は繁殖せず','credits/':'写真の作者と利用条件','help/':'端末間では自動同期しません'};
   for(const route of routes){
     const {window,document:d}=await page(route);
     try {
@@ -158,7 +158,7 @@ test('Launch Package sitemap and LLM files reflect actual current articles witho
   assert.equal(urls.length,PAGE_CATALOG.length);assert.equal(new Set(urls).size,urls.length);
   assert.ok(urls.every(u=>u.startsWith(origin+base)&&!u.includes('?')&&!u.includes('404')));
   assert.equal([...sitemap.matchAll(/<lastmod>\d{4}-\d{2}-\d{2}<\/lastmod>/g)].length,urls.length);
-  for(const text of [short,full]){assert.ok(text.startsWith('# '+SITE_NAME));assert.match(text,/本人の写真・年齢・誕生日・性格・好物・観察エピソードは未提供/);assert.match(text,/GAなどの解析タグは未設置/);assert.match(text,/保証しません/);assert.doesNotMatch(text,/<ruby>|<rt>/);}
+  for(const text of [short,full]){assert.ok(text.startsWith('# '+SITE_NAME));assert.match(text,/本人の実写写真はこのサイトでは公開していません/);assert.match(text,/GAなどの解析タグは未設置/);assert.match(text,/保証しません/);assert.doesNotMatch(text,/<ruby>|<rt>/);}
   for(const a of articles){assert.ok(short.includes(`${origin+base}encyclopedia/${a.id}/`));assert.ok(full.includes('## '+a.title));assert.ok(full.includes('情報確認日: '+a.checkedAt));for(const source of a.sources)assert.ok(full.includes(source.title));}
   assert.match(robots,/host root/);assert.match(robots,/Sitemap: https:\/\/djnaoyaman.github.io\/buncho-ureshi\/sitemap.xml/);
   assert.equal(routeMetadata('',{query:'保存'}).robots,'noindex, follow');assert.equal(routeMetadata('',{query:'保存'}).canonical,origin+base);

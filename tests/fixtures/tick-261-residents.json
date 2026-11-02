@@ -1,0 +1,127 @@
+{
+  "seed": 842911,
+  "tick": 261,
+  "generatedFrom": "original version-1 engine, validated before projecting layout-only fields",
+  "birds": [
+    {
+      "id": "b1",
+      "home": "resident",
+      "stage": "adult",
+      "action": {
+        "kind": "rest",
+        "target": null,
+        "startedTick": 261
+      }
+    },
+    {
+      "id": "b2",
+      "home": "resident",
+      "stage": "adult",
+      "action": {
+        "kind": "bath",
+        "target": "b10",
+        "startedTick": 261
+      }
+    },
+    {
+      "id": "b3",
+      "home": "departed",
+      "stage": "adult",
+      "action": {
+        "kind": "play",
+        "target": "b6",
+        "startedTick": 202
+      }
+    },
+    {
+      "id": "b4",
+      "home": "resident",
+      "stage": "adult",
+      "action": {
+        "kind": "bath",
+        "target": "b6",
+        "startedTick": 261
+      }
+    },
+    {
+      "id": "b5",
+      "home": "visitor",
+      "stage": "adult",
+      "action": {
+        "kind": "play",
+        "target": "b7",
+        "startedTick": 261
+      }
+    },
+    {
+      "id": "b6",
+      "home": "resident",
+      "stage": "adult",
+      "action": {
+        "kind": "bath",
+        "target": "b4",
+        "startedTick": 261
+      }
+    },
+    {
+      "id": "b7",
+      "home": "resident",
+      "stage": "adult",
+      "action": {
+        "kind": "bath",
+        "target": "b11",
+        "startedTick": 261
+      }
+    },
+    {
+      "id": "b8",
+      "home": "resident",
+      "stage": "adult",
+      "action": {
+        "kind": "bath",
+        "target": "b9",
+        "startedTick": 261
+      }
+    },
+    {
+      "id": "b9",
+      "home": "resident",
+      "stage": "adult",
+      "action": {
+        "kind": "explore",
+        "target": null,
+        "startedTick": 261
+      }
+    },
+    {
+      "id": "b10",
+      "home": "resident",
+      "stage": "adult",
+      "action": {
+        "kind": "bath",
+        "target": "b2",
+        "startedTick": 261
+      }
+    },
+    {
+      "id": "b11",
+      "home": "resident",
+      "stage": "adult",
+      "action": {
+        "kind": "bath",
+        "target": "b7",
+        "startedTick": 261
+      }
+    },
+    {
+      "id": "b12",
+      "home": "resident",
+      "stage": "chick",
+      "action": {
+        "kind": "nest",
+        "target": null,
+        "startedTick": 261
+      }
+    }
+  ]
+}

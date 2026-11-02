@@ -101,7 +101,7 @@ test("integrated DOM navigation, learning tools, quiz and truthful observation f
   assert.ok(
     doc
       .querySelector("main")
-      .textContent.includes("本人の写真と観察エピソードは未提供"),
+      .textContent.includes("本人の実写写真はこのサイトでは公開していません"),
   );
   const form = doc.querySelector("#observation-form");
   form.querySelector("[name=note]").value =

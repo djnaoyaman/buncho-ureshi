@@ -191,7 +191,7 @@ test("keyboard access, truthful observation and local persistence", async ({
 }) => {
   await page.goto("omochi/");
   await expect(page.locator("main")).toContainText(
-    "本人の写真と観察エピソードは未提供",
+    "本人の実写写真はこのサイトでは公開していません",
   );
   await page
     .locator("textarea[name=note]")
