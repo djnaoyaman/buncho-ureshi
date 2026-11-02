@@ -249,3 +249,28 @@ test('dirty input drafts cannot leak into a replacement world reusing the same b
   await store.transact(()=>savedWorld('新しい庭の名前',999));await [...f.timers.values()][0]();
   assert.equal(f.root.querySelector('#game-name').value,'新しい庭の名前');
 });
+
+test('a peer refresh cannot detach a held submit button before native activation',async t=>{
+  const f=await fixture(t),store=await f.otherTab();await f.mount();
+  const form=f.root.querySelector('[data-game-form="rename"]'),button=form.querySelector('button[type="submit"]'),input=form.querySelector('input');
+  input.value='押している途中の名前';input.dispatchEvent(new f.window.Event('input',{bubbles:true}));
+  button.dispatchEvent(new f.window.PointerEvent('pointerdown',{bubbles:true,pointerId:7}));
+  await store.transact(w=>{renameBird(w,'b1','他のタブの更新');bumpRevision(w);return w;});
+  await [...f.timers.values()][0]();
+  assert.equal(button.isConnected,true,'original activation target stays in the live tree');
+  assert.equal(f.root.querySelector('[data-game-form="rename"]'),form);
+  button.dispatchEvent(new f.window.PointerEvent('pointerup',{bubbles:true,pointerId:7}));
+  form.dispatchEvent(new f.window.Event('submit',{bubbles:true,cancelable:true}));
+  await until(async()=>(await rawWorld(f.indexedDB)).birds[0].name==='押している途中の名前','held-pointer submit commits once');
+});
+
+test('pointer cancellation flushes a pending refresh without saving the local draft',async t=>{
+  const f=await fixture(t),store=await f.otherTab();await f.mount();
+  const button=f.root.querySelector('[data-game-form="rename"] button[type="submit"]');
+  button.dispatchEvent(new f.window.PointerEvent('pointerdown',{bubbles:true,pointerId:8}));
+  await store.transact(w=>{renameBird(w,'b1','キャンセル後の更新');bumpRevision(w);return w;});
+  await [...f.timers.values()][0]();assert.equal(button.isConnected,true);
+  f.window.document.dispatchEvent(new f.window.PointerEvent('pointercancel',{bubbles:true,pointerId:8}));
+  await until(()=>f.root.querySelector('#game-name').value==='キャンセル後の更新','cancel releases deferred refresh');
+  assert.equal((await rawWorld(f.indexedDB)).birds[0].name,'キャンセル後の更新');
+});

@@ -258,6 +258,30 @@ test('simultaneous tabs serialize catch-up, hatch once, and preserve both users 
   await other.close();
 });
 
+test('a held native submit survives a peer update and the next background poll', async ({ page, context }) => {
+  const seeded=createWorld(fixedNow);advanceTicks(seeded,1);seeded.paused=true;
+  await seedWorld(page,seeded);const other=await context.newPage();
+  await Promise.all([openGame(page),openGame(other)]);
+  await Promise.all([tab(page,'profile'),tab(other,'roster')]);
+  await other.locator('.game-roster [data-game-select="b2"]').click();
+  await page.locator('#game-name').fill('押したままの保存');
+  const submit=page.locator('[data-game-form="rename"] button[type="submit"]');
+  await submit.scrollIntoViewIfNeeded();
+  await submit.evaluate(button=>{window.__heldGameSubmit=button;});
+  const box=await submit.boundingBox();await page.mouse.move(box.x+box.width/2,box.y+box.height/2);await page.mouse.down();
+  await other.locator('#game-name').fill('同時に更新した仲間');
+  await other.locator('[data-game-form="rename"] button[type="submit"]').click();
+  await expect.poll(async()=>(await readWorld(page)).birds.find(b=>b.id==='b2').name).toBe('同時に更新した仲間');
+  // Explicitly span the application's 3-second background polling interval
+  // while the pointer remains down, not a timing guess for page readiness.
+  await page.waitForTimeout(3200);
+  expect(await page.evaluate(()=>window.__heldGameSubmit.isConnected)).toBe(true);
+  await page.mouse.up();
+  await expect.poll(async()=>(await readWorld(page)).birds.find(b=>b.id==='b1').name).toBe('押したままの保存');
+  expect((await readWorld(page)).birds.find(b=>b.id==='b2').name).toBe('同時に更新した仲間');
+  await other.close();
+});
+
 test('pause survives reload, ignores elapsed absence, and resumes without catch-up', async ({ page }) => {
   await openGame(page);
   await page.locator('.game-status [data-game-action="pause"]').click();

@@ -47,6 +47,20 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
   if(!alive||!root.isConnected){store.close();return()=>{};}
   // Unsaved local text belongs to an immutable bird in one world. A background
   // refresh must not replace it just because the submit button took focus.
+  // A peer update may finish between pointerdown and click. Keep the live
+  // form/button nodes in place until the user's activation is complete.
+  let refreshPending=false, releaseTimer;
+  const pressedPointers=new Set();
+  const formFocused=()=>root.contains(document.activeElement)&&!!document.activeElement?.closest('form[data-game-form]');
+  const interactionActive=()=>pressedPointers.size>0||formFocused();
+  const pointerStart=ev=>{pressedPointers.add(ev.pointerId);};
+  const pointerEnd=ev=>{
+    pressedPointers.delete(ev.pointerId);
+    clearTimeout(releaseTimer);
+    // Native click/form submission follows pointerup; never replace its target
+    // in the pointerup handler itself. Cancellation uses the same safe flush.
+    releaseTimer=setTimeout(()=>{if(alive&&refreshPending&&!busy&&!interactionActive())render();},0);
+  };
   const drafts = new Map();
   const draftKey = (birdId = selected) => `${world.worldId}:${birdId}`;
   function rememberDraft(ev) {
@@ -113,6 +127,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
   function settings() {return `<section class="game-settings"><h3>つづきの保存と設定</h3><p>この端末のこのブラウザに保存します。ほかの端末へは自動で同期しません。大切な物語は「保存ファイルを書き出す」で保管してね。</p><button data-game-action="export">保存ファイルを書き出す</button><label class="game-import-label" for="game-import">保存ファイルを読み込む（今の庭と入れ替え）</label><input id="game-import" type="file" accept="application/json,.json"><p class="game-small">読み込み前に形式・版・血縁・人数を検査します。不正なファイルで今の庭は壊れません。読み込む前に、今の保存も書き出しておくと安心です。</p><label class="game-check"><input type="checkbox" data-game-motion ${world.settings.motion?'checked':''}> 文鳥の小さな動きを表示</label><button data-game-action="pause">${world.paused?'時間を動かす':'時間を一時停止'}</button><details data-game-details="save-help"><summary>保存と時間のしくみ</summary><p>実際の15秒がゲームの1時間、6分が1日です。卵からひなは12時間、幼鳥へ24時間、成鳥へ48時間（すべてゲーム時間）。現実の成長や繁殖の手順ではありません。</p><p>閉じたあとは動き続けません。次に開いた時に、最大24ゲーム日（実際の2時間24分）ぶんを順番に計算します。それより長く留守にしても、不利益はありません。一時停止中の時間は進みません。</p><p>複数のタブの更新は保存処理を一列にして、同じ時間を二重に進めません。最初の公開形式は版1。将来対応しない版は保存を変えずに拒否します。</p><p>色はゲームの表現として選ばれます。羽色の遺伝を再現するものではありません。</p></details>${new URLSearchParams(location.search).get('qa')==='1'?'<details data-game-details="qa"><summary>検証用（通常の遊びには不要）</summary><button data-game-action="qa-step">1000時間を検証する</button><p>世代・家系・上限の確認用です。先に保存を書き出してください。</p></details>':''}</section>`;}
   function help() {return `<section class="game-help"><h3>ようこそ、おもちの文鳥ぐらしへ</h3><ol><li><strong>まずは見る。</strong>枝、巣、ごはん、水浴び場で、みんなが自分で過ごすよ。</li><li><strong>お客さんを迎える。</strong>最初に来るのはオスの文鳥。名前を決めて「庭へ迎える」を押せるよ。何度も交流すると、自分から仲間になることもあるよ。</li><li><strong>話しかける。</strong>文鳥をえらんで、ことばのボタンを押そう。気分や好み、友達、記憶で返事が変わるよ。</li><li><strong>家族を見守る。</strong>気持ちが通じた成鳥はつがいに。信頼・元気・時間・場所がそろうと卵が生まれることがあるよ。必ずつがいになるわけではないし、友達のままでもすてき。</li><li><strong>記念に残す。</strong>家系図や日記の「記念カード」からアート工房へ。ゲームの家族のお祝いをつくろう。</li></ol><p>食事も休息も自分でできるので、来られない日があっても大丈夫。死亡・課金・広告・連続ログインの条件はありません。</p><p>会話は名前・状態・関係・記憶と、いくつかのことばに反応するルールです。何でも理解するAIではなく、外部へ入力を送りません。</p><p>実在のおもちは、娘さんのメスの白文鳥です。この庭の性格・会話・家族・成長は創作。現実の飼育や繁殖の方法を示すものではありません。</p></section>`;}
   function render() {
+    refreshPending=false;
     const openDetails=new Set([...root.querySelectorAll("details[open][data-game-details]")].map(d=>d.dataset.gameDetails));
     const oldBirdPositions=new Map([...root.querySelectorAll('.game-room-bird')].map(el=>[el.dataset.birdId,el.getBoundingClientRect()]));
     const focus=document.activeElement,focusBird=root.contains(focus)?focus.dataset?.gameSelect:null,focusIndex=root.contains(focus)?[...root.querySelectorAll('button,input,select,summary')].indexOf(focus):-1,focusId=root.contains(focus)?focus.id:null,focusValue=focusId&&'value'in focus&&(!focus.dataset.gameDraftBird||(focus.dataset.gameDraftBird===selected&&focus.dataset.gameDraftWorld===world.worldId&&drafts.get(draftKey())?.[focusId]!==undefined))?focus.value:null,selectionStart=focus?.selectionStart,selectionEnd=focus?.selectionEnd;
@@ -184,9 +199,9 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     }
   }
   async function change(ev){if(ev.target.matches('[data-game-choose], [data-game-scene-choose]')){selected=ev.target.value;render();}if(ev.target.matches('[data-game-motion]'))await mutate(w=>{w.settings.motion=ev.target.checked;});if(ev.target.id==='game-import'&&ev.target.files?.[0]){const file=ev.target.files[0],request=++importRequest;const currentRequest=()=>alive&&root.isConnected&&request===importRequest;try{if(file.size>MAX_SAVE_BYTES)throw new Error('4MB以下の保存ファイルを選んでね。');const text=await file.text();if(!currentRequest())return;const imported=parseSave(text);if(!confirm(`「${imported.birds[0].name}」の庭（${imported.birds.length}羽）を読み込み、今の庭と入れ替えますか？`)){ev.target.value='';return;}await mutate(w=>{const now=Date.now();if(!Number.isSafeInteger(now)||now<0||now>8640000000000000)throw new Error('端末の日時を確認してから、もう一度読み込んでください。');imported.lastUpdated=now;imported.revision=w.revision;return imported;},'保存ファイルから庭を復元しました。',currentRequest);}catch(e){if(!currentRequest())return;error=`読み込めませんでした。今の保存はそのままです。 ${e.message}`;render();}}}
-  root.addEventListener('click',click);root.addEventListener('submit',submit);root.addEventListener('change',change);root.addEventListener('input',rememberDraft);
+  root.addEventListener('click',click);root.addEventListener('submit',submit);root.addEventListener('change',change);root.addEventListener('input',rememberDraft);root.addEventListener('pointerdown',pointerStart);document.addEventListener('pointerup',pointerEnd);document.addEventListener('pointercancel',pointerEnd);
   if(globalThis.BroadcastChannel){channel=new BroadcastChannel('buncho-garden-updates');channel.onmessage=()=>poll();}
-  async function poll(){if(!alive||busy||document.hidden)return;busy++;try{const next=await store.transact(w=>w.paused?w:advanceTo(w));const changed=next.worldId!==world.worldId||next.revision!==world.revision||next.paused!==world.paused;if(!alive)return;latest(next);if(changed)render();}catch(e){if(alive){error=e.message;render();}}finally{busy--;}}
+  async function poll(){if(!alive||busy||document.hidden)return;busy++;try{const next=await store.transact(w=>w.paused?w:advanceTo(w));const replaced=next.worldId!==world.worldId,changed=replaced||next.revision!==world.revision||next.paused!==world.paused||refreshPending;if(!alive)return;latest(next);if(changed){if(!replaced&&interactionActive())refreshPending=true;else render();}}catch(e){if(alive){error=e.message;render();}}finally{busy--;}}
   timer=setInterval(poll,3000);render();
-  return ()=>{alive=false;importRequest++;clearInterval(timer);channel?.close();store.close();root.removeEventListener('click',click);root.removeEventListener('submit',submit);root.removeEventListener('change',change);root.removeEventListener('input',rememberDraft);drafts.clear();};
+  return ()=>{alive=false;importRequest++;clearInterval(timer);channel?.close();store.close();root.removeEventListener('click',click);root.removeEventListener('submit',submit);root.removeEventListener('change',change);root.removeEventListener('input',rememberDraft);root.removeEventListener('pointerdown',pointerStart);document.removeEventListener('pointerup',pointerEnd);document.removeEventListener('pointercancel',pointerEnd);clearTimeout(releaseTimer);pressedPointers.clear();drafts.clear();};
 }
