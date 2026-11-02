@@ -239,8 +239,9 @@ test('other-tab refresh preserves dirty name and talk drafts after focus moves t
   await until(async()=>(await rawWorld(f.indexedDB)).birds[0].name==='まだ保存していない名前','save preserved draft');
   await sleep(20);
   await store.transact(w=>{renameBird(w,'b1','保存後の別タブ名');bumpRevision(w);return w;});
-  f.root.querySelector('[data-game-panel="profile"]').focus();await [...f.timers.values()][0]();
-  assert.equal(f.root.querySelector('#game-name').value,'保存後の別タブ名','saved draft no longer masks remote updates');
+  assert.equal(f.window.document.activeElement,f.root.querySelector('[data-game-form="rename"] button[type="submit"]'),'successful save retains keyboard focus');
+  await [...f.timers.values()][0]();
+  assert.equal(f.root.querySelector('#game-name').value,'保存後の別タブ名','saved draft and focused Save button no longer block live remote updates');
 });
 
 test('dirty input drafts cannot leak into a replacement world reusing the same bird ID',async t=>{

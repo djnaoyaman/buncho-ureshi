@@ -56,7 +56,14 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
   // form/button nodes in place until the user's activation is complete.
   let refreshPending=false, releaseTimer;
   const pressedPointers=new Set();
-  const formFocused=()=>root.contains(document.activeElement)&&!!document.activeElement?.closest('form[data-game-form]');
+  const formFocused=()=>{
+    const focus=document.activeElement;
+    if(!root.contains(focus))return false;
+    const field=focus?.closest('form[data-game-form]')?.querySelector('input[data-game-draft-bird]');
+    // A completed Save button may retain keyboard focus. Do not freeze the
+    // self-running scene after its draft has been committed.
+    return !!field&&(focus===field||drafts.get(`${field.dataset.gameDraftWorld}:${field.dataset.gameDraftBird}`)?.[field.id]!==undefined);
+  };
   const interactionActive=()=>pressedPointers.size>0||formFocused();
   const pointerStart=ev=>{pressedPointers.add(ev.pointerId);};
   const pointerEnd=ev=>{
