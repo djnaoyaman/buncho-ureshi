@@ -68,6 +68,7 @@ async function openGame(page, query = '') {
 }
 
 async function tab(page, name) {
+  if(await page.locator('.game-bird-sheet').isVisible())await page.locator('[data-game-close-bird]').click();
   const target=page.locator(`[data-game-panel="${name}"]`).first();if(!await target.isVisible())await page.locator('.game-secondary-menu summary').click();await target.click();
 }
 
@@ -92,7 +93,7 @@ test('first session shows a home, welcome points and all nine decoration slots',
  expect((await readWorld(page)).decor.points).toBe(20);await expect(page.locator('.game-furnishing')).toHaveCount(9);
  await tab(page,'decorate');await expect(page.locator('[data-decor-slot]')).toHaveCount(9);
  for(const slot of DECOR_SLOTS){await page.locator(`[data-decor-slot="${slot.id}"]`).click();await expect(page.locator(`[data-decor-draw="${slot.id}"]`)).toBeEnabled();}
- await expect(page.locator('.game-decor-intro')).toContainText('お金・広告・購入はありません');
+ await page.locator('[data-game-details="draw-odds"] summary').click();await expect(page.locator('[data-game-details="draw-odds"]')).toContainText('お金・広告・購入はありません');
 });
 
 test('home park and known friend visits change actual occupants; return and reload preserve travel',async({page})=>{
@@ -173,4 +174,43 @@ test('secondary drawer opens and closes by real keyboard controls without losing
  await summary.click();await expect(menu.locator('[data-game-panel="family"]')).toBeVisible();await menu.locator('[data-game-panel="family"]').focus();const before=await page.evaluate(()=>scrollY);await page.keyboard.press('Escape');await expect(summary).toBeFocused();await expect(menu).not.toHaveAttribute('open','');expect(Math.abs((await page.evaluate(()=>scrollY))-before)).toBeLessThan(4);
  await summary.press('Enter');await expect(menu.locator('[data-game-panel="family"]')).toBeVisible();await menu.locator('[data-game-close-menu]').click();await expect(summary).toBeFocused();await expect(menu).not.toHaveAttribute('open','');
  await summary.click();await menu.locator('[data-game-panel="family"]').click();await expect(page.locator('.game-family-tree')).toBeVisible();await expect(page.locator('.game-field-nav button')).toHaveCount(4);await page.locator('[data-field-travel="home"]').click();await expect(page.locator('.game-room')).toHaveAttribute('data-field','home');
+});
+
+// These are actual browser interactions and viewport checks, not the separate
+// twenty manually played sessions requested by the user.
+for(const size of [{width:320,height:568},{width:390,height:844},{width:1440,height:1000}])test(`bird action sheet keeps care in context and restores focus at ${size.width}px`,async({page},info)=>{
+ const w=createWorld(fixedNow);w.paused=true;w.birds[0].needs.food=40;
+ await seedWorld(page,w);await page.setViewportSize(size);await openGame(page);await decodeScene(page);
+ await expect(page.locator('.game-panel .game-profile')).toHaveCount(0);
+ const bird=page.locator('[data-game-scene-select][data-bird-id="b1"]');await bird.scrollIntoViewIfNeeded();const before=await page.evaluate(()=>scrollY);
+ await bird.click();const sheet=page.locator('.game-bird-sheet');await expect(sheet).toBeVisible();await expect(sheet).toHaveAttribute('open','');await expect(page.locator('#game-sheet-close')).toBeFocused();
+ const primary=sheet.locator('.game-care-actions button');await expect(primary).toHaveCount(3);
+ expect(await primary.evaluateAll(buttons=>buttons.every(b=>{const r=b.getBoundingClientRect();return r.width>=44&&r.height>=44&&r.top>=0&&r.bottom<=innerHeight;}))).toBe(true);
+ await page.locator('[data-game-care="feed"]').click();await expect(page.locator('[data-game-fullness]')).toHaveText('60 / 100');await expect(page.locator('.game-care-feedback')).toBeVisible();
+ expect(Math.abs(await page.evaluate(()=>scrollY)-before)).toBeLessThan(4);
+ // Tab and Shift+Tab may cycle through the dialog; no background control may
+ // receive focus while its native modal is open.
+ for(let n=0;n<28;n++){await page.keyboard.press(n<14?'Tab':'Shift+Tab');expect(await sheet.evaluate(d=>d.contains(document.activeElement))).toBe(true);}
+ await page.keyboard.press('Escape');await expect(sheet).not.toBeVisible();await expect(bird).toBeFocused();expect(Math.abs(await page.evaluate(()=>scrollY)-before)).toBeLessThan(4);
+ await bird.click();await page.locator('[data-game-details="sheet-talk"] summary').click();await page.locator('#game-words').fill('まだ送らないことば');await page.locator('[data-game-close-bird]').click();await expect(bird).toBeFocused();
+ await bird.click();await page.locator('[data-game-details="sheet-talk"] summary').click();await expect(page.locator('#game-words')).toHaveValue('まだ送らないことば');
+ if(info.project.name==='chromium')await info.attach(`game-first-sheet-${size.width}`,{body:await page.screenshot({animations:'disabled'}),contentType:'image/png'});
+ await page.locator('[data-game-close-bird]').click();await page.locator('[data-field-travel="park"]').click();await expect(page.locator('.game-room')).toHaveAttribute('data-field','park');await expect(sheet).not.toBeVisible();
+ await tab(page,'decorate');await expect(page.locator('.game-decoration')).toBeVisible();await expect(sheet).not.toBeVisible();
+});
+
+test('action sheet dismisses on backdrop and deliberate panel navigation focuses new context',async({page})=>{
+ const w=createWorld(fixedNow);w.paused=true;await seedWorld(page,w);await page.setViewportSize({width:1440,height:1000});await openGame(page);
+ await page.locator('[data-game-scene-select]').first().click();const sheet=page.locator('.game-bird-sheet');await expect(sheet).toBeVisible();const r=await sheet.boundingBox();expect(r.x).toBeGreaterThan(10);await page.mouse.click(r.x-8,r.y+r.height/2);await expect(sheet).not.toBeVisible();await expect(page.locator('[data-game-scene-select]')).toBeFocused();
+ await tab(page,'profile');await page.locator('[data-game-open-bird]').click();await expect(sheet).toBeVisible();await page.locator('[data-game-close-bird]').click();await expect(page.locator('[data-game-open-bird]')).toBeFocused();
+ await tab(page,'diary');await page.evaluate(()=>scrollTo(0,document.body.scrollHeight));await tab(page,'family');await expect(page.locator('.game-family-tree')).toBeVisible();
+ expect(await page.locator('.game-panel').evaluate(p=>{const h=p.querySelector('h3');const r=h.getBoundingClientRect();return document.activeElement===h&&r.top>=0&&r.bottom<=innerHeight;})).toBe(true);
+});
+
+test('friends empty state does not restart onboarding after visitors become residents',async({page})=>{
+ const w=createWorld(fixedNow);advanceTicks(w,1);w.birds[1].home='resident';w.paused=true;
+ await seedWorld(page,w);await openGame(page);await tab(page,'friends');
+ await expect(page.locator('.game-empty-home')).toContainText('いま訪ねられる友達はいません');
+ await expect(page.locator('.game-empty-home')).not.toContainText('最初');
+ await page.locator('.game-empty-home [data-field-travel="home"]').click();await expect(page.locator('.game-room-bird')).toHaveCount(2);
 });
