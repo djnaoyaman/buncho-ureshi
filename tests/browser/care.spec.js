@@ -6,8 +6,8 @@ function fixture({stage='adult',home='resident',sound=false}={}){
   const w=createWorld(now,5402);advanceTicks(w,1);adoptBird(w,'b2','こめ');w.paused=true;w.lastUpdated=now;w.care.cleanliness=15;w.settings.careSound=sound;w.birds[0].needs.food=40;w.birds[0].mood=60;w.birds[0].stage=stage;w.birds[0].home=home;return validateWorld(w);
 }
 async function record(page,value){return page.evaluate(({dbName,value})=>new Promise((resolve,reject)=>{const open=indexedDB.open(dbName,1);open.onupgradeneeded=()=>open.result.createObjectStore('world');open.onerror=()=>reject(open.error);open.onsuccess=()=>{const db=open.result,tx=db.transaction('world',value?'readwrite':'readonly'),store=tx.objectStore('world'),request=value?store.put(value,'current'):store.get('current');tx.oncomplete=()=>{db.close();resolve(value||request.result);};tx.onerror=()=>{db.close();reject(tx.error);};};}),{dbName:DB,value});}
-async function seed(page,w=fixture()){await page.goto('');await record(page,w);await page.goto('game/');await expect(page.locator('.game-app')).toBeVisible();}
-async function tab(page,name){await page.locator(`[data-game-panel="${name}"]`).first().click();}
+async function seed(page,w=fixture()){await page.goto('');await record(page,w);await page.goto('game/');await expect(page.locator('.game-app')).toBeVisible();await page.locator('[data-game-details="home-care"] summary').click();}
+async function tab(page,name){const target=page.locator(`[data-game-panel="${name}"]`).first();if(!await target.isVisible())await page.locator('.game-secondary-menu summary').click();await target.click();}
 async function downloadText(download){const stream=await download.createReadStream();if(!stream)throw Error('No download stream');const chunks=[];for await(const chunk of stream)chunks.push(Buffer.from(chunk));return Buffer.concat(chunks).toString('utf8');}
 async function trackNativeAudio(page){await page.addInitScript(()=>{
   const Native=window.AudioContext||window.webkitAudioContext;window.__careAudio={contexts:0,starts:0,active:0,closed:0,resumes:0,resolved:0,resumeErrors:[],states:[]};
@@ -34,7 +34,7 @@ test.beforeEach(async({page})=>{await page.addInitScript(value=>{Date.now=()=>va
 test('an existing v1 device save migrates in place without advancing paused family history',async({page})=>{
   const legacy=structuredClone(legacyWorld);legacy.paused=true;legacy.lastUpdated=now;
   await seed(page,legacy);const migrated=await record(page);
-  expect(migrated.version).toBe(2);expect(migrated.worldId).toBe(legacy.worldId);expect(migrated.tick).toBe(legacy.tick);
+  expect(migrated.version).toBe(3);expect(migrated.worldId).toBe(legacy.worldId);expect(migrated.tick).toBe(legacy.tick);
   expect(migrated.birds.map(({care,...bird})=>bird)).toEqual(legacy.birds);expect(migrated.events).toEqual(legacy.events);
   expect(migrated.care).toEqual({cleanliness:100,lastCleanTick:null});expect(migrated.settings.careSound).toBe(false);
   expect(migrated.birds.every(b=>b.care.lastFedTick===null&&b.care.lastPetTick===null)).toBe(true);
@@ -94,7 +94,7 @@ test('care unavailable stages explain disabled actions and retain their natural 
 
 test('care export preserves v2 values, cancelled import is exact, confirmed import with sound preference never autoplays',async({page})=>{
   await trackNativeAudio(page);await seed(page);await page.locator('[data-game-care="feed"]').click();await expect(page.locator('[data-game-fullness]')).toHaveText('60 / 100');await tab(page,'settings');
-  const downloadEvent=page.waitForEvent('download');await page.locator('[data-game-action="export"]').click();const exported=validateWorld(JSON.parse(await downloadText(await downloadEvent)));expect(exported.version).toBe(2);expect(exported.birds[0].needs.food).toBe(60);expect(exported.care.cleanliness).toBe(15);expect(exported.settings.careSound).toBe(false);
+  const downloadEvent=page.waitForEvent('download');await page.locator('[data-game-action="export"]').click();const exported=validateWorld(JSON.parse(await downloadText(await downloadEvent)));expect(exported.version).toBe(3);expect(exported.birds[0].needs.food).toBe(60);expect(exported.care.cleanliness).toBe(15);expect(exported.settings.careSound).toBe(false);
   const next=fixture({sound:true});next.worldId+='-import';next.birds[0].needs.food=73;next.care.cleanliness=44;
   const file={name:'care.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(next))},before=await record(page);
   page.once('dialog',dialog=>dialog.dismiss());await page.locator('#game-import').setInputFiles(file);await expect(page.locator('#game-import')).toHaveValue('');expect(await record(page)).toEqual(before);
