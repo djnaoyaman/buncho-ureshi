@@ -11,7 +11,13 @@ for (const width of [320,390,768,1280]) {
       await expect(page.locator('main')).toBeVisible();
       if(name==='game') { await expect(page.locator('body')).toHaveAttribute('data-game-intro','done',{timeout:10000}); await expect(page.locator('.game-logo-intro')).toHaveCount(0); }
       else if(name==='home') await expect(page.locator('.art-cover-photo img')).toBeVisible();
-      await page.locator('main img').evaluateAll(async images => Promise.all(images.filter(img=>img.loading!=='lazy').map(img=>img.decode())));
+      // Studio's hidden export preview intentionally has no source until export.
+      // A visible empty image or any sourced eager image failing decode still fails.
+      await page.locator('main img').evaluateAll(async images => Promise.all(images.filter(img=>img.loading!=='lazy').map(async img=>{
+        if (!img.getAttribute('src') && !img.getAttribute('srcset') && img.closest('[hidden]')) return;
+        await img.decode();
+        if (!img.naturalWidth) throw new Error(`Image has no decoded pixels: ${img.currentSrc}`);
+      })));
       expect(await page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth + 1),`${name} overflows ${width}`).toBe(true);
       const primary=page.locator('#menu-toggle'); await primary.click();
       await expect(page.locator('#menu')).toBeVisible(); await primary.click();
