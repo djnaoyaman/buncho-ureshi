@@ -42,7 +42,8 @@ test('opening bird remains prominent but can still visit its food and bath',()=>
   for(const variant of ['wide','tall']) for(const kind of ['rest','eat','bath']){
     const b={id:'b1',home:'resident',stage:'adult',action:{kind}},p=habitatPositions([b],variant).get('b1');
     assert.equal(p.id,kind==='rest'?'root-center':kind==='eat'?'food-ground':'bath-back-rim');
-    assert.ok(p.width>(variant==='tall'?.23:.15));
+    assert.ok(p.width>(kind==='eat'?(variant==='tall'?.20:.13):(variant==='tall'?.23:.15)));
+    if(kind==='eat')assert.ok(p.width<=(variant==='tall'?.21:.132),'singleton feeding tail clearance');
   }
 });
 
@@ -55,12 +56,12 @@ test('photo sprite API uses only local whitelisted stage assets, with no fake SV
       assert.equal(root.children.length,1);assert.equal(sprite.tagName,'SPAN');
       assert.equal(sprite.dataset.stage,stage);assert.equal(sprite.dataset.color,color);
       assert.equal(sprite.getAttribute('aria-hidden'),'true');assert.equal(img.getAttribute('alt'),'');
-      const expected=stage==='adult'?color:stage==='juvenile'?(color==='sakura'?'juvenile':`juvenile-${color}`):stage;
+      const expected=stage==='adult'?`${color}-poses`:stage==='juvenile'?`juvenile-${color}-poses`:stage;
       assert.ok(img.src.endsWith(`/game-art/${expected}.${stage==='egg'?'svg':'webp'}`));
       const geometry=gameSpriteGeometry(color,stage);
       assert.equal(geometry.asset,expected);
-      assert.equal(Number(img.getAttribute('width')),GAME_SPRITE_ASSETS[expected].width);
-      assert.equal(Number(img.getAttribute('height')),GAME_SPRITE_ASSETS[expected].height);
+      assert.equal(Number(img.getAttribute('width')),stage==='adult'?1774:stage==='juvenile'?1536:GAME_SPRITE_ASSETS[expected].width);
+      assert.equal(Number(img.getAttribute('height')),stage==='adult'?887:stage==='juvenile'?1024:GAME_SPRITE_ASSETS[expected].height);
       assert.ok(Math.abs((geometry.imageLeft*850+geometry.footX*geometry.scale)-459)<.0001);
       assert.ok(Math.abs((geometry.imageTop*1000+geometry.footY*geometry.scale)-975)<.0001);
       assert.equal(root.querySelectorAll('svg,script,[data-part],[onload],[onclick]').length,0);

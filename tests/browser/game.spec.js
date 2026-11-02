@@ -1,17 +1,37 @@
 import { test, expect } from '@playwright/test';
 import { habitatPositions } from '../../src/habitat-layout.js';
-import { GAME_SPRITE_ASSETS } from '../../src/game.js';
+import { GAME_SPRITE_ASSETS, gameSpriteGeometry } from '../../src/game.js';
+import { POSE_ATLASES } from '../../src/bird-poses.js';
+const ALL_SPRITE_ASSETS={...GAME_SPRITE_ASSETS,...Object.fromEntries(Object.values(POSE_ATLASES).map(a=>[a.asset.replace(/\.webp$/,''),a]))};
 import { createWorld, createBird, advanceTicks, advanceTo, validateWorld, TICK_MS, LIMITS } from '../../src/engine.js';
 
 const DB_NAME = 'buncho-ureshi-garden-v1';
 const fixedNow = Date.UTC(2026, 10, 2, 12, 0, 0);
 async function decodeScene(page) {
-  await page.locator('.game-room').evaluate(async room => {
-    await Promise.all([...room.querySelectorAll('img')].map(img => img.decode()));
-    await new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done)));
+  // A resize can change <picture>.currentSrc while a prior decode is pending;
+  // a world refresh can also detach the room. Retry only those superseded reads.
+  await page.evaluate(async()=>{
+    const frame=()=>new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(done)));
+    const deadline=performance.now()+10000;
+    while(performance.now()<deadline){
+      await frame();const room=document.querySelector('.game-room');if(!room?.isConnected)continue;
+      const images=[...room.querySelectorAll('img')],sources=images.map(i=>i.currentSrc||i.src);
+      const intended=img=>{const picture=img.closest('picture');const source=picture&&[...picture.querySelectorAll('source')].find(s=>!s.media||matchMedia(s.media).matches);return source?new URL(source.srcset.trim().split(/\s+/)[0],document.baseURI).href:img.src;};
+      // This scene has one URL per source; wait for the currently selected
+      // responsive candidate, not a still-decoded previous-width candidate.
+      if(images.some((i,n)=>sources[n]!==intended(i)))continue;
+      const results=await Promise.allSettled(images.map(i=>i.decode()));await frame();
+      const current=[...room.querySelectorAll('img')];
+      const superseded=!room.isConnected||document.querySelector('.game-room')!==room||current.length!==images.length||images.some((i,n)=>!i.isConnected||current[n]!==i||(i.currentSrc||i.src)!==sources[n]||intended(i)!==sources[n]);
+      if(superseded)continue;
+      const failed=results.findIndex(r=>r.status==='rejected');
+      if(failed>=0)throw new Error('Stable scene image failed to decode: '+sources[failed]+' — '+String(results[failed].reason));
+      if(images.length&&images.every(i=>i.complete&&i.naturalWidth>0&&i.naturalHeight>0))return;
+      throw new Error('Stable scene image has no decoded pixels');
+    }
+    throw new Error('Scene never reached a stable connected, decoded state');
   });
 }
-
 
 // These helpers inspect only this application's own IndexedDB record.
 // Game input, naming, menus, downloads, imports and handoffs remain real UI operations.
@@ -406,11 +426,12 @@ for (const residents of [1, 10]) test(`${residents === 1 ? 'initial one-bird' : 
         if(!img?.complete||!img.naturalWidth)errors.push(`${bird.dataset.birdId} image not decoded`);
         else {const drawn=img.getBoundingClientRect();if(Math.abs(drawn.width/drawn.height-img.naturalWidth/img.naturalHeight)>.01)errors.push(`${bird.dataset.birdId} image is stretched`);}
         if(plane){
+          const crop=sprite.querySelector('.game-pose-window');if(crop){const v=crop.getBoundingClientRect();if(getComputedStyle(crop).overflow!=='hidden'||v.left<room.left-1||v.right>room.right+1||v.top<room.top-1||v.bottom>room.bottom+1)errors.push(`${bird.dataset.birdId} visible pose window exceeds habitat room`);}
           const expected=expectedPositions[bird.dataset.birdId],foot={x:plane.left+plane.width*.54,y:plane.top+plane.height*.975};
           const anchor={x:room.left+1+(room.width-2)*expected.x,y:room.top+1+(room.height-2)*expected.y};
           if(Math.abs(foot.x-anchor.x)>2||Math.abs(foot.y-anchor.y)>2)errors.push(`${bird.dataset.birdId} feet miss its reviewed habitat anchor`);
-          if(img?.naturalWidth){const drawn=img.getBoundingClientRect(),source=assetGeometry[sprite.dataset.asset];
-            const imageFoot={x:drawn.left+source.footX/source.width*drawn.width,y:drawn.top+source.footY/source.height*drawn.height};
+          if(img?.naturalWidth){const drawn=img.getBoundingClientRect(),source=assetGeometry[sprite.dataset.asset],sourceFoot=sprite.dataset.pose?source.poses[sprite.dataset.pose].foot:[source.footX,source.footY];
+            const imageFoot={x:drawn.left+sourceFoot[0]/source.width*drawn.width,y:drawn.top+sourceFoot[1]/source.height*drawn.height};
             if(Math.abs(imageFoot.x-foot.x)>1||Math.abs(imageFoot.y-foot.y)>1)errors.push(`${bird.dataset.birdId} native image contact is miscalibrated`);
           }
           planes.push({id:bird.dataset.birdId,rect:plane});
@@ -426,8 +447,8 @@ for (const residents of [1, 10]) test(`${residents === 1 ? 'initial one-bird' : 
       if(getComputedStyle(roomElement).display==='grid')errors.push('rejected grid returned');
       if(document.documentElement.scrollWidth>innerWidth+1)errors.push('document overflow');
       return errors;
-    },{residents,viewportWidth:width,expectedPositions:Object.fromEntries(habitatPositions(seeded.birds,width<=600?'tall':'wide')),assetGeometry:GAME_SPRITE_ASSETS}),{message:`${residents} birds, ${width}px ${orientation}: decoded, bounded, proportional scene`}).toEqual([]);
-    if(testInfo.project.name==='chromium'&&[375,1440].includes(width)&&orientation==='portrait')await testInfo.attach(`game-photo-${residents}-birds-${width}`,{body:await page.locator('.game-room').screenshot({animations:'disabled'}),contentType:'image/png'});
+    },{residents,viewportWidth:width,expectedPositions:Object.fromEntries(habitatPositions(seeded.birds,width<=600?'tall':'wide')),assetGeometry:ALL_SPRITE_ASSETS}),{message:`${residents} birds, ${width}px ${orientation}: decoded, bounded, proportional scene`}).toEqual([]);
+    if(testInfo.project.name==='chromium'&&[320,375,1440].includes(width)&&orientation==='portrait')await testInfo.attach(`game-photo-${residents}-birds-${width}`,{body:await page.locator('.game-room').screenshot({animations:'disabled'}),contentType:'image/png'});
   }
   for(const bird of seeded.birds){
     await page.locator(`.game-room-bird[data-game-select="${bird.id}"]`).click();
@@ -449,12 +470,12 @@ test('all color stages decode and nest-bound young remain reachable through the 
   await expect(page.locator('.game-room-bird.game-nestling button')).toHaveCount(0);
   await expect(page.locator('#game-scene-resident option')).toHaveCount(10);
   await expect.poll(()=>page.locator('.game-room img').evaluateAll(images=>images.every(i=>i.complete&&i.naturalWidth>0))).toBe(true);
-  const expected=['white','sakura','cinnamon','silver','juvenile-white','juvenile','juvenile-cinnamon','juvenile-silver','chick','egg'];
+  const expected=world.birds.map(b=>gameSpriteGeometry(b.color,b.stage).asset);
   expect(await page.locator('.game-room-bird .game-sprite').evaluateAll(nodes=>nodes.map(n=>n.dataset.asset))).toEqual(expected);
   const sources=await page.locator('.game-room-bird img').evaluateAll(nodes=>nodes.map(n=>new URL(n.currentSrc).pathname.split('/').at(-1)));
   expect(sources).toEqual(expected.map(asset=>`${asset}.${asset==='egg'?'svg':'webp'}`));
   const dimensions=await page.locator('.game-room-bird img').evaluateAll(nodes=>nodes.map(n=>[n.naturalWidth,n.naturalHeight]));
-  expect(dimensions).toEqual(expected.map(asset=>[GAME_SPRITE_ASSETS[asset].width,GAME_SPRITE_ASSETS[asset].height]));
+  expect(dimensions).toEqual(expected.map(asset=>[ALL_SPRITE_ASSETS[asset].width,ALL_SPRITE_ASSETS[asset].height]));
   for(const b of world.birds){
     await page.locator('#game-scene-resident').selectOption(b.id);
     await expect(page.locator('.game-scene-caption strong')).toHaveText(b.name);
@@ -467,16 +488,17 @@ test('all color stages decode and nest-bound young remain reachable through the 
     const errors=await page.locator('.game-room').evaluate((roomElement,assets)=>{
       const room=roomElement.getBoundingClientRect(),errors=[],planes=[];
       for(const bird of roomElement.querySelectorAll('.game-room-bird')){
-        const sprite=bird.querySelector('.game-sprite'),r=sprite.getBoundingClientRect(),img=sprite.querySelector('img'),drawn=img.getBoundingClientRect(),source=assets[sprite.dataset.asset];
+        const sprite=bird.querySelector('.game-sprite'),r=sprite.getBoundingClientRect(),img=sprite.querySelector('img'),drawn=img.getBoundingClientRect(),source=assets[sprite.dataset.asset],sourceFoot=sprite.dataset.pose?source.poses[sprite.dataset.pose].foot:[source.footX,source.footY];
+        const crop=sprite.querySelector('.game-pose-window');if(crop){const v=crop.getBoundingClientRect();if(getComputedStyle(crop).overflow!=='hidden'||v.left<room.left-1||v.right>room.right+1||v.top<room.top-1||v.bottom>room.bottom+1)errors.push(`${bird.dataset.birdId} visible stage crop exceeds habitat room`);}
         if(r.left<room.left-1||r.right>room.right+1||r.top<room.top-1||r.bottom>room.bottom+1)errors.push(`${bird.dataset.birdId} out of bounds`);
         if(Math.abs(drawn.width/drawn.height-img.naturalWidth/img.naturalHeight)>.01)errors.push(`${bird.dataset.birdId} stage art stretched`);
-        if(Math.abs(drawn.left+source.footX/source.width*drawn.width-(r.left+r.width*.54))>1||Math.abs(drawn.top+source.footY/source.height*drawn.height-(r.top+r.height*.975))>1)errors.push(`${bird.dataset.birdId} stage contact misaligned`);
+        if(Math.abs(drawn.left+sourceFoot[0]/source.width*drawn.width-(r.left+r.width*.54))>1||Math.abs(drawn.top+sourceFoot[1]/source.height*drawn.height-(r.top+r.height*.975))>1)errors.push(`${bird.dataset.birdId} stage contact misaligned`);
         if(bird.classList.contains('game-nestling')&&(!bird.dataset.anchor.startsWith('nest-')||bird.tagName!=='SPAN'))errors.push('nestling leaves nest or becomes inaccessible tiny button');
         planes.push({id:bird.dataset.birdId,r});
       }
       for(let i=0;i<planes.length;i++)for(let j=i+1;j<planes.length;j++){const a=planes[i],b=planes[j];if(Math.min(a.r.right,b.r.right)-Math.max(a.r.left,b.r.left)>1&&Math.min(a.r.bottom,b.r.bottom)-Math.max(a.r.top,b.r.top)>1)errors.push(`${a.id} overlaps ${b.id}`);}
       return errors;
-    },GAME_SPRITE_ASSETS);
+    },ALL_SPRITE_ASSETS);
     expect(errors).toEqual([]);
     if(testInfo.project.name==='chromium')await testInfo.attach(`game-photo-mixed-stages-${width}`,{body:await page.locator('.game-room').screenshot({animations:'disabled'}),contentType:'image/png'});
   }
@@ -496,4 +518,45 @@ test('active social partners meet on nearby real anchors and mobile keeps one re
     expect(geometry.distance).toBeLessThan(.35);expect(geometry.captionInside).toBe(true);expect(geometry.captionHeight).toBeLessThan(60);
     if(info.project.name==='chromium'&&width!==320)await info.attach(`game-photo-social-${width}`,{body:await page.locator('.game-room').screenshot({animations:'disabled'}),contentType:'image/png'});
   }
+});
+
+
+test('natural poses vary asynchronously while stable controls, drafts and save state remain untouched',async({page},info)=>{
+  const world=gardenVisualFixture(10);world.birds.forEach(b=>{b.color='white';b.action={kind:'rest',target:null,startedTick:world.tick};});world.paused=false;world.settings.motion=true;
+  await seedWorld(page,world);await page.setViewportSize({width:375,height:900});await openGame(page);await decodeScene(page);
+  const poses=()=>page.locator('.game-room-bird .game-sprite').evaluateAll(nodes=>nodes.map(n=>n.dataset.pose));
+  const before=await poses();expect(new Set(before).size).toBeGreaterThanOrEqual(3);await expect(page.locator('.game-room-bird .game-sprite[data-color="white"]')).toHaveCount(10);
+  const saveBefore=await readWorld(page);
+  await page.locator('#game-words').fill('まだ書いているところ');
+  await page.evaluate(()=>{window.__poseButtons=[...document.querySelectorAll('.game-room-bird')];window.__poseInput=document.querySelector('#game-words');window.__poseImages=[...document.querySelectorAll('.game-room-bird img')];});
+  await expect.poll(poses,{timeout:14000,message:'independent quiet holds eventually change genuine anatomical frames'}).not.toEqual(before);
+  expect(await page.evaluate(()=>window.__poseButtons.every((node,i)=>node===document.querySelectorAll('.game-room-bird')[i])&&window.__poseImages.every((node,i)=>node===document.querySelectorAll('.game-room-bird img')[i])&&window.__poseInput===document.querySelector('#game-words'))).toBe(true);
+  await expect(page.locator('#game-words')).toHaveValue('まだ書いているところ');expect(await readWorld(page)).toEqual(saveBefore);
+  const after=await poses();expect(after.some((pose,i)=>pose===before[i])).toBe(true);
+  await info.attach('natural-unsynchronized-poses-375',{body:await page.locator('.game-room').screenshot(),contentType:'image/png'});
+  await page.locator('[data-game-action="pause"]').first().click();const paused=await poses();await page.waitForTimeout(1800);expect(await poses()).toEqual(paused);
+  await page.emulateMedia({reducedMotion:'reduce'});await page.locator('[data-game-action="pause"]').first().click();const reduced=await poses();await page.waitForTimeout(1800);expect(await poses()).toEqual(reduced);
+  await page.locator('#menu-toggle').click();await page.locator('#menu a[href$="encyclopedia/"]').click();await expect(page.locator('#game-root')).toHaveCount(0);await page.waitForTimeout(700);
+});
+
+test('real left and right social frames face their partner, and feeding uses the peck frame',async({page},info)=>{
+  const world=createWorld(fixedNow);createBird(world,{home:'resident',color:'sakura'});world.birds[0].action={kind:'play',target:world.birds[1].id,startedTick:world.tick};world.birds[1].action={kind:'play',target:world.birds[0].id,startedTick:world.tick};world.paused=true;
+  await seedWorld(page,world);await openGame(page);
+  for(const width of [320,375,1440]){
+    await page.setViewportSize({width,height:1000});await decodeScene(page);
+    await expect.poll(()=>page.locator('.game-room-bird').evaluateAll(nodes=>{const pairs=nodes.map(n=>({x:n.getBoundingClientRect().x,pose:n.querySelector('.game-sprite').dataset.pose})).sort((a,b)=>a.x-b.x);return pairs.map(p=>p.pose);})).toEqual(['right','left']);
+    if(info.project.name==='chromium')await info.attach(`natural-pair-facing-${width}`,{body:await page.locator('.game-room').screenshot(),contentType:'image/png'});
+  }
+  world.birds[0].action={kind:'eat',target:null,startedTick:world.tick};world.birds[1].action={kind:'rest',target:null,startedTick:world.tick};world.paused=false;await seedWorld(page,world);await openGame(page);
+  await expect.poll(()=>page.locator(`[data-bird-id="${world.birds[0].id}"] .game-sprite`).getAttribute('data-pose'),{timeout:14000}).toBe('peck');
+});
+
+test('a lone juvenile silver feeding sideways remains fully inside the natural habitat',async({page},info)=>{
+ const world=createWorld(fixedNow);world.paused=true;Object.assign(world.birds[0],{color:'silver',stage:'juvenile',action:{kind:'eat',target:null,startedTick:world.tick}});
+ await seedWorld(page,world);await openGame(page);
+ for(const width of [320,375,1440]){await page.setViewportSize({width,height:1000});await decodeScene(page);
+  await expect(page.locator('.game-room-bird .game-sprite')).toHaveAttribute('data-pose','right');
+  const contained=await page.locator('.game-room').evaluate(room=>{const r=room.getBoundingClientRect(),v=room.querySelector('.game-pose-window').getBoundingClientRect();return v.left>=r.left-1&&v.right<=r.right+1&&v.top>=r.top-1&&v.bottom<=r.bottom+1;});expect(contained).toBe(true);
+  if(info.project.name==='chromium')await info.attach(`natural-single-sideways-food-${width}`,{body:await page.locator('.game-room').screenshot(),contentType:'image/png'});
+ }
 });

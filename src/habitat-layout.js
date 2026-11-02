@@ -103,7 +103,11 @@ export function habitatPositions(birds,variant='wide') {
   if(active.length===1 && adults.length===1){
     const action=adults[0].action.kind;
     const a=HABITAT_ANCHORS[variant].find(a=>['eat','bath'].includes(action)?a.zone===action:a.id==='root-center');
-    positions.set(adults[0].id,{...a,width:(variant==='tall'?.25:.17)*a.depth,interactive:true});
+    // The singleton food spot sits close to the left edge. Bound its enlarged
+    // contact plane for the widest true side/peck tail, using one width for all
+    // frames and keeping feet on the exact physical feeding-ground anchor.
+    const width=Math.min((variant==='tall'?.25:.17)*a.depth,a.zone==='eat'?(variant==='tall'?.21:.132):1);
+    positions.set(adults[0].id,{...a,width,interactive:true});
     return positions;
   }
   const baseWidth=variant==='tall'?.175:.112;

@@ -1,5 +1,16 @@
 # Verification record and acceptance ledger
 
+## Current release note — 2026-11-02
+
+The base site, Launch Package corrections, photograph color atlas, natural habitat and care release have been published. Care main commit `af968678` was verified by public Actions run `41415758965`: **211 first-pass tests, 0 flaky, 0 failed, 3 intentional skips**. These are care-release results, not a claim that the new pose patch has passed browser CI.
+
+A private appearance reference photograph of the real female white Java sparrow Omochi was subsequently provided. The original photograph, hand/background, private filename and metadata are **not public**. No personal traits or observation diaries have been invented. Game save schema is now version 2, with strict validation and supported version-1 migration.
+
+The pose release adds varied generated directions and actions, not real Omochi photographs. Its exact-commit CI and public verification remain pending and must be recorded in the final release evidence. The timestamped 03:51 snapshot below is retained as historical evidence; later supplied-reference and release facts supersede its then-current limitations.
+
+---
+
+
 **Historical pre-CI snapshot: 2026-11-02 03:51 UTC.** The final local checks below passed before the application source commit. At this checkpoint, remote CI, Pages deployment and public real-browser acceptance had not yet been established. This is a timestamped preparation record, not a permanent statement about deployment status. For subsequent results, inspect the exact commit in [GitHub Actions](https://github.com/djnaoyaman/buncho-ureshi/actions/workflows/pages.yml) and its release evidence. Publication requires successful verification, deployment and public-URL tests for that commit.
 
 ## Repository creation resolved; publication is still pending
@@ -91,6 +102,6 @@ Prepared specs cover:
 | New Public repository and Pages | User-created Public repository confirmed; connector read/blob write verified; workflow prepared locally | Source commit and Pages deployment pending |
 | Exact-commit final CI and live URL verification | Build→unit→3-engine browser→deploy→public test workflow | Not run for application source; initial remote README commit only |
 
-## Remaining factual/material limitations
+## Historical factual/material limitations at 03:51
 
 Real photographs and observations of the family's Omochi have not been provided, intentionally not fabricated. Game feather colors are illustrative rather than genetic. Speech quality/availability and native file sharing depend on the actual device. At the lifetime roster limit (128) the same garden continues relationships but no longer adds birds; names and family links remain preserved rather than growing without bound. No real-device or live-site pass was established in this historical pre-CI snapshot; later results must be tied to the exact released commit.
