@@ -40,7 +40,7 @@ async function downloadBytes(download) {
 // This is local page instrumentation, not a claim that audio was heard by a human.
 async function installAudit(context) {
   await context.addInitScript(() => {
-    window.__studioAudit = { text: [], images: 0, audioCreated: 0, audioClosed: 0, starts: 0, stops: 0, gains: [] };
+    window.__studioAudit = { text: [], images: 0, brandImages: 0, audioCreated: 0, audioClosed: 0, starts: 0, stops: 0, gains: [] };
     const audit = window.__studioAudit;
     const fillText = CanvasRenderingContext2D.prototype.fillText;
     CanvasRenderingContext2D.prototype.fillText = function (text, ...args) {
@@ -49,7 +49,7 @@ async function installAudit(context) {
     };
     const drawImage = CanvasRenderingContext2D.prototype.drawImage;
     CanvasRenderingContext2D.prototype.drawImage = function (...args) {
-      if (this.canvas.width === 1400) audit.images++;
+      if (this.canvas.width === 1400) { audit.images++; if (args[0]?.src?.endsWith('/brand/wordmark-04.webp')) audit.brandImages++; }
       return drawImage.apply(this, args);
     };
     for (const key of ['AudioContext', 'webkitAudioContext']) {
@@ -258,6 +258,15 @@ for (const [format, width, height] of [['square', 1400, 1400], ['portrait', 1400
     expect(text).toContain(artPhoto.licenseUrl);
     expect(text).toContain('色調整');
     expect(audit.images).toBeGreaterThan(0);
+    expect(audit.brandImages).toBeGreaterThan(0);
+    // The actual PNG has the approved green lettering and red beak in its reserved header.
+    const brandPixels=await preview.evaluate(async img=>{
+      await img.decode();const c=document.createElement('canvas');c.width=img.naturalWidth;c.height=img.naturalHeight;
+      const ctx=c.getContext('2d');ctx.drawImage(img,0,0);const pixels=ctx.getImageData(490,8,420,244).data;
+      let green=0,red=0;for(let i=0;i<pixels.length;i+=4){const[r,g,b]=pixels.slice(i,i+3);if(g>r*1.15&&g>b*1.05&&r+g+b<400)green++;if(r>g*1.3&&r>b*1.3&&r>100)red++;}return{green,red};
+    });
+    expect(brandPixels.green).toBeGreaterThan(200);expect(brandPixels.red).toBeGreaterThan(30);
+
     // Decode the generated bitmap and confirm nonblank detailed pixels in its footer.
     const readFooter = () => preview.evaluate(async img => {
       await img.decode();

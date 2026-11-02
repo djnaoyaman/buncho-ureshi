@@ -74,10 +74,10 @@ test('export-enabled photo catalog preserves attribution and excludes share-alik
 // Lightweight repeatable DOM/Canvas contract fixture. It observes draw text and
 // state transitions; it does not replace real-browser screenshots or PNG pixel QA.
 function mockEnvironment(config = {}) {
-  const controls = new Map(), storage = new Map(), drawn = [], drawCalls = [], old = new Map(), images = [], blobCallbacks = [], signalHandlers = new WeakMap();
+  const controls = new Map(), storage = new Map(), drawn = [], drawCalls = [], imageCalls = [], old = new Map(), images = [], blobCallbacks = [], signalHandlers = new WeakMap();
   let blobCalls = 0;
   let acceptReset = true;
-  const context = new Proxy({ measureText: t => ({ width: [...String(t)].length * 6 }), fillText: (t,x,y) => { drawn.push(String(t)); drawCalls.push({text:String(t),x,y,font:context.font}); } }, {
+  const context = new Proxy({ measureText: t => ({ width: [...String(t)].length * 6 }), drawImage: (image,...args)=>imageCalls.push({src:image.src,args}), fillText: (t,x,y) => { drawn.push(String(t)); drawCalls.push({text:String(t),x,y,font:context.font}); } }, {
     get: (o, k) => k in o ? o[k] : (() => {}), set: (o, k, v) => { o[k] = v; return true; }
   });
   class Element {
@@ -117,7 +117,7 @@ function mockEnvironment(config = {}) {
   install('confirm', () => acceptReset);
   install('AudioContext', undefined); install('webkitAudioContext', undefined);
   return {
-    root: new Element(), storage, drawn, drawCalls, images, config,
+    root: new Element(), storage, drawn, drawCalls, imageCalls, images, config,
     get blobCalls(){return blobCalls;},finishBlob(){const callback=blobCallbacks.shift();assert(callback,'pending PNG callback');callback(new Blob(['mock-png'],{type:'image/png'}));},
     el: n => controls.get(`[data-studio="${n}"]`), button: n => controls.get(`[data-action="${n}"]`),
     state: () => JSON.parse(storage.get(KEY)), setReset: value => { acceptReset = value; },
@@ -182,7 +182,7 @@ test('strict saves reject hidden oversized fields and preserve corrupt raw data 
 
 test('photo admission rejects nonlocal/blob/credential sources, duplicate IDs and unsupported licenses without fetching them',()=>{
  const m=mockEnvironment();let cleanup;
- try{cleanup=mountStudio(m.root,{photos:[specimen(),specimen('external',{src:'https://elsewhere.test/p.webp'}),specimen('blob',{src:'blob:https://example.test/token'}),specimen('credential',{src:'https://user:pass@example.test/buncho-ureshi/photos/b.webp'}),specimen('outside',{src:'/unrelated/photo.webp'}),specimen('svg',{src:'/photos/photo.svg'}),specimen('sa',{license:'CC BY-SA 4.0'}),specimen('source-credentials',{source:'https://user:pass@example.com/photo'}),specimen('p1',{src:'/photos/duplicate.webp'}),specimen('huge',{author:'a'.repeat(513)})]});assert.equal(m.el('photos').children.length,1);assert.equal(m.el('photos').children[0].dataset.photo,'p1');assert(m.images.every(img=>img.src?.includes('/buncho-ureshi/photos/p1.webp')));}finally{cleanup?.();m.restore();}
+ try{cleanup=mountStudio(m.root,{photos:[specimen(),specimen('external',{src:'https://elsewhere.test/p.webp'}),specimen('blob',{src:'blob:https://example.test/token'}),specimen('credential',{src:'https://user:pass@example.test/buncho-ureshi/photos/b.webp'}),specimen('outside',{src:'/unrelated/photo.webp'}),specimen('svg',{src:'/photos/photo.svg'}),specimen('sa',{license:'CC BY-SA 4.0'}),specimen('source-credentials',{source:'https://user:pass@example.com/photo'}),specimen('p1',{src:'/photos/duplicate.webp'}),specimen('huge',{author:'a'.repeat(513)})]});assert.equal(m.el('photos').children.length,1);assert.equal(m.el('photos').children[0].dataset.photo,'p1');assert(m.images.every(img=>img.src?.includes('/buncho-ureshi/photos/p1.webp')||img.src==='https://example.test/buncho-ureshi/brand/wordmark-04.webp'));}finally{cleanup?.();m.restore();}
 });
 
 test('literal attribution is preserved, and excess credit text blocks export rather than overlapping the image',async()=>{
@@ -209,7 +209,7 @@ test('leaving during photo loading cancels pending listeners and export without 
 
 test('a loaded image with failed decoding never reaches PNG encoding',async()=>{
  const m=mockEnvironment();let cleanup;
- try{cleanup=mountStudio(m.root,{photos:[specimen()]});await m.el('photos').children[0].click();for(const image of m.images)image.decode=()=>Promise.reject(new Error('corrupt pixels'));await m.button('export').click();assert.equal(m.blobCalls,0);assert.equal(m.el('export-panel').hidden,true);assert.match(m.el('status').textContent,/写真をすべて読み込めず/);}finally{cleanup?.();m.restore();}
+ try{cleanup=mountStudio(m.root,{photos:[specimen()]});await m.el('photos').children[0].click();for(const image of m.images.filter(i=>i.src.includes('/photos/')))image.decode=()=>Promise.reject(new Error('corrupt pixels')); await m.button('export').click();assert.equal(m.blobCalls,0);assert.equal(m.el('export-panel').hidden,true);assert.match(m.el('status').textContent,/写真をすべて読み込めず/);}finally{cleanup?.();m.restore();}
 });
 
 
@@ -220,4 +220,10 @@ test('studio mute cancels queued gain automation and sets native gain immediatel
   calls.length=0;applyStudioMasterGain(master,audio,false,.5);assert.equal(gain.value,.11);assert.deepEqual(calls,[['cancel',0],['set',.11,0]]);
   applyStudioMasterGain(master,audio,false,NaN);assert.equal(gain.value,0);
   applyStudioMasterGain(null,audio,true,1);
+});
+
+
+test('approved brand bitmap is drawn at its own ratio and missing brand blocks PNG export',async()=>{
+ const m=mockEnvironment();let cleanup;
+ try{cleanup=mountStudio(m.root);const logo=m.images.find(i=>i.src.endsWith('/brand/wordmark-04.webp'));assert(logo);assert(m.imageCalls.some(c=>c.src===logo.src&&c.args[2]===295&&Math.abs(c.args[3]-295*645/1120)<.001));await m.button('export').click();assert.equal(m.blobCalls,1);logo.naturalWidth=0;await m.button('export').click();assert.equal(m.blobCalls,1,'must not export without the approved bitmap');assert.match(m.el('status').textContent,/画像を作れません/);}finally{cleanup?.();m.restore();}
 });

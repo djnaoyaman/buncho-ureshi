@@ -142,7 +142,7 @@ test('Launch Package manifest, PNG/ICO sizes, safe mask and existing OGP artwork
   assert.ok((await asset('ogp.png')).length<200000);
   const ico=await asset('favicon.ico');assert.equal(ico.readUInt16LE(0),0);assert.equal(ico.readUInt16LE(2),1);assert.equal(ico.readUInt16LE(4),3);
   assert.deepEqual([ico[6],ico[22],ico[38]],[16,32,48]);
-  const mask=(await asset('safari-pinned-tab.svg')).toString();assert.match(mask,/viewBox="0 0 16 16"/);assert.doesNotMatch(mask,/<script|<image|#[a-fA-F0-9]{3,6}/);
+  const mask=(await asset('safari-pinned-tab.svg')).toString();assert.match(mask,/viewBox="0 0 128 128"/);assert.doesNotMatch(mask,/<script|<image|#[a-fA-F0-9]{3,6}/);
   const manifest=JSON.parse(await asset('manifest.webmanifest'));
   assert.equal(manifest.name,SITE_NAME);assert.equal(manifest.short_name,SITE_NAME);assert.equal(manifest.lang,'ja');assert.equal(manifest.start_url,'./');assert.equal(manifest.scope,'./');assert.equal(manifest.id,'./');assert.equal(manifest.display,'standalone');
   assert.deepEqual(new Set(manifest.icons.map(i=>i.purpose)),new Set(['any','maskable']));

@@ -5,7 +5,7 @@ import { morphPhotos } from "./data/morph-photos.js";
 import { SITE_NAME } from "./visuals.js";
 export const PRODUCTION_ORIGIN = "https://djnaoyaman.github.io";
 export const BASE_PATH = "/buncho-ureshi/";
-export const IMAGE_ALT = `${SITE_NAME} — おもちと学ぶ文鳥図鑑。鳥と植物を配した案内用ロゴ。`;
+export const IMAGE_ALT = `${SITE_NAME} — おもちと学ぶ文鳥図鑑。赤いくちばしの白文鳥と深緑の文字を配した採用ロゴ。`;
 export const PAGE_CATALOG = [
   [
     "",
