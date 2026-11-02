@@ -2052,3 +2052,6 @@ body[data-world="buncho"] .game-gem-reward{background:#e5f2bb;color:#304631;bord
 .quiz-learning{border-block:1px solid var(--line);padding:4px 0;margin:20px 0}.quiz-learning p{font-size:.88rem;line-height:1.8}
 .quiz-learning-result a{text-underline-offset:4px}
 @media(max-width:480px){.morph-discovery-link{padding:24px 20px!important}.morph-discovery-link h2{font-size:1.35rem!important;letter-spacing:-.035em}.morph-discovery-link .big-arrow{display:none}.morph-discovery-link h2 ruby{white-space:nowrap}.header-menu{max-height:calc(100dvh - 95px);overflow-y:auto;overscroll-behavior:contain}}
+
+/* Small screens use separate touch targets, not overlapping diagram labels. */
+@media(max-width:480px){.body-diagram{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;aspect-ratio:auto;border-radius:24px;padding:18px}.body-diagram>svg{grid-column:1/-1;width:100%;height:auto;max-height:260px}.body-diagram button{position:static;transform:none;min-width:0;min-height:44px;padding:8px 4px}}

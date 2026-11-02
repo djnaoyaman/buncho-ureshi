@@ -14,7 +14,7 @@ for (const width of [320,390,768,1280]) {
       // Full-page evidence must visit lazy media, just as a reader scrolling does.
       if (!['encyclopedia','atlas'].includes(name)) {
         for (const img of await page.locator('main img[loading=lazy][src]').all()) {
-          if (await img.isVisible()) { await img.scrollIntoViewIfNeeded(); await img.evaluate(node=>node.decode()); }
+          if (await img.isVisible()) { await img.scrollIntoViewIfNeeded(); await expect.poll(()=>img.evaluate(node=>node.complete && node.naturalWidth>0), {message:await img.getAttribute('src')}).toBe(true); await img.evaluate(node=>node.decode()); }
         }
         await page.evaluate(()=>window.scrollTo(0,0));
       }

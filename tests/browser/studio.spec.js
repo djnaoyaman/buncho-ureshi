@@ -88,9 +88,9 @@ test.beforeEach(async ({ context, page }) => {
   await page.route(/youtube|youtu\.be|googlevideo|ytimg/i, route => route.abort());
 });
 
-test('six templates, eight backgrounds and palettes, and local table of contents work', async ({ page }, testInfo) => {
+test('six templates, eleven backgrounds and eight palettes, and local table of contents work', async ({ page }, testInfo) => {
   await openStudio(page);
-  await expect(control(page, 'background').locator('option')).toHaveCount(8);
+  await expect(control(page, 'background').locator('option')).toHaveCount(11);
   await expect(control(page, 'palettes').locator('button')).toHaveCount(8);
   const compositions = new Set();
   for (let i = 0; i < 6; i++) {

@@ -123,7 +123,7 @@ for(const width of [320,375,768,1440])test(`atlas fits ${width}px with full-fram
   for(const route of routes){
     await page.goto(route);await ready(page);await decodePhotos(page);
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),route).toBe(true);
-    const overflowing=await page.locator('main .morph-atlas').evaluate(root=>[...root.querySelectorAll('h1,h2,h3,select,button,img,figure')].filter(node=>{const r=node.getBoundingClientRect();return r.width>0&&(r.left< -1||r.right>innerWidth+1);}).map(node=>({tag:node.tagName,text:node.textContent.slice(0,60)})));
+    const overflowing=await page.locator('main .morph-atlas').evaluate(root=>[...root.querySelectorAll('h1,h2,h3,select,button,img,figure')].filter(node=>{const r=node.getBoundingClientRect(),gallery=node.closest('[data-morph-results]');if(gallery&&getComputedStyle(gallery).overflowX==='auto'){const g=gallery.getBoundingClientRect(),card=node.closest('[data-morph-card]'),c=card?.getBoundingClientRect();return g.left< -1||g.right>innerWidth+1||!!(c&&(r.left<c.left-1||r.right>c.right+1));}return r.width>0&&(r.left< -1||r.right>innerWidth+1);}).map(node=>({tag:node.tagName,text:node.textContent.slice(0,60)})));
     expect(overflowing,route).toEqual([]);
     if(info.project.name==='chromium'){
       const name=`atlas-${route.split('/')[1]||'overview'}-${width}.png`;
