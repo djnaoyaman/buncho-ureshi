@@ -40,7 +40,8 @@ export function fieldPositions(birds,variant='wide',place='home') {
   mature=[...paired,...mature.filter(b=>!used.has(b.id))];
   const young=birds.filter(b=>['egg','chick'].includes(b.stage));
   const upper=park?(tall?.274:.311):(tall?.371:.379),middle=park?(tall?.451:.501):(tall?.552:.581);
-  const anchors=[[.20,upper],[.40,upper],[.60,upper],[.78,upper],[.27,middle],[.47,middle],[.67,middle],...(young.length?[[.80,.79]]:[[.83,middle]]),[.21,.79],[.40,park?.76:.79],[.59,park?.76:.79],...(young.length?[[.83,middle]]:[[.80,.79]])];
+  const lower=tall?[.22,.39,.56,.73]:[.29,.435,.58,.725];
+  const anchors=[[.20,upper],[.40,upper],[.60,upper],[.78,upper],...lower.map(x=>[x,middle]),[.21,.79],[.40,park?.76:.79],[.59,park?.76:.79],[.80,.79]];
   mature.slice(0,12).forEach((b,i)=>{const a=mature.length===1?anchors[9]:anchors[i];positions.set(b.id,{id:`field-contact-${i}`,x:a[0],y:a[1],width:mature.length===1?(tall?.24:.17):(tall?.16:.105),depth:1,zone:b.action.kind,interactive:true});});
   const nestY=tall?.590:.635,columns=Math.min(4,Math.max(2,young.length)),rows=Math.ceil(young.length/columns)||1;
   const stepX=.14/(columns+1),stepY=.065/rows;
