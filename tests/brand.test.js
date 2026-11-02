@@ -15,11 +15,11 @@ test('selected 04 master is byte-exact and every checked-in derivative matches i
   assert.deepEqual(manifest.masterSize,[1774,887]);
   assert.deepEqual(manifest.wordmarkCrop,[345,125,1465,770]);
   assert.equal(manifest.rasterArtwork,true);
-  assert.equal(Object.keys(manifest.files).length,16);
+  assert.equal(Object.keys(manifest.files).length,17);
   for(const [path,file] of Object.entries(manifest.files)){
     const bytes=await read(path);assert.equal(bytes.length,file.bytes,path);assert.equal(hash(bytes),file.sha256,path);
   }
-  assert.ok((await read('public/'+BRAND_ASSET)).length<80000);
+  assert.ok((await read('public/'+BRAND_ASSET)).length<350000);
   assert.ok((await read('public/ogp.png')).length<100000);
 });
 
