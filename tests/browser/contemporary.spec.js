@@ -11,6 +11,13 @@ for (const width of [320,390,768,1280]) {
       await expect(page.locator('main')).toBeVisible();
       if(name==='game') { await expect(page.locator('body')).toHaveAttribute('data-game-intro','done',{timeout:10000}); await expect(page.locator('.game-logo-intro')).toHaveCount(0); }
       else if(name==='home') await expect(page.locator('.art-cover-photo img')).toBeVisible();
+      // Full-page evidence must visit lazy media, just as a reader scrolling does.
+      if (!['encyclopedia','atlas'].includes(name)) {
+        for (const img of await page.locator('main img[loading=lazy][src]').all()) {
+          if (await img.isVisible()) { await img.scrollIntoViewIfNeeded(); await img.evaluate(node=>node.decode()); }
+        }
+        await page.evaluate(()=>window.scrollTo(0,0));
+      }
       // Studio's hidden export preview intentionally has no source until export.
       // A visible empty image or any sourced eager image failing decode still fails.
       await page.locator('main img').evaluateAll(async images => Promise.all(images.filter(img=>img.loading!=='lazy').map(async img=>{
