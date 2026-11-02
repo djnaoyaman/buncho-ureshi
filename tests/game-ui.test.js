@@ -225,3 +225,27 @@ test('returning from a visitor profile aligns the scene, picker and resident pro
   assert.equal(f.root.querySelector('.game-scene-caption strong').textContent,'最初の庭');
   assert.equal(f.root.querySelector('.game-profile h3').textContent,'最初の庭');
 });
+
+test('other-tab refresh preserves dirty name and talk drafts after focus moves to a button',async t=>{
+  const f=await fixture(t),store=await f.otherTab();await f.mount();
+  const type=(id,value)=>{const input=f.root.querySelector(id);input.value=value;input.dispatchEvent(new f.window.Event('input',{bubbles:true}));};
+  type('#game-name','まだ保存していない名前');type('#game-words','おはよう、元気？');
+  f.root.querySelector('[data-game-form="rename"] button[type="submit"]').focus();
+  await store.transact(w=>{renameBird(w,'b1','別タブの変更');bumpRevision(w);return w;});
+  await [...f.timers.values()][0]();
+  assert.equal(f.root.querySelector('#game-name').value,'まだ保存していない名前');
+  assert.equal(f.root.querySelector('#game-words').value,'おはよう、元気？');
+  f.root.querySelector('[data-game-form="rename"]').dispatchEvent(new f.window.Event('submit',{bubbles:true,cancelable:true}));
+  await until(async()=>(await rawWorld(f.indexedDB)).birds[0].name==='まだ保存していない名前','save preserved draft');
+  await sleep(20);
+  await store.transact(w=>{renameBird(w,'b1','保存後の別タブ名');bumpRevision(w);return w;});
+  f.root.querySelector('[data-game-panel="profile"]').focus();await [...f.timers.values()][0]();
+  assert.equal(f.root.querySelector('#game-name').value,'保存後の別タブ名','saved draft no longer masks remote updates');
+});
+
+test('dirty input drafts cannot leak into a replacement world reusing the same bird ID',async t=>{
+  const f=await fixture(t),store=await f.otherTab();await f.mount();
+  const input=f.root.querySelector('#game-name');input.focus();input.value='古い庭だけの下書き';input.dispatchEvent(new f.window.Event('input',{bubbles:true}));
+  await store.transact(()=>savedWorld('新しい庭の名前',999));await [...f.timers.values()][0]();
+  assert.equal(f.root.querySelector('#game-name').value,'新しい庭の名前');
+});
