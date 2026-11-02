@@ -46,3 +46,10 @@
 @media(max-width:600px){.game-floor-soil{clip-path:polygon(36% 83%,57% 82%,63% 88%,65% 95%,83% 100%,16% 100%,20% 96%,35% 91%)}.game-garden-care{padding:.65rem;justify-content:flex-start}.game-garden-care p{text-align:left}.game-care{padding:.85rem}.game-care-actions{flex-direction:column}.game-care-actions button{width:100%}.game-fullness small{display:block;margin:.3rem 0 0}.game-care-cheer{font-size:1rem}}
 html[data-motion="off"] .game-care-cheer,.game-app[data-care-motion="off"] .game-care-cheer{animation:none}
 @media(prefers-reduced-motion:reduce){.game-care-cheer{animation:none!important}}
+
+/* Each atlas frame has its own reviewed crop; the raw atlas may exceed this window. */
+.game-pose-window{display:block;position:absolute;overflow:hidden;pointer-events:none}
+.game-pose-window>img{max-width:none;height:auto;object-fit:initial;transform:none}
+
+/* Invisible hit/contact planes do not squeeze horizontal tails or wings. */
+.game-sprite[data-pose]{overflow:visible}

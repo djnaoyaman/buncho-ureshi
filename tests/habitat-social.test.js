@@ -49,13 +49,20 @@ function socialPopulation(count,young,mode) {
   return birds;
 }
 
-test('all 3,120 original geometry cases preserve the prior target-free layout and 46px margin',()=>{
+// Only the reviewed singleton food enlargement changes in the pose release.
+function expectedPriorLayout(birds,variant){
+ const prior=beforeSocial(birds,variant);
+ if(prior.size===1){const [id,p]=[...prior][0];if(p.zone==='eat'&&p.interactive)prior.set(id,{...p,width:Math.min(p.width,variant==='tall'?.21:.132)});}
+ return prior;
+}
+
+test('all 3,120 original geometry cases preserve prior target-free layouts except reviewed singleton food clearance',()=>{
   assert.deepEqual(HABITAT_ANCHORS,originalAnchors);
   let cases=0;
   for(const variant of ['wide','tall'])for(const width of variant==='tall'?[284,339,375]:[568,732,960])for(let count=1;count<=10;count++)for(let young=0;young<=count;young++)for(let salt=0;salt<8;salt++){
     const birds=population(count,young,salt),context=`${variant}/${width}/${count}/${young}/${salt}`;
     const positions=assertGeometry(birds,variant,width,context);
-    assert.deepEqual(stable(positions),stable(beforeSocial(birds,variant)),context);cases++;
+    assert.deepEqual(stable(positions),stable(expectedPriorLayout(birds,variant)),context);cases++;
   }
   assert.equal(cases,3120);
 });
@@ -128,12 +135,12 @@ test('missing, absent, young, stale, declined and incompatible targets do not pu
   }
 });
 
-test('solo food/bath/root positions and explicit 46px safety margin remain unchanged',()=>{
+test('solo food/bath/root foot anchors and 46px safety remain, with bounded single-food width',()=>{
   for(const variant of ['wide','tall'])for(const kind of ['rest','play','eat','bath']){
     const bird=population(1,0)[0];bird.action.kind=kind;bird.action.target='missing';
     const positions=habitatPositions([bird],variant),p=positions.get(bird.id);
     assert.equal(p.id,kind==='eat'?'food-ground':kind==='bath'?'bath-back-rim':'root-center');
-    assert.deepEqual(stable(positions),stable(beforeSocial([bird],variant)));
+    assert.deepEqual(stable(positions),stable(expectedPriorLayout([bird],variant)));
   }
   const p={x:.5,y:.5,width:.01,interactive:true},bounds=spriteBounds(p,'tall',284);
   assert.ok(Math.abs((bounds.right-bounds.left)*284-46)<1e-8);
