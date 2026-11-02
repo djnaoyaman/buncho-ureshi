@@ -144,3 +144,9 @@
  .morph-filterbar{grid-template-columns:1fr!important}.morph-compare-controls{gap:10px}
 }
 @media(prefers-reduced-motion:reduce){.morph-cards{scroll-behavior:auto}}
+
+/* Ruby needs room above each wrapped caption line, including expanded evidence. */
+.morph-atlas .morph-photo figcaption p,.morph-atlas .morph-photo figcaption dd{line-height:2.5}
+.morph-atlas .morph-photo figcaption rt{font-size:.5em;line-height:1}
+.morph-atlas .morph-photo figcaption summary{line-height:2.4;padding-block:5px}
+.morph-identity-evidence{font-size:.78rem;padding-block:8px}
