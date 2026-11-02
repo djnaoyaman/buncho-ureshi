@@ -91,6 +91,11 @@ test("direct URLs, reloads and photograph decoding", async ({ page }) => {
   expect(errors).toEqual([]);
 });
 test("search filter favorites ruby and history", async ({ page }, info) => {
+  await page.addInitScript(() => {
+    // An existing visitor's old preference must not hide the required furigana.
+    if (!localStorage.getItem("buncho-settings"))
+      localStorage.setItem("buncho-settings", JSON.stringify({ ruby: false, motion: false }));
+  });
   // Passive diagnostics retain the exact failing history/reload flow. They do
   // not replace native history methods or change browser preferences.
   const navigationEvents = [];
@@ -134,22 +139,24 @@ test("search filter favorites ruby and history", async ({ page }, info) => {
       "aria-pressed",
       "true",
     );
-    await page.locator("#ruby-toggle").click();
+    await expect(page.locator("#ruby-toggle")).toHaveCount(0);
+    await expect(page.locator("html")).toHaveAttribute("data-ruby", "on");
+    expect(await page.evaluate(() => JSON.parse(localStorage.getItem("buncho-settings")))).toEqual({ ruby: true, motion: false });
     await page.reload();
-    await expect(page.locator("html")).toHaveAttribute("data-ruby", "off");
+    await expect(page.locator("html")).toHaveAttribute("data-ruby", "on");
     await page.goBack();
     // Assert the page restored by Back itself; another goto would mask a broken
     // history entry. Keep this regression flow identical across browser engines.
     await expect(page).toHaveURL(/\/buncho-ureshi\/encyclopedia\/$/);
     await expect(page.locator("#article-search")).toBeVisible();
-    await expect(page.locator("html")).toHaveAttribute("data-ruby", "off");
+    await expect(page.locator("html")).toHaveAttribute("data-ruby", "on");
     await page.getByRole("button", { name: "♡ お気に入り", exact: true }).click();
     await expect(page.locator(".article-card")).toHaveCount(1);
     await expect(page.locator(".article-card")).toHaveAttribute("href", favoriteHref);
     // Keep full-navigation persistence coverage after testing the restored DOM.
     await page.reload();
     await expect(page.locator("#article-search")).toBeVisible();
-    await expect(page.locator("html")).toHaveAttribute("data-ruby", "off");
+    await expect(page.locator("html")).toHaveAttribute("data-ruby", "on");
     await page.getByRole("button", { name: "♡ お気に入り", exact: true }).click();
     await expect(page.locator(".article-card")).toHaveCount(1);
     await expect(page.locator(".article-card")).toHaveAttribute("href", favoriteHref);

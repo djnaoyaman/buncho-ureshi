@@ -1,0 +1,37 @@
+{
+  "id": "./",
+  "name": "文鳥♬文鳥♬文鳥って嬉しいな♪",
+  "short_name": "文鳥♬文鳥♬文鳥って嬉しいな♪",
+  "description": "おもちと学ぶ文鳥図鑑。写真で知る、アートをつくる、文鳥たちの暮らしを見守る。",
+  "lang": "ja",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6f3e8",
+  "theme_color": "#244c3b",
+  "categories": [
+    "education",
+    "games"
+  ],
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

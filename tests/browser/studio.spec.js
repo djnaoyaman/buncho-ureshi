@@ -307,7 +307,7 @@ test('audio is opt-in; user playback, mute, volume, stop and SFX controls affect
   await expect.poll(() => page.evaluate(() => window.__studioAudit.starts)).toBeGreaterThan(0);
   await action(page, 'mute').click();
   await expect(action(page, 'mute')).toHaveAttribute('aria-pressed', 'true');
-  expect((await page.evaluate(() => window.__studioAudit.gains)).at(-1)).toBe(0);
+  await expect.poll(() => page.evaluate(() => window.__studioAudit.gains.at(-1))).toBe(0);
   await setRange(page, 'volume', 50);
   await action(page, 'mute').click();
   await expect(action(page, 'mute')).toHaveAttribute('aria-pressed', 'false');

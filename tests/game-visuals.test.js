@@ -1,26 +1,31 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { Window } from 'happy-dom';
 import { gameBirdSvg } from '../src/game.js';
 
-test('egg, chick, juvenile and adult have distinct original silhouettes', () => {
-  const stages=['egg','chick','juvenile','adult'];
-  for(const color of ['white','sakura','silver','cinnamon']) {
-    const drawings=stages.map(stage=>gameBirdSvg(color,stage));
-    assert.equal(new Set(drawings).size,4);
-    drawings.forEach((svg,i)=>{
-      assert.match(svg,new RegExp(`data-stage="${stages[i]}"`));
-      assert.match(svg,/viewBox="0 0 120 100"/);
-      assert.match(svg,/aria-hidden="true"/);
-      assert.doesNotMatch(svg,/<(?:image|script)|href=/);
-    });
-  }
-  const chick=gameBirdSvg('white','chick'),juvenile=gameBirdSvg('white','juvenile'),adult=gameBirdSvg('white','adult');
-  assert.match(chick,/rx="26" ry="21"/); // Small rounded body.
-  assert.match(chick,/M35 68 26 73 38 77/); // Short nestling tail.
-  assert.match(juvenile,/rx="30" ry="24"/);
-  assert.match(juvenile,/#b4a591/); // Brown juvenile plumage.
-  assert.match(juvenile,/M96 39 110 44 97 50Z/); // Shorter dark bill.
-  assert.match(adult,/rx="32" ry="26"/);
-  assert.match(adult,/M96 38 115 43 97 51Z/);
-  assert.match(adult,/#d75854/);
+test('original bird artwork has distinct stages and adult colors without locking old path shapes', async () => {
+  const window=new Window();
+  try {
+    const stages=['egg','chick','juvenile','adult'];
+    for(const color of ['white','sakura','silver','cinnamon']) {
+      const drawings=stages.map(stage=>gameBirdSvg(color,stage));
+      assert.equal(new Set(drawings).size,4);
+      drawings.forEach((markup,i)=>{
+        const root=window.document.createElement('div');root.innerHTML=markup;
+        assert.equal(root.children.length,1);
+        const svg=root.firstElementChild;
+        assert.equal(svg.tagName.toLowerCase(),'svg');
+        assert.equal(svg.getAttribute('data-stage'),stages[i]);
+        assert.equal(svg.getAttribute('viewBox'),'0 0 120 100');
+        assert.notEqual(svg.getAttribute('preserveAspectRatio'),'none');
+        assert.equal(svg.getAttribute('aria-hidden'),'true');
+        assert.equal(svg.querySelectorAll('image, script, foreignObject, [href], [onclick], [onload]').length,0);
+        assert.doesNotMatch(markup,/NaN|Infinity|undefined/);
+        if(stages[i]!=='egg') for(const part of ['body','wing','bill','eye','feet','tail']) {
+          assert.ok(svg.querySelector(`[data-part="${part}"]`),`${color} ${stages[i]} must include a deliberate ${part} shape`);
+        }
+      });
+    }
+    assert.equal(new Set(['white','sakura','silver','cinnamon'].map(color=>gameBirdSvg(color,'adult'))).size,4);
+  } finally { await window.happyDOM.close(); }
 });

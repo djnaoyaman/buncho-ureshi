@@ -318,52 +318,90 @@ test('rapid navigation and Back clean up a pending async game mount without orph
 });
 
 
-test('ten residents keep full names, actions and speech bubbles separated at narrow and wide sizes', async ({ page }, testInfo) => {
-  const seeded = createWorld(fixedNow);
-  while (seeded.birds.length < LIMITS.residents) createBird(seeded, { home: 'resident' });
-  const actionKinds = ['rest', 'eat', 'bath', 'explore', 'talk', 'play', 'nest', 'visit'];
-  seeded.birds.forEach((bird, i) => {
-    bird.name = 'あいうえおかきくけこさしすせそ' + i; // Exactly 16 characters, never truncated.
-    bird.action = { kind: actionKinds[i % actionKinds.length], target: null, startedTick: seeded.tick };
-  });
-  for (let i = 0; i < seeded.birds.length; i += 2) {
-    seeded.events.push({ id: `e${seeded.nextEvent++}`, kind: 'play', ids: [seeded.birds[i].id, seeded.birds[i + 1].id], condition: '表示確認のためのゲーム内交流', result: '双方が一緒に遊んだ', data: {}, tick: seeded.tick, at: seeded.epoch + seeded.tick * TICK_MS });
+function gardenVisualFixture(count) {
+  const world = createWorld(fixedNow);
+  while (world.birds.length < count) createBird(world, { home: 'resident' });
+  if (count > 1) {
+    const actionKinds = ['rest', 'eat', 'bath', 'explore', 'talk', 'play', 'nest', 'visit'];
+    world.birds.forEach((bird, i) => {
+      bird.name = 'あいうえおかきくけこさしすせそ' + i;
+      bird.action = { kind: actionKinds[i % actionKinds.length], target: null, startedTick: world.tick };
+    });
+    for (let i = 0; i < world.birds.length; i += 2) {
+      world.events.push({ id: `e${world.nextEvent++}`, kind: 'play', ids: [world.birds[i].id, world.birds[i + 1].id], condition: '表示確認のためのゲーム内交流', result: '双方が一緒に遊んだ', data: {}, tick: world.tick, at: world.epoch + world.tick * TICK_MS });
+    }
   }
-  validateWorld(seeded);
+  return validateWorld(world);
+}
+
+// Collision absence alone is not a visual-quality pass. The rejected layout had a
+// 920px one-bird room and preserveAspectRatio=none, yet its text did not collide.
+// Gate initial composition, scenery proportions, anatomy size and crowded access.
+for (const residents of [1, 10]) test(`${residents === 1 ? 'initial one-bird' : 'populated ten-bird'} garden has bounded composition, proportional scenery and readable residents`, async ({ page }, testInfo) => {
+  test.setTimeout(90000);
+  const seeded = gardenVisualFixture(residents);
   await seedWorld(page, seeded);
   await openGame(page);
-  await expect(page.locator('.game-room-bird')).toHaveCount(10);
-  await expect(page.locator('.game-room-bird .game-bubble')).toHaveCount(10);
-  for (const width of [320, 375, 768, 1440]) {
-    await page.setViewportSize({ width, height: 1000 });
-    await expect.poll(() => page.evaluate(() => {
-      const room = document.querySelector('.game-room').getBoundingClientRect();
-      const parts = [...document.querySelectorAll('.game-room-bird')].flatMap(bird =>
-        [...bird.querySelectorAll('.game-bird-label, .game-bubble, :scope > small')].map(el => ({
-          bird: bird.dataset.gameSelect, kind: el.className || 'action', text: el.textContent,
-          rect: el.getBoundingClientRect(), clipped: el.scrollHeight > el.clientHeight + 1 || el.scrollWidth > el.clientWidth + 1
-        }))
-      );
+  await expect(page.locator('.game-room-bird')).toHaveCount(residents);
+  await expect(page.locator('.game-room-bird .game-bubble')).toHaveCount(residents === 1 ? 0 : residents);
+  for (const width of [320, 375, 390, 768, 1440]) for (const orientation of ['portrait', 'landscape']) {
+    const height = orientation === 'portrait' ? Math.max(800, Math.round(width * 1.25)) : Math.max(240, Math.round(width * .65));
+    await page.setViewportSize({ width, height });
+    await expect.poll(() => page.evaluate(({ residents, viewportWidth }) => {
+      const roomElement = document.querySelector('.game-room');
+      const room = roomElement.getBoundingClientRect();
       const errors = [];
-      for (const bird of document.querySelectorAll('.game-room-bird')) {
-        const r = bird.getBoundingClientRect();
-        if (r.width < 44 || r.height < 44) errors.push(`${bird.dataset.gameSelect} touch target below 44px`);
+      const maxHeight = residents === 1 ? (viewportWidth <= 480 ? 420 : 520) : (viewportWidth <= 768 ? 720 : 650);
+      if (room.height < 280 || room.height > maxHeight + 1) errors.push(`room height ${room.height} outside 280–${maxHeight}px`);
+      const visible = el => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== 'hidden'; };
+      const inside = r => r.left >= room.left - 1 && r.right <= room.right + 1 && r.top >= room.top - 1 && r.bottom <= room.bottom + 1;
+      const birds = [...roomElement.querySelectorAll('.game-room-bird')];
+      const parts = birds.flatMap(bird => [...bird.querySelectorAll('.game-bird-label, .game-bubble, :scope > small')].map(el => ({
+        bird: bird.dataset.gameSelect, kind: el.className || 'action', rect: el.getBoundingClientRect(),
+        clipped: el.scrollHeight > el.clientHeight + 1 || el.scrollWidth > el.clientWidth + 1,
+        font: parseFloat(getComputedStyle(el).fontSize), visible: visible(el)
+      })));
+      for (const bird of birds) {
+        const r = bird.getBoundingClientRect(), svg = bird.querySelector('svg'), drawn = svg?.getBoundingClientRect();
+        if (!visible(bird) || r.width < 44 || r.height < 44) errors.push(`${bird.dataset.gameSelect} touch target below 44px or hidden`);
+        if (!inside(r)) errors.push(`${bird.dataset.gameSelect} button outside room`);
+        if (!drawn || drawn.width < (residents === 1 ? 64 : 48) || drawn.height < 40 || !inside(drawn)) errors.push(`${bird.dataset.gameSelect} illustration is too small or clipped`);
       }
       for (const part of parts) {
-        const r = part.rect;
-        if (part.clipped || r.left < room.left || r.right > room.right + 1 || r.top < room.top || r.bottom > room.bottom + 1) errors.push(`${part.bird} ${part.kind} clipped`);
+        if (!part.visible || part.clipped || !inside(part.rect)) errors.push(`${part.bird} ${part.kind} hidden or clipped`);
+        if (part.font < (part.kind === 'game-bird-label' ? 11 : 10)) errors.push(`${part.bird} ${part.kind} text is too small`);
       }
-      for (let i = 0; i < parts.length; i++) for (let j = i + 1; j < parts.length; j++) {
-        const a = parts[i], b = parts[j];
+      const visibleParts = [...parts, ...birds.map(bird => ({ bird: bird.dataset.gameSelect, kind: 'illustration', rect: bird.querySelector('svg').getBoundingClientRect() }))];
+      for (let i = 0; i < visibleParts.length; i++) for (let j = i + 1; j < visibleParts.length; j++) {
+        const a = visibleParts[i], b = visibleParts[j];
         if (a.bird === b.bird) continue;
         const x = Math.min(a.rect.right, b.rect.right) - Math.max(a.rect.left, b.rect.left);
         const y = Math.min(a.rect.bottom, b.rect.bottom) - Math.max(a.rect.top, b.rect.top);
         if (x > 1 && y > 1) errors.push(`${a.bird} ${a.kind} overlaps ${b.bird} ${b.kind}`);
       }
+      for (const svg of roomElement.querySelectorAll('svg')) {
+        if (svg.getAttribute('preserveAspectRatio')?.trim() === 'none') errors.push('SVG explicitly disables proportional scaling');
+        if (!visible(svg)) continue;
+        const m = svg.getScreenCTM();
+        if (!m) { errors.push('visible SVG has no screen transform'); continue; }
+        const x = Math.hypot(m.a, m.b), y = Math.hypot(m.c, m.d);
+        if (!x || !y || Math.max(x, y) / Math.min(x, y) > 1.01) errors.push('SVG is stretched non-uniformly');
+      }
+      const props = [...roomElement.querySelectorAll('[data-game-prop]')];
+      if (props.map(p => p.dataset.gameProp).sort().join() !== 'bath,food,nest') errors.push('three separately sized habitat props must be present');
+      for (const prop of props) {
+        if (!visible(prop) || !inside(prop.getBoundingClientRect())) errors.push(`${prop.dataset.gameProp} prop is hidden or clipped`);
+      }
       if (document.documentElement.scrollWidth > innerWidth + 1) errors.push('document overflow');
       return errors;
-    }), { message: `All name/action/bubble boxes must remain separate at ${width}px` }).toEqual([]);
+    }, { residents, viewportWidth: width }), { message: `${residents} birds, ${width}px ${orientation}: bounded composition, proportions and text must remain readable` }).toEqual([]);
     await expect(page.locator('.game-bird-label')).toHaveText(seeded.birds.map(bird => bird.name));
-    if (testInfo.project.name === 'chromium') await testInfo.attach(`game-ten-full-names-${width}`, { body: await page.locator('.game-room').screenshot({ animations: 'disabled' }), contentType: 'image/png' });
+    if (testInfo.project.name === 'chromium') await testInfo.attach(`game-${residents === 1 ? 'initial' : 'ten-full-names'}-${width}-${orientation}`, { body: await page.locator('.game-room').screenshot({ animations: 'disabled' }), contentType: 'image/png' });
+  }
+  // Each resident remains a real reachable selection target, not just decoration.
+  for (const bird of seeded.birds) {
+    await tab(page, 'garden');
+    await page.locator(`.game-room-bird[data-game-select="${bird.id}"]`).click();
+    await expect(page.locator('.game-profile-heading h3')).toHaveText(bird.name);
   }
 });
