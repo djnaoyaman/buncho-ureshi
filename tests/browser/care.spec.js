@@ -10,12 +10,13 @@ async function seed(page,w=fixture()){await page.goto('');await record(page,w);a
 async function tab(page,name){await page.locator(`[data-game-panel="${name}"]`).first().click();}
 async function downloadText(download){const stream=await download.createReadStream();if(!stream)throw Error('No download stream');const chunks=[];for await(const chunk of stream)chunks.push(Buffer.from(chunk));return Buffer.concat(chunks).toString('utf8');}
 async function trackNativeAudio(page){await page.addInitScript(()=>{
-  const Native=window.AudioContext||window.webkitAudioContext;window.__careAudio={contexts:0,starts:0,active:0,closed:0};
+  const Native=window.AudioContext||window.webkitAudioContext;window.__careAudio={contexts:0,starts:0,active:0,closed:0,resumes:0,resolved:0,resumeErrors:[],states:[]};
   if(!Native){window.__careAudio.unavailable=true;return;}
   // Observe real native instances, as in the studio audit. Do not rely on
   // WebIDL constructors preserving a JavaScript subclass's method overrides.
   const Tracked=new Proxy(Native,{construct(Target,args){
-    const audio=Reflect.construct(Target,args);window.__careAudio.contexts++;window.__careNativeContext=audio;
+    const audio=Reflect.construct(Target,args);window.__careAudio.contexts++;window.__careNativeContext=audio;window.__careAudio.states.push(audio.state);audio.addEventListener('statechange',()=>window.__careAudio.states.push(audio.state));
+    const resume=audio.resume.bind(audio);audio.resume=()=>{window.__careAudio.resumes++;return resume().then(value=>{window.__careAudio.resolved++;return value;},error=>{window.__careAudio.resumeErrors.push(String(error));throw error;});};
     const create=audio.createOscillator.bind(audio),close=audio.close.bind(audio);
     audio.createOscillator=()=>{const osc=create(),start=osc.start.bind(osc);osc.start=(...args)=>{window.__careAudio.starts++;window.__careAudio.active++;return start(...args);};osc.addEventListener('ended',()=>window.__careAudio.active--);return osc;};
     audio.close=()=>{window.__careAudio.closed++;return close();};return audio;
@@ -56,7 +57,7 @@ test('care sound opt-in schedules a short native synthetic chirp only after succ
   // No false audible claim: missing browser audio must retain explicit text fallback.
   const unavailable=await page.evaluate(()=>window.__careAudio.unavailable);
   if(unavailable)await expect(page.locator('.game-message')).toContainText('合成音を鳴らせません');
-  else {await expect.poll(()=>page.evaluate(()=>window.__careAudio.starts)).toBe(2);}
+  else {try{await expect.poll(()=>page.evaluate(()=>window.__careAudio.starts)).toBe(2);}finally{console.log('NATIVE_CARE_AUDIO_DIAGNOSTIC',await page.evaluate(()=>({audit:window.__careAudio,state:window.__careNativeContext?.state,time:window.__careNativeContext?.currentTime,hidden:document.hidden,message:document.querySelector('.game-message')?.textContent})));}}
   await page.locator('[data-game-care-sound]').uncheck();await expect.poll(()=>page.evaluate(()=>window.__careAudio.active)).toBe(0);await expect.poll(async()=> (await record(page)).settings.careSound).toBe(false);
   const starts=await page.evaluate(()=>window.__careAudio.starts);await page.locator('[data-game-care="pet"]').click();await expect(page.locator('.game-care-feedback')).toContainText('ひとやすみ');expect(await page.evaluate(()=>window.__careAudio.starts)).toBe(starts);
   await page.reload();await expect(page.locator('.game-app')).toBeVisible();expect(await page.evaluate(()=>window.__careAudio.starts)).toBe(0);expect(await page.evaluate(()=>window.__careAudio.contexts)).toBe(0);
