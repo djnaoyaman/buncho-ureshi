@@ -1,0 +1,86 @@
+import { test, expect } from '@playwright/test';
+import { createWorld, advanceTicks, adoptBird, validateWorld } from '../../src/engine.js';
+const DB='buncho-ureshi-garden-v1',now=Date.UTC(2026,10,2,12);
+function fixture({stage='adult',home='resident',sound=false}={}){
+  const w=createWorld(now,5402);advanceTicks(w,1);adoptBird(w,'b2','こめ');w.paused=true;w.lastUpdated=now;w.care.cleanliness=15;w.settings.careSound=sound;w.birds[0].needs.food=40;w.birds[0].mood=60;w.birds[0].stage=stage;w.birds[0].home=home;return validateWorld(w);
+}
+async function record(page,value){return page.evaluate(({dbName,value})=>new Promise((resolve,reject)=>{const open=indexedDB.open(dbName,1);open.onupgradeneeded=()=>open.result.createObjectStore('world');open.onerror=()=>reject(open.error);open.onsuccess=()=>{const db=open.result,tx=db.transaction('world',value?'readwrite':'readonly'),store=tx.objectStore('world'),request=value?store.put(value,'current'):store.get('current');tx.oncomplete=()=>{db.close();resolve(value||request.result);};tx.onerror=()=>{db.close();reject(tx.error);};};}),{dbName:DB,value});}
+async function seed(page,w=fixture()){await page.goto('');await record(page,w);await page.goto('game/');await expect(page.locator('.game-app')).toBeVisible();}
+async function tab(page,name){await page.locator(`[data-game-panel="${name}"]`).first().click();}
+async function downloadText(download){const stream=await download.createReadStream();if(!stream)throw Error('No download stream');const chunks=[];for await(const chunk of stream)chunks.push(Buffer.from(chunk));return Buffer.concat(chunks).toString('utf8');}
+async function trackNativeAudio(page){await page.addInitScript(()=>{
+  const Native=window.AudioContext||window.webkitAudioContext;window.__careAudio={contexts:0,starts:0,active:0,closed:0};
+  if(!Native){window.__careAudio.unavailable=true;return;}
+  class Tracked extends Native{constructor(...args){super(...args);window.__careAudio.contexts++;}createOscillator(){const osc=super.createOscillator(),start=osc.start.bind(osc);osc.start=(...args)=>{window.__careAudio.starts++;window.__careAudio.active++;return start(...args);};osc.addEventListener('ended',()=>window.__careAudio.active--);return osc;}close(){window.__careAudio.closed++;return super.close();}}
+  Object.defineProperty(window,'AudioContext',{configurable:true,value:Tracked});
+});}
+async function holdAudio(page){await page.addInitScript(()=>{
+  window.__careStarts=0;const gates=[];window.__releaseCareAudio=()=>gates.splice(0).forEach(release=>release());
+  class Param{setValueAtTime(){}linearRampToValueAtTime(){}exponentialRampToValueAtTime(){}cancelScheduledValues(){}}
+  class HeldContext{constructor(){this.state='suspended';this.currentTime=0;this.destination={};}resume(){return new Promise(resolve=>gates.push(()=>{if(this.state!=='closed')this.state='running';resolve();}));}createOscillator(){return{frequency:new Param(),connect(){},disconnect(){},start(){window.__careStarts++;},stop(){}};}createGain(){return{gain:new Param(),connect(){},disconnect(){}};}close(){this.state='closed';return Promise.resolve();}}
+  Object.defineProperty(window,'AudioContext',{configurable:true,value:HeldContext});
+});}
+test.beforeEach(async({page})=>{await page.addInitScript(value=>{Date.now=()=>value;},now);await page.route(/youtube|youtu\.be|googlevideo|ytimg/i,r=>r.abort());});
+
+test('care feed increases displayed fullness and free cleaning resets the floor without duplicate same-tick changes',async({page})=>{
+  await seed(page);await expect(page.locator('[data-game-fullness]')).toHaveText('40 / 100');await expect(page.locator('[data-game-care-sound]')).not.toBeChecked();
+  await page.locator('[data-game-care="feed"]').click();await expect(page.locator('[data-game-fullness]')).toHaveText('60 / 100');const fed=await record(page);
+  await page.locator('[data-game-care="feed"]').click();await page.locator('[data-game-care="feed"]').click();await expect(page.locator('.game-care-feedback')).toContainText('さっき食べた');expect(await record(page)).toEqual(fed);
+  await page.locator('[data-game-care="clean"]').click();await expect(page.locator('[data-game-cleanliness-value]')).toHaveText('100 / 100');await expect(page.locator('.game-floor-soil')).toHaveCSS('opacity','0');
+  const clean=await record(page);await page.locator('[data-game-care="clean"]').click();expect(await record(page)).toEqual(clean);expect(clean.birds[0].color).toBe('white');
+  await page.reload();await expect(page.locator('[data-game-fullness]')).toHaveText('60 / 100');await expect(page.locator('[data-game-cleanliness-value]')).toHaveText('100 / 100');
+});
+
+test('care sound opt-in schedules a short native synthetic chirp only after successful pet, mute stops it and reload is silent',async({page})=>{
+  await trackNativeAudio(page);await seed(page);expect(await page.evaluate(()=>window.__careAudio.contexts)).toBe(0);
+  await page.locator('[data-game-care-sound]').check();await expect.poll(async()=> (await record(page)).settings.careSound).toBe(true);expect(await page.evaluate(()=>window.__careAudio.starts)).toBe(0);
+  await page.locator('[data-game-care="pet"]').click();await expect(page.locator('.game-care-feedback')).toContainText('ぴっ');
+  // No false audible claim: missing browser audio must retain explicit text fallback.
+  const unavailable=await page.evaluate(()=>window.__careAudio.unavailable);
+  if(unavailable)await expect(page.locator('.game-message')).toContainText('合成音を鳴らせません');
+  else {await expect.poll(()=>page.evaluate(()=>window.__careAudio.starts)).toBe(2);}
+  await page.locator('[data-game-care-sound]').uncheck();await expect.poll(()=>page.evaluate(()=>window.__careAudio.active)).toBe(0);await expect.poll(async()=> (await record(page)).settings.careSound).toBe(false);
+  const starts=await page.evaluate(()=>window.__careAudio.starts);await page.locator('[data-game-care="pet"]').click();await expect(page.locator('.game-care-feedback')).toContainText('ひとやすみ');expect(await page.evaluate(()=>window.__careAudio.starts)).toBe(starts);
+  await page.reload();await expect(page.locator('.game-app')).toBeVisible();expect(await page.evaluate(()=>window.__careAudio.starts)).toBe(0);expect(await page.evaluate(()=>window.__careAudio.contexts)).toBe(0);
+});
+
+for(const cancel of ['selection','route','mute'])test(`care pending audio is discarded after ${cancel}`,async({page})=>{
+  await holdAudio(page);await seed(page,fixture({sound:true}));await page.locator('[data-game-care="pet"]').click();await expect.poll(async()=> (await record(page)).birds[0].mood).toBe(64);expect(await page.evaluate(()=>window.__careStarts)).toBe(0);
+  if(cancel==='selection')await page.locator('[data-game-scene-choose]').selectOption('b2');
+  if(cancel==='route'){await page.locator('#menu-toggle').click();await page.locator('#menu a[href$="encyclopedia/"]').click();await expect(page.locator('#article-grid')).toBeVisible();}
+  if(cancel==='mute')await page.locator('[data-game-care-sound]').uncheck();
+  await page.evaluate(()=>window.__releaseCareAudio());await page.waitForTimeout(50);expect(await page.evaluate(()=>window.__careStarts)).toBe(0);
+});
+
+test('care unavailable stages explain disabled actions and retain their natural stage artwork',async({page})=>{
+  for(const options of [{stage:'egg'},{stage:'chick'},{home:'departed'}]){
+    await seed(page,fixture(options));if(options.home){await tab(page,'roster');await page.locator('[data-game-select="b1"]').click();}
+    await expect(page.locator('[data-game-care="feed"]')).toBeDisabled();await expect(page.locator('[data-game-care="pet"]')).toBeDisabled();
+    await expect(page.locator('#game-care-explanation')).toContainText(options.home?'別の庭に巣立った':'巣で育つ時間');
+    if(options.stage)await expect(page.locator('.game-profile-heading .game-sprite')).toHaveAttribute('data-stage',options.stage);
+  }
+});
+
+test('care export preserves v2 values, cancelled import is exact, confirmed import with sound preference never autoplays',async({page})=>{
+  await trackNativeAudio(page);await seed(page);await page.locator('[data-game-care="feed"]').click();await expect(page.locator('[data-game-fullness]')).toHaveText('60 / 100');await tab(page,'settings');
+  const downloadEvent=page.waitForEvent('download');await page.locator('[data-game-action="export"]').click();const exported=validateWorld(JSON.parse(await downloadText(await downloadEvent)));expect(exported.version).toBe(2);expect(exported.birds[0].needs.food).toBe(60);expect(exported.care.cleanliness).toBe(15);expect(exported.settings.careSound).toBe(false);
+  const next=fixture({sound:true});next.worldId+='-import';next.birds[0].needs.food=73;next.care.cleanliness=44;
+  const file={name:'care.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(next))},before=await record(page);
+  page.once('dialog',dialog=>dialog.dismiss());await page.locator('#game-import').setInputFiles(file);await expect(page.locator('#game-import')).toHaveValue('');expect(await record(page)).toEqual(before);
+  page.once('dialog',dialog=>dialog.accept());await page.locator('#game-import').setInputFiles(file);await expect(page.locator('.game-message')).toContainText('復元');expect((await record(page)).worldId).toBe(next.worldId);expect(await page.evaluate(()=>window.__careAudio.starts)).toBe(0);
+  await tab(page,'garden');await expect(page.locator('[data-game-fullness]')).toHaveText('73 / 100');await expect(page.locator('[data-game-cleanliness-value]')).toHaveText('44 / 100');await expect(page.locator('[data-game-care-sound]')).toBeChecked();
+});
+
+for(const width of [320,768,1440])test(`care controls and floor-only tint fit ${width}px without changing bird contacts`,async({page},info)=>{
+  await page.setViewportSize({width,height:950});await page.emulateMedia({reducedMotion:'reduce'});await seed(page);
+  await page.locator('.game-room img').evaluateAll(async images=>{await Promise.all(images.map(image=>image.decode()));await new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(done)));});
+  const before=await page.locator('.game-room-bird').evaluateAll(nodes=>nodes.map(node=>({id:node.dataset.birdId,style:node.getAttribute('style'),src:node.querySelector('img').src,filter:getComputedStyle(node.querySelector('img')).filter})));
+  expect(before.every(b=>b.filter==='none')).toBe(true);const floor=page.locator('.game-floor-soil');expect(Number(await floor.evaluate(node=>getComputedStyle(node).opacity))).toBeGreaterThan(0);expect(Number(await floor.evaluate(node=>getComputedStyle(node).opacity))).toBeLessThanOrEqual(.22);await expect(floor).toHaveAttribute('aria-hidden','true');await expect(floor).toHaveCSS('pointer-events','none');await expect(floor).toHaveCSS('z-index','1');
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+  if(info.project.name==='chromium')await page.locator('.game-room').screenshot({path:info.outputPath(`care-floor-dirty-${width}.png`),animations:'disabled'});
+  await page.locator('[data-game-care="clean"]').click();await expect(floor).toHaveCSS('opacity','0');
+  expect(await page.locator('.game-room-bird').evaluateAll(nodes=>nodes.map(node=>({id:node.dataset.birdId,style:node.getAttribute('style'),src:node.querySelector('img').src,filter:getComputedStyle(node.querySelector('img')).filter})))).toEqual(before);
+  await page.locator('[data-game-care="pet"]').click();await expect(page.locator('.game-app')).toHaveAttribute('data-care-motion','off');await expect(page.locator('.game-care-feedback').last()).toContainText('ぴっ');
+  await page.locator('.game-room img').evaluateAll(async images=>{await Promise.all(images.map(image=>image.decode()));await new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(done)));});
+  if(info.project.name==='chromium'){await page.locator('.game-room').screenshot({path:info.outputPath(`care-floor-clean-${width}.png`),animations:'disabled'});await page.locator('.game-care').screenshot({path:info.outputPath(`care-controls-${width}.png`),animations:'disabled'});}
+});
