@@ -75,6 +75,8 @@ test('atlas filters handle aliases, zero results, keyboard submission and repeat
 
 test('atlas comparison handles repeated identical selections, keyboard alternatives, profile shortcuts and explicit reset', async ({ page }) => {
   await page.goto('colors/');await ready(page);
+  await page.locator('#morph-compare > summary').click();
+  await expect(page.locator('#morph-compare')).toHaveAttribute('open', '');
   const a=page.locator('[data-morph-compare="a"]'),b=page.locator('[data-morph-compare="b"]');
   const initial=[await a.inputValue(),await b.inputValue()];
   await a.selectOption('silver');await b.selectOption('silver');await b.selectOption('silver');

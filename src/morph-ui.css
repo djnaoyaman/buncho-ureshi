@@ -126,3 +126,21 @@
 .morph-compare-controls>[data-morph-compare-reset]{grid-column:1/-1;justify-self:start;}
 .morph-discovery-link{margin-bottom:30px;}
 .morph-discovery-link h2{font-size:clamp(1.3rem,3vw,2rem);line-height:1.8;}
+/* A photograph appears once in the browse view; comparison is an explicit action. */
+.morph-overview-hero{display:block!important}
+.morph-overview-hero .morph-intro{max-width:850px}
+.morph-image-wrap{padding:12px;border-radius:26px 26px 8px 26px!important;overflow:hidden}
+.morph-card:nth-child(2n) .morph-image-wrap{border-radius:64px 64px 14px 14px!important}
+.morph-image-wrap img{border-radius:8px;min-height:0}
+.morph-research>summary,.morph-compare-panel>summary{cursor:pointer;font-weight:700;min-height:44px;padding:12px 0;font-size:1.1rem}
+.morph-gallery-nav{display:none}
+@media(max-width:600px){
+ .morph-overview-hero .morph-intro h1{font-size:clamp(24px,6.6vw,32px)!important;line-height:1.9;letter-spacing:-.04em!important}
+ .morph-atlas ruby{white-space:nowrap}.morph-atlas p{line-height:2.1}
+ .morph-gallery-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:12px 0}.morph-gallery-nav [role=status]{font-size:.8rem}
+ .morph-cards{display:flex!important;gap:18px;overflow-x:auto;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;scroll-padding:0;padding-bottom:16px;}
+ .morph-cards .morph-card,.morph-cards .morph-card:nth-child(5):last-child{flex:0 0 100%;display:block!important;scroll-snap-align:start;scroll-snap-stop:always;}
+ .morph-card .morph-image-wrap{aspect-ratio:4/3;}.morph-card-body{padding-top:18px!important}
+ .morph-filterbar{grid-template-columns:1fr!important}.morph-compare-controls{gap:10px}
+}
+@media(prefers-reduced-motion:reduce){.morph-cards{scroll-behavior:auto}}

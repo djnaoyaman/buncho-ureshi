@@ -45,7 +45,7 @@ function resolveSources(refs, data) {
 }
 function sourceSection(refs, data, checkedAt, heading = true) {
   const sources = resolveSources(refs, data);
-  return `${heading ? '<h2><ruby>調<rt>しら</rt></ruby>べた<ruby>資料<rt>しりょう</rt></ruby></h2>' : ''}${sources.length ? `<ol class="morph-source-list">${sources.map(source => `<li>${externalLink(source.url || source.source, source.title || source.name || '参照資料')}${source.author ? ` — ${E(source.author)}` : ''}${source.note ? `<br>${E(source.note)}` : ''}</li>`).join('')}</ol>` : '<p class="morph-checked">この項目の出典は、写真の元ページと図鑑の素材台帳をご覧ください。</p>'}${checkedAt ? `<p class="morph-checked"><ruby>確認日<rt>かくにんび</rt></ruby>：<time datetime="${E(checkedAt)}">${E(checkedAt)}</time></p>` : ''}`;
+  return `<details class="morph-research"><summary>${heading ? '調べた資料' : 'この項目の資料'}</summary>${sources.length ? `<ol class="morph-source-list">${sources.map(source => `<li>${externalLink(source.url || source.source, source.title || source.name || '参照資料')}${source.author ? ` — ${E(source.author)}` : ''}${source.note ? `<br>${E(source.note)}` : ''}</li>`).join('')}</ol>` : '<p class="morph-checked">この項目の出典は、写真の元ページと図鑑の素材台帳をご覧ください。</p>'}${checkedAt ? `<p class="morph-checked"><ruby>確認日<rt>かくにんび</rt></ruby>：<time datetime="${E(checkedAt)}">${E(checkedAt)}</time></p>` : ''}</details>`;
 }
 function paragraphList(values, className = '') {
   const items = list(values);
@@ -144,7 +144,7 @@ export function renderMorphOverview(data, options = {}) {
   const heroProfile = all.find(profile => profile.id === 'white') || all[0];
   const heading = data.titleRuby ? renderMorphRuby(data.titleRuby) : '<ruby>文鳥<rt>ぶんちょう</rt></ruby>の<ruby>羽色<rt>はねいろ</rt></ruby>ずかん';
   const count = filterMorphProfiles(data, options.query, options.filter).length;
-  return `<div class="morph-atlas" data-morph-view="overview">${breadcrumb(null, options)}<div class="morph-overview-hero"><header class="morph-intro"><p class="morph-kicker">FEATHERS / A LIVING COLOUR ATLAS</p><h1>${heading}</h1><p><ruby>黒<rt>くろ</rt></ruby>、<ruby>白<rt>しろ</rt></ruby>、やわらかな<ruby>灰色<rt>はいいろ</rt></ruby>。<br><ruby>写真<rt>しゃしん</rt></ruby>を<ruby>大<rt>おお</rt></ruby>きく<ruby>見<rt>み</rt></ruby>て、<ruby>羽<rt>はね</rt></ruby>のちがいを<ruby>探<rt>さが</rt></ruby>そう。</p>${flourish()}</header>${heroProfile ? renderMorphPhoto(photoReference(heroProfile), data, {...options, primary:true, eager:true}) : ''}</div>${data.coverage?.claim ? `<p class="morph-coverage">${data.coverage.claimHtml ? renderMorphRuby(data.coverage.claimHtml) : E(data.coverage.claim)}</p>` : ''}${taxonomyHTML(data)}<nav class="morph-toc" aria-label="羽色ずかんの目次"><a href="${E(url)}#morph-profiles"><ruby>写真<rt>しゃしん</rt></ruby>から<ruby>探<rt>さが</rt></ruby>す</a><a href="${E(url)}#morph-compare">２つをくらべる</a><a href="${E(url)}#morph-growth">こどもと、おとな</a><a href="${E(url)}#morph-terms">ことば<ruby>帳<rt>ちょう</rt></ruby></a><a href="${E(url)}#morph-sources"><ruby>資料<rt>しりょう</rt></ruby></a></nav><section class="morph-section" id="morph-profiles"><h2><ruby>写真<rt>しゃしん</rt></ruby>から、${all.length}つの<ruby>解説<rt>かいせつ</rt></ruby>へ</h2><p class="morph-section-lead"><ruby>見<rt>み</rt></ruby>える<ruby>模様<rt>もよう</rt></ruby>と、<ruby>資料<rt>しりょう</rt></ruby>で<ruby>確認<rt>かくにん</rt></ruby>できた<ruby>名前<rt>なまえ</rt></ruby>を<ruby>分<rt>わ</rt></ruby>けて<ruby>書<rt>か</rt></ruby>いています。<ruby>写真<rt>しゃしん</rt></ruby>は、<ruby>体<rt>からだ</rt></ruby>の<ruby>特徴<rt>とくちょう</rt></ruby>が<ruby>欠<rt>か</rt></ruby>けないように<ruby>表示<rt>ひょうじ</rt></ruby>しています。</p><form class="morph-filterbar" data-morph-filter-form role="search"><label for="morph-search"><ruby>色<rt>いろ</rt></ruby>・<ruby>模様<rt>もよう</rt></ruby>・ことばで<ruby>探<rt>さが</rt></ruby>す<input id="morph-search" data-morph-query type="search" value="${E(options.query || '')}" maxlength="80" placeholder="白、まだら、幼鳥…" autocomplete="off"></label><label for="morph-filter"><ruby>呼<rt>よ</rt></ruby>び<ruby>名<rt>な</rt></ruby>でしぼる<select id="morph-filter" data-morph-filter><option value="all">すべての かいせつ</option>${filters.map(filter => `<option value="${E(filter.value || filter.id)}"${options.filter === (filter.value || filter.id) ? ' selected' : ''}>${E(filter.label || filter.name)}</option>`).join('')}</select></label><button type="button" data-morph-reset>しぼりこみをもどす</button></form><p class="morph-result-count" data-morph-result-count role="status" aria-live="polite">${count}件の<ruby>解説<rt>かいせつ</rt></ruby></p><div class="morph-cards" data-morph-results>${renderMorphCards(data, options)}</div></section><section class="morph-section" id="morph-compare"><h2>２つ<ruby>並<rt>なら</rt></ruby>べて、<ruby>見<rt>み</rt></ruby>くらべる</h2><p class="morph-section-lead"><ruby>頭<rt>あたま</rt></ruby>、ほお、<ruby>翼<rt>つばさ</rt></ruby>。どこがちがうかな？ <ruby>名前<rt>なまえ</rt></ruby>を<ruby>選<rt>えら</rt></ruby>ぶと<ruby>写真<rt>しゃしん</rt></ruby>と<ruby>説明<rt>せつめい</rt></ruby>が<ruby>切<rt>き</rt></ruby>り<ruby>替<rt>か</rt></ruby>わります。</p><div class="morph-compare-controls"><label for="morph-compare-a">１つめの<ruby>文鳥<rt>ぶんちょう</rt></ruby><select id="morph-compare-a" data-morph-compare="a">${compareOptions(data, selected[0])}</select></label><span class="morph-compare-mark" aria-hidden="true">と</span><label for="morph-compare-b">２つめの<ruby>文鳥<rt>ぶんちょう</rt></ruby><select id="morph-compare-b" data-morph-compare="b">${compareOptions(data, selected[1])}</select></label><button type="button" data-morph-compare-reset>くらべる組み合わせをもどす</button></div><p class="morph-live" data-morph-compare-status role="status" aria-live="polite"></p><div data-morph-comparison>${renderMorphComparison(selected, data, options)}</div></section>${introductionSections(data)}${ageSection(data, options)}${termsSection(data)}${glossarySection(data)}<section class="morph-section" id="morph-sources">${sourceSection(data.overviewSources || data.sources, data, data.checkedAt || data.checkedDate)}</section><noscript><p class="morph-noscript">写真と解説はこのまま読めます。検索・しぼりこみ・比較の切り替え・読み上げにはJavaScriptが必要です。</p></noscript></div>`;
+  return `<div class="morph-atlas" data-morph-view="overview">${breadcrumb(null, options)}<div class="morph-overview-hero"><header class="morph-intro"><p class="morph-kicker">FEATHERS / A LIVING COLOUR ATLAS</p><h1>${heading}</h1><p><ruby>黒<rt>くろ</rt></ruby>、<ruby>白<rt>しろ</rt></ruby>、やわらかな<ruby>灰色<rt>はいいろ</rt></ruby>。<br><ruby>写真<rt>しゃしん</rt></ruby>を<ruby>大<rt>おお</rt></ruby>きく<ruby>見<rt>み</rt></ruby>て、<ruby>羽<rt>はね</rt></ruby>のちがいを<ruby>探<rt>さが</rt></ruby>そう。</p>${flourish()}</header></div>${data.coverage?.claim ? `<p class="morph-coverage">${data.coverage.claimHtml ? renderMorphRuby(data.coverage.claimHtml) : E(data.coverage.claim)}</p>` : ''}${taxonomyHTML(data)}<nav class="morph-toc" aria-label="羽色ずかんの目次"><a href="${E(url)}#morph-profiles"><ruby>写真<rt>しゃしん</rt></ruby>から<ruby>探<rt>さが</rt></ruby>す</a><a href="${E(url)}#morph-compare">２つをくらべる</a><a href="${E(url)}#morph-growth">こどもと、おとな</a><a href="${E(url)}#morph-terms">ことば<ruby>帳<rt>ちょう</rt></ruby></a><a href="${E(url)}#morph-sources"><ruby>資料<rt>しりょう</rt></ruby></a></nav><section class="morph-section" id="morph-profiles"><h2><ruby>写真<rt>しゃしん</rt></ruby>から、${all.length}つの<ruby>解説<rt>かいせつ</rt></ruby>へ</h2><p class="morph-section-lead"><ruby>見<rt>み</rt></ruby>える<ruby>模様<rt>もよう</rt></ruby>と、<ruby>資料<rt>しりょう</rt></ruby>で<ruby>確認<rt>かくにん</rt></ruby>できた<ruby>名前<rt>なまえ</rt></ruby>を<ruby>分<rt>わ</rt></ruby>けて<ruby>書<rt>か</rt></ruby>いています。<ruby>写真<rt>しゃしん</rt></ruby>は、<ruby>体<rt>からだ</rt></ruby>の<ruby>特徴<rt>とくちょう</rt></ruby>が<ruby>欠<rt>か</rt></ruby>けないように<ruby>表示<rt>ひょうじ</rt></ruby>しています。</p><form class="morph-filterbar" data-morph-filter-form role="search"><label for="morph-search"><ruby>色<rt>いろ</rt></ruby>・<ruby>模様<rt>もよう</rt></ruby>・ことばで<ruby>探<rt>さが</rt></ruby>す<input id="morph-search" data-morph-query type="search" value="${E(options.query || '')}" maxlength="80" placeholder="白、まだら、幼鳥…" autocomplete="off"></label><label for="morph-filter"><ruby>呼<rt>よ</rt></ruby>び<ruby>名<rt>な</rt></ruby>でしぼる<select id="morph-filter" data-morph-filter><option value="all">すべての かいせつ</option>${filters.map(filter => `<option value="${E(filter.value || filter.id)}"${options.filter === (filter.value || filter.id) ? ' selected' : ''}>${E(filter.label || filter.name)}</option>`).join('')}</select></label><button type="button" data-morph-reset>しぼりこみをもどす</button></form><p class="morph-result-count" data-morph-result-count role="status" aria-live="polite">${count}件の<ruby>解説<rt>かいせつ</rt></ruby></p><div class="morph-gallery-nav"><button type="button" data-morph-page="-1" aria-label="前の羽色へ">← 前へ</button><span data-morph-position role="status">1 / ${count}</span><button type="button" data-morph-page="1" aria-label="次の羽色へ">次へ →</button></div><div class="morph-cards" data-morph-results tabindex="0" aria-label="羽色の写真。横にスワイプして選べます">${renderMorphCards(data, options)}</div></section><details class="morph-section morph-compare-panel" id="morph-compare"><summary>２つの羽色をくらべる</summary><h2>２つ<ruby>並<rt>なら</rt></ruby>べて、<ruby>見<rt>み</rt></ruby>くらべる</h2><p class="morph-section-lead"><ruby>頭<rt>あたま</rt></ruby>、ほお、<ruby>翼<rt>つばさ</rt></ruby>。どこがちがうかな？ <ruby>名前<rt>なまえ</rt></ruby>を<ruby>選<rt>えら</rt></ruby>ぶと<ruby>写真<rt>しゃしん</rt></ruby>と<ruby>説明<rt>せつめい</rt></ruby>が<ruby>切<rt>き</rt></ruby>り<ruby>替<rt>か</rt></ruby>わります。</p><div class="morph-compare-controls"><label for="morph-compare-a">１つめの<ruby>文鳥<rt>ぶんちょう</rt></ruby><select id="morph-compare-a" data-morph-compare="a">${compareOptions(data, selected[0])}</select></label><span class="morph-compare-mark" aria-hidden="true">と</span><label for="morph-compare-b">２つめの<ruby>文鳥<rt>ぶんちょう</rt></ruby><select id="morph-compare-b" data-morph-compare="b">${compareOptions(data, selected[1])}</select></label><button type="button" data-morph-compare-reset>くらべる組み合わせをもどす</button></div><p class="morph-live" data-morph-compare-status role="status" aria-live="polite"></p><div data-morph-comparison></div></details>${introductionSections(data)}${ageSection(data, options)}${termsSection(data)}${glossarySection(data)}<section class="morph-section" id="morph-sources">${sourceSection(data.overviewSources || data.sources, data, data.checkedAt || data.checkedDate)}</section><noscript><p class="morph-noscript">写真と解説はこのまま読めます。検索・しぼりこみ・比較の切り替え・読み上げにはJavaScriptが必要です。</p></noscript></div>`;
 }
 export function renderMorphProfile(id, data, options = {}) {
   const profile = profiles(data).find(item => item.id === id);
@@ -169,11 +169,31 @@ export function bindMorphAtlas(root, { data, speak, stopSpeech, onAnnounce, ...o
   if (a && b) { const pair = initialComparison(data, options); a.value = pair[0]; b.value = pair[1]; }
   let active = true, speaking = false;
   const announce = text => { if (typeof onAnnounce === 'function') onAnnounce(text); };
+  const gallery = root.querySelector('[data-morph-results]');
+  const comparisonPanel = root.querySelector('#morph-compare');
+  function galleryPosition() {
+    const cards = [...(gallery?.querySelectorAll('[data-morph-card]') || [])];
+    const left = gallery?.getBoundingClientRect().left || 0;
+    const index = cards.length ? cards.reduce((best, card, i) => Math.abs(card.getBoundingClientRect().left - left) < Math.abs(cards[best].getBoundingClientRect().left - left) ? i : best, 0) : 0;
+    const label = root.querySelector('[data-morph-position]');
+    if (label) label.textContent = `${cards.length ? index + 1 : 0} / ${cards.length}`;
+    const prev = root.querySelector('[data-morph-page="-1"]'), next = root.querySelector('[data-morph-page="1"]');
+    if (prev) prev.disabled = !cards.length || index === 0;
+    if (next) next.disabled = !cards.length || index === cards.length - 1;
+    return { cards, index };
+  }
+  function comparisonToggle() {
+    if (comparisonPanel?.open) updateComparison();
+    else { const result = root.querySelector('[data-morph-comparison]'); if (result) result.innerHTML = ''; }
+  }
+
   function updateFilters() {
     if (!active || !query || !filter) return;
     const result = root.querySelector('[data-morph-results]'), count = root.querySelector('[data-morph-result-count]');
     const found = filterMorphProfiles(data, query.value, filter.value);
     if (result) result.innerHTML = renderMorphCards(data, { ...options, query: query.value, filter: filter.value });
+    if (result) result.scrollLeft = 0;
+    galleryPosition();
     if (count) count.innerHTML = `${found.length}<ruby>件<rt>けん</rt></ruby>の<ruby>解説<rt>かいせつ</rt></ruby>`;
   }
   function updateComparison() {
@@ -183,6 +203,16 @@ export function bindMorphAtlas(root, { data, speak, stopSpeech, onAnnounce, ...o
     if (status) status.textContent = a.value === b.value ? 'ちがう名前を２つ選んでね。' : `${profileName(profiles(data).find(profile => profile.id === a.value))}と${profileName(profiles(data).find(profile => profile.id === b.value))}を並べました。`;
   }
   function click(event) {
+    const page = event.target.closest?.('[data-morph-page]');
+    if (page && root.contains(page)) {
+      const { cards, index } = galleryPosition();
+      const target = cards[Math.max(0, Math.min(cards.length - 1, index + Number(page.dataset.morphPage)))];
+      if (gallery && target) {
+        const reduced = root.ownerDocument.defaultView?.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+        gallery.scrollBy({ left: target.getBoundingClientRect().left - gallery.getBoundingClientRect().left, behavior: reduced ? 'auto' : 'smooth' });
+      }
+      return;
+    }
     const resetComparison = event.target.closest?.('[data-morph-compare-reset]');
     if (resetComparison && root.contains(resetComparison) && a && b) { const pair = initialComparison(data, options); a.value = pair[0]; b.value = pair[1]; updateComparison(); a.focus(); return; }
     const compare = event.target.closest?.('[data-morph-compare-id]');
@@ -191,6 +221,7 @@ export function bindMorphAtlas(root, { data, speak, stopSpeech, onAnnounce, ...o
       if (!profiles(data).some(profile => profile.id === id)) return;
       a.value = id;
       if (b.value === id) b.value = profiles(data).find(profile => profile.id !== id)?.id || '';
+      if (comparisonPanel) comparisonPanel.open = true;
       updateComparison();
       root.querySelector('#morph-compare')?.scrollIntoView?.({ block: 'start', behavior: 'auto' });
       a.focus({ preventScroll: true });
@@ -214,9 +245,14 @@ export function bindMorphAtlas(root, { data, speak, stopSpeech, onAnnounce, ...o
   function input(event) { if (event.target === query) updateFilters(); }
   function change(event) { if (event.target === filter) updateFilters(); else if (event.target === a || event.target === b) updateComparison(); }
   function submit(event) { if (event.target.matches?.('[data-morph-filter-form]')) { event.preventDefault(); updateFilters(); } }
+  gallery?.addEventListener('scroll', galleryPosition, { passive: true });
+  comparisonPanel?.addEventListener('toggle', comparisonToggle);
+  galleryPosition();
   root.addEventListener('click', click); root.addEventListener('input', input); root.addEventListener('change', change); root.addEventListener('submit', submit);
   return () => {
     if (!active) return; active = false;
+    gallery?.removeEventListener('scroll', galleryPosition);
+    comparisonPanel?.removeEventListener('toggle', comparisonToggle);
     root.removeEventListener('click', click); root.removeEventListener('input', input); root.removeEventListener('change', change); root.removeEventListener('submit', submit);
     if (speaking && typeof stopSpeech === 'function') stopSpeech();
   };

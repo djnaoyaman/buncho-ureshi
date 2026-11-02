@@ -57,6 +57,6 @@ test("20+ quizzes link explanations to real articles", () => {
 });
 test("real Omochi remains separate from fictional biographies", async () => {
   const app = await readFile(new URL("../src/app.js", import.meta.url), "utf8");
-  assert.ok(app.includes("本人の実写写真はこのサイトでは公開していません"));
+  assert.ok(app.includes("写真は、ご家族から「おもちです」と紹介された本人です"));
   assert.ok(app.includes("ゲームの出来事とは別の記録"));
 });

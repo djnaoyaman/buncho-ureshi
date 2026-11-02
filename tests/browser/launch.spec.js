@@ -44,7 +44,7 @@ test('Launch Package served manifest, icons, sitemap and LLM files match the pro
   for(const icon of manifest.icons){const r=await request.get(new URL(icon.src,response.url()).href);expect(r.status()).toBe(200);const bytes=await r.body();expect(bytes.subarray(1,4).toString()).toBe('PNG');expect(`${bytes.readUInt32BE(16)}x${bytes.readUInt32BE(20)}`).toBe(icon.sizes);}
   for(const name of ['favicon.ico','favicon.svg','apple-touch-icon.png','safari-pinned-tab.svg','ogp.png']){const r=await request.get(target(name));expect(r.status()).toBe(200);expect((await r.body()).length).toBeGreaterThan(100);}
   const map=await request.get(target('sitemap.xml'));expect(map.status()).toBe(200);const xml=await map.text();expect([...xml.matchAll(/<loc>/g)]).toHaveLength(PAGE_CATALOG.length);expect(xml).not.toContain('404.html');
-  for(const name of ['llms.txt','llms-full.txt']){const r=await request.get(target(name));expect(r.status()).toBe(200);const text=await r.text();expect(text).toContain(SITE_NAME);expect(text).toContain('本人の実写写真はこのサイトでは公開していません');}
+  for(const name of ['llms.txt','llms-full.txt']){const r=await request.get(target(name));expect(r.status()).toBe(200);const text=await r.text();expect(text).toContain(SITE_NAME);expect(text).toContain('ご家族が提供した、おもち本人の写真を掲載しています');}
   await page.goto('help/');await expect(page.locator('#help-access')).toContainText('オフライン');await expect(page.locator('#help-access')).toContainText('ブックマーク');
 });
 

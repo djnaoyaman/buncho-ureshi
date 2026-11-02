@@ -155,9 +155,14 @@ function navigate(route, replace = false) {
 function heading(eyebrow, title, description = "") {
   return `<header class="page-heading"><p class="eyebrow">${eyebrow}</p><h1>${title}</h1>${description ? `<p class="lede">${description}</p>` : ""}</header>`;
 }
+// Covers are independent original photographs, never recoloured or duplicated crops.
+const articleCoverOverrides = { conservation: "photo-03", beak: "photo-14", eyes: "photo-43", tail: "photo-26", observation: "photo-27", resting: "photo-21", voice: "photo-19", sleep: null, clean: "photo-11", molt: "photo-37", health: null };
 function articleCard(a) {
-  return `<a class="article-card" href="${url(`encyclopedia/${a.id}/`)}">${a.category === "おもち観察室" ? `<div class="observation-card-art">${birdSvg()}<small>案内イラスト</small></div>` : image(a.photos?.[0])}<div><span class="eyebrow">${esc(a.category)}</span><h3>${esc(a.title)}</h3><p>${a.summary}</p></div><span class="card-arrow" aria-hidden="true">↗</span></a>`;
+  const id = Object.hasOwn(articleCoverOverrides, a.id) ? articleCoverOverrides[a.id] : a.photos?.[0];
+  const p = photos.find(p => p.id === id);
+  return `<a class="article-card${p ? '' : ' article-card--text'}" href="${url(`encyclopedia/${a.id}/`)}">${p ? `<div class="article-cover-frame">${image(id)}<small class="article-cover-credit">${esc(p.credit)}</small></div>` : ''}<div><span class="eyebrow">${esc(a.category)}</span><h3>${esc(a.title)}</h3><p>${a.summary}</p></div><span class="card-arrow" aria-hidden="true">↗</span></a>`;
 }
+
 const siteSections = [
   { route: "", title: "トップ · 文鳥の庭", description: "写真で知る、アートをつくる、文鳥と暮らす。今日の発見と観察ミッション。" },
   { route: "encyclopedia/", title: "文鳥図鑑", description: "文鳥の種類、体、羽色、しぐさ、食べ物、飼育の基本。写真と出典から三段階で学ぶ。" },
@@ -251,7 +256,7 @@ function article(a) {
           )
           .join("")}</div>`
       : ""
-  }<aside class="mission"><span class="eyebrow">観察ミッション</span><p>${a.mission || "写真と説明を見比べて、気づいたことを一つ見つけよう。"}</p><small>鳥を追いかけたり、嫌がることをしたりせずに観察しよう。</small></aside><section id="sources" class="source-box"><h2>確かめた資料と写真</h2><p>情報確認日：${esc(a.checkedAt || "2026-11-02")}。一般の文鳥についての解説です。写真はおもち本人ではありません。</p><ul>${a.sources.map((s) => `<li>${s.url ? `<a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">${esc(s.title)}</a>` : esc(s.title)}</li>`).join("")}</ul><ul>${photoCredits(a.photos)}</ul></section><h2>つながる発見</h2><div class="related-links">${(
+  }<aside class="mission"><span class="eyebrow">観察ミッション</span><p>${a.mission || "写真と説明を見比べて、気づいたことを一つ見つけよう。"}</p><small>鳥を追いかけたり、嫌がることをしたりせずに観察しよう。</small></aside><details id="sources" class="source-box research-details"><summary>確かめた資料と写真</summary><p>情報確認日：${esc(a.checkedAt || "2026-11-02")}。一般の文鳥についての解説です。写真はおもち本人ではありません。</p><ul>${a.sources.map((s) => `<li>${s.url ? `<a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">${esc(s.title)}</a>` : esc(s.title)}</li>`).join("")}</ul><ul>${photoCredits([...new Set([...(a.photos || []), articleCoverOverrides[a.id]].filter(Boolean))])}</ul></details><h2>つながる発見</h2><div class="related-links">${(
     a.related || []
   )
     .map((id) => articles.find((x) => x.id === id))
@@ -304,11 +309,11 @@ function bodyPage() {
   ];
   return `${heading("文鳥のからだ探検", "どこを、よく見てみよう？", "丸い体に、暮らしのくふうがつまっている。名前を押して、写真を拡大しよう。")}<div class="body-explorer"><div class="body-diagram">${birdSvg("gray")}${parts.map(([label, id, x, y]) => `<button style="left:${x}%;top:${y}%" data-part="${id}" aria-label="${label}を拡大して調べる" aria-pressed="false" aria-controls="part-detail">${label}</button>`).join("")}</div><div id="part-detail" aria-live="polite"><p class="eyebrow">体の地図</p><h2>気になる場所をえらぼう</h2><p>耳の穴は羽毛にかくれていて、外から見える耳たぶはありません。図は位置を伝えるための模式図です。</p></div></div><p class="quiet">独自制作の模式図。色・大きさ・位置は説明のための表現を含みます。</p><div class="article-grid">${articles
     .filter((a) => a.category === "からだ探検")
-    .map(articleCard)
+    .map(a => `<a class="body-topic-link" href="${url(`encyclopedia/${a.id}/`)}"><strong>${esc(a.title)}</strong><span>${a.summary}</span></a>`)
     .join("")}</div>`;
 }
 function omochi() {
-  return `${heading("おもち観察室", "おもちの「ほんとう」を、少しずつ。", "ここは、実際のおもちを観察する場所。ゲームの出来事とは別の記録です。")}<div class="omochi-profile"><div class="omochi-portrait">${birdSvg()}<span>案内イラスト</span></div><div><p class="eyebrow">わかっていること</p><h2>おもち</h2><dl class="profile-list"><div><dt>種類・羽色</dt><dd>文鳥・白文鳥</dd></div><div><dt>性別</dt><dd>メス</dd></div><div><dt>家族</dt><dd>依頼者のお嬢さんのペット</dd></div><div><dt>年齢・誕生日・性格・好物</dt><dd>まだ教えてもらっていません。</dd></div></dl><p>本人の実写写真はこのサイトでは公開していません。観察エピソードは未提供です。別の白文鳥の写真を、おもちとして紹介することはありません。</p></div></div><section class="section"><p class="eyebrow">静かに見てみよう</p><h2>観察のたね</h2><div class="learning-steps"><div><b>からだ</b><p>休んでいるとき、足はどうなっている？</p></div><div><b>くらし</b><p>水浴びの前と後で、羽はどう変わった？</p></div><div><b>ことば</b><p>「うれしそう」だけでなく、見えた動きを書いてみよう。</p></div></div><p class="quiet">しぐさだけで気持ちを決めつけないことも、研究の第一歩。</p></section><section class="observation-notebook"><h2>わたしの観察ノート</h2><p>あなたが実際に見たことを書けます。この端末だけに保存され、サイトには投稿されません。</p><form id="observation-form"><label>観察した日<input type="date" name="date" value="${new Date().toISOString().slice(0, 10)}" required></label><label>見たこと・気になったこと<textarea name="note" maxlength="600" rows="3" placeholder="だれが、いつ、どこで、どんな動きをした？" required></textarea></label><button class="button">ノートに記録する</button></form><div id="observations"></div></section>`;
+  return `${heading("おもち観察室", "おもちの「ほんとう」を、少しずつ。", "ここは、実際のおもちを観察する場所。ゲームの出来事とは別の記録です。")}<div class="omochi-profile"><figure class="omochi-portrait omochi-real-portrait"><img src="${url("omochi/omochi-original.jpeg")}" alt="指にとまる白文鳥のおもち本人" width="925" height="1536"><figcaption>おもち本人 · ご家族からの提供写真</figcaption></figure><div><p class="eyebrow">わかっていること</p><h2>おもち</h2><dl class="profile-list"><div><dt>種類・羽色</dt><dd>文鳥・白文鳥</dd></div><div><dt>性別</dt><dd>メス</dd></div><div><dt>家族</dt><dd>依頼者のお嬢さんのペット</dd></div><div><dt>年齢・誕生日・性格・好物</dt><dd>まだ教えてもらっていません。</dd></div></dl><p>写真は、ご家族から「おもちです」と紹介された本人です。年齢・誕生日や観察エピソードは、まだ教えてもらっていません。</p></div></div><section class="section"><p class="eyebrow">静かに見てみよう</p><h2>観察のたね</h2><div class="learning-steps"><div><b>からだ</b><p>休んでいるとき、足はどうなっている？</p></div><div><b>くらし</b><p>水浴びの前と後で、羽はどう変わった？</p></div><div><b>ことば</b><p>「うれしそう」だけでなく、見えた動きを書いてみよう。</p></div></div><p class="quiet">しぐさだけで気持ちを決めつけないことも、研究の第一歩。</p></section><section class="observation-notebook"><h2>わたしの観察ノート</h2><p>あなたが実際に見たことを書けます。この端末だけに保存され、サイトには投稿されません。</p><form id="observation-form"><label>観察した日<input type="date" name="date" value="${new Date().toISOString().slice(0, 10)}" required></label><label>見たこと・気になったこと<textarea name="note" maxlength="600" rows="3" placeholder="だれが、いつ、どこで、どんな動きをした？" required></textarea></label><button class="button">ノートに記録する</button></form><div id="observations"></div></section>`;
 }
 function challenge() {
   return `${heading("文鳥チャレンジ", "「わかった！」を、ひとつずつ。", `${quizzes.length}問。点数よりも、どうして？を楽しもう。`)}<div id="quiz-root" class="quiz-root"></div>`;
@@ -319,9 +324,11 @@ function bindQuiz() {
     answered = false;
   function draw() {
     const q = quizzes[index];
+    const learning = articles.find(a => a.id === q.articleId);
+    const learnLink = `<a href="${url(`encyclopedia/${q.articleId}/`)}" target="_blank" rel="noopener">${esc(learning?.title || "関連する図鑑")}（別のタブ）</a>`;
     answered = false;
     document.querySelector("#quiz-root").innerHTML =
-      `<div class="quiz-progress"><span>${index + 1} / ${quizzes.length}</span><progress value="${index}" max="${quizzes.length}" aria-label="クイズの進み具合"></progress></div><h2>${q.question}</h2>${q.photoId ? `<figure>${image(q.photoId)}</figure>` : q.diagram ? `<figure class="quiz-diagram">${birdSvg("gray")}<figcaption>文鳥の体の模式図</figcaption></figure>` : ""}<div class="quiz-choices">${q.choices.map((c, i) => `<button data-answer="${i}">${esc(c)}</button>`).join("")}</div><div id="quiz-feedback" aria-live="polite"></div>`;
+      `<div class="quiz-progress"><span>${index + 1} / ${quizzes.length}</span><progress value="${index}" max="${quizzes.length}" aria-label="クイズの進み具合"></progress></div><details class="quiz-learning"><summary>この問題を学べるページ</summary><p>${learnLink}</p><p>${learning?.summary || ""}</p></details><h2>${q.question}</h2>${q.photoId ? `<figure>${image(q.photoId)}</figure>` : q.diagram ? `<figure class="quiz-diagram">${birdSvg("gray")}<figcaption>文鳥の体の模式図</figcaption></figure>` : ""}<div class="quiz-choices">${q.choices.map((c, i) => `<button data-answer="${i}">${esc(c)}</button>`).join("")}</div><div id="quiz-feedback" aria-live="polite"></div>`;
     document.querySelectorAll("[data-answer]").forEach(
       (b) =>
         (b.onclick = () => {
@@ -335,7 +342,7 @@ function bindQuiz() {
               x.classList.add("correct");
           });
           document.querySelector("#quiz-feedback").innerHTML =
-            `<h3>${ok ? "そのとおり！" : "新しい発見だね！"}</h3><p>${q.explanation}</p><a class="text-link" href="${url(`encyclopedia/${q.articleId}/`)}">図鑑でたしかめる →</a>${q.mission ? `<p class="mission">${esc(q.mission)}</p>` : ""}<button id="quiz-next" class="button">${index === quizzes.length - 1 ? "結果を見る" : "つぎの問題へ"}</button>`;
+            `<h3>${ok ? "そのとおり！" : "新しい発見だね！"}</h3><p>${q.explanation}</p><p class="quiz-learning-result">${ok ? "もっと知るなら" : "ここを読むとわかる"}：${learnLink}</p>${q.mission ? `<p class="mission">${esc(q.mission)}</p>` : ""}<button id="quiz-next" class="button">${index === quizzes.length - 1 ? "結果を見る" : "つぎの問題へ"}</button>`;
           document.querySelector("#quiz-next").onclick = () => {
             index++;
             if (index < quizzes.length) draw();
