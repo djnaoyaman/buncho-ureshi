@@ -1,0 +1,87 @@
+{
+  "version": 1,
+  "approvedMasterSHA256": "543193b35d04c436e1370303b5d64a26de63cf282bc6fddc2dc5a52011c5a82a",
+  "masterSize": [
+    1774,
+    887
+  ],
+  "wordmarkCrop": [
+    345,
+    125,
+    1465,
+    770
+  ],
+  "birdFrame": [
+    1000,
+    140,
+    1320,
+    410
+  ],
+  "rasterArtwork": true,
+  "files": {
+    "public/apple-touch-icon.png": {
+      "bytes": 23675,
+      "sha256": "54aceebdade1893630e0e42528c1f7a122f38c1a20814be558ef624f60311bc0"
+    },
+    "public/brand/selected-04-master.png": {
+      "bytes": 1287128,
+      "sha256": "543193b35d04c436e1370303b5d64a26de63cf282bc6fddc2dc5a52011c5a82a"
+    },
+    "public/brand/wordmark-04.webp": {
+      "bytes": 66200,
+      "sha256": "8d2eb2e7b0a8f8b27c9632d1f5f00dc135f6acb42981d06d2512890afc4c2f2d"
+    },
+    "public/favicon-16.png": {
+      "bytes": 468,
+      "sha256": "7d02b7a6e9cdb23c652e4c2e02cb4e99cd58560d5f49ac40d601df6ea2ff9e88"
+    },
+    "public/favicon-32.png": {
+      "bytes": 1367,
+      "sha256": "52d15db241719252b5cb67b5c8d275f87f6e271f25e27ed469e8c09323563bcb"
+    },
+    "public/favicon-48.png": {
+      "bytes": 2480,
+      "sha256": "6f16579082c972841c08618abfa61d66fee9dbccb4a23cd063e0a7e0ad83d73e"
+    },
+    "public/favicon.ico": {
+      "bytes": 4577,
+      "sha256": "fd09310e1a90c36397d68c3d987c828c5d89f3cb35c2d188fd31f6eb6c5e7ddb"
+    },
+    "public/favicon.png": {
+      "bytes": 125876,
+      "sha256": "681457c9616c111ee5bd5a4b4ffcd1d1e323eb6cb5465feff310d3434fa819ef"
+    },
+    "public/favicon.svg": {
+      "bytes": 17986,
+      "sha256": "f81fc13dcbbe8948b251d81976bcba91752018e4eaf3cfcf3cda05c676ae8592"
+    },
+    "public/icon-192.png": {
+      "bytes": 26450,
+      "sha256": "b0027c76a8bf237fd00c18ba07478171140e05d5365dbf45719bc92540186578"
+    },
+    "public/icon-512.png": {
+      "bytes": 125876,
+      "sha256": "681457c9616c111ee5bd5a4b4ffcd1d1e323eb6cb5465feff310d3434fa819ef"
+    },
+    "public/icon-maskable-512.png": {
+      "bytes": 88663,
+      "sha256": "b745b491b93873a74ceb27ff4360263362ba81d0145bbedae717b01324eceb97"
+    },
+    "public/icon-maskable.svg": {
+      "bytes": 118524,
+      "sha256": "8e76cc2cfc1cc7918d07ad0dff4a9130c27cfe67f9e5edbc9550f738974afcc5"
+    },
+    "public/ogp.png": {
+      "bytes": 49797,
+      "sha256": "f55cb1c8427862d41056aacce5c2fd87ad0d89790462340b9f7ef817d68433ed"
+    },
+    "public/ogp.svg": {
+      "bytes": 66690,
+      "sha256": "6d0078e814822d22251f706dfb80ee85c3e3f8ece3e863f9b48c0ffb0eedc7fd"
+    },
+    "public/safari-pinned-tab.svg": {
+      "bytes": 3653,
+      "sha256": "6813beebc50e2c7ffb7fc3d4c045b0bc2d728609ab15dabe96cb6feb15acb7ae"
+    }
+  }
+}

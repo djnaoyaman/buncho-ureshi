@@ -1,3 +1,4 @@
+import { BRAND_ASSET, BRAND_SIZE } from './visuals.js';
 /* Original browser-local Java sparrow atelier. No service calls or image uploads. */
 // Muting is an immediate state change, not an asymptotic automation target.
 // Cancel queued gain changes so a suspended/resumed context cannot restore them.
@@ -74,12 +75,11 @@ function drawBird(c,color='white',stage='adult'){
  c.strokeStyle=young?'#5c544a':'#a73642';c.lineWidth=1;c.beginPath();c.moveTo(47,-25);c.lineTo(65,-21);c.stroke();
  c.fillStyle=young?'#8a7766':'#e46770';ellipse(c,32,-30,6.1,6.1);c.fillStyle='#202a29';ellipse(c,32,-30,3.7,3.7);c.fillStyle='#fff';ellipse(c,33.3,-31.3,1.1,1.1);
 }
-function note(c,x,y,size=18,double=false,color='#214d40'){c.save();c.translate(x,y);c.fillStyle=color;c.strokeStyle=color;c.lineWidth=size*.12;ellipse(c,0,0,size*.28,size*.19,-.4);c.beginPath();c.moveTo(size*.25,0);c.lineTo(size*.25,-size);c.stroke();if(double){ellipse(c,size*.65,-size*.15,size*.28,size*.19,-.4);c.beginPath();c.moveTo(size*.9,-size*.15);c.lineTo(size*.9,-size*1.15);c.lineTo(size*.25,-size);c.stroke();}else{c.beginPath();c.moveTo(size*.25,-size);c.bezierCurveTo(size*.9,-size*.8,size*.9,-size*.4,size*.35,-size*.4);c.stroke();}c.restore();}
-function logo(c,y,p){
- c.save();c.fillStyle=p[2];c.font='600 32px "Noto Serif JP", "Yu Mincho", serif';c.textBaseline='middle';c.textAlign='left';
- const parts=['文鳥','文鳥','文鳥って嬉しいな'],widths=parts.map(t=>c.measureText(t).width);let x=(1000-widths.reduce((a,b)=>a+b,0)-100)/2;
- parts.forEach((t,i)=>{c.fillText(t,x,y+(i===1?-3:0));x+=widths[i]+12;note(c,x,y+6,21,i<2,p[2]);x+=22;});
- c.strokeStyle=p[3];c.lineWidth=2;c.beginPath();c.moveTo(140,y+31);c.bezierCurveTo(340,y+8,660,y+57,860,y+25);c.stroke();leaf(c,170,y+27,26,43,-.7,p[3]);leaf(c,835,y+28,25,40,.8,p[3]);c.translate(850,y+3);c.scale(.38,.38);drawBird(c);c.restore();
+// Draw the same approved bitmap, with its original palette and aspect ratio.
+function logo(c, image) {
+ if (!image.complete || !image.naturalWidth) return;
+ const w=295,h=w*BRAND_SIZE.height/BRAND_SIZE.width;
+ c.save();c.drawImage(image,(1000-w)/2,8,w,h);c.restore();
 }
 function wrap(c,text,width){const out=[];let line='';for(const ch of String(text)){if(line&&c.measureText(line+ch).width>width){out.push(line);line='';}line+=ch;}if(line)out.push(line);return out;}
 function background(c,index,p,H){
@@ -149,6 +149,11 @@ export function mountStudio(root,{photos=[],birdSvg,seed}={}){
  const canvas=el('canvas'),ctx=canvas.getContext('2d');
  if(!ctx){root.textContent='この環境では画像を描く機能が使えません。別のブラウザで工房を開いてください。';return()=>{};}
  const tell=t=>{if(!destroyed)el('status').textContent=t;},current=()=>state.items.find(o=>o.id===selected);
+ const brandImage=new Image();brandImage.decoding='async';
+ brandImage.onload=()=>{if(!destroyed)draw();};
+ brandImage.onerror=()=>{if(!destroyed)tell('ロゴを読み込めません。通信を確かめて、もう一度開いてください。');};
+ brandImage.src=new URL(BRAND_ASSET,document.baseURI).href;
+
  function persist(){if(invalidSaved)return;try{localStorage.setItem(STORE,JSON.stringify(state));}catch{tell('この端末では自動保存できません。「画像をつくる・保存」で残してください。');}}
  function remember(){undo.push(clone(state));if(undo.length>HISTORY)undo.shift();redo=[];}
  function invalidate(){revision++;prepared=null;el('export-panel').hidden=true;if(exportURL){URL.revokeObjectURL(exportURL);exportURL=null;}}
@@ -161,7 +166,7 @@ export function mountStudio(root,{photos=[],birdSvg,seed}={}){
    const credit='['+(i+1)+'] '+(p.title?plain(p.title)+' / ':'')+p.author+(p.credit&&p.credit!==p.author?' / '+p.credit:'')+' / '+p.license+' / '+source+' / '+p.licenseUrl+' / '+(changed?'配置・切り取り・回転・色調整':'配置・切り取り・回転')+'（元写真からの変更）'+(p.modifications?' / 素材準備: '+plain(p.modifications):'');lines.push(...wrap(c,credit,900));});
   c.restore();return lines;
  }
- function layout(c=ctx){const H=state.format==='portrait'?1250:1000,lines=creditLines(c),requiredFooter=80+lines.length*14,overflow=requiredFooter>H-429,footer=overflow?108:requiredFooter,height=H-footer-169;return {H,lines:overflow?['クレジットが長いため画像を作れません。写真を減らしてから保存してください。']:lines,footer,overflow,top:155,bottom:H-footer-14,height,fit:Math.min(1,height/620)};}
+ function layout(c=ctx){const H=state.format==='portrait'?1250:1000,lines=creditLines(c),requiredFooter=80+lines.length*14,overflow=requiredFooter>H-509,footer=overflow?108:requiredFooter,height=H-footer-249;return {H,lines:overflow?['クレジットが長いため画像を作れません。写真を減らしてから保存してください。']:lines,footer,overflow,top:235,bottom:H-footer-14,height,fit:Math.min(1,height/620)};}
  function dimensions(o,L){let h=o.w;if(o.kind==='photo'){const img=getImage(o.photoId);h=img?.naturalWidth?o.w*img.naturalHeight/img.naturalWidth:o.w*.72;h=o.clip&&o.clip!=='rectangle'?o.w:Math.min(h,o.w*1.6);}else if(o.kind==='text')h=o.w*.16*Math.ceil(o.text.length/12);else if(['branch','ribbon','nest'].includes(o.kind))h=o.w*.35;else if(o.kind==='bird')h=o.w*.72;return {w:o.w*L.fit,h:h*L.fit};}
  function position(o,L){const d=dimensions(o,L),rad=Math.min(Math.hypot(d.w,d.h)/2,Math.min(470,L.height/2));return {x:clamp(o.x*1000,rad+10,990-rad),y:clamp(L.top+o.y*L.height,L.top+rad,L.bottom-rad),...d};}
  function drawItem(c,o,L,selection){
@@ -174,8 +179,8 @@ export function mountStudio(root,{photos=[],birdSvg,seed}={}){
   if(selection){c.strokeStyle='#ba5d48';c.lineWidth=3;c.setLineDash([8,6]);c.strokeRect(-pos.w/2-8,-pos.h/2-8,pos.w+16,pos.h+16);c.setLineDash([]);c.fillStyle='#ba5d48';for(const x of [-pos.w/2-8,pos.w/2+8])for(const y of [-pos.h/2-8,pos.h/2+8])c.fillRect(x-4,y-4,8,8);}c.restore();
  }
  function draw(c=ctx,selection=true){
-  const L=layout(c),p=STUDIO_PALETTES[state.palette];if(c===ctx&&canvas.height!==L.H)canvas.height=L.H;background(c,state.background,p,L.H);logo(c,47,p);
-  c.fillStyle=p[2];c.font='500 35px "Noto Serif JP", "Yu Mincho", serif';c.textAlign='center';c.textBaseline='middle';let size=35;while(c.measureText(state.title).width>880&&size>20)c.font='500 '+(--size)+'px "Noto Serif JP", "Yu Mincho", serif';c.fillText(state.title,500,124);
+  const L=layout(c),p=STUDIO_PALETTES[state.palette];if(c===ctx&&canvas.height!==L.H)canvas.height=L.H;background(c,state.background,p,L.H);logo(c,brandImage);
+  c.fillStyle=p[2];c.font='500 35px "Noto Serif JP", "Yu Mincho", serif';c.textAlign='center';c.textBaseline='middle';let size=35;while(c.measureText(state.title).width>880&&size>20)c.font='500 '+(--size)+'px "Noto Serif JP", "Yu Mincho", serif';c.fillText(state.title,500,202);
   c.save();c.beginPath();c.rect(0,L.top,1000,L.height);c.clip();state.items.forEach(o=>drawItem(c,o,L,selection&&o.id===selected));c.restore();c.fillStyle=p[1];c.fillRect(0,L.H-L.footer,1000,L.footer);c.strokeStyle=p[3];c.lineWidth=1;c.beginPath();c.moveTo(50,L.H-L.footer+8);c.lineTo(950,L.H-L.footer+8);c.stroke();
   c.fillStyle=p[2];c.textAlign='left';c.textBaseline='top';c.font='13px sans-serif';c.fillText('文鳥アート工房 ｜ 文鳥♬文鳥♬文鳥って嬉しいな♪',50,L.H-L.footer+19);c.font='11px sans-serif';c.fillText('写真の色・構図の加工を含むアート作品です。実在のおもちの写真ではありません。',50,L.H-L.footer+39);
   L.lines.forEach((t,i)=>c.fillText(t,50,L.H-L.footer+57+i*14));if(!L.lines.length)c.fillText('オリジナルの文鳥・植物イラスト。作品は端末内で制作され、投稿・送信されません。',50,L.H-L.footer+57);return L;
@@ -227,7 +232,7 @@ export function mountStudio(root,{photos=[],birdSvg,seed}={}){
  function finishDrag(e,cancel=false){if(!drag||e.pointerId!==drag.pointer)return;const finished=drag;drag=null;if(cancel){state=finished.start;invalidate();refresh();tell('移動を取り消しました。');}else if(finished.moved){undo.push(finished.start);if(undo.length>HISTORY)undo.shift();redo=[];invalidate();refresh();persist();tone('move');tell('素材を動かしました。');}if(canvas.hasPointerCapture?.(finished.pointer))canvas.releasePointerCapture(finished.pointer);}
  on(canvas,'pointerup',e=>finishDrag(e));on(canvas,'pointercancel',e=>finishDrag(e,true));on(canvas,'lostpointercapture',e=>{if(drag)finishDrag(e,true);});
  on(canvas,'keydown',e=>{const map={ArrowLeft:'left',ArrowRight:'right',ArrowUp:'up',ArrowDown:'down',Delete:'delete',Backspace:'delete'};if(map[e.key]){e.preventDefault();btn(map[e.key]).click();}if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();btn(e.shiftKey?'redo':'undo').click();}});
- async function loadNeeded(){await Promise.all([...new Set(state.items.filter(o=>o.kind==='photo').map(o=>o.photoId))].map(pid=>new Promise((resolve,reject)=>{const img=getImage(pid);if(!img){reject(new Error('photo'));return;}let timer,settled=false;const finish=error=>{if(settled)return;settled=true;clearTimeout(timer);img.removeEventListener('load',loaded);img.removeEventListener('error',failed);signal.removeEventListener('abort',cancelled);error?reject(new Error(error)):resolve();},loaded=()=>{if(!img.naturalWidth){finish('photo');return;}try{Promise.resolve(typeof img.decode==='function'?img.decode():undefined).then(()=>finish(),()=>finish('photo'));}catch{finish('photo');}},failed=()=>finish('photo'),cancelled=()=>finish('cancelled');timer=setTimeout(()=>finish('timeout'),15000);signal.addEventListener('abort',cancelled,{once:true});if(signal.aborted){cancelled();return;}if(img.complete)loaded();else{img.addEventListener('load',loaded,{once:true});img.addEventListener('error',failed,{once:true});}})));}
+ async function loadNeeded(){await Promise.all([brandImage,...[...new Set(state.items.filter(o=>o.kind==='photo').map(o=>o.photoId))].map(getImage)].map(img=>new Promise((resolve,reject)=>{if(!img){reject(new Error('photo'));return;}let timer,settled=false;const finish=error=>{if(settled)return;settled=true;clearTimeout(timer);img.removeEventListener('load',loaded);img.removeEventListener('error',failed);signal.removeEventListener('abort',cancelled);error?reject(new Error(img===brandImage&&error==='photo'?'brand':error)):resolve();},loaded=()=>{if(!img.naturalWidth){finish('photo');return;}try{Promise.resolve(typeof img.decode==='function'?img.decode():undefined).then(()=>finish(),()=>finish('photo'));}catch{finish('photo');}},failed=()=>finish('photo'),cancelled=()=>finish('cancelled');timer=setTimeout(()=>finish('timeout'),15000);signal.addEventListener('abort',cancelled,{once:true});if(signal.aborted){cancelled();return;}if(img.complete)loaded();else{img.addEventListener('load',loaded,{once:true});img.addEventListener('error',failed,{once:true});}})));}
  on(btn('export'),'click',async()=>{
   if(drag)finishDrag({pointerId:drag.pointer});const ticket=revision;btn('export').disabled=true;tell('写真と文字をたしかめて、画像をつくっています。');
   try{await loadNeeded();if(document.fonts?.ready)await document.fonts.ready;if(destroyed)return;if(ticket!==revision)throw new Error('changed');if(layout().overflow)throw new Error('credits');
@@ -236,7 +241,7 @@ export function mountStudio(root,{photos=[],birdSvg,seed}={}){
    if(exportURL)URL.revokeObjectURL(exportURL);prepared=blob;exportURL=URL.createObjectURL(blob);el('export-preview').src=exportURL;el('download').href=exportURL;el('download').download='buncho-'+state.format+'.png';el('export-panel').hidden=false;
    let share=false;try{share=!!navigator.canShare?.({files:[new File([blob],'buncho-art.png',{type:'image/png'})]});}catch{}btn('share').hidden=!share;el('share-help').textContent=share?'共有先は次の画面でえらべます。':'このブラウザでは直接共有に対応していません。「PNG画像を保存」で保存してから共有してね。';
    tell('画像ができました。クレジットまで入っています。「PNG画像を保存」を押してね。');tone('save');
-  }catch(e){tell(e.message==='changed'?'作品が変わりました。もう一度「画像をつくる・保存」を押してください。':e.message==='credits'?'写真のクレジットが長すぎて、読みやすく入りません。写真を減らすか、縦長にして保存してください。':'写真をすべて読み込めず、画像を作れませんでした。通信を確かめるか、読み込めない写真を消してやりなおしてください。');}
+  }catch(e){tell(e.message==='changed'?'作品が変わりました。もう一度「画像をつくる・保存」を押してください。':e.message==='credits'?'写真のクレジットが長すぎて、読みやすく入りません。写真を減らすか、縦長にして保存してください。':e.message==='brand'?'採用ロゴを読み込めず、画像を作れませんでした。通信を確かめて、もう一度開いてください。':'写真をすべて読み込めず、画像を作れませんでした。通信を確かめるか、読み込めない写真を消してやりなおしてください。');}
   finally{if(!destroyed)btn('export').disabled=false;}
  });
  on(btn('share'),'click',async()=>{if(!prepared)return;try{await navigator.share({files:[new File([prepared],'buncho-art.png',{type:'image/png'})],title:state.title||'文鳥アート工房'});tell('共有画面を閉じました。');}catch(e){tell(e.name==='AbortError'?'共有を取り消しました。作品はそのままです。':'この環境では共有できません。「PNG画像を保存」を使ってください。');}});
