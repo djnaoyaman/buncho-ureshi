@@ -15,11 +15,11 @@ test('selected 04 master is byte-exact and every checked-in derivative matches i
   assert.deepEqual(manifest.masterSize,[1774,887]);
   assert.deepEqual(manifest.wordmarkCrop,[345,125,1465,770]);
   assert.equal(manifest.rasterArtwork,true);
-  assert.equal(Object.keys(manifest.files).length,16);
+  assert.equal(Object.keys(manifest.files).length,17);
   for(const [path,file] of Object.entries(manifest.files)){
     const bytes=await read(path);assert.equal(bytes.length,file.bytes,path);assert.equal(hash(bytes),file.sha256,path);
   }
-  assert.ok((await read('public/'+BRAND_ASSET)).length<80000);
+  assert.ok((await read('public/'+BRAND_ASSET)).length<350000);
   assert.ok((await read('public/ogp.png')).length<100000);
 });
 
@@ -44,4 +44,12 @@ test('all page shells request the exact current logo-fit stylesheet version',asy
   for(const path of ['dist/index.html','dist/game/index.html','dist/studio/index.html','dist/colors/index.html','dist/404.html']){
     assert.ok((await read(path)).toString().includes(`href="src/style.css?v=${version}"`),path);
   }
+});
+
+
+test('brand module URL changes propagate from HTML through app and studio imports',async()=>{
+  const version=hash(await read('src/visuals.js')).slice(0,12);
+  assert.ok((await read('dist/index.html')).toString().includes(`src="src/app.js?v=${version}"`));
+  for(const file of ['app.js','studio.js','metadata.js'])assert.ok((await read('dist/src/'+file)).toString().includes(`./visuals.js?v=${version}`),file);
+  assert.ok((await read('dist/src/app.js')).toString().includes(`./studio.js?v=${version}`));
 });

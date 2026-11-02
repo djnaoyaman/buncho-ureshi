@@ -49,7 +49,7 @@ async function installAudit(context) {
     };
     const drawImage = CanvasRenderingContext2D.prototype.drawImage;
     CanvasRenderingContext2D.prototype.drawImage = function (...args) {
-      if (this.canvas.width === 1400) { audit.images++; if (args[0]?.src?.endsWith('/brand/wordmark-04.webp')) audit.brandImages++; }
+      if (this.canvas.width === 1400) { audit.images++; if (args[0]?.src?.endsWith('/brand/wordmark-04-transparent.webp')) audit.brandImages++; }
       return drawImage.apply(this, args);
     };
     for (const key of ['AudioContext', 'webkitAudioContext']) {

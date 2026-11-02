@@ -19,7 +19,7 @@ export function flourish(kind = "horizontal") {
   return `<svg class="flourish ${kind}" viewBox="0 0 500 80" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.4"><path d="M4 63C84 81 101 0 172 26S228 69 250 45C272 69 309 0 363 28S420 79 496 63"/><path d="M90 57q-5-35 28-36-3 29-28 36m55-27q1-22 24-25-1 20-24 25m266 28q5-35-28-36 3 29 28 36m-55-27q-1-22-24-25 1 20 24 25"/><path d="M235 36q15-27 30 0-15 24-30 0Z"/></g></svg>`;
 }
 // Kept as an API name for existing callers; the approved logo is raster artwork, not SVG.
-export const BRAND_ASSET = 'brand/wordmark-04.webp';
+export const BRAND_ASSET = 'brand/wordmark-04-transparent.webp';
 export const BRAND_SIZE = Object.freeze({ width: 1120, height: 645 });
 export function logoSvg(className = "") {
   return `<img class="brand-art ${esc(className)}" src="${BRAND_ASSET}" width="${BRAND_SIZE.width}" height="${BRAND_SIZE.height}" alt="${SITE_NAME}" decoding="async" fetchpriority="high">`;

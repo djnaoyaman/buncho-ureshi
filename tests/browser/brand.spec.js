@@ -36,7 +36,7 @@ test('approved 04 decodes without stretching and remains visible from 320px to d
       });
     },screenshot.toString('base64'));
     for(const item of pixels){
-      expect(item.blend).toBe('multiply');expect(item.isolation).toBe('isolate');expect(item.background).toBe('rgb(246, 243, 232)');
+      expect(item.blend).toBe('normal');expect(item.filter).toBe('none');expect(item.isolation).toBe('isolate');expect(item.background).toBe('rgb(246, 243, 232)');
       expect(item.corners.length).toBe(4);
       for(const pixel of item.corners)for(const [i,value] of [246,243,232].entries())expect(Math.abs(pixel[i]-value)).toBeLessThanOrEqual(2);
     }
@@ -66,7 +66,7 @@ test('logo integration stays local to light UI surfaces and supports contrast pr
   await page.setViewportSize({width:375,height:900});
   for(const route of ['./','colors/','game/','studio/','404.html']){
     await page.goto(route);await expect(page.locator('#brand img')).toBeVisible();
-    expect(await page.locator('#brand img').evaluate(e=>getComputedStyle(e).mixBlendMode)).toBe('multiply');
+    expect(await page.locator('#brand img').evaluate(e=>getComputedStyle(e).mixBlendMode)).toBe('normal');
     const unexpected=await page.locator('img,canvas').evaluateAll(els=>els.filter(e=>getComputedStyle(e).mixBlendMode!=='normal'&&!e.matches('.site-header .header-logo,.hero-copy > .hero-logo')).length);
     expect(unexpected).toBe(0);
   }
@@ -79,4 +79,21 @@ test('logo integration stays local to light UI surfaces and supports contrast pr
     await expect(page.locator(selector)).toHaveAttribute('alt',SITE_NAME);
   }
   await info.attach('integrated-04-forced-colors-375',{body:await page.screenshot(),contentType:'image/png'});
+});
+
+test('served wordmark has true alpha, opaque white bird, and unchanged original ink RGB',async({page},info)=>{
+  await page.goto('./');
+  const report=await page.evaluate(async()=>{
+    const read=async path=>{const im=new Image();im.src=new URL(path,document.baseURI);await im.decode();const c=document.createElement('canvas');c.width=im.width;c.height=im.height;const g=c.getContext('2d',{willReadFrequently:true});g.drawImage(im,0,0);return {w:im.width,h:im.height,a:g.getImageData(0,0,im.width,im.height).data};};
+    const source=await read('brand/wordmark-04.webp'),cutout=await read('brand/wordmark-04-transparent.webp');
+    let transparent=0,opaque=0,mismatches=0,borderOpaque=0;
+    for(let y=0;y<cutout.h;y++)for(let x=0;x<cutout.w;x++){const i=(y*cutout.w+x)*4,a=cutout.a[i+3];if(a===0)transparent++;if(a===255){opaque++;if([0,1,2].some(c=>cutout.a[i+c]!==source.a[i+c]))mismatches++;}if((x===0||y===0||x===cutout.w-1||y===cutout.h-1)&&a!==0)borderOpaque++;}
+    return {size:[cutout.w,cutout.h],transparent:transparent/(cutout.w*cutout.h),opaque,mismatches,borderOpaque,bird:Array.from(cutout.a.slice((100*cutout.w+790)*4,(100*cutout.w+790)*4+4))};
+  });
+  expect(report.size).toEqual([1120,645]);expect(report.transparent).toBeGreaterThan(.75);expect(report.opaque).toBeGreaterThan(100000);expect(report.mismatches).toBe(0);expect(report.borderOpaque).toBe(0);expect(report.bird[3]).toBe(255);expect(report.bird[0]).toBeGreaterThan(240);
+  await page.setViewportSize({width:390,height:1000});
+  for(const background of ['rgb(246, 243, 232)','rgb(222, 232, 224)']){
+    await page.locator('.site-header,.hero-copy').evaluateAll((els,color)=>els.forEach(e=>e.style.backgroundColor=color),background);
+    await info.attach(`alpha-logo-${background}`,{body:await page.screenshot(),contentType:'image/png'});
+  }
 });

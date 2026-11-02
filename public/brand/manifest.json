@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "approvedMasterSHA256": "543193b35d04c436e1370303b5d64a26de63cf282bc6fddc2dc5a52011c5a82a",
   "masterSize": [
     1774,
@@ -82,6 +82,19 @@
     "public/safari-pinned-tab.svg": {
       "bytes": 3653,
       "sha256": "6813beebc50e2c7ffb7fc3d4c045b0bc2d728609ab15dabe96cb6feb15acb7ae"
+    },
+    "public/brand/wordmark-04-transparent.webp": {
+      "bytes": 285828,
+      "sha256": "76358acafbdb86ee214823d9778b2babef812caf6de9034a9c1f9794a62c0fec"
     }
+  },
+  "transparentDerivative": {
+    "source": "public/brand/wordmark-04.webp",
+    "method": "Alpha-only paper removal, preserving original decoded RGB exactly and the enclosed white bird body. No redraw, recoloring, blending or brightness filters.",
+    "size": [
+      1120,
+      645
+    ],
+    "allRGBPreserved": true
   }
 }
