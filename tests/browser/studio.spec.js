@@ -258,17 +258,31 @@ for (const [format, width, height] of [['square', 1400, 1400], ['portrait', 1400
     expect(text).toContain('色調整');
     expect(audit.images).toBeGreaterThan(0);
     // Decode the generated bitmap and confirm nonblank detailed pixels in its footer.
-    const footer = await preview.evaluate(async img => {
+    const readFooter = () => preview.evaluate(async img => {
       await img.decode();
       const c = document.createElement('canvas'); c.width = img.naturalWidth; c.height = img.naturalHeight;
       const ctx = c.getContext('2d'); ctx.drawImage(img, 0, 0);
       const data = ctx.getImageData(60, c.height - 200, c.width - 120, 170).data;
-      let dark = 0, light = 0;
-      for (let i = 0; i < data.length; i += 4) { if (data[i] + data[i + 1] + data[i + 2] < 450) dark++; else if (data[i] + data[i + 1] + data[i + 2] > 630) light++; }
-      return { dark, light };
+      let dark = 0, light = 0, opaque = 0;
+      for (let i = 0; i < data.length; i += 4) { if (data[i + 3] === 255) opaque++; if (data[i] + data[i + 1] + data[i + 2] < 450) dark++; else if (data[i] + data[i + 1] + data[i + 2] > 630) light++; }
+      return { dark, light, opaque, pixels: data.length / 4 };
     });
+    // A decoded image can precede WebKit's usable Canvas readback. Keep both
+    // original pixel gates and require an opaque bitmap, rather than accepting
+    // transparent zeroes as dark "credit" pixels or retrying the whole test.
+    const footerReadbacks = [];
+    try {
+      await expect.poll(async () => {
+        const sample = await readFooter(); footerReadbacks.push(sample);
+        return sample.dark > 100 && sample.light > 1000 && sample.opaque === sample.pixels;
+      }, { message: 'decoded PNG footer contains real dark text and opaque light paper' }).toBe(true);
+    } finally {
+      await testInfo.attach(`studio-${format}-footer-readbacks`, { body: Buffer.from(JSON.stringify(footerReadbacks, null, 2)), contentType: 'application/json' });
+    }
+    const footer = footerReadbacks.at(-1);
     expect(footer.dark).toBeGreaterThan(100);
     expect(footer.light).toBeGreaterThan(1000);
+    expect(footer.opaque).toBe(footer.pixels);
     await expect(action(page, 'share')).toBeHidden();
     await expect(control(page, 'share-help')).toContainText('保存してから共有');
     const promise = page.waitForEvent('download');
@@ -296,7 +310,9 @@ test('audio is opt-in; user playback, mute, volume, stop and SFX controls affect
   expect((await page.evaluate(() => window.__studioAudit.gains)).at(-1)).toBe(0);
   await setRange(page, 'volume', 50);
   await action(page, 'mute').click();
-  expect((await page.evaluate(() => window.__studioAudit.gains)).at(-1)).toBeCloseTo(0.11, 5);
+  await expect(action(page, 'mute')).toHaveAttribute('aria-pressed', 'false');
+  await expect(control(page, 'audio-status')).toHaveText('ミュートを解除しました。');
+  await expect.poll(() => page.evaluate(() => window.__studioAudit.gains.at(-1))).toBeCloseTo(0.11, 5);
   await action(page, 'stop').click();
   await expect(control(page, 'audio-status')).toContainText('停止');
   const stopped = await page.evaluate(() => window.__studioAudit.starts);

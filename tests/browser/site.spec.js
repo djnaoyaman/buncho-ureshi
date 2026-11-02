@@ -90,40 +90,79 @@ test("direct URLs, reloads and photograph decoding", async ({ page }) => {
   ).toBeTruthy();
   expect(errors).toEqual([]);
 });
-test("search filter favorites ruby and history", async ({ page }) => {
-  await page.goto("encyclopedia/");
-  await page.locator("#article-search").fill("水");
-  await expect(page.locator(".article-card").first()).toBeVisible();
-  const favoriteHref = await page.locator(".article-card").first().getAttribute("href");
-  await page.locator(".article-card").first().click();
-  await page.locator("#favorite").click();
-  await expect(page.locator("#favorite")).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  );
-  await page.locator("#ruby-toggle").click();
-  await page.reload();
-  await expect(page.locator("html")).toHaveAttribute("data-ruby", "off");
-  await page.goBack();
-  // Assert the page restored by Back itself. A second goto here masked history
-  // failures and raced WebKit's restored document with an unnecessary navigation.
-  await expect(page).toHaveURL(/\/buncho-ureshi\/encyclopedia\/$/);
-  await expect(page.locator("#article-search")).toBeVisible();
-  await expect(page.locator("html")).toHaveAttribute("data-ruby", "off");
-  await page.getByRole("button", { name: "♡ お気に入り", exact: true }).click();
-  await expect(page.locator(".article-card")).toHaveCount(1);
-  await expect(page.locator(".article-card")).toHaveAttribute("href", favoriteHref);
-  // Keep full-navigation persistence coverage after testing the restored DOM.
-  await page.reload();
-  await expect(page.locator("#article-search")).toBeVisible();
-  await expect(page.locator("html")).toHaveAttribute("data-ruby", "off");
-  await page.getByRole("button", { name: "♡ お気に入り", exact: true }).click();
-  await expect(page.locator(".article-card")).toHaveCount(1);
-  await expect(page.locator(".article-card")).toHaveAttribute("href", favoriteHref);
-  await page.locator("#menu-toggle").click();
-  await expect(page.locator("#menu")).toBeVisible();
-  await page.keyboard.press("Escape");
-  await expect(page.locator("#menu")).toBeHidden();
+test("search filter favorites ruby and history", async ({ page }, info) => {
+  // Passive diagnostics retain the exact failing history/reload flow. They do
+  // not replace native history methods or change browser preferences.
+  const navigationEvents = [];
+  const record = (type, detail = {}) => {
+    navigationEvents.push({ type, ...detail });
+    if (navigationEvents.length > 80) navigationEvents.shift();
+  };
+  const prefix = "buncho-history-diagnostic:";
+  page.on("console", message => {
+    if (message.type() === "debug" && message.text().startsWith(prefix)) {
+      try { record("lifecycle", JSON.parse(message.text().slice(prefix.length))); }
+      catch { record("diagnostic-parse-error"); }
+    }
+  });
+  page.on("framenavigated", frame => {
+    if (frame === page.mainFrame()) record("navigation", { url: frame.url() });
+  });
+  page.on("requestfailed", request => {
+    if (request.isNavigationRequest()) record("document-request-failed", {
+      url: request.url(), error: request.failure()?.errorText,
+    });
+  });
+  page.on("pageerror", error => record("pageerror", { message: error.message }));
+  page.on("crash", () => record("crash", { url: page.url() }));
+  await page.addInitScript(({ prefix }) => {
+    const report = event => console.debug(prefix + JSON.stringify({
+      event: event.type, url: location.href, historyLength: history.length,
+      persisted: event.persisted ?? null, state: history.state,
+    }));
+    for (const type of ["pageshow", "pagehide", "popstate"])
+      window.addEventListener(type, report, { passive: true });
+  }, { prefix });
+  try {
+    await page.goto("encyclopedia/");
+    await page.locator("#article-search").fill("水");
+    await expect(page.locator(".article-card").first()).toBeVisible();
+    const favoriteHref = await page.locator(".article-card").first().getAttribute("href");
+    await page.locator(".article-card").first().click();
+    await page.locator("#favorite").click();
+    await expect(page.locator("#favorite")).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    await page.locator("#ruby-toggle").click();
+    await page.reload();
+    await expect(page.locator("html")).toHaveAttribute("data-ruby", "off");
+    await page.goBack();
+    // Assert the page restored by Back itself; another goto would mask a broken
+    // history entry. Keep this regression flow identical across browser engines.
+    await expect(page).toHaveURL(/\/buncho-ureshi\/encyclopedia\/$/);
+    await expect(page.locator("#article-search")).toBeVisible();
+    await expect(page.locator("html")).toHaveAttribute("data-ruby", "off");
+    await page.getByRole("button", { name: "♡ お気に入り", exact: true }).click();
+    await expect(page.locator(".article-card")).toHaveCount(1);
+    await expect(page.locator(".article-card")).toHaveAttribute("href", favoriteHref);
+    // Keep full-navigation persistence coverage after testing the restored DOM.
+    await page.reload();
+    await expect(page.locator("#article-search")).toBeVisible();
+    await expect(page.locator("html")).toHaveAttribute("data-ruby", "off");
+    await page.getByRole("button", { name: "♡ お気に入り", exact: true }).click();
+    await expect(page.locator(".article-card")).toHaveCount(1);
+    await expect(page.locator(".article-card")).toHaveAttribute("href", favoriteHref);
+    await page.locator("#menu-toggle").click();
+    await expect(page.locator("#menu")).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(page.locator("#menu")).toBeHidden();
+  } finally {
+    await info.attach("history-navigation-diagnostics", {
+      body: JSON.stringify({ project: info.project.name, events: navigationEvents }, null, 2),
+      contentType: "application/json",
+    });
+  }
 });
 test("quiz answers and explanation links", async ({ page }) => {
   await page.goto("challenge/");

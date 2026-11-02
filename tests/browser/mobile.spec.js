@@ -58,9 +58,27 @@ test.beforeEach(async ({ context }) => {
   await context.route(youtubeRequests, route => route.abort());
 });
 
-async function studioTouchFlow(page) {
+async function studioTouchFlow(page, testInfo, deviceLabel) {
+  const layoutHistory = [];
+  const recordLayout = async stage => {
+    const layout = await page.evaluate(() => {
+      const width = innerWidth;
+      return {
+        innerWidth: width, clientWidth: document.documentElement.clientWidth,
+        scrollWidth: document.documentElement.scrollWidth,
+        visualViewport: window.visualViewport ? { width: visualViewport.width, scale: visualViewport.scale, offsetLeft: visualViewport.offsetLeft } : null,
+        offenders: [...document.querySelectorAll('body *')].map(element => {
+          const rect = element.getBoundingClientRect(), style = getComputedStyle(element);
+          return { tag: element.tagName, id: element.id, class: String(element.className?.baseVal ?? element.className ?? ''), studio: element.getAttribute('data-studio'), left: rect.left, right: rect.right, width: rect.width, clientWidth: element.clientWidth, scrollWidth: element.scrollWidth, overflowX: style.overflowX, minWidth: style.minWidth, maxWidth: style.maxWidth, cssWidth: style.width, text: element.textContent?.slice(0, 100) };
+        }).filter(element => element.width > 0 && (element.right > width + 1 || element.left < -1 || element.scrollWidth > element.clientWidth + 1)).slice(0, 100),
+      };
+    });
+    layoutHistory.push({ stage, ...layout });
+    return layout;
+  };
   await page.goto('studio/');
   await expect(control(page, 'canvas')).toBeVisible();
+  await recordLayout('initial');
   await trustedTap(page, page.locator('[data-material="bird-white"]'));
   const id = await control(page, 'layers').inputValue();
   const before = (await savedArt(page)).items.find(item => item.id === id);
@@ -73,13 +91,17 @@ async function studioTouchFlow(page) {
   expect(after.r).not.toBe(before.r);
   await control(page, 'title').fill('タッチの文鳥アルバム');
   await action(page, 'title').tap();
+  await recordLayout('transformed-and-titled');
   await page.locator('.studio-photo-details summary').tap();
+  await recordLayout('photo-picker-open');
   await page.locator(`[data-photo="${photo.id}"]`).tap();
   await expect.poll(async () => (await savedArt(page)).items.some(item => item.photoId === photo.id)).toBe(true);
+  await recordLayout('photo-added');
   await action(page, 'export').tap();
   const preview = control(page, 'export-preview');
   await expect(preview).toBeVisible();
   await expect.poll(() => preview.evaluate(img => [img.naturalWidth, img.naturalHeight])).toEqual([1400, 1400]);
+  await recordLayout('export-ready');
   const pending = page.waitForEvent('download');
   await control(page, 'download').tap();
   const bytes = await downloadBytes(await pending);
@@ -87,7 +109,9 @@ async function studioTouchFlow(page) {
   expect(bytes.readUInt32BE(16)).toBe(1400);
   expect(bytes.readUInt32BE(20)).toBe(1400);
   expect(bytes.length).toBeGreaterThan(20000);
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
+  const finalLayout = await recordLayout('download-complete');
+  await testInfo.attach(`studio-touch-layout-${deviceLabel}`, { body: Buffer.from(JSON.stringify(layoutHistory, null, 2)), contentType: 'application/json' });
+  expect(finalLayout.scrollWidth, JSON.stringify(finalLayout)).toBeLessThanOrEqual(finalLayout.innerWidth + 1);
   await page.reload();
   await expect(control(page, 'title')).toHaveValue('タッチの文鳥アルバム');
 }
@@ -132,8 +156,8 @@ async function gameTouchFlow(page, context, name) {
 // Native tap + accessible move/scale/rotate controls are covered. Drag remains the existing
 // mouse/pointer test; this suite does not use CDP, inject a synthetic drag, or claim pinch support.
 test('phone and tablet touch controls create, download and restore a studio PNG', async ({ page, browser, browserName, baseURL }, testInfo) => {
-  await studioTouchFlow(page);
-  await withTablet(browser, browserName, baseURL, testInfo, tabletPage => studioTouchFlow(tabletPage));
+  await studioTouchFlow(page, testInfo, 'phone');
+  await withTablet(browser, browserName, baseURL, testInfo, tabletPage => studioTouchFlow(tabletPage, testInfo, 'tablet'));
 });
 
 test('phone and tablet touch controls welcome, name, talk to and save a game visitor', async ({ page, context, browser, browserName, baseURL }, testInfo) => {
