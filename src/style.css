@@ -1784,3 +1784,32 @@ input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), select, te
   .site-header .brand-art.header-logo,
   .hero-copy > .brand-art.hero-logo { mix-blend-mode: normal; filter: none; }
 }
+
+/* The game is one quiet world. This shell leaves every non-game route alone. */
+body[data-world="buncho"]{--world-font:"Hiragino Maru Gothic ProN","Hiragino Maru Gothic Pro","Yu Gothic UI","Meiryo",sans-serif;--sans:var(--world-font);--serif:var(--world-font);font-family:var(--world-font);background:#f6f1e3}
+body[data-world="buncho"] .game-app :is(h2,h3,h4){font-family:var(--world-font);font-weight:600;letter-spacing:.02em}
+body[data-world="buncho"] .site-header{min-height:60px;gap:.6rem;padding:.3rem max(14px,calc((100vw - 1100px)/2));padding-top:max(.3rem,env(safe-area-inset-top));padding-left:max(14px,calc((100vw - 1100px)/2),env(safe-area-inset-left));padding-right:max(14px,calc((100vw - 1100px)/2),env(safe-area-inset-right));background:#f6f1e3;border-color:#ded4b9}
+body[data-world="buncho"] .site-header .brand{width:112px;flex:0 0 112px;min-height:44px;display:flex;align-items:center}
+body[data-world="buncho"] .site-header .header-logo{width:112px;height:auto;max-height:52px;object-fit:contain}
+body[data-world="buncho"] .desktop-nav{display:none}
+body[data-world="buncho"] #menu-toggle{min-width:72px;min-height:44px;border:1px solid #d8c9a6;border-radius:1rem;background:#fffaed;color:#496044;font-size:.78rem;padding:.4rem .65rem}
+body[data-world="buncho"] #main.page-content{max-width:1100px;min-height:0;padding-top:.4rem;padding-bottom:max(.7rem,env(safe-area-inset-bottom));padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right))}
+body[data-world="buncho"] .site-footer{display:none}
+body[data-world="buncho"] .header-menu{right:max(12px,env(safe-area-inset-right));top:calc(100% + 4px);width:min(380px,calc(100vw - 24px));max-height:calc(100dvh - 80px);overflow-y:auto;overscroll-behavior:contain;border:1px solid #d8c9a6;border-radius:1.1rem;padding:.9rem;background:#fffaf0;box-shadow:0 12px 35px #57472625}
+body[data-world="buncho"] .header-menu :is(a,button,summary){min-height:44px}
+body[data-world="buncho"] .header-menu nav a{display:flex;align-items:center;border-radius:.65rem;padding:.4rem .5rem;font-size:.78rem}
+body[data-world="buncho"] .header-menu nav a:hover{background:#ebeeda}
+body[data-world="buncho"] .header-menu form{padding-top:.6rem;border-top:1px solid #dfd5ba}
+body[data-world="buncho"] .world-menu-extras .page-tools{margin:.7rem 0 0;padding:.7rem 0 0;border-top:1px solid #dfd5ba;color:#496044}
+body[data-world="buncho"] .world-menu-extras .page-tools-buttons{display:grid;grid-template-columns:1fr 1fr;gap:.4rem}
+body[data-world="buncho"] .world-menu-extras .page-tools button{font-size:.72rem;padding:.45rem}
+body[data-world="buncho"] .world-menu-extras #page-top{grid-column:1/-1}
+body[data-world="buncho"] .world-menu-extras :is(p,label,input){font-size:.72rem;color:#52674a;overflow-wrap:anywhere}
+body[data-world="buncho"] .world-menu-about{font-size:.74rem;border-top:1px solid #dfd5ba;margin-top:.6rem}
+body[data-world="buncho"] .world-menu-about summary{padding:.65rem .2rem;cursor:pointer}
+body[data-world="buncho"] .world-menu-about>a{display:flex;align-items:center;padding:.4rem .2rem}
+body[data-world="buncho"] .world-menu-about .footer-bottom{display:grid;gap:.5rem;margin:0;padding:.6rem 0;border:0;color:#52674a;font-size:.68rem}
+
+body[data-world="buncho"] .game-world-title{text-align:center;margin:0;padding:.25rem 0}.game-world-title h1{font:600 1.2rem/1.5 var(--world-font);margin:0}.game-world-title img{display:block;width:min(280px,80vw);max-height:100px;object-fit:contain;margin:auto}
+
+.game-logo-intro{position:fixed;inset:0;z-index:2000;display:grid;place-items:center;background:radial-gradient(ellipse,#fff9e9,#e9efd9);padding:max(24px,env(safe-area-inset-top)) max(20px,env(safe-area-inset-right)) max(24px,env(safe-area-inset-bottom)) max(20px,env(safe-area-inset-left));box-sizing:border-box;animation:game-intro-backdrop 2s ease both}.game-logo-intro img{width:min(760px,88vw);height:auto;max-height:70dvh;object-fit:contain;animation:game-intro-logo 2s cubic-bezier(.2,.7,.3,1) both}@keyframes game-intro-logo{0%{opacity:0;transform:translateY(18px) scale(.88)}22%{opacity:1;transform:translateY(-5px) scale(1.02)}38%,80%{opacity:1;transform:none}100%{opacity:0;transform:scale(1.04)}}@keyframes game-intro-backdrop{0%,85%{opacity:1}100%{opacity:0}}@media(prefers-reduced-motion:reduce){.game-logo-intro,.game-logo-intro img{animation:none}}html[data-motion="off"] .game-logo-intro,html[data-motion="off"] .game-logo-intro img{animation:none}

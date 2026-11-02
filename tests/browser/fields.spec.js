@@ -1,5 +1,5 @@
 import {test,expect} from '@playwright/test';
-import {createWorld,createBird,advanceTicks,validateWorld,DECOR_SLOTS,DECOR_COLORS,DECOR_TIERS,drawDecoration} from '../../src/engine.js';
+import {createWorld,createBird,advanceTicks,validateWorld,feedBird,DECOR_SLOTS,DECOR_COLORS,DECOR_TIERS,drawDecoration} from '../../src/engine.js';
 const DB_NAME = 'buncho-ureshi-garden-v1';
 const fixedNow = Date.UTC(2026, 10, 2, 12, 0, 0);
 async function decodeScene(page) {
@@ -65,6 +65,7 @@ async function seedWorld(page, world, lastUpdated = fixedNow) {
 async function openGame(page, query = '') {
   await page.goto(`game/${query}`);
   await expect(page.locator('#game-root .game-app')).toBeVisible();
+  await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');
 }
 
 async function tab(page, name) {
@@ -98,13 +99,13 @@ test('first session shows a home, welcome points and all nine decoration slots',
 
 test('home park and known friend visits change actual occupants; return and reload preserve travel',async({page})=>{
  const w=createWorld(fixedNow);advanceTicks(w,1);const host=w.birds[1];host.home='departed';const chick=createBird(w,{home:'resident',stage:'chick'});w.paused=true;
- await seedWorld(page,w);await openGame(page);await expect(page.locator(`[data-bird-id="${chick.id}"]`)).toHaveCount(1);
+ await seedWorld(page,w);await openGame(page);await expect(page.locator(`.game-room [data-bird-id="${chick.id}"]`)).toHaveCount(1);
  await page.locator('[data-field-travel="park"]').click();await expect(page.locator('.game-room')).toHaveAttribute('data-field','park');
- await expect(page.locator(`[data-bird-id="${chick.id}"]`)).toHaveCount(0);await expect(page.locator(`[data-bird-id="${host.id}"]`)).toHaveCount(1);
+ await expect(page.locator(`.game-room [data-bird-id="${chick.id}"]`)).toHaveCount(0);await expect(page.locator(`.game-room [data-bird-id="${host.id}"]`)).toHaveCount(1);
  await tab(page,'friends');await page.locator(`[data-field-host="${host.id}"]`).click();await expect(page.locator('.game-room')).toHaveAttribute('data-field','friend');
- await expect(page.locator(`[data-bird-id="${host.id}"]`)).toHaveCount(1);await expect(page.locator('[data-bird-id="b1"]')).toHaveCount(1);await page.reload();await expect(page.locator('.game-room')).toHaveAttribute('data-field','friend');
- await page.locator('[data-field-travel="home"]').click();await expect(page.locator('.game-room')).toHaveAttribute('data-field','home');await expect(page.locator(`[data-bird-id="${chick.id}"]`)).toHaveCount(1);await expect(page.locator(`[data-bird-id="${host.id}"]`)).toHaveCount(0);
- await tab(page,'friends');await page.locator(`[data-field-invite="${host.id}"]`).click();await expect.poll(async()=> (await readWorld(page)).birds.find(b=>b.id===host.id).home).toBe('visitor');await page.locator('[data-field-travel="home"]').click();await expect(page.locator(`[data-bird-id="${host.id}"]`)).toHaveCount(1);
+ await expect(page.locator(`.game-room [data-bird-id="${host.id}"]`)).toHaveCount(1);await expect(page.locator('.game-room [data-bird-id="b1"]')).toHaveCount(1);await page.reload();await expect(page.locator('.game-room')).toHaveAttribute('data-field','friend');
+ await page.locator('[data-field-travel="home"]').click();await expect(page.locator('.game-room')).toHaveAttribute('data-field','home');await expect(page.locator(`.game-room [data-bird-id="${chick.id}"]`)).toHaveCount(1);await expect(page.locator(`.game-room [data-bird-id="${host.id}"]`)).toHaveCount(0);
+ await tab(page,'friends');await page.locator(`[data-field-invite="${host.id}"]`).click();await expect.poll(async()=> (await readWorld(page)).birds.find(b=>b.id===host.id).home).toBe('visitor');await page.locator('[data-field-travel="home"]').click();await expect(page.locator(`.game-room [data-bird-id="${host.id}"]`)).toHaveCount(1);
 });
 
 function richWorld(){const w=createWorld(fixedNow);w.paused=true;w.decor.points=w.decor.lifetimePoints=1000;for(const slot of DECOR_SLOTS)for(const color of DECOR_COLORS)for(const tier of DECOR_TIERS){const id=`${slot.id}-${color.id}-${tier.id}`;if(!w.decor.inventory.some(i=>i.id===id))w.decor.inventory.push({id,slot:slot.id,color:color.id,tier:tier.id});}return validateWorld(w);}
@@ -124,11 +125,11 @@ test('draw repeated clicks and concurrent tabs charge exactly once; preview does
  await expect.poll(async()=> (await readWorld(page)).decor.draws).toBe(1);const saved=validateWorld(await readWorld(page));expect(saved.decor).toEqual(expected.decor);expect(saved.decor.equipped.toy).toBe('toy-mint-cozy');await expect(page.locator('[data-decor-draw="toy"]')).toBeDisabled();expect(result.item.slot).toBe('toy');await second.close();
 });
 
-test('v2 import cancellation preserves state; accepted migration keeps birds diary care and exports v3',async({page})=>{
- const old=createWorld(fixedNow);advanceTicks(old,80);old.paused=true;old.birds[0].name='大切なおもち';old.version=2;delete old.field;delete old.decor;
+test('v2 import cancellation preserves state; accepted migration keeps birds diary care and exports v4',async({page})=>{
+ const old=createWorld(fixedNow);advanceTicks(old,80);old.paused=true;old.birds[0].name='大切なおもち';old.version=2;delete old.field;delete old.decor;delete old.gems;for(const b of old.birds)delete b.gemCare;
  await openGame(page);await tab(page,'settings');const before=await readWorld(page);const file={name:'old-world-v2.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(old))};
  page.once('dialog',dialog=>dialog.dismiss());await page.locator('#game-import').setInputFiles(file);await expect.poll(async()=> (await readWorld(page)).worldId).toBe(before.worldId);expect((await readWorld(page)).birds).toEqual(before.birds);
- page.once('dialog',dialog=>dialog.accept());await page.locator('#game-import').setInputFiles(file);await expect(page.locator('.game-message')).toContainText('復元しました');const saved=validateWorld(await readWorld(page));expect(saved.version).toBe(3);expect(saved.birds).toEqual(old.birds);expect(saved.events).toEqual(old.events);expect(saved.care).toEqual(old.care);expect(saved.decor.points).toBe(20);
+ page.once('dialog',dialog=>dialog.accept());await page.locator('#game-import').setInputFiles(file);await expect(page.locator('.game-message')).toContainText('復元しました');const saved=validateWorld(await readWorld(page));expect(saved.version).toBe(4);expect(saved.birds.map(({gemCare,...bird})=>bird)).toEqual(old.birds);expect(saved.events).toEqual(old.events);expect(saved.care).toEqual(old.care);expect(saved.decor.points).toBe(20);
  const download=page.waitForEvent('download');await page.locator('[data-game-action="export"]').click();expect(JSON.parse(await readDownload(await download)).decor).toEqual(saved.decor);
 });
 
@@ -151,9 +152,9 @@ for(const width of [390,1440])test(`illustrated home park friend and rich decor 
 
 test('newer panel navigation is not overwritten by an interrupted pending trip',async({page})=>{
  const w=createWorld(fixedNow);w.paused=true;await seedWorld(page,w);await openGame(page);
- await page.evaluate(()=>{document.querySelector('[data-field-travel="park"]').click();document.querySelector('.game-field-nav [data-game-panel="decorate"]').click();});
+ await page.evaluate(()=>{document.querySelector('[data-field-travel="park"]').click();document.querySelector('.game-play-actions [data-game-panel="decorate"]').click();});
  await expect(page.locator('.game-decoration')).toBeVisible();await expect.poll(async()=> (await readWorld(page)).field.place).toBe('park');
- await expect(page.locator('.game-decoration')).toBeVisible();await expect(page.locator('.game-field-nav [data-game-panel="decorate"]')).toHaveAttribute('aria-pressed','true');
+ await expect(page.locator('.game-decoration')).toBeVisible();await expect(page.locator('.game-play-actions [data-game-panel="decorate"]')).toHaveAttribute('aria-pressed','true');
  await page.locator('[data-field-travel="home"]').click();await expect(page.locator('.game-room')).toHaveAttribute('data-field','home');
 });
 
@@ -169,11 +170,11 @@ test('first session and twelve long-name birds retain readable mobile viewport a
 
 test('secondary drawer opens and closes by real keyboard controls without losing focus or scrolling the scene',async({page})=>{
  await page.setViewportSize({width:390,height:1000});await openGame(page);await decodeScene(page);
- await expect(page.locator('.game-field-nav')).toHaveCount(1);await expect(page.locator('.game-field-nav button')).toHaveCount(4);
+ await expect(page.locator('.game-field-nav')).toHaveCount(1);await expect(page.locator('.game-field-nav button')).toHaveCount(3);
  const menu=page.locator('.game-secondary-menu'),summary=menu.locator('summary');await expect(menu).not.toHaveAttribute('open','');await expect(menu.locator('[data-game-panel="family"]')).not.toBeVisible();
  await summary.click();await expect(menu.locator('[data-game-panel="family"]')).toBeVisible();await menu.locator('[data-game-panel="family"]').focus();const before=await page.evaluate(()=>scrollY);await page.keyboard.press('Escape');await expect(summary).toBeFocused();await expect(menu).not.toHaveAttribute('open','');expect(Math.abs((await page.evaluate(()=>scrollY))-before)).toBeLessThan(4);
  await summary.press('Enter');await expect(menu.locator('[data-game-panel="family"]')).toBeVisible();await menu.locator('[data-game-close-menu]').click();await expect(summary).toBeFocused();await expect(menu).not.toHaveAttribute('open','');
- await summary.click();await menu.locator('[data-game-panel="family"]').click();await expect(page.locator('.game-family-tree')).toBeVisible();await expect(page.locator('.game-field-nav button')).toHaveCount(4);await page.locator('[data-field-travel="home"]').click();await expect(page.locator('.game-room')).toHaveAttribute('data-field','home');
+ await summary.click();await menu.locator('[data-game-panel="family"]').click();await expect(page.locator('.game-family-tree')).toBeVisible();await expect(page.locator('.game-field-nav button')).toHaveCount(3);await page.locator('[data-field-travel="home"]').click();await expect(page.locator('.game-room')).toHaveAttribute('data-field','home');
 });
 
 // These are actual browser interactions and viewport checks, not the separate
@@ -213,4 +214,88 @@ test('friends empty state does not restart onboarding after visitors become resi
  await expect(page.locator('.game-empty-home')).toContainText('いま訪ねられる友達はいません');
  await expect(page.locator('.game-empty-home')).not.toContainText('最初');
  await page.locator('.game-empty-home [data-field-travel="home"]').click();await expect(page.locator('.game-room-bird')).toHaveCount(2);
+});
+
+async function holdWorldWrites(page){await page.evaluate(dbName=>new Promise((resolve,reject)=>{const q=indexedDB.open(dbName,1);q.onerror=()=>reject(q.error);q.onsuccess=()=>{const db=q.result,tx=db.transaction('world','readwrite'),store=tx.objectStore('world'),deadline=performance.now()+5000;let hold=true;window.__releaseGemWrite=()=>{hold=false;};tx.oncomplete=()=>db.close();const keep=()=>{const r=store.get('current');r.onsuccess=()=>{if(hold&&performance.now()<deadline)keep();};};keep();resolve();};}),DB_NAME);}
+function collectibleWorld(){const w=createWorld(fixedNow);w.birds[0].needs.food=80;feedBird(w,'b1');advanceTicks(w,2);w.paused=true;expect(w.gems.droppings.length).toBeGreaterThan(0);return validateWorld(w);}
+
+test('Gem collection waits for committed save and repeated clicks cannot pay twice',async({page})=>{
+ const w=collectibleWorld(),drop=w.gems.droppings[0],before=w.decor.points;await seedWorld(page,w);await openGame(page);
+ const pickup=page.locator(`[data-gem-collect="${drop.id}"]`);await expect(pickup).toBeVisible();await expect(pickup).toHaveAttribute('data-gem-revision',String(w.revision));
+ // Hold this test world's IndexedDB write lock without changing its record.
+ // A committed-only reward must not appear while the real transaction waits.
+ await holdWorldWrites(page);
+ try{
+  await pickup.dblclick();await expect(page.locator('.game-gem-reward')).toHaveCount(0);await expect(page.locator('[data-decor-points]')).toContainText(String(before));
+ }finally{await page.evaluate(()=>window.__releaseGemWrite());}
+ await expect.poll(async()=>(await readWorld(page)).decor.points).toBe(before+8);await expect(page.locator('.game-gem-reward')).toContainText('+8 Gem');await expect(pickup).toHaveCount(0);
+ const saved=validateWorld(await readWorld(page));expect(saved.gems.droppings.some(d=>d.id===drop.id)).toBe(false);await page.reload();await expect(pickup).toHaveCount(0);expect((await readWorld(page)).decor.points).toBe(before+8);
+});
+
+test('two tabs collecting the same dropping get exactly one Gem reward',async({page,context})=>{
+ const w=collectibleWorld(),drop=w.gems.droppings[0],before=w.decor.points;await seedWorld(page,w);const second=await context.newPage();await Promise.all([openGame(page),openGame(second)]);
+ await holdWorldWrites(page);try{await Promise.all([page,second].map(p=>p.locator(`[data-gem-collect="${drop.id}"]`).click()));}finally{await page.evaluate(()=>window.__releaseGemWrite());}
+ await expect.poll(async()=>(await readWorld(page)).decor.points).toBe(before+8);const saved=validateWorld(await readWorld(page));expect(saved.gems.droppings.some(d=>d.id===drop.id)).toBe(false);await second.close();
+});
+
+test('all nine slots show 24 future items without granting locked or unowned equipment',async({page})=>{
+ const w=createWorld(fixedNow);w.paused=true;await seedWorld(page,w);await openGame(page);await tab(page,'decorate');
+ for(const slot of DECOR_SLOTS){
+  await page.locator(`[data-decor-slot="${slot.id}"]`).click();await expect(page.locator('[data-decor-preview]')).toHaveCount(24);
+  await expect(page.locator('[data-decor-preview][data-owned="true"]')).toHaveCount(1);await expect(page.locator('[data-decor-preview][data-owned="false"]')).toHaveCount(23);await expect(page.locator('[data-decor-preview][data-locked="true"]')).toHaveCount(16);
+  const locked=`${slot.id}-rose-special`;await page.locator(`[data-decor-preview="${locked}"]`).click();await expect(page.locator('[data-preview-item]')).toHaveAttribute('data-preview-item',locked);await expect(page.locator('[data-decor-equip]')).toHaveCount(0);await expect(page.locator('.game-decor-preview')).toContainText('Lv.6');
+  const future=`${slot.id}-rose-cozy`;await page.locator(`[data-decor-preview="${future}"]`).click();await expect(page.locator('[data-preview-item]')).toHaveAttribute('data-preview-item',future);await expect(page.locator('[data-decor-equip]')).toHaveCount(0);
+  expect((await readWorld(page)).decor).toEqual(w.decor);
+ }
+});
+
+for(const width of [320,390,1440])test(`immersive Gem world, complete collection and centered bird pixels at ${width}px`,async({page},info)=>{
+ const w=collectibleWorld();await seedWorld(page,w);await page.setViewportSize({width,height:1000});await page.emulateMedia({reducedMotion:'reduce'});await openGame(page);await decodeScene(page);
+ await expect(page.locator('.game-field-nav button')).toHaveCount(3);await expect(page.locator('.game-play-actions [data-game-panel="decorate"]')).toBeVisible();await expect(page.locator('#game-scene-resident')).toHaveCount(0);
+ if(info.project.name==='chromium')await info.attach(`gem-main-${width}`,{body:await page.screenshot({animations:'disabled'}),contentType:'image/png'});
+ const pickup=page.locator('[data-gem-collect]').first(),before=(await readWorld(page)).decor.points;await pickup.click();await expect(page.locator('.game-gem-reward')).toContainText('+8 Gem');expect((await readWorld(page)).decor.points).toBe(before+8);
+ if(info.project.name==='chromium')await info.attach(`gem-collect-${width}`,{body:await page.screenshot({animations:'disabled'}),contentType:'image/png'});
+ await tab(page,'profile');await expect(page.locator('.game-profile-heading .game-mini-bird')).toBeVisible();
+ const placement=await page.locator('.game-profile-heading').evaluate(h=>{const b=h.querySelector('.game-mini-bird').getBoundingClientRect(),r=h.getBoundingClientRect();return{width:b.width,centerError:Math.abs((b.left+b.right-r.left-r.right)/2)};});expect(placement.width).toBeGreaterThanOrEqual(200);expect(placement.centerError).toBeLessThan(3);
+ if(info.project.name==='chromium')await info.attach(`gem-profile-${width}`,{body:await page.screenshot({animations:'disabled'}),contentType:'image/png'});
+ await tab(page,'decorate');await page.locator('[data-decor-slot="swing"]').click();await expect(page.locator('[data-decor-preview]')).toHaveCount(24);
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+ if(info.project.name==='chromium')await info.attach(`gem-all-24-${width}`,{body:await page.locator('.game-decoration').screenshot({animations:'disabled'}),contentType:'image/png'});
+});
+
+test('horizontal bird gestures and keyboard arrows preserve drafts while vertical movement does not switch birds',async({page})=>{
+ const w=createWorld(fixedNow);createBird(w,{home:'resident',name:'こめ'});w.paused=true;await seedWorld(page,w);await page.setViewportSize({width:390,height:844});await openGame(page);await page.emulateMedia({reducedMotion:'reduce'});
+ // Gesture click suppression uses real elapsed time. Restore a monotonic,
+ // integer test clock here; the world stays paused throughout the interaction.
+ await page.evaluate(()=>{const base=Date.now(),start=performance.now();Date.now=()=>base+Math.floor(performance.now()-start);});
+ const gesture=async(locator,dx,dy)=>{await locator.scrollIntoViewIfNeeded();const r=await locator.boundingBox(),x=r.x+r.width/2,y=r.y+r.height/2;await page.mouse.move(x,y);await page.mouse.down();await page.mouse.move(x+dx,y+dy,{steps:8});await page.mouse.up();await page.waitForTimeout(450);};
+ const face=page.locator('.game-bird-carousel-face');await expect(face).toHaveAttribute('data-bird-id','b1');await gesture(face,-80,4);await expect(face).toHaveAttribute('data-bird-id','b2');
+ await gesture(face,4,-80);await expect(face).toHaveAttribute('data-bird-id','b2');
+ const prev=page.locator('.game-bird-carousel [data-bird-step="-1"]');await prev.focus();await page.keyboard.press('Enter');await expect(face).toHaveAttribute('data-bird-id','b1');
+ await tab(page,'profile');await page.locator('#game-name').fill('まだ保存しない名前');await gesture(page.locator('.game-profile-heading .game-mini-bird'),-80,2);await expect(page.locator('.game-profile-heading h3')).toHaveText('こめ');await page.locator('.game-profile [data-bird-step="-1"]').click();await expect(page.locator('#game-name')).toHaveValue('まだ保存しない名前');
+ await page.locator('[data-game-open-bird]').click();await page.locator('[data-game-details="sheet-talk"] > summary').click();await page.locator('#game-words').fill('まだ送らないことば');await gesture(page.locator('.game-sheet-heading .game-mini-bird'),-80,2);await expect(page.locator('#game-sheet-title')).toHaveText('こめ');await page.locator('.game-bird-sheet [data-bird-step="-1"]').click();await expect(page.locator('#game-words')).toHaveValue('まだ送らないことば');
+ expect((await readWorld(page)).birds.map(b=>b.name)).toEqual(w.birds.map(b=>b.name));await page.keyboard.press('Escape');await expect(page.locator('.game-bird-sheet')).not.toBeVisible();
+});
+
+test('friend carousel centers with accessible arrows, allows vertical scrolling and keeps visit and invite controls usable',async({page},info)=>{
+ const w=createWorld(fixedNow);const friends=['こはく','すず','そら'].map(name=>createBird(w,{home:'departed',name,sex:'male'}));w.paused=true;await seedWorld(page,w);await page.setViewportSize({width:390,height:600});await page.emulateMedia({reducedMotion:'reduce'});await openGame(page);await tab(page,'friends');
+ const track=page.locator('.game-friend-houses');await expect(track.locator('[data-friend-card]')).toHaveCount(3);await expect(track).toHaveCSS('touch-action','pan-x pan-y');
+ await page.locator('[data-friend-step="1"]').click();const target=page.locator(`[data-friend-card="${friends[1].id}"]`);
+ await expect.poll(()=>target.evaluate(el=>{const a=el.getBoundingClientRect(),b=el.parentElement.getBoundingClientRect();return Math.abs((a.left+a.right-b.left-b.right)/2);})).toBeLessThan(5);
+ // Vertical wheel input over the native horizontal scroller must still move
+ // the page. This is a browser wheel check, not a physical-phone swipe claim.
+ await page.evaluate(()=>scrollTo(0,0));const box=await track.boundingBox();await page.mouse.move(box.x+box.width/2,Math.min(560,box.y+20));await page.mouse.wheel(0,160);await expect.poll(()=>page.evaluate(()=>scrollY)).toBeGreaterThan(0);
+ await page.setViewportSize({width:390,height:844});
+ if(info.project.name==='chromium')await info.attach('gem-friend-carousel-390',{body:await page.locator('.game-friends').screenshot({animations:'disabled'}),contentType:'image/png'});
+ await target.locator('[data-field-travel="friend"]').click();await expect(page.locator('.game-room')).toHaveAttribute('data-field','friend');expect((await readWorld(page)).field.hostId).toBe(friends[1].id);
+ await tab(page,'friends');await page.locator('[data-friend-step="1"]').click();await page.locator(`[data-friend-card="${friends[1].id}"] [data-field-invite]`).click();await expect.poll(async()=>(await readWorld(page)).birds.find(b=>b.id===friends[1].id).home).toBe('visitor');
+ await expect(page.locator(`[data-friend-card="${friends[1].id}"] [data-field-invite]`)).toBeDisabled();
+});
+
+test('approved title logo starts centered for two seconds once per game entry and respects reduced motion',async({page},info)=>{
+ await page.setViewportSize({width:390,height:844});await page.emulateMedia({reducedMotion:'reduce'});await page.goto('game/');
+ const intro=page.locator('.game-logo-intro');await expect(intro).toBeVisible();const started=Date.now();await expect(intro.locator('img')).toHaveAttribute('alt','おもちの文鳥ぐらし');expect(await intro.evaluate(e=>getComputedStyle(e).animationName)).toBe('none');
+ const box=await intro.locator('img').boundingBox();expect(Math.abs(box.x+box.width/2-195)).toBeLessThan(2);expect(Math.abs(box.y+box.height/2-422)).toBeLessThan(2);
+ if(info.project.name==='chromium')await info.attach('gem-startup-logo-390',{body:await page.screenshot(),contentType:'image/png'});
+ await expect(intro).toHaveCount(0);expect(Date.now()-started).toBeGreaterThan(1200);await page.locator('[data-field-travel="park"]').click();await expect(page.locator('.game-logo-intro')).toHaveCount(0);await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');
 });

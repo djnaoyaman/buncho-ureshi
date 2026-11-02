@@ -14,7 +14,7 @@ const imageAlt = IMAGE_ALT;
 // Reload the corrected presentation even when an earlier stylesheet is cached.
 const styleVersion = createHash("sha256").update(await readFile(new URL("../src/style.css", import.meta.url))).digest("hex").slice(0, 12);
 const brandVersion = createHash("sha256").update(await readFile(new URL("../src/visuals.js", import.meta.url))).digest("hex").slice(0, 12);
-const gameVersion = createHash("sha256").update((await Promise.all(["game.js", "engine.js", "game-store.js", "field-visuals.js", "game.css"].map(name => readFile(new URL("../src/" + name, import.meta.url))))).map(bytes=>bytes.toString()).join("\n")).digest("hex").slice(0,12);
+const gameVersion = createHash("sha256").update((await Promise.all(["game.js", "game-chrome.js", "family-layout.js", "engine.js", "game-store.js", "field-visuals.js", "game.css"].map(name => readFile(new URL("../src/" + name, import.meta.url))))).map(bytes=>bytes.toString()).join("\n")).digest("hex").slice(0,12);
 const securityPolicy = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'";
 const secureLink = (href) => href?.replace(/^http:\/\/creativecommons\.org\//, "https://creativecommons.org/");
 const dest = new URL("../dist/", import.meta.url);
@@ -31,6 +31,8 @@ for (const name of ["app.js", "studio.js", "metadata.js", "game.js", "game-store
     .replaceAll("./visuals.js", `./visuals.js?v=${brandVersion}`)
     .replaceAll("./studio.js", `./studio.js?v=${brandVersion}`)
     .replaceAll("./metadata.js", `./metadata.js?v=${brandVersion}`)
+    .replaceAll("./family-layout.js", `./family-layout.js?v=${gameVersion}`)
+    .replaceAll("./game-chrome.js", `./game-chrome.js?v=${gameVersion}`)
     .replaceAll("./game.js", `./game.js?v=${gameVersion}`)
     .replaceAll("./engine.js", `./engine.js?v=${gameVersion}`)
     .replaceAll("./game-store.js", `./game-store.js?v=${gameVersion}`)

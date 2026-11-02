@@ -1,3 +1,4 @@
+import { createWorldChrome } from "./game-chrome.js";
 import { articles } from "./data/articles.js";
 import { photos, birdVideo } from "./data/photos.js";
 import { quizzes } from "./data/quizzes.js";
@@ -60,6 +61,7 @@ function speak(text) {
 function announce(text) {
   document.querySelector("#status").textContent = text;
 }
+let worldChrome;
 let pageShareGeneration = 0;
 function resetPageTools() {
   pageShareGeneration += 1;
@@ -359,6 +361,7 @@ function help() {
   return `${heading("遊び方と設定", "いつでも、戻ってこられる場所。")}<div class="help-layout"><nav class="article-toc"><a href="#help-reading">読む</a><a href="#help-studio">つくる</a><a href="#help-game">暮らす</a><a href="#help-storage">保存</a><a href="#help-access">また来る・共有</a></nav><div class="prose"><section id="help-reading"><h2>写真から、じっくり読むまで</h2><p>図鑑は「まず見る」「基本を知る」「もっと調べる」の三段階。ふりがなはいつも表示されます。「解説をきく」は端末の読み上げ機能を使います。声が入っていない端末でも本文はそのまま読めます。</p><p>♡でつけたお気に入りは図鑑の絞り込みから見つけられます。メニューのサイト内検索は、図鑑の本文だけでなくアート工房・ゲーム・保存の手引きなども調べます。図鑑内の検索では記事を絞り込めます。</p></section><section id="help-studio"><h2>文鳥アート工房</h2><p>まずは見本を選びましょう。写真や鳥、花を加えて、指やマウスで動かせます。動かすボタン・大きさ・回転でも調整できます。重なり順を変え、タイトルを入れたら、正方形か縦長で保存。写真のクレジットも一緒に入ります。</p><p>音は再生ボタンを押したときだけ始まります。BGMも操作音も、サイト用に作った合成音です。本物の文鳥の鳴き声や既存の曲ではありません。共有非対応の端末では画像を保存して共有できます。</p></section><section id="help-game"><h2>おもちの文鳥ぐらし</h2><p>文鳥たちは性格、気分、欲求、相手との関係と記憶から行動を選びます。名前を呼んだり、水浴びに誘ったりして、暮らしを見守ってください。会話は話題と状態に応じたルールで作るもので、何でも理解できるAIではありません。</p><p>おもちの性格・会話・家族・日記はゲームだけの創作です。現実のおもちの観察記録ではありません。成長・つがい・繁殖は簡略化した表現で、現実の飼育手順ではありません。</p><p>閉じている間は動作せず、次に開いたときに経過時間をまとめて計算します。長期間の不在でも鳥は自分で食事や休息をとり、不在への罰・死亡・強い苦痛はありません。詳しい時間と上限はゲームの「設定・遊び方」に表示します。</p></section><section id="help-storage"><h2>端末内の保存について</h2><p>アクセス解析ツール・広告用の追跡コードは未導入です。解析の導入は別途の確認が必要なため、現在は行っていません。</p><p>会員登録やログインは不要。ゲーム、作品、動きの設定、お気に入り、観察ノートはこのブラウザの端末内保存です。端末間の自動同期はなく、閲覧データの消去やプライベートブラウズ終了で失われる場合があります。大切なゲームは設定から定期的に書き出してください。</p><p>読み込むのは、自分が保存したゲーム用JSONファイルだけにしましょう。形式を確認し、不正なデータは現在の世界を置き換えません。複数タブでは一度に一つの更新だけを受け付けます。</p></section><section id="help-access"><h2>また来る・ページを共有する</h2><p>好きなページはブラウザのブックマークに登録できます。パソコンではブラウザのメニューから「ブックマークに追加」などを選びます。スマートフォンでは、次の方法でホーム画面から開きやすくできます。表示名や手順は端末・ブラウザの版によって異なります。</p><ul><li><b>iPhone・iPadのSafari：</b>ブラウザの「共有」メニューから「ホーム画面に追加」を選び、内容を確認して追加します。<a href="https://support.apple.com/ja-jp/guide/iphone/iphea86e5236/ios" target="_blank" rel="noopener noreferrer">Appleの手順</a></li><li><b>AndroidのChrome：</b>ブラウザのメニューから「ホーム画面に追加」を選びます。「ショートカットを作成」などが表示されたら、案内に従って追加してください。<a href="https://support.google.com/chrome/answer/15085120?hl=ja&amp;co=GENIE.Platform%3DAndroid" target="_blank" rel="noopener noreferrer">Chromeの手順</a></li></ul><p><b>このサイトを開くにはインターネット接続が必要です。オフラインでの利用には対応していません。</b>ホーム画面への追加は、ゲームや作品のバックアップ・端末間同期ではありません。ブラウザとは別の保存領域になる場合もあるため、大切なゲームは追加前にJSONを書き出し、作品はPNGで保存してください。</p><p>ページ下の「このページを共有」は端末の共有画面を開きます。「URLをコピー」はページのアドレスだけをコピーします。機能が使えない場合は、表示されたURLを選んで手動でコピーできます。実行や送信先は自分で選び、このサイトが勝手に投稿することはありません。検索語・URLの追加パラメーターや、観察ノート・作品・ゲームの保存データは共有URLには入りません。アート作品の画像共有は、工房内の共有ボタンを使ってください。</p></section><section><h2>読みやすさ</h2><label class="setting-line"><input id="motion-toggle" type="checkbox" ${settings.motion ? "checked" : ""}> 小さな動きを表示する</label><p>動きを減らす端末設定にも対応。どのボタンもキーボードのTabとEnterで操作できます。</p></section><section><h2>鳥との暮らしで困ったら</h2><p>体調や飼育の判断は鳥を診療する獣医師へ。サイトやゲームは診断・治療の代わりにはなりません。いつもとの違いが気になるときは、大人と一緒に相談してください。</p></section></div></div>`;
 }
 function render(route) {
+  worldChrome?.set(route === "game/" && !new URLSearchParams(location.search).has("q"));
   resetPageTools();
   document
     .querySelectorAll("[data-nav]")
@@ -413,7 +416,7 @@ function render(route) {
       ) + '<div id="studio-root"></div>';
   } else if (route === "game/") {
     title = "おもちの文鳥ぐらし";
-    view = '<header class="game-route-title"><p>籠のおうちと、文鳥公園</p><h1>おもちの文鳥ぐらし</h1></header><div id="game-root"></div>';
+    view = `<header class="game-world-title" data-game-title-slot><h1><img src="${BASE}game-art/game-title.png" alt="おもちの文鳥ぐらし" width="2172" height="724"></h1></header><div id="game-root"></div>`;
   } else if (route === "credits/") {
     title = "出典と素材";
     view = credits();
@@ -612,6 +615,7 @@ function render(route) {
   }
 }
 mountPageTools();
+worldChrome = createWorldChrome(document);
 document.querySelector("#brand").innerHTML = logoSvg("header-logo");
 document.querySelector("#menu-toggle").onclick = (e) => {
   const menu = document.querySelector("#menu");
@@ -642,10 +646,7 @@ document.addEventListener("click", (e) => {
 });
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") {
-    document.querySelector("#menu").hidden = true;
-    document
-      .querySelector("#menu-toggle")
-      .setAttribute("aria-expanded", "false");
+    worldChrome.close(true);
     window.speechSynthesis?.cancel();
   }
 });
