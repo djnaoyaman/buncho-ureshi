@@ -1,0 +1,458 @@
+export const morphPhotos = [
+  {
+    "id": "photo-02",
+    "src": "/photos/photo-02.webp",
+    "alt": "ジャワ島バルラン国立公園で、枝に止まる野生の文鳥。",
+    "author": "Francesco Veronesi",
+    "source": "https://commons.wikimedia.org/wiki/File:Java_Sparrow_-_Baluran_NP_-_East_Java_MG_8180_(29726690101).jpg",
+    "license": "CC BY-SA 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0",
+    "credit": "Francesco Veronesi / CC BY-SA 2.0",
+    "category": "文鳥",
+    "artAllowed": false,
+    "title": "Java Sparrow - Baluran NP - East Java MG 8180 (29726690101).jpg",
+    "acquiredAt": "2026-11-02",
+    "modifications": "長辺1200px以内に縮小、WebP変換。色調変更・切り抜きなし。",
+    "width": 1000,
+    "height": 750,
+    "sha256": "23bd94eb25ede3544521ffcdf59572d0fd3fad78c879a315f5a6eadd41459b91",
+    "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/a/a4/Java_Sparrow_-_Baluran_NP_-_East_Java_MG_8180_%2829726690101%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "sourcePageId": 51657006,
+    "reuse": true,
+    "mediaType": "photograph",
+    "originalUniquePhoto": true,
+    "localSourcePath": "../buncho-ureshi/public/photos/photo-02.webp",
+    "verifiedAt": "2026-11-02",
+    "reviewedUses": [
+      {
+        "profileId": "normal",
+        "caption": "ジャワ島バルラン国立公園の文鳥。野生色の頭・ほお・胸の境目を見る資料。",
+        "confidence": "種の資料と撮影情報を照合し、野生色の見た目を確認。写真の個体の遺伝子型は不明。"
+      }
+    ]
+  },
+  {
+    "id": "photo-08",
+    "src": "/photos/photo-08.webp",
+    "alt": "人の手のひらに止まる桜文鳥。一般の資料写真で、おもちではない。",
+    "author": "Muband",
+    "source": "https://commons.wikimedia.org/wiki/File:Buncyou-tenori.jpg",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+    "credit": "Muband / CC BY-SA 3.0",
+    "category": "羽色",
+    "artAllowed": false,
+    "title": "Buncyou-tenori.jpg",
+    "acquiredAt": "2026-11-02",
+    "modifications": "長辺1200px以内に縮小、WebP変換。色調変更・切り抜きなし。",
+    "width": 500,
+    "height": 375,
+    "sha256": "6dc0d8faf5903144559382d9bdf390db11454eaffce824ab861a0b50e951ebfa",
+    "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/9/92/Buncyou-tenori.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "sourcePageId": 20606406,
+    "reuse": true,
+    "mediaType": "photograph",
+    "originalUniquePhoto": true,
+    "localSourcePath": "../buncho-ureshi/public/photos/photo-08.webp",
+    "verifiedAt": "2026-11-02",
+    "reviewedUses": [
+      {
+        "profileId": "sakura-pied",
+        "caption": "小さな白い羽が頭や首に見える資料。撮影者は年をとった飼育文鳥と説明。写真から品種の家系は確定しません。",
+        "confidence": "写真の白斑を直接確認。桜／パイドは見た目の説明であり、撮影者による血統認定はない。"
+      }
+    ]
+  },
+  {
+    "id": "photo-12",
+    "src": "/photos/photo-12.webp",
+    "alt": "白と灰色の羽が混じる文鳥。布の縁に止まっている。",
+    "author": "さくらふみこ",
+    "source": "https://commons.wikimedia.org/wiki/File:Gomashiobunchou.jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "credit": "さくらふみこ / CC BY-SA 4.0",
+    "category": "羽色",
+    "artAllowed": false,
+    "title": "Gomashiobunchou.jpg",
+    "acquiredAt": "2026-11-02",
+    "modifications": "長辺1200px以内に縮小、WebP変換。色調変更・切り抜きなし。",
+    "width": 1200,
+    "height": 900,
+    "sha256": "c54c1139a43ad65a6ecc292cc49cb7f21bd10e3d7df7eb28f95cbb43dacc1360",
+    "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/4/49/Gomashiobunchou.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "sourcePageId": 105174218,
+    "reuse": true,
+    "mediaType": "photograph",
+    "originalUniquePhoto": true,
+    "localSourcePath": "../buncho-ureshi/public/photos/photo-12.webp",
+    "verifiedAt": "2026-11-02",
+    "reviewedUses": [
+      {
+        "profileId": "sakura-pied",
+        "caption": "白いまだら模様の例。ファイル名は Gomashiobunchou。遺伝型・年齢は確認できていません。",
+        "confidence": "写真の白斑を直接確認。桜／パイドは見た目の説明であり、撮影者による血統認定はない。"
+      }
+    ]
+  },
+  {
+    "id": "photo-16",
+    "src": "/photos/photo-16.webp",
+    "alt": "シルバーと記載された飼育文鳥。淡い灰色の羽と赤いくちばし。",
+    "author": "Joy1210",
+    "source": "https://commons.wikimedia.org/wiki/File:Java_Sparrow_(Silver).JPG",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "credit": "Joy1210 / CC BY-SA 3.0",
+    "category": "羽色",
+    "artAllowed": false,
+    "title": "Java Sparrow (Silver).JPG",
+    "acquiredAt": "2026-11-02",
+    "modifications": "長辺1200px以内に縮小、WebP変換。色調変更・切り抜きなし。",
+    "width": 1193,
+    "height": 898,
+    "sha256": "2d07a63c3fc0b9ec64f01934ef7c928206dd387418df68b17f26650e791fdd92",
+    "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/8/8a/Java_Sparrow_%28Silver%29.JPG?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "sourcePageId": 15069254,
+    "reuse": true,
+    "mediaType": "photograph",
+    "originalUniquePhoto": true,
+    "localSourcePath": "../buncho-ureshi/public/photos/photo-16.webp",
+    "verifiedAt": "2026-11-02",
+    "reviewedUses": [
+      {
+        "profileId": "silver",
+        "caption": "撮影者が「銀禾雀 / Silver」と記載。シルバーの実写例ですが、ライト・ダーク、性別、月齢は未確認。",
+        "confidence": "撮影者の明示的なシルバー表記と画素を照合。細分類・眼球色・家系は判定しない。"
+      }
+    ]
+  },
+  {
+    "id": "photo-18",
+    "src": "/photos/photo-18.webp",
+    "alt": "巣立ち後の若い文鳥。頭は灰褐色で、くちばしは暗い色。",
+    "author": "Tus van Genderen",
+    "source": "https://commons.wikimedia.org/wiki/File:Java_sparrow_fledgling.jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "credit": "Tus van Genderen / CC BY-SA 4.0",
+    "category": "幼鳥",
+    "artAllowed": false,
+    "title": "Java sparrow fledgling.jpg",
+    "acquiredAt": "2026-11-02",
+    "modifications": "長辺1200px以内に縮小、WebP変換。色調変更・切り抜きなし。",
+    "width": 900,
+    "height": 1200,
+    "sha256": "567da3c335f294bb6ba993dee1954b52136044cc6de81774c37369932532b7f8",
+    "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/e/ed/Java_sparrow_fledgling.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "sourcePageId": 47652659,
+    "reuse": true,
+    "mediaType": "photograph",
+    "originalUniquePhoto": true,
+    "localSourcePath": "../buncho-ureshi/public/photos/photo-18.webp",
+    "verifiedAt": "2026-11-02",
+    "reviewedUses": [
+      {
+        "profileId": "juvenile",
+        "caption": "巣立ちから七日後と作者が記載した文鳥。孵化後七日という意味ではありません。",
+        "confidence": "撮影者の juvenile / immature / 巣立ち後の記録を確認。別個体間の比較であり、同一個体の時系列ではない。"
+      }
+    ]
+  },
+  {
+    "id": "photo-20",
+    "src": "/photos/photo-20.webp",
+    "alt": "室内で後ろ向きに止まる桜文鳥。たたんだ翼と尾が見える。",
+    "author": "uiuiui",
+    "source": "https://commons.wikimedia.org/wiki/File:Jawa_sparrow_of_Japan.JPG",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "credit": "uiuiui / CC BY-SA 3.0",
+    "category": "羽色",
+    "artAllowed": false,
+    "title": "Jawa sparrow of Japan.JPG",
+    "acquiredAt": "2026-11-02",
+    "modifications": "長辺1200px以内に縮小、WebP変換。色調変更・切り抜きなし。",
+    "width": 640,
+    "height": 480,
+    "sha256": "f89f6e186fa6dfa940dd14b613f80e65626150b4085bc8b761c07b123f33868a",
+    "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/0/05/Jawa_sparrow_of_Japan.JPG?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "sourcePageId": 18451699,
+    "reuse": true,
+    "mediaType": "photograph",
+    "originalUniquePhoto": true,
+    "localSourcePath": "../buncho-ureshi/public/photos/photo-20.webp",
+    "verifiedAt": "2026-11-02",
+    "reviewedUses": [
+      {
+        "profileId": "sakura-pied",
+        "caption": "頭の白い羽と翼・尾の配色を見る補助資料。品種の詳しい家系情報はありません。",
+        "confidence": "写真の白斑を直接確認。桜／パイドは見た目の説明であり、撮影者による血統認定はない。"
+      }
+    ]
+  },
+  {
+    "id": "photo-21",
+    "src": "/photos/photo-21.webp",
+    "alt": "止まり木に並ぶ二羽の白文鳥。一般の資料写真で、おもちではない。",
+    "author": "Antara",
+    "source": "https://commons.wikimedia.org/wiki/File:Let%27s_fall_in_love_-_Flickr_-_Only_Sequel.jpg",
+    "license": "CC BY 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+    "credit": "Antara / CC BY 2.0",
+    "category": "羽色",
+    "artAllowed": true,
+    "title": "Let's fall in love - Flickr - Only Sequel.jpg",
+    "acquiredAt": "2026-11-02",
+    "modifications": "長辺1200px以内に縮小、WebP変換。色調変更・切り抜きなし。",
+    "width": 635,
+    "height": 440,
+    "sha256": "d57f3bc8545c9c08b13b775d721425cbe547d6798b453712655824e18b3d6df6",
+    "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/1/18/Let%27s_fall_in_love_-_Flickr_-_Only_Sequel.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "sourcePageId": 92159699,
+    "reuse": true,
+    "mediaType": "photograph",
+    "originalUniquePhoto": true,
+    "localSourcePath": "../buncho-ureshi/public/photos/photo-21.webp",
+    "verifiedAt": "2026-11-02",
+    "reviewedUses": [
+      {
+        "profileId": "white",
+        "caption": "二羽の白い文鳥。同じ色でも別の個体であることを見る資料。",
+        "confidence": "ファイル名・撮影説明と白い羽の実写を照合。眼球の見え方は写真の観察であり、遺伝子型・健康・正確な年齢は不明。"
+      }
+    ]
+  },
+  {
+    "id": "photo-26",
+    "src": "/photos/photo-26.webp",
+    "alt": "ハワイの草の上に立つ文鳥。横から見た翼と尾。",
+    "author": "Bernard Spragg. NZ",
+    "source": "https://commons.wikimedia.org/wiki/File:Java_Sparrow._(Lonchura_oryzivora),_(10722015754).jpg",
+    "license": "CC0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "credit": "Bernard Spragg. NZ / CC0",
+    "category": "野外",
+    "artAllowed": true,
+    "title": "Java Sparrow. (Lonchura oryzivora), (10722015754).jpg",
+    "acquiredAt": "2026-11-02",
+    "modifications": "長辺1200px以内に縮小、WebP変換。色調変更・切り抜きなし。",
+    "width": 1200,
+    "height": 813,
+    "sha256": "44c724ae87b21a81b35a8191636845ac5d412f1e14dbbdd4bb8238745bf5774e",
+    "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/5/5a/Java_Sparrow._%28Lonchura_oryzivora%29%2C_%2810722015754%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "sourcePageId": 70114503,
+    "reuse": true,
+    "mediaType": "photograph",
+    "originalUniquePhoto": true,
+    "localSourcePath": "../buncho-ureshi/public/photos/photo-26.webp",
+    "verifiedAt": "2026-11-02",
+    "reviewedUses": [
+      {
+        "profileId": "normal",
+        "caption": "ハワイの文鳥。横から、翼と黒い尾を比べる資料。",
+        "confidence": "種の資料と撮影情報を照合し、野生色の見た目を確認。写真の個体の遺伝子型は不明。"
+      },
+      {
+        "profileId": "juvenile",
+        "caption": "野生色の成鳥との比較用。若鳥写真と同一個体ではありません。",
+        "confidence": "撮影者の juvenile / immature / 巣立ち後の記録を確認。別個体間の比較であり、同一個体の時系列ではない。"
+      }
+    ]
+  },
+  {
+    "id": "photo-37",
+    "src": "/photos/photo-37.webp",
+    "alt": "ハワイの草地にいる幼鳥。灰褐色の頭と淡いほおが見える。",
+    "author": "Daniel Ramirez",
+    "source": "https://commons.wikimedia.org/wiki/File:Padda_oryzivora_-Honolulu,_Hawaii,_USA_-immature-8.jpg",
+    "license": "CC BY 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+    "credit": "Daniel Ramirez / CC BY 2.0",
+    "category": "幼鳥",
+    "artAllowed": true,
+    "title": "Padda oryzivora -Honolulu, Hawaii, USA -immature-8.jpg",
+    "acquiredAt": "2026-11-02",
+    "modifications": "長辺1200px以内に縮小、WebP変換。色調変更・切り抜きなし。",
+    "width": 1200,
+    "height": 981,
+    "sha256": "b014e06da6e4af802ea1c0e15047b00324d6568d281a05d9c7eb7250db0c7788",
+    "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/f/f4/Padda_oryzivora_-Honolulu%2C_Hawaii%2C_USA_-immature-8.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "sourcePageId": 15083739,
+    "reuse": true,
+    "mediaType": "photograph",
+    "originalUniquePhoto": true,
+    "localSourcePath": "../buncho-ureshi/public/photos/photo-37.webp",
+    "verifiedAt": "2026-11-02",
+    "reviewedUses": [
+      {
+        "profileId": "juvenile",
+        "caption": "ハワイの immature と記載された若い文鳥。別個体の比較資料。",
+        "confidence": "撮影者の juvenile / immature / 巣立ち後の記録を確認。別個体間の比較であり、同一個体の時系列ではない。"
+      }
+    ]
+  },
+  {
+    "id": "photo-38",
+    "src": "/photos/photo-38.webp",
+    "alt": "ハワイの草地に立つ若い文鳥。成鳥の黒い頭とは違う色。",
+    "author": "Kim Bridges",
+    "source": "https://commons.wikimedia.org/wiki/File:Padda_oryzivora_-University_of_Hawaii_at_Manoa_campus,_Honolulu,_Hawaii,_USA_-juvenile-8_(2).jpg",
+    "license": "CC BY 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/3.0",
+    "credit": "Kim Bridges / CC BY 3.0",
+    "category": "幼鳥",
+    "artAllowed": true,
+    "title": "Padda oryzivora -University of Hawaii at Manoa campus, Honolulu, Hawaii, USA -juvenile-8 (2).jpg",
+    "acquiredAt": "2026-11-02",
+    "modifications": "長辺1200px以内に縮小、WebP変換。色調変更・切り抜きなし。",
+    "width": 1200,
+    "height": 900,
+    "sha256": "d8f172cc9c7b4943ffc29657b631055e4df9280015746ea08d8c27c7768d615a",
+    "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/2/21/Padda_oryzivora_-University_of_Hawaii_at_Manoa_campus%2C_Honolulu%2C_Hawaii%2C_USA_-juvenile-8_%282%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "sourcePageId": 14547730,
+    "reuse": true,
+    "mediaType": "photograph",
+    "originalUniquePhoto": true,
+    "localSourcePath": "../buncho-ureshi/public/photos/photo-38.webp",
+    "verifiedAt": "2026-11-02",
+    "reviewedUses": [
+      {
+        "profileId": "juvenile",
+        "caption": "ハワイの juvenile と記載された若い文鳥。写真の青みはそのまま保持。",
+        "confidence": "撮影者の juvenile / immature / 巣立ち後の記録を確認。別個体間の比較であり、同一個体の時系列ではない。"
+      }
+    ]
+  },
+  {
+    "id": "photo-39",
+    "src": "/photos/photo-39.webp",
+    "alt": "ペナン・バードパークの白文鳥。丸太に止まり、横を向いている。おもち本人ではない。",
+    "author": "shankar s.",
+    "source": "https://commons.wikimedia.org/wiki/File:Java_Sparrow-_White_(12340487613).jpg",
+    "license": "CC BY 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+    "credit": "shankar s. / CC BY 2.0",
+    "category": "白文鳥",
+    "artAllowed": true,
+    "title": "Java Sparrow- White (12340487613).jpg",
+    "acquiredAt": "2026-11-02",
+    "modifications": "長辺1200px以内に縮小、WebP変換。色調変更・切り抜きなし。",
+    "width": 1200,
+    "height": 797,
+    "sha256": "4ebdf6ba91731376d96eefc2ddedd9f279de4acc0175038be01732d877f1eebe",
+    "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0d/Java_Sparrow-_White_%2812340487613%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "sourcePageId": 68235580,
+    "reuse": true,
+    "mediaType": "photograph",
+    "originalUniquePhoto": true,
+    "localSourcePath": "../buncho-ureshi/public/photos/photo-39.webp",
+    "verifiedAt": "2026-11-02",
+    "reviewedUses": [
+      {
+        "profileId": "white",
+        "caption": "白い翼・尾を横から見られる全身写真。ペナン・バードパーク。",
+        "confidence": "ファイル名・撮影説明と白い羽の実写を照合。眼球の見え方は写真の観察であり、遺伝子型・健康・正確な年齢は不明。"
+      }
+    ]
+  },
+  {
+    "id": "photo-41",
+    "src": "/photos/photo-41.webp",
+    "alt": "弥富で撮影された白文鳥。ケージ内の止まり木に立っている。おもち本人ではない。",
+    "author": "Asturio Cantabrio",
+    "source": "https://commons.wikimedia.org/wiki/File:Yatomi_Japanese_Rice_Bird_ac.jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "credit": "Asturio Cantabrio / CC BY-SA 4.0",
+    "category": "白文鳥",
+    "artAllowed": false,
+    "title": "Yatomi Japanese Rice Bird ac.jpg",
+    "acquiredAt": "2026-11-02",
+    "modifications": "長辺1200px以内に縮小、WebP変換。色調変更・切り抜きなし。",
+    "width": 1200,
+    "height": 798,
+    "sha256": "1046f47e58373e18adbbd71b4456aef14d45d64839aea7ca34c88f719c8c0c43",
+    "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/1/11/Yatomi_Japanese_Rice_Bird_ac.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "sourcePageId": 94066488,
+    "reuse": true,
+    "mediaType": "photograph",
+    "originalUniquePhoto": true,
+    "localSourcePath": "../buncho-ureshi/public/photos/photo-41.webp",
+    "verifiedAt": "2026-11-02",
+    "reviewedUses": [
+      {
+        "profileId": "white",
+        "caption": "弥富で撮影された白文鳥。おもちではありません。",
+        "confidence": "ファイル名・撮影説明と白い羽の実写を照合。眼球の見え方は写真の観察であり、遺伝子型・健康・正確な年齢は不明。"
+      }
+    ]
+  },
+  {
+    "id": "photo-43",
+    "src": "/photos/photo-43.webp",
+    "alt": "手の上の白文鳥を横から見た写真。目、くちばし、足がよく見える。おもち本人ではない。",
+    "author": "Joseph",
+    "source": "https://commons.wikimedia.org/wiki/File:%E7%99%BD%E6%96%87%E9%B3%A5.JPG",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "credit": "Joseph / CC BY-SA 3.0",
+    "category": "白文鳥",
+    "artAllowed": false,
+    "title": "白文鳥.JPG",
+    "acquiredAt": "2026-11-02",
+    "modifications": "長辺1200px以内に縮小、WebP変換。色調変更・切り抜きなし。",
+    "width": 1200,
+    "height": 902,
+    "sha256": "9a457da913217fb972ffe36a1db52d996875abb9b8e64cfd3681a7d374db13ff",
+    "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/5/5e/%E7%99%BD%E6%96%87%E9%B3%A5.JPG?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "sourcePageId": 8010061,
+    "reuse": true,
+    "mediaType": "photograph",
+    "originalUniquePhoto": true,
+    "localSourcePath": "../buncho-ureshi/public/photos/photo-43.webp",
+    "verifiedAt": "2026-11-02",
+    "reviewedUses": [
+      {
+        "profileId": "white",
+        "caption": "白い羽と暗く見える眼球、ピンクの目のまわりを近くから見る資料。おもちではありません。",
+        "confidence": "ファイル名・撮影説明と白い羽の実写を照合。眼球の見え方は写真の観察であり、遺伝子型・健康・正確な年齢は不明。"
+      }
+    ]
+  },
+  {
+    "id": "morph-cinnamon-video-still",
+    "src": "/photos/morph-cinnamon-video-still.webp",
+    "alt": "シナモン文鳥の実録動画の3.000秒から取り出した静止画。手の上に止まる茶色系の文鳥。おもち本人ではありません。",
+    "author": "KAMEDA, Akihiro",
+    "source": "https://commons.wikimedia.org/wiki/File:%E3%82%B7%E3%83%8A%E3%83%A2%E3%83%B3%E6%96%87%E9%B3%A5%E3%81%AE%E6%B1%82%E6%84%9B%E3%81%AE%E6%AD%8C.webm",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "credit": "KAMEDA, Akihiro / CC BY-SA 3.0",
+    "title": "シナモン文鳥の求愛の歌 — 3.000秒の静止画",
+    "acquiredAt": "2026-11-02",
+    "modifications": "元のCC BY-SA 3.0動画の3.000秒から1フレームを抽出し、480×480pxのWebPに変換。切り抜き・色調変更なし。静止画もCC BY-SA 3.0。",
+    "category": "文鳥",
+    "artAllowed": false,
+    "artRestriction": "現行工房はCC BY-SAの共有画像ライセンスを管理しないため、図鑑でのみ使用。",
+    "width": 480,
+    "height": 480,
+    "sha256": "92f9016da0e8fc2dce0e1cebd70d583420b352576614ef83c34e75f7efa10929",
+    "mediaType": "video-still",
+    "originalUniquePhoto": false,
+    "derivedFrom": "/photos/cinnamon-song.webm",
+    "frameTimeSeconds": 3,
+    "sourceDurationSeconds": 12,
+    "verifiedAt": "2026-11-02",
+    "reuse": false,
+    "localSourcePath": "photos/morph-cinnamon-video-still.webp",
+    "reviewedUses": [
+      {
+        "profileId": "cinnamon",
+        "caption": "シナモン文鳥の実録動画の3.000秒から抽出した静止画。新しい独立写真には数えません。おもちではありません。",
+        "confidence": "撮影者のシナモン表記と実録動画を確認。掲載媒体は動画由来の静止画。独立写真・正確な月齢・遺伝子型は未確認。"
+      }
+    ]
+  }
+];
+export const newMorphPhotos = morphPhotos.filter(p => !p.reuse);

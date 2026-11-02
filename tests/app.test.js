@@ -407,7 +407,8 @@ test("site-wide search, truthful selected-part crops and literal photo credits",
     assert.equal(doc.querySelector("#search-query").value, "アート");
     assert.ok(resultLink("studio/"));
     search("   ");
-    assert.equal(doc.querySelectorAll(".section-result").length, 9);
+    assert.equal(doc.querySelectorAll(".section-result").length, 10);
+    assert.ok(resultLink("colors/"));
     assert.equal(doc.querySelectorAll("#search-article-results .article-card").length, 0);
     assert.match(doc.querySelector("#search-result-status").textContent, /ことばを入れて/);
     const injection = '<img id="query-injection" onerror="window.__searchInjected=true">';
