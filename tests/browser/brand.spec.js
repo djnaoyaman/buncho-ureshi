@@ -7,7 +7,7 @@ test('approved 04 decodes without stretching and remains visible from 320px to d
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   for(const [width,height] of [[320,900],[375,900],[390,844],[844,390],[768,900],[1440,900]]){
     await page.setViewportSize({width,height});await page.goto('./');
-    for(const selector of ['#brand img','.hero-logo']){
+    for(const selector of ['#brand img']){
       const logo=page.locator(selector);await expect(logo).toBeVisible();await expect(logo).toHaveAttribute('alt',SITE_NAME);
       const result=await logo.evaluate(async img=>{await img.decode();const r=img.getBoundingClientRect();return {w:img.naturalWidth,h:img.naturalHeight,x:r.x,y:r.y,width:r.width,height:r.height};});
       expect([result.w,result.h]).toEqual([1120,645]);expect(result.width/result.height).toBeCloseTo(1120/645,2);
@@ -18,9 +18,8 @@ test('approved 04 decodes without stretching and remains visible from 320px to d
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
     const header=await page.locator('.site-header').boundingBox();
     expect(header.height).toBeLessThanOrEqual(width<=600?96:110);
-    expect(await page.locator('.hero-logo').evaluate(e=>e.getBoundingClientRect().width)).toBeLessThanOrEqual(width<=600?270:380);
     await page.evaluate(()=>scrollTo(0,0));
-    const captureHeight=await page.locator('.hero-copy').evaluate(e=>Math.ceil(Math.max(innerHeight,e.getBoundingClientRect().bottom+20)));
+    const captureHeight=await page.locator('.art-cover-copy').evaluate(e=>Math.ceil(Math.max(innerHeight,e.getBoundingClientRect().bottom+20)));
     const screenshot=await page.screenshot({scale:'css',clip:{x:0,y:0,width,height:captureHeight}});
     // Inspect rendered PNG pixels, not only CSS declarations. The 4 inset corners
     // contain source paper, so they must now match their actual ivory backdrop.
@@ -28,17 +27,17 @@ test('approved 04 decodes without stretching and remains visible from 320px to d
       const image=new Image();image.src='data:image/png;base64,'+encoded;await image.decode();
       const canvas=document.createElement('canvas');canvas.width=image.width;canvas.height=image.height;
       const c=canvas.getContext('2d');c.drawImage(image,0,0);
-      return [...document.querySelectorAll('#brand img,.hero-logo')].map(e=>{
-        const r=e.getBoundingClientRect(),style=getComputedStyle(e),parent=getComputedStyle(e.closest('.site-header,.hero-copy'));
+      return [...document.querySelectorAll('#brand img')].map(e=>{
+        const r=e.getBoundingClientRect(),style=getComputedStyle(e),parent=getComputedStyle(e.closest('.site-header'));
         const corners=[[r.x+2,r.y+2],[r.right-3,r.y+2],[r.x+2,r.bottom-3],[r.right-3,r.bottom-3]].filter(([x,y])=>x>=0&&y>=0&&x<image.width&&y<image.height);
         return {blend:style.mixBlendMode,filter:style.filter,isolation:parent.isolation,background:parent.backgroundColor,
           corners:corners.map(([x,y])=>[...c.getImageData(Math.floor(x),Math.floor(y),1,1).data])};
       });
     },screenshot.toString('base64'));
     for(const item of pixels){
-      expect(item.blend).toBe('normal');expect(item.filter).toBe('none');expect(item.isolation).toBe('isolate');expect(item.background).toBe('rgb(246, 243, 232)');
+      expect(item.blend).toBe('normal');expect(item.filter).toBe('none');expect(item.isolation).toBe('isolate');expect(item.background).toBe('rgb(247, 248, 243)');
       expect(item.corners.length).toBe(4);
-      for(const pixel of item.corners)for(const [i,value] of [246,243,232].entries())expect(Math.abs(pixel[i]-value)).toBeLessThanOrEqual(2);
+      for(const pixel of item.corners)for(const [i,value] of [247,248,243].entries())expect(Math.abs(pixel[i]-value)).toBeLessThanOrEqual(2);
     }
     await info.attach(`integrated-04-home-${width}x${height}`,{body:screenshot,contentType:'image/png'});
   }
@@ -71,9 +70,9 @@ test('logo integration stays local to light UI surfaces and supports contrast pr
     expect(unexpected).toBe(0);
   }
   await page.goto('./');await page.emulateMedia({colorScheme:'dark'});
-  expect(await page.locator('.site-header').evaluate(e=>getComputedStyle(e).backgroundColor)).toBe('rgb(246, 243, 232)');
+  expect(await page.locator('.site-header').evaluate(e=>getComputedStyle(e).backgroundColor)).toBe('rgb(247, 248, 243)');
   await page.emulateMedia({forcedColors:'active'});
-  for(const selector of ['#brand img','.hero-logo']){
+  for(const selector of ['#brand img']){
     expect(await page.locator(selector).evaluate(e=>getComputedStyle(e).mixBlendMode)).toBe('normal');
     expect(await page.locator(selector).evaluate(e=>getComputedStyle(e).filter)).toBe('none');
     await expect(page.locator(selector)).toHaveAttribute('alt',SITE_NAME);
@@ -92,8 +91,8 @@ test('served wordmark has true alpha, opaque white bird, and unchanged original 
   });
   expect(report.size).toEqual([1120,645]);expect(report.transparent).toBeGreaterThan(.75);expect(report.opaque).toBeGreaterThan(100000);expect(report.mismatches).toBe(0);expect(report.borderOpaque).toBe(0);expect(report.bird[3]).toBe(255);expect(report.bird[0]).toBeGreaterThan(240);
   await page.setViewportSize({width:390,height:1000});
-  for(const background of ['rgb(246, 243, 232)','rgb(222, 232, 224)']){
-    await page.locator('.site-header,.hero-copy').evaluateAll((els,color)=>els.forEach(e=>e.style.backgroundColor=color),background);
+  for(const background of ['rgb(247, 248, 243)','rgb(222, 232, 224)']){
+    await page.locator('.site-header').evaluateAll((els,color)=>els.forEach(e=>e.style.backgroundColor=color),background);
     await info.attach(`alpha-logo-${background}`,{body:await page.screenshot(),contentType:'image/png'});
   }
 });

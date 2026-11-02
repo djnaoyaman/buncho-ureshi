@@ -70,11 +70,21 @@ async function seedWorld(page, world, lastUpdated = fixedNow) {
 async function openGame(page, query = '') {
   await page.goto(`game/${query}`);
   await expect(page.locator('#game-root .game-app')).toBeVisible();
+  await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');
 }
 
 async function closeBird(page) { if(await page.locator('.game-bird-sheet').isVisible())await page.locator('[data-game-close-bird]').click(); }
 async function openBird(page) { await page.locator('[data-game-open-bird]').click();await expect(page.locator('.game-bird-sheet')).toBeVisible(); }
 async function openTalk(page) { await openBird(page);const d=page.locator('[data-game-details="sheet-talk"]');if(!await d.evaluate(e=>e.open))await d.locator('summary').click(); }
+async function chooseBird(page,id){
+  const face=page.locator('.game-bird-carousel-face');
+  for(let i=0;i<128;i++){
+    if(await face.getAttribute('data-bird-id')===id)return;
+    await page.locator('.game-bird-carousel [data-bird-step="1"]').click();
+  }
+  throw new Error(`Bird ${id} was not reachable through the visible carousel`);
+}
+
 async function tab(page, name) {
   await closeBird(page);
   const target=page.locator(`[data-game-panel="${name}"]`).first();if(!await target.isVisible())await page.locator('.game-secondary-menu summary').click();await target.click();
@@ -116,6 +126,7 @@ test('game starts with Omochi, then names and welcomes the unrelated male visito
   expect(world.birds.find(b => b.id === 'b2')).toMatchObject({ name: 'こめ', sex: 'male', parents: [] });
   await page.reload();
   await expect(page.locator('#game-root .game-app')).toBeVisible();
+  await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');
   await tab(page, 'roster');
   await expect(page.locator('.game-roster [data-game-select="b2"]')).toContainText('こめ');
 });
@@ -141,8 +152,11 @@ test('verification control produces autonomous generations, bounded roster, and 
   expect(world.birds.filter(b => b.home === 'visitor').length).toBeLessThanOrEqual(LIMITS.visitors);
   expect(world.events.length).toBeLessThanOrEqual(LIMITS.events);
   await tab(page, 'family');
-  await expect(page.locator('.game-family-card')).toHaveCount(world.birds.length);
-  await expect(page.locator('.game-family-tree')).toContainText('親 → 子');
+  await expect(page.locator('.game-family-node.is-focus')).toHaveCount(1);
+  await expect(page.locator('.game-family-legend')).toContainText('親子');
+  await page.locator('[data-game-details="family-text"] > summary').click();
+  await expect(page.locator('[data-game-details="family-text"] li')).toHaveCount(world.birds.length);
+  for(const b of world.birds)await expect(page.locator(`[data-game-details="family-text"] [data-family-focus="${b.id}"]`)).toHaveText(b.name);
   await tab(page, 'roster');
   await expect(page.locator('.game-roster [data-game-select]')).toHaveCount(world.birds.length);
   await tab(page, 'diary');
@@ -224,7 +238,7 @@ test('save download imports back exactly; malformed files do not replace the cur
   const exportedText = await readDownload(await downloaded);
   const exported = validateWorld(JSON.parse(exportedText));
   expect(exported.tick).toBe(300);
-  expect(exported.version).toBe(3);
+  expect(exported.version).toBe(4);
   await tab(page, 'profile');
   await page.locator('#game-name').fill('あとから変えた名前');
   await page.locator('[data-game-form="rename"] button[type="submit"]').click();
@@ -328,13 +342,14 @@ test('pause survives reload, ignores elapsed absence, and resumes without catch-
   await expect(page.locator('.game-status')).toContainText('のんびり進行中');
   await page.reload();
   await expect(page.locator('#game-root .game-app')).toBeVisible();
+  await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');
   const resumed = validateWorld(await readWorld(page));
   expect(resumed.paused).toBe(false);
   expect(resumed.tick).toBe(paused.tick);
   expect(resumed.lastUpdated).toBe(fixedNow);
 });
 
-test('family card hands real game names and family composition into the art studio', async ({ page }) => {
+test('family card hands real game names and family composition into the art studio', async ({ page },info) => {
   const seeded = createWorld(fixedNow);
   advanceTicks(seeded, 300);
   const child = seeded.birds.find(b => b.parents.length === 2);
@@ -343,6 +358,14 @@ test('family card hands real game names and family composition into the art stud
   await seedWorld(page, seeded);
   await openGame(page);
   await tab(page, 'family');
+  await page.locator('[data-game-details="family-text"] > summary').click();
+  await page.locator(`[data-game-details="family-text"] [data-family-focus="${child.id}"]`).click();
+  await page.locator('[data-game-details="family-text"] > summary').click();
+  await expect(page.locator(`.game-family-node.is-focus[data-family-focus="${child.id}"]`)).toBeVisible();
+  for(const id of child.parents)await expect(page.locator(`.game-family-node[data-family-focus="${id}"]`)).toBeVisible();
+  expect(await page.locator('.family-edge-blood').count()).toBeGreaterThan(0);
+  await page.setViewportSize({width:390,height:900});
+  if(info.project.name==='chromium')await info.attach('gem-family-390',{body:await page.locator('.game-family-tree').screenshot({animations:'disabled'}),contentType:'image/png'});
   await page.locator(`[data-game-art="${child.id}"]`).click();
   await expect(page).toHaveURL(/\/buncho-ureshi\/studio\/$/);
   await expect(page.locator('[data-studio="canvas"]')).toBeVisible();
@@ -352,6 +375,7 @@ test('family card hands real game names and family composition into the art stud
   for (const id of child.parents) await expect(layers).toContainText(seeded.birds.find(b => b.id === id).name);
   await page.goBack();
   await expect(page.locator('#game-root .game-app')).toBeVisible();
+  await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');
   expect((await readWorld(page)).birds.find(b => b.id === child.id).name).toBe('わかばの記念');
 });
 
@@ -364,20 +388,20 @@ test('rapid navigation and Back clean up a pending async game mount without orph
     window.setInterval = (fn, delay, ...args) => { const id = set(fn, delay, ...args); window.__gameTestIntervals.set(id, delay); return id; };
     window.clearInterval = id => { window.__gameTestIntervals.delete(id); return clear(id); };
   });
-  await page.goto('');
+  await page.goto('encyclopedia/');
   for (let i = 0; i < 4; i++) {
-    // Both native navigation links are activated in the same task, before the IDB open resolves.
-    await page.evaluate(() => {
-      document.querySelector('.desktop-nav [data-nav="game/"]').click();
-      document.querySelector('.desktop-nav [data-nav="encyclopedia/"]').click();
-    });
+    await page.locator('.desktop-nav [data-nav="game/"]').click();
+    // Real browser Back immediately abandons the game route, including a mount
+    // that may still be awaiting IndexedDB; no hidden background link is forced.
+    await page.goBack();
     await expect(page.locator('#game-root')).toHaveCount(0);
     await expect.poll(async () => page.evaluate(() => [...window.__gameTestIntervals.values()].filter(delay => delay === 3000).length)).toBe(0);
   }
-  await page.goBack();
+  await page.goForward();
   await expect(page.locator('#game-root .game-app')).toBeVisible();
+  await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');
   await expect.poll(async () => page.evaluate(() => [...window.__gameTestIntervals.values()].filter(delay => delay === 3000).length)).toBe(1);
-  await page.locator('.desktop-nav [data-nav="encyclopedia/"]').click();
+  await page.locator('#menu-toggle').click();await page.locator('#menu a[href$="encyclopedia/"]').click();
   await expect.poll(async () => page.evaluate(() => [...window.__gameTestIntervals.values()].filter(delay => delay === 3000).length)).toBe(0);
   expect(errors).toEqual([]);
 });
@@ -409,7 +433,8 @@ for (const residents of [1, 10]) test(`${residents === 1 ? 'initial one-bird' : 
   await openGame(page);
   await expect(page.locator('.game-room-bird')).toHaveCount(residents);
   await expect(page.locator('.game-scene-caption')).toHaveCount(1);
-  await expect(page.locator('#game-scene-resident option')).toHaveText(seeded.birds.map(bird=>`${bird.name} · ${{white:'白文鳥',sakura:'桜文鳥',silver:'シルバー',cinnamon:'シナモン'}[bird.color]}・成鳥`));
+  await expect(page.locator('#game-scene-resident')).toHaveCount(0);
+  for(const b of seeded.birds){await chooseBird(page,b.id);await expect(page.locator('.game-bird-carousel-face')).toContainText(b.name);await expect(page.locator('.game-bird-carousel-face')).toContainText(`${{white:'白文鳥',sakura:'桜文鳥',silver:'シルバー',cinnamon:'シナモン'}[b.color]}・成鳥`);}
   await expect(page.locator('.game-room-bird .game-bubble, .game-room-bird .game-bird-label, .game-room-bird svg')).toHaveCount(0);
   await expect(page.locator('.game-furnishing')).toHaveCount(9);
   for (const width of [320, 375, 390, 768, 1440]) for (const orientation of ['portrait', 'landscape']) {
@@ -462,13 +487,13 @@ for (const residents of [1, 10]) test(`${residents === 1 ? 'initial one-bird' : 
     await expect(page.locator('.game-room')).toBeVisible();
     await expect(page.locator('.game-scene-caption strong')).toHaveText(bird.name);
     await expect(page.locator('#game-sheet-title')).toHaveText(bird.name);
-    await expect(page.locator('#game-scene-resident')).toHaveValue(bird.id);
+    await expect(page.locator('.game-bird-carousel-face')).toHaveAttribute('data-bird-id',bird.id);
     await closeBird(page);
     await expect(page.locator(`.game-room-bird[data-game-select="${bird.id}"]`)).toBeFocused();
   }
 });
 
-test('all color stages decode and nest-bound young remain reachable through the full-name picker',async({page},testInfo)=>{
+test('all color stages decode and nest-bound young remain reachable through the full-name carousel',async({page},testInfo)=>{
   const world=createWorld(fixedNow),colors=['white','sakura','cinnamon','silver'];
   while(world.birds.length<10)createBird(world,{home:'resident'});
   world.birds.forEach((b,i)=>{b.color=colors[i%4];b.stage=i<4?'adult':i<8?'juvenile':i===8?'chick':'egg';b.name=`表示確認${i+1}`;});
@@ -477,7 +502,7 @@ test('all color stages decode and nest-bound young remain reachable through the 
   await expect(page.locator('.game-room-bird')).toHaveCount(10);
   await expect(page.locator('.game-room-bird.game-nestling')).toHaveCount(2);
   await expect(page.locator('.game-room-bird.game-nestling button')).toHaveCount(0);
-  await expect(page.locator('#game-scene-resident option')).toHaveCount(10);
+  await expect(page.locator('#game-scene-resident')).toHaveCount(0);await expect(page.locator('.game-bird-carousel .game-bird-switch')).toContainText('/ 10');
   await expect.poll(()=>page.locator('.game-room img').evaluateAll(images=>images.every(i=>i.complete&&i.naturalWidth>0))).toBe(true);
   const expected=world.birds.map(b=>gameSpriteGeometry(b.color,b.stage).asset);
   expect(await page.locator('.game-room-bird .game-sprite').evaluateAll(nodes=>nodes.map(n=>n.dataset.asset))).toEqual(expected);
@@ -486,7 +511,7 @@ test('all color stages decode and nest-bound young remain reachable through the 
   const dimensions=await page.locator('.game-room-bird img').evaluateAll(nodes=>nodes.map(n=>[n.naturalWidth,n.naturalHeight]));
   expect(dimensions).toEqual(expected.map(asset=>[ALL_SPRITE_ASSETS[asset].width,ALL_SPRITE_ASSETS[asset].height]));
   for(const b of world.birds){
-    await page.locator('#game-scene-resident').selectOption(b.id);
+    await chooseBird(page,b.id);
     await expect(page.locator('.game-scene-caption strong')).toHaveText(b.name);
     await openBird(page);await expect(page.locator('#game-sheet-title')).toHaveText(b.name);
     if(['egg','chick'].includes(b.stage)){await expect(page.locator('[data-game-care="feed"]')).toBeDisabled();await expect(page.locator('[data-game-care="pet"]')).toBeDisabled();}
@@ -517,7 +542,7 @@ test('all color stages decode and nest-bound young remain reachable through the 
 
 test('active social partners meet on nearby real anchors and mobile keeps one readable exchange',async({page},info)=>{
   const world=createWorld(fixedNow,842911);advanceTicks(world,261);world.paused=true;validateWorld(world);
-  await seedWorld(page,world);await openGame(page);await page.locator('#game-scene-resident').selectOption('b7');
+  await seedWorld(page,world);await openGame(page);await chooseBird(page,'b7');
   for(const width of [320,375,1440]){
     await page.setViewportSize({width,height:1000});await decodeScene(page);
     await expect(page.locator('.game-scene-caption .game-bubble')).toBeVisible();
@@ -561,7 +586,7 @@ test('real left and right social frames face their partner, and feeding uses the
     if(info.project.name==='chromium')await info.attach(`natural-pair-facing-${width}`,{body:await page.locator('.game-room').screenshot(),contentType:'image/png'});
   }
   world.birds[0].action={kind:'eat',target:null,startedTick:world.tick};world.birds[1].action={kind:'rest',target:null,startedTick:world.tick};world.paused=false;await seedWorld(page,world);await openGame(page);
-  await expect.poll(()=>page.locator(`[data-bird-id="${world.birds[0].id}"] .game-sprite`).getAttribute('data-pose'),{timeout:14000}).toBe('peck');
+  await expect.poll(()=>page.locator(`.game-room [data-bird-id="${world.birds[0].id}"] .game-sprite`).getAttribute('data-pose'),{timeout:14000}).toBe('peck');
 });
 
 test('a lone juvenile silver feeding sideways remains fully inside the natural habitat',async({page},info)=>{

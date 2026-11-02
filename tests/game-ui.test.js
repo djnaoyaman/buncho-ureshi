@@ -199,7 +199,7 @@ test('photo habitat keeps one selected caption, accessible resident picker, and 
   assert.equal(f.root.querySelectorAll('.game-room-bird button').length,0);
   assert.equal(f.root.querySelectorAll('.game-room-bird svg').length,0);
   assert.equal(f.root.querySelectorAll('.game-room-bird').length,2);
-  assert.equal(f.root.querySelectorAll('#game-scene-resident option').length,2);
+  assert.equal(f.root.querySelector('.game-bird-carousel .game-bird-switch span').textContent,'1 / 2');assert.equal(f.root.querySelector('#game-scene-resident'),null);
   const bird=f.root.querySelector('[data-game-scene-select][data-bird-id="b2"]');
   bird.focus();bird.click();
   assert.equal(f.root.querySelectorAll('.game-room').length,1,'scene selection must not navigate away');
@@ -208,7 +208,7 @@ test('photo habitat keeps one selected caption, accessible resident picker, and 
   assert.equal(f.window.document.activeElement.id,'game-sheet-close','focus enters native sheet');
   assert.equal(f.root.querySelector('.game-bird-sheet').open,true);f.closeBird();
   assert.equal(f.window.document.activeElement.dataset.birdId,'b2','closing restores scene bird focus');
-  const picker=f.root.querySelector('#game-scene-resident');picker.value='b1';picker.dispatchEvent(new f.window.Event('change',{bubbles:true}));
+  f.root.querySelector('.game-bird-carousel [data-bird-step="-1"]').click();
   assert.equal(f.root.querySelector('.game-scene-caption strong').textContent,'最初の庭');
   f.openBird();f.root.querySelector('.game-bird-sheet [data-game-panel="profile"]').click();
   assert.equal(f.root.querySelector('.game-profile h3').textContent,'最初の庭');
@@ -226,7 +226,7 @@ test('returning from a visitor profile aligns the scene, picker and resident pro
   f.root.querySelector('[data-game-scene-select][data-bird-id="b2"]').click();f.root.querySelector('.game-bird-sheet [data-game-panel="profile"]').click();
   assert.match(f.root.querySelector('.game-profile-heading').textContent,/ななしの訪問者/);
   f.root.querySelector('[data-game-panel="garden"]').click();
-  assert.equal(f.root.querySelector('#game-scene-resident').value,'b2');
+  assert.equal(f.root.querySelector('.game-bird-carousel-face').dataset.birdId,'b2');
   assert.equal(f.root.querySelector('.game-scene-caption strong').textContent,'ななしの訪問者');
   assert.equal(f.root.querySelector('.game-profile'),null,'scene no longer repeats full profile');f.openBird();assert.equal(f.root.querySelector('#game-sheet-title').textContent,'ななしの訪問者');
 });
@@ -287,7 +287,7 @@ test('field travel and return preserve story and real visitors in the same scene
  f.root.querySelector('[data-game-panel="friends"]').click();f.root.querySelector('[data-field-travel="friend"]').click();await until(()=>f.root.querySelector('.game-room')?.dataset.field==='friend','friend arrived');
  assert.match(f.root.querySelector('.game-field-bar h3').textContent,/ななしの訪問者/);
  f.root.querySelector('[data-field-travel="home"]').click();await until(()=>f.root.querySelector('.game-room')?.dataset.field==='home','home returned');
- const w=await rawWorld(f.indexedDB);assert.equal(w.birds[0].name,'最初の庭');assert(w.decor.points>=20);assert.equal(w.version,3);
+ const w=await rawWorld(f.indexedDB);assert.equal(w.birds[0].name,'最初の庭');assert(w.decor.points>=20);assert.equal(w.version,4);
 });
 test('draw is one transaction on double click; preview cancellation and equip preserve inventory',async t=>{
  const f=await fixture(t);await f.mount();f.root.querySelector('[data-game-panel="decorate"]').click();
@@ -311,7 +311,7 @@ test('pending draw cannot replace a newer category or preview choice',async t=>{
 });
 
 test('one primary nav and a secondary disclosure preserve keyboard close focus',async t=>{
- const f=await fixture(t);await f.mount();assert.equal(f.root.querySelectorAll('.game-field-nav').length,1);assert.equal(f.root.querySelectorAll('.game-field-nav button').length,4);
+ const f=await fixture(t);await f.mount();assert.equal(f.root.querySelectorAll('.game-field-nav').length,1);assert.equal(f.root.querySelectorAll('.game-field-nav button').length,3);
  let menu=f.root.querySelector('.game-secondary-menu');assert.equal(menu.open,false);assert(f.root.querySelector('.game-room').compareDocumentPosition(menu)&4);menu.open=true;menu.querySelector('[data-game-panel="family"]').focus();menu.dispatchEvent(new f.window.KeyboardEvent('keydown',{key:'Escape',bubbles:true}));assert.equal(menu.open,false);assert.equal(f.window.document.activeElement.id,'game-nav-summary');
  menu.open=true;menu.querySelector('[data-game-close-menu]').click();assert.equal(menu.open,false);assert.equal(f.window.document.activeElement.id,'game-nav-summary');
  f.root.querySelector('[data-game-panel="decorate"]').click();assert.equal(f.root.querySelectorAll('.game-field-nav').length,1);assert.equal(f.root.querySelectorAll('[data-field-travel="home"]').length,1);assert(f.root.querySelector('.game-decoration'));
@@ -335,3 +335,31 @@ test('deferred sheet close restoration never steals a newer intentional focus',a
  const newer=f.root.querySelector('[data-game-action="pause"]');newer.focus();await sleep(25);
  assert.equal(f.window.document.activeElement===newer,true);
 });
+
+test('future collection previews all24 variants without granting or equipping unowned items',async t=>{
+ const f=await fixture(t);await f.mount();f.root.querySelector('[data-game-panel="decorate"]').click();
+ assert.equal(f.root.querySelectorAll('[data-decor-preview]').length,24);assert.equal(f.root.querySelectorAll('[data-decor-preview][data-owned="true"]').length,1);
+ f.root.querySelector('[data-decor-preview="perch-rose-special"]').click();assert.equal(f.root.querySelector('.game-decor-preview').dataset.previewItem,'perch-rose-special');assert.equal(f.root.querySelector('[data-decor-equip]'),null);assert.match(f.root.querySelector('.game-decor-preview').textContent,/Lv.6/);
+ assert.equal((await rawWorld(f.indexedDB)).decor.equipped.perch,'perch-mint-cozy');assert.equal((await rawWorld(f.indexedDB)).decor.inventory.length,9);
+ f.root.querySelector('[data-decor-slot="water"]').click();assert.equal(f.root.querySelectorAll('[data-decor-preview]').length,24);assert.match(f.root.querySelector('.game-decor-preview').dataset.previewItem,/^water-/);
+});
+
+test('horizontal bird swipes and arrows replace select while vertical and interactive drags do not switch',async t=>{
+ const f=await fixture(t),store=await f.otherTab();await store.transact(w=>{w.paused=false;advanceTicks(w,1);w.paused=true;return w;});await f.mount();
+ const swipe=(node,dx,dy,type='pointerup')=>{node.dispatchEvent(new f.window.PointerEvent('pointerdown',{bubbles:true,pointerId:11,clientX:180,clientY:200,button:0}));f.window.document.dispatchEvent(new f.window.PointerEvent(type,{bubbles:true,pointerId:11,clientX:180+dx,clientY:200+dy}));};
+ assert.equal(f.root.querySelector('[data-game-scene-choose]'),null);swipe(f.root.querySelector('.game-bird-carousel-face'),-100,5);assert.equal(f.root.querySelector('.game-bird-carousel-face').dataset.birdId,'b2');await sleep(410);
+ swipe(f.root.querySelector('.game-bird-carousel-face'),70,120);assert.equal(f.root.querySelector('.game-bird-carousel-face').dataset.birdId,'b2');
+ swipe(f.root.querySelector('#game-open-bird'),100,0);assert.equal(f.root.querySelector('.game-bird-carousel-face').dataset.birdId,'b2');
+ f.openBird();const input=f.root.querySelector('#game-words');input.value='訪問者への下書き';input.dispatchEvent(new f.window.Event('input',{bubbles:true}));
+ swipe(f.root.querySelector('#game-sheet-title'),90,0);assert.equal(f.root.querySelector('#game-sheet-title').textContent,'最初の庭');await sleep(410);f.root.querySelector('.game-bird-sheet [data-bird-step="1"]').click();assert.equal(f.root.querySelector('#game-words').value,'訪問者への下書き');
+});
+
+test('stale rendered dropping cannot redeem after peer update even while poll defers DOM; next fresh tap redeems once',async t=>{
+ const f=await fixture(t),store=await f.otherTab();await store.transact(w=>{w.paused=false;w.birds[0].gemCare.fullSinceTick=0;advanceTicks(w,2);w.paused=true;return w;});await f.mount();
+ const button=f.root.querySelector('[data-gem-collect]');assert(button);const before=await rawWorld(f.indexedDB);button.dispatchEvent(new f.window.PointerEvent('pointerdown',{bubbles:true,pointerId:14}));
+ await store.transact(w=>{renameBird(w,'b1','更新された鳥');return w;});await [...f.timers.values()][0]();assert.equal(button.isConnected,true);button.click();await sleep(30);
+ assert.equal((await rawWorld(f.indexedDB)).decor.points,before.decor.points);assert.equal(f.root.querySelector('.game-gem-reward'),null);f.window.document.dispatchEvent(new f.window.PointerEvent('pointerup',{bubbles:true,pointerId:14}));
+ const fresh=f.root.querySelector('[data-gem-collect]');fresh.click();fresh.click();await until(async()=>!(await rawWorld(f.indexedDB)).gems.droppings.length,'drop removed');await sleep(20);assert.equal((await rawWorld(f.indexedDB)).decor.points,before.decor.points+8);assert.match(f.root.querySelector('.game-gem-reward').textContent,/\+8 Gem/);assert.equal(f.window.document.activeElement.dataset.gameCare,'clean');f.root.querySelector('[data-game-panel="decorate"]').click();assert.equal(f.root.querySelector('.game-gem-reward'),null,'newer navigation dismisses reward from prior scene');
+});
+
+test('family graph selection recenters and restores keyboard focus to the selected bird',async t=>{const f=await fixture(t),store=await f.otherTab();await store.transact(w=>{w.paused=false;advanceTicks(w,1);w.paused=true;return w;});await f.mount();f.root.querySelector('[data-game-panel="family"]').click();f.root.querySelector('[data-game-details="family-text"]').open=true;const other=f.root.querySelector('[data-game-details="family-text"] [data-family-focus="b2"]');other.focus();other.click();assert.equal(f.window.document.activeElement.dataset.familyFocus,'b2');assert(f.window.document.activeElement.classList.contains('is-focus'));});

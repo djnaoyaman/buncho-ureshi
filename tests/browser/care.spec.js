@@ -9,6 +9,15 @@ async function record(page,value){return page.evaluate(({dbName,value})=>new Pro
 async function seed(page,w=fixture()){await page.goto('');await record(page,w);await page.goto('game/');await expect(page.locator('.game-app')).toBeVisible();if(w.birds[0].home!=='departed')await openCare(page);}
 async function openCare(page){await page.locator('[data-game-open-bird]').click();await expect(page.locator('.game-bird-sheet')).toBeVisible();}
 async function closeCare(page){if(await page.locator('.game-bird-sheet').isVisible()){await page.locator('[data-game-close-bird]').click();await expect(page.locator('.game-bird-sheet')).not.toBeVisible();}}
+async function chooseBird(page,id){
+  const face=page.locator('.game-bird-carousel-face');
+  for(let i=0;i<128;i++){
+    if(await face.getAttribute('data-bird-id')===id)return;
+    await page.locator('.game-bird-carousel [data-bird-step="1"]').click();
+  }
+  throw new Error(`Bird ${id} was not reachable through the visible carousel`);
+}
+
 async function tab(page,name){await closeCare(page);const target=page.locator(`[data-game-panel="${name}"]`).first();if(!await target.isVisible())await page.locator('.game-secondary-menu summary').click();await target.click();}
 async function downloadText(download){const stream=await download.createReadStream();if(!stream)throw Error('No download stream');const chunks=[];for await(const chunk of stream)chunks.push(Buffer.from(chunk));return Buffer.concat(chunks).toString('utf8');}
 async function trackNativeAudio(page){await page.addInitScript(()=>{
@@ -36,10 +45,10 @@ test.beforeEach(async({page})=>{await page.addInitScript(value=>{Date.now=()=>va
 test('an existing v1 device save migrates in place without advancing paused family history',async({page})=>{
   const legacy=structuredClone(legacyWorld);legacy.paused=true;legacy.lastUpdated=now;
   await seed(page,legacy);const migrated=await record(page);
-  expect(migrated.version).toBe(3);expect(migrated.worldId).toBe(legacy.worldId);expect(migrated.tick).toBe(legacy.tick);
-  expect(migrated.birds.map(({care,...bird})=>bird)).toEqual(legacy.birds);expect(migrated.events).toEqual(legacy.events);
+  expect(migrated.version).toBe(4);expect(migrated.worldId).toBe(legacy.worldId);expect(migrated.tick).toBe(legacy.tick);
+  expect(migrated.birds.map(({care,gemCare,...bird})=>bird)).toEqual(legacy.birds);expect(migrated.events).toEqual(legacy.events);
   expect(migrated.care).toEqual({cleanliness:100,lastCleanTick:null});expect(migrated.settings.careSound).toBe(false);
-  expect(migrated.birds.every(b=>b.care.lastFedTick===null&&b.care.lastPetTick===null)).toBe(true);
+  expect(migrated.birds.every(b=>b.care.lastFedTick===null&&b.care.lastPetTick===null)).toBe(true);expect(migrated.birds.every(b=>Object.values(b.gemCare).every(value=>value===null))).toBe(true);expect(migrated.gems).toEqual({droppings:[],nextDropId:1});
   await page.reload();await expect(page.locator('.game-app')).toBeVisible();expect(await record(page)).toEqual(migrated);
 });
 
@@ -79,7 +88,7 @@ test('care sound opt-in schedules a short native synthetic chirp or reports unav
 
 for(const cancel of ['selection','route','mute','close'])test(`care pending audio is discarded after ${cancel}`,async({page})=>{
   await holdAudio(page);await seed(page,fixture({sound:true}));await page.locator('[data-game-care="pet"]').click();await expect.poll(async()=> (await record(page)).birds[0].mood).toBe(64);expect(await page.evaluate(()=>window.__careStarts)).toBe(0);
-  if(cancel==='selection'){await closeCare(page);await page.locator('[data-game-scene-choose]').selectOption('b2');await openCare(page);}if(cancel==='close')await closeCare(page);
+  if(cancel==='selection'){await closeCare(page);await chooseBird(page,'b2');await openCare(page);}if(cancel==='close')await closeCare(page);
   if(cancel==='route'){await closeCare(page);await page.locator('#menu-toggle').click();await page.locator('#menu a[href$="encyclopedia/"]').click();await expect(page.locator('#article-grid')).toBeVisible();}
   if(cancel==='mute')await page.locator('[data-game-care-sound]').uncheck();
   await page.evaluate(()=>window.__releaseCareAudio());await page.waitForTimeout(50);expect(await page.evaluate(()=>window.__careStarts)).toBe(0);
@@ -96,7 +105,7 @@ test('care unavailable stages explain disabled actions and retain their natural 
 
 test('care export preserves v2 values, cancelled import is exact, confirmed import with sound preference never autoplays',async({page})=>{
   await trackNativeAudio(page);await seed(page);await page.locator('[data-game-care="feed"]').click();await expect(page.locator('[data-game-fullness]')).toHaveText('60 / 100');await tab(page,'settings');
-  const downloadEvent=page.waitForEvent('download');await page.locator('[data-game-action="export"]').click();const exported=validateWorld(JSON.parse(await downloadText(await downloadEvent)));expect(exported.version).toBe(3);expect(exported.birds[0].needs.food).toBe(60);expect(exported.care.cleanliness).toBe(15);expect(exported.settings.careSound).toBe(false);
+  const downloadEvent=page.waitForEvent('download');await page.locator('[data-game-action="export"]').click();const exported=validateWorld(JSON.parse(await downloadText(await downloadEvent)));expect(exported.version).toBe(4);expect(exported.birds[0].needs.food).toBe(60);expect(exported.care.cleanliness).toBe(15);expect(exported.settings.careSound).toBe(false);
   const next=fixture({sound:true});next.worldId+='-import';next.birds[0].needs.food=73;next.care.cleanliness=44;
   const file={name:'care.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(next))},before=await record(page);
   page.once('dialog',dialog=>dialog.dismiss());await page.locator('#game-import').setInputFiles(file);await expect(page.locator('#game-import')).toHaveValue('');expect(await record(page)).toEqual(before);
@@ -116,4 +125,15 @@ for(const width of [320,768,1440])test(`care controls and floor-only tint fit ${
   await openCare(page);await page.locator('[data-game-care="pet"]').click();await expect(page.locator('.game-app')).toHaveAttribute('data-care-motion','off');await expect(page.locator('.game-care-feedback').last()).toContainText('ぴっ');
   await page.locator('.game-room img').evaluateAll(async images=>{await Promise.all(images.map(image=>image.decode()));await new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(done)));});
   if(info.project.name==='chromium'){await page.locator('.game-care').screenshot({path:info.outputPath(`care-controls-${width}.png`),animations:'disabled'});await closeCare(page);await page.locator('.game-room').screenshot({path:info.outputPath(`care-floor-clean-${width}.png`),animations:'disabled'});}
+});
+
+test('feed pet and known chat earn distinct Gems once per care cooldown and survive reload',async({page})=>{
+ await seed(page);const before=(await record(page)).decor.points;
+ await page.locator('[data-game-care="feed"]').click();await expect.poll(async()=>(await record(page)).decor.points).toBe(before+6);await expect(page.locator('.game-gem-reward')).toContainText('+6 Gem');
+ await page.locator('[data-game-care="feed"]').click();expect((await record(page)).decor.points).toBe(before+6);
+ await page.locator('[data-game-care="pet"]').click();await expect.poll(async()=>(await record(page)).decor.points).toBe(before+11);await expect(page.locator('.game-gem-reward')).toContainText('+5 Gem');
+ await page.locator('[data-game-care="pet"]').click();expect((await record(page)).decor.points).toBe(before+11);
+ await page.locator('[data-game-talk="名前を呼ぶ"]').click();await expect.poll(async()=>(await record(page)).decor.points).toBe(before+16);await expect(page.locator('.game-gem-reward')).toContainText('+5 Gem');
+ await page.locator('[data-game-talk="名前を呼ぶ"]').click();expect((await record(page)).decor.points).toBe(before+16);
+ await page.reload();await expect(page.locator('.game-app')).toBeVisible();expect((await record(page)).decor.points).toBe(before+16);await expect(page.locator('.game-gem-reward')).toHaveCount(0);
 });
