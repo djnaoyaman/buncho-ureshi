@@ -140,7 +140,11 @@ for(const width of [390,1440])test(`illustrated home park friend and rich decor 
   else{await expect(page.locator('.game-room')).toHaveAttribute('data-field',place);await decodeScene(page);}
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
   await expect(page.locator('.game-message.is-error')).toHaveCount(0);
-  if(info.project.name==='chromium')await info.attach(`field-${place}-${width}`,{body:await page.locator(place==='decorate'?'.game-decoration':'.game-panel').screenshot({animations:'disabled'}),contentType:'image/png'});
+  if(info.project.name==='chromium'){
+   await info.attach(`field-${place}-${width}`,{body:await page.locator(place==='decorate'?'.game-decoration':'.game-panel').screenshot({animations:'disabled'}),contentType:'image/png'});
+   await page.evaluate(()=>scrollTo(0,0));await info.attach(`field-viewport-${place}-${width}`,{body:await page.screenshot({animations:'disabled'}),contentType:'image/png'});
+   if(place!=='decorate')await info.attach(`field-scene-${place}-${width}`,{body:await page.locator('.game-room').screenshot({animations:'disabled'}),contentType:'image/png'});
+  }
  }
 });
 
@@ -150,4 +154,14 @@ test('newer panel navigation is not overwritten by an interrupted pending trip',
  await expect(page.locator('.game-decoration')).toBeVisible();await expect.poll(async()=> (await readWorld(page)).field.place).toBe('park');
  await expect(page.locator('.game-decoration')).toBeVisible();await expect(page.locator('.game-tabs [data-game-panel="decorate"]')).toHaveAttribute('aria-pressed','true');
  await page.locator('[data-field-travel="home"]').click();await expect(page.locator('.game-room')).toHaveAttribute('data-field','home');
+});
+
+
+test('first session and twelve long-name birds retain readable mobile viewport and touch targets',async({page},info)=>{
+ await page.setViewportSize({width:390,height:1000});await openGame(page);await decodeScene(page);
+ if(info.project.name==='chromium')await info.attach('field-first-session-viewport-390',{body:await page.screenshot({animations:'disabled'}),contentType:'image/png'});
+ const w=createWorld(fixedNow);for(let i=1;i<12;i++)createBird(w,{home:i<10?'resident':'visitor',name:'あいうえおかきくけこさしすせそた'});w.paused=true;
+ await seedWorld(page,w);await openGame(page);await decodeScene(page);await expect(page.locator('.game-room-bird')).toHaveCount(12);
+ const issues=await page.locator('.game-room').evaluate(room=>{const r=room.getBoundingClientRect();return [...room.querySelectorAll('.game-room-bird')].flatMap(b=>{const q=b.getBoundingClientRect();return q.width<44||q.height<44||q.left<r.left-1||q.right>r.right+1||q.top<r.top-1||q.bottom>r.bottom+1?[b.dataset.birdId]:[];});});expect(issues).toEqual([]);
+ if(info.project.name==='chromium'){await page.evaluate(()=>scrollTo(0,0));await info.attach('field-twelve-longnames-viewport-390',{body:await page.screenshot({animations:'disabled'}),contentType:'image/png'});await info.attach('field-twelve-longnames-scene-390',{body:await page.locator('.game-room').screenshot({animations:'disabled'}),contentType:'image/png'});}
 });

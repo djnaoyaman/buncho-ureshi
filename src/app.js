@@ -413,12 +413,7 @@ function render(route) {
       ) + '<div id="studio-root"></div>';
   } else if (route === "game/") {
     title = "おもちの文鳥ぐらし";
-    view =
-      heading(
-        "おもちの文鳥ぐらし",
-        "小さな出会いから、家族の物語。",
-        "見守ったり、話しかけたり。文鳥たちは、自分で暮らしを見つけます。",
-      ) + '<div id="game-root"></div>';
+    view = '<header class="game-route-title"><p>籠のおうちと、文鳥公園</p><h1>おもちの文鳥ぐらし</h1></header><div id="game-root"></div>';
   } else if (route === "credits/") {
     title = "出典と素材";
     view = credits();
