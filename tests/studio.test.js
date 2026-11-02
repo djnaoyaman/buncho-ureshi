@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mountStudio, makeStudioTemplate, validateStudioState, STUDIO_BACKGROUNDS, STUDIO_PALETTES, STUDIO_TEMPLATES } from '../src/studio.js';
+import { applyStudioMasterGain, mountStudio, makeStudioTemplate, validateStudioState, STUDIO_BACKGROUNDS, STUDIO_PALETTES, STUDIO_TEMPLATES } from '../src/studio.js';
 import { photos } from '../src/data/photos.js';
 
 const KEY = 'buncho-ureshi-studio-v1';
@@ -210,4 +210,14 @@ test('leaving during photo loading cancels pending listeners and export without 
 test('a loaded image with failed decoding never reaches PNG encoding',async()=>{
  const m=mockEnvironment();let cleanup;
  try{cleanup=mountStudio(m.root,{photos:[specimen()]});await m.el('photos').children[0].click();for(const image of m.images)image.decode=()=>Promise.reject(new Error('corrupt pixels'));await m.button('export').click();assert.equal(m.blobCalls,0);assert.equal(m.el('export-panel').hidden,true);assert.match(m.el('status').textContent,/写真をすべて読み込めず/);}finally{cleanup?.();m.restore();}
+});
+
+
+test('studio mute cancels queued gain automation and sets native gain immediately even with a frozen audio clock',()=>{
+  const calls=[],gain={value:.055,cancelScheduledValues(t){calls.push(['cancel',t]);},setValueAtTime(v,t){calls.push(['set',v,t]);}};
+  const master={gain},audio={currentTime:0};
+  applyStudioMasterGain(master,audio,true,.25);assert.equal(gain.value,0);assert.deepEqual(calls,[['cancel',0],['set',0,0]]);
+  calls.length=0;applyStudioMasterGain(master,audio,false,.5);assert.equal(gain.value,.11);assert.deepEqual(calls,[['cancel',0],['set',.11,0]]);
+  applyStudioMasterGain(master,audio,false,NaN);assert.equal(gain.value,0);
+  applyStudioMasterGain(null,audio,true,1);
 });

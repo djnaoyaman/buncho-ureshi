@@ -1,4 +1,14 @@
 /* Original browser-local Java sparrow atelier. No service calls or image uploads. */
+// Muting is an immediate state change, not an asymptotic automation target.
+// Cancel queued gain changes so a suspended/resumed context cannot restore them.
+export function applyStudioMasterGain(master, audio, muted, volume) {
+  if (!master || !audio) return;
+  const value = muted ? 0 : Math.max(0, Math.min(1, Number.isFinite(volume) ? volume : 0)) * .22;
+  const time = Math.max(0, Number.isFinite(audio.currentTime) ? audio.currentTime : 0);
+  master.gain.cancelScheduledValues(time);
+  master.gain.value = value;
+  master.gain.setValueAtTime(value, time);
+}
 export const STUDIO_PALETTES=[
  ['植物園','#f5efdf','#214d40','#739681','#dda9a6'],
  ['さくら','#fff0ec','#71404c','#9dafa1','#d68b9c'],
@@ -231,15 +241,15 @@ export function mountStudio(root,{photos=[],birdSvg,seed}={}){
  });
  on(btn('share'),'click',async()=>{if(!prepared)return;try{await navigator.share({files:[new File([prepared],'buncho-art.png',{type:'image/png'})],title:state.title||'文鳥アート工房'});tell('共有画面を閉じました。');}catch(e){tell(e.name==='AbortError'?'共有を取り消しました。作品はそのままです。':'この環境では共有できません。「PNG画像を保存」を使ってください。');}});
  let audio=null,master=null,musicTimer=null,noteIndex=0,muted=false,sfx=false,volume=.25;const oscillators=new Set();
- function audioReady(){try{if(!audio){const AC=globalThis.AudioContext||globalThis.webkitAudioContext;if(!AC)throw new Error('no audio');audio=new AC();master=audio.createGain();master.gain.value=muted?0:volume*.22;master.connect(audio.destination);}if(audio.state==='suspended')audio.resume().catch(()=>{});return true;}catch{el('audio-status').textContent='この環境は音の再生に対応していません。作品づくりは使えます。';return false;}}
+ function audioReady(){try{if(!audio){const AC=globalThis.AudioContext||globalThis.webkitAudioContext;if(!AC)throw new Error('no audio');audio=new AC();master=audio.createGain();applyStudioMasterGain(master,audio,muted,volume);master.connect(audio.destination);}if(audio.state==='suspended')audio.resume().catch(()=>{});return true;}catch{el('audio-status').textContent='この環境は音の再生に対応していません。作品づくりは使えます。';return false;}}
  function playNote(freq,duration=.3,delay=0,type='sine',gain=.25){if(!audio||!master)return;const t=audio.currentTime+delay,o=audio.createOscillator(),g=audio.createGain();o.type=type;o.frequency.value=freq;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(gain,t+.025);g.gain.exponentialRampToValueAtTime(.0001,t+duration);o.connect(g);g.connect(master);oscillators.add(o);o.start(t);o.stop(t+duration+.05);o.onended=()=>{oscillators.delete(o);o.disconnect();g.disconnect();};}
  function tone(name){if(!sfx||!audio)return;const notes={add:[659,880],change:[523],move:[440],undo:[392,330],save:[523,659,784]};(notes[name]||[523]).forEach((f,i)=>playNote(f,.2,i*.075,'sine',.18));}
  function stopMusic(){if(musicTimer){clearInterval(musicTimer);musicTimer=null;}for(const o of oscillators){try{o.stop();}catch{}}oscillators.clear();noteIndex=0;el('audio-status').textContent='音楽を停止しました。';btn('play').textContent='音楽を再生';}
  function musicStep(){const melodies=[[60,64,67,69,67,64,62,65,69,71,69,65],[72,67,74,69,76,72,67,69],[48,55,60,62,55,64,60,55]],which=Number(el('music').value),m=melodies[which],n=m[noteIndex%m.length];playNote(440*2**((n-69)/12),which===2?1.5:.7,0,which===1?'sine':'triangle',.18);if(noteIndex%3===0)playNote(440*2**((n-81)/12),1.1,0,'sine',.14);noteIndex++;}
  on(btn('play'),'click',()=>{if(!audioReady())return;stopMusic();musicStep();musicTimer=setInterval(musicStep,Number(el('music').value)===2?800:450);btn('play').textContent='はじめから再生';el('audio-status').textContent=el('music').selectedOptions[0].text+'を再生中。';});
  on(btn('stop'),'click',()=>{stopMusic();if(audio&&!sfx)audio.suspend().catch(()=>{});});on(el('music'),'change',()=>{stopMusic();el('audio-status').textContent='曲をえらびました。再生を押すと始まります。';});
- on(el('volume'),'input',()=>{volume=Number(el('volume').value)/100;if(master)master.gain.setTargetAtTime(muted?0:volume*.22,audio.currentTime,.03);});
- on(btn('mute'),'click',()=>{muted=!muted;if(master)master.gain.setTargetAtTime(muted?0:volume*.22,audio.currentTime,.03);btn('mute').setAttribute('aria-pressed',String(muted));btn('mute').textContent=muted?'音をもどす':'ミュート';el('audio-status').textContent=muted?'すべての音をミュートしました。':'ミュートを解除しました。';});
+ on(el('volume'),'input',()=>{volume=Number(el('volume').value)/100;applyStudioMasterGain(master,audio,muted,volume);});
+ on(btn('mute'),'click',()=>{muted=!muted;applyStudioMasterGain(master,audio,muted,volume);btn('mute').setAttribute('aria-pressed',String(muted));btn('mute').textContent=muted?'音をもどす':'ミュート';el('audio-status').textContent=muted?'すべての音をミュートしました。':'ミュートを解除しました。';});
  on(btn('sfx'),'click',()=>{if(!sfx&&!audioReady())return;sfx=!sfx;btn('sfx').setAttribute('aria-pressed',String(sfx));btn('sfx').textContent=sfx?'操作音を消す':'操作音をつける';el('audio-status').textContent=sfx?'操作に合わせた合成音が鳴ります。':'操作音を消しました。';tone('add');});
  on(document,'visibilitychange',()=>{if(document.hidden){stopMusic();if(audio)audio.suspend().catch(()=>{});}else if(audio&&sfx)audio.resume().catch(()=>{});});
  refresh();persist();if(invalidSaved)tell('以前の保存を読み込めませんでした。元のデータは上書きせず残しています。今の作品はPNGで保存できます。「作り直す」を確認すると端末の保存を置き換えます。');else if(seed)tell('ゲームの記念カードをつくりました。前の作品は「もどす」で戻せます。');
