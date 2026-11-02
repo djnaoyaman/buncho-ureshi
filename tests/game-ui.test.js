@@ -95,6 +95,9 @@ async function fixture(t, { corrupt = false } = {}) {
     async mount() { dispose = await mountGame(root); return dispose; },
     stop() { dispose?.(); dispose = undefined; },
     async otherTab() { const store = await openGameStore({ indexedDB }); stores.push(store); return store; },
+    profile() { root.querySelector('[data-game-panel="profile"]').click(); },
+    openBird(){root.querySelector('[data-game-open-bird]').click();},
+    closeBird(){root.querySelector('[data-game-close-bird]').click();},
     settings() { root.querySelector('[data-game-panel="settings"]').click(); },
     importLater(gate, name = 'garden.json') {
       const input = root.querySelector('#game-import');
@@ -140,7 +143,7 @@ test('mountGame cleanup cancels a pending file import without confirmation, save
 });
 
 test('mountGame stale UI cannot rename a reused bird ID after another tab replaces worldId', async t => {
-  const f = await fixture(t); await f.mount();
+  const f = await fixture(t); await f.mount();f.profile();
   const store = await f.otherTab();
   const replacement = savedWorld('別の庭の文鳥', 401);
   await store.transact(w => { replacement.revision = w.revision; bumpRevision(replacement); return replacement; });
@@ -202,14 +205,16 @@ test('photo habitat keeps one selected caption, accessible resident picker, and 
   assert.equal(f.root.querySelectorAll('.game-room').length,1,'scene selection must not navigate away');
   assert.equal(f.root.querySelector('.game-scene-caption strong').textContent,'そら');
   assert.equal(f.root.querySelector('[data-game-scene-select][aria-pressed="true"]').dataset.birdId,'b2');
-  assert.equal(f.window.document.activeElement.dataset.birdId,'b2','selection focus survives render');
+  assert.equal(f.window.document.activeElement.id,'game-sheet-close','focus enters native sheet');
+  assert.equal(f.root.querySelector('.game-bird-sheet').open,true);f.closeBird();
+  assert.equal(f.window.document.activeElement.dataset.birdId,'b2','closing restores scene bird focus');
   const picker=f.root.querySelector('#game-scene-resident');picker.value='b1';picker.dispatchEvent(new f.window.Event('change',{bubbles:true}));
   assert.equal(f.root.querySelector('.game-scene-caption strong').textContent,'最初の庭');
-  f.root.querySelector('.game-scene-picker [data-game-panel="profile"]').click();
+  f.openBird();f.root.querySelector('.game-bird-sheet [data-game-panel="profile"]').click();
   assert.equal(f.root.querySelector('.game-profile h3').textContent,'最初の庭');
   assert.equal(f.root.querySelector('.game-room'),null);
   f.root.querySelector('[data-game-panel="garden"]').click();
-  assert.equal(f.root.querySelector('.game-art-disclosure').textContent.includes('実際のおもちの写真'),true);
+  f.root.querySelector('[data-game-panel="help"]').click();assert.equal(f.root.querySelector('.game-art-disclosure').textContent.includes('実際のおもちの写真'),true);f.root.querySelector('[data-game-panel="garden"]').click();
   assert.equal(f.root.querySelectorAll('.game-room-bird').length,2);
 });
 
@@ -218,41 +223,40 @@ test('returning from a visitor profile aligns the scene, picker and resident pro
   const f=await fixture(t),store=await f.otherTab();
   await store.transact(w=>{w.paused=false;advanceTicks(w,1);w.paused=true;bumpRevision(w);return w;});
   await f.mount();
-  f.root.querySelector('.game-visitor-box [data-game-select="b2"]').click();
+  f.root.querySelector('[data-game-scene-select][data-bird-id="b2"]').click();f.root.querySelector('.game-bird-sheet [data-game-panel="profile"]').click();
   assert.match(f.root.querySelector('.game-profile-heading').textContent,/ななしの訪問者/);
   f.root.querySelector('[data-game-panel="garden"]').click();
   assert.equal(f.root.querySelector('#game-scene-resident').value,'b2');
   assert.equal(f.root.querySelector('.game-scene-caption strong').textContent,'ななしの訪問者');
-  assert.equal(f.root.querySelector('.game-profile h3').textContent,'ななしの訪問者');
+  assert.equal(f.root.querySelector('.game-profile'),null,'scene no longer repeats full profile');f.openBird();assert.equal(f.root.querySelector('#game-sheet-title').textContent,'ななしの訪問者');
 });
 
 test('other-tab refresh preserves dirty name and talk drafts after focus moves to a button',async t=>{
-  const f=await fixture(t),store=await f.otherTab();await f.mount();
+  const f=await fixture(t),store=await f.otherTab();await f.mount();f.profile();
   const type=(id,value)=>{const input=f.root.querySelector(id);input.value=value;input.dispatchEvent(new f.window.Event('input',{bubbles:true}));};
-  type('#game-name','まだ保存していない名前');type('#game-words','おはよう、元気？');
-  f.root.querySelector('[data-game-form="rename"] button[type="submit"]').focus();
-  await store.transact(w=>{renameBird(w,'b1','別タブの変更');bumpRevision(w);return w;});
-  await [...f.timers.values()][0]();
+  type('#game-name','まだ保存していない名前');f.openBird();f.root.querySelector('[data-game-details="sheet-talk"]').open=true;type('#game-words','おはよう、元気？');
+  f.root.querySelector('#game-talk-send').focus();
+  await store.transact(w=>{renameBird(w,'b1','別タブの変更');bumpRevision(w);return w;});await [...f.timers.values()][0]();
+  assert.equal(f.root.querySelector('#game-words').value,'おはよう、元気？');f.closeBird();
   assert.equal(f.root.querySelector('#game-name').value,'まだ保存していない名前');
-  assert.equal(f.root.querySelector('#game-words').value,'おはよう、元気？');
+  f.openBird();assert.equal(f.root.querySelector('#game-words').value,'おはよう、元気？','closed sheet preserves unsent talk');f.closeBird();
+  f.root.querySelector('[data-game-form="rename"] button[type="submit"]').focus();
   f.root.querySelector('[data-game-form="rename"]').dispatchEvent(new f.window.Event('submit',{bubbles:true,cancelable:true}));
-  await until(async()=>(await rawWorld(f.indexedDB)).birds[0].name==='まだ保存していない名前','save preserved draft');
-  await sleep(20);
+  await until(async()=>(await rawWorld(f.indexedDB)).birds[0].name==='まだ保存していない名前','save preserved draft');await sleep(20);
   await store.transact(w=>{renameBird(w,'b1','保存後の別タブ名');bumpRevision(w);return w;});
-  assert.equal(f.window.document.activeElement,f.root.querySelector('[data-game-form="rename"] button[type="submit"]'),'successful save retains keyboard focus');
-  await [...f.timers.values()][0]();
+  assert.equal(f.window.document.activeElement,f.root.querySelector('[data-game-form="rename"] button[type="submit"]'),'successful save retains keyboard focus');await [...f.timers.values()][0]();
   assert.equal(f.root.querySelector('#game-name').value,'保存後の別タブ名','saved draft and focused Save button no longer block live remote updates');
 });
 
 test('dirty input drafts cannot leak into a replacement world reusing the same bird ID',async t=>{
-  const f=await fixture(t),store=await f.otherTab();await f.mount();
+  const f=await fixture(t),store=await f.otherTab();await f.mount();f.profile();
   const input=f.root.querySelector('#game-name');input.focus();input.value='古い庭だけの下書き';input.dispatchEvent(new f.window.Event('input',{bubbles:true}));
   await store.transact(()=>savedWorld('新しい庭の名前',999));await [...f.timers.values()][0]();
   assert.equal(f.root.querySelector('#game-name').value,'新しい庭の名前');
 });
 
 test('a peer refresh cannot detach a held submit button before native activation',async t=>{
-  const f=await fixture(t),store=await f.otherTab();await f.mount();
+  const f=await fixture(t),store=await f.otherTab();await f.mount();f.profile();
   const form=f.root.querySelector('[data-game-form="rename"]'),button=form.querySelector('button[type="submit"]'),input=form.querySelector('input');
   input.value='押している途中の名前';input.dispatchEvent(new f.window.Event('input',{bubbles:true}));
   button.dispatchEvent(new f.window.PointerEvent('pointerdown',{bubbles:true,pointerId:7}));
@@ -266,7 +270,7 @@ test('a peer refresh cannot detach a held submit button before native activation
 });
 
 test('pointer cancellation flushes a pending refresh without saving the local draft',async t=>{
-  const f=await fixture(t),store=await f.otherTab();await f.mount();
+  const f=await fixture(t),store=await f.otherTab();await f.mount();f.profile();
   const button=f.root.querySelector('[data-game-form="rename"] button[type="submit"]');
   button.dispatchEvent(new f.window.PointerEvent('pointerdown',{bubbles:true,pointerId:8}));
   await store.transact(w=>{renameBird(w,'b1','キャンセル後の更新');bumpRevision(w);return w;});

@@ -375,6 +375,8 @@ test('game memorial uses real game name labels and undo restores the preceding s
   await action(page, 'title').click();
   const before = await saved(page);
   await page.locator('.desktop-nav [data-nav="game/"]').click();
+  await page.locator('[data-game-scene-select][data-bird-id="b1"]').click();
+  await page.locator('.game-bird-sheet [data-game-panel="profile"]').click();
   await expect(page.locator('.game-profile-heading h3')).toHaveText('おもち');
   await page.locator('[data-game-art="b1"]').first().click();
   await expect(page).toHaveURL(/\/studio\/$/);

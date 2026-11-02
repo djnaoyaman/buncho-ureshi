@@ -72,7 +72,11 @@ async function openGame(page, query = '') {
   await expect(page.locator('#game-root .game-app')).toBeVisible();
 }
 
+async function closeBird(page) { if(await page.locator('.game-bird-sheet').isVisible())await page.locator('[data-game-close-bird]').click(); }
+async function openBird(page) { await page.locator('[data-game-open-bird]').click();await expect(page.locator('.game-bird-sheet')).toBeVisible(); }
+async function openTalk(page) { await openBird(page);const d=page.locator('[data-game-details="sheet-talk"]');if(!await d.evaluate(e=>e.open))await d.locator('summary').click(); }
 async function tab(page, name) {
+  await closeBird(page);
   const target=page.locator(`[data-game-panel="${name}"]`).first();if(!await target.isVisible())await page.locator('.game-secondary-menu summary').click();await target.click();
 }
 
@@ -93,14 +97,16 @@ test.beforeEach(async ({ context, page }) => {
 
 test('game starts with Omochi, then names and welcomes the unrelated male visitor', async ({ page }) => {
   await openGame(page);
+  await tab(page,'profile');
   await expect(page.locator('.game-profile-heading h3')).toHaveText('おもち');
-  await expect(page.locator('.game-profile-heading')).toContainText('メス / 白文鳥 / 成鳥');
+  await expect(page.locator('.game-profile-heading')).toContainText('メス · 白文鳥 · 成鳥');
   let world = await readWorld(page);
   expect(world.birds).toHaveLength(1);
   expect(world.birds[0]).toMatchObject({ id: 'b1', name: 'おもち', sex: 'female', color: 'white' });
   await seedWorld(page, world, fixedNow - TICK_MS);
   await openGame(page);
-  await page.locator('.game-visitor-box [data-game-select="b2"]').click();
+  await page.locator('[data-game-scene-select][data-bird-id="b2"]').click();
+  await page.locator('.game-bird-sheet [data-game-panel="profile"]').click();
   await expect(page.locator('.game-profile-heading')).toContainText('オス');
   await page.locator('#game-name').fill('こめ');
   await page.locator('[data-game-action="adopt"]').click();
@@ -140,7 +146,7 @@ test('verification control produces autonomous generations, bounded roster, and 
   await tab(page, 'roster');
   await expect(page.locator('.game-roster [data-game-select]')).toHaveCount(world.birds.length);
   await tab(page, 'diary');
-  await expect(page.locator('.game-diary li')).toHaveCount(world.events.length);
+  await page.locator('.game-full-diary > summary').click();await expect(page.locator('.game-full-diary .game-diary li')).toHaveCount(world.events.length);
   if (testInfo.project.name === 'chromium') {
     await tab(page, 'garden');
     for (const width of [375, 768, 1440]) {
@@ -165,6 +171,7 @@ test('rename persists and conversations use needs, personality and memory', asyn
   await page.locator('#game-name').fill('しらたま');
   await page.locator('[data-game-form="rename"] button[type="submit"]').click();
   await expect(page.locator('.game-profile-heading h3')).toHaveText('しらたま');
+  await openTalk(page);
   await page.locator('[data-game-talk="あそぼう"]').click();
   await expect(page.locator('.game-reply')).toContainText('しらたま');
   await expect(page.locator('.game-reply')).toContainText('休みたい');
@@ -177,9 +184,10 @@ test('rename persists and conversations use needs, personality and memory', asyn
   await page.locator('[data-game-form="talk"] button').click();
   await expect(page.locator('.game-reply')).toContainText('まだわからない');
   await page.reload();
+  await tab(page,'profile');
   await expect(page.locator('.game-profile-heading h3')).toHaveText('しらたま');
   await tab(page, 'diary');
-  await expect(page.locator('.game-diary')).toContainText('しらたま');
+  await page.locator('.game-full-diary > summary').click();await expect(page.locator('.game-full-diary .game-diary')).toContainText('しらたま');
   const restored = validateWorld(await readWorld(page));
   expect(restored.birds[0].id).toBe('b1');
   expect(restored.birds[0].name).toBe('しらたま');
@@ -191,15 +199,13 @@ test('rapid repeated conversations stay attached to the originally selected bird
   seeded.birds[0].mood = 50;
   await seedWorld(page, seeded);
   await openGame(page);
-  await tab(page, 'profile');
-  await page.evaluate(() => {
-    const play = document.querySelector('[data-game-talk="あそぼう"]');
-    play.click();
-    play.click();
-    document.querySelector('[data-game-panel="roster"]').click();
-    document.querySelector('.game-roster [data-game-select="b2"]').click();
-    document.querySelector('[data-game-talk="おやすみ"]').click();
-  });
+  await openTalk(page);
+  // Exercise repeated activation only on the visible control. Subsequent modal
+  // dismissal and navigation use real user actions, never hidden/forced clicks.
+  await page.locator('[data-game-talk="あそぼう"]').evaluate(play=>{play.click();play.click();});
+  await closeBird(page);await tab(page,'roster');
+  await page.locator('.game-roster [data-game-select="b2"]').click();
+  await openTalk(page);await page.locator('[data-game-talk="おやすみ"]').click();
   await expect.poll(async () => (await readWorld(page)).birds[0].memories.filter(m => m.kind === 'user-play').length).toBe(2);
   await expect.poll(async () => (await readWorld(page)).birds.find(b => b.id === 'b2').memories.at(-1).kind).toBe('user-rest');
   const world = validateWorld(await readWorld(page));
@@ -455,8 +461,10 @@ for (const residents of [1, 10]) test(`${residents === 1 ? 'initial one-bird' : 
     await page.locator(`.game-room-bird[data-game-select="${bird.id}"]`).click();
     await expect(page.locator('.game-room')).toBeVisible();
     await expect(page.locator('.game-scene-caption strong')).toHaveText(bird.name);
-    await expect(page.locator('.game-profile-heading h3')).toHaveText(bird.name);
+    await expect(page.locator('#game-sheet-title')).toHaveText(bird.name);
     await expect(page.locator('#game-scene-resident')).toHaveValue(bird.id);
+    await closeBird(page);
+    await expect(page.locator(`.game-room-bird[data-game-select="${bird.id}"]`)).toBeFocused();
   }
 });
 
@@ -480,7 +488,9 @@ test('all color stages decode and nest-bound young remain reachable through the 
   for(const b of world.birds){
     await page.locator('#game-scene-resident').selectOption(b.id);
     await expect(page.locator('.game-scene-caption strong')).toHaveText(b.name);
-    await expect(page.locator('.game-profile-heading h3')).toHaveText(b.name);
+    await openBird(page);await expect(page.locator('#game-sheet-title')).toHaveText(b.name);
+    if(['egg','chick'].includes(b.stage)){await expect(page.locator('[data-game-care="feed"]')).toBeDisabled();await expect(page.locator('[data-game-care="pet"]')).toBeDisabled();}
+    await closeBird(page);
   }
   for(const width of [375,1440]){
     await page.setViewportSize({width,height:1000});
@@ -528,12 +538,14 @@ test('natural poses vary asynchronously while stable controls, drafts and save s
   const poses=()=>page.locator('.game-room-bird .game-sprite').evaluateAll(nodes=>nodes.map(n=>n.dataset.pose));
   const before=await poses();expect(new Set(before).size).toBeGreaterThanOrEqual(3);await expect(page.locator('.game-room-bird .game-sprite[data-color="white"]')).toHaveCount(10);
   const saveBefore=await readWorld(page);
+  await openTalk(page);
   await page.locator('#game-words').fill('まだ書いているところ');
   await page.evaluate(()=>{window.__poseButtons=[...document.querySelectorAll('.game-room-bird')];window.__poseInput=document.querySelector('#game-words');window.__poseImages=[...document.querySelectorAll('.game-room-bird img')];});
   await expect.poll(poses,{timeout:14000,message:'independent quiet holds eventually change genuine anatomical frames'}).not.toEqual(before);
   expect(await page.evaluate(()=>window.__poseButtons.every((node,i)=>node===document.querySelectorAll('.game-room-bird')[i])&&window.__poseImages.every((node,i)=>node===document.querySelectorAll('.game-room-bird img')[i])&&window.__poseInput===document.querySelector('#game-words'))).toBe(true);
   await expect(page.locator('#game-words')).toHaveValue('まだ書いているところ');expect(await readWorld(page)).toEqual(saveBefore);
   const after=await poses();expect(after.some((pose,i)=>pose===before[i])).toBe(true);
+  await closeBird(page);
   await info.attach('natural-unsynchronized-poses-375',{body:await page.locator('.game-room').screenshot(),contentType:'image/png'});
   await page.locator('[data-game-action="pause"]').first().click();const paused=await poses();await page.waitForTimeout(1800);expect(await poses()).toEqual(paused);
   await page.emulateMedia({reducedMotion:'reduce'});await page.locator('[data-game-action="pause"]').first().click();const reduced=await poses();await page.waitForTimeout(1800);expect(await poses()).toEqual(reduced);

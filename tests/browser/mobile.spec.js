@@ -120,7 +120,7 @@ async function gameTouchFlow(page, context, name) {
   await context.addInitScript(now => { Date.now = () => now; }, fixedNow);
   await page.goto('game/');
   await expect(page.locator('#game-root .game-app')).toBeVisible();
-  await expect(page.locator('.game-profile-heading h3')).toHaveText('おもち');
+  await expect(page.locator('.game-scene-caption strong')).toHaveText('おもち');
   // Backdate only this application's saved timestamp by one tick; actual startup performs the visit.
   await page.evaluate(({ dbName, now, tick }) => new Promise((resolve, reject) => {
     const open = indexedDB.open(dbName, 1);
@@ -134,12 +134,16 @@ async function gameTouchFlow(page, context, name) {
     };
   }), { dbName: DB_NAME, now: fixedNow, tick: TICK_MS });
   await page.reload();
-  await trustedTap(page, page.locator('.game-visitor-box [data-game-select="b2"]'));
+  await trustedTap(page, page.locator('[data-game-scene-select][data-bird-id="b2"]'));
+  await page.locator('.game-bird-sheet [data-game-panel="profile"]').tap();
   await page.locator('#game-name').fill(name);
   await page.locator('[data-game-action="adopt"]').tap();
   await expect(page.locator('.game-profile-heading h3')).toHaveText(name);
+  await page.locator('[data-game-open-bird]').tap();await expect(page.locator('.game-bird-sheet')).toBeVisible();
+  await page.locator('[data-game-details="sheet-talk"] summary').tap();
   await page.locator('[data-game-talk="あそぼう"]').tap();
   await expect(page.locator('.game-reply')).toContainText(name);
+  await page.locator('[data-game-close-bird]').tap();
   if(!await page.locator('.game-tabs [data-game-panel="settings"]').isVisible())await page.locator('.game-secondary-menu summary').tap();
   await page.locator('.game-tabs [data-game-panel="settings"]').tap();
   const pending = page.waitForEvent('download');
