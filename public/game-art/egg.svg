@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="850" height="1000" viewBox="0 0 850 1000">
+  <defs>
+    <radialGradient id="shell" cx="32%" cy="28%" r="78%">
+      <stop offset="0" stop-color="#fffefa"/>
+      <stop offset=".58" stop-color="#f8f6ed"/>
+      <stop offset=".87" stop-color="#e4e0d3"/>
+      <stop offset="1" stop-color="#cfcabb"/>
+    </radialGradient>
+  </defs>
+  <path d="M459 240 C351 240 293 389 263 539 C223 733 289 953 459 975 C629 951 690 754 655 566 C627 413 566 242 459 240Z" fill="url(#shell)"/>
+</svg>

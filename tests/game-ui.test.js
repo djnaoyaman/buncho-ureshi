@@ -4,7 +4,7 @@ import { Window } from 'happy-dom';
 import { IDBFactory } from 'fake-indexeddb';
 import { mountGame } from '../src/game.js';
 import { openGameStore, DB_NAME } from '../src/game-store.js';
-import { createWorld, renameBird, serializeWorld, bumpRevision } from '../src/engine.js';
+import { createWorld, renameBird, serializeWorld, bumpRevision, adoptBird, advanceTicks } from '../src/engine.js';
 
 // Real engine/store code in a DOM emulator, not browser or visual acceptance.
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -180,4 +180,48 @@ test('mountGame closes an opened IndexedDB connection when initial save validati
   assert.match(f.root.querySelector('[role="alert"]').textContent, /保存を開けませんでした/);
   assert.equal(f.timers.size, 0, 'failed mount never starts polling');
   assert.deepEqual(await rawWorld(f.indexedDB), f.initial, 'unsupported save is retained without replacement');
+});
+
+
+test('photo habitat keeps one selected caption, accessible resident picker, and profile flow', async t => {
+  const f = await fixture(t);
+  const store = await f.otherTab();
+  await store.transact(w => { w.paused=false;advanceTicks(w,1);w.paused=true;const guest=w.birds.find(b=>b.home==='visitor'); adoptBird(w,guest.id,'そら'); bumpRevision(w); return w; });
+  await f.mount();
+  assert.equal(f.root.querySelectorAll('.game-room').length,1);
+  assert.equal(f.root.querySelectorAll('.game-habitat picture').length,0);
+  assert.match(f.root.querySelector('.game-habitat source').getAttribute('srcset'),/habitat-tall\.webp$/);
+  assert.match(f.root.querySelector('.game-habitat img').getAttribute('src'),/habitat-wide\.webp$/);
+  assert.equal(f.root.querySelectorAll('.game-scene-caption').length,1);
+  assert.equal(f.root.querySelectorAll('.game-room-bird button').length,0);
+  assert.equal(f.root.querySelectorAll('.game-room-bird svg').length,0);
+  assert.equal(f.root.querySelectorAll('.game-room-bird').length,2);
+  assert.equal(f.root.querySelectorAll('#game-scene-resident option').length,2);
+  const bird=f.root.querySelector('[data-game-scene-select][data-bird-id="b2"]');
+  bird.focus();bird.click();
+  assert.equal(f.root.querySelectorAll('.game-room').length,1,'scene selection must not navigate away');
+  assert.equal(f.root.querySelector('.game-scene-caption strong').textContent,'そら');
+  assert.equal(f.root.querySelector('[data-game-scene-select][aria-pressed="true"]').dataset.birdId,'b2');
+  assert.equal(f.window.document.activeElement.dataset.birdId,'b2','selection focus survives render');
+  const picker=f.root.querySelector('#game-scene-resident');picker.value='b1';picker.dispatchEvent(new f.window.Event('change',{bubbles:true}));
+  assert.equal(f.root.querySelector('.game-scene-caption strong').textContent,'最初の庭');
+  f.root.querySelector('.game-scene-picker [data-game-panel="profile"]').click();
+  assert.equal(f.root.querySelector('.game-profile h3').textContent,'最初の庭');
+  assert.equal(f.root.querySelector('.game-room'),null);
+  f.root.querySelector('[data-game-panel="garden"]').click();
+  assert.equal(f.root.querySelector('.game-art-disclosure').textContent.includes('実際のおもちの写真'),true);
+  assert.equal(f.root.querySelectorAll('.game-room-bird').length,2);
+});
+
+
+test('returning from a visitor profile aligns the scene, picker and resident profile',async t=>{
+  const f=await fixture(t),store=await f.otherTab();
+  await store.transact(w=>{w.paused=false;advanceTicks(w,1);w.paused=true;bumpRevision(w);return w;});
+  await f.mount();
+  f.root.querySelector('.game-visitor-box [data-game-select="b2"]').click();
+  assert.match(f.root.querySelector('.game-profile-heading').textContent,/ななしの訪問者/);
+  f.root.querySelector('[data-game-panel="garden"]').click();
+  assert.equal(f.root.querySelector('#game-scene-resident').value,'b1');
+  assert.equal(f.root.querySelector('.game-scene-caption strong').textContent,'最初の庭');
+  assert.equal(f.root.querySelector('.game-profile h3').textContent,'最初の庭');
 });

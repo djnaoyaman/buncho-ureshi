@@ -1,4 +1,6 @@
 import { test, expect } from '@playwright/test';
+import { habitatPositions } from '../../src/habitat-layout.js';
+import { GAME_SPRITE_ASSETS } from '../../src/game.js';
 import { createWorld, createBird, advanceTicks, advanceTo, validateWorld, TICK_MS, LIMITS } from '../../src/engine.js';
 
 const DB_NAME = 'buncho-ureshi-garden-v1';
@@ -334,74 +336,109 @@ function gardenVisualFixture(count) {
   return validateWorld(world);
 }
 
-// Collision absence alone is not a visual-quality pass. The rejected layout had a
-// 920px one-bird room and preserveAspectRatio=none, yet its text did not collide.
-// Gate initial composition, scenery proportions, anatomy size and crowded access.
-for (const residents of [1, 10]) test(`${residents === 1 ? 'initial one-bird' : 'populated ten-bird'} garden has bounded composition, proportional scenery and readable residents`, async ({ page }, testInfo) => {
+// The rejected grid is gone. Pixel review remains separate from these DOM gates:
+// decode assets, preserve their native ratio, keep contact planes bounded, and
+// ensure every name remains reachable without blanket floating scene labels.
+for (const residents of [1, 10]) test(`${residents === 1 ? 'initial one-bird' : 'populated ten-bird'} photographic habitat is bounded, proportional and accessible`, async ({ page }, testInfo) => {
   test.setTimeout(90000);
   const seeded = gardenVisualFixture(residents);
   await seedWorld(page, seeded);
   await openGame(page);
   await expect(page.locator('.game-room-bird')).toHaveCount(residents);
-  await expect(page.locator('.game-room-bird .game-bubble')).toHaveCount(residents === 1 ? 0 : residents);
+  await expect(page.locator('.game-scene-caption')).toHaveCount(1);
+  await expect(page.locator('#game-scene-resident option')).toHaveText(seeded.birds.map(bird=>`${bird.name} · 成鳥`));
+  await expect(page.locator('.game-room-bird .game-bubble, .game-room-bird .game-bird-label, .game-room svg')).toHaveCount(0);
   for (const width of [320, 375, 390, 768, 1440]) for (const orientation of ['portrait', 'landscape']) {
     const height = orientation === 'portrait' ? Math.max(800, Math.round(width * 1.25)) : Math.max(240, Math.round(width * .65));
     await page.setViewportSize({ width, height });
-    await expect.poll(() => page.evaluate(({ residents, viewportWidth }) => {
-      const roomElement = document.querySelector('.game-room');
-      const room = roomElement.getBoundingClientRect();
-      const errors = [];
-      const maxHeight = residents === 1 ? (viewportWidth <= 480 ? 420 : 520) : (viewportWidth <= 768 ? 720 : 650);
-      if (room.height < 280 || room.height > maxHeight + 1) errors.push(`room height ${room.height} outside 280–${maxHeight}px`);
-      const visible = el => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== 'hidden'; };
-      const inside = r => r.left >= room.left - 1 && r.right <= room.right + 1 && r.top >= room.top - 1 && r.bottom <= room.bottom + 1;
-      const birds = [...roomElement.querySelectorAll('.game-room-bird')];
-      const parts = birds.flatMap(bird => [...bird.querySelectorAll('.game-bird-label, .game-bubble, :scope > small')].map(el => ({
-        bird: bird.dataset.gameSelect, kind: el.className || 'action', rect: el.getBoundingClientRect(),
-        clipped: el.scrollHeight > el.clientHeight + 1 || el.scrollWidth > el.clientWidth + 1,
-        font: parseFloat(getComputedStyle(el).fontSize), visible: visible(el)
-      })));
-      for (const bird of birds) {
-        const r = bird.getBoundingClientRect(), svg = bird.querySelector('svg'), drawn = svg?.getBoundingClientRect();
-        if (!visible(bird) || r.width < 44 || r.height < 44) errors.push(`${bird.dataset.gameSelect} touch target below 44px or hidden`);
-        if (!inside(r)) errors.push(`${bird.dataset.gameSelect} button outside room`);
-        if (!drawn || drawn.width < (residents === 1 ? 64 : 48) || drawn.height < 40 || !inside(drawn)) errors.push(`${bird.dataset.gameSelect} illustration is too small or clipped`);
+    await expect.poll(() => page.locator('.game-room img').evaluateAll(images=>images.every(img=>img.complete&&img.naturalWidth>0))).toBe(true);
+    await expect.poll(() => page.evaluate(({ residents, viewportWidth, expectedPositions, assetGeometry }) => {
+      const roomElement=document.querySelector('.game-room'),room=roomElement.getBoundingClientRect(),errors=[];
+      const tall=viewportWidth<=600,maxHeight=tall?500:600,ratio=tall?.75:1.6;
+      if(room.height<280||room.height>maxHeight+1)errors.push(`room height ${room.height} outside 280–${maxHeight}px`);
+      if(Math.abs(room.width/room.height-ratio)>.01)errors.push('habitat aspect ratio changed');
+      if(room.width>(tall?375:960)+1)errors.push('scene exceeds width bound');
+      const inside=r=>r.left>=room.left-1&&r.right<=room.right+1&&r.top>=room.top-1&&r.bottom<=room.bottom+1;
+      const birds=[...roomElement.querySelectorAll('.game-room-bird')],planes=[];
+      for(const bird of birds){
+        const r=bird.getBoundingClientRect(),sprite=bird.querySelector('.game-sprite'),plane=sprite?.getBoundingClientRect(),img=sprite?.querySelector('img');
+        if(bird.tagName!=='BUTTON'||r.width<44||r.height<44)errors.push(`${bird.dataset.birdId} adult target below 44px`);
+        if(!inside(r)||!plane||!inside(plane))errors.push(`${bird.dataset.birdId} contact plane outside scene`);
+        if(plane&&(plane.width<(residents===1?64:44)||Math.abs(plane.width/plane.height-.85)>.01))errors.push(`${bird.dataset.birdId} contact plane too small or stretched`);
+        if(!img?.complete||!img.naturalWidth)errors.push(`${bird.dataset.birdId} image not decoded`);
+        else {const drawn=img.getBoundingClientRect();if(Math.abs(drawn.width/drawn.height-img.naturalWidth/img.naturalHeight)>.01)errors.push(`${bird.dataset.birdId} image is stretched`);}
+        if(plane){
+          const expected=expectedPositions[bird.dataset.birdId],foot={x:plane.left+plane.width*.54,y:plane.top+plane.height*.975};
+          const anchor={x:room.left+1+(room.width-2)*expected.x,y:room.top+1+(room.height-2)*expected.y};
+          if(Math.abs(foot.x-anchor.x)>2||Math.abs(foot.y-anchor.y)>2)errors.push(`${bird.dataset.birdId} feet miss its reviewed habitat anchor`);
+          if(img?.naturalWidth){const drawn=img.getBoundingClientRect(),source=assetGeometry[sprite.dataset.asset];
+            const imageFoot={x:drawn.left+source.footX/source.width*drawn.width,y:drawn.top+source.footY/source.height*drawn.height};
+            if(Math.abs(imageFoot.x-foot.x)>1||Math.abs(imageFoot.y-foot.y)>1)errors.push(`${bird.dataset.birdId} native image contact is miscalibrated`);
+          }
+          planes.push({id:bird.dataset.birdId,rect:plane});
+        }
       }
-      for (const part of parts) {
-        if (!part.visible || part.clipped || !inside(part.rect)) errors.push(`${part.bird} ${part.kind} hidden or clipped`);
-        if (part.font < (part.kind === 'game-bird-label' ? 11 : 10)) errors.push(`${part.bird} ${part.kind} text is too small`);
+      for(let i=0;i<planes.length;i++)for(let j=i+1;j<planes.length;j++){
+        const a=planes[i],b=planes[j],x=Math.min(a.rect.right,b.rect.right)-Math.max(a.rect.left,b.rect.left),y=Math.min(a.rect.bottom,b.rect.bottom)-Math.max(a.rect.top,b.rect.top);
+        if(x>1&&y>1)errors.push(`${a.id} overlaps ${b.id}`);
       }
-      const visibleParts = [...parts, ...birds.map(bird => ({ bird: bird.dataset.gameSelect, kind: 'illustration', rect: bird.querySelector('svg').getBoundingClientRect() }))];
-      for (let i = 0; i < visibleParts.length; i++) for (let j = i + 1; j < visibleParts.length; j++) {
-        const a = visibleParts[i], b = visibleParts[j];
-        if (a.bird === b.bird) continue;
-        const x = Math.min(a.rect.right, b.rect.right) - Math.max(a.rect.left, b.rect.left);
-        const y = Math.min(a.rect.bottom, b.rect.bottom) - Math.max(a.rect.top, b.rect.top);
-        if (x > 1 && y > 1) errors.push(`${a.bird} ${a.kind} overlaps ${b.bird} ${b.kind}`);
-      }
-      for (const svg of roomElement.querySelectorAll('svg')) {
-        if (svg.getAttribute('preserveAspectRatio')?.trim() === 'none') errors.push('SVG explicitly disables proportional scaling');
-        if (!visible(svg)) continue;
-        const m = svg.getScreenCTM();
-        if (!m) { errors.push('visible SVG has no screen transform'); continue; }
-        const x = Math.hypot(m.a, m.b), y = Math.hypot(m.c, m.d);
-        if (!x || !y || Math.max(x, y) / Math.min(x, y) > 1.01) errors.push('SVG is stretched non-uniformly');
-      }
-      const props = [...roomElement.querySelectorAll('[data-game-prop]')];
-      if (props.map(p => p.dataset.gameProp).sort().join() !== 'bath,food,nest') errors.push('three separately sized habitat props must be present');
-      for (const prop of props) {
-        if (!visible(prop) || !inside(prop.getBoundingClientRect())) errors.push(`${prop.dataset.gameProp} prop is hidden or clipped`);
-      }
-      if (document.documentElement.scrollWidth > innerWidth + 1) errors.push('document overflow');
+      const habitat=roomElement.querySelector('.game-habitat img');
+      if(getComputedStyle(habitat).objectFit!=='cover')errors.push('background is not proportional cover');
+      if(!habitat.currentSrc.endsWith(tall?'habitat-tall.webp':'habitat-wide.webp'))errors.push('wrong responsive habitat asset');
+      if(getComputedStyle(roomElement).display==='grid')errors.push('rejected grid returned');
+      if(document.documentElement.scrollWidth>innerWidth+1)errors.push('document overflow');
       return errors;
-    }, { residents, viewportWidth: width }), { message: `${residents} birds, ${width}px ${orientation}: bounded composition, proportions and text must remain readable` }).toEqual([]);
-    await expect(page.locator('.game-bird-label')).toHaveText(seeded.birds.map(bird => bird.name));
-    if (testInfo.project.name === 'chromium') await testInfo.attach(`game-${residents === 1 ? 'initial' : 'ten-full-names'}-${width}-${orientation}`, { body: await page.locator('.game-room').screenshot({ animations: 'disabled' }), contentType: 'image/png' });
+    },{residents,viewportWidth:width,expectedPositions:Object.fromEntries(habitatPositions(seeded.birds,width<=600?'tall':'wide')),assetGeometry:GAME_SPRITE_ASSETS}),{message:`${residents} birds, ${width}px ${orientation}: decoded, bounded, proportional scene`}).toEqual([]);
+    if(testInfo.project.name==='chromium'&&[375,1440].includes(width)&&orientation==='portrait')await testInfo.attach(`game-photo-${residents}-birds-${width}`,{body:await page.locator('.game-room').screenshot({animations:'disabled'}),contentType:'image/png'});
   }
-  // Each resident remains a real reachable selection target, not just decoration.
-  for (const bird of seeded.birds) {
-    await tab(page, 'garden');
+  for(const bird of seeded.birds){
     await page.locator(`.game-room-bird[data-game-select="${bird.id}"]`).click();
+    await expect(page.locator('.game-room')).toBeVisible();
+    await expect(page.locator('.game-scene-caption strong')).toHaveText(bird.name);
     await expect(page.locator('.game-profile-heading h3')).toHaveText(bird.name);
+    await expect(page.locator('#game-scene-resident')).toHaveValue(bird.id);
+  }
+});
+
+test('all color stages decode and nest-bound young remain reachable through the full-name picker',async({page},testInfo)=>{
+  const world=createWorld(fixedNow),colors=['white','sakura','cinnamon','silver'];
+  while(world.birds.length<10)createBird(world,{home:'resident'});
+  world.birds.forEach((b,i)=>{b.color=colors[i%4];b.stage=i<4?'adult':i<8?'juvenile':i===8?'chick':'egg';b.name=`表示確認${i+1}`;});
+  world.paused=true;validateWorld(world);
+  await seedWorld(page,world);await openGame(page);
+  await expect(page.locator('.game-room-bird')).toHaveCount(10);
+  await expect(page.locator('.game-room-bird.game-nestling')).toHaveCount(2);
+  await expect(page.locator('.game-room-bird.game-nestling button')).toHaveCount(0);
+  await expect(page.locator('#game-scene-resident option')).toHaveCount(10);
+  await expect.poll(()=>page.locator('.game-room img').evaluateAll(images=>images.every(i=>i.complete&&i.naturalWidth>0))).toBe(true);
+  const expected=['white','sakura','cinnamon','silver','juvenile-white','juvenile','juvenile-cinnamon','juvenile-silver','chick','egg'];
+  expect(await page.locator('.game-room-bird .game-sprite').evaluateAll(nodes=>nodes.map(n=>n.dataset.asset))).toEqual(expected);
+  const sources=await page.locator('.game-room-bird img').evaluateAll(nodes=>nodes.map(n=>new URL(n.currentSrc).pathname.split('/').at(-1)));
+  expect(sources).toEqual(expected.map(asset=>`${asset}.${asset==='egg'?'svg':'webp'}`));
+  const dimensions=await page.locator('.game-room-bird img').evaluateAll(nodes=>nodes.map(n=>[n.naturalWidth,n.naturalHeight]));
+  expect(dimensions).toEqual(expected.map(asset=>[GAME_SPRITE_ASSETS[asset].width,GAME_SPRITE_ASSETS[asset].height]));
+  for(const b of world.birds){
+    await page.locator('#game-scene-resident').selectOption(b.id);
+    await expect(page.locator('.game-scene-caption strong')).toHaveText(b.name);
+    await expect(page.locator('.game-profile-heading h3')).toHaveText(b.name);
+  }
+  for(const width of [375,1440]){
+    await page.setViewportSize({width,height:1000});
+    await expect.poll(()=>page.locator('.game-habitat img').evaluate(i=>i.complete&&i.naturalWidth>0)).toBe(true);
+    const errors=await page.locator('.game-room').evaluate((roomElement,assets)=>{
+      const room=roomElement.getBoundingClientRect(),errors=[],planes=[];
+      for(const bird of roomElement.querySelectorAll('.game-room-bird')){
+        const sprite=bird.querySelector('.game-sprite'),r=sprite.getBoundingClientRect(),img=sprite.querySelector('img'),drawn=img.getBoundingClientRect(),source=assets[sprite.dataset.asset];
+        if(r.left<room.left-1||r.right>room.right+1||r.top<room.top-1||r.bottom>room.bottom+1)errors.push(`${bird.dataset.birdId} out of bounds`);
+        if(Math.abs(drawn.width/drawn.height-img.naturalWidth/img.naturalHeight)>.01)errors.push(`${bird.dataset.birdId} stage art stretched`);
+        if(Math.abs(drawn.left+source.footX/source.width*drawn.width-(r.left+r.width*.54))>1||Math.abs(drawn.top+source.footY/source.height*drawn.height-(r.top+r.height*.975))>1)errors.push(`${bird.dataset.birdId} stage contact misaligned`);
+        if(bird.classList.contains('game-nestling')&&(!bird.dataset.anchor.startsWith('nest-')||bird.tagName!=='SPAN'))errors.push('nestling leaves nest or becomes inaccessible tiny button');
+        planes.push({id:bird.dataset.birdId,r});
+      }
+      for(let i=0;i<planes.length;i++)for(let j=i+1;j<planes.length;j++){const a=planes[i],b=planes[j];if(Math.min(a.r.right,b.r.right)-Math.max(a.r.left,b.r.left)>1&&Math.min(a.r.bottom,b.r.bottom)-Math.max(a.r.top,b.r.top)>1)errors.push(`${a.id} overlaps ${b.id}`);}
+      return errors;
+    },GAME_SPRITE_ASSETS);
+    expect(errors).toEqual([]);
+    if(testInfo.project.name==='chromium')await testInfo.attach(`game-photo-mixed-stages-${width}`,{body:await page.locator('.game-room').screenshot({animations:'disabled'}),contentType:'image/png'});
   }
 });
