@@ -11,7 +11,7 @@ This is a fictional game, not instructions for feeding, breeding or touching a r
 
 ## Sound and motion
 
-The saved sound preference defaults to false. Only the user's enabled, successful pet action can start the original short synthetic two-note chirp. It is not an animal recording or Omochi's actual voice. Loading, migration, import, catch-up and enabling a preference do not play sound. Explicit gesture activation is required. Immediate mute, selection/world/route changes and teardown stop or cancel pending audio. A stale action/unlock more than 1.5 seconds old is dropped. Unsupported audio leaves the textual response functional. Motion-off, pause and reduced-motion settings suppress the brief opacity cue; birds are not pulled off their perches.
+The saved sound preference defaults to false. Only the user's enabled, successful pet action can start the original short synthetic two-note chirp. It is not an animal recording or Omochi's actual voice. Loading, migration, import, catch-up and enabling a preference do not play sound. Explicit gesture activation is required. Immediate mute, selection/world/route changes and teardown stop or cancel pending audio. A stale action/unlock more than 1.5 seconds old is dropped. Unsupported audio leaves the textual response functional. A native resume that never settles is bounded to 1.2 seconds and reports the silent fallback; a late completion cannot play the old gesture. Contexts that remain suspended at time zero are reported as unavailable native output in browser evidence, not as a successfully heard chirp. Motion-off, pause and reduced-motion settings suppress the brief opacity cue; birds are not pulled off their perches.
 
 ## Schema version 2
 

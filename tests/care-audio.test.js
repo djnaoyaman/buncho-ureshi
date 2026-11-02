@@ -33,3 +33,18 @@ test('missing or denied audio capability degrades to silent feedback without rej
   const absent=createCareAudio({Context:null});absent.setEnabled(true);assert.equal(await absent.unlockFromGesture(),false);assert.equal(await absent.chirp(),false);absent.close();
   const rig=audioRig({reject:true}),audio=createCareAudio({Context:rig.Context});audio.setEnabled(true);assert.equal(await audio.unlockFromGesture(),false);assert.equal(await audio.chirp(),false);assert.equal(rig.starts,0);audio.close();
 });
+
+
+test('a never-settled native resume times out silently and a late completion cannot play an old chirp',async()=>{
+  const rig=audioRig({held:true}),audio=createCareAudio({Context:rig.Context,activationTimeoutMs:5});audio.setEnabled(true);
+  const unlock=audio.unlockFromGesture(),pendingChirp=audio.chirp();
+  assert.equal(await unlock,false);assert.equal(await pendingChirp,false);assert.equal(rig.starts,0);
+  rig.gate.resolve();await Promise.resolve();await Promise.resolve();
+  assert.equal(await audio.chirp(),false,'late resume does not reactivate the expired gesture');assert.equal(rig.starts,0);
+  assert.equal(await audio.unlockFromGesture(),true,'a fresh gesture can try the recovered device');assert.equal(await audio.chirp(),true);assert.equal(rig.starts,2);audio.close();
+});
+
+test('teardown resolves pending native activation immediately without waiting for its device promise',async()=>{
+  const rig=audioRig({held:true}),audio=createCareAudio({Context:rig.Context});audio.setEnabled(true);
+  const unlock=audio.unlockFromGesture();audio.close();assert.equal(await unlock,false);assert.equal(rig.starts,0);assert.equal(rig.contexts[0].closes,1);
+});

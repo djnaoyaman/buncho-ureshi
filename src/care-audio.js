@@ -1,10 +1,26 @@
 /** Original, brief synthetic game chirp. Never a recording or a real bird voice.
  * No context is created until unlockFromGesture() is explicitly invoked.
  */
-export function createCareAudio({ Context = globalThis.AudioContext || globalThis.webkitAudioContext } = {}) {
+export function createCareAudio({ Context = globalThis.AudioContext || globalThis.webkitAudioContext, activationTimeoutMs = 1200 } = {}) {
   let enabled = false, disposed = false, context = null, generation = 0;
   let ready = Promise.resolve(false);
-  const active = new Set();
+  const active = new Set(), pendingActivations = new Set();
+  const activationLimit = Number.isFinite(activationTimeoutMs) ? Math.max(1, Math.min(1200, activationTimeoutMs)) : 1200;
+  function waitForActivation(resumed, token) {
+    return new Promise(resolve => {
+      let settled=false;
+      const pending={timer:null,finish:null};
+      const finish=ok=>{
+        if(settled)return;settled=true;clearTimeout(pending.timer);pendingActivations.delete(pending);
+        resolve(ok&&enabled&&!disposed&&token===generation&&context?.state==='running');
+      };
+      pending.finish=()=>finish(false);pendingActivations.add(pending);
+      // A native resume promise may remain pending when an output device or
+      // browser activation is unavailable. Never hang or play a stale chirp.
+      pending.timer=setTimeout(pending.finish,activationLimit);
+      Promise.resolve(resumed).then(()=>finish(true),()=>finish(false));
+    });
+  }
   function stopNodes() {
     for (const entry of active) {
       try { entry.gain.gain.cancelScheduledValues(context?.currentTime || 0); entry.gain.gain.setValueAtTime(0, context?.currentTime || 0); } catch {}
@@ -13,7 +29,7 @@ export function createCareAudio({ Context = globalThis.AudioContext || globalThi
     }
     active.clear();
   }
-  function cancel() { generation++; ready = Promise.resolve(false); stopNodes(); }
+  function cancel() { generation++; for(const pending of [...pendingActivations])pending.finish(); ready = Promise.resolve(false); stopNodes(); }
   function setEnabled(value) {
     const next = value === true && !disposed;
     if (!next) cancel();
@@ -25,7 +41,7 @@ export function createCareAudio({ Context = globalThis.AudioContext || globalThi
     try {
       if (!context) context = new Context();
       const resumed = context.state === 'running' ? undefined : context.resume();
-      ready = Promise.resolve(resumed).then(() => enabled && !disposed && token === generation && context.state === 'running', () => false);
+      ready = waitForActivation(resumed, token);
     } catch { ready = Promise.resolve(false); }
     return ready;
   }
