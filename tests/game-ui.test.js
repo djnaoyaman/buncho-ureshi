@@ -305,3 +305,10 @@ test('pending draw cannot replace a newer category or preview choice',async t=>{
  assert.equal(f.root.querySelector('[data-decor-slot][aria-pressed="true"]').dataset.decorSlot,'perch');assert.match(f.root.querySelector('.game-decor-preview').dataset.previewItem,/^perch-/);assert.equal(f.root.querySelector('.game-draw-result'),null);
  const w=await rawWorld(f.indexedDB);assert.equal(w.decor.draws,1);assert.equal(w.decor.equipped.toy,'toy-mint-cozy');
 });
+
+test('one primary nav and a secondary disclosure preserve keyboard close focus',async t=>{
+ const f=await fixture(t);await f.mount();assert.equal(f.root.querySelectorAll('.game-field-nav').length,1);assert.equal(f.root.querySelectorAll('.game-field-nav button').length,4);
+ let menu=f.root.querySelector('.game-secondary-menu');assert.equal(menu.open,false);assert(f.root.querySelector('.game-room').compareDocumentPosition(menu)&4);menu.open=true;menu.querySelector('[data-game-panel="family"]').focus();menu.dispatchEvent(new f.window.KeyboardEvent('keydown',{key:'Escape',bubbles:true}));assert.equal(menu.open,false);assert.equal(f.window.document.activeElement.id,'game-nav-summary');
+ menu.open=true;menu.querySelector('[data-game-close-menu]').click();assert.equal(menu.open,false);assert.equal(f.window.document.activeElement.id,'game-nav-summary');
+ f.root.querySelector('[data-game-panel="decorate"]').click();assert.equal(f.root.querySelectorAll('.game-field-nav').length,1);assert.equal(f.root.querySelectorAll('[data-field-travel="home"]').length,1);assert(f.root.querySelector('.game-decoration'));
+});

@@ -140,6 +140,7 @@ async function gameTouchFlow(page, context, name) {
   await expect(page.locator('.game-profile-heading h3')).toHaveText(name);
   await page.locator('[data-game-talk="あそぼう"]').tap();
   await expect(page.locator('.game-reply')).toContainText(name);
+  if(!await page.locator('.game-tabs [data-game-panel="settings"]').isVisible())await page.locator('.game-secondary-menu summary').tap();
   await page.locator('.game-tabs [data-game-panel="settings"]').tap();
   const pending = page.waitForEvent('download');
   await page.locator('[data-game-action="export"]').tap();
@@ -148,6 +149,7 @@ async function gameTouchFlow(page, context, name) {
   expect(world.tick).toBe(1);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
   await page.reload();
+  if(!await page.locator('.game-tabs [data-game-panel="roster"]').isVisible())await page.locator('.game-secondary-menu summary').tap();
   await page.locator('.game-tabs [data-game-panel="roster"]').tap();
   await expect(page.locator('.game-roster [data-game-select="b2"]')).toContainText(name);
 }

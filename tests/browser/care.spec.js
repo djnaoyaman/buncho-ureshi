@@ -7,7 +7,7 @@ function fixture({stage='adult',home='resident',sound=false}={}){
 }
 async function record(page,value){return page.evaluate(({dbName,value})=>new Promise((resolve,reject)=>{const open=indexedDB.open(dbName,1);open.onupgradeneeded=()=>open.result.createObjectStore('world');open.onerror=()=>reject(open.error);open.onsuccess=()=>{const db=open.result,tx=db.transaction('world',value?'readwrite':'readonly'),store=tx.objectStore('world'),request=value?store.put(value,'current'):store.get('current');tx.oncomplete=()=>{db.close();resolve(value||request.result);};tx.onerror=()=>{db.close();reject(tx.error);};};}),{dbName:DB,value});}
 async function seed(page,w=fixture()){await page.goto('');await record(page,w);await page.goto('game/');await expect(page.locator('.game-app')).toBeVisible();await page.locator('[data-game-details="home-care"] summary').click();}
-async function tab(page,name){await page.locator(`[data-game-panel="${name}"]`).first().click();}
+async function tab(page,name){const target=page.locator(`[data-game-panel="${name}"]`).first();if(!await target.isVisible())await page.locator('.game-secondary-menu summary').click();await target.click();}
 async function downloadText(download){const stream=await download.createReadStream();if(!stream)throw Error('No download stream');const chunks=[];for await(const chunk of stream)chunks.push(Buffer.from(chunk));return Buffer.concat(chunks).toString('utf8');}
 async function trackNativeAudio(page){await page.addInitScript(()=>{
   const Native=window.AudioContext||window.webkitAudioContext;window.__careAudio={contexts:0,starts:0,active:0,closed:0,resumes:0,resolved:0,resumeErrors:[],states:[]};

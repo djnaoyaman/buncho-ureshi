@@ -73,7 +73,7 @@ async function openGame(page, query = '') {
 }
 
 async function tab(page, name) {
-  await page.locator(`[data-game-panel="${name}"]`).first().click();
+  const target=page.locator(`[data-game-panel="${name}"]`).first();if(!await target.isVisible())await page.locator('.game-secondary-menu summary').click();await target.click();
 }
 
 async function readDownload(download) {

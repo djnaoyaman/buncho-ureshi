@@ -68,7 +68,7 @@ async function openGame(page, query = '') {
 }
 
 async function tab(page, name) {
-  await page.locator(`[data-game-panel="${name}"]`).first().click();
+  const target=page.locator(`[data-game-panel="${name}"]`).first();if(!await target.isVisible())await page.locator('.game-secondary-menu summary').click();await target.click();
 }
 
 async function readDownload(download) {
@@ -150,9 +150,9 @@ for(const width of [390,1440])test(`illustrated home park friend and rich decor 
 
 test('newer panel navigation is not overwritten by an interrupted pending trip',async({page})=>{
  const w=createWorld(fixedNow);w.paused=true;await seedWorld(page,w);await openGame(page);
- await page.evaluate(()=>{document.querySelector('[data-field-travel="park"]').click();document.querySelector('.game-tabs [data-game-panel="decorate"]').click();});
+ await page.evaluate(()=>{document.querySelector('[data-field-travel="park"]').click();document.querySelector('.game-field-nav [data-game-panel="decorate"]').click();});
  await expect(page.locator('.game-decoration')).toBeVisible();await expect.poll(async()=> (await readWorld(page)).field.place).toBe('park');
- await expect(page.locator('.game-decoration')).toBeVisible();await expect(page.locator('.game-tabs [data-game-panel="decorate"]')).toHaveAttribute('aria-pressed','true');
+ await expect(page.locator('.game-decoration')).toBeVisible();await expect(page.locator('.game-field-nav [data-game-panel="decorate"]')).toHaveAttribute('aria-pressed','true');
  await page.locator('[data-field-travel="home"]').click();await expect(page.locator('.game-room')).toHaveAttribute('data-field','home');
 });
 
@@ -164,4 +164,13 @@ test('first session and twelve long-name birds retain readable mobile viewport a
  await seedWorld(page,w);await openGame(page);await decodeScene(page);await expect(page.locator('.game-room-bird')).toHaveCount(12);
  const issues=await page.locator('.game-room').evaluate(room=>{const r=room.getBoundingClientRect();return [...room.querySelectorAll('.game-room-bird')].flatMap(b=>{const q=b.getBoundingClientRect();return q.width<44||q.height<44||q.left<r.left-1||q.right>r.right+1||q.top<r.top-1||q.bottom>r.bottom+1?[b.dataset.birdId]:[];});});expect(issues).toEqual([]);
  if(info.project.name==='chromium'){await page.evaluate(()=>scrollTo(0,0));await info.attach('field-twelve-longnames-viewport-390',{body:await page.screenshot({animations:'disabled'}),contentType:'image/png'});await info.attach('field-twelve-longnames-scene-390',{body:await page.locator('.game-room').screenshot({animations:'disabled'}),contentType:'image/png'});}
+});
+
+test('secondary drawer opens and closes by real keyboard controls without losing focus or scrolling the scene',async({page})=>{
+ await page.setViewportSize({width:390,height:1000});await openGame(page);await decodeScene(page);
+ await expect(page.locator('.game-field-nav')).toHaveCount(1);await expect(page.locator('.game-field-nav button')).toHaveCount(4);
+ const menu=page.locator('.game-secondary-menu'),summary=menu.locator('summary');await expect(menu).not.toHaveAttribute('open','');await expect(menu.locator('[data-game-panel="family"]')).not.toBeVisible();
+ await summary.click();await expect(menu.locator('[data-game-panel="family"]')).toBeVisible();await menu.locator('[data-game-panel="family"]').focus();const before=await page.evaluate(()=>scrollY);await page.keyboard.press('Escape');await expect(summary).toBeFocused();await expect(menu).not.toHaveAttribute('open','');expect(Math.abs((await page.evaluate(()=>scrollY))-before)).toBeLessThan(4);
+ await summary.press('Enter');await expect(menu.locator('[data-game-panel="family"]')).toBeVisible();await menu.locator('[data-game-close-menu]').click();await expect(summary).toBeFocused();await expect(menu).not.toHaveAttribute('open','');
+ await summary.click();await menu.locator('[data-game-panel="family"]').click();await expect(page.locator('.game-family-tree')).toBeVisible();await expect(page.locator('.game-field-nav button')).toHaveCount(4);await page.locator('[data-field-travel="home"]').click();await expect(page.locator('.game-room')).toHaveAttribute('data-field','home');
 });
