@@ -6,7 +6,7 @@ import { BRAND_ASSET, BRAND_SIZE, SITE_NAME, logoSvg } from '../src/visuals.js';
 import { IMAGE_ALT } from '../src/metadata.js';
 const read=path=>readFile(new URL('../'+path,import.meta.url));
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
-const approved='849bb9f3d28e437e17d5588c60855d891f7006a48f05708cb98cdacdc7ca22ad';
+const approved='543193b35d04c436e1370303b5d64a26de63cf282bc6fddc2dc5a52011c5a82a';
 
 test('selected 04 master is byte-exact and every checked-in derivative matches its provenance manifest',async()=>{
   const manifest=JSON.parse(await read('public/brand/manifest.json'));

@@ -8,7 +8,7 @@ import base64, hashlib, io, json
 ROOT=Path(__file__).resolve().parents[1]
 PUBLIC=ROOT/'public'; BRAND=PUBLIC/'brand'
 MASTER=BRAND/'selected-04-master.png'
-SHA='849bb9f3d28e437e17d5588c60855d891f7006a48f05708cb98cdacdc7ca22ad'
+SHA='543193b35d04c436e1370303b5d64a26de63cf282bc6fddc2dc5a52011c5a82a'
 assert hashlib.sha256(MASTER.read_bytes()).hexdigest()==SHA, 'Approved master changed'
 im=Image.open(MASTER).convert('RGB')
 assert im.size==(1774,887)

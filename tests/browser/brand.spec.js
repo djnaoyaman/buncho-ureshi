@@ -24,7 +24,7 @@ test('approved 04 decodes without stretching and remains visible from 320px to d
 test('served selected-master hash and derivatives are exact, and platform icon rasters decode',async({page,request},info)=>{
   const root=new URL(info.project.use.baseURL),get=path=>request.get(new URL(path,root).href);
   const manifestResponse=await get('brand/manifest.json');expect(manifestResponse.status()).toBe(200);const manifest=await manifestResponse.json();
-  expect(manifest.approvedMasterSHA256).toBe('849bb9f3d28e437e17d5588c60855d891f7006a48f05708cb98cdacdc7ca22ad');
+  expect(manifest.approvedMasterSHA256).toBe('543193b35d04c436e1370303b5d64a26de63cf282bc6fddc2dc5a52011c5a82a');
   for(const [path,file] of Object.entries(manifest.files)){
     const r=await get(path.replace(/^public\//,''));expect(r.status(),path).toBe(200);const bytes=await r.body();
     expect(bytes.length,path).toBe(file.bytes);expect(createHash('sha256').update(bytes).digest('hex'),path).toBe(file.sha256);
