@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import legacyWorld from '../fixtures/v1-world.json' with {type:'json'};
 import { createWorld, advanceTicks, adoptBird, validateWorld } from '../../src/engine.js';
 const DB='buncho-ureshi-garden-v1',now=Date.UTC(2026,10,2,12);
 function fixture({stage='adult',home='resident',sound=false}={}){
@@ -11,7 +12,14 @@ async function downloadText(download){const stream=await download.createReadStre
 async function trackNativeAudio(page){await page.addInitScript(()=>{
   const Native=window.AudioContext||window.webkitAudioContext;window.__careAudio={contexts:0,starts:0,active:0,closed:0};
   if(!Native){window.__careAudio.unavailable=true;return;}
-  class Tracked extends Native{constructor(...args){super(...args);window.__careAudio.contexts++;}createOscillator(){const osc=super.createOscillator(),start=osc.start.bind(osc);osc.start=(...args)=>{window.__careAudio.starts++;window.__careAudio.active++;return start(...args);};osc.addEventListener('ended',()=>window.__careAudio.active--);return osc;}close(){window.__careAudio.closed++;return super.close();}}
+  // Observe real native instances, as in the studio audit. Do not rely on
+  // WebIDL constructors preserving a JavaScript subclass's method overrides.
+  const Tracked=new Proxy(Native,{construct(Target,args){
+    const audio=Reflect.construct(Target,args);window.__careAudio.contexts++;window.__careNativeContext=audio;
+    const create=audio.createOscillator.bind(audio),close=audio.close.bind(audio);
+    audio.createOscillator=()=>{const osc=create(),start=osc.start.bind(osc);osc.start=(...args)=>{window.__careAudio.starts++;window.__careAudio.active++;return start(...args);};osc.addEventListener('ended',()=>window.__careAudio.active--);return osc;};
+    audio.close=()=>{window.__careAudio.closed++;return close();};return audio;
+  }});
   Object.defineProperty(window,'AudioContext',{configurable:true,value:Tracked});
 });}
 async function holdAudio(page){await page.addInitScript(()=>{
@@ -21,6 +29,16 @@ async function holdAudio(page){await page.addInitScript(()=>{
   Object.defineProperty(window,'AudioContext',{configurable:true,value:HeldContext});
 });}
 test.beforeEach(async({page})=>{await page.addInitScript(value=>{Date.now=()=>value;},now);await page.route(/youtube|youtu\.be|googlevideo|ytimg/i,r=>r.abort());});
+
+test('an existing v1 device save migrates in place without advancing paused family history',async({page})=>{
+  const legacy=structuredClone(legacyWorld);legacy.paused=true;legacy.lastUpdated=now;
+  await seed(page,legacy);const migrated=await record(page);
+  expect(migrated.version).toBe(2);expect(migrated.worldId).toBe(legacy.worldId);expect(migrated.tick).toBe(legacy.tick);
+  expect(migrated.birds.map(({care,...bird})=>bird)).toEqual(legacy.birds);expect(migrated.events).toEqual(legacy.events);
+  expect(migrated.care).toEqual({cleanliness:100,lastCleanTick:null});expect(migrated.settings.careSound).toBe(false);
+  expect(migrated.birds.every(b=>b.care.lastFedTick===null&&b.care.lastPetTick===null)).toBe(true);
+  await page.reload();await expect(page.locator('.game-app')).toBeVisible();expect(await record(page)).toEqual(migrated);
+});
 
 test('care feed increases displayed fullness and free cleaning resets the floor without duplicate same-tick changes',async({page})=>{
   await seed(page);await expect(page.locator('[data-game-fullness]')).toHaveText('40 / 100');await expect(page.locator('[data-game-care-sound]')).not.toBeChecked();
