@@ -99,3 +99,9 @@ Photo-quality isolated Java sparrows with believable conical bills, eyes, layere
 ## Verification boundary
 
 Pure geometry and DOM tests do not establish photographic quality. The final compressed assets, mixed-age desktop/mobile compositions and actual browser screenshots must each be inspected. Browser tests check decoding, intrinsic ratios, physical contact anchors, bounded scene size, selection of all residents and existing save/game/studio flows.
+
+## Browser-driven corrections
+
+The first new-habitat browser run caught a strict 44 px target minimum failure in the crowded 320 px scene. Mature targets now use a 46 px CSS/geometry safety margin; the browser still requires at least 44 px. The actual mixed-age mobile screenshot also exposed two not-yet-painted juvenile sprites after repeated DOM replacement, despite fetched-image dimensions being present. Small scene sprites now request synchronous decoding; screenshot gates explicitly decode every current scene image and wait for paint rather than using fetch completion as a proxy.
+
+Active, same-start play/bath targets now reserve nearby pairs of existing physical anchors, with reciprocal encounters first. This changes only spatial depiction, not simulation state. Declined/talk actions, absent targets and nest-bound young are excluded. Crowded simultaneous bath pairs are not falsely promised a shared bath: nearby real surfaces are used without overlapping birds. The selected exchange cue is visible on narrow screens as well as desktop.

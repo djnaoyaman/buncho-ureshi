@@ -5,6 +5,13 @@ import { createWorld, createBird, advanceTicks, advanceTo, validateWorld, TICK_M
 
 const DB_NAME = 'buncho-ureshi-garden-v1';
 const fixedNow = Date.UTC(2026, 10, 2, 12, 0, 0);
+async function decodeScene(page) {
+  await page.locator('.game-room').evaluate(async room => {
+    await Promise.all([...room.querySelectorAll('img')].map(img => img.decode()));
+    await new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done)));
+  });
+}
+
 
 // These helpers inspect only this application's own IndexedDB record.
 // Game input, naming, menus, downloads, imports and handoffs remain real UI operations.
@@ -351,6 +358,7 @@ for (const residents of [1, 10]) test(`${residents === 1 ? 'initial one-bird' : 
   for (const width of [320, 375, 390, 768, 1440]) for (const orientation of ['portrait', 'landscape']) {
     const height = orientation === 'portrait' ? Math.max(800, Math.round(width * 1.25)) : Math.max(240, Math.round(width * .65));
     await page.setViewportSize({ width, height });
+    await decodeScene(page);
     await expect.poll(() => page.locator('.game-room img').evaluateAll(images=>images.every(img=>img.complete&&img.naturalWidth>0))).toBe(true);
     await expect.poll(() => page.evaluate(({ residents, viewportWidth, expectedPositions, assetGeometry }) => {
       const roomElement=document.querySelector('.game-room'),room=roomElement.getBoundingClientRect(),errors=[];
@@ -362,9 +370,9 @@ for (const residents of [1, 10]) test(`${residents === 1 ? 'initial one-bird' : 
       const birds=[...roomElement.querySelectorAll('.game-room-bird')],planes=[];
       for(const bird of birds){
         const r=bird.getBoundingClientRect(),sprite=bird.querySelector('.game-sprite'),plane=sprite?.getBoundingClientRect(),img=sprite?.querySelector('img');
-        if(bird.tagName!=='BUTTON'||r.width<44||r.height<44)errors.push(`${bird.dataset.birdId} adult target below 44px`);
+        if(bird.tagName!=='BUTTON'||r.width<44||r.height<44)errors.push(`${bird.dataset.birdId} adult target below 44px: ${r.width} × ${r.height}`);
         if(!inside(r)||!plane||!inside(plane))errors.push(`${bird.dataset.birdId} contact plane outside scene`);
-        if(plane&&(plane.width<(residents===1?64:44)||Math.abs(plane.width/plane.height-.85)>.01))errors.push(`${bird.dataset.birdId} contact plane too small or stretched`);
+        if(plane&&(plane.width<(residents===1?64:44)||Math.abs(plane.width/plane.height-.85)>.01))errors.push(`${bird.dataset.birdId} contact plane too small or stretched: ${plane.width} × ${plane.height}`);
         if(!img?.complete||!img.naturalWidth)errors.push(`${bird.dataset.birdId} image not decoded`);
         else {const drawn=img.getBoundingClientRect();if(Math.abs(drawn.width/drawn.height-img.naturalWidth/img.naturalHeight)>.01)errors.push(`${bird.dataset.birdId} image is stretched`);}
         if(plane){
@@ -424,6 +432,7 @@ test('all color stages decode and nest-bound young remain reachable through the 
   }
   for(const width of [375,1440]){
     await page.setViewportSize({width,height:1000});
+    await decodeScene(page);
     await expect.poll(()=>page.locator('.game-habitat img').evaluate(i=>i.complete&&i.naturalWidth>0)).toBe(true);
     const errors=await page.locator('.game-room').evaluate((roomElement,assets)=>{
       const room=roomElement.getBoundingClientRect(),errors=[],planes=[];
@@ -440,5 +449,21 @@ test('all color stages decode and nest-bound young remain reachable through the 
     },GAME_SPRITE_ASSETS);
     expect(errors).toEqual([]);
     if(testInfo.project.name==='chromium')await testInfo.attach(`game-photo-mixed-stages-${width}`,{body:await page.locator('.game-room').screenshot({animations:'disabled'}),contentType:'image/png'});
+  }
+});
+
+test('active social partners meet on nearby real anchors and mobile keeps one readable exchange',async({page},info)=>{
+  const world=createWorld(fixedNow,842911);advanceTicks(world,261);world.paused=true;validateWorld(world);
+  await seedWorld(page,world);await openGame(page);await page.locator('#game-scene-resident').selectOption('b7');
+  for(const width of [320,375,1440]){
+    await page.setViewportSize({width,height:1000});await decodeScene(page);
+    await expect(page.locator('.game-scene-caption .game-bubble')).toBeVisible();
+    await expect(page.locator('.game-scene-caption .game-bubble')).toHaveText('いっしょに♪');
+    const geometry=await page.locator('.game-room').evaluate(room=>{
+      const box=room.getBoundingClientRect(),point=id=>{const r=room.querySelector(`[data-bird-id="${id}"] .game-sprite`).getBoundingClientRect();return{x:r.left+r.width*.54,y:r.top+r.height*.975};},a=point('b7'),b=point('b11'),caption=room.querySelector('.game-scene-caption').getBoundingClientRect();
+      return{distance:Math.hypot(a.x-b.x,a.y-b.y)/box.width,captionInside:caption.left>=box.left&&caption.right<=box.right&&caption.bottom<=box.bottom,captionHeight:caption.height};
+    });
+    expect(geometry.distance).toBeLessThan(.35);expect(geometry.captionInside).toBe(true);expect(geometry.captionHeight).toBeLessThan(60);
+    if(info.project.name==='chromium'&&width!==320)await info.attach(`game-photo-social-${width}`,{body:await page.locator('.game-room').screenshot({animations:'disabled'}),contentType:'image/png'});
   }
 });
