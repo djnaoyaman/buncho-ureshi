@@ -1,4 +1,4 @@
-import { createWorld, parseSave, serializeWorld, validateWorld } from './engine.js';
+import { createWorld, parseSave, serializeWorld, validateWorld, readCompatibleWorld } from './engine.js';
 
 export const STORAGE_KEY = 'buncho-ureshi-world-v1';
 export const DB_NAME = 'buncho-ureshi-garden-v1';
@@ -48,10 +48,12 @@ export async function openGameStore(platform = globalThis) {
           let result, failure;
           request.onsuccess = () => {
             try {
-              const current = request.result ? validateWorld(request.result) : createWorld();
+              const exists = request.result !== undefined;
+              const current = exists ? readCompatibleWorld(request.result) : createWorld();
               const beforeRevision = current.revision, beforeTime = current.lastUpdated;
               result = validateWorld(fn(current));
-              if (!request.result || result.revision !== beforeRevision || result.lastUpdated !== beforeTime) store.put(result, 'current');
+              // Compare against the raw persisted schema, not the already-migrated object.
+              if (!exists || request.result.version !== result.version || result.revision !== beforeRevision || result.lastUpdated !== beforeTime) store.put(result, 'current');
             } catch (error) { failure = error; tx.abort(); }
           };
           request.onerror = () => { failure = request.error; };
@@ -82,7 +84,8 @@ function lockedLocalStore(storage, locks) {
         const raw = storage.getItem(STORAGE_KEY);
         const current = raw !== null ? parseSave(raw) : createWorld();
         const result = validateWorld(fn(current));
-        storage.setItem(STORAGE_KEY, serializeWorld(result));
+        const encoded = serializeWorld(result);
+        if (encoded !== raw) storage.setItem(STORAGE_KEY, encoded);
         return result;
       });
     },

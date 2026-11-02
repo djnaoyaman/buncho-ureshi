@@ -34,3 +34,15 @@
  .game-scene-picker{gap:.4rem}.game-scene-picker label{width:100%;text-align:center;font-size:.85rem}.game-scene-picker select{min-width:0;max-width:15rem}.game-art-disclosure{font-size:.7rem}
 }
 @media(prefers-reduced-motion:reduce){.game-room-bird{animation:none!important;transition:none!important}}
+
+/* Care additions: the translucent yellow patch is BETWEEN the background and
+   all birds/captions. Its reviewed polygon covers central ground, not bowls,
+   branches or nest. No sprite/text/global image filter is used. */
+.game-floor-soil{position:absolute;inset:0;z-index:1;pointer-events:none;background:#dfb33c;opacity:clamp(0,var(--care-soil-opacity,0),.22);clip-path:polygon(32% 84%,48% 80%,64% 83%,66% 92%,82% 100%,17% 100%,26% 94%)}
+.game-garden-care{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:.6rem 1rem;max-width:960px;margin:1rem auto;padding:.8rem;border:1px solid #ccd4bf;border-radius:.6rem;background:#f5f2e8}
+.game-garden-care label{display:flex;align-items:center;flex-wrap:wrap;gap:.5rem;font-size:.85rem}.game-garden-care meter{width:100px;max-width:100%;height:14px}.game-garden-care p{flex-basis:100%;margin:.1rem 0;text-align:center}.game-garden-care output,.game-fullness output{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.game-care{margin:1rem 0;padding:1rem 1.2rem;border:1px solid #c7d2b8;border-radius:.7rem;background:#f1f3e9}.game-care h4{margin:0 0 .6rem}.game-care-actions{display:flex;flex-wrap:wrap;gap:.6rem}.game-care-actions button:disabled{cursor:not-allowed;opacity:.6;background:#eeeae1;box-shadow:none}.game-fullness{margin:.4rem 0 .9rem;font-size:1rem}.game-fullness small{display:inline-block;margin-left:.3rem;font-size:.77rem}.game-care-feedback{padding:.6rem .8rem;border-left:3px solid #8ca57b;background:#fffdf6;font-size:.9rem}.game-care-disclosure{font-size:.78rem;line-height:1.8;color:#63765a}.game-care-sound{font-size:.85rem;align-items:flex-start}.game-care-sound input{flex:0 0 auto;margin-top:.15rem}.game-care-cheer{position:absolute;right:4%;top:5%;color:#fff6b1;text-shadow:0 1px 2px #244738;font:700 1.35rem/1 sans-serif;pointer-events:none;animation:game-care-note .8s ease-out both}
+@keyframes game-care-note{0%{opacity:0}20%,70%{opacity:1}100%{opacity:0}}
+@media(max-width:600px){.game-floor-soil{clip-path:polygon(36% 83%,57% 82%,63% 88%,65% 95%,83% 100%,16% 100%,20% 96%,35% 91%)}.game-garden-care{padding:.65rem;justify-content:flex-start}.game-garden-care p{text-align:left}.game-care{padding:.85rem}.game-care-actions{flex-direction:column}.game-care-actions button{width:100%}.game-fullness small{display:block;margin:.3rem 0 0}.game-care-cheer{font-size:1rem}}
+html[data-motion="off"] .game-care-cheer,.game-app[data-care-motion="off"] .game-care-cheer{animation:none}
+@media(prefers-reduced-motion:reduce){.game-care-cheer{animation:none!important}}

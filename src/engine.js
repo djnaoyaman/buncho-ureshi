@@ -1,11 +1,14 @@
 /** A deterministic, offline, non-punitive story simulation. No real husbandry advice. */
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 2;
 export const TICK_MS = 15000;
 export const MAX_SAVE_BYTES = 4000000;
 const MAX_DATE_MS = 8640000000000000;
-const EVENT_KINDS = ['welcome','visit','revisit','adopt','movein','pair','egg','hatch','grow','declined','play','bath','reconcile','depart'];
+const LEGACY_EVENT_KINDS = ['welcome','visit','revisit','adopt','movein','pair','egg','hatch','grow','declined','play','bath','reconcile','depart'];
+const EVENT_KINDS = [...LEGACY_EVENT_KINDS, 'user-feed', 'user-pet'];
 const MILESTONE_KINDS = ['welcome','adopt','movein','pair','egg','hatch','grow','depart'];
-const MEMORY_KINDS = [...EVENT_KINDS, ...['hello','rest','bath','friend','play','food','unknown'].map(kind => `user-${kind}`)];
+const LEGACY_MEMORY_KINDS = [...LEGACY_EVENT_KINDS, ...['hello','rest','bath','friend','play','food','unknown'].map(kind => `user-${kind}`)];
+const MEMORY_KINDS = [...LEGACY_MEMORY_KINDS, 'user-feed', 'user-pet'];
+export const CARE_RULES = Object.freeze({ feedGain: 20, petMoodGain: 4, feedCooldownTicks: 2, petCooldownTicks: 1, cleanCooldownTicks: 1, soilPerTick: 1 });
 export const LIMITS = Object.freeze({ residents: 10, visitors: 2, birds: 128, events: 240, memories: 16, offlineTicks: 576 });
 export const STAGES = Object.freeze({ egg: '卵', chick: 'ひな', juvenile: '幼鳥', adult: '成鳥' });
 export const ACTIONS = Object.freeze({ rest: 'ひとやすみ', eat: 'ごはん', bath: '水浴び', explore: 'たんけん', talk: 'おしゃべり', play: 'いっしょに遊ぶ', nest: '巣で過ごす', visit: 'あそびに来たよ' });
@@ -23,13 +26,13 @@ function id(w) { return `b${w.nextId++}`; }
 export function bumpRevision(w) { w.revision = w.revision >= Number.MAX_SAFE_INTEGER ? 0 : w.revision + 1; return w.revision; }
 export function createBird(w, options = {}) {
   if (w.birds.length >= LIMITS.birds) return null;
-  const b = { id: id(w), name: options.name || pick(w, names), sex: options.sex || (random(w) < .5 ? 'female' : 'male'), color: options.color || pick(w, COLORS), stage: options.stage || 'adult', bornTick: w.tick, stageTick: w.tick, arrivedTick: w.tick, parents: options.parents || [], generation: options.generation || 0, partner: null, pairTick: null, eggsLaid: 0, lastEggTick: -1000, home: options.home || 'visitor', personality: { curiosity: 25 + Math.floor(random(w) * 65), sociability: 35 + Math.floor(random(w) * 55), caution: 15 + Math.floor(random(w) * 65) }, preference: pick(w, PREFERENCES), mood: 70, needs: { energy: 80, food: 80, play: 60 }, relations: {}, memories: [], milestones: [], action: { kind: 'rest', target: null, startedTick: w.tick }, lastSocialTick: -1 };
+  const b = { id: id(w), name: options.name || pick(w, names), sex: options.sex || (random(w) < .5 ? 'female' : 'male'), color: options.color || pick(w, COLORS), stage: options.stage || 'adult', bornTick: w.tick, stageTick: w.tick, arrivedTick: w.tick, parents: options.parents || [], generation: options.generation || 0, partner: null, pairTick: null, eggsLaid: 0, lastEggTick: -1000, home: options.home || 'visitor', personality: { curiosity: 25 + Math.floor(random(w) * 65), sociability: 35 + Math.floor(random(w) * 55), caution: 15 + Math.floor(random(w) * 65) }, preference: pick(w, PREFERENCES), mood: 70, needs: { energy: 80, food: 80, play: 60 }, care: { lastFedTick: null, lastPetTick: null }, relations: {}, memories: [], milestones: [], action: { kind: 'rest', target: null, startedTick: w.tick }, lastSocialTick: -1 };
   w.birds.push(b); return b;
 }
 function remember(w, b, kind, otherId = null) { const memory = { kind, otherId, tick: w.tick }; b.memories.push(memory); if (b.memories.length > LIMITS.memories) b.memories.shift(); if (['welcome','adopt','movein','pair','egg','hatch','grow','depart'].includes(kind) && !b.milestones.some(m => m.kind === kind && m.otherId === otherId)) { b.milestones.push(memory); if (b.milestones.length > LIMITS.memories) b.milestones.shift(); } }
 function record(w, kind, ids, condition, result, data = {}) {
   const prior = w.events.at(-1);
-  if (prior && prior.kind === kind && prior.ids.join() === ids.join() && w.tick - prior.tick < 3) return;
+  if (!['user-feed', 'user-pet'].includes(kind) && prior && prior.kind === kind && prior.ids.join() === ids.join() && w.tick - prior.tick < 3) return;
   // An imported astronomic counter must not lose numeric precision. Bird IDs never change.
   if (w.nextEvent >= Number.MAX_SAFE_INTEGER) { w.events.forEach((event, i) => { event.id = `e${i + 1}`; }); w.nextEvent = w.events.length + 1; }
   const e = { id: `e${w.nextEvent++}`, kind, ids, condition, result, data, tick: w.tick, at: w.epoch + w.tick * TICK_MS };
@@ -37,7 +40,7 @@ function record(w, kind, ids, condition, result, data = {}) {
   for (const bid of ids) { const b = findBird(w, bid); if (b) remember(w, b, kind, ids.find(i => i !== bid) || null); }
 }
 export function createWorld(now = Date.now(), seed = 842911) {
-  const w = { version: SAVE_VERSION, revision: 0, worldId: `garden-${now}-${seed}`, epoch: now, lastUpdated: now, seed: seed >>> 0, tick: 0, nextId: 1, nextEvent: 1, paused: false, settings: { motion: true }, birds: [], events: [], offlineSummary: null };
+  const w = { version: SAVE_VERSION, revision: 0, worldId: `garden-${now}-${seed}`, epoch: now, lastUpdated: now, seed: seed >>> 0, tick: 0, nextId: 1, nextEvent: 1, paused: false, settings: { motion: true, careSound: false }, care: { cleanliness: 100, lastCleanTick: null }, birds: [], events: [], offlineSummary: null };
   const b = createBird(w, { name: 'おもち', sex: 'female', color: 'white', home: 'resident' });
   b.personality = { curiosity: 65, sociability: 75, caution: 30 };
   record(w, 'welcome', [b.id], '新しい庭', '物語が始まった'); return w;
@@ -159,7 +162,7 @@ function visits(w) {
 }
 export function stepWorld(w) {
   if (w.paused || !Number.isSafeInteger(w.tick + 1) || w.epoch + (w.tick + 1) * TICK_MS > MAX_DATE_MS) return w;
-  w.tick++; grow(w); visits(w);
+  w.tick++; w.care.cleanliness = Math.max(0, w.care.cleanliness - CARE_RULES.soilPerTick); grow(w); visits(w);
   const active = w.birds.filter(b => b.home !== 'departed' && b.stage !== 'egg');
   for (const b of active) {
     b.needs.energy = clamp(b.needs.energy - (b.stage === 'chick' ? 2 : 4), 12, 100);
@@ -206,6 +209,56 @@ export function adoptBird(w, birdId, name) {
   if (name) renameBird(w, b.id, name);
   b.home = 'resident'; record(w, 'adopt', [b.id], '利用者が迎え入れた', 'この庭で暮らし始めた'); bumpRevision(w); return b;
 }
+// Care is fictional interaction. Cleanliness never changes biological or social state.
+// Tick-based stamps survive memory eviction and are committed in the same store transaction.
+export function getFullness(w, birdId) {
+  const bird = findBird(w, birdId);
+  if (!bird) throw new Error('文鳥を選んでね。');
+  return bird.needs.food; // Higher always means more full, never hunger.
+}
+export function getCleanliness(w) { return w.care.cleanliness; }
+function careBird(w, birdId) {
+  const bird = findBird(w, birdId);
+  if (!bird || bird.home === 'departed') throw new Error('いま庭にいる文鳥を選んでね。');
+  if (!['juvenile', 'adult'].includes(bird.stage)) throw new Error('卵やひなは巣で育つ時間。そっと見守ろう。');
+  return bird;
+}
+function remaining(lastTick, tick, interval) { return lastTick === null ? 0 : Math.max(0, interval - (tick - lastTick)); }
+function careResult(kind, birdId, changed, before, after, cooldownTicks, message, reason) {
+  return { kind, birdId, changed, before, after, cooldownTicks, message, reason };
+}
+export function feedBird(w, birdId) {
+  const bird = careBird(w, birdId), before = bird.needs.food;
+  const wait = remaining(bird.care.lastFedTick, w.tick, CARE_RULES.feedCooldownTicks);
+  if (wait) return careResult('feed', birdId, false, before, before, wait, `${bird.name}はさっき食べたところ。少しゲームの時間を待とう。`, 'cooldown');
+  if (before >= 100) return careResult('feed', birdId, false, before, before, 0, `${bird.name}は、いまおなかいっぱい。見守っていよう。`, 'full');
+  bird.needs.food = clamp(before + CARE_RULES.feedGain);
+  bird.care.lastFedTick = w.tick;
+  setAction(w, bird, 'eat');
+  record(w, 'user-feed', [birdId], '利用者がゲームのごはんを選び、食べられる時期だった', 'おなかの満ちぐあいが増えた');
+  bumpRevision(w);
+  return careResult('feed', birdId, true, before, bird.needs.food, CARE_RULES.feedCooldownTicks, `${bird.name}がごはんを食べたよ。おなかの満ちぐあい ${Math.round(before)} → ${Math.round(bird.needs.food)}。`, 'success');
+}
+export function petBird(w, birdId) {
+  const bird = careBird(w, birdId), before = bird.mood;
+  const wait = remaining(bird.care.lastPetTick, w.tick, CARE_RULES.petCooldownTicks);
+  if (wait) return careResult('pet', birdId, false, before, before, wait, `${bird.name}とのふれあいは、ひとやすみ。少しゲームの時間を待とう。`, 'cooldown');
+  bird.mood = clamp(before + CARE_RULES.petMoodGain);
+  bird.care.lastPetTick = w.tick;
+  setAction(w, bird, 'talk');
+  record(w, 'user-pet', [birdId], '利用者がゲームのふれあいを選んだ', bird.mood > before ? '気分が少し明るくなった' : '明るいふれあいの記憶が増えた');
+  bumpRevision(w);
+  return careResult('pet', birdId, true, before, bird.mood, CARE_RULES.petCooldownTicks, `${bird.name}「ぴっ♪」うれしそうにこたえたよ。（ゲームの表現です）`, 'success');
+}
+export function cleanGarden(w) {
+  const before = w.care.cleanliness;
+  const wait = remaining(w.care.lastCleanTick, w.tick, CARE_RULES.cleanCooldownTicks);
+  if (before === 100 || wait) return careResult('clean', null, false, before, before, wait, '庭の床はきれいだよ。のんびり過ごそう。', before === 100 ? 'clean' : 'cooldown');
+  w.care.cleanliness = 100;
+  w.care.lastCleanTick = w.tick;
+  bumpRevision(w);
+  return careResult('clean', null, true, before, 100, CARE_RULES.cleanCooldownTicks, '庭の床をきれいにしたよ。文鳥の羽の色は変わらないよ。', 'success');
+}
 export function talkToBird(w, birdId, text) {
   const b = findBird(w, birdId); if (!b) throw new Error('文鳥を選んでね。');
   const input = String(text).trim().slice(0, 100);
@@ -218,7 +271,7 @@ export function talkToBird(w, birdId, text) {
   else if (/(水|みず|おふろ|浴)/.test(input)) { topic = 'bath'; b.needs.play = clamp(b.needs.play - 10); b.preference === '水浴び' && (b.mood = clamp(b.mood + 6)); setAction(w, b, 'bath'); answer = `${b.name}だよ。${b.preference === '水浴び' ? '水浴びの話、大好き！' : '花びらの水場を見にいこうかな。'}${near}も来るかな？`; }
   else if (/(ともだち|友|家族|なかよし|好き)/.test(input)) { topic = 'friend'; b.needs.play = clamp(b.needs.play - 8); answer = `${b.name}だよ。${friend ? `${near}とは「${relationshipLabel(w, b, findBird(w, friend[0]))}」。会うたび少しずつ知っていくんだ。` : 'まだ出会ったばかり。少しずつ仲良くなりたいな。'}`; }
   else if (/(あそ|遊|探検|たんけん)/.test(input)) { topic = 'play'; b.needs.play = clamp(b.needs.play - 12); b.mood = clamp(b.mood + 5); answer = `${b.name}だよ。${b.needs.energy < 35 ? 'いまは少し休みたいな。元気になったらね。' : b.personality.curiosity > 60 ? '新しい葉っぱの向こうを探検したい！' : 'いつもの枝で、ゆっくり遊ぼう。'}`; }
-  else if (/(ごはん|食|おいし|たべ)/.test(input)) { topic = 'food'; b.needs.food = clamp(b.needs.food + 8); setAction(w, b, 'eat'); answer = `${b.name}だよ。ごはんは自分でも食べられるよ。声をかけてくれてうれしいな。`; }
+  else if (/(ごはん|食|おいし|たべ)/.test(input)) { topic = 'food'; answer = `${b.name}だよ。ごはんは自分でも食べられるよ。あげたいときは、ごはんのボタンを選んでね。`; }
   else if (/(今日|きょう|げんき|元気|どう|おは|こん|よん|呼)/.test(input) || input.includes(b.name)) {
     answer = `${b.name}だよ。いまは${b.needs.energy < 40 ? 'のんびりしたい気分' : b.mood > 75 ? 'わくわくした気分' : 'おだやかな気分'}。${last?.otherId ? `さっきは${birdName(w, last.otherId)}のことを考えていたよ。` : `${b.preference}が気になるな。`}`;
   } else { topic = 'unknown'; answer = `${b.name}だよ。そのお話はまだわからないけれど、声は届いたよ。「遊ぼう」「水浴び」「友達」「おやすみ」のお話ならできるよ。`; }
@@ -226,14 +279,14 @@ export function talkToBird(w, birdId, text) {
 }
 export function eventText(w, e) {
   const n = e.ids.map(i => birdName(w, i));
-  const phrases = { welcome: `${n[0]}の文鳥ぐらしが始まった。`, visit: `${n[0]}が庭へ遊びに来た。`, revisit: `${n[0]}が久しぶりに遊びに来た。`, adopt: `${n[0]}を庭の仲間に迎えた。`, movein: `${n[0]}が、この庭で暮らすことにした。`, pair: `${n[0]}と${n[1]}がつがいになった。`, egg: `${n[1]}と${n[2]}の巣に、${n[0]}が生まれた。`, hatch: `${n[0]}が卵からかえった。`, grow: `${n[0]}が${STAGES[e.data.stage] || '次の段階'}になった。`, declined: `${n[0]}「遊ぼう」 ${n[1]}「今日は休むね。また今度！」`, play: `${n[0]}「いっしょに遊ぼう」 ${n[1]}「いいね！」`, bath: `${n[0]}「水場へいこう」 ${n[1]}「いっしょにいこう！」`, reconcile: `${n[0]}と${n[1]}は、今日は元気に遊べた。`, depart: `${n.join('と')}が別の庭へ巣立った。また会えるね。` };
+  const phrases = { 'user-feed': `${n[0]}がゲームのごはんを食べた。`, 'user-pet': `${n[0]}「ぴっ♪」ふれあいに明るくこたえた。（ゲームの表現）`, welcome: `${n[0]}の文鳥ぐらしが始まった。`, visit: `${n[0]}が庭へ遊びに来た。`, revisit: `${n[0]}が久しぶりに遊びに来た。`, adopt: `${n[0]}を庭の仲間に迎えた。`, movein: `${n[0]}が、この庭で暮らすことにした。`, pair: `${n[0]}と${n[1]}がつがいになった。`, egg: `${n[1]}と${n[2]}の巣に、${n[0]}が生まれた。`, hatch: `${n[0]}が卵からかえった。`, grow: `${n[0]}が${STAGES[e.data.stage] || '次の段階'}になった。`, declined: `${n[0]}「遊ぼう」 ${n[1]}「今日は休むね。また今度！」`, play: `${n[0]}「いっしょに遊ぼう」 ${n[1]}「いいね！」`, bath: `${n[0]}「水場へいこう」 ${n[1]}「いっしょにいこう！」`, reconcile: `${n[0]}と${n[1]}は、今日は元気に遊べた。`, depart: `${n.join('と')}が別の庭へ巣立った。また会えるね。` };
   return phrases[e.kind] || `${n.join('と')}：${e.result}`;
 }
-export function validateWorld(input) {
+function validateVersion(input, version) {
   const fail = msg => { throw new Error(`保存データを読み込めません：${msg}`); };
   if (!input || typeof input !== 'object' || Array.isArray(input)) fail('形式が違います。');
   const shape = (value, keys) => value !== null && typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length === keys.length && keys.every(key => Object.hasOwn(value, key));
-  const worldKeys = ['version','revision','worldId','epoch','lastUpdated','seed','tick','nextId','nextEvent','paused','settings','birds','events','offlineSummary'];
+  const worldKeys = ['version','revision','worldId','epoch','lastUpdated','seed','tick','nextId','nextEvent','paused','settings','birds','events','offlineSummary', ...(version === 2 ? ['care'] : [])];
   if (!shape(input, worldKeys)) fail('保存の項目が不正です。');
   // Check bounded input before JSON cloning, including direct IndexedDB values.
   // Descriptors avoid invoking getters/toJSON on malformed non-JSON objects.
@@ -258,15 +311,17 @@ export function validateWorld(input) {
     path.delete(value);
   }
   preflight(input);
-  if (input.version !== SAVE_VERSION) fail('対応していない版です。元の保存はそのままです。');
+  if (input.version !== version) fail('対応していない版です。元の保存はそのままです。');
   let w; try { w = clone(input); } catch { fail('JSONの構造が不正です。'); }
-  if (!shape(w.settings, ['motion'])) fail('保存の項目が不正です。');
+  if (!shape(w.settings, version === 2 ? ['motion', 'careSound'] : ['motion'])) fail('保存の項目が不正です。');
   const num = (n, lo = 0, hi = Number.MAX_SAFE_INTEGER) => typeof n === 'number' && Number.isFinite(n) && n >= lo && n <= hi;
   const integer = (n, lo = 0, hi = Number.MAX_SAFE_INTEGER) => Number.isInteger(n) && num(n, lo, hi);
   const str = (v, max = 100) => typeof v === 'string' && v.length > 0 && v.length <= max && !/[\u0000-\u001f\u007f]/.test(v);
+  if (version === 2 && (!shape(w.care, ['cleanliness', 'lastCleanTick']) || !integer(w.care.cleanliness, 0, 100) || !(w.care.lastCleanTick === null || integer(w.care.lastCleanTick, 0, w.tick)) || typeof w.settings.careSound !== 'boolean')) fail('お世話の情報が不正です。');
+  const validEvents = version === 2 ? EVENT_KINDS : LEGACY_EVENT_KINDS, validMemories = version === 2 ? MEMORY_KINDS : LEGACY_MEMORY_KINDS;
   if (!str(w.worldId) || !integer(w.revision) || !integer(w.seed, 0, 4294967295) || !integer(w.tick) || !integer(w.nextId, 1, LIMITS.birds + 1) || !integer(w.nextEvent, 2) || !integer(w.epoch, 0, MAX_DATE_MS) || !integer(w.lastUpdated, 0, MAX_DATE_MS) || !integer(w.epoch + w.tick * TICK_MS, 0, MAX_DATE_MS) || typeof w.paused !== 'boolean' || !w.settings || typeof w.settings.motion !== 'boolean') fail('基本情報が不正です。');
   if (!Array.isArray(w.birds) || !w.birds.length || w.birds.length > LIMITS.birds || !Array.isArray(w.events) || !w.events.length || w.events.length > LIMITS.events) fail('鳥や日記が多すぎます。');
-  if (w.birds.some(b => !shape(b, ['id','name','sex','color','stage','bornTick','stageTick','arrivedTick','parents','generation','partner','pairTick','eggsLaid','lastEggTick','home','personality','preference','mood','needs','relations','memories','milestones','action','lastSocialTick']))) fail('文鳥の項目が不正です。');
+  if (w.birds.some(b => !shape(b, ['id','name','sex','color','stage','bornTick','stageTick','arrivedTick','parents','generation','partner','pairTick','eggsLaid','lastEggTick','home','personality','preference','mood','needs','relations','memories','milestones','action','lastSocialTick', ...(version === 2 ? ['care'] : [])]))) fail('文鳥の項目が不正です。');
   const ids = new Set(w.birds.map(b => b.id));
   if (ids.size !== w.birds.length) fail('同じIDが重なっています。');
   if (w.nextId !== w.birds.length + 1 || w.birds.some((_, i) => !ids.has(`b${i + 1}`))) fail('文鳥のIDの順序が不正です。');
@@ -275,12 +330,13 @@ export function validateWorld(input) {
     if (!/^b[1-9]\d{0,8}$/.test(b.id) || Number(b.id.slice(1)) >= w.nextId || !str(b.name, 16) || !b.name.trim() || !['female', 'male'].includes(b.sex) || !COLORS.includes(b.color) || !Object.hasOwn(STAGES, b.stage) || !['resident','visitor','departed'].includes(b.home) || !PREFERENCES.includes(b.preference)) fail('文鳥の情報が不正です。');
     for (const k of ['bornTick', 'stageTick', 'arrivedTick']) if (!integer(b[k], 0, w.tick) || k !== 'bornTick' && b[k] < b.bornTick) fail('成長の時刻が不正です。');
     if (!integer(b.generation, 0, LIMITS.birds) || !integer(b.eggsLaid, 0, 2) || !integer(b.lastEggTick, -1000, w.tick) || !integer(b.lastSocialTick, -1, w.tick) || !(b.pairTick === null || integer(b.pairTick, 0, w.tick)) || !num(b.mood, 0, 100) || !b.personality || !b.needs) fail('状態が不正です。');
+    if (version === 2 && (!shape(b.care, ['lastFedTick', 'lastPetTick']) || ['lastFedTick', 'lastPetTick'].some(key => !(b.care[key] === null || integer(b.care[key], b.bornTick, w.tick))) || ['egg', 'chick'].includes(b.stage) && Object.values(b.care).some(value => value !== null))) fail('文鳥のお世話時刻が不正です。');
     if (!shape(b.personality, ['curiosity','sociability','caution']) || !shape(b.needs, ['energy','food','play']) || ['curiosity','sociability','caution'].some(k => !num(b.personality[k], 0, 100)) || ['energy','food','play'].some(k => !num(b.needs[k], 0, 100))) fail('気分や欲求が不正です。');
     if (!Array.isArray(b.parents) || ![0,2].includes(b.parents.length) || b.parents.some(p => !ref(p) || p === b.id) || new Set(b.parents).size !== b.parents.length || !ref(b.partner, true) || b.partner === b.id) fail('家族の参照が不正です。');
     if (!shape(b.action, ['kind','target','startedTick']) || !Object.hasOwn(ACTIONS, b.action.kind) || !ref(b.action.target, true) || !integer(b.action.startedTick, b.bornTick, w.tick)) fail('行動が不正です。');
     if (!b.relations || typeof b.relations !== 'object' || Array.isArray(b.relations) || Object.keys(b.relations).length > LIMITS.birds) fail('関係が不正です。');
     for (const [other, r] of Object.entries(b.relations)) if (!ref(other) || other === b.id || !shape(r, ['affection','trust','compatibility','meetings','lastTick']) || ['affection','trust','compatibility'].some(k => !num(r[k], 0, 100)) || !integer(r.meetings) || !integer(r.lastTick, 0, w.tick)) fail('関係の数値が不正です。');
-    for (const list of [b.memories, b.milestones]) if (!Array.isArray(list) || list.length > LIMITS.memories || list.some(m => !shape(m, ['kind','otherId','tick']) || !(list === b.milestones ? MILESTONE_KINDS : MEMORY_KINDS).includes(m.kind) || !ref(m.otherId, true) || !integer(m.tick, b.bornTick, w.tick))) fail('記憶が不正です。');
+    for (const list of [b.memories, b.milestones]) if (!Array.isArray(list) || list.length > LIMITS.memories || list.some(m => !shape(m, ['kind','otherId','tick']) || !(list === b.milestones ? MILESTONE_KINDS : validMemories).includes(m.kind) || !ref(m.otherId, true) || !integer(m.tick, b.bornTick, w.tick))) fail('記憶が不正です。');
   }
   // Detect parent cycles before recursive ancestry checks.
   const visiting = new Set(), done = new Set();
@@ -296,7 +352,7 @@ export function validateWorld(input) {
   const eventIds = new Set();
   let previousId = 0, previousTick = 0;
   for (const e of w.events) {
-    if (!shape(e, ['id','kind','ids','condition','result','data','tick','at']) || !/^e[1-9]\d*$/.test(e.id) || !Number.isSafeInteger(Number(e.id.slice(1))) || Number(e.id.slice(1)) <= previousId || Number(e.id.slice(1)) >= w.nextEvent || eventIds.has(e.id) || !EVENT_KINDS.includes(e.kind) || !Array.isArray(e.ids) || !e.ids.length || e.ids.length > 3 || new Set(e.ids).size !== e.ids.length || e.ids.some(x => !ref(x)) || !str(e.condition, 120) || !str(e.result, 120) || !integer(e.tick, previousTick, w.tick) || !integer(e.at, 0, MAX_DATE_MS) || e.at !== w.epoch + e.tick * TICK_MS || e.ids.some(id => findBird(w,id).bornTick > e.tick)) fail('日記が不正です。');
+    if (!shape(e, ['id','kind','ids','condition','result','data','tick','at']) || !/^e[1-9]\d*$/.test(e.id) || !Number.isSafeInteger(Number(e.id.slice(1))) || Number(e.id.slice(1)) <= previousId || Number(e.id.slice(1)) >= w.nextEvent || eventIds.has(e.id) || !validEvents.includes(e.kind) || !Array.isArray(e.ids) || !e.ids.length || e.ids.length > 3 || new Set(e.ids).size !== e.ids.length || e.ids.some(x => !ref(x)) || !str(e.condition, 120) || !str(e.result, 120) || !integer(e.tick, previousTick, w.tick) || !integer(e.at, 0, MAX_DATE_MS) || e.at !== w.epoch + e.tick * TICK_MS || e.ids.some(id => findBird(w,id).bornTick > e.tick)) fail('日記が不正です。');
     const expectedIds = ['pair','declined','play','bath','reconcile'].includes(e.kind) ? 2 : e.kind === 'egg' ? 3 : ['grow','hatch'].includes(e.kind) ? 1 + findBird(w,e.ids[0]).parents.length : e.kind === 'depart' ? e.ids.length : 1;
     if (e.ids.length !== expectedIds || e.kind === 'depart' && e.ids.length > 2) fail('日記の文鳥の組み合わせが不正です。');
     if (['egg','hatch','grow'].includes(e.kind) && e.ids.slice(1).join() !== findBird(w,e.ids[0]).parents.join()) fail('日記の家族が不正です。');
@@ -309,11 +365,29 @@ export function validateWorld(input) {
   if (w.offlineSummary !== null && (!shape(w.offlineSummary, ['ticks','skipped','newBirds','fromTick','toTick']) || !integer(w.offlineSummary.ticks, 0, LIMITS.offlineTicks) || !integer(w.offlineSummary.skipped) || !integer(w.offlineSummary.newBirds, 0, LIMITS.birds) || !integer(w.offlineSummary.fromTick,0,w.tick) || !integer(w.offlineSummary.toTick,w.offlineSummary.fromTick,w.tick) || w.offlineSummary.toTick - w.offlineSummary.fromTick !== w.offlineSummary.ticks)) fail('おかえり情報が不正です。');
   return w;
 }
+/** Strict current-version validator for transactions; use compatibility only at read boundaries. */
+export function validateWorld(input) { return validateVersion(input, SAVE_VERSION); }
+export function migrateV1ToV2(input) {
+  const world = validateVersion(input, 1); // Validate the complete legacy object before adding anything.
+  world.version = SAVE_VERSION;
+  world.settings.careSound = false;
+  world.care = { cleanliness: 100, lastCleanTick: null };
+  for (const bird of world.birds) bird.care = { lastFedTick: null, lastPetTick: null };
+  return validateWorld(world);
+}
+export function readCompatibleWorld(input) {
+  // Do not execute an accessor even to discover the version of an untrusted object.
+  const descriptor = input && typeof input === 'object' ? Object.getOwnPropertyDescriptor(input, 'version') : null;
+  if (!descriptor || !Object.hasOwn(descriptor, 'value')) throw new Error('保存データを読み込めません：版の形式が違います。');
+  if (descriptor.value === 1) return migrateV1ToV2(input);
+  if (descriptor.value === SAVE_VERSION) return validateWorld(input);
+  throw new Error('保存データを読み込めません：対応していない版です。元の保存はそのままです。');
+}
 export function serializeWorld(w) {
   // Compact output keeps even a dense, bounded 128-bird relationship graph importable.
-  const text = JSON.stringify(validateWorld(w));
+  const text = JSON.stringify(readCompatibleWorld(w));
   if (new TextEncoder().encode(text).byteLength > MAX_SAVE_BYTES) throw new Error('保存データが4MBを超えています。');
   return text;
 }
-/** Migration boundary: v1 is the first public schema; newer versions must add an explicit pure migration here. */
-export function parseSave(text) { if (typeof text !== 'string' || text.length > MAX_SAVE_BYTES || new TextEncoder().encode(text).byteLength > MAX_SAVE_BYTES) throw new Error('保存ファイルは4MB以下のJSONを選んでください。'); return validateWorld(JSON.parse(text)); }
+/** Versioned import boundary. Strict v1 migrates purely to v2; future versions fail closed. */
+export function parseSave(text) { if (typeof text !== 'string' || text.length > MAX_SAVE_BYTES || new TextEncoder().encode(text).byteLength > MAX_SAVE_BYTES) throw new Error('保存ファイルは4MB以下のJSONを選んでください。'); return readCompatibleWorld(JSON.parse(text)); }

@@ -198,7 +198,7 @@ test('save download imports back exactly; malformed files do not replace the cur
   const exportedText = await readDownload(await downloaded);
   const exported = validateWorld(JSON.parse(exportedText));
   expect(exported.tick).toBe(300);
-  expect(exported.version).toBe(1);
+  expect(exported.version).toBe(2);
   await tab(page, 'profile');
   await page.locator('#game-name').fill('あとから変えた名前');
   await page.locator('[data-game-form="rename"] button[type="submit"]').click();
@@ -279,6 +279,12 @@ test('a held native submit survives a peer update and the next background poll',
   await page.mouse.up();
   await expect.poll(async()=>(await readWorld(page)).birds.find(b=>b.id==='b1').name).toBe('押したままの保存');
   expect((await readWorld(page)).birds.find(b=>b.id==='b2').name).toBe('同時に更新した仲間');
+  await submit.focus();
+  await tab(other,'roster');await other.locator('.game-roster [data-game-select="b1"]').click();
+  await other.locator('#game-name').fill('保存のあとも更新');
+  await other.locator('[data-game-form="rename"] button[type="submit"]').click();
+  await expect(page.locator('.game-profile-heading h3')).toHaveText('保存のあとも更新');
+  await expect(page.locator('#game-name')).toHaveValue('保存のあとも更新');
   await other.close();
 });
 
