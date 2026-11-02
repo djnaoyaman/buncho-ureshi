@@ -1,0 +1,222 @@
+LOCAL NON-BROWSER VALIDATION
+Started: 2026-11-02 03:50:57 UTC
+Command: npm run check && npm test
+Evidence: Node.js, syntax/content validation and HappyDOM only.
+This is not real-browser execution or deployed-site verification.
+
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> buncho-ureshi@1.0.0 check
+> node scripts/check.mjs
+
+26 JavaScript files passed syntax checks.
+Content validated: 37 articles, 42 photos, 30 quizzes.
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> buncho-ureshi@1.0.0 pretest
+> npm run build
+
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> buncho-ureshi@1.0.0 build
+> node scripts/build.mjs
+
+Built 46 pages, 37 articles and 42 photographs at /buncho-ureshi/
+
+> buncho-ureshi@1.0.0 test
+> node --test tests/*.test.js
+
+✔ integrated DOM navigation, learning tools, quiz and truthful observation flows (218.578933ms)
+✔ corrupt local settings, favorites and observations are normalized without injecting DOM (103.431842ms)
+✔ site-wide search, truthful selected-part crops and literal photo credits (190.430353ms)
+✔ encyclopedia has every required section and three learning levels (1.353656ms)
+✔ 30 licensed local photographs have distinct file content (38.449391ms)
+✔ 20+ quizzes link explanations to real articles (0.537048ms)
+✔ real Omochi remains separate from fictional biographies (3.085674ms)
+✔ begins with the female white Omochi and an unrelated male visitor (2.972914ms)
+✔ autonomous relationships lead to eggs, hatchlings, adults, and unrelated later generations (5600.888228ms)
+✔ blocks siblings, parent-child, grandparents and first cousins (0.3187ms)
+✔ time progression is deterministic, bounded and does not punish absence (10.068712ms)
+✔ pause does not catch up paused time on resume; backwards clock does not create duplicate ticks (0.258389ms)
+✔ save roundtrip restores all names, relationships, families, memories, settings and dates (11.518193ms)
+✔ invalid saves are rejected without mutating the existing world (6.441163ms)
+✔ renaming retains IDs and resolves names dynamically in diary (0.348204ms)
+✔ conversation reflects needs, personality, friends and history and changes state (0.532912ms)
+✔ relationships are directional and social events have causes/results/memories (0.37187ms)
+✔ long-term world is bounded and every lineage and name remains addressable (335.771279ms)
+✔ imports reject discontinuous ID counters and invalid breeding parentage (18.12046ms)
+✔ invalid wall clocks and tick counts cannot corrupt a valid world (4.104902ms)
+✔ imports enforce UTF-8 byte bounds and reject unknown nested payloads without modifying the world (62.009552ms)
+✔ dense bounded relationship graphs export below the same import byte limit (790.315869ms)
+✔ imported diary counters, timestamps and family chronology cannot become duplicate future events (57.250196ms)
+✔ numeric counter edges stay safe across an engine update (4.023665ms)
+✔ direct stored objects are bounded before clone and do not invoke serialization hooks (6.876418ms)
+✔ IndexedDB transactions preserve forty simultaneous edits and advance one shared interval only once (73.345897ms)
+✔ a rejected transactional result leaves the original IndexedDB world intact (11.765845ms)
+✔ blocked IndexedDB does not silently open a different local world; late success is closed (0.380303ms)
+✔ a newer incompatible database or synchronous open error is not replaced by fallback storage (0.197017ms)
+✔ a previously saved locked-local world remains the same backend after IndexedDB becomes available (8.510558ms)
+✔ corrupt fallback JSON and missing locks preserve existing bytes rather than starting anew (1.535531ms)
+✔ memory-only mode is explicit, transactional and closes safely (1.697605ms)
+✔ mountGame delayed file reads: the latest requested import wins, not the last read to finish (80.302445ms)
+✔ mountGame cleanup cancels a pending file import without confirmation, save or DOM mutation (31.277297ms)
+✔ mountGame stale UI cannot rename a reused bird ID after another tab replaces worldId (24.655985ms)
+✔ mountGame keeps settings disclosures open after motion and pause mutations rerender (25.907142ms)
+✔ mountGame closes an opened IndexedDB connection when initial save validation fails (7.087275ms)
+✔ egg, chick, juvenile and adult have distinct original silhouettes (1.845316ms)
+✔ all generated pages have exact formal name and subpath canonical/OGP metadata (404.50294ms)
+✔ article body, deeper explanations, source links and dates are visible static HTML (183.914597ms)
+✔ main-route static introductions are specific, linked and truthful before JavaScript runs (45.942868ms)
+✔ 404 HTML has a real canonical, noindex and an ordinary home link (4.079148ms)
+✔ local HTTP server serves friendly 404 HTML at unknown subpaths with status 404 (106.775173ms)
+✔ studio has six distinct valid templates, eight backgrounds and eight palettes (5.659536ms)
+✔ all four game feather colors and four growth stages survive family handoff with visible names (4.690859ms)
+✔ storage validation rejects malformed state, duplicate IDs, unsupported references, and oversized input (1.572928ms)
+✔ export-enabled photo catalog preserves attribution and excludes share-alike and unsupported glyph attribution (0.768867ms)
+✔ mock DOM contract: editing, photo credits, export fallback, reset cancel/confirm, undo/redo and cleanup (25.092942ms)
+✔ mock DOM family seed retains previous composition in undo and exports every supplied family name (4.787354ms)
+✔ strict saves reject hidden oversized fields and preserve corrupt raw data until a confirmed reset (8.895898ms)
+✔ photo admission rejects nonlocal/blob/credential sources, duplicate IDs and unsupported licenses without fetching them (3.563794ms)
+✔ literal attribution is preserved, and excess credit text blocks export rather than overlapping the image (180.838358ms)
+✔ six longest real photo credits remain complete and within the square PNG footer (16.086663ms)
+✔ held-pointer changes invalidate an in-flight PNG; interrupted drags do not undo later controls (13.280036ms)
+✔ leaving during photo loading cancels pending listeners and export without waiting for timeout (5.060365ms)
+✔ a loaded image with failed decoding never reaches PNG encoding (2.196305ms)
+ℹ tests 56
+ℹ suites 0
+ℹ pass 56
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7043.397709
+
+Aggregate exit status: 0
+
+Browser test discovery only (not execution):
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+Listing tests:
+  [chromium] › game.spec.js:80:1 › game starts with Omochi, then names and welcomes the unrelated male visitor
+  [chromium] › game.spec.js:113:1 › verification control produces autonomous generations, bounded roster, and a family tree
+  [chromium] › game.spec.js:166:1 › rename persists and conversations use needs, personality and memory
+  [chromium] › game.spec.js:198:1 › rapid repeated conversations stay attached to the originally selected bird
+  [chromium] › game.spec.js:221:1 › save download imports back exactly; malformed files do not replace the current world
+  [chromium] › game.spec.js:272:1 › simultaneous tabs serialize catch-up, hatch once, and preserve both users edits
+  [chromium] › game.spec.js:304:1 › pause survives reload, ignores elapsed absence, and resumes without catch-up
+  [chromium] › game.spec.js:325:1 › family card hands real game names and family composition into the art studio
+  [chromium] › game.spec.js:347:1 › rapid navigation and Back clean up a pending async game mount without orphan timers
+  [chromium] › reference.spec.js:11:1 › current OMOCHI TOUCH live reference: layout, backgrounds, palettes, undo, PNG and reset
+  [chromium] › site.spec.js:22:56 › responsive 320 portrait
+  [chromium] › site.spec.js:22:56 › responsive 320 landscape
+  [chromium] › site.spec.js:22:56 › responsive 375 portrait
+  [chromium] › site.spec.js:22:56 › responsive 375 landscape
+  [chromium] › site.spec.js:22:56 › responsive 390 portrait
+  [chromium] › site.spec.js:22:56 › responsive 390 landscape
+  [chromium] › site.spec.js:22:56 › responsive 768 portrait
+  [chromium] › site.spec.js:22:56 › responsive 768 landscape
+  [chromium] › site.spec.js:22:56 › responsive 1024 portrait
+  [chromium] › site.spec.js:22:56 › responsive 1024 landscape
+  [chromium] › site.spec.js:22:56 › responsive 1440 portrait
+  [chromium] › site.spec.js:22:56 › responsive 1440 landscape
+  [chromium] › site.spec.js:57:1 › direct URLs, reloads and photograph decoding
+  [chromium] › site.spec.js:77:1 › search filter favorites ruby and history
+  [chromium] › site.spec.js:101:1 › quiz answers and explanation links
+  [chromium] › site.spec.js:113:1 › keyboard access, truthful observation and local persistence
+  [chromium] › site.spec.js:127:1 › speech controls safely call browser API
+  [chromium] › site.spec.js:149:1 › genuine licensed video can play, stop and mute from user controls
+  [chromium] › site.spec.js:163:1 › sitewide search includes studio, game and help, and survives reload and history
+  [chromium] › site.spec.js:204:1 › body explorer enlarges seven real photo regions with truthful ear context and source credits
+  [chromium] › studio.spec.js:116:1 › six templates, eight backgrounds and palettes, and local table of contents work
+  [chromium] › studio.spec.js:148:1 › photo crop/tint, text editing, movement, scale, rotation, layers, duplicate and delete persist
+  [chromium] › studio.spec.js:206:1 › reset cancel preserves the composition; confirm clears it; undo and redo are reversible
+  [chromium] › studio.spec.js:228:1 › pointer drag and cancellation plus keyboard alternatives do not lose the selected item
+  [chromium] › studio.spec.js:276:1 › touch selection and movement buttons work on a 390px touch viewport
+  [chromium] › studio.spec.js:311:3 › square PNG decodes at exact dimensions and retains actual photo, title, logo and credit pixels
+  [chromium] › studio.spec.js:311:3 › portrait PNG decodes at exact dimensions and retains actual photo, title, logo and credit pixels
+  [chromium] › studio.spec.js:379:1 › audio is opt-in; user playback, mute, volume, stop and SFX controls affect native audio
+  [chromium] › studio.spec.js:409:1 › interrupted export and rapid navigation clean up audio and retain the latest composition
+  [chromium] › studio.spec.js:440:1 › game memorial uses real game name labels and undo restores the preceding studio work
+  [firefox] › game.spec.js:80:1 › game starts with Omochi, then names and welcomes the unrelated male visitor
+  [firefox] › game.spec.js:113:1 › verification control produces autonomous generations, bounded roster, and a family tree
+  [firefox] › game.spec.js:166:1 › rename persists and conversations use needs, personality and memory
+  [firefox] › game.spec.js:198:1 › rapid repeated conversations stay attached to the originally selected bird
+  [firefox] › game.spec.js:221:1 › save download imports back exactly; malformed files do not replace the current world
+  [firefox] › game.spec.js:272:1 › simultaneous tabs serialize catch-up, hatch once, and preserve both users edits
+  [firefox] › game.spec.js:304:1 › pause survives reload, ignores elapsed absence, and resumes without catch-up
+  [firefox] › game.spec.js:325:1 › family card hands real game names and family composition into the art studio
+  [firefox] › game.spec.js:347:1 › rapid navigation and Back clean up a pending async game mount without orphan timers
+  [firefox] › reference.spec.js:11:1 › current OMOCHI TOUCH live reference: layout, backgrounds, palettes, undo, PNG and reset
+  [firefox] › site.spec.js:22:56 › responsive 320 portrait
+  [firefox] › site.spec.js:22:56 › responsive 320 landscape
+  [firefox] › site.spec.js:22:56 › responsive 375 portrait
+  [firefox] › site.spec.js:22:56 › responsive 375 landscape
+  [firefox] › site.spec.js:22:56 › responsive 390 portrait
+  [firefox] › site.spec.js:22:56 › responsive 390 landscape
+  [firefox] › site.spec.js:22:56 › responsive 768 portrait
+  [firefox] › site.spec.js:22:56 › responsive 768 landscape
+  [firefox] › site.spec.js:22:56 › responsive 1024 portrait
+  [firefox] › site.spec.js:22:56 › responsive 1024 landscape
+  [firefox] › site.spec.js:22:56 › responsive 1440 portrait
+  [firefox] › site.spec.js:22:56 › responsive 1440 landscape
+  [firefox] › site.spec.js:57:1 › direct URLs, reloads and photograph decoding
+  [firefox] › site.spec.js:77:1 › search filter favorites ruby and history
+  [firefox] › site.spec.js:101:1 › quiz answers and explanation links
+  [firefox] › site.spec.js:113:1 › keyboard access, truthful observation and local persistence
+  [firefox] › site.spec.js:127:1 › speech controls safely call browser API
+  [firefox] › site.spec.js:149:1 › genuine licensed video can play, stop and mute from user controls
+  [firefox] › site.spec.js:163:1 › sitewide search includes studio, game and help, and survives reload and history
+  [firefox] › site.spec.js:204:1 › body explorer enlarges seven real photo regions with truthful ear context and source credits
+  [firefox] › studio.spec.js:116:1 › six templates, eight backgrounds and palettes, and local table of contents work
+  [firefox] › studio.spec.js:148:1 › photo crop/tint, text editing, movement, scale, rotation, layers, duplicate and delete persist
+  [firefox] › studio.spec.js:206:1 › reset cancel preserves the composition; confirm clears it; undo and redo are reversible
+  [firefox] › studio.spec.js:228:1 › pointer drag and cancellation plus keyboard alternatives do not lose the selected item
+  [firefox] › studio.spec.js:276:1 › touch selection and movement buttons work on a 390px touch viewport
+  [firefox] › studio.spec.js:311:3 › square PNG decodes at exact dimensions and retains actual photo, title, logo and credit pixels
+  [firefox] › studio.spec.js:311:3 › portrait PNG decodes at exact dimensions and retains actual photo, title, logo and credit pixels
+  [firefox] › studio.spec.js:379:1 › audio is opt-in; user playback, mute, volume, stop and SFX controls affect native audio
+  [firefox] › studio.spec.js:409:1 › interrupted export and rapid navigation clean up audio and retain the latest composition
+  [firefox] › studio.spec.js:440:1 › game memorial uses real game name labels and undo restores the preceding studio work
+  [webkit] › game.spec.js:80:1 › game starts with Omochi, then names and welcomes the unrelated male visitor
+  [webkit] › game.spec.js:113:1 › verification control produces autonomous generations, bounded roster, and a family tree
+  [webkit] › game.spec.js:166:1 › rename persists and conversations use needs, personality and memory
+  [webkit] › game.spec.js:198:1 › rapid repeated conversations stay attached to the originally selected bird
+  [webkit] › game.spec.js:221:1 › save download imports back exactly; malformed files do not replace the current world
+  [webkit] › game.spec.js:272:1 › simultaneous tabs serialize catch-up, hatch once, and preserve both users edits
+  [webkit] › game.spec.js:304:1 › pause survives reload, ignores elapsed absence, and resumes without catch-up
+  [webkit] › game.spec.js:325:1 › family card hands real game names and family composition into the art studio
+  [webkit] › game.spec.js:347:1 › rapid navigation and Back clean up a pending async game mount without orphan timers
+  [webkit] › reference.spec.js:11:1 › current OMOCHI TOUCH live reference: layout, backgrounds, palettes, undo, PNG and reset
+  [webkit] › site.spec.js:22:56 › responsive 320 portrait
+  [webkit] › site.spec.js:22:56 › responsive 320 landscape
+  [webkit] › site.spec.js:22:56 › responsive 375 portrait
+  [webkit] › site.spec.js:22:56 › responsive 375 landscape
+  [webkit] › site.spec.js:22:56 › responsive 390 portrait
+  [webkit] › site.spec.js:22:56 › responsive 390 landscape
+  [webkit] › site.spec.js:22:56 › responsive 768 portrait
+  [webkit] › site.spec.js:22:56 › responsive 768 landscape
+  [webkit] › site.spec.js:22:56 › responsive 1024 portrait
+  [webkit] › site.spec.js:22:56 › responsive 1024 landscape
+  [webkit] › site.spec.js:22:56 › responsive 1440 portrait
+  [webkit] › site.spec.js:22:56 › responsive 1440 landscape
+  [webkit] › site.spec.js:57:1 › direct URLs, reloads and photograph decoding
+  [webkit] › site.spec.js:77:1 › search filter favorites ruby and history
+  [webkit] › site.spec.js:101:1 › quiz answers and explanation links
+  [webkit] › site.spec.js:113:1 › keyboard access, truthful observation and local persistence
+  [webkit] › site.spec.js:127:1 › speech controls safely call browser API
+  [webkit] › site.spec.js:149:1 › genuine licensed video can play, stop and mute from user controls
+  [webkit] › site.spec.js:163:1 › sitewide search includes studio, game and help, and survives reload and history
+  [webkit] › site.spec.js:204:1 › body explorer enlarges seven real photo regions with truthful ear context and source credits
+  [webkit] › studio.spec.js:116:1 › six templates, eight backgrounds and palettes, and local table of contents work
+  [webkit] › studio.spec.js:148:1 › photo crop/tint, text editing, movement, scale, rotation, layers, duplicate and delete persist
+  [webkit] › studio.spec.js:206:1 › reset cancel preserves the composition; confirm clears it; undo and redo are reversible
+  [webkit] › studio.spec.js:228:1 › pointer drag and cancellation plus keyboard alternatives do not lose the selected item
+  [webkit] › studio.spec.js:276:1 › touch selection and movement buttons work on a 390px touch viewport
+  [webkit] › studio.spec.js:311:3 › square PNG decodes at exact dimensions and retains actual photo, title, logo and credit pixels
+  [webkit] › studio.spec.js:311:3 › portrait PNG decodes at exact dimensions and retains actual photo, title, logo and credit pixels
+  [webkit] › studio.spec.js:379:1 › audio is opt-in; user playback, mute, volume, stop and SFX controls affect native audio
+  [webkit] › studio.spec.js:409:1 › interrupted export and rapid navigation clean up audio and retain the latest composition
+  [webkit] › studio.spec.js:440:1 › game memorial uses real game name labels and undo restores the preceding studio work
+Total: 120 tests in 4 files
+
+Browser discovery exit status: 0
+Finished: 2026-11-02 03:51:08 UTC
