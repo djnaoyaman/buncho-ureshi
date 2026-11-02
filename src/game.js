@@ -144,7 +144,11 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
   function openBirdSheet(birdId){fieldViewRequest++;cancelCareEffects();selected=birdId;sheetOpen=true;sheetReturn={birdId,worldId:world.worldId};lastReply='';message='';render();}
   function closeBirdSheet(restore=true){
     const back=sheetReturn;sheetOpen=false;cancelCareEffects();root.querySelector('.game-bird-sheet')?.close();
-    render();if(restore&&back?.worldId===world.worldId){const target=root.querySelector(`[data-game-scene-select][data-bird-id="${back.birdId}"]`)||root.querySelector('#game-open-bird');target?.focus({preventScroll:true});}
+    render();if(restore&&back?.worldId===world.worldId){
+      const generation=careGeneration,view=fieldViewRequest;
+      const focusBack=(deferred=false)=>{if(!alive||sheetOpen||generation!==careGeneration||view!==fieldViewRequest||back.worldId!==world.worldId)return;const active=document.activeElement;if(deferred&&active?.isConnected&&active!==document.body&&active!==document.documentElement&&!active.closest('.game-bird-sheet'))return;const target=root.querySelector(`[data-game-scene-select][data-bird-id="${back.birdId}"]`)||root.querySelector('#game-open-bird');target?.focus({preventScroll:true});};
+      focusBack();root.ownerDocument.defaultView.requestAnimationFrame(()=>focusBack(true));
+    }
   }
   function sheetCancel(ev){if(ev.target.matches('.game-bird-sheet')){ev.preventDefault();closeBirdSheet();}}
   function focusPanel(){const surface=root.querySelector('.game-panel');const heading=surface?.querySelector('h3')||surface;if(heading){heading.tabIndex=-1;heading.focus({preventScroll:true});surface.scrollIntoView?.({block:'start',behavior:'instant'});}}
@@ -324,7 +328,20 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     audio.setEnabled(careSoundEnabled());render();
   }
   function closeGameMenu(){const menu=root.querySelector('.game-secondary-menu');if(!menu)return;menu.open=false;menu.querySelector('summary').focus({preventScroll:true});}
-  function menuKeydown(ev){if(ev.key==='Escape'&&ev.target.closest('.game-secondary-menu[open]')){ev.preventDefault();closeGameMenu();}}
+  function menuKeydown(ev){
+    const sheet=root.querySelector('.game-bird-sheet[open]');
+    if(sheet&&ev.key==='Tab'){
+      const controls=[...sheet.querySelectorAll('button,input,select,textarea,a[href],summary,[tabindex]')].filter(el=>{
+        if(el.disabled||el.tabIndex<0||!el.getClientRects().length||el.closest('[hidden],[inert]'))return false;
+        for(let node=el.parentElement;node&&node!==sheet;node=node.parentElement){if(node.tagName==='DETAILS'&&!node.open){const summary=node.querySelector(':scope > summary');if(el!==summary&&!summary?.contains(el))return false;}}
+        return true;
+      });
+      const index=controls.indexOf(document.activeElement);
+      if(controls.length){ev.preventDefault();const next=index<0?(ev.shiftKey?controls.length-1:0):(index+(ev.shiftKey?-1:1)+controls.length)%controls.length;controls[next].focus({preventScroll:true});}
+      return;
+    }
+    if(ev.key==='Escape'&&ev.target.closest('.game-secondary-menu[open]')){ev.preventDefault();closeGameMenu();}
+  }
   async function click(ev) {
     if(ev.target.matches('.game-bird-sheet')){const r=ev.target.getBoundingClientRect();if(ev.clientX<r.left||ev.clientX>r.right||ev.clientY<r.top||ev.clientY>r.bottom)closeBirdSheet();return;}
     const button=ev.target.closest('button');if(!button||!root.contains(button))return;

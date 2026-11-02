@@ -409,7 +409,7 @@ for (const residents of [1, 10]) test(`${residents === 1 ? 'initial one-bird' : 
   await openGame(page);
   await expect(page.locator('.game-room-bird')).toHaveCount(residents);
   await expect(page.locator('.game-scene-caption')).toHaveCount(1);
-  await expect(page.locator('#game-scene-resident option')).toHaveText(seeded.birds.map(bird=>`${bird.name} · 成鳥`));
+  await expect(page.locator('#game-scene-resident option')).toHaveText(seeded.birds.map(bird=>`${bird.name} · ${{white:'白文鳥',sakura:'桜文鳥',silver:'シルバー',cinnamon:'シナモン'}[bird.color]}・成鳥`));
   await expect(page.locator('.game-room-bird .game-bubble, .game-room-bird .game-bird-label, .game-room-bird svg')).toHaveCount(0);
   await expect(page.locator('.game-furnishing')).toHaveCount(9);
   for (const width of [320, 375, 390, 768, 1440]) for (const orientation of ['portrait', 'landscape']) {

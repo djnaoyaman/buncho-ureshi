@@ -316,3 +316,22 @@ test('one primary nav and a secondary disclosure preserve keyboard close focus',
  menu.open=true;menu.querySelector('[data-game-close-menu]').click();assert.equal(menu.open,false);assert.equal(f.window.document.activeElement.id,'game-nav-summary');
  f.root.querySelector('[data-game-panel="decorate"]').click();assert.equal(f.root.querySelectorAll('.game-field-nav').length,1);assert.equal(f.root.querySelectorAll('[data-field-travel="home"]').length,1);assert(f.root.querySelector('.game-decoration'));
 });
+
+test('bird sheet Tab loop excludes closed disclosure descendants and wraps visible controls',async t=>{
+ const f=await fixture(t);await f.mount();f.openBird();const sheet=f.root.querySelector('.game-bird-sheet');
+ // DOM emulator has no layout. Give every control a rectangle deliberately so
+ // closed-details exclusion is tested independently of browser layout behavior.
+ for(const node of sheet.querySelectorAll('button,input,summary'))node.getClientRects=()=>[{}];
+ const close=sheet.querySelector('#game-sheet-close');close.focus();
+ const key=shiftKey=>f.window.document.activeElement.dispatchEvent(new f.window.KeyboardEvent('keydown',{key:'Tab',shiftKey,bubbles:true,cancelable:true}));
+ key(false);assert.equal(f.window.document.activeElement.id,'game-care-feed');
+ close.focus();key(true);assert.equal(f.window.document.activeElement.dataset.gamePanel,'profile');
+ key(false);assert.equal(f.window.document.activeElement.id,'game-sheet-close');
+ for(let i=0;i<20;i++){key(false);assert.equal(sheet.contains(f.window.document.activeElement),true);assert.notEqual(f.window.document.activeElement.id,'game-words');assert.notEqual(f.window.document.activeElement.dataset.gameTalk,'あそぼう');}
+});
+
+test('deferred sheet close restoration never steals a newer intentional focus',async t=>{
+ const f=await fixture(t);await f.mount();f.openBird();f.closeBird();
+ const newer=f.root.querySelector('[data-game-action="pause"]');newer.focus();await sleep(25);
+ assert.equal(f.window.document.activeElement===newer,true);
+});
