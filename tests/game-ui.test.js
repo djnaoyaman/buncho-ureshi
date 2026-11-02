@@ -190,8 +190,8 @@ test('photo habitat keeps one selected caption, accessible resident picker, and 
   await f.mount();
   assert.equal(f.root.querySelectorAll('.game-room').length,1);
   assert.equal(f.root.querySelectorAll('.game-habitat picture').length,0);
-  assert.match(f.root.querySelector('.game-habitat source').getAttribute('srcset'),/habitat-tall\.webp$/);
-  assert.match(f.root.querySelector('.game-habitat img').getAttribute('src'),/habitat-wide\.webp$/);
+  assert.match(f.root.querySelector('.game-habitat source').getAttribute('srcset'),/field-home-tall\.webp$/);
+  assert.match(f.root.querySelector('.game-habitat img').getAttribute('src'),/field-home-wide\.webp$/);
   assert.equal(f.root.querySelectorAll('.game-scene-caption').length,1);
   assert.equal(f.root.querySelectorAll('.game-room-bird button').length,0);
   assert.equal(f.root.querySelectorAll('.game-room-bird svg').length,0);
@@ -221,9 +221,9 @@ test('returning from a visitor profile aligns the scene, picker and resident pro
   f.root.querySelector('.game-visitor-box [data-game-select="b2"]').click();
   assert.match(f.root.querySelector('.game-profile-heading').textContent,/ななしの訪問者/);
   f.root.querySelector('[data-game-panel="garden"]').click();
-  assert.equal(f.root.querySelector('#game-scene-resident').value,'b1');
-  assert.equal(f.root.querySelector('.game-scene-caption strong').textContent,'最初の庭');
-  assert.equal(f.root.querySelector('.game-profile h3').textContent,'最初の庭');
+  assert.equal(f.root.querySelector('#game-scene-resident').value,'b2');
+  assert.equal(f.root.querySelector('.game-scene-caption strong').textContent,'ななしの訪問者');
+  assert.equal(f.root.querySelector('.game-profile h3').textContent,'ななしの訪問者');
 });
 
 test('other-tab refresh preserves dirty name and talk drafts after focus moves to a button',async t=>{
@@ -274,4 +274,34 @@ test('pointer cancellation flushes a pending refresh without saving the local dr
   f.window.document.dispatchEvent(new f.window.PointerEvent('pointercancel',{bubbles:true,pointerId:8}));
   await until(()=>f.root.querySelector('#game-name').value==='キャンセル後の更新','cancel releases deferred refresh');
   assert.equal((await rawWorld(f.indexedDB)).birds[0].name,'キャンセル後の更新');
+});
+
+test('field travel and return preserve story and real visitors in the same scene',async t=>{
+ const f=await fixture(t),store=await f.otherTab();await store.transact(w=>{w.paused=false;advanceTicks(w,1);w.paused=true;bumpRevision(w);return w;});await f.mount();
+ f.root.querySelector('[data-field-travel="park"]').click();await until(()=>f.root.querySelector('.game-room')?.dataset.field==='park','park arrived');
+ assert.equal(f.root.querySelectorAll('.game-room-bird').length,2);
+ f.root.querySelector('[data-game-panel="friends"]').click();f.root.querySelector('[data-field-travel="friend"]').click();await until(()=>f.root.querySelector('.game-room')?.dataset.field==='friend','friend arrived');
+ assert.match(f.root.querySelector('.game-field-bar h3').textContent,/ななしの訪問者/);
+ f.root.querySelector('[data-field-travel="home"]').click();await until(()=>f.root.querySelector('.game-room')?.dataset.field==='home','home returned');
+ const w=await rawWorld(f.indexedDB);assert.equal(w.birds[0].name,'最初の庭');assert(w.decor.points>=20);assert.equal(w.version,3);
+});
+test('draw is one transaction on double click; preview cancellation and equip preserve inventory',async t=>{
+ const f=await fixture(t);await f.mount();f.root.querySelector('[data-game-panel="decorate"]').click();
+ f.root.querySelector('[data-decor-slot="swing"]').click();const draw=f.root.querySelector('[data-decor-draw]');draw.click();draw.click();
+ await until(()=>!!f.root.querySelector('.game-draw-result'),'draw result');let w=await rawWorld(f.indexedDB);assert.equal(w.decor.draws,1);assert(w.decor.points<=8);
+ const item=w.decor.inventory.find(i=>i.slot==='swing'&&i.id!==w.decor.equipped.swing);
+ if(item){assert.equal(f.root.querySelector('.game-decor-preview').dataset.previewItem,item.id);f.root.querySelector('[data-decor-cancel]').click();assert.equal(f.root.querySelector('.game-decor-preview').dataset.previewItem,w.decor.equipped.swing);f.root.querySelector(`[data-decor-preview="${item.id}"]`).click();f.root.querySelector('[data-decor-equip]').click();await until(async()=> (await rawWorld(f.indexedDB)).decor.equipped.swing===item.id,'equipped');}
+ f.root.querySelector('[data-field-travel="home"]').click();await until(()=>!!f.root.querySelector('.game-room'),'return after decorating');w=await rawWorld(f.indexedDB);assert.equal(f.root.querySelector('[data-equipped-slot="swing"]').dataset.equippedItem,w.decor.equipped.swing);
+});
+test('navigation away during a field transaction cannot reopen its old panel',async t=>{
+ const f=await fixture(t);await f.mount();f.root.querySelector('[data-field-travel="park"]').click();f.root.querySelector('[data-game-panel="family"]').click();
+ await until(async()=> (await rawWorld(f.indexedDB)).field.place==='park','travel committed');await sleep(20);assert(f.root.querySelector('.game-family-tree'));assert.equal(f.root.querySelector('.game-room'),null);
+});
+
+test('pending draw cannot replace a newer category or preview choice',async t=>{
+ const f=await fixture(t);await f.mount();f.root.querySelector('[data-game-panel="decorate"]').click();f.root.querySelector('[data-decor-slot="toy"]').click();
+ f.root.querySelector('[data-decor-draw="toy"]').click();f.root.querySelector('[data-decor-slot="perch"]').click();
+ await until(async()=> (await rawWorld(f.indexedDB)).decor.draws===1,'toy draw committed');await sleep(20);
+ assert.equal(f.root.querySelector('[data-decor-slot][aria-pressed="true"]').dataset.decorSlot,'perch');assert.match(f.root.querySelector('.game-decor-preview').dataset.previewItem,/^perch-/);assert.equal(f.root.querySelector('.game-draw-result'),null);
+ const w=await rawWorld(f.indexedDB);assert.equal(w.decor.draws,1);assert.equal(w.decor.equipped.toy,'toy-mint-cozy');
 });

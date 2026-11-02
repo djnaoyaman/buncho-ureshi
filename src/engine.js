@@ -1,5 +1,5 @@
 /** A deterministic, offline, non-punitive story simulation. No real husbandry advice. */
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 export const TICK_MS = 15000;
 export const MAX_SAVE_BYTES = 4000000;
 const MAX_DATE_MS = 8640000000000000;
@@ -19,6 +19,68 @@ const names = ['こはく', 'すず', 'わかば', 'こむぎ', 'つむぎ', '�
 const clone = value => JSON.parse(JSON.stringify(value));
 function random(w) { w.seed = (Math.imul(w.seed, 1664525) + 1013904223) >>> 0; return w.seed / 4294967296; }
 function pick(w, list) { return list[Math.floor(random(w) * list.length)]; }
+
+const SLOT_LABELS = Object.freeze({perch:'止まり木',feed:'エサ入れ',water:'水入れ',bath:'水浴び容器',greens:'青菜入れ',shellgrit:'ボレー粉入れ',swing:'ブランコ',toy:'おもちゃ',paper:'底に敷く紙'});
+const COLOR_HEX = Object.freeze({mint:'#8fbea6',rose:'#e8a8b5',sky:'#94c6df',lemon:'#edd88a',lavender:'#beb0dc',peach:'#e9ba97',cream:'#e9dfc5',aqua:'#8ecdc8'});
+export const DECOR_SLOTS = Object.freeze(Object.entries(SLOT_LABELS).map(([id,label])=>Object.freeze({id,label})));
+export const DECOR_COLORS = Object.freeze(Object.entries(COLOR_HEX).map(([id,hex],i)=>Object.freeze({id,hex,label:['ミント','さくら','空色','レモン','ラベンダー','ピーチ','クリーム','アクア'][i]})));
+export const DECOR_TIERS = Object.freeze([{id:'cozy',label:'ほっこり',level:1},{id:'lovely',label:'とっておき',level:3},{id:'special',label:'きらめき',level:6}]);
+export const DECOR_DRAW_COST = 20;
+const POINT_CAP = 1000000000;
+function initialField() { return {place:'home',hostId:null,enteredTick:0}; }
+function initialDecor() {
+  const inventory=Object.keys(SLOT_LABELS).map(slot=>({id:`${slot}-mint-cozy`,slot,color:'mint',tier:'cozy'}));
+  return {points:20,lifetimePoints:20,inventory,equipped:Object.fromEntries(inventory.map(item=>[item.slot,item.id])),draws:0,lastDrawTick:null};
+}
+export function decorLevel(w) { return Math.min(20,1+Math.floor(w.decor.lifetimePoints/80)); }
+export function fieldBirds(w) {
+  const resident=w.birds.filter(b=>b.home==='resident'&&['juvenile','adult'].includes(b.stage));
+  if(w.field.place==='home')return w.birds.filter(b=>b.home!=='departed');
+  if(w.field.place==='park')return [...w.birds.filter(b=>b.home!=='departed'&&['juvenile','adult'].includes(b.stage)),...w.birds.filter(b=>b.home==='departed'&&b.stage==='adult')].slice(0,12);
+  const host=findBird(w,w.field.hostId);
+  return [...resident,...w.birds.filter(b=>!resident.includes(b)&&(b.id===host?.id||b.id===host?.partner))].slice(0,12);
+}
+export function travelTo(w,place,hostId=null) {
+  if(!['home','park','friend'].includes(place))throw new Error('行き先を選んでね。');
+  const host=place==='friend'?findBird(w,hostId):null;
+  if(place==='friend'&&(!host||host.home==='resident'||host.stage!=='adult'))throw new Error('お友達の成鳥のお部屋を選んでね。');
+  if(w.field.place===place&&w.field.hostId===(host?.id||null))return {changed:false,message:'いまここにいるよ。'};
+  w.field={place,hostId:host?.id||null,enteredTick:w.tick};bumpRevision(w);
+  return {changed:true,message:place==='home'?'自分たちの籠に帰ったよ。':place==='park'?'文鳥公園に着いたよ。':`${host.name}のお部屋に遊びに来たよ。`};
+}
+export function inviteFriend(w,birdId) {
+  const b=findBird(w,birdId);
+  if(!b||b.home==='resident'||b.stage!=='adult')throw new Error('お友達の成鳥を選んでね。');
+  if(b.home==='visitor')return {changed:false,message:'もう遊びに来ているよ。'};
+  if(w.birds.filter(x=>x.home==='visitor').length>=LIMITS.visitors)throw new Error('お客さんは2羽まで。今いる友達と過ごそう。');
+  b.home='visitor';b.arrivedTick=w.tick;setAction(w,b,'visit');record(w,'revisit',[b.id],'お友達を自分たちの籠へ招いた','いっしょに過ごす時間が始まった');bumpRevision(w);
+  return {changed:true,message:`${b.name}を招いたよ。籠に帰って一緒に過ごそう。`};
+}
+export function decorOdds(w) { const n=DECOR_TIERS.filter(t=>decorLevel(w)>=t.level).length;return DECOR_TIERS.slice(0,n).map((t,i)=>({tierId:t.id,probability:(n===1?[1]:n===2?[.65,.35]:[.65,.25,.1])[i]})); }
+export function drawDecoration(w,slot='perch') {
+  if(!Object.hasOwn(SLOT_LABELS,slot))throw new Error('9種類の道具から選んでね。');
+  if(w.decor.lastDrawTick===w.tick)return {changed:false,message:'さっきのお飾りを楽しもう。次のゲーム時間にまた引けるよ。'};
+  if(w.decor.points<DECOR_DRAW_COST)throw new Error('20ポイントで1回。友達との交流や家族の成長を見守ろう。');
+  const available=DECOR_TIERS.filter(t=>decorLevel(w)>=t.level);
+  const roll=random(w),tier=available.length===3&&roll>=.9?available[2]:available.length>=2&&roll>=.65?available[1]:available[0];
+  const color=pick(w,Object.keys(COLOR_HEX)),id=`${slot}-${color}-${tier.id}`;
+  const item={id,slot,color,tier:tier.id},duplicate=w.decor.inventory.some(x=>x.id===id);
+  w.decor.points-=DECOR_DRAW_COST;
+  if(duplicate)w.decor.points=Math.min(POINT_CAP,w.decor.points+8);else w.decor.inventory.push(item);
+  w.decor.draws=Math.min(POINT_CAP,w.decor.draws+1);w.decor.lastDrawTick=w.tick;bumpRevision(w);
+  return {changed:true,item,duplicate,message:duplicate?'同じお飾りだったので8ポイントを返したよ。':`${SLOT_LABELS[slot]}のお飾りが仲間入り！`};
+}
+export function equipDecoration(w,itemId) {
+  const item=w.decor.inventory.find(x=>x.id===itemId);if(!item)throw new Error('持っているお飾りを選んでね。');
+  if(w.decor.equipped[item.slot]===itemId)return {changed:false,message:'もう飾ってあるよ。'};
+  w.decor.equipped[item.slot]=itemId;bumpRevision(w);return {changed:true,message:`${SLOT_LABELS[item.slot]}を飾ったよ。`};
+}
+function awardEvent(w,kind) {
+  const amount={play:2,bath:2,reconcile:3,movein:10,pair:30,egg:25,hatch:35,grow:20}[kind]||0;
+  if(!amount)return;
+  w.decor.points=Math.min(POINT_CAP,w.decor.points+amount);w.decor.lifetimePoints=Math.min(POINT_CAP,w.decor.lifetimePoints+amount);
+}
+
 export function findBird(w, id) { return w.birds.find(b => b.id === id); }
 export function birdName(w, id) { return findBird(w, id)?.name || '文鳥'; }
 function id(w) { return `b${w.nextId++}`; }
@@ -36,11 +98,12 @@ function record(w, kind, ids, condition, result, data = {}) {
   // An imported astronomic counter must not lose numeric precision. Bird IDs never change.
   if (w.nextEvent >= Number.MAX_SAFE_INTEGER) { w.events.forEach((event, i) => { event.id = `e${i + 1}`; }); w.nextEvent = w.events.length + 1; }
   const e = { id: `e${w.nextEvent++}`, kind, ids, condition, result, data, tick: w.tick, at: w.epoch + w.tick * TICK_MS };
+  awardEvent(w,kind);
   w.events.push(e); if (w.events.length > LIMITS.events) w.events.shift();
   for (const bid of ids) { const b = findBird(w, bid); if (b) remember(w, b, kind, ids.find(i => i !== bid) || null); }
 }
 export function createWorld(now = Date.now(), seed = 842911) {
-  const w = { version: SAVE_VERSION, revision: 0, worldId: `garden-${now}-${seed}`, epoch: now, lastUpdated: now, seed: seed >>> 0, tick: 0, nextId: 1, nextEvent: 1, paused: false, settings: { motion: true, careSound: false }, care: { cleanliness: 100, lastCleanTick: null }, birds: [], events: [], offlineSummary: null };
+  const w = { version: SAVE_VERSION, revision: 0, worldId: `garden-${now}-${seed}`, epoch: now, lastUpdated: now, seed: seed >>> 0, tick: 0, nextId: 1, nextEvent: 1, paused: false, settings: { motion: true, careSound: false }, care: { cleanliness: 100, lastCleanTick: null }, birds: [], events: [], offlineSummary: null, field: initialField(), decor: initialDecor() };
   const b = createBird(w, { name: 'おもち', sex: 'female', color: 'white', home: 'resident' });
   b.personality = { curiosity: 65, sociability: 75, caution: 30 };
   record(w, 'welcome', [b.id], '新しい庭', '物語が始まった'); return w;
@@ -163,7 +226,8 @@ function visits(w) {
 export function stepWorld(w) {
   if (w.paused || !Number.isSafeInteger(w.tick + 1) || w.epoch + (w.tick + 1) * TICK_MS > MAX_DATE_MS) return w;
   w.tick++; w.care.cleanliness = Math.max(0, w.care.cleanliness - CARE_RULES.soilPerTick); grow(w); visits(w);
-  const active = w.birds.filter(b => b.home !== 'departed' && b.stage !== 'egg');
+  if(w.field.place==='friend'&&findBird(w,w.field.hostId)?.home==='resident')w.field={place:'home',hostId:null,enteredTick:w.tick};
+  const active = fieldBirds(w).filter(b => b.stage !== 'egg');
   for (const b of active) {
     b.needs.energy = clamp(b.needs.energy - (b.stage === 'chick' ? 2 : 4), 12, 100);
     b.needs.food = clamp(b.needs.food - 5, 12, 100); b.needs.play = clamp(b.needs.play - 4, 8, 100);
@@ -286,7 +350,7 @@ function validateVersion(input, version) {
   const fail = msg => { throw new Error(`保存データを読み込めません：${msg}`); };
   if (!input || typeof input !== 'object' || Array.isArray(input)) fail('形式が違います。');
   const shape = (value, keys) => value !== null && typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length === keys.length && keys.every(key => Object.hasOwn(value, key));
-  const worldKeys = ['version','revision','worldId','epoch','lastUpdated','seed','tick','nextId','nextEvent','paused','settings','birds','events','offlineSummary', ...(version === 2 ? ['care'] : [])];
+  const worldKeys = ['version','revision','worldId','epoch','lastUpdated','seed','tick','nextId','nextEvent','paused','settings','birds','events','offlineSummary', ...(version >= 2 ? ['care'] : []), ...(version === 3 ? ['field','decor'] : [])];
   if (!shape(input, worldKeys)) fail('保存の項目が不正です。');
   // Check bounded input before JSON cloning, including direct IndexedDB values.
   // Descriptors avoid invoking getters/toJSON on malformed non-JSON objects.
@@ -313,15 +377,15 @@ function validateVersion(input, version) {
   preflight(input);
   if (input.version !== version) fail('対応していない版です。元の保存はそのままです。');
   let w; try { w = clone(input); } catch { fail('JSONの構造が不正です。'); }
-  if (!shape(w.settings, version === 2 ? ['motion', 'careSound'] : ['motion'])) fail('保存の項目が不正です。');
+  if (!shape(w.settings, version >= 2 ? ['motion', 'careSound'] : ['motion'])) fail('保存の項目が不正です。');
   const num = (n, lo = 0, hi = Number.MAX_SAFE_INTEGER) => typeof n === 'number' && Number.isFinite(n) && n >= lo && n <= hi;
   const integer = (n, lo = 0, hi = Number.MAX_SAFE_INTEGER) => Number.isInteger(n) && num(n, lo, hi);
   const str = (v, max = 100) => typeof v === 'string' && v.length > 0 && v.length <= max && !/[\u0000-\u001f\u007f]/.test(v);
-  if (version === 2 && (!shape(w.care, ['cleanliness', 'lastCleanTick']) || !integer(w.care.cleanliness, 0, 100) || !(w.care.lastCleanTick === null || integer(w.care.lastCleanTick, 0, w.tick)) || typeof w.settings.careSound !== 'boolean')) fail('お世話の情報が不正です。');
-  const validEvents = version === 2 ? EVENT_KINDS : LEGACY_EVENT_KINDS, validMemories = version === 2 ? MEMORY_KINDS : LEGACY_MEMORY_KINDS;
+  if (version >= 2 && (!shape(w.care, ['cleanliness', 'lastCleanTick']) || !integer(w.care.cleanliness, 0, 100) || !(w.care.lastCleanTick === null || integer(w.care.lastCleanTick, 0, w.tick)) || typeof w.settings.careSound !== 'boolean')) fail('お世話の情報が不正です。');
+  const validEvents = version >= 2 ? EVENT_KINDS : LEGACY_EVENT_KINDS, validMemories = version >= 2 ? MEMORY_KINDS : LEGACY_MEMORY_KINDS;
   if (!str(w.worldId) || !integer(w.revision) || !integer(w.seed, 0, 4294967295) || !integer(w.tick) || !integer(w.nextId, 1, LIMITS.birds + 1) || !integer(w.nextEvent, 2) || !integer(w.epoch, 0, MAX_DATE_MS) || !integer(w.lastUpdated, 0, MAX_DATE_MS) || !integer(w.epoch + w.tick * TICK_MS, 0, MAX_DATE_MS) || typeof w.paused !== 'boolean' || !w.settings || typeof w.settings.motion !== 'boolean') fail('基本情報が不正です。');
   if (!Array.isArray(w.birds) || !w.birds.length || w.birds.length > LIMITS.birds || !Array.isArray(w.events) || !w.events.length || w.events.length > LIMITS.events) fail('鳥や日記が多すぎます。');
-  if (w.birds.some(b => !shape(b, ['id','name','sex','color','stage','bornTick','stageTick','arrivedTick','parents','generation','partner','pairTick','eggsLaid','lastEggTick','home','personality','preference','mood','needs','relations','memories','milestones','action','lastSocialTick', ...(version === 2 ? ['care'] : [])]))) fail('文鳥の項目が不正です。');
+  if (w.birds.some(b => !shape(b, ['id','name','sex','color','stage','bornTick','stageTick','arrivedTick','parents','generation','partner','pairTick','eggsLaid','lastEggTick','home','personality','preference','mood','needs','relations','memories','milestones','action','lastSocialTick', ...(version >= 2 ? ['care'] : [])]))) fail('文鳥の項目が不正です。');
   const ids = new Set(w.birds.map(b => b.id));
   if (ids.size !== w.birds.length) fail('同じIDが重なっています。');
   if (w.nextId !== w.birds.length + 1 || w.birds.some((_, i) => !ids.has(`b${i + 1}`))) fail('文鳥のIDの順序が不正です。');
@@ -330,7 +394,7 @@ function validateVersion(input, version) {
     if (!/^b[1-9]\d{0,8}$/.test(b.id) || Number(b.id.slice(1)) >= w.nextId || !str(b.name, 16) || !b.name.trim() || !['female', 'male'].includes(b.sex) || !COLORS.includes(b.color) || !Object.hasOwn(STAGES, b.stage) || !['resident','visitor','departed'].includes(b.home) || !PREFERENCES.includes(b.preference)) fail('文鳥の情報が不正です。');
     for (const k of ['bornTick', 'stageTick', 'arrivedTick']) if (!integer(b[k], 0, w.tick) || k !== 'bornTick' && b[k] < b.bornTick) fail('成長の時刻が不正です。');
     if (!integer(b.generation, 0, LIMITS.birds) || !integer(b.eggsLaid, 0, 2) || !integer(b.lastEggTick, -1000, w.tick) || !integer(b.lastSocialTick, -1, w.tick) || !(b.pairTick === null || integer(b.pairTick, 0, w.tick)) || !num(b.mood, 0, 100) || !b.personality || !b.needs) fail('状態が不正です。');
-    if (version === 2 && (!shape(b.care, ['lastFedTick', 'lastPetTick']) || ['lastFedTick', 'lastPetTick'].some(key => !(b.care[key] === null || integer(b.care[key], b.bornTick, w.tick))) || ['egg', 'chick'].includes(b.stage) && Object.values(b.care).some(value => value !== null))) fail('文鳥のお世話時刻が不正です。');
+    if (version >= 2 && (!shape(b.care, ['lastFedTick', 'lastPetTick']) || ['lastFedTick', 'lastPetTick'].some(key => !(b.care[key] === null || integer(b.care[key], b.bornTick, w.tick))) || ['egg', 'chick'].includes(b.stage) && Object.values(b.care).some(value => value !== null))) fail('文鳥のお世話時刻が不正です。');
     if (!shape(b.personality, ['curiosity','sociability','caution']) || !shape(b.needs, ['energy','food','play']) || ['curiosity','sociability','caution'].some(k => !num(b.personality[k], 0, 100)) || ['energy','food','play'].some(k => !num(b.needs[k], 0, 100))) fail('気分や欲求が不正です。');
     if (!Array.isArray(b.parents) || ![0,2].includes(b.parents.length) || b.parents.some(p => !ref(p) || p === b.id) || new Set(b.parents).size !== b.parents.length || !ref(b.partner, true) || b.partner === b.id) fail('家族の参照が不正です。');
     if (!shape(b.action, ['kind','target','startedTick']) || !Object.hasOwn(ACTIONS, b.action.kind) || !ref(b.action.target, true) || !integer(b.action.startedTick, b.bornTick, w.tick)) fail('行動が不正です。');
@@ -363,23 +427,39 @@ function validateVersion(input, version) {
   }
   if (w.nextEvent !== previousId + 1) fail('日記IDの順序が不正です。');
   if (w.offlineSummary !== null && (!shape(w.offlineSummary, ['ticks','skipped','newBirds','fromTick','toTick']) || !integer(w.offlineSummary.ticks, 0, LIMITS.offlineTicks) || !integer(w.offlineSummary.skipped) || !integer(w.offlineSummary.newBirds, 0, LIMITS.birds) || !integer(w.offlineSummary.fromTick,0,w.tick) || !integer(w.offlineSummary.toTick,w.offlineSummary.fromTick,w.tick) || w.offlineSummary.toTick - w.offlineSummary.fromTick !== w.offlineSummary.ticks)) fail('おかえり情報が不正です。');
+  if(version===3){
+    if(!shape(w.field,['place','hostId','enteredTick'])||!['home','park','friend'].includes(w.field.place)||!integer(w.field.enteredTick,0,w.tick)||!(w.field.place==='friend'?ref(w.field.hostId)&&findBird(w,w.field.hostId).stage==='adult':w.field.hostId===null))fail('行き先の情報が不正です。');
+    const d=w.decor;
+    if(!shape(d,['points','lifetimePoints','inventory','equipped','draws','lastDrawTick'])||!integer(d.points,0,POINT_CAP)||!integer(d.lifetimePoints,d.points,POINT_CAP)||!integer(d.draws,0,POINT_CAP)||!(d.lastDrawTick===null||integer(d.lastDrawTick,0,w.tick))||!Array.isArray(d.inventory)||d.inventory.length<9||d.inventory.length>216||!shape(d.equipped,Object.keys(SLOT_LABELS)))fail('お飾りの情報が不正です。');
+    const itemIds=new Set();
+    for(const item of d.inventory){
+      if(!shape(item,['id','slot','color','tier'])||!Object.hasOwn(SLOT_LABELS,item.slot)||!Object.hasOwn(COLOR_HEX,item.color)||!DECOR_TIERS.some(t=>t.id===item.tier&&t.level<=decorLevel(w))||item.id!==`${item.slot}-${item.color}-${item.tier}`||itemIds.has(item.id))fail('お飾りの種類が不正です。');
+      itemIds.add(item.id);
+    }
+    for(const [slot,itemId] of Object.entries(d.equipped))if(!d.inventory.some(item=>item.id===itemId&&item.slot===slot))fail('飾っている道具が不正です。');
+  }
   return w;
 }
 /** Strict current-version validator for transactions; use compatibility only at read boundaries. */
 export function validateWorld(input) { return validateVersion(input, SAVE_VERSION); }
+/** Historical export retained: validates v1, applies v2 care, then upgrades to current. */
 export function migrateV1ToV2(input) {
   const world = validateVersion(input, 1); // Validate the complete legacy object before adding anything.
-  world.version = SAVE_VERSION;
+  world.version = 2;
   world.settings.careSound = false;
   world.care = { cleanliness: 100, lastCleanTick: null };
   for (const bird of world.birds) bird.care = { lastFedTick: null, lastPetTick: null };
-  return validateWorld(world);
+  return migrateV2ToV3(validateVersion(world,2));
+}
+export function migrateV2ToV3(input) {
+  const world=validateVersion(input,2);world.version=3;world.field=initialField();world.decor=initialDecor();return validateWorld(world);
 }
 export function readCompatibleWorld(input) {
   // Do not execute an accessor even to discover the version of an untrusted object.
   const descriptor = input && typeof input === 'object' ? Object.getOwnPropertyDescriptor(input, 'version') : null;
   if (!descriptor || !Object.hasOwn(descriptor, 'value')) throw new Error('保存データを読み込めません：版の形式が違います。');
   if (descriptor.value === 1) return migrateV1ToV2(input);
+  if (descriptor.value === 2) return migrateV2ToV3(input);
   if (descriptor.value === SAVE_VERSION) return validateWorld(input);
   throw new Error('保存データを読み込めません：対応していない版です。元の保存はそのままです。');
 }
@@ -389,5 +469,5 @@ export function serializeWorld(w) {
   if (new TextEncoder().encode(text).byteLength > MAX_SAVE_BYTES) throw new Error('保存データが4MBを超えています。');
   return text;
 }
-/** Versioned import boundary. Strict v1 migrates purely to v2; future versions fail closed. */
+/** Versioned import boundary. Strict v1/v2 migrate purely to v3; future versions fail closed. */
 export function parseSave(text) { if (typeof text !== 'string' || text.length > MAX_SAVE_BYTES || new TextEncoder().encode(text).byteLength > MAX_SAVE_BYTES) throw new Error('保存ファイルは4MB以下のJSONを選んでください。'); return readCompatibleWorld(JSON.parse(text)); }

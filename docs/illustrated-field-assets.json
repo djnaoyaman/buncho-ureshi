@@ -1,0 +1,165 @@
+{
+  "generation": "Built-in image_gen, 2026-11-02. Original raster artwork, no external reference/license dependencies. Wide home and park are new generations; portrait variants use respective wide image as style reference.",
+  "review": "All four visually inspected. No birds/text/UI baked in. Delicate gouache/colored-pencil style; retained structural rails and nest, room for equipment overlays. WebP conversion only; no resize/crop/edit.",
+  "assets": [
+    {
+      "path": "public/game-art/field-home-tall.webp",
+      "width": 1086,
+      "height": 1448,
+      "bytes": 187760,
+      "sha256": "5ce059767c1a6727f22327b7dc753c614532ed6906fcc1387706429e9d791d79"
+    },
+    {
+      "path": "public/game-art/field-home-wide.webp",
+      "width": 1586,
+      "height": 992,
+      "bytes": 179012,
+      "sha256": "2a22c997f33da84121a7725222b26a79c39446e76359c5e667407a30609b6c72"
+    },
+    {
+      "path": "public/game-art/field-park-tall.webp",
+      "width": 1086,
+      "height": 1448,
+      "bytes": 402420,
+      "sha256": "104ac87e083af3677874688527012f361aebbad6331a754abc7131b1bed11e7f"
+    },
+    {
+      "path": "public/game-art/field-park-wide.webp",
+      "width": 1586,
+      "height": 992,
+      "bytes": 435090,
+      "sha256": "931406f0904577fb9b7462a0755e2a5125956dcab59e2e0e010d67f1aaffac93"
+    }
+  ],
+  "prompt_summary": {
+    "home": "Cute spacious front-cutaway cream/sage/apricot cage interior; delicate detailed gouache/colored-pencil picture-book art, open front, faint rear bars, two structural wooden rails, empty nest right, broad cream paper floor, no birds/text/UI/food bowls/swings/toys. Portrait recompose same room.",
+    "park": "Cute shared sparrow park, gouache/colored-pencil leaves and pastel sky; two trees frame open sky with two horizontal branches, low log, nest right and shallow stone bath lower-right; no birds/text/UI. Portrait recompose same park."
+  },
+  "anchors": {
+    "home-wide": {
+      "upper_rail_y": 0.379,
+      "lower_rail_y": 0.581,
+      "nest": {
+        "x": 0.87,
+        "y": 0.624,
+        "width": 0.15
+      },
+      "floor_y": 0.8
+    },
+    "home-tall": {
+      "upper_rail_y": 0.371,
+      "lower_rail_y": 0.552,
+      "nest": {
+        "x": 0.87,
+        "y": 0.609,
+        "width": 0.15
+      },
+      "floor_y": 0.81
+    },
+    "park-wide": {
+      "upper": [
+        [
+          0.24,
+          0.294
+        ],
+        [
+          0.49,
+          0.307
+        ],
+        [
+          0.73,
+          0.318
+        ]
+      ],
+      "middle": [
+        [
+          0.25,
+          0.504
+        ],
+        [
+          0.49,
+          0.497
+        ],
+        [
+          0.7,
+          0.508
+        ]
+      ],
+      "log": [
+        [
+          0.36,
+          0.761
+        ],
+        [
+          0.56,
+          0.774
+        ]
+      ],
+      "nest": {
+        "x": 0.89,
+        "y": 0.478,
+        "width": 0.15
+      },
+      "bath": {
+        "x": 0.87,
+        "y": 0.736
+      }
+    },
+    "park-tall": {
+      "upper": [
+        [
+          0.24,
+          0.274
+        ],
+        [
+          0.5,
+          0.272
+        ],
+        [
+          0.75,
+          0.277
+        ]
+      ],
+      "middle": [
+        [
+          0.24,
+          0.452
+        ],
+        [
+          0.5,
+          0.449
+        ],
+        [
+          0.73,
+          0.457
+        ]
+      ],
+      "log": [
+        [
+          0.32,
+          0.751
+        ],
+        [
+          0.61,
+          0.758
+        ]
+      ],
+      "nest": {
+        "x": 0.9,
+        "y": 0.45,
+        "width": 0.15
+      },
+      "bath": {
+        "x": 0.875,
+        "y": 0.745
+      }
+    }
+  },
+  "integration_notes": [
+    "Coordinates normalized to full asset. Contact positions from visual pixels, verify final sprite feet in browser.",
+    "Do not use old photographic habitat anchor coordinates.",
+    "Home persistent rails remain structural; main equipment perch can overlay upper rail, other equipment at floor/hanging areas.",
+    "Portrait ratio exactly3:4; wide is1586/992. Use picture sources, not portrait crop of wide.",
+    "Original PNGs retained separately; prefer smaller WebP for web."
+  ]
+}
