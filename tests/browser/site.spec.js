@@ -94,6 +94,7 @@ test("search filter favorites ruby and history", async ({ page }) => {
   await page.goto("encyclopedia/");
   await page.locator("#article-search").fill("水");
   await expect(page.locator(".article-card").first()).toBeVisible();
+  const favoriteHref = await page.locator(".article-card").first().getAttribute("href");
   await page.locator(".article-card").first().click();
   await page.locator("#favorite").click();
   await expect(page.locator("#favorite")).toHaveAttribute(
@@ -104,9 +105,21 @@ test("search filter favorites ruby and history", async ({ page }) => {
   await page.reload();
   await expect(page.locator("html")).toHaveAttribute("data-ruby", "off");
   await page.goBack();
-  await page.goto("encyclopedia/");
+  // Assert the page restored by Back itself. A second goto here masked history
+  // failures and raced WebKit's restored document with an unnecessary navigation.
+  await expect(page).toHaveURL(/\/buncho-ureshi\/encyclopedia\/$/);
+  await expect(page.locator("#article-search")).toBeVisible();
+  await expect(page.locator("html")).toHaveAttribute("data-ruby", "off");
   await page.getByRole("button", { name: "♡ お気に入り", exact: true }).click();
   await expect(page.locator(".article-card")).toHaveCount(1);
+  await expect(page.locator(".article-card")).toHaveAttribute("href", favoriteHref);
+  // Keep full-navigation persistence coverage after testing the restored DOM.
+  await page.reload();
+  await expect(page.locator("#article-search")).toBeVisible();
+  await expect(page.locator("html")).toHaveAttribute("data-ruby", "off");
+  await page.getByRole("button", { name: "♡ お気に入り", exact: true }).click();
+  await expect(page.locator(".article-card")).toHaveCount(1);
+  await expect(page.locator(".article-card")).toHaveAttribute("href", favoriteHref);
   await page.locator("#menu-toggle").click();
   await expect(page.locator("#menu")).toBeVisible();
   await page.keyboard.press("Escape");

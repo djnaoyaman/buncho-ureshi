@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { createWorld, advanceTicks, advanceTo, validateWorld, TICK_MS, LIMITS } from '../../src/engine.js';
+import { createWorld, createBird, advanceTicks, advanceTo, validateWorld, TICK_MS, LIMITS } from '../../src/engine.js';
 
 const DB_NAME = 'buncho-ureshi-garden-v1';
 const fixedNow = Date.UTC(2026, 10, 2, 12, 0, 0);
@@ -315,4 +315,55 @@ test('rapid navigation and Back clean up a pending async game mount without orph
   await page.locator('.desktop-nav [data-nav="encyclopedia/"]').click();
   await expect.poll(async () => page.evaluate(() => [...window.__gameTestIntervals.values()].filter(delay => delay === 3000).length)).toBe(0);
   expect(errors).toEqual([]);
+});
+
+
+test('ten residents keep full names, actions and speech bubbles separated at narrow and wide sizes', async ({ page }, testInfo) => {
+  const seeded = createWorld(fixedNow);
+  while (seeded.birds.length < LIMITS.residents) createBird(seeded, { home: 'resident' });
+  const actionKinds = ['rest', 'eat', 'bath', 'explore', 'talk', 'play', 'nest', 'visit'];
+  seeded.birds.forEach((bird, i) => {
+    bird.name = 'あいうえおかきくけこさしすせそ' + i; // Exactly 16 characters, never truncated.
+    bird.action = { kind: actionKinds[i % actionKinds.length], target: null, startedTick: seeded.tick };
+  });
+  for (let i = 0; i < seeded.birds.length; i += 2) {
+    seeded.events.push({ id: `e${seeded.nextEvent++}`, kind: 'play', ids: [seeded.birds[i].id, seeded.birds[i + 1].id], condition: '表示確認のためのゲーム内交流', result: '双方が一緒に遊んだ', data: {}, tick: seeded.tick, at: seeded.epoch + seeded.tick * TICK_MS });
+  }
+  validateWorld(seeded);
+  await seedWorld(page, seeded);
+  await openGame(page);
+  await expect(page.locator('.game-room-bird')).toHaveCount(10);
+  await expect(page.locator('.game-room-bird .game-bubble')).toHaveCount(10);
+  for (const width of [320, 375, 768, 1440]) {
+    await page.setViewportSize({ width, height: 1000 });
+    await expect.poll(() => page.evaluate(() => {
+      const room = document.querySelector('.game-room').getBoundingClientRect();
+      const parts = [...document.querySelectorAll('.game-room-bird')].flatMap(bird =>
+        [...bird.querySelectorAll('.game-bird-label, .game-bubble, :scope > small')].map(el => ({
+          bird: bird.dataset.gameSelect, kind: el.className || 'action', text: el.textContent,
+          rect: el.getBoundingClientRect(), clipped: el.scrollHeight > el.clientHeight + 1 || el.scrollWidth > el.clientWidth + 1
+        }))
+      );
+      const errors = [];
+      for (const bird of document.querySelectorAll('.game-room-bird')) {
+        const r = bird.getBoundingClientRect();
+        if (r.width < 44 || r.height < 44) errors.push(`${bird.dataset.gameSelect} touch target below 44px`);
+      }
+      for (const part of parts) {
+        const r = part.rect;
+        if (part.clipped || r.left < room.left || r.right > room.right + 1 || r.top < room.top || r.bottom > room.bottom + 1) errors.push(`${part.bird} ${part.kind} clipped`);
+      }
+      for (let i = 0; i < parts.length; i++) for (let j = i + 1; j < parts.length; j++) {
+        const a = parts[i], b = parts[j];
+        if (a.bird === b.bird) continue;
+        const x = Math.min(a.rect.right, b.rect.right) - Math.max(a.rect.left, b.rect.left);
+        const y = Math.min(a.rect.bottom, b.rect.bottom) - Math.max(a.rect.top, b.rect.top);
+        if (x > 1 && y > 1) errors.push(`${a.bird} ${a.kind} overlaps ${b.bird} ${b.kind}`);
+      }
+      if (document.documentElement.scrollWidth > innerWidth + 1) errors.push('document overflow');
+      return errors;
+    }), { message: `All name/action/bubble boxes must remain separate at ${width}px` }).toEqual([]);
+    await expect(page.locator('.game-bird-label')).toHaveText(seeded.birds.map(bird => bird.name));
+    if (testInfo.project.name === 'chromium') await testInfo.attach(`game-ten-full-names-${width}`, { body: await page.locator('.game-room').screenshot({ animations: 'disabled' }), contentType: 'image/png' });
+  }
 });

@@ -11,6 +11,25 @@ const control = (page, name) => page.locator(`[data-studio="${name}"]`);
 const action = (page, name) => page.locator(`[data-action="${name}"]`);
 const savedArt = page => page.evaluate(key => JSON.parse(localStorage.getItem(key)), STUDIO_KEY);
 
+// WebKit's emulation may report maxTouchPoints=0. Prove actual touch delivery,
+// rather than changing navigator metadata or substituting synthetic page events.
+async function trustedTap(page, target) {
+  await target.evaluate(element => {
+    window.__trustedTouchEvents = [];
+    for (const type of ['touchstart', 'touchend']) {
+      element.addEventListener(type, event => {
+        window.__trustedTouchEvents.push({ type: event.type, trusted: event.isTrusted, changedTouches: event.changedTouches.length });
+      }, { capture: true, passive: true, once: true });
+    }
+  });
+  await target.tap();
+  await expect.poll(() => page.evaluate(() => {
+    const events = window.__trustedTouchEvents || [];
+    return ['touchstart', 'touchend'].every(type => events.some(event => event.type === type && event.trusted && event.changedTouches > 0));
+  })).toBe(true);
+}
+
+
 async function downloadBytes(download) {
   const stream = await download.createReadStream();
   if (!stream) throw new Error('The mobile download has no readable stream.');
@@ -42,8 +61,7 @@ test.beforeEach(async ({ context }) => {
 async function studioTouchFlow(page) {
   await page.goto('studio/');
   await expect(control(page, 'canvas')).toBeVisible();
-  expect(await page.evaluate(() => navigator.maxTouchPoints)).toBeGreaterThan(0);
-  await page.locator('[data-material="bird-white"]').tap();
+  await trustedTap(page, page.locator('[data-material="bird-white"]'));
   const id = await control(page, 'layers').inputValue();
   const before = (await savedArt(page)).items.find(item => item.id === id);
   await action(page, 'right').tap();
@@ -78,7 +96,6 @@ async function gameTouchFlow(page, context, name) {
   await context.addInitScript(now => { Date.now = () => now; }, fixedNow);
   await page.goto('game/');
   await expect(page.locator('#game-root .game-app')).toBeVisible();
-  expect(await page.evaluate(() => navigator.maxTouchPoints)).toBeGreaterThan(0);
   await expect(page.locator('.game-profile-heading h3')).toHaveText('おもち');
   // Backdate only this application's saved timestamp by one tick; actual startup performs the visit.
   await page.evaluate(({ dbName, now, tick }) => new Promise((resolve, reject) => {
@@ -93,7 +110,7 @@ async function gameTouchFlow(page, context, name) {
     };
   }), { dbName: DB_NAME, now: fixedNow, tick: TICK_MS });
   await page.reload();
-  await page.locator('.game-visitor-box [data-game-select="b2"]').tap();
+  await trustedTap(page, page.locator('.game-visitor-box [data-game-select="b2"]'));
   await page.locator('#game-name').fill(name);
   await page.locator('[data-game-action="adopt"]').tap();
   await expect(page.locator('.game-profile-heading h3')).toHaveText(name);
