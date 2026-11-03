@@ -311,7 +311,7 @@ test('audio is opt-in; user playback, mute, volume, stop and SFX controls affect
   await openStudio(page);
   await page.locator('[data-template="1"]').click();
   expect((await page.evaluate(() => window.__studioAudit)).audioCreated).toBe(0);
-  await expect(control(page, 'audio-status')).toHaveText('音はまだ出ません。');
+  await expect(control(page, 'audio-status')).toHaveText('再生を押すまで音は出ません。');
   await action(page, 'play').click();
   await expect(control(page, 'audio-status')).toContainText('再生中');
   await expect.poll(() => page.evaluate(() => window.__studioAudit.starts)).toBeGreaterThan(0);
@@ -360,7 +360,7 @@ test('interrupted export and rapid navigation clean up audio and retain the late
   await expect(control(page, 'canvas')).toBeVisible();
   await expect(control(page, 'title')).toHaveValue('もどってくる作品');
   await expect(control(page, 'export-panel')).toBeHidden();
-  await expect(control(page, 'audio-status')).toHaveText('音はまだ出ません。');
+  await expect(control(page, 'audio-status')).toHaveText('再生を押すまで音は出ません。');
   for (let i = 0; i < 2; i++) {
     await page.locator('.desktop-nav [data-nav="encyclopedia/"]').click();
     await page.locator('.desktop-nav [data-nav="studio/"]').click();
@@ -405,3 +405,26 @@ test('three requested art backgrounds are selectable, persist and appear in expo
  }
  expect(new Set(signatures).size).toBe(3);await page.reload();await expect(control(page,'background')).toHaveValue('10');
 });
+
+for (const width of [390,1280]) {
+ test(`music introduction lets users choose before creating art at ${width}px`,async({page},testInfo)=>{
+  await page.setViewportSize({width,height:900});await openStudio(page);
+  const intro=page.locator('.studio-music-intro');await expect(intro).toHaveCount(1);
+  await expect(intro).toContainText('作る前に、音楽をえらぼう');
+  await expect(page.getByRole('heading',{name:'音のアトリエ'})).toHaveCount(0);
+  const before=await saved(page);
+  expect(await intro.evaluate(node=>!!(node.compareDocumentPosition(document.querySelector('.studio-steps'))&Node.DOCUMENT_POSITION_FOLLOWING))).toBe(true);
+  expect((await page.evaluate(()=>window.__studioAudit)).audioCreated).toBe(0);
+  await testInfo.attach(`studio-music-intro-${width}`,{body:await intro.screenshot(),contentType:'image/png'});
+  for(const track of ['0','1','2']){
+   await control(page,'music').selectOption(track);
+   await expect(control(page,'audio-status')).toContainText('再生を押すと始まります');
+   await action(page,'play').click();await expect(control(page,'audio-status')).toContainText('再生中');
+   await action(page,'stop').click();await expect(control(page,'audio-status')).toContainText('停止');
+  }
+  expect(await saved(page)).toEqual(before);
+  await page.locator('[data-template="1"]').click();
+  expect((await saved(page)).items.length).toBeGreaterThan(0);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+ });
+}

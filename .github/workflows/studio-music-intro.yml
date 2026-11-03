@@ -1,0 +1,45 @@
+name: Studio music introduction
+on:
+  pull_request:
+    paths: ['src/studio.js', 'src/studio.css', 'tests/studio.test.js', 'tests/browser/studio.spec.js', '.github/workflows/studio-music-intro.yml']
+  workflow_dispatch:
+    inputs:
+      public_url:
+        description: 'Optional already-deployed site URL to verify'
+        default: ''
+        required: false
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: node --test tests/studio.test.js
+      - run: npx playwright install --with-deps chrome webkit
+      - name: Provide native audio output device
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y pulseaudio pulseaudio-utils
+          pulseaudio --start --exit-idle-time=-1
+          pactl load-module module-null-sink sink_name=ci_audio sink_properties=device.description=CI_Audio
+          pactl set-default-sink ci_audio
+      - name: Verify opt-in music, composition preservation and interrupted navigation
+        env:
+          PUBLIC_URL: ${{ inputs.public_url }}
+        run: npx playwright test tests/browser/studio.spec.js --grep 'music introduction|audio is opt-in|interrupted export' --project=chrome --project=webkit --retries=0
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: studio-music-intro-${{ github.sha }}
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14
