@@ -128,13 +128,13 @@ for(const width of [320,768,1440])test(`care unavailable stages explain disabled
   }
 });
 
-test('care export preserves v2 values, cancelled import is exact, confirmed import with sound preference never autoplays',async({page})=>{
+test('care export preserves v7 values, cancelled import is exact, confirmed import with sound preference never autoplays',async({page})=>{
   await trackNativeAudio(page);await seed(page);await page.locator('[data-game-care="feed"]').click();await expect(page.locator('[data-game-fullness]')).toHaveText('60 / 100');await tab(page,'settings');
   await openManagement(page);const downloadEvent=page.waitForEvent('download');await page.locator('[data-game-action="export"]').click();const exported=validateWorld(JSON.parse(await downloadText(await downloadEvent)));expect(exported.version).toBe(7);expect(exported.birds[0].needs.food).toBe(60);expect(exported.care.cleanliness).toBe(15);expect(exported.settings.careSound).toBe(false);
   const next=fixture({sound:true});next.worldId+='-import';next.birds[0].needs.food=73;next.care.cleanliness=44;
   const file={name:'care.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(next))},before=await record(page);
   await openManagement(page);page.once('dialog',dialog=>dialog.dismiss());await page.locator('#game-import').setInputFiles(file);await expect(page.locator('#game-import')).toHaveValue('');expect(await record(page)).toEqual(before);
-  await openManagement(page);page.once('dialog',dialog=>dialog.accept());await page.locator('#game-import').setInputFiles(file);await expect(page.locator('.game-message')).toContainText('復元');expect((await record(page)).worldId).toBe(next.worldId);expect(await page.evaluate(()=>window.__careAudio.starts)).toBe(0);
+  await openManagement(page);page.once('dialog',dialog=>dialog.accept());await page.locator('#game-import').setInputFiles(file);await expect(page.locator('.game-message')).toContainText('復元');const restored=await record(page);expect(restored.worldId).toMatch(/^garden-import-/);expect(restored.worldId).not.toBe(next.worldId);expect(restored.worldId).not.toBe(before.worldId);expect(await page.evaluate(()=>window.__careAudio.starts)).toBe(0);
   await tab(page,'garden');await openCare(page);await expect(page.locator('[data-game-fullness]')).toHaveText('73 / 100');await expect(page.locator('[data-game-cleanliness-value]')).toHaveText('44 / 100');await expectMuted(page);
 });
 
