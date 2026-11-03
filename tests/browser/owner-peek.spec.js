@@ -55,3 +55,16 @@ test('deep complexion and selected hair are visible in the smiling view',async({
  await art.evaluate(el=>{for(const animation of el.getAnimations({subtree:true})){animation.pause();animation.effect.updateTiming({delay:0});animation.currentTime=10000;}});await expect(page.locator('.owner-peek-glance')).toHaveCSS('opacity','1');
  await page.screenshot({path:info.outputPath('watercolor-deep-skin-glance.png')});
 });
+
+test('the whole dressed figure turns, and all motion controls stop it',async({page},info)=>{
+ await page.setViewportSize({width:390,height:844});await page.goto('game/');await expect(page.locator('.game-logo-intro')).toBeHidden();
+ const owner=page.locator('.game-owner-companion'), body=owner.locator('.owner-peek-body');
+ const pose=async t=>owner.evaluate((el,t)=>{for(const a of el.getAnimations({subtree:true})){a.pause();a.effect.updateTiming({delay:0});a.currentTime=t;}},t);
+ await pose(9360);await expect(owner.locator('.owner-peek-back')).toHaveCSS('opacity','1');await owner.screenshot({path:info.outputPath('turn-away.png')});
+ await pose(9480);const turning=await body.evaluate(e=>getComputedStyle(e).transform);expect(turning).not.toBe('none');await owner.screenshot({path:info.outputPath('turn-midway.png')});
+ await pose(10000);await expect(owner.locator('.owner-peek-glance')).toHaveCSS('opacity','1');await owner.screenshot({path:info.outputPath('turn-smile.png')});
+ const views=await owner.evaluate(el=>['.owner-peek-back','.owner-peek-glance'].map(sel=>Array.from(el.querySelector(sel).querySelectorAll('svg')).map(s=>s.getAttribute('viewBox'))));
+ expect(views[0]).not.toEqual(views[1]);
+ await page.evaluate(()=>document.documentElement.dataset.motion='off');await expect(body).toHaveCSS('animation-name','none');await expect(owner.locator('.owner-peek-glance')).toHaveCSS('opacity','0');
+ await page.evaluate(()=>{delete document.documentElement.dataset.motion;document.querySelector('.game-app').dataset.careMotion='off';});await expect(body).toHaveCSS('animation-name','none');await expect(owner.locator('.owner-peek-glance')).toHaveCSS('opacity','0');
+});
