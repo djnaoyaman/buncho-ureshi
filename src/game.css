@@ -511,3 +511,19 @@ html[data-motion="off"] .owner-peek-body,html[data-motion="off"] .owner-peek-bac
 .owner-peek-body,.owner-peek-back,.owner-peek-glance{animation-delay:var(--owner-delay,0ms)}
 
 body[data-world="buncho"] .game-owner-setting .owner-portrait-art{width:70px;height:90px;transform:none}
+
+/* Keep every control in its own row on narrow, very short screens. */
+@media(max-width:600px) and (max-height:340px){
+ body[data-world="buncho"] .game-field-bar{top:8px;right:76px}
+ body[data-world="buncho"] .game-field-nav{top:58px;left:76px;right:64px;width:auto;gap:4px}
+ body[data-world="buncho"] .game-field-nav button{padding:2px;font-size:11px}
+ body[data-world="buncho"] .game-main>.game-heading{top:58px;right:8px}
+ body[data-world="buncho"] .game-scene-controls-toggle{top:58px;bottom:auto;width:60px;min-width:60px;height:48px;padding:4px;white-space:normal;font-size:11px}
+ body[data-world="buncho"] .game-scene-toolbar{top:auto;bottom:76px;left:8px;right:8px;transform:none;width:auto;max-height:54px}
+ body[data-world="buncho"] .game-scene-toolbar .game-bird-carousel{width:calc(100% - 64px)}
+ body[data-world="buncho"] .game-scene-toolbar .game-garden-care{left:auto;right:0;bottom:0;width:56px;max-width:56px}
+ body[data-world="buncho"] .game-scene-toolbar .game-garden-care button{min-width:56px;padding:4px}
+}
+@media(max-width:600px) and (max-height:280px){
+ body[data-world="buncho"][data-scene-controls="open"] .game-main>.game-scene-caption{display:none}
+}
