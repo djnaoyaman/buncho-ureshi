@@ -1,0 +1,29 @@
+name: Color atlas focused readability
+on:
+  pull_request:
+    paths: ['src/morph-ui.*', 'tests/browser/colors-readable.spec.js', '.github/workflows/colors-readable.yml']
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: node --test tests/morph-ui.test.js tests/morph-integration.test.js
+      - run: npx playwright install --with-deps chrome
+      - run: npx playwright test tests/browser/colors-readable.spec.js --project=chrome --retries=0
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: colors-readable-${{ github.sha }}
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14

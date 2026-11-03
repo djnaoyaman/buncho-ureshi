@@ -62,6 +62,7 @@ test('atlas discovery, site-wide alias search and native Back/Forward restore re
 
 test('atlas filters handle aliases, zero results, keyboard submission and repeated reset without persisted state', async ({ page }) => {
   await page.goto('colors/');await ready(page);
+  await page.locator('.morph-search-panel > summary').click();
   const search=page.locator('[data-morph-query]');
   await search.fill('ｓｉｌｖｅｒ');await search.press('Enter');await expect(page.locator('[data-morph-card]')).toHaveCount(1);await expect(page.locator('[data-morph-card="silver"]')).toHaveCount(1);
   await search.fill('NO_SUCH_BIRD_993');await expect(page.locator('[data-morph-card]')).toHaveCount(0);await expect(page.locator('[data-morph-result-count]')).toContainText('0');
