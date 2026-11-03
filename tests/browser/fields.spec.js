@@ -62,15 +62,24 @@ async function seedWorld(page, world, lastUpdated = fixedNow) {
   }), { dbName: DB_NAME, value: world, lastUpdated });
 }
 
+async function openControls(page) {
+  await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');
+  const toggle=page.locator('.game-scene-controls-toggle');
+  if(await toggle.getAttribute('aria-expanded')!=='true')await toggle.click();
+  await expect(toggle).toHaveAttribute('aria-expanded','true');
+}
+
 async function openGame(page, query = '') {
   await page.goto(`game/${query}`);
   await expect(page.locator('#game-root .game-app')).toBeVisible();
   await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');
+  await openControls(page);
 }
 
 async function tab(page, name) {
   if(await page.locator('.game-bird-sheet').isVisible())await page.locator('[data-game-close-bird]').click();
   if(await page.locator('.game-panel-overlay').isVisible())await page.locator('[data-game-close-panel]').click();
+  await openControls(page);
   const direct = name==='garden' ? '.game-field-nav [data-field-travel="home"]'
     : ['decorate','family'].includes(name) ? `.game-bottom-dock [data-game-panel="${name}"]`
     : ['friends','outdoors'].includes(name) ? `.game-field-nav [data-game-panel="${name}"]` : null;
