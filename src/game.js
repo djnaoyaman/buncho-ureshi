@@ -124,8 +124,9 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
   const reframeCompact=()=>{if(alive)render();};
   const audio = audioFactory();
   let careGeneration=0, soundRequest=0, soundChoice=null, careFeedback=null, careGesture=null, gestureTimer;
+  let pollFlight=null, pendingCareIntent=null;
   const careSoundEnabled = () => soundChoice ?? explicitSound ?? true;
-  function cancelCareEffects() { careGeneration++;audio.cancel();clearTimeout(gestureTimer);careGesture=null;careFeedback=null;root.querySelectorAll('.game-care-cheer,.game-gem-reward').forEach(node=>node.remove()); }
+  function cancelCareEffects() { pendingCareIntent=null;careGeneration++;audio.cancel();clearTimeout(gestureTimer);careGesture=null;careFeedback=null;root.querySelectorAll('.game-care-cheer,.game-gem-reward').forEach(node=>node.remove()); }
   const latest = w => {
     if(findBird(world,selected)?.name!==findBird(w,selected)?.name){lastReply='';replyBird=null;}
     if (world.worldId !== w.worldId) { if(!resetPending)closeResetDialog(false);sheetOpen=false;sheetReturn=null;poseClock.reset();drafts.clear();nameSuggestionOrigins.clear();previewItem=null;drawResult=null;lastReply='';replyBird=null;cancelCareEffects();soundRequest++;soundChoice=null; }
@@ -451,34 +452,56 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     const welcome=root.querySelector('#game-welcome-close'),welcomeKey=world.offlineSummary?`${world.worldId}:${world.offlineSummary.fromTick}:${world.offlineSummary.toTick}`:null;if(welcome&&welcomeKey!==welcomeFocusKey&&panel==='garden'&&!sheetOpen){welcomeFocusKey=welcomeKey;welcome.focus({preventScroll:true});}
   }
   function artPayload(b, e) { const family=[b,...b.parents.map(id=>findBird(world,id)),...(b.partner?[findBird(world,b.partner)]:[])].filter(Boolean); return {title:e?eventText(world,e):`${b.name}の家族`,name:b.name,names:family.map(x=>x.name),birds:family.map(x=>({id:x.id,name:x.name,color:x.color,stage:x.stage})),date:day(e?.tick??world.tick),event:e?.kind||'family',source:'game',caption:'おもちの文鳥ぐらし・ゲームの記念カード'}; }
+  // Only our captured poll may advance this gesture's token. Never adopt an
+  // arbitrary newer revision: a peer write must still fail the engine guard.
+  function reserveCareIntent(){
+    if(pendingCareIntent)return null;
+    return pendingCareIntent={token:economyToken(world),poll:pollFlight};
+  }
+  function releaseCareIntent(intent){if(pendingCareIntent===intent)pendingCareIntent=null;}
+  async function afterCarePoll(intent,current){
+    const flight=intent.poll;await flight.promise;
+    if(pendingCareIntent!==intent||!current())return null;
+    const before=flight.before,after=flight.after;
+    if(!before||!after||before.worldId!==intent.token.worldId||before.revision!==intent.token.revision||after.worldId!==intent.token.worldId||world.worldId!==after.worldId||world.revision!==after.revision){
+      message='お部屋が変わったよ。もう一度選んでね。';render();return null;
+    }
+    return {worldId:after.worldId,revision:after.revision};
+  }
   async function careAction(button) {
     const kind=button.dataset.gameCare, birdId=button.dataset.careBirdId || null;
-    const expectedWorldId=world.worldId, expectedSelection=selected, expectedPanel=panel, generation=careGeneration, gestureAt=Date.now(), token=economyToken(world);
+    const expectedWorldId=world.worldId, expectedSelection=selected, expectedPanel=panel, generation=careGeneration, gestureAt=Date.now();
     if(!['feed','pet','clean'].includes(kind)||button.disabled)return;
-    const current=()=>alive&&root.isConnected&&world.worldId===expectedWorldId&&selected===expectedSelection&&panel===expectedPanel&&generation===careGeneration;
-    // Unlock starts synchronously in this click; no sound plays before commit.
-    const unlocked=careSoundEnabled()?audio.unlockFromGesture():Promise.resolve(false);
-    let feedback;
-    const committed=await mutate(w=>{
-      if(w.worldId!==expectedWorldId)throw new Error('庭が変わりました。もう一度えらんでね。');
-      feedback=kind==='feed'?feedBird(w,birdId,gestureAt,token):kind==='pet'?petBird(w,birdId,gestureAt,token):cleanGarden(w);
-      // Feedback is deliberately NOT returned: transactions require the world.
-    },'',()=>alive&&root.isConnected,{bump:false,advancePaused:false,advanceCurrent:false});
-    if(!committed||!feedback||!current())return;
-    careFeedback=feedback;message='';
-    if(['pet','feed'].includes(kind)&&feedback.changed){
-      careGesture={birdId,worldId:expectedWorldId,kind};clearTimeout(gestureTimer);
-      gestureTimer=setTimeout(()=>{if(!current())return;careGesture=null;render();},850);
-    }
-    render();
-    showGemReward(feedback.gemAward,undefined,feedback.goldAward);
-    if(feedback.changed&&careSoundEnabled()){
-      const canPlay=()=>current()&&!document.hidden&&Date.now()-gestureAt<=1500&&careSoundEnabled();
-      const opened=await unlocked;
-      if(!canPlay())return;
-      const played=opened&&await audio.chirp(canPlay);
-      if(!played&&canPlay()){message='この端末では合成音を鳴らせませんでした。ことばの返事はそのまま楽しめます。';render();}
-    }
+    const intent=reserveCareIntent();if(!intent)return;
+    try{
+      const current=()=>alive&&root.isConnected&&world.worldId===expectedWorldId&&selected===expectedSelection&&panel===expectedPanel&&generation===careGeneration;
+      // Unlock starts synchronously in this click; no sound plays before commit.
+      const unlocked=careSoundEnabled()?audio.unlockFromGesture():Promise.resolve(false);
+      const token=intent.poll?await afterCarePoll(intent,current):intent.token;if(!token)return;
+      let feedback;
+      const committed=await mutate(w=>{
+        if(w.worldId!==expectedWorldId)throw new Error('庭が変わりました。もう一度えらんでね。');
+        feedback=kind==='feed'?feedBird(w,birdId,gestureAt,token):kind==='pet'?petBird(w,birdId,gestureAt,token):cleanGarden(w);
+        // Feedback is deliberately NOT returned: transactions require the world.
+      },'',()=>alive&&root.isConnected,{bump:false,advancePaused:false,advanceCurrent:false});
+      releaseCareIntent(intent);
+      if(!committed||!feedback||!current())return;
+      if(!feedback.birdId&&feedback.kind!=='clean'&&feedback.message){message=feedback.message;render();return;}
+      careFeedback=feedback;message='';
+      if(['pet','feed'].includes(kind)&&feedback.changed){
+        careGesture={birdId,worldId:expectedWorldId,kind};clearTimeout(gestureTimer);
+        gestureTimer=setTimeout(()=>{if(!current())return;careGesture=null;render();},850);
+      }
+      render();
+      showGemReward(feedback.gemAward,undefined,feedback.goldAward);
+      if(feedback.changed&&careSoundEnabled()){
+        const canPlay=()=>current()&&!document.hidden&&Date.now()-gestureAt<=1500&&careSoundEnabled();
+        const opened=await unlocked;
+        if(!canPlay())return;
+        const played=opened&&await audio.chirp(canPlay);
+        if(!played&&canPlay()){message='この端末では合成音を鳴らせませんでした。ことばの返事はそのまま楽しめます。';render();}
+      }
+    }finally{releaseCareIntent(intent);}
   }
   async function changeCareSound(enabled) {
     const request=++soundRequest,expectedWorldId=world.worldId;
@@ -577,16 +600,23 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     if(action==='qa-step'&&new URLSearchParams(location.search).get('qa')==='1')await mutate(w=>{const paused=w.paused;w.paused=false;advanceTicks(w,1000);w.paused=paused;markCurrentTime(w);},'検証用に1000時間を進めました。');
   }
   async function talkAction(text){
-    const birdId=selected,generation=careGeneration,worldId=world.worldId,gestureAt=Date.now(),token=economyToken(world);let answer,gemAward,goldAward,careChanged=false;
-    const eligible=['adult','juvenile'].includes(findBird(world,birdId)?.stage)&&findBird(world,birdId)?.home!=='departed';
-    const unlocked=eligible&&careSoundEnabled()?audio.unlockFromGesture():Promise.resolve(false);
-    const committed=await mutate(w=>{const b=findBird(w,birdId);const reply=talkToBird(w,birdId,text==='名前を呼ぶ'?b.name:text,gestureAt,token);answer=reply.answer;gemAward=reply.gemAward;goldAward=reply.goldAward;careChanged=reply.careChanged;},'',()=>alive,{bump:false,advanceCurrent:false});
-    if(committed&&generation===careGeneration&&selected===birdId&&world.worldId===worldId){lastReply=answer;replyBird=birdId;render();showGemReward(gemAward,undefined,goldAward);}
-    if(committed&&eligible&&careChanged&&careSoundEnabled()){
-      const current=()=>alive&&root.isConnected&&generation===careGeneration&&selected===birdId&&world.worldId===worldId&&!document.hidden&&careSoundEnabled()&&Date.now()-gestureAt<=1500;
-      if(await unlocked&&current())await audio.chirp(current);
-    }
-    return committed;
+    const birdId=selected,generation=careGeneration,worldId=world.worldId,expectedPanel=panel,gestureAt=Date.now();
+    const intent=reserveCareIntent();if(!intent)return false;
+    try{
+      let answer,gemAward,goldAward,careChanged=false;
+      const eligible=['adult','juvenile'].includes(findBird(world,birdId)?.stage)&&findBird(world,birdId)?.home!=='departed';
+      const unlocked=eligible&&careSoundEnabled()?audio.unlockFromGesture():Promise.resolve(false);
+      const current=()=>alive&&root.isConnected&&generation===careGeneration&&selected===birdId&&world.worldId===worldId&&panel===expectedPanel;
+      const token=intent.poll?await afterCarePoll(intent,current):intent.token;if(!token)return false;
+      const committed=await mutate(w=>{const b=findBird(w,birdId);const reply=talkToBird(w,birdId,text==='名前を呼ぶ'?b.name:text,gestureAt,token);answer=reply.answer;gemAward=reply.gemAward;goldAward=reply.goldAward;careChanged=reply.careChanged;},'',()=>alive,{bump:false,advanceCurrent:false});
+      releaseCareIntent(intent);
+      if(committed&&generation===careGeneration&&selected===birdId&&world.worldId===worldId){lastReply=answer;replyBird=birdId;render();showGemReward(gemAward,undefined,goldAward);}
+      if(committed&&eligible&&careChanged&&careSoundEnabled()){
+        const current=()=>alive&&root.isConnected&&generation===careGeneration&&selected===birdId&&world.worldId===worldId&&!document.hidden&&careSoundEnabled()&&Date.now()-gestureAt<=1500;
+        if(await unlocked&&current())await audio.chirp(current);
+      }
+      return committed;
+    }finally{releaseCareIntent(intent);}
   }
   async function submit(ev){
     const form=ev.target.closest('form');if(!form)return;ev.preventDefault();
@@ -623,7 +653,21 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
   });
   root.addEventListener('cancel',sheetCancel,true);root.addEventListener('keydown',menuKeydown);root.addEventListener('click',click);root.addEventListener('submit',submit);root.addEventListener('change',change);root.addEventListener('input',rememberDraft);root.addEventListener('pointerdown',pointerStart);document.addEventListener('pointerup',pointerEnd);document.addEventListener('pointercancel',pointerEnd);
   if(globalThis.BroadcastChannel){channel=new BroadcastChannel('buncho-garden-updates');channel.onmessage=()=>poll();}
-  async function poll(){if(!alive||busy||document.hidden)return;busy++;try{const next=await store.transact(w=>advanceTo(w));const replaced=next.worldId!==world.worldId,changed=replaced||next.revision!==world.revision||next.paused!==world.paused||refreshPending;if(!alive)return;latest(next);if(changed){if(!replaced&&interactionActive())refreshPending=true;else render();}}catch(e){if(alive){error=e.message;render();}}finally{busy--;}}
+  async function poll(){
+    if(!alive||busy||document.hidden)return;
+    busy++;const flight={before:null,after:null,promise:null};pollFlight=flight;
+    flight.promise=(async()=>{
+      try{
+        const next=await store.transact(w=>{flight.before=economyToken(w);return advanceTo(w);});
+        flight.after=economyToken(next);
+        const replaced=next.worldId!==world.worldId,changed=replaced||next.revision!==world.revision||next.paused!==world.paused||refreshPending;
+        if(!alive)return;latest(next);
+        if(changed){if(!replaced&&interactionActive())refreshPending=true;else render();}
+      }catch(e){if(alive){error=e.message;render();}}
+      finally{busy--;if(pollFlight===flight)pollFlight=null;}
+    })();
+    await flight.promise;
+  }
   timer=setInterval(poll,3000);render();document.dispatchEvent(new document.defaultView.CustomEvent('buncho-game-ready'));
   const poseTimer=setInterval(updatePoses,600);
   root.ownerDocument.defaultView.addEventListener('resize',resizeFamily);
