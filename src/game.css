@@ -447,3 +447,5 @@ body[data-world="buncho"] .game-secondary-menu .game-tabs button:nth-child(3n+2)
 body[data-world="buncho"]:has(.game-secondary-menu[open]) .game-scene-controls-toggle{display:none}
 body[data-world="buncho"] .game-music-volume{white-space:nowrap}body[data-world="buncho"] .game-music-volume input{flex:1;min-width:0;width:auto}
 body[data-world="buncho"] .finch-garden .finch-garden-selector button[aria-current=page]{background:linear-gradient(#82a875,#527a50);border-color:#e0edc2;color:#fffdec;box-shadow:0 3px 0 #375537}
+
+body[data-world="buncho"]:has(.finch-garden-dock>details[open]) .game-scene-controls-toggle{display:none}
