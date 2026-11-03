@@ -16,7 +16,7 @@ for (const size of [{width:320,height:568},{width:390,height:844},{width:844,hei
   test(`all built pages fit ${size.width}x${size.height}`, async ({ page }, info) => {
     test.setTimeout(360000);
     await page.setViewportSize(size);
-    await page.route(/youtube|youtu\\.be|googlevideo|ytimg/i, route => route.abort());
+    await page.route(/youtube|youtu\.be|googlevideo|ytimg/i, route => route.abort());
     const routes = await htmlRoutes();
     expect(routes.length).toBeGreaterThan(40);
     const failures = [];
