@@ -152,3 +152,17 @@
 .morph-atlas .morph-photo figcaption rt{font-size:.5em;line-height:1}
 .morph-atlas .morph-photo figcaption summary{line-height:2.4;padding-block:5px}
 .morph-identity-evidence{font-size:.78rem;padding-block:8px}
+
+/* Browse one bird at a time: name, short identifying summary, then photograph. */
+.morph-card-heading{margin:0 0 16px;min-width:0}
+.morph-card-heading h3{margin:0 0 8px;font-size:1.35rem}
+.morph-card-heading .morph-card-summary{margin:0;max-width:40em}
+.morph-card:nth-child(5):last-child{display:block;grid-column:auto}
+.morph-search-panel>summary,.morph-reading-notes>summary,.morph-secondary>summary{cursor:pointer;min-height:44px;padding:12px 0;font-weight:600;font-size:1rem}
+.morph-reading-notes{margin:12px 0;border-block:1px solid var(--morph-line)}
+.morph-search-panel{margin:12px 0}
+.morph-search-panel .morph-filterbar{margin-top:10px}
+.morph-secondary:not([open]){padding-block:12px}
+.morph-atlas[data-morph-view=overview] .morph-intro{padding-block:20px}
+.morph-atlas[data-morph-view=overview] .morph-toc{margin:12px 0;padding-block:8px;gap:4px 18px}
+.morph-atlas[data-morph-view=overview] #morph-profiles{padding-top:20px}

@@ -195,3 +195,26 @@ test('ruby field labels use inline text flow and put only controls on the next r
   assert(!/\.morph-atlas label\{[^}]*display:(?:grid|flex)/.test(css));
   assert(css.includes('display:ruby-text!important'));
 });
+
+test('overview leads with bird identity and keeps detailed research folded without losing sources or photographs', async () => {
+ const {root,close}=dom(renderMorphOverview(data));
+ try{
+  const gallery=root.querySelector('[data-morph-results]');
+  assert.equal(root.querySelectorAll('.morph-card').length,5);
+  for(const card of root.querySelectorAll('.morph-card')){
+   assert.equal(card.firstElementChild.className,'morph-card-heading');
+   assert(card.firstElementChild.querySelector('h3'));
+   assert(card.firstElementChild.querySelector('.morph-card-summary'));
+   assert.equal(card.querySelectorAll('img').length,1);
+   assert(card.querySelector('.morph-credit a'));
+   assert(card.querySelector('.morph-photo details .morph-photo-description'));
+  }
+  for(const selector of ['.morph-search-panel','.morph-reading-notes','#morph-terms','#morph-glossary']){
+   const panel=root.querySelector(selector);assert.equal(panel.tagName,'DETAILS');assert.equal(panel.open,false);
+  }
+  assert(gallery.compareDocumentPosition(root.querySelector('.morph-reading-notes')) & 4);
+  assert(plainText(root.querySelector('[data-morph-card="cinnamon"] .morph-observation-label')).includes('静止画'));
+  assert(plainText(root.querySelector('[data-morph-card="silver"] .morph-observation-label')).includes('未確認'));
+  assert.equal(root.querySelectorAll('.morph-term').length,14);
+ }finally{await close();}
+});
