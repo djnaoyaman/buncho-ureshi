@@ -1,11 +1,15 @@
 import { test, expect } from '@playwright/test';
-async function ready(page) {
+async function ready(page, openControls = true) {
   await page.addInitScript(() => {
     localStorage.setItem('buncho.music.v1', JSON.stringify({enabled:false}));
     localStorage.setItem('buncho.care-sound-choice.v1', JSON.stringify({explicit:true,enabled:false}));
   });
   await page.goto('game/');
   await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');
+  if (openControls) {
+    await page.locator('.game-scene-controls-toggle').click();
+    await expect(page.locator('.game-scene-controls-toggle')).toHaveAttribute('aria-expanded', 'true');
+  }
 }
 async function noScroll(page) {
   expect(await page.evaluate(() => ({x:scrollX,y:scrollY,
@@ -51,6 +55,9 @@ for(const [width,height] of [[320,568],[390,844],[844,390]]) {
     for(const id of ids){
       await selector.locator(`[data-garden-select="${id}"]`).click();
       await expect(selector.locator(`[data-garden-select="${id}"]`)).toHaveAttribute('aria-current','page');
+      const selectedBackground = await selector.locator(`[data-garden-select="${id}"]`).evaluate(el => getComputedStyle(el).background);
+      const neighborBackground = await selector.locator('[data-garden-select]:not([aria-current=page])').first().evaluate(el => getComputedStyle(el).background);
+      expect(selectedBackground).not.toBe(neighborBackground);
       await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-garden-id',id);
       await cover(page,page.locator('.finch-garden-slide').first().locator('.finch-garden-background'));
       await noScroll(page);
@@ -128,5 +135,251 @@ for (const [width, height] of [[320, 568], [390, 844], [844, 390]]) {
     if (width <= 390) {
       await page.screenshot({ path: testInfo.outputPath(`compact-exit-${width}x${height}.png`) });
     }
+  });
+}
+
+for (const [width, height] of [[320, 568], [390, 844]]) {
+  test(`scenery stays clear with reachable controls and birds ${width}x${height}`, async ({page}, info) => {
+    await page.setViewportSize({width, height});
+    await page.emulateMedia({reducedMotion: 'reduce'});
+    await ready(page, false);
+    const toggle = page.locator('.game-scene-controls-toggle');
+    const chrome = ['.game-field-nav', '.game-field-bar', '.game-heading', '.game-scene-toolbar', '.game-bottom-dock', '.game-secondary-menu'];
+    async function closed() {
+      await expect(page.locator('body')).toHaveAttribute('data-scene-controls', 'closed');
+      await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+      await expect(toggle).toHaveText('操作');
+      for (const selector of chrome) await expect(page.locator(selector)).toBeHidden();
+    }
+    async function target(element) {
+      await expect(element).toBeVisible();
+      const r = await element.boundingBox();
+      expect(r.width).toBeGreaterThanOrEqual(44);
+      expect(r.height).toBeGreaterThanOrEqual(44);
+      expect(r.x).toBeGreaterThanOrEqual(0);
+      expect(r.y).toBeGreaterThanOrEqual(0);
+      expect(r.x + r.width).toBeLessThanOrEqual(width);
+      expect(r.y + r.height).toBeLessThanOrEqual(height);
+      expect(await element.evaluate(el => {
+        const r = el.getBoundingClientRect();
+        return el.contains(document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2));
+      })).toBe(true);
+      await element.click({trial: true});
+    }
+    await expect(toggle).toHaveCount(1);
+    await closed();
+    await target(toggle);
+    await target(page.locator('.game-world-exit'));
+    await cover(page, page.locator('.game-main .game-habitat img'));
+    await noScroll(page);
+    await page.screenshot({path: info.outputPath(`scenery-home-closed-${width}.png`)});
+    // Native keyboard activation must retain focus on the stable toggle.
+    await toggle.focus();
+    await page.keyboard.press('Enter');
+    await expect(toggle).toBeFocused();
+    await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    await expect(toggle).toHaveText('景色を見る');
+    await expect(page.locator('body')).toHaveAttribute('data-scene-controls', 'open');
+    await expect(page.locator('.game-field-nav')).toBeVisible();
+    await expect(page.locator('.game-bottom-dock')).toBeVisible();
+    await page.keyboard.press('Space');
+    await closed();
+    await expect(toggle).toBeFocused();
+    const bird = page.locator('.game-room-bird.is-selected');
+    await target(bird);
+    await bird.click();
+    await expect(page.locator('.game-bird-sheet')).toBeVisible();
+    await page.locator('[data-game-care=feed]').click();
+    await expect(page.locator('[data-game-fullness]')).toHaveText('100 / 100');
+    await page.locator('[data-game-close-bird]').click();
+    await expect(page.locator('.game-bird-sheet')).toBeHidden();
+    await closed();
+    await expect(bird).toBeFocused();
+    await toggle.click();
+    await page.locator('.game-field-nav [data-game-panel=outdoors]').click();
+    await expect(page.locator('.game-encounter-host')).toHaveAttribute('aria-busy', 'false');
+    await toggle.click();
+    await closed();
+    for (const selector of ['.finch-garden > header', '.finch-garden-selector', '.finch-garden-dock']) {
+      await expect(page.locator(selector)).toBeHidden();
+    }
+    const gardenBirds = page.locator('.finch-garden-image-plane > button');
+    await expect(gardenBirds).toHaveCount(5);
+    await page.locator('.finch-garden-stage img').evaluateAll(images => Promise.all(images.map(image => image.decode())));
+    for (let i = 0; i < await gardenBirds.count(); i++) await target(gardenBirds.nth(i));
+    await target(toggle);
+    await target(page.locator('[data-game-close-panel]'));
+    await noScroll(page);
+    await page.screenshot({path: info.outputPath(`scenery-garden-closed-${width}.png`)});
+    await page.locator('.finch-garden-household').click();
+    await expect(page.locator('.game-bird-sheet')).toBeVisible();
+    await page.locator('[data-game-close-bird]').click();
+    await closed();
+    await expect(page.locator('.finch-garden-household')).toBeFocused();
+    await toggle.click();
+    await expect(page.locator('.finch-garden-selector')).toBeVisible();
+    await page.locator('[data-garden-select=mizukagami]').click();
+    await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-garden-id', 'mizukagami');
+    await toggle.click();
+    await page.locator('[data-game-close-panel]').click();
+    await expect(page.locator('.game-panel-overlay')).toBeHidden();
+    await closed();
+    await target(bird);
+    await toggle.click();
+    await page.locator('.game-field-nav [data-game-panel=outdoors]').click();
+    await expect(page.locator('.finch-garden-stage')).toBeVisible();
+    await page.locator('[data-game-close-panel]').click();
+    await page.locator('.game-world-exit').click();
+    await expect(page).toHaveURL(/\/encyclopedia\/$/);
+    await expect(toggle).toBeHidden();
+    await expect(page.locator('.game-scene-controls-toggle:visible')).toHaveCount(0);
+    await expect(page.locator('body')).not.toHaveAttribute('data-scene-controls', /.+/);
+    await expect(page.locator('body')).not.toHaveAttribute('data-world', 'buncho');
+    await expect(page.locator('.site-header')).toBeVisible();
+    expect(await page.locator('body').evaluate(el => getComputedStyle(el).overflowY)).not.toBe('hidden');
+    await page.goBack();
+    await expect(page).toHaveURL(/\/game\/$/);
+    await expect(page.locator('body')).toHaveAttribute('data-game-intro', 'done');
+    await expect(toggle).toHaveCount(1);
+    await closed();
+    await target(toggle);
+  });
+}
+
+for (const [width, height] of [[320, 568], [390, 844]]) {
+  test(`designed menu fits eight cards and restores keyboard focus ${width}`, async ({page}, info) => {
+    await page.setViewportSize({width, height});
+    await ready(page);
+    const opener = page.locator('#game-nav-open');
+    const menu = page.locator('.game-secondary-menu');
+    await opener.click();
+    await expect(menu).toBeVisible();
+    const cards = menu.locator('.game-tabs button');
+    await expect(cards).toHaveCount(8);
+    expect(await menu.evaluate(el => el.contains(document.activeElement))).toBe(true);
+    const ids = ['profile', 'relations', 'family', 'diary', 'roster', 'notebook', 'settings', 'help'];
+    for (const id of ids) {
+      const card = menu.locator(`#game-menu-${id}`);
+      await expect(card).toBeVisible();
+      await expect(card.locator('svg')).toHaveCount(1);
+      await card.click({trial: true});
+    }
+    const bounds = await cards.evaluateAll(elements => elements.map(el => {
+      const r = el.getBoundingClientRect();
+      return {x:r.x,y:r.y,w:r.width,h:r.height};
+    }));
+    expect(new Set(bounds.map(r => Math.round(r.x))).size).toBe(2);
+    for (const r of bounds) {
+      expect(r.w).toBeGreaterThanOrEqual(44);
+      expect(r.h).toBeGreaterThanOrEqual(44);
+      expect(r.x).toBeGreaterThanOrEqual(0);
+      expect(r.y).toBeGreaterThanOrEqual(0);
+      expect(r.x + r.w).toBeLessThanOrEqual(width);
+      expect(r.y + r.h).toBeLessThanOrEqual(height);
+    }
+    expect(await menu.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
+    const close = menu.locator('[data-game-close-menu]');
+    const closeBounds = await close.boundingBox();
+    expect(closeBounds.width).toBeGreaterThanOrEqual(44);
+    expect(closeBounds.height).toBeGreaterThanOrEqual(44);
+    await noScroll(page);
+    await page.screenshot({path: info.outputPath(`designed-menu-${width}.png`)});
+    await close.focus();
+    await page.keyboard.press('Enter');
+    await expect(menu).toBeHidden();
+    await expect(opener).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(menu).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(menu).toBeHidden();
+    await expect(opener).toBeFocused();
+  });
+
+  test(`centered welcome dismisses without resetting the saved world ${width}`, async ({page}, info) => {
+    await page.setViewportSize({width, height});
+    // Each Playwright page has an isolated fresh context. Freeze wall time only,
+    // so the paused save can be compared without heartbeat time changes.
+    await page.addInitScript(() => { Date.now = () => 1793683200000; });
+    await ready(page, false);
+    const seeded = await page.evaluate(async () => {
+      const urls = performance.getEntriesByType('resource').map(entry => entry.name);
+      const find = name => urls.find(url => url.includes('/src/' + name + '.js'));
+      const engine = await import(find('engine'));
+      const {openGameStore} = await import(find('game-store'));
+      const store = await openGameStore();
+      try {
+        const world = await store.transact(world => {
+          world.paused = true;
+          engine.renameBird(world, world.birds[0].id, 'しろまる');
+          // The save schema requires integer skipped and both tick endpoints.
+          world.offlineSummary = {ticks:0, newBirds:0, skipped:0, fromTick:world.tick, toTick:world.tick};
+          engine.bumpRevision(world);
+          return world;
+        });
+        return {worldId:world.worldId, birds:world.birds, decor:world.decor, economy:world.economy, tick:world.tick};
+      } finally { store.close(); }
+    });
+    await page.reload();
+    await expect(page.locator('body')).toHaveAttribute('data-game-intro', 'done');
+    const welcome = page.locator('.game-welcome');
+    const close = page.locator('#game-welcome-close');
+    await expect(welcome).toBeVisible();
+    await expect(welcome).toHaveAttribute('role', 'dialog');
+    await expect(welcome).toHaveAttribute('aria-modal', 'false');
+    await expect(welcome).not.toContainText('0日');
+    await expect(close).toBeFocused();
+    await expect(page.locator('body')).toHaveAttribute('data-scene-controls', 'closed');
+    const rect = await welcome.boundingBox();
+    expect(Math.abs(rect.x + rect.width / 2 - width / 2)).toBeLessThanOrEqual(2);
+    expect(Math.abs(rect.y + rect.height / 2 - height / 2)).toBeLessThanOrEqual(2);
+    expect(rect.width).toBeGreaterThan(rect.height);
+    expect(rect.x).toBeGreaterThanOrEqual(0);
+    expect(rect.x + rect.width).toBeLessThanOrEqual(width);
+    expect(rect.y).toBeGreaterThanOrEqual(0);
+    expect(rect.y + rect.height).toBeLessThanOrEqual(height);
+    const closeRect = await close.boundingBox();
+    expect(closeRect.width).toBeGreaterThanOrEqual(44);
+    expect(closeRect.height).toBeGreaterThanOrEqual(44);
+    await close.click({trial:true});
+    await noScroll(page);
+    await page.screenshot({path: info.outputPath(`welcome-centered-${width}.png`)});
+    // A pending greeting belongs to home, not above the outdoor scene.
+    await page.locator('.game-scene-controls-toggle').click();
+    await page.locator('.game-field-nav [data-game-panel=outdoors]').click();
+    await expect(page.locator('.game-encounter-host')).toHaveAttribute('aria-busy', 'false');
+    await expect(page.locator('.finch-garden-stage')).toBeVisible();
+    await expect(welcome).toBeHidden();
+    await page.locator('[data-game-close-panel]').click();
+    await expect(page.locator('.game-panel-overlay')).toBeHidden();
+    await expect(welcome).toBeVisible();
+    await close.focus();
+    await expect(close).toBeFocused();
+    if (width === 320) await page.keyboard.press('Escape');
+    else await close.click();
+    await expect(welcome).toBeHidden();
+    await expect(page.locator('.game-room-bird.is-selected')).toBeFocused();
+    const saved = await page.evaluate(async () => {
+      const url = performance.getEntriesByType('resource').find(entry => entry.name.includes('/src/game-store.js')).name;
+      const {DB_NAME} = await import(url);
+      const db = await new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      try {
+        return await new Promise((resolve, reject) => {
+          const request = db.transaction('world').objectStore('world').get('current');
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => reject(request.error);
+        });
+      } finally { db.close(); }
+    });
+    expect(saved.offlineSummary).toBeNull();
+    expect(saved.paused).toBe(true);
+    expect({worldId:saved.worldId, birds:saved.birds, decor:saved.decor, economy:saved.economy, tick:saved.tick}).toEqual(seeded);
+    await page.reload();
+    await expect(page.locator('body')).toHaveAttribute('data-game-intro', 'done');
+    await expect(welcome).toBeHidden();
+    await expect(page.locator('.game-room-bird')).toHaveCount(seeded.birds.length);
   });
 }
