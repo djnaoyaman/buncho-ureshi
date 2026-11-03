@@ -491,8 +491,8 @@ body[data-world="buncho"] .game-app .game-draw-result button{display:block;min-w
 
 
 /* A foreground observer, facing the birds rather than hidden behind controls. */
-body[data-world="buncho"] .game-owner-companion{display:block;position:absolute;left:0;bottom:calc(72px + env(safe-area-inset-bottom,0px));width:clamp(104px,18cqw,190px);z-index:12;pointer-events:none}
-body[data-world="buncho"] .owner-peek-art{display:block;width:100%;height:auto;filter:drop-shadow(0 3px 3px #4d49322c)}
+body[data-world="buncho"] .game-owner-companion{display:block;position:absolute;left:auto;right:0;bottom:calc(72px + env(safe-area-inset-bottom,0px));width:clamp(104px,18cqw,190px);z-index:12;pointer-events:none}
+body[data-world="buncho"] .owner-peek-art{display:block;width:100%;height:auto;transform:scaleX(-1);filter:drop-shadow(0 3px 3px #4d49322c)}
 .owner-peek-body{transform-origin:50% 100%;animation:owner-lean 8s ease-in-out infinite}
 .owner-peek-glance{opacity:0;animation:owner-glance 8s ease-in-out infinite}
 .owner-peek-back{animation:owner-away 8s ease-in-out infinite}
