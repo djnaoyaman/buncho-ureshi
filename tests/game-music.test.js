@@ -64,3 +64,16 @@ test('same garden event is idempotent and decoded cache stays selected-only',asy
 test('world replacement invalidates a previous pending garden selection',async()=>{let finish;const f=fixture({gardenAssets:readyGardens,fetcher:url=>url.includes('komorebi')?new Promise(r=>finish=r):Promise.resolve({ok:true,arrayBuffer:async()=>new ArrayBuffer(1)})});await f.player.setGarden('komorebi','old');const old=f.player.playCurrentFromGesture();await tick();const next=f.player.setGarden('onsen','new');finish({ok:true,arrayBuffer:async()=>new ArrayBuffer(1)});assert.equal(await old,false);assert.equal(await next,true);assert.equal(f.started.length,1);assert.equal(f.player.state().selected,'garden-onsen');f.player.dispose();});
 test('invalid or truncated compressed endpoint fails honestly without scheduling source',async()=>{const f=fixture({gardenAssets:{komorebi:{music:{...readyGardens.komorebi.music,loopEndSeconds:13}}}});await f.player.setGarden('komorebi','world-a');assert.equal(await f.player.playCurrentFromGesture(),false);assert.equal(f.started.length,0);assert.match(f.player.state().error,/ループ範囲/);f.player.dispose();});
 test('legacy selected original remains fixed and new auto preference persists',async()=>{const f=fixture({storage:{getItem:()=>JSON.stringify({selected:'lakeside',enabled:false}),setItem(){}}});assert.equal(f.player.state().mode,'fixed');assert.equal(f.player.state().enabled,false);f.player.dispose();const a=fixture();await a.player.playAutoFromGesture();const saved=JSON.parse(a.values.get('buncho.music.v1'));assert.equal(saved.mode,'auto');assert.equal(saved.selected,'meadow');a.player.dispose();});
+
+test('garden committed during delayed audio activation replaces the stale track',async()=>{
+ let resume;const f=fixture({gardenAssets:readyGardens});class Delayed extends f.Context {resume(){return new Promise(r=>{resume=()=>{this.state='running';r();};});}}
+ const p=createGameMusic({gardenAssets:readyGardens,Context:Delayed,fetcher:async url=>{f.requests.push(url);return {ok:true,arrayBuffer:async()=>new ArrayBuffer(1)};}});
+ await p.setGarden('komorebi','one');const first=p.playCurrentFromGesture();await p.setGarden('onsen','one');resume();await first;
+ assert.equal(p.state().selected,'garden-onsen');assert.equal(p.state().status,'playing');assert.deepEqual(f.requests,['audio/gardens/onsen.mp3']);p.dispose();
+});
+test('interrupted and failed audio ask for a fresh trusted gesture; off does not',async()=>{
+ const f=fixture();await f.player.playCurrentFromGesture();assert.equal(f.player.needsGesture(),false);
+ f.contexts[0].state='interrupted';assert.equal(f.player.needsGesture(),true);await f.player.playCurrentFromGesture();assert.equal(f.player.needsGesture(),false);
+ f.player.off();assert.equal(f.player.needsGesture(),false);f.player.dispose();
+ const bad=fixture({fetcher:async()=>({ok:false})});await bad.player.playCurrentFromGesture();assert.equal(bad.player.needsGesture(),true);bad.player.dispose();
+});

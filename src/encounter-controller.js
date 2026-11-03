@@ -4,7 +4,7 @@ import {renderEncounterNotebook,renderEncounterPage,renderEncounterScene,renderF
 /** Host injects its single existing transaction store. Never creates a second save/backend. */
 export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()=>null,onHouseholdBird=()=>{},onGarden=async()=>{},onGardenChanged=()=>{},onReward=()=>{},meetFriend=null,completeEncounter=null,system=encounterSystem,initialMode='notebook',base='/buncho-ureshi/'}={}){
   if(typeof getWorld!=='function'||typeof transact!=='function')throw new Error('図鑑の保存先が必要です。');
-  let alive=true,busy=false,mode=initialMode==='garden'?'garden':'notebook',pageId=null,showPhoto=false,generation=0,notice='',worldId=getWorld().worldId;
+  let alive=true,busy=false,mode=initialMode==='garden'?'garden':'notebook',pageId=null,showPhoto=false,generation=0,notice='',worldId=getWorld().worldId,revealGardenId=null;
   const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   function render({focus=false}={}){
     if(!alive)return;const w=getWorld();
@@ -19,8 +19,20 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
     if(selector){
       const selected=selector.querySelector('[aria-current=page]');
       if(oldScroll!=null)selector.scrollLeft=oldScroll;
-      if(selected && (oldScroll==null || selected.dataset.gardenSelect!==oldSelected)){
-        selector.scrollLeft=selected.offsetLeft-selector.offsetLeft;
+      if(selected && (oldScroll==null || selected.dataset.gardenSelect!==oldSelected))revealGardenId=selected.dataset.gardenSelect;
+      if(revealGardenId){
+        // A newly mounted panel can be detached during render. Wait until layout
+        // exists, and carry the intent across any intervening re-render.
+        const reveal=()=>{
+          if(!alive||!selector.isConnected||root.querySelector('.finch-garden-selector')!==selector)return;
+          const target=selector.querySelector('[aria-current=page]');
+          if(!target||target.dataset.gardenSelect!==revealGardenId||!selector.clientWidth)return;
+          const view=selector.getBoundingClientRect(),item=target.getBoundingClientRect();
+          if(item.left<view.left)selector.scrollLeft+=item.left-view.left;
+          else if(item.right>view.right)selector.scrollLeft+=item.right-view.right;
+          revealGardenId=null;
+        };
+        if(typeof requestAnimationFrame==='function')requestAnimationFrame(reveal);else reveal();
       }
     }
     // Restore only within the same garden and world; navigation starts fresh.
@@ -42,7 +54,7 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
   }
   async function click(event){
     const button=event.target.closest('button');if(!button||!root.contains(button)||busy)return;
-    if(button.hasAttribute('data-garden-scroll')){const selector=root.querySelector('.finch-garden-selector');if(selector)selector.scrollBy({left:(button.dataset.gardenScroll==='next'?1:-1)*selector.clientWidth,behavior:'smooth'});return;}
+    if(button.hasAttribute('data-garden-scroll')){const selector=root.querySelector('.finch-garden-selector');if(selector)selector.scrollLeft+=(button.dataset.gardenScroll==='next'?1:-1)*selector.clientWidth;return;}
     if(button.hasAttribute('data-garden-household')){const id=button.dataset.gardenHousehold,w=getWorld();if(w.birds.some(b=>b.id===id&&b.home==='resident'&&['juvenile','adult'].includes(b.stage)))onHouseholdBird(id);return;}
     if(button.hasAttribute('data-encounter-page')){pageId=button.dataset.encounterPage;mode='entry';showPhoto=false;notice='';render({focus:true});return;}
     if(button.hasAttribute('data-encounter-back')||button.hasAttribute('data-encounter-close')){const token=++generation,w=getWorld(),expected={worldId:w.worldId,revision:w.revision};await mutate(current=>system.leaveGarden(current,expected),token);if(!alive||token!==generation)return;mode='notebook';notice='';render({focus:true});return;}
