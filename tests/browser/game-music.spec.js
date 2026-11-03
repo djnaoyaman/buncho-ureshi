@@ -2,14 +2,16 @@ import {test,expect} from '@playwright/test';
 async function audioProbe(page){await page.addInitScript(()=>{
  window.__musicProbe={contexts:0,started:0,stopped:0,active:0,oscillators:0,decoded:[],connected:0};
  const C=window.AudioContext||window.webkitAudioContext;if(!C)return;
- class Tracked extends C{
-  constructor(...args){super(...args);window.__musicProbe.contexts++;}
-  async decodeAudioData(bytes){const b=await super.decodeAudioData(bytes);const ch=b.getChannelData(0);let peak=0;for(let i=0;i<ch.length;i+=113)peak=Math.max(peak,Math.abs(ch[i]));window.__musicProbe.decoded.push({duration:b.duration,peak});return b;}
-  createBufferSource(){const s=super.createBufferSource(),start=s.start.bind(s),stop=s.stop.bind(s);let live=false;s.start=(...a)=>{live=true;window.__musicProbe.started++;window.__musicProbe.active++;return start(...a)};s.stop=(...a)=>{if(live){live=false;window.__musicProbe.active--;window.__musicProbe.stopped++;}return stop(...a)};return s;}
-  createGain(){const g=super.createGain(),connect=g.connect.bind(g);g.connect=(...a)=>{if(a[0]===this.destination)window.__musicProbe.connected++;return connect(...a)};return g;}
-  createOscillator(){const o=super.createOscillator(),start=o.start.bind(o);o.start=(...a)=>{window.__musicProbe.oscillators++;return start(...a)};return o;}
- }
- window.AudioContext=Tracked;window.webkitAudioContext=Tracked;
+ const Tracked=new Proxy(C,{construct(Target,args){
+  const audio=Reflect.construct(Target,args);window.__musicProbe.contexts++;
+  const decode=audio.decodeAudioData.bind(audio);audio.decodeAudioData=async bytes=>{const b=await decode(bytes);const ch=b.getChannelData(0);let peak=0;for(let i=0;i<ch.length;i+=113)peak=Math.max(peak,Math.abs(ch[i]));window.__musicProbe.decoded.push({duration:b.duration,peak});return b;};
+  const createSource=audio.createBufferSource.bind(audio);audio.createBufferSource=()=>{const s=createSource(),start=s.start.bind(s),stop=s.stop.bind(s);let live=false;s.start=(...a)=>{live=true;window.__musicProbe.started++;window.__musicProbe.active++;return start(...a)};s.stop=(...a)=>{if(live){live=false;window.__musicProbe.active--;window.__musicProbe.stopped++;}return stop(...a)};return s;};
+  const createGain=audio.createGain.bind(audio);audio.createGain=()=>{const g=createGain(),connect=g.connect.bind(g);g.connect=(...a)=>{if(a[0]===audio.destination)window.__musicProbe.connected++;return connect(...a)};return g;};
+  const createOsc=audio.createOscillator.bind(audio);audio.createOscillator=()=>{const o=createOsc(),start=o.start.bind(o);o.start=(...a)=>{window.__musicProbe.oscillators++;return start(...a)};return o;};
+  return audio;
+ }});
+ Object.defineProperty(window,'AudioContext',{configurable:true,value:Tracked});
+ if(window.webkitAudioContext)Object.defineProperty(window,'webkitAudioContext',{configurable:true,value:Tracked});
 });}
 test('first real game tap enables original music; four tracks decode, switch, mute and route cleanup',async({page},info)=>{
  test.setTimeout(150000);
