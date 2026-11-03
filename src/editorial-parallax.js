@@ -1,10 +1,11 @@
-// Move the complete photographic plate, never zoom or clip the bird inside it.
-export function photoDrift(center, viewport, limit = 8) {
+// A distinct photo layer counters 16–18% of page scroll. Move the complete
+// plate, never zoom or clip the bird. CSS reserves the full 40/56px excursion.
+export function photoDrift(center, viewport, limit = 56, speed = 0.18) {
   if (!Number.isFinite(center) || !Number.isFinite(viewport) || viewport <= 0) return 0;
-  return Math.max(-limit, Math.min(limit, (viewport / 2 - center) / viewport * limit * 2));
+  return Math.max(-limit, Math.min(limit, (viewport / 2 - center) * speed));
 }
 export function bindEditorialParallax(grid, { enabled = true } = {}) {
-  if (!grid) return () => {};
+  if (!grid || !enabled) return () => {};
   const win = grid.ownerDocument.defaultView, doc = grid.ownerDocument;
   const reduced = win.matchMedia('(prefers-reduced-motion: reduce)');
   const visible = new Set(), offsets = new Map();
@@ -19,7 +20,8 @@ export function bindEditorialParallax(grid, { enabled = true } = {}) {
     const changes = [...visible].filter(f => f.isConnected).map(frame => {
       const rect = frame.getBoundingClientRect();
       const center = rect.top - (offsets.get(frame) || 0) + rect.height / 2;
-      return [frame, photoDrift(center, win.innerHeight)];
+      const compact = win.innerWidth <= 600;
+      return [frame, photoDrift(center, win.innerHeight, compact ? 40 : 56, compact ? 0.16 : 0.18)];
     });
     for (const [frame, offset] of changes) { offsets.set(frame, offset); frame.style.setProperty('--photo-drift', `${offset.toFixed(2)}px`); }
   };
