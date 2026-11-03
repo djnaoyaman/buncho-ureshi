@@ -16,7 +16,7 @@ for(const [tier,style,width] of [['cozy','warm',320],['lovely','mid-century',390
   await page.locator(`[data-decor-slot="${slot}"]`).click();await page.locator(`[data-decor-tier="${chosenTier}"]`).click();
   const id=`${slot}-rose-${chosenTier}`;await page.locator(`[data-decor-preview="${id}"]`).click();
   await expect(page.locator('[data-preview-item]')).toHaveAttribute('data-preview-item',id);
-  await expect(page.locator(`[data-preview-item] [data-furniture-style="${style}"]`)).toHaveCount(1);
+  await expect(page.locator(`[data-preview-item] > .game-item-art [data-furniture-style="${style}"]`)).toHaveCount(1);
   expect((await record(page)).decor.equipped[slot]).toBe(world.decor.equipped[slot]);
   await page.locator('[data-decor-cancel]').click();await page.locator(`[data-decor-preview="${id}"]`).click();await page.locator(`[data-decor-equip="${id}"]`).click();world.decor.equipped[slot]=id;
  }
