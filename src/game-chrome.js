@@ -8,7 +8,7 @@ export function createWorldChrome(doc) {
   viewport?.addEventListener('resize',updateViewport);viewport?.addEventListener('scroll',updateViewport);doc.defaultView.addEventListener('resize',updateViewport);
   const originalWorldControl=toggle.getAttribute('data-game-world-control');
   const siteMenuFragment=doc.createDocumentFragment(),siteMenuNodes=[...menu.children].map(node=>{const marker=doc.createComment('site-menu-return');node.before(marker);return {node,marker};});
-  const exit=doc.createElement('a');exit.className='game-world-exit';exit.textContent='図鑑へ戻る';exit.href=doc.querySelector('base').getAttribute('href')+'encyclopedia/';exit.hidden=true;exit.setAttribute('data-game-world-control','');toggle.before(exit);
+  const exit=doc.createElement('a');exit.className='game-world-exit';exit.textContent='図鑑';exit.setAttribute('aria-label','図鑑へ戻る');exit.title='図鑑へ戻る';exit.href=doc.querySelector('base').getAttribute('href')+'encyclopedia/';exit.hidden=true;exit.setAttribute('data-game-world-control','');toggle.before(exit);
   const original={label:toggle.getAttribute('aria-label'),html:toggle.innerHTML,href:brand.getAttribute('href'),brandLabel:brand.getAttribute('aria-label')};
   const extras=doc.createElement('div');extras.className='world-menu-extras';extras.hidden=true;extras.setAttribute('data-game-world-control','');
   const controls=doc.createElement('nav');controls.className='world-game-controls';controls.setAttribute('aria-label','文鳥ぐらし');controls.innerHTML='<button type="button" data-world-action="settings">暮らしの設定</button><button type="button" data-world-action="help">あそびかた</button>';extras.append(controls);
