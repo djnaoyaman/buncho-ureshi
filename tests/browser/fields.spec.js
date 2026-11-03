@@ -164,7 +164,7 @@ for(const width of [390,1440])test(`illustrated home park friend and rich decor 
   else{await expect(page.locator('.game-room')).toHaveAttribute('data-field',place);await decodeScene(page);}
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
   await expect(page.locator('.game-message.is-error')).toHaveCount(0);
-  if(info.project.name==='chromium'){
+  if(info.project.name==='chrome'){
    await info.attach(`field-${place}-${width}`,{body:await page.locator(place==='decorate'?'.game-decoration':'.game-panel').screenshot({animations:'disabled'}),contentType:'image/png'});
    await page.evaluate(()=>scrollTo(0,0));await info.attach(`field-viewport-${place}-${width}`,{body:await page.screenshot({animations:'disabled'}),contentType:'image/png'});
    if(place!=='decorate')await info.attach(`field-scene-${place}-${width}`,{body:await page.locator('.game-room').screenshot({animations:'disabled'}),contentType:'image/png'});
@@ -183,11 +183,11 @@ test('newer panel navigation is not overwritten by an interrupted pending trip',
 
 test('first session and twelve long-name birds retain readable mobile viewport and touch targets',async({page},info)=>{
  await page.setViewportSize({width:390,height:1000});await openGame(page);await decodeScene(page);
- if(info.project.name==='chromium')await info.attach('field-first-session-viewport-390',{body:await page.screenshot({animations:'disabled'}),contentType:'image/png'});
+ if(info.project.name==='chrome')await info.attach('field-first-session-viewport-390',{body:await page.screenshot({animations:'disabled'}),contentType:'image/png'});
  const w=createWorld(fixedNow);for(let i=1;i<12;i++)createBird(w,{home:i<10?'resident':'visitor',name:'あいうえおかきくけこさしすせそた'});w.paused=true;
  await seedWorld(page,w);await openGame(page);await decodeScene(page);await expect(page.locator('.game-room-bird')).toHaveCount(12);
  const issues=await page.locator('.game-room').evaluate(room=>{const r=room.getBoundingClientRect();return [...room.querySelectorAll('.game-room-bird')].flatMap(b=>{const q=b.getBoundingClientRect();return q.width<44||q.height<44||q.left<r.left-1||q.right>r.right+1||q.top<r.top-1||q.bottom>r.bottom+1?[b.dataset.birdId]:[];});});expect(issues).toEqual([]);
- if(info.project.name==='chromium'){await page.evaluate(()=>scrollTo(0,0));await info.attach('field-twelve-longnames-viewport-390',{body:await page.screenshot({animations:'disabled'}),contentType:'image/png'});await info.attach('field-twelve-longnames-scene-390',{body:await page.locator('.game-room').screenshot({animations:'disabled'}),contentType:'image/png'});}
+ if(info.project.name==='chrome'){await page.evaluate(()=>scrollTo(0,0));await info.attach('field-twelve-longnames-viewport-390',{body:await page.screenshot({animations:'disabled'}),contentType:'image/png'});await info.attach('field-twelve-longnames-scene-390',{body:await page.locator('.game-room').screenshot({animations:'disabled'}),contentType:'image/png'});}
 });
 
 test('secondary drawer opens and closes by real keyboard controls without losing focus or scrolling the scene',async({page})=>{
@@ -217,7 +217,7 @@ for(const size of [{width:320,height:568},{width:390,height:844},{width:1440,hei
  await page.keyboard.press('Escape');await expect(sheet).not.toBeVisible();await expect(bird).toBeFocused();expect(Math.abs(await page.evaluate(()=>scrollY)-before)).toBeLessThan(4);
  await bird.click();await page.locator('[data-game-details="sheet-talk"] summary').click();await page.locator('#game-words').fill('まだ送らないことば');await page.locator('[data-game-close-bird]').click();await expect(bird).toBeFocused();
  await bird.click();await page.locator('[data-game-details="sheet-talk"] summary').click();await expect(page.locator('#game-words')).toHaveValue('まだ送らないことば');
- if(info.project.name==='chromium')await info.attach(`game-first-sheet-${size.width}`,{body:await page.screenshot({animations:'disabled'}),contentType:'image/png'});
+ if(info.project.name==='chrome')await info.attach(`game-first-sheet-${size.width}`,{body:await page.screenshot({animations:'disabled'}),contentType:'image/png'});
  await page.locator('[data-game-close-bird]').click();await page.locator('[data-field-travel="park"]').click();await expect(page.locator('.game-room')).toHaveAttribute('data-field','park');await expect(sheet).not.toBeVisible();
  await tab(page,'decorate');await expect(page.locator('.game-decoration')).toBeVisible();await expect(sheet).not.toBeVisible();
 });
@@ -276,15 +276,15 @@ test('all nine slots show 24 future items without granting locked or unowned equ
 for(const width of [320,390,1440])test(`immersive Gem world, complete collection and centered bird pixels at ${width}px`,async({page},info)=>{
  const w=collectibleWorld();await seedWorld(page,w);await page.setViewportSize({width,height:1000});await page.emulateMedia({reducedMotion:'reduce'});await openGame(page);await decodeScene(page);
  await expect(page.locator('.game-field-nav button')).toHaveCount(3);await expect(page.locator('.game-bottom-dock [data-game-panel="decorate"]')).toBeVisible();await expect(page.locator('#game-scene-resident')).toHaveCount(0);
- if(info.project.name==='chromium')await info.attach(`gem-main-${width}`,{body:await page.screenshot({animations:'disabled'}),contentType:'image/png'});
+ if(info.project.name==='chrome')await info.attach(`gem-main-${width}`,{body:await page.screenshot({animations:'disabled'}),contentType:'image/png'});
  const pickup=page.locator('[data-gem-collect]').first(),before=(await readWorld(page)).decor.points;await pickup.click();await expect(page.locator('.game-gem-reward')).toContainText('+8 Gem');expect((await readWorld(page)).decor.points).toBe(before+8);
- if(info.project.name==='chromium')await info.attach(`gem-collect-${width}`,{body:await page.screenshot({animations:'disabled'}),contentType:'image/png'});
+ if(info.project.name==='chrome')await info.attach(`gem-collect-${width}`,{body:await page.screenshot({animations:'disabled'}),contentType:'image/png'});
  await tab(page,'profile');await expect(page.locator('.game-profile-heading .game-mini-bird')).toBeVisible();
  const placement=await page.locator('.game-profile-heading').evaluate(h=>{const b=h.querySelector('.game-mini-bird').getBoundingClientRect(),r=h.getBoundingClientRect();return{width:b.width,centerError:Math.abs((b.left+b.right-r.left-r.right)/2)};});expect(placement.width).toBeGreaterThanOrEqual(200);expect(placement.centerError).toBeLessThan(3);
- if(info.project.name==='chromium')await info.attach(`gem-profile-${width}`,{body:await page.screenshot({animations:'disabled'}),contentType:'image/png'});
+ if(info.project.name==='chrome')await info.attach(`gem-profile-${width}`,{body:await page.screenshot({animations:'disabled'}),contentType:'image/png'});
  await tab(page,'decorate');await page.locator('[data-decor-slot="swing"]').click();await expect(page.locator('[data-decor-preview]')).toHaveCount(24);
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
- if(info.project.name==='chromium')await info.attach(`gem-all-24-${width}`,{body:await page.locator('.game-decoration').screenshot({animations:'disabled'}),contentType:'image/png'});
+ if(info.project.name==='chrome')await info.attach(`gem-all-24-${width}`,{body:await page.locator('.game-decoration').screenshot({animations:'disabled'}),contentType:'image/png'});
 });
 
 test('horizontal bird gestures and keyboard arrows preserve drafts while vertical movement does not switch birds',async({page})=>{
@@ -310,7 +310,7 @@ test('friend carousel centers with accessible arrows, allows vertical scrolling 
  // the overlay, while the immersive document remains fixed. This is not a physical-phone swipe claim.
  const panel=page.locator('.game-panel-overlay[open] .game-panel');await panel.evaluate(el=>el.scrollTo(0,0));const box=await track.boundingBox();await page.mouse.move(box.x+box.width/2,Math.min(560,box.y+20));await page.mouse.wheel(0,160);await expect.poll(()=>panel.evaluate(el=>el.scrollTop)).toBeGreaterThan(0);expect(await page.evaluate(()=>scrollY)).toBe(0);
  await page.setViewportSize({width:390,height:844});
- if(info.project.name==='chromium')await info.attach('gem-friend-carousel-390',{body:await page.locator('.game-friends').screenshot({animations:'disabled'}),contentType:'image/png'});
+ if(info.project.name==='chrome')await info.attach('gem-friend-carousel-390',{body:await page.locator('.game-friends').screenshot({animations:'disabled'}),contentType:'image/png'});
  await target.locator('[data-field-travel="friend"]').click();await expect(page.locator('.game-room')).toHaveAttribute('data-field','friend');expect((await readWorld(page)).field.hostId).toBe(friends[1].id);
  await tab(page,'friends');await page.locator('[data-friend-step="1"]').click();await page.locator(`[data-friend-card="${friends[1].id}"] [data-field-invite]`).click();await expect.poll(async()=>(await readWorld(page)).birds.find(b=>b.id===friends[1].id).home).toBe('visitor');
  await expect(page.locator(`[data-friend-card="${friends[1].id}"] [data-field-invite]`)).toBeDisabled();
@@ -320,7 +320,7 @@ test('approved title logo starts centered for two seconds once per game entry an
  await page.setViewportSize({width:390,height:844});await page.emulateMedia({reducedMotion:'reduce'});await page.goto('game/');
  const intro=page.locator('.game-logo-intro');await expect(intro).toBeVisible();const started=Date.now();await expect(intro.locator('img')).toHaveAttribute('alt','おもちの文鳥ぐらし');expect(await intro.evaluate(e=>getComputedStyle(e).animationName)).toBe('none');
  const box=await intro.locator('img').boundingBox();expect(Math.abs(box.x+box.width/2-195)).toBeLessThan(2);expect(Math.abs(box.y+box.height/2-422)).toBeLessThan(2);
- if(info.project.name==='chromium')await info.attach('gem-startup-logo-390',{body:await page.screenshot(),contentType:'image/png'});
+ if(info.project.name==='chrome')await info.attach('gem-startup-logo-390',{body:await page.screenshot(),contentType:'image/png'});
  await expect(intro).toHaveCount(0);expect(Date.now()-started).toBeGreaterThan(1200);await page.locator('[data-field-travel="park"]').click();await expect(page.locator('.game-logo-intro')).toHaveCount(0);await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');
 });
 // Append to tests/browser/fields.spec.js to reuse its supported seed/decode helpers.
@@ -335,7 +335,7 @@ for(const width of [320,390])test(`furniture: eight actual forms keep mounted co
   for(const slot of DECOR_SLOTS)await expect(page.locator(`[data-equipped-slot="${slot.id}"] svg`)).toHaveAttribute('data-form',String(variant));
   const outliers=await page.locator('.game-room').evaluate(room=>{const r=room.getBoundingClientRect();return [...room.querySelectorAll('.game-furnishing')].filter(e=>e.dataset.equippedSlot!=='paper').flatMap(e=>{const b=e.getBoundingClientRect();return b.left<r.left-1||b.right>r.right+1||b.top<r.top-1||b.bottom>r.bottom+1?[e.dataset.equippedSlot]:[];});});expect(outliers).toEqual([]);
   const restored=await readWorld(page);expect(restored.decor.inventory).toEqual(w.decor.inventory);expect(restored.decor.equipped).toEqual(w.decor.equipped);
-  if(info.project.name==='chromium')await info.attach(`furniture-mounted-${width}-form-${variant+1}`,{body:await page.locator('.game-room').screenshot({animations:'disabled'}),contentType:'image/png'});
+  if(info.project.name==='chrome')await info.attach(`furniture-mounted-${width}-form-${variant+1}`,{body:await page.locator('.game-room').screenshot({animations:'disabled'}),contentType:'image/png'});
  }
 });
 
@@ -350,7 +350,7 @@ for(const width of [320,390,1024])for(const contacts of [0,1,2,3,12,127])test(`r
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
  const before=await readWorld(page);
  if(contacts){await map.locator('summary').first().click();await expect(map.locator('details').first()).toHaveAttribute('open','');await expect(map.locator('details').first()).toContainText('親しさ 80');await expect(map.locator('details').first()).toContainText('親しさ 20');await map.locator('summary').first().click();}
- if(info.project.name==='chromium')await info.attach(`relationship-map-${width}-${contacts}`,{body:await map.screenshot({animations:'disabled'}),contentType:'image/png'});
+ if(info.project.name==='chrome')await info.attach(`relationship-map-${width}-${contacts}`,{body:await map.screenshot({animations:'disabled'}),contentType:'image/png'});
  if(contacts>2){await page.locator('#game-rel-page-next').click();await expect(map).toHaveAttribute('data-rel-page','1');await page.locator('#game-rel-page-prev').click();await expect(map).toHaveAttribute('data-rel-page','0');}
  if(contacts){await map.locator('[data-rel-focus-id="b2"]').click();await expect(map).toHaveAttribute('data-rel-selected','b2');await expect(map).toBeFocused();}
  expect(await readWorld(page)).toEqual(before);

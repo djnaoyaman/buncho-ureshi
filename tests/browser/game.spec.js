@@ -176,7 +176,7 @@ test('verification control produces autonomous generations, bounded roster, and 
   await expect(page.locator('.game-roster [data-game-select]')).toHaveCount(world.birds.length);
   await tab(page, 'diary');
   await page.locator('.game-full-diary > summary').click();await expect(page.locator('.game-full-diary .game-diary li')).toHaveCount(world.events.length);
-  if (testInfo.project.name === 'chromium') {
+  if (testInfo.project.name === 'chrome') {
     await tab(page, 'garden');
     for (const width of [375, 768, 1440]) {
       await page.setViewportSize({ width, height: 1000 });
@@ -381,7 +381,7 @@ test('family card hands real game names and family composition into the art stud
   for(const id of child.parents)await expect(page.locator(`.game-family-node[data-family-focus="${id}"]`)).toBeVisible();
   expect(await page.locator('.family-edge-blood').count()).toBeGreaterThan(0);
   await page.setViewportSize({width:390,height:900});
-  if(info.project.name==='chromium')await info.attach('gem-family-390',{body:await page.locator('.game-family-tree').screenshot({animations:'disabled'}),contentType:'image/png'});
+  if(info.project.name==='chrome')await info.attach('gem-family-390',{body:await page.locator('.game-family-tree').screenshot({animations:'disabled'}),contentType:'image/png'});
   await page.locator(`[data-game-art="${child.id}"]`).click();
   await expect(page).toHaveURL(/\/buncho-ureshi\/studio\/$/);
   await expect(page.locator('[data-studio="canvas"]')).toBeVisible();
@@ -499,7 +499,7 @@ for (const residents of [1, 10]) test(`${residents === 1 ? 'initial one-bird' : 
       if(getComputedStyle(roomElement).display==='grid')errors.push('rejected grid returned');
       if(document.documentElement.scrollWidth>innerWidth+1)errors.push('document overflow');
       return errors;
-    },{residents,viewportWidth:width,compact,expectedPositions:compact?Object.fromEntries(seeded.birds.map(b=>[b.id,fieldPositions([b],width<=600?'tall':'wide','home').get(b.id)])):Object.fromEntries(fieldPositions(seeded.birds,width<=600?'tall':'wide','home')),assetGeometry:ALL_SPRITE_ASSETS}),{message:`${residents} birds, ${width}px ${orientation}: decoded, bounded, proportional scene`}).toEqual([]);};
+    },{residents,viewportWidth:width,compact,expectedPositions:compact?Object.fromEntries(seeded.birds.map(b=>[b.id,{...fieldPositions([b],width<=600?'tall':'wide','home').get(b.id),x:.5}])):Object.fromEntries(fieldPositions(seeded.birds,width<=600?'tall':'wide','home')),assetGeometry:ALL_SPRITE_ASSETS}),{message:`${residents} birds, ${width}px ${orientation}: decoded, bounded, proportional scene`}).toEqual([]);};
     await assertGeometry();
     if(compact){
       // Every saved bird remains reachable through actual 44px controls even
@@ -516,9 +516,9 @@ for (const residents of [1, 10]) test(`${residents === 1 ? 'initial one-bird' : 
         expect(await control.evaluate(el=>{const r=el.getBoundingClientRect(),hit=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);return r.width>=44&&r.height>=44&&r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight&&(hit===el||el.contains(hit));})).toBe(true);
       }
       if(residents>1){await next.focus();await page.keyboard.press('Enter');await expect(page.locator('.game-room-bird')).toHaveAttribute('data-bird-id',seeded.birds[0].id);await assertGeometry();}
-      if(testInfo.project.name==='chromium')await testInfo.attach(`game-short-${residents}-birds-${width}x${height}`,{body:await page.screenshot({animations:'disabled'}),contentType:'image/png'});
+      if(testInfo.project.name==='chrome')await testInfo.attach(`game-short-${residents}-birds-${width}x${height}`,{body:await page.screenshot({animations:'disabled'}),contentType:'image/png'});
     }
-    if(testInfo.project.name==='chromium'&&[320,375,1440].includes(width)&&orientation==='portrait')await testInfo.attach(`game-field-${residents}-birds-${width}`,{body:await page.locator('.game-room').screenshot({animations:'disabled'}),contentType:'image/png'});
+    if(testInfo.project.name==='chrome'&&[320,375,1440].includes(width)&&orientation==='portrait')await testInfo.attach(`game-field-${residents}-birds-${width}`,{body:await page.locator('.game-room').screenshot({animations:'disabled'}),contentType:'image/png'});
   }
   for(const bird of seeded.birds){
     await page.locator(`.game-room-bird[data-game-select="${bird.id}"]`).click();
@@ -574,7 +574,7 @@ test('all color stages decode and nest-bound young remain reachable through the 
       return errors;
     },ALL_SPRITE_ASSETS);
     expect(errors).toEqual([]);
-    if(testInfo.project.name==='chromium')await testInfo.attach(`game-field-mixed-stages-${width}`,{body:await page.locator('.game-room').screenshot({animations:'disabled'}),contentType:'image/png'});
+    if(testInfo.project.name==='chrome')await testInfo.attach(`game-field-mixed-stages-${width}`,{body:await page.locator('.game-room').screenshot({animations:'disabled'}),contentType:'image/png'});
   }
 });
 
@@ -595,7 +595,7 @@ test('active social partners meet on nearby real anchors and mobile keeps one re
       return{distance:Math.hypot(a.x-b.x,a.y-b.y)/box.width,captionInside:caption.left>=box.left&&caption.right<=box.right&&caption.bottom<=box.bottom,captionHeight:caption.height};
     },pairIds);
     expect(geometry.distance).toBeLessThan(.35);expect(geometry.captionInside).toBe(true);expect(geometry.captionHeight).toBeLessThan(60);
-    if(info.project.name==='chromium'&&width!==320)await info.attach(`game-field-social-${width}`,{body:await page.locator('.game-room').screenshot({animations:'disabled'}),contentType:'image/png'});
+    if(info.project.name==='chrome'&&width!==320)await info.attach(`game-field-social-${width}`,{body:await page.locator('.game-room').screenshot({animations:'disabled'}),contentType:'image/png'});
   }
 });
 
@@ -626,7 +626,7 @@ test('real left and right social frames face their partner, and feeding uses the
   for(const width of [320,375,1440]){
     await page.setViewportSize({width,height:1000});await decodeScene(page);
     await expect.poll(()=>page.locator('.game-room-bird').evaluateAll(nodes=>{const pairs=nodes.map(n=>({x:n.getBoundingClientRect().x,pose:n.querySelector('.game-sprite').dataset.pose})).sort((a,b)=>a.x-b.x);return pairs.map(p=>p.pose);})).toEqual(['right','left']);
-    if(info.project.name==='chromium')await info.attach(`natural-pair-facing-${width}`,{body:await page.locator('.game-room').screenshot(),contentType:'image/png'});
+    if(info.project.name==='chrome')await info.attach(`natural-pair-facing-${width}`,{body:await page.locator('.game-room').screenshot(),contentType:'image/png'});
   }
   world.birds[0].action={kind:'eat',target:null,startedTick:world.tick};world.birds[1].action={kind:'rest',target:null,startedTick:world.tick};world.paused=false;await seedWorld(page,world);await openGame(page);
   await expect.poll(()=>page.locator(`.game-room [data-bird-id="${world.birds[0].id}"] .game-sprite`).getAttribute('data-pose'),{timeout:14000}).toBe('peck');
@@ -638,6 +638,6 @@ test('a lone juvenile silver feeding sideways remains fully inside the natural h
  for(const width of [320,375,1440]){await page.setViewportSize({width,height:1000});await decodeScene(page);
   await expect(page.locator('.game-room-bird .game-sprite')).toHaveAttribute('data-pose','right');
   const contained=await page.locator('.game-room').evaluate(room=>{const r=room.getBoundingClientRect(),v=room.querySelector('.game-pose-window').getBoundingClientRect();return v.left>=r.left-1&&v.right<=r.right+1&&v.top>=r.top-1&&v.bottom<=r.bottom+1;});expect(contained).toBe(true);
-  if(info.project.name==='chromium')await info.attach(`natural-single-sideways-food-${width}`,{body:await page.locator('.game-room').screenshot(),contentType:'image/png'});
+  if(info.project.name==='chrome')await info.attach(`natural-single-sideways-food-${width}`,{body:await page.locator('.game-room').screenshot(),contentType:'image/png'});
  }
 });

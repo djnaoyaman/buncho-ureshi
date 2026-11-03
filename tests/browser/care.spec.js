@@ -139,12 +139,12 @@ for(const width of [320,768,1440])test(`care controls and floor-only tint fit ${
   const before=await page.locator('.game-room-bird').evaluateAll(nodes=>nodes.map(node=>({id:node.dataset.birdId,style:node.getAttribute('style'),src:node.querySelector('img').src,filter:getComputedStyle(node.querySelector('img')).filter})));
   expect(before.every(b=>b.filter==='none')).toBe(true);const floor=page.locator('.game-floor-soil');expect(Number(await floor.evaluate(node=>getComputedStyle(node).opacity))).toBeGreaterThan(0);expect(Number(await floor.evaluate(node=>getComputedStyle(node).opacity))).toBeLessThanOrEqual(.22);await expect(floor).toHaveAttribute('aria-hidden','true');await expect(floor).toHaveCSS('pointer-events','none');await expect(floor).toHaveCSS('z-index','1');
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
-  if(info.project.name==='chromium')await page.locator('.game-room').screenshot({path:info.outputPath(`care-floor-dirty-${width}.png`),animations:'disabled'});
+  if(info.project.name==='chrome')await page.locator('.game-room').screenshot({path:info.outputPath(`care-floor-dirty-${width}.png`),animations:'disabled'});
   await closeCare(page);await page.locator('[data-game-care="clean"]').click();await expect(floor).toHaveCSS('opacity','0');
   expect(await page.locator('.game-room-bird').evaluateAll(nodes=>nodes.map(node=>({id:node.dataset.birdId,style:node.getAttribute('style'),src:node.querySelector('img').src,filter:getComputedStyle(node.querySelector('img')).filter})))).toEqual(before);
   await openCare(page);await page.locator('[data-game-care="pet"]').click();await expect(page.locator('.game-app')).toHaveAttribute('data-care-motion','off');await expect(page.locator('.game-care-feedback').last()).toContainText('ぴっ');
   await page.locator('.game-room img').evaluateAll(async images=>{await Promise.all(images.map(image=>image.decode()));await new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(done)));});
-  if(info.project.name==='chromium'){await page.locator('.game-care').screenshot({path:info.outputPath(`care-controls-${width}.png`),animations:'disabled'});await closeCare(page);await page.locator('.game-room').screenshot({path:info.outputPath(`care-floor-clean-${width}.png`),animations:'disabled'});}
+  if(info.project.name==='chrome'){await page.locator('.game-care').screenshot({path:info.outputPath(`care-controls-${width}.png`),animations:'disabled'});await closeCare(page);await page.locator('.game-room').screenshot({path:info.outputPath(`care-floor-clean-${width}.png`),animations:'disabled'});}
 });
 
 test('care Gems share real-window bars and survive reload without reward replay',async({page})=>{

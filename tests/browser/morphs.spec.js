@@ -123,7 +123,7 @@ for(const width of [320,375,768,1440])test(`atlas fits ${width}px with full-fram
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),route).toBe(true);
     const overflowing=await page.locator('main .morph-atlas').evaluate(root=>[...root.querySelectorAll('h1,h2,h3,select,button,img,figure')].filter(node=>{const r=node.getBoundingClientRect();return r.width>0&&(r.left< -1||r.right>innerWidth+1);}).map(node=>({tag:node.tagName,text:node.textContent.slice(0,60)})));
     expect(overflowing,route).toEqual([]);
-    if(info.project.name==='chromium'){
+    if(info.project.name==='chrome'){
       const name=`atlas-${route.split('/')[1]||'overview'}-${width}.png`;
       await page.screenshot({path:info.outputPath(name),animations:'disabled',fullPage:false});
       if(route==='colors/'&&width===375)await page.screenshot({path:info.outputPath('atlas-overview-full-375.png'),animations:'disabled',fullPage:true});
