@@ -449,3 +449,11 @@ body[data-world="buncho"] .game-music-volume{white-space:nowrap}body[data-world=
 body[data-world="buncho"] .finch-garden .finch-garden-selector button[aria-current=page]{background:linear-gradient(#82a875,#527a50);border-color:#e0edc2;color:#fffdec;box-shadow:0 3px 0 #375537}
 
 body[data-world="buncho"]:has(.finch-garden-dock>details[open]) .game-scene-controls-toggle{display:none}
+
+/* The selected bird's caption belongs to the viewport HUD, not the cropped art plane. */
+body[data-world="buncho"] .game-main>.game-scene-caption{position:absolute;top:calc(136px + env(safe-area-inset-top,0px));bottom:auto;left:50%;transform:translateX(-50%);z-index:42;max-width:calc(100% - 24px);width:max-content;display:flex;flex-wrap:wrap;justify-content:center;gap:2px 8px;padding:6px 12px;border:1px solid #c9b98f;border-radius:14px;background:#fffaf0;color:#264633;font-size:13px;line-height:1.5;box-shadow:0 2px 5px #263e2526;pointer-events:none}
+body[data-world="buncho"] .game-main>.game-scene-caption strong{max-width:100%;white-space:normal;overflow-wrap:anywhere;overflow:visible;text-overflow:clip}
+body[data-world="buncho"] .game-main>.game-scene-caption>span{font-size:12px;white-space:normal;overflow:visible;max-width:100%}
+body[data-world="buncho"][data-scene-controls="closed"] .game-main>.game-scene-caption{top:auto;bottom:calc(16px + env(safe-area-inset-bottom,0px))}
+
+@media(max-width:600px){body[data-world="buncho"][data-scene-controls="open"] .game-main>.game-scene-caption{top:calc(176px + env(safe-area-inset-top,0px))}}
