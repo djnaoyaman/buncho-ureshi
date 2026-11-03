@@ -28,9 +28,18 @@ for (const width of [320,390,768,1280]) {
         if (!img.naturalWidth) throw new Error(`Image has no decoded pixels: ${img.currentSrc}`);
       })));
       expect(await page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth + 1),`${name} overflows ${width}`).toBe(true);
-      const primary=page.locator('#menu-toggle'); await primary.click();
-      await expect(page.locator('#menu')).toBeVisible(); await primary.click();
-      await expect(page.locator('#menu')).toBeHidden();
+      if (name === 'game') {
+        const controls = page.locator('.game-scene-controls-toggle');
+        await controls.click(); await expect(controls).toHaveAttribute('aria-expanded', 'true');
+        await page.locator('#game-nav-open').click();
+        await expect(page.locator('.game-secondary-menu')).toHaveAttribute('open', '');
+        await page.locator('[data-game-close-menu]').click();
+        await expect(page.locator('.game-secondary-menu')).not.toHaveAttribute('open', '');
+      } else {
+        const primary=page.locator('#menu-toggle'); await primary.click();
+        await expect(page.locator('#menu')).toBeVisible(); await primary.click();
+        await expect(page.locator('#menu')).toBeHidden();
+      }
       await info.attach(`contemporary-${name}-${width}`,{body:await page.screenshot({fullPage:name!=='encyclopedia'&&name!=='atlas',animations:'disabled'}),contentType:'image/png'});
     }
     expect(errors).toEqual([]);

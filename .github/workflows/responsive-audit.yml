@@ -1,0 +1,38 @@
+name: Responsive route audit
+on:
+  pull_request:
+    paths:
+      - 'tests/browser/all-pages-responsive.spec.js'
+      - '.github/workflows/responsive-audit.yml'
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chrome, edge, webkit]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npx playwright install --with-deps webkit chromium
+      - run: npx playwright install chrome msedge
+      - run: npx playwright test tests/browser/all-pages-responsive.spec.js --project=${{ matrix.browser }} --retries=0
+      - run: npx playwright test tests/browser/care.spec.js --grep 'existing v1' --project=${{ matrix.browser }} --retries=0
+      - run: npx playwright test tests/browser/trial-smoke.spec.js --project=${{ matrix.browser }} --retries=0
+      - run: npx playwright test tests/browser/contemporary.spec.js --project=${{ matrix.browser }} --retries=0
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: responsive-${{ matrix.browser }}-${{ github.sha }}
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14
