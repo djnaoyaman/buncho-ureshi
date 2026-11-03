@@ -2,6 +2,12 @@ name: Responsive route audit
 on:
   pull_request:
     paths:
+      - 'src/**'
+      - 'public/**'
+      - 'tests/browser/care.spec.js'
+      - 'tests/browser/contemporary.spec.js'
+      - 'tests/browser/game-viewport.spec.js'
+      - 'tests/browser/trial-smoke.spec.js'
       - 'tests/browser/all-pages-responsive.spec.js'
       - '.github/workflows/responsive-audit.yml'
 permissions:
