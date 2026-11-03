@@ -24,8 +24,8 @@ jobs:
       - run: npx playwright install --with-deps chromium firefox webkit
       - name: Native care audio (not mocked)
         run: npx playwright test tests/browser/care.spec.js --project=firefox --grep "care sound opt-in" --retries=0
-      - name: UI-only browser verification (original BGM explicitly unverified)
-        run: npx playwright test
+      - name: Diagnostic UI-only browser verification (max 12 failures; original BGM unverified)
+        run: npx playwright test --max-failures=12
         env:
           REFERENCE_QA: "1"
       - uses: actions/upload-artifact@v4
@@ -35,4 +35,16 @@ jobs:
           path: |
             playwright-report/
             test-results/
+          retention-days: 14
+
+      - name: Upload bounded visual evidence separately from traces
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ui-visual-evidence-${{ github.sha }}
+          path: |
+            playwright-report/data/*.png
+            playwright-report/data/*.jpg
+            test-results/**/*.png
+            test-results/**/error-context.md
           retention-days: 14

@@ -18,7 +18,24 @@ async function chooseBird(page,id){
   throw new Error(`Bird ${id} was not reachable through the visible carousel`);
 }
 
-async function tab(page,name){await closeCare(page);if(await page.locator('.game-panel-overlay').isVisible())await page.locator('[data-game-close-panel]').click();const target=page.locator(`[data-game-panel="${name}"]`).first();if(!await target.isVisible())await page.locator('[data-game-open-menu]').click();await target.click();}
+async function tab(page, name) {
+  if(await page.locator('.game-bird-sheet').isVisible())await page.locator('[data-game-close-bird]').click();
+  if(await page.locator('.game-panel-overlay').isVisible())await page.locator('[data-game-close-panel]').click();
+  const direct = name==='garden' ? '.game-field-nav [data-field-travel="home"]'
+    : ['decorate','family'].includes(name) ? `.game-bottom-dock [data-game-panel="${name}"]`
+    : name==='friends' ? '.game-field-nav [data-game-panel="friends"]' : null;
+  if(direct)await page.locator(direct).click();
+  else {
+    const menu=page.locator('.game-secondary-menu');
+    if(!await menu.evaluate(el=>el.open))await page.locator('.game-bottom-dock [data-game-open-menu]').click();
+    await menu.locator(`[data-game-panel="${name}"]`).click();
+    await expect(menu).not.toHaveAttribute('open','');
+  }
+}
+async function openManagement(page) {
+  const details=page.locator('[data-game-details="management"]');
+  if(!await details.evaluate(el=>el.open))await details.locator(':scope > summary').click();
+}
 async function sound(page,enabled){await tab(page,'settings');await page.locator('[data-game-care-sound]').setChecked(enabled);await openCare(page);}
 async function expectMuted(page){await tab(page,'settings');await expect(page.locator('[data-game-care-sound]')).not.toBeChecked();await openCare(page);}
 async function downloadText(download){const stream=await download.createReadStream();if(!stream)throw Error('No download stream');const chunks=[];for await(const chunk of stream)chunks.push(Buffer.from(chunk));return Buffer.concat(chunks).toString('utf8');}
@@ -107,11 +124,11 @@ test('care unavailable stages explain disabled actions and retain their natural 
 
 test('care export preserves v2 values, cancelled import is exact, confirmed import with sound preference never autoplays',async({page})=>{
   await trackNativeAudio(page);await seed(page);await page.locator('[data-game-care="feed"]').click();await expect(page.locator('[data-game-fullness]')).toHaveText('60 / 100');await tab(page,'settings');
-  const downloadEvent=page.waitForEvent('download');await page.locator('[data-game-action="export"]').click();const exported=validateWorld(JSON.parse(await downloadText(await downloadEvent)));expect(exported.version).toBe(5);expect(exported.birds[0].needs.food).toBe(60);expect(exported.care.cleanliness).toBe(15);expect(exported.settings.careSound).toBe(false);
+  await openManagement(page);const downloadEvent=page.waitForEvent('download');await page.locator('[data-game-action="export"]').click();const exported=validateWorld(JSON.parse(await downloadText(await downloadEvent)));expect(exported.version).toBe(5);expect(exported.birds[0].needs.food).toBe(60);expect(exported.care.cleanliness).toBe(15);expect(exported.settings.careSound).toBe(false);
   const next=fixture({sound:true});next.worldId+='-import';next.birds[0].needs.food=73;next.care.cleanliness=44;
   const file={name:'care.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(next))},before=await record(page);
-  page.once('dialog',dialog=>dialog.dismiss());await page.locator('#game-import').setInputFiles(file);await expect(page.locator('#game-import')).toHaveValue('');expect(await record(page)).toEqual(before);
-  page.once('dialog',dialog=>dialog.accept());await page.locator('#game-import').setInputFiles(file);await expect(page.locator('.game-message')).toContainText('復元');expect((await record(page)).worldId).toBe(next.worldId);expect(await page.evaluate(()=>window.__careAudio.starts)).toBe(0);
+  await openManagement(page);page.once('dialog',dialog=>dialog.dismiss());await page.locator('#game-import').setInputFiles(file);await expect(page.locator('#game-import')).toHaveValue('');expect(await record(page)).toEqual(before);
+  await openManagement(page);page.once('dialog',dialog=>dialog.accept());await page.locator('#game-import').setInputFiles(file);await expect(page.locator('.game-message')).toContainText('復元');expect((await record(page)).worldId).toBe(next.worldId);expect(await page.evaluate(()=>window.__careAudio.starts)).toBe(0);
   await tab(page,'garden');await openCare(page);await expect(page.locator('[data-game-fullness]')).toHaveText('73 / 100');await expect(page.locator('[data-game-cleanliness-value]')).toHaveText('44 / 100');await expectMuted(page);
 });
 

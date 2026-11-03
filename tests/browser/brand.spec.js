@@ -64,7 +64,7 @@ test('logo integration stays local to light UI surfaces and supports contrast pr
   await page.route(/youtube|youtu\.be|googlevideo|ytimg/i,route=>route.abort());
   await page.setViewportSize({width:375,height:900});
   for(const route of ['./','colors/','game/','studio/','404.html']){
-    await page.goto(route);await expect(page.locator('#brand img')).toBeVisible();
+    await page.goto(route);if(route==='game/'){await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');await expect(page.locator('#brand img')).toBeHidden();await expect(page.locator('.game-world-title img')).toBeVisible();}else await expect(page.locator('#brand img')).toBeVisible();
     expect(await page.locator('#brand img').evaluate(e=>getComputedStyle(e).mixBlendMode)).toBe('normal');
     const unexpected=await page.locator('img,canvas').evaluateAll(els=>els.filter(e=>getComputedStyle(e).mixBlendMode!=='normal'&&!e.matches('.site-header .header-logo,.hero-copy > .hero-logo')).length);
     expect(unexpected).toBe(0);

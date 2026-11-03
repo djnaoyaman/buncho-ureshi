@@ -1,3 +1,4 @@
+import { manualNaming } from '../../src/bird-names.js';
 import { test, expect } from './qa-test-fixture.js';
 import { fieldPositions } from '../../src/field-visuals.js';
 import { GAME_SPRITE_ASSETS, gameSpriteGeometry } from '../../src/game.js';
@@ -74,7 +75,7 @@ async function openGame(page, query = '') {
 }
 
 async function closeBird(page) { if(await page.locator('.game-bird-sheet').isVisible())await page.locator('[data-game-close-bird]').click(); }
-async function openBird(page) { await page.locator('[data-game-open-bird]').click();await expect(page.locator('.game-bird-sheet')).toBeVisible(); }
+async function openBird(page) { const profile=page.locator('.game-panel-overlay[open] .game-profile [data-game-open-bird]');if(await profile.count())await profile.click();else await page.locator('.game-bottom-dock [data-game-open-bird]').click();await expect(page.locator('.game-bird-sheet')).toBeVisible(); }
 async function openTalk(page) { await openBird(page);const d=page.locator('[data-game-details="sheet-talk"]');if(!await d.evaluate(e=>e.open))await d.locator('summary').click(); }
 async function chooseBird(page,id){
   const face=page.locator('.game-bird-carousel-face');
@@ -86,8 +87,22 @@ async function chooseBird(page,id){
 }
 
 async function tab(page, name) {
-  await closeBird(page);
-  const target=page.locator(`[data-game-panel="${name}"]`).first();if(!await target.isVisible())await page.locator('[data-game-open-menu]').click();await target.click();
+  if(await page.locator('.game-bird-sheet').isVisible())await page.locator('[data-game-close-bird]').click();
+  if(await page.locator('.game-panel-overlay').isVisible())await page.locator('[data-game-close-panel]').click();
+  const direct = name==='garden' ? '.game-field-nav [data-field-travel="home"]'
+    : ['decorate','family'].includes(name) ? `.game-bottom-dock [data-game-panel="${name}"]`
+    : name==='friends' ? '.game-field-nav [data-game-panel="friends"]' : null;
+  if(direct)await page.locator(direct).click();
+  else {
+    const menu=page.locator('.game-secondary-menu');
+    if(!await menu.evaluate(el=>el.open))await page.locator('.game-bottom-dock [data-game-open-menu]').click();
+    await menu.locator(`[data-game-panel="${name}"]`).click();
+    await expect(menu).not.toHaveAttribute('open','');
+  }
+}
+async function openManagement(page) {
+  const details=page.locator('[data-game-details="management"]');
+  if(!await details.evaluate(el=>el.open))await details.locator(':scope > summary').click();
 }
 
 async function readDownload(download) {
@@ -234,7 +249,7 @@ test('save download imports back exactly; malformed files do not replace the cur
   await seedWorld(page, seeded);
   await openGame(page);
   await tab(page, 'settings');
-  const downloaded = page.waitForEvent('download');
+  await openManagement(page);const downloaded = page.waitForEvent('download');
   await page.locator('[data-game-action="export"]').click();
   const exportedText = await readDownload(await downloaded);
   const exported = validateWorld(JSON.parse(exportedText));
@@ -245,7 +260,7 @@ test('save download imports back exactly; malformed files do not replace the cur
   await page.locator('[data-game-form="rename"] button[type="submit"]').click();
   await expect.poll(async () => (await readWorld(page)).birds[0].name).toBe('あとから変えた名前');
   await tab(page, 'settings');
-  page.once('dialog', dialog => dialog.accept());
+  await openManagement(page);page.once('dialog', dialog => dialog.accept());
   await page.locator('#game-import').setInputFiles({ name: 'my-garden.json', mimeType: 'application/json', buffer: Buffer.from(exportedText) });
   await expect(page.locator('.game-message')).toContainText('復元しました');
   let restored = validateWorld(await readWorld(page));
@@ -355,7 +370,7 @@ test('family card hands real game names and family composition into the art stud
   advanceTicks(seeded, 300);
   const child = seeded.birds.find(b => b.parents.length === 2);
   expect(child).toBeTruthy();
-  child.name = 'わかばの記念';
+  child.name = 'わかばの記念';child.naming=manualNaming(child.name);validateWorld(seeded);
   await seedWorld(page, seeded);
   await openGame(page);
   await tab(page, 'family');
@@ -414,7 +429,7 @@ function gardenVisualFixture(count) {
   if (count > 1) {
     const actionKinds = ['rest', 'eat', 'bath', 'explore', 'talk', 'play', 'nest', 'visit'];
     world.birds.forEach((bird, i) => {
-      bird.name = 'あいうえおかきくけこさしすせそ' + i;
+      bird.name = 'あいうえおかきくけこさしすせそ' + i;bird.naming=manualNaming(bird.name);
       bird.action = { kind: actionKinds[i % actionKinds.length], target: null, startedTick: world.tick };
     });
     for (let i = 0; i < world.birds.length; i += 2) {
@@ -497,7 +512,7 @@ for (const residents of [1, 10]) test(`${residents === 1 ? 'initial one-bird' : 
 test('all color stages decode and nest-bound young remain reachable through the full-name carousel',async({page},testInfo)=>{
   const world=createWorld(fixedNow),colors=['white','sakura','cinnamon','silver'];
   while(world.birds.length<10)createBird(world,{home:'resident'});
-  world.birds.forEach((b,i)=>{b.color=colors[i%4];b.stage=i<4?'adult':i<8?'juvenile':i===8?'chick':'egg';b.name=`表示確認${i+1}`;});
+  world.birds.forEach((b,i)=>{b.color=colors[i%4];b.stage=i<4?'adult':i<8?'juvenile':i===8?'chick':'egg';b.name=`表示確認${i+1}`;b.naming=manualNaming(b.name);});
   world.paused=true;validateWorld(world);
   await seedWorld(page,world);await openGame(page);
   await expect(page.locator('.game-room-bird')).toHaveCount(10);
