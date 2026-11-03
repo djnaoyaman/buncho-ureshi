@@ -1,16 +1,38 @@
 import { normalizeOwnerProfile, OWNER_CHOICES } from './owner-profile.js';
 
-// A separate, shoulder-up scene illustration. The wardrobe preview remains
-// front-facing; the companion faces the birds except for a brief glance back.
-export function renderOwnerPeek(value) {
+// Original modular painted sprites, with wardrobe selections applied to the
+// same two views. Sources are local; no profile information leaves the device.
+const HEADS=new URL('../game-art/owner-heads.webp',import.meta.url).href;
+const CLOTHES=new URL('../game-art/owner-clothes.webp',import.meta.url).href;
+const CELL=396.6, ROW=396.5;
+const colorFor=(key,id,index=2)=>OWNER_CHOICES[key].find(row=>row[0]===id)[index];
+function channelSlopes(color,reference){
+  const rgb=hex=>[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16));
+  const base=rgb(reference).reduce((a,b)=>a+b,0)/3;
+  return rgb(color).map(v=>Math.max(.35,Math.min(1.65,v/base)));
+}
+function tintFilter(id,color,reference){
+  const [r,g,b]=channelSlopes(color,reference);
+  return `<filter id="${id}" color-interpolation-filters="sRGB"><feColorMatrix type="saturate" values="0"/><feComponentTransfer><feFuncR type="linear" slope="${r}"/><feFuncG type="linear" slope="${g}"/><feFuncB type="linear" slope="${b}"/></feComponentTransfer></filter>`;
+}
+const sprite=(src,col,row,x,y,w,h,extra='')=>`<svg x="${x}" y="${y}" width="${w}" height="${h}" viewBox="${(col*CELL).toFixed(1)} ${(row*ROW).toFixed(1)} ${CELL} ${ROW}" preserveAspectRatio="xMidYMid meet" overflow="hidden" ${extra}><image href="${src}" x="0" y="0" width="1983" height="793"/></svg>`;
+export function renderOwnerPeek(value){
   const p=normalizeOwnerProfile(value);
-  const color=(key,id,index=2)=>OWNER_CHOICES[key].find(row=>row[0]===id)[index];
-  const skin=color('skin',p.skin), hair=color('hairColor',p.hairColor), cloth=color('palette',p.palette), trim=color('palette',p.palette,3);
-  const silhouette={crop:'M30 72Q25 28 69 24Q115 22 120 66L113 95Q70 108 32 91Z',bob:'M27 78Q20 27 68 23Q118 20 122 75L116 117Q99 126 84 113H57Q37 125 25 111Z',wave:'M27 77Q15 45 39 28Q65 12 94 27Q122 28 122 69Q136 87 122 101Q131 119 111 123Q98 132 84 116H54Q36 131 22 118Q8 105 23 92Z',bun:'M29 76Q23 28 68 24Q115 20 120 71L114 98H32Z',sweep:'M27 78Q22 36 51 26Q86 10 109 35Q124 49 119 85L110 102H31Z'}[p.hair];
-  const bun=p.hair==='bun'?`<circle cx="99" cy="25" r="18" fill="${hair}"/>`:'';
-  const eyes=p.eyes==='smile'?'<path d="M45 78q5-6 10 0m19 0q5-6 10 0" fill="none" stroke="#493d36" stroke-width="3" stroke-linecap="round"/>':`<g fill="#493d36"><ellipse cx="50" cy="78" rx="${p.eyes==='bright'?4:3}" ry="${p.eyes==='bright'?6:4}"/><ellipse cx="79" cy="78" rx="${p.eyes==='bright'?4:3}" ry="${p.eyes==='bright'?6:4}"/></g>`;
-  const face=p.face==='oval'?'M38 60Q39 37 66 38Q94 39 95 63L92 88Q85 108 66 110Q47 107 40 88Z':p.face==='soft'?'M35 60Q36 37 66 38Q96 38 98 63L96 87Q91 107 66 109Q41 107 37 87Z':'M37 60Q38 37 66 38Q95 38 96 63L94 87Q88 107 66 109Q44 107 39 87Z';
-  const outfit={apron:`<path d="M43 126l10 19 25 0 10-19M53 145l-7 54m32-54 8 54" fill="none" stroke="#f8f1df" stroke-width="7"/>`,cardigan:`<path d="M65 132v65M43 178l16 2m16 0 17-2" stroke="${trim}" stroke-width="3" fill="none"/>`,smock:'<path d="M46 128q19 16 39 0" stroke="#fff6e5" stroke-width="6" fill="none"/>',dress:`<path d="M34 166q31 9 63 0" stroke="${trim}" stroke-width="5" fill="none"/>`,overalls:`<path d="M44 126l9 28h26l9-28M53 154l-5 45m31-45 5 45" stroke="${trim}" stroke-width="7" fill="none"/>`}[p.outfit];
-  const accessory={none:'',birdpin:`<circle cx="84" cy="151" r="6" fill="#fff9ed"/><path d="M83 150l7 2-7 2" fill="#d7877c"/>`,leafbag:`<path d="M43 129l46 68" stroke="#927958" stroke-width="4"/><path d="M82 180q20-4 17 13q-5 13-19 5q-7-9 2-18" fill="#7d9672"/>`,beret:`<path d="M26 42Q27 16 69 16Q107 16 117 42Q73 52 26 42" fill="${trim}"/><path d="M67 17q-2-8 5-10" stroke="${trim}" stroke-width="5" fill="none"/>`,scarf:`<path d="M48 114q18 9 37 0l4 12q-21 11-44 0Z" fill="${trim}"/><path d="M78 120l14 26-12 4-10-27" fill="${trim}"/>`}[p.accessory];
-  return `<svg class="owner-peek-art" viewBox="0 0 140 200" aria-hidden="true" focusable="false"><g class="owner-peek-body"><path d="M25 200Q23 148 38 130Q47 120 65 120Q87 120 97 131Q113 152 112 200Z" fill="${cloth}" stroke="${trim}" stroke-width="2"/>${outfit}<path d="M93 139Q108 139 120 157l13-7 4 8q-16 16-26 6l-14-10" fill="${cloth}" stroke="${trim}" stroke-width="2"/><path d="M131 150q8-5 9 1v7q-4 4-9 0" fill="${skin}"/><path d="M55 90v35q11 8 22 0v-35" fill="${skin}"/><g class="owner-peek-back">${bun}<path d="${silhouette}" fill="${hair}"/><path d="M40 48Q60 32 83 39" fill="none" stroke="#fff5dc" opacity=".2" stroke-width="4" stroke-linecap="round"/></g><g class="owner-peek-glance">${bun}<path d="${silhouette}" fill="${hair}"/><path d="${face}" fill="${skin}"/><ellipse cx="42" cy="89" rx="7" ry="4" fill="#d7857b" opacity=".25"/><ellipse cx="89" cy="89" rx="7" ry="4" fill="#d7857b" opacity=".25"/>${eyes}<path d="M61 95q5 4 10 0" fill="none" stroke="#a56559" stroke-width="2" stroke-linecap="round"/><path d="M35 67Q34 34 65 33Q96 31 101 63Q82 60 71 47Q65 63 55 64L54 52Q46 65 35 67" fill="${hair}"/></g>${accessory}</g></svg>`;
+  const hairIndex=['crop','bob','wave','bun','sweep'].indexOf(p.hair);
+  const outfitIndex=['apron','cardigan','smock','dress','overalls'].indexOf(p.outfit);
+  const hair=colorFor('hairColor',p.hairColor),skin=colorFor('skin',p.skin),cloth=colorFor('palette',p.palette),trim=colorFor('palette',p.palette,3);
+  const head=(row)=>`<g clip-path="url(#peek-head-bounds)">${sprite(HEADS,hairIndex,row,14,2,112,112,'filter="url(#peek-hair-tint)"')}</g>`;
+  // The small skin region is recoloured separately, preserving the selected
+  // complexion instead of shifting it with the hair tint.
+  const skinLayer=(row,mask)=>`<g mask="url(#${mask})" filter="url(#peek-skin-tint)">${sprite(HEADS,hairIndex,row,14,2,112,112)}</g>`;
+  const eyes=p.eyes==='smile'?`<path d="M51 48q8-3 17 1l1 5q-9 2-18-1Z" fill="${skin}" opacity=".9"/><g fill="none" stroke="#62483e" stroke-width="1.3" stroke-linecap="round"><path d="M53 51q2-2 4 0m6 1q2-2 4 0"/></g>`:p.eyes==='bright'?'<g fill="#fff9ed" opacity=".85"><circle cx="55" cy="50" r=".7"/><circle cx="65" cy="51" r=".7"/></g>':'';
+  const accessory={none:'',birdpin:`<g transform="translate(93 136)"><ellipse rx="4.8" ry="4" fill="#f9f2df" stroke="#d9c4a0" stroke-width=".8"/><path d="M3-1l5 2-5 2" fill="#cf8277"/><circle cx="1" cy="-1" r=".6" fill="#53493f"/></g>`,leafbag:`<path d="M42 102l51 79" stroke="#8d785e" stroke-width="3.5" fill="none"/><path d="M87 170q15-4 17 8q-1 14-17 15q-11-9 0-23" fill="#748c69" stroke="#617b5a" stroke-width="1"/><path d="M91 174l7 13" stroke="#d5dfbe" stroke-width="1"/>`,beret:`<path d="M35 28q2-19 35-20q31 0 38 19q-24 10-73 1" fill="${trim}" stroke="#6b6251" stroke-opacity=".4"/><path d="M68 9q-1-5 4-6" fill="none" stroke="${trim}" stroke-width="3"/><path d="M41 22q26-10 53-2" fill="none" stroke="#fff7e8" opacity=".22" stroke-width="2"/>`,scarf:`<path d="M52 96q17 7 34-1l3 9q-20 9-40 0Z" fill="${trim}"/><path d="M80 101l12 23-10 4-9-24" fill="${trim}"/><path d="M78 104l9 17" stroke="#fff5df" opacity=".25" stroke-width="2"/>`}[p.accessory];
+  const faceClip=p.face==='oval'?'M47 42Q58 34 68 40Q80 47 79 65Q76 79 63 84Q50 80 45 65Z':p.face==='soft'?'M44 42Q57 32 71 40Q83 48 81 67Q77 82 62 85Q47 81 43 65Z':'M46 42Q57 34 69 40Q81 47 80 66Q76 80 62 84Q49 80 44 65Z';
+  const headBounds=p.hair==='wave'?'M35 5Q67-2 104 8Q123 25 118 62L123 107H22L24 59Q19 27 35 5Z':p.hair==='bun'?'M35 6Q52-1 75 5Q101 0 112 19Q121 44 111 78L100 106H32L24 78Q19 34 35 6Z':'M34 6Q67-1 101 7Q119 20 118 54Q117 79 106 95L93 105H40L27 92Q20 65 23 42Q24 19 34 6Z';
+  return `<svg class="owner-peek-art" viewBox="0 0 140 200" aria-hidden="true" focusable="false" data-hair-color="${hair}" data-skin-color="${skin}" data-hair="${p.hair}" data-outfit="${p.outfit}" data-face="${p.face}" data-eyes="${p.eyes}"><defs>
+    ${tintFilter('peek-hair-tint',hair,'#624a3e')}${tintFilter('peek-skin-tint',skin,'#e8b89c')}${tintFilter('peek-cloth-tint',cloth,'#b7c7a8')}
+    <clipPath id="peek-head-bounds"><path d="${headBounds}"/></clipPath><clipPath id="peek-body-bounds"><path d="M22 94Q33 78 69 80Q105 78 118 94L127 200H12Z"/></clipPath><filter id="peek-feather"><feGaussianBlur stdDeviation="3"/></filter><mask id="peek-face-clip" maskUnits="userSpaceOnUse" x="0" y="0" width="140" height="200"><path d="${faceClip}" fill="white" filter="url(#peek-feather)"/></mask><mask id="peek-neck-clip" maskUnits="userSpaceOnUse" x="0" y="0" width="140" height="200"><ellipse cx="69" cy="91" rx="13" ry="10" fill="white" filter="url(#peek-feather)"/></mask>
+  </defs><g class="owner-peek-body"><g clip-path="url(#peek-body-bounds)">${sprite(CLOTHES,outfitIndex,0,2,75,136,136,'filter="url(#peek-cloth-tint)"')}</g>
+    <g class="owner-peek-back">${head(0)}${skinLayer(0,'peek-neck-clip')}</g>
+    <g class="owner-peek-glance"><g transform="translate(70 0) scale(${p.face==='oval'?0.95:p.face==='soft'?1.05:1} 1) translate(-70 0)">${head(1)}${skinLayer(1,'peek-face-clip')}${eyes}</g></g>${accessory}</g></svg>`;
 }
