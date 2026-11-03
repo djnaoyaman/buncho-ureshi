@@ -324,6 +324,27 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     const positions=fieldPositions(birds,kind,place),g=roomGeometry(kind),fraction=g.width/g.planeWidth;
     return new Map([...positions].map(([id,p])=>[id,{...p,x:(1-fraction)/2+p.x*fraction,width:p.width*fraction}]));
   }
+  // Keep the caption in a free viewport band, including crowded perch rows.
+  function placeSceneCaption(){
+    if(!alive||panel!=='garden')return;
+    const caption=root.querySelector('.game-main>.game-scene-caption'),main=root.querySelector('.game-main');
+    if(!caption||!main)return;
+    caption.style.top='';caption.style.bottom='';
+    const box=caption.getBoundingClientRect(),frame=main.getBoundingClientRect();
+    if(!box.width||!box.height||!frame.height)return;
+    const obstacles=[...root.querySelectorAll('.game-room-bird,.game-scene-toolbar,.game-bottom-dock,.game-field-nav,.game-field-bar,.game-main>.game-heading,.game-auto-gift,.game-adoption-invitation'),document.querySelector('.game-scene-controls-toggle')].filter(Boolean);
+    let gaps=[[frame.top+8,frame.bottom-8]];
+    for(const node of obstacles){
+      if(!node.getClientRects().length)continue;
+      const r=node.getBoundingClientRect();if(r.right<=box.left||r.left>=box.right)continue;
+      const top=r.top-4,bottom=r.bottom+4;
+      gaps=gaps.flatMap(([a,b])=>bottom<=a||top>=b?[[a,b]]:[[a,Math.max(a,top)],[Math.min(b,bottom),b]]);
+    }
+    const choices=gaps.filter(([a,b])=>b-a>=box.height).map(([a,b])=>Math.max(a,Math.min(box.top,b-box.height)));
+    if(!choices.length)return;
+    const top=choices.reduce((a,b)=>Math.abs(a-box.top)<=Math.abs(b-box.top)?a:b);
+    caption.style.top=`${top-frame.top}px`;caption.style.bottom='auto';
+  }
   function sceneCaption(){
     const active=fieldBirds(world),current=active.find(b=>b.id===selected)||active[0];
     const related=current&&world.events.slice(-8).reverse().find(e=>e.ids.includes(current.id)&&world.tick-e.tick<2&&['play','bath','declined','pair','reconcile'].includes(e.kind));
@@ -377,6 +398,10 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
   function settings() {return `<section class="game-settings"><h3>暮らしの設定</h3><button class="game-owner-setting" data-game-panel="owner">${renderOwnerAvatar(loadOwnerProfile(),{decorative:true,idPrefix:'settings-owner'})}<span>${escape(ownerName())}<small>見た目と名前を選ぶ</small></span></button><div data-settings-music></div>${soundControl()}<fieldset class="game-adoption-settings"><legend>友達のお迎え</legend><button data-adoption-mode="ask" aria-pressed="${world.settings.adoptionMode==='ask'}">そのつど選ぶ</button><button data-adoption-mode="auto" aria-pressed="${world.settings.adoptionMode==='auto'}">文鳥たちに任せる</button><small>友達の来訪はどちらでも続きます。</small></fieldset><label class="game-check"><input type="checkbox" data-game-motion ${world.settings.motion?'checked':''}> 文鳥の小さな動きを表示</label><details class="game-wallet-details" data-game-details="wallet"><summary>もちものの数</summary><p>Gems：${world.decor.points.toLocaleString('ja-JP')}<br>Gold：${world.economy.gold.toLocaleString('ja-JP')}</p></details><details class="game-settings-management" data-game-details="management"><summary>保存とリセット</summary><p>この端末のこのブラウザに保存します。ほかの端末へは自動で同期しません。大切な物語は「保存ファイルを書き出す」で保管してね。</p><button data-game-action="reset-state">リセットするものを選ぶ</button><button data-game-action="export">保存ファイルを書き出す</button><label class="game-import-label" for="game-import">保存ファイルを読み込む（今の庭と入れ替え）</label><input id="game-import" type="file" accept="application/json,.json"><p class="game-small">読み込み前に形式・版・血縁・人数を検査します。不正なファイルで今の庭は壊れません。読み込む前に、今の保存も書き出しておくと安心です。</p></details><p class="game-care-disclosure">合成音は架空のゲームの声です。実際のおもちの声ではありません。音をOFFにすると、再生中の音もすぐに止まります。</p><button data-game-action="pause">${world.paused?'時間を動かす':'時間を一時停止'}</button><details data-game-details="save-help"><summary>保存と時間のしくみ</summary><p>実際の15秒がゲームの1時間、6分が1日です。卵からひなは12時間、幼鳥へ24時間、成鳥へ48時間（すべてゲーム時間）。現実の成長や繁殖の手順ではありません。</p><p>閉じたあとは動き続けません。次に開いた時に、最大24ゲーム日（実際の2時間24分）ぶんを順番に計算します。それより長く留守にしても、不利益はありません。一時停止中の時間は進みません。</p><p>複数のタブの更新は保存処理を一列にして、同じ時間を二重に進めません。保存形式は版${SAVE_VERSION}。検査できた以前の保存は、名前・家族・日記・Gem・お飾りを残して引き継ぎ、新しいお世話時刻と名前の情報を加えます。古い版の画面が開いたままなら、読み直してください。将来対応しない版は保存を変えずに拒否します。</p><p>色はゲームの表現として選ばれます。羽色の遺伝を再現するものではありません。</p></details>${new URLSearchParams(location.search).get('qa')==='1'?'<details data-game-details="qa"><summary>検証用（通常の遊びには不要）</summary><button data-game-action="qa-step">1000時間を検証する</button><p>世代・家系・上限の確認用です。先に保存を書き出してください。</p></details>':''}</section>`;}
   function help() {return `<section class="game-help"><details data-game-details="help-care"><summary>お世話・音・創作について</summary><p>日本時間の7時・17時・20時に、またお世話できます。土日と日本の祝日は12時にも。ごはんはおなか、名前を呼ぶ・なでる・お話は元気がいっぱいになるまで。物語を一時停止していても、お世話の時間は来ます。長く来られなくても減るのは一回分だけ。${escape(careWindow(world.careSchedule.seenAt).coverageMessage)}</p><p>なでる操作は創作です。本物の文鳥に無理に触らず、様子を見守ってください。音はゲーム用の合成音で、実際のおもちや文鳥の声ではありません。</p><p class="game-art-disclosure">文鳥は写真のような生成画像、籠と公園は生成イラストです。実際のおもちの写真や、現実の観察記録ではありません。</p><p>友達はこの端末の物語のNPCです。ほかの利用者との通信・対戦はありません。</p></details><h3>ようこそ、おもちの文鳥ぐらしへ</h3><ol><li><strong>まずは見る。</strong>枝、巣、ごはん、水浴び場で、みんなが自分で過ごすよ。</li><li><strong>お客さんを迎える。</strong>最初に来るのはオスの文鳥。名前を決めて「おうちに迎える」を押せるよ。新しい暮らしでは、お迎えするか選べるよ。設定で文鳥たちに任せることもできます。</li><li><strong>話しかける。</strong>文鳥をえらんで、ことばのボタンを押そう。気分や好み、友達、記憶で返事が変わるよ。</li><li><strong>家族を見守る。</strong>気持ちが通じた成鳥はつがいに。信頼・元気・時間・場所がそろうと卵が生まれることがあるよ。必ずつがいになるわけではないし、友達のままでもすてき。</li><li><strong>記念に残す。</strong>家系図や日記の「記念カード」からアート工房へ。ゲームの家族のお祝いをつくろう。</li></ol><p>食事も休息も自分でできるので、来られない日があっても大丈夫。死亡・課金・広告・連続ログインの条件はありません。</p><p>会話は名前・状態・関係・記憶と、いくつかのことばに反応するルールです。何でも理解するAIではなく、外部へ入力を送りません。</p><p>実在のおもちは、娘さんのメスの白文鳥です。この庭の性格・会話・家族・成長は創作。現実の飼育や繁殖の方法を示すものではありません。</p></section>`;}
   function render() {
+    // A background refresh replaces the panel node. Keep the reader's place
+    // only when the same panel remains open; navigation starts at the top.
+    const oldPanelScroll=root.querySelector('.game-app')?.dataset.panel===panel
+      ? root.querySelector('.game-panel-overlay[open] > .game-panel')?.scrollTop : undefined;
     const ownerFocus=ownerEditor?.contains(document.activeElement)?document.activeElement:null;if(ownerEditor)ownerEditor.remove();
     document.dispatchEvent(new document.defaultView.CustomEvent('buncho-game-will-render'));
     if(!poseEnabled())poseClock.hold();
@@ -418,6 +443,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     if(sheetOpen){sheet.innerHTML=birdSheet();if(opening)sheet.showModal();}else{if(sheet.open)sheet.close();sheet.innerHTML='';}
     for(const [id,value] of Object.entries(drafts.get(draftKey())||{})){const input=root.querySelector(`#${id}`);if(input)input.value=value;}
     root.querySelectorAll('details[data-game-details]').forEach(d=>{if(openDetails.has(d.dataset.gameDetails))d.open=true;});
+    if(oldPanelScroll!==undefined&&panel!=='garden')overlay.querySelector(':scope > .game-panel').scrollTop=oldPanelScroll;
     if(oldFriendScroll!==undefined&&root.querySelector('.game-friend-houses'))root.querySelector('.game-friend-houses').scrollLeft=oldFriendScroll;
     if(oldFamilyScroll!==undefined&&root.querySelector('.game-family-pan'))root.querySelector('.game-family-pan').scrollLeft=oldFamilyScroll;
     const room=root.querySelector('.game-room');
@@ -452,6 +478,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     if(focusBird&&!sheetOpen){const el=root.querySelector(`button[data-game-select="${focusBird}"]`);el?.focus({preventScroll:true});}
     if(!opening&&!focusBird&&!focusId&&focusIndex>=0){const el=root.querySelectorAll('button,input,select,summary')[focusIndex];if(el&&el.tagName===focus.tagName&&el.textContent===focus.textContent)el.focus({preventScroll:true});}
     if(focusId){const el=root.querySelector(`#${focusId}`);if(el&&el.tagName===focus.tagName){if(focusValue!==null&&el.type!=='file')el.value=focusValue;el.focus({preventScroll:true});if(typeof selectionStart==='number'&&el.setSelectionRange)try{el.setSelectionRange(selectionStart,selectionEnd);}catch{}}}
+    placeSceneCaption();
     if(opening)root.querySelector('#game-sheet-close')?.focus({preventScroll:true});
     const welcome=root.querySelector('#game-welcome-close'),welcomeKey=world.offlineSummary?`${world.worldId}:${world.offlineSummary.fromTick}:${world.offlineSummary.toTick}`:null;if(welcome&&welcomeKey!==welcomeFocusKey&&panel==='garden'&&!sheetOpen){welcomeFocusKey=welcomeKey;welcome.focus({preventScroll:true});}
   }
@@ -672,9 +699,11 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     })();
     await flight.promise;
   }
+  const captionObserver=new document.defaultView.MutationObserver(placeSceneCaption);
+  captionObserver.observe(document.body,{attributes:true,attributeFilter:['data-scene-controls']});
   timer=setInterval(poll,3000);render();document.dispatchEvent(new document.defaultView.CustomEvent('buncho-game-ready'));
   const poseTimer=setInterval(updatePoses,600);
   root.ownerDocument.defaultView.addEventListener('resize',resizeFamily);
   document.addEventListener('visibilitychange',holdPoses);reducedMotion?.addEventListener?.('change',holdPoses);poseLayout?.addEventListener?.('change',reframePoses);compactLayout?.addEventListener?.('change',reframeCompact);
-  return ()=>{closeAdoptionDialog(false);encounterController?.destroy();encounterController=null;encounterRoot=null;document.dispatchEvent(new document.defaultView.CustomEvent('buncho-game-garden',{detail:{gardenId:null,worldId:world.worldId}}));ownerCleanup?.dispose();ownerCleanup=null;ownerEditor=null;closeResetDialog(false);document.removeEventListener('buncho-world-action',worldAction);disposeRelations();root.ownerDocument.defaultView.removeEventListener('storage',syncCarePreference);document.removeEventListener('click',unlockCareCapture,true);root.ownerDocument.defaultView.removeEventListener('pagehide',cancelCareEffects);alive=false;importRequest++;soundRequest++;cancelCareEffects();audio.close();clearInterval(timer);clearInterval(poseTimer);root.ownerDocument.defaultView.removeEventListener('resize',resizeFamily);document.removeEventListener('visibilitychange',holdPoses);reducedMotion?.removeEventListener?.('change',holdPoses);poseLayout?.removeEventListener?.('change',reframePoses);compactLayout?.removeEventListener?.('change',reframeCompact);channel?.close();store.close();root.querySelector('.game-bird-sheet')?.close();root.removeEventListener('cancel',sheetCancel,true);root.removeEventListener('keydown',menuKeydown);root.removeEventListener('click',click);root.removeEventListener('submit',submit);root.removeEventListener('change',change);root.removeEventListener('input',rememberDraft);root.removeEventListener('pointerdown',pointerStart);document.removeEventListener('pointerup',pointerEnd);document.removeEventListener('pointercancel',pointerEnd);clearTimeout(releaseTimer);pressedPointers.clear();drafts.clear();};
+  return ()=>{captionObserver.disconnect();closeAdoptionDialog(false);encounterController?.destroy();encounterController=null;encounterRoot=null;document.dispatchEvent(new document.defaultView.CustomEvent('buncho-game-garden',{detail:{gardenId:null,worldId:world.worldId}}));ownerCleanup?.dispose();ownerCleanup=null;ownerEditor=null;closeResetDialog(false);document.removeEventListener('buncho-world-action',worldAction);disposeRelations();root.ownerDocument.defaultView.removeEventListener('storage',syncCarePreference);document.removeEventListener('click',unlockCareCapture,true);root.ownerDocument.defaultView.removeEventListener('pagehide',cancelCareEffects);alive=false;importRequest++;soundRequest++;cancelCareEffects();audio.close();clearInterval(timer);clearInterval(poseTimer);root.ownerDocument.defaultView.removeEventListener('resize',resizeFamily);document.removeEventListener('visibilitychange',holdPoses);reducedMotion?.removeEventListener?.('change',holdPoses);poseLayout?.removeEventListener?.('change',reframePoses);compactLayout?.removeEventListener?.('change',reframeCompact);channel?.close();store.close();root.querySelector('.game-bird-sheet')?.close();root.removeEventListener('cancel',sheetCancel,true);root.removeEventListener('keydown',menuKeydown);root.removeEventListener('click',click);root.removeEventListener('submit',submit);root.removeEventListener('change',change);root.removeEventListener('input',rememberDraft);root.removeEventListener('pointerdown',pointerStart);document.removeEventListener('pointerup',pointerEnd);document.removeEventListener('pointercancel',pointerEnd);clearTimeout(releaseTimer);pressedPointers.clear();drafts.clear();};
 }
