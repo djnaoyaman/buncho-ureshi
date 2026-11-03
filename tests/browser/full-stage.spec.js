@@ -68,3 +68,65 @@ for(const [width,height] of [[320,568],[390,844],[844,390]]) {
     await expect(bird).toBeVisible(); await noScroll(page);
   });
 }
+
+for (const [width, height] of [[320, 568], [390, 844], [844, 390]]) {
+  test(`compact encyclopedia exit stays clear of wallet ${width}x${height}`, async ({ page }, testInfo) => {
+    await page.setViewportSize({ width, height });
+    await ready(page);
+    const exit = page.locator('.game-world-exit');
+    const wallet = page.locator('.game-field-bar .game-wallet');
+    await expect(exit).toBeVisible();
+    await expect(exit).toHaveText('図鑑');
+    await expect(exit).toHaveAttribute('aria-label', '図鑑へ戻る');
+    await expect(exit).toHaveAccessibleName('図鑑へ戻る');
+    await expect(exit).toHaveAttribute('href', /\/encyclopedia\/$/);
+    await expect(wallet).toBeVisible();
+
+    async function checkGeometry() {
+      const geometry = await exit.evaluate(el => {
+        const rect = el.getBoundingClientRect();
+        const walletRect = document.querySelector('.game-field-bar .game-wallet').getBoundingClientRect();
+        const style = getComputedStyle(el);
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        const textRects = [...range.getClientRects()];
+        return {
+          x: rect.x, y: rect.y, right: rect.right, bottom: rect.bottom,
+          width: rect.width, height: rect.height,
+          lineCount: new Set(textRects.map(r => Math.round(r.top))).size,
+          textFits: textRects.every(r => r.left >= rect.left + parseFloat(style.borderLeftWidth)
+            && r.right <= rect.right - parseFloat(style.borderRightWidth)
+            && r.top >= rect.top && r.bottom <= rect.bottom),
+          overlapsWallet: rect.left < walletRect.right && rect.right > walletRect.left
+            && rect.top < walletRect.bottom && rect.bottom > walletRect.top,
+          receivesPointer: el.contains(document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2)),
+        };
+      });
+      expect(geometry.width).toBeGreaterThanOrEqual(44);
+      expect(geometry.height).toBeGreaterThanOrEqual(44);
+      expect(geometry.x).toBeGreaterThanOrEqual(0);
+      expect(geometry.y).toBeGreaterThanOrEqual(0);
+      expect(geometry.right).toBeLessThanOrEqual(width);
+      expect(geometry.bottom).toBeLessThanOrEqual(height);
+      expect(geometry.lineCount).toBe(1);
+      expect(geometry.textFits).toBe(true);
+      expect(geometry.overlapsWallet).toBe(false);
+      expect(geometry.receivesPointer).toBe(true);
+      await exit.click({ trial: true });
+    }
+
+    await checkGeometry();
+    // Root text sizing exercises rem-based neighbors. The exit uses px, so also
+    // double its actual font size explicitly to test 200% text-only enlargement.
+    const normalFontSize = await exit.evaluate(el => parseFloat(getComputedStyle(el).fontSize));
+    await page.evaluate(() => { document.documentElement.style.fontSize = '200%'; });
+    await exit.evaluate((el, size) => el.style.setProperty('font-size', `${size * 2}px`, 'important'), normalFontSize);
+    await checkGeometry();
+    await page.evaluate(() => { document.documentElement.style.removeProperty('font-size'); });
+    await exit.evaluate(el => el.style.removeProperty('font-size'));
+    await checkGeometry();
+    if (width <= 390) {
+      await page.screenshot({ path: testInfo.outputPath(`compact-exit-${width}x${height}.png`) });
+    }
+  });
+}
