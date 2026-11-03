@@ -9,8 +9,8 @@ test('owner is a visible foreground observer, customized and motion-aware',async
   let bounds=await owner.boundingBox();expect(bounds.width).toBeGreaterThanOrEqual(80);expect(bounds.x).toBeGreaterThanOrEqual(0);expect(bounds.y+bounds.height).toBeLessThanOrEqual(height);
   const toggle=await page.locator('.game-scene-controls-toggle').boundingBox();if(toggle)expect(bounds.x).toBeGreaterThanOrEqual(toggle.x+toggle.width);
   await page.screenshot({path:info.outputPath(`peek-${width}.png`)});
-  if(width===390){await owner.evaluate(el=>{for(const animation of el.getAnimations({subtree:true})){animation.pause();animation.currentTime=10000;}});expect(Number(await owner.locator('.owner-peek-glance').evaluate(e=>getComputedStyle(e).opacity))).toBeGreaterThan(.9);await page.screenshot({path:info.outputPath('peek-glance.png')});}
-  await page.emulateMedia({reducedMotion:'reduce'});expect(await owner.locator('.owner-peek-glance').evaluate(e=>getComputedStyle(e).animationName)).toBe('none');await expect(owner.locator('.owner-peek-glance')).toHaveCSS('opacity','0');
+  if(width===390){await owner.evaluate(el=>{for(const animation of el.getAnimations({subtree:true})){animation.pause();animation.effect.updateTiming({delay:0});animation.currentTime=10000;}});expect(Number(await owner.locator('.owner-peek-glance').evaluate(e=>getComputedStyle(e).opacity))).toBeGreaterThan(.9);await page.screenshot({path:info.outputPath('peek-glance.png')});}
+  await page.emulateMedia({reducedMotion:'reduce'});await expect(owner.locator('.owner-peek-glance')).toHaveCSS('animation-name','none');await expect(owner.locator('.owner-peek-glance')).toHaveCSS('opacity','0');
   await page.emulateMedia({reducedMotion:'no-preference'});
  }
 });
@@ -21,7 +21,7 @@ test('painted owner keeps each selected hairstyle and outfit',async({page},info)
  for(let i=0;i<hairs.length;i++){
   await page.evaluate(({hair,outfit})=>localStorage.setItem('buncho.owner-profile.v1',JSON.stringify({version:1,hair,outfit,skin:'peach',hairColor:'chestnut',palette:'leaf',accessory:'none',eyes:hair==='sweep'?'smile':'gentle',face:hair==='sweep'?'soft':'round'})),{hair:hairs[i],outfit:outfits[i]});
   await page.goto('game/');await expect(page.locator('.game-logo-intro')).toBeHidden();const art=page.locator('.owner-peek-art');await expect(art).toHaveAttribute('data-hair',hairs[i]);await expect(art).toHaveAttribute('data-outfit',outfits[i]);
-  await page.screenshot({path:info.outputPath(`variant-${i}.png`)});if(i===4){await art.evaluate(el=>{for(const animation of el.getAnimations({subtree:true})){animation.pause();animation.currentTime=10000;}});await page.screenshot({path:info.outputPath('variant-smile-glance.png')});}
+  await page.screenshot({path:info.outputPath(`variant-${i}.png`)});if(i===4){await art.evaluate(el=>{for(const animation of el.getAnimations({subtree:true})){animation.pause();animation.effect.updateTiming({delay:0});animation.currentTime=10000;}});await page.screenshot({path:info.outputPath('variant-smile-glance.png')});}
  }
 });
 
