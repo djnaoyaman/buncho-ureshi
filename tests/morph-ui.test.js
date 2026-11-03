@@ -218,3 +218,15 @@ test('overview leads with bird identity and keeps detailed research folded witho
   assert.equal(root.querySelectorAll('.morph-term').length,14);
  }finally{await close();}
 });
+
+test('overview explains three destinations and exposes all five color shortcuts without duplicate photographs', async()=>{
+ const {root,close}=dom(renderMorphOverview(data));
+ try{
+  const links=[...root.querySelectorAll('.morph-entry-nav a')];
+  assert.deepEqual(links.map(a=>a.dataset.morphJump),['morph-profiles','morph-compare','morph-terms']);
+  for(const a of links){assert(root.querySelector('#'+a.dataset.morphJump));assert(a.querySelector('strong'));assert(a.querySelector('small'));}
+  assert.equal(root.querySelectorAll('[data-morph-show]').length,5);
+  assert.equal(root.querySelectorAll('.morph-card img').length,5);
+  assert(plainText(root.querySelector('h1')).includes('文鳥の羽色ずかん'));
+ }finally{await close();}
+});

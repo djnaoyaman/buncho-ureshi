@@ -166,3 +166,16 @@
 .morph-atlas[data-morph-view=overview] .morph-intro{padding-block:20px}
 .morph-atlas[data-morph-view=overview] .morph-toc{margin:12px 0;padding-block:8px;gap:4px 18px}
 .morph-atlas[data-morph-view=overview] #morph-profiles{padding-top:20px}
+
+/* Three unmistakable entry points; no extra photographs or long preamble. */
+.morph-atlas[data-morph-view=overview] .morph-breadcrumb{margin-bottom:12px}
+.morph-atlas[data-morph-view=overview] .morph-intro{margin:0;text-align:left;padding-block:12px}
+.morph-atlas[data-morph-view=overview] .morph-intro h1{font-size:clamp(1.6rem,5vw,2.5rem)!important;margin:4px 0 12px;line-height:1.7;letter-spacing:0!important}
+.morph-entry-lead{font-size:.86rem;margin:0!important}
+.morph-entry-nav{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:16px 0 24px}
+.morph-entry-nav a{display:flex;flex-direction:column;gap:5px;align-items:flex-start;padding:13px 10px;min-height:116px;border:1px solid #c5d0c2;border-radius:12px;color:var(--morph-ink);background:#edf1e8;text-decoration:none}
+.morph-entry-nav a:nth-child(2){background:#f4eee5}.morph-entry-nav a:nth-child(3){background:#e9eef1}
+.morph-entry-number{font-size:.7rem;letter-spacing:.1em}.morph-entry-nav strong{font-size:clamp(.8rem,3.4vw,1.05rem);line-height:1.5}.morph-entry-nav small{font-size:.7rem;line-height:1.5}.morph-entry-nav a>span:last-child{align-self:flex-end}
+.morph-quick-picks{display:flex;flex-wrap:wrap;gap:7px;margin:12px 0}.morph-quick-picks button{border-radius:24px;font-size:.82rem;min-height:44px;padding:8px 13px;background:#fff}
+.morph-more-links{display:flex;flex-wrap:wrap;gap:12px 24px;padding:16px 0}.morph-more-links a{min-height:44px;display:flex;align-items:center;font-size:.88rem}
+.morph-card{scroll-margin-top:100px}
