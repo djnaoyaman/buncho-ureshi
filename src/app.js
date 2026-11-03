@@ -1,10 +1,11 @@
+import { bindEditorialParallax } from "./editorial-parallax.js";
 import { mountGameMusic } from "./game-music-ui.js";
 import { renderHome } from "./home.js";
 import { createWorldChrome } from "./game-chrome.js";
 import { articles } from "./data/articles.js";
 import { photos, birdVideo } from "./data/photos.js";
 import { quizzes } from "./data/quizzes.js";
-import { SITE_NAME, esc, birdSvg, logoSvg, flourish } from "./visuals.js";
+import { SITE_NAME, esc, birdSvg, birdPhotoCredit, logoSvg, flourish } from "./visuals.js";
 import { readLocal, writeLocal } from "./storage.js";
 import { mountGame, gameBirdSvg } from "./game.js";
 import { mountStudio } from "./studio.js";
@@ -156,7 +157,7 @@ function navigate(route, replace = false) {
 function heading(eyebrow, title, description = "") {
   return `<header class="page-heading"><p class="eyebrow">${eyebrow}</p><h1>${title}</h1>${description ? `<p class="lede">${description}</p>` : ""}</header>`;
 }
-// Covers are independent original photographs, never recoloured or duplicated crops.
+// Covers use distinct source photographs. Index-only CSS adds reversible editorial framing.
 const articleCoverOverrides = { conservation: "photo-03", beak: "photo-14", eyes: "photo-43", tail: "photo-26", observation: "photo-27", resting: "photo-21", voice: "photo-19", sleep: null, clean: "photo-11", molt: "photo-37", health: null };
 function articleCard(a) {
   const id = Object.hasOwn(articleCoverOverrides, a.id) ? articleCoverOverrides[a.id] : a.photos?.[0];
@@ -193,14 +194,14 @@ function submitSiteSearch(event) {
   navigate(`?q=${encodeURIComponent(query)}`);
 }
 function atlasDoor() {
-  return `<a class="challenge-banner morph-discovery-link" href="${url("colors/")}"><span><span class="eyebrow">写真でくらべる、小さな羽の世界</span><h2><ruby>文鳥<rt>ぶんちょう</rt></ruby>の<ruby>羽色<rt>はねいろ</rt></ruby>ずかん</h2><p>5つの色・模様と、こどもからおとなへのちがい。大きな実写写真と出典から、見えること・まだわからないことを学ぼう。</p></span><span class="big-arrow" aria-hidden="true">↗</span></a>`;
+  return `<a class="challenge-banner morph-discovery-link" href="${url("colors/")}"><span><span class="eyebrow">写真で見つける、小さな羽の世界</span><h2><ruby>文鳥<rt>ぶんちょう</rt></ruby>の<ruby>羽色<rt>はねいろ</rt></ruby>ずかん</h2><p>5つの色・模様と、こどもからおとなへのちがい。大きな実写写真と出典から、見えること・まだわからないことを学ぼう。</p></span><span class="big-arrow" aria-hidden="true">↗</span></a>`;
 }
 function home() {
   return renderHome({ photos, articles, quizzes, url, image, atlasDoor, esc });
 }
 
 function encyclopedia() {
-  return `${heading("文鳥を知る", "写真から、ふしぎをひらこう。", "同じ文鳥でも、色や姿、しぐさはいろいろ。気になる扉からどうぞ。")} ${atlasDoor()}<div class="encyclopedia-tools"><label class="search-field"><span>図鑑をさがす</span><input id="article-search" type="search" placeholder="くちばし、水浴び、食べ物…"></label><div class="filter-chips" role="group" aria-label="図鑑の分類"><button class="chip active" data-category="all">すべて</button>${[...new Set(articles.map((a) => a.category))].map((c) => `<button class="chip" data-category="${esc(c)}">${esc(c)}</button>`).join("")}<button class="chip" data-category="favorites">♡ お気に入り</button></div></div><p id="result-count" role="status"></p><div id="article-grid" class="article-grid"></div><a class="text-link" href="${url("body/")}">図から見つける「からだ探検」 →</a>`;
+  return `${heading("文鳥を知る", "写真から、ふしぎをひらこう。", "同じ文鳥でも、色や姿、しぐさはいろいろ。気になる扉からどうぞ。")} ${atlasDoor()}<div class="encyclopedia-tools"><label class="search-field"><span>図鑑をさがす</span><input id="article-search" type="search" placeholder="くちばし、水浴び、食べ物…"></label><div class="filter-chips" role="group" aria-label="図鑑の分類"><button class="chip active" data-category="all">すべて</button>${[...new Set(articles.map((a) => a.category))].map((c) => `<button class="chip" data-category="${esc(c)}">${esc(c)}</button>`).join("")}<button class="chip" data-category="favorites">♡ お気に入り</button></div></div><p class="photo-presentation-note">一覧の写真は、構図と明るさ・彩度を控えめに調整しています。羽色や細部は記事の写真で確かめてください。<a href="${url("credits/")}">元写真・作者・利用条件</a>。表示上の調整も元写真と同じライセンスです。</p><p id="result-count" role="status"></p><div id="article-grid" class="article-grid"></div><a class="text-link" href="${url("body/")}">図から見つける「からだ探検」 →</a>`;
 }
 function bindEncyclopedia(initial = "") {
   let category = "all";
@@ -247,7 +248,7 @@ function photoCredits(ids) {
     .join("");
 }
 function article(a) {
-  return `<nav class="breadcrumb" aria-label="現在の場所"><a href="${url("encyclopedia/")}">図鑑</a><span aria-hidden="true">/</span>${esc(a.category)}</nav>${heading(esc(a.category), esc(a.title))}<div class="article-actions"><button id="favorite" aria-pressed="${favorites.includes(a.id)}">${favorites.includes(a.id) ? "♥ お気に入り" : "♡ お気に入りにする"}</button><button id="speak">解説をきく</button><button id="stop-speak">読み上げをとめる</button></div><nav class="article-toc" aria-label="この記事の目次"><a href="#first">まず見る</a><a href="#basic">基本を知る</a><a href="#deep">もっと調べる</a><a href="#sources">出典</a></nav><article class="article-body"><section id="first"><p class="eyebrow">01　まず見る</p><p class="article-summary">${a.summary}</p>${a.photos?.length ? `<figure class="article-hero">${image(a.photos[0], "", true)}<figcaption>${esc(photos.find((p) => p.id === a.photos[0])?.alt || "")}</figcaption></figure>` : birdSvg()}</section>${["voice", "courtship"].includes(a.id) ? videoBlock() : ""}<section id="basic"><p class="eyebrow">02　基本を知る</p><h2>しくみを見てみよう</h2><div class="prose">${paragraphs(a.body)}</div></section><section id="deep"><p class="eyebrow">03　もっと調べる</p><h2>もう一歩、その先へ。</h2><div class="prose">${paragraphs(a.deep)}</div>${a.terms?.length ? `<dl class="glossary">${a.terms.map((t) => `<div><dt><ruby>${esc(t.term)}<rt>${esc(t.reading)}</rt></ruby></dt><dd>${esc(t.meaning)}</dd></div>`).join("")}</dl>` : ""}</section>${
+  return `<nav class="breadcrumb" aria-label="現在の場所"><a href="${url("encyclopedia/")}">図鑑</a><span aria-hidden="true">/</span>${esc(a.category)}</nav>${heading(esc(a.category), esc(a.title))}<div class="article-actions"><button id="favorite" aria-pressed="${favorites.includes(a.id)}">${favorites.includes(a.id) ? "♥ お気に入り" : "♡ お気に入りにする"}</button><button id="speak">解説をきく</button><button id="stop-speak">読み上げをとめる</button></div><nav class="article-toc" aria-label="この記事の目次"><a href="#first">まず見る</a><a href="#basic">基本を知る</a><a href="#deep">もっと調べる</a><a href="#sources">出典</a></nav><article class="article-body"><section id="first"><p class="eyebrow">01　まず見る</p><p class="article-summary">${a.summary}</p>${a.photos?.length ? `<figure class="article-hero">${image(a.photos[0], "", true)}<figcaption>${esc(photos.find((p) => p.id === a.photos[0])?.alt || "")}</figcaption></figure>` : `${birdSvg()}<p class="quiet">${birdPhotoCredit()}</p>`}</section>${["voice", "courtship"].includes(a.id) ? videoBlock() : ""}<section id="basic"><p class="eyebrow">02　基本を知る</p><h2>しくみを見てみよう</h2><div class="prose">${paragraphs(a.body)}</div></section><section id="deep"><p class="eyebrow">03　もっと調べる</p><h2>もう一歩、その先へ。</h2><div class="prose">${paragraphs(a.deep)}</div>${a.terms?.length ? `<dl class="glossary">${a.terms.map((t) => `<div><dt><ruby>${esc(t.term)}<rt>${esc(t.reading)}</rt></ruby></dt><dd>${esc(t.meaning)}</dd></div>`).join("")}</dl>` : ""}</section>${
     a.photos?.length > 1
       ? `<div class="photo-row">${a.photos
           .slice(1)
@@ -308,7 +309,7 @@ function bodyPage() {
     ["尾", "tail", 77, 69],
     ["足", "feet", 50, 86],
   ];
-  return `${heading("文鳥のからだ探検", "どこを、よく見てみよう？", "丸い体に、暮らしのくふうがつまっている。名前を押して、写真を拡大しよう。")}<div class="body-explorer"><div class="body-diagram">${birdSvg("gray")}${parts.map(([label, id, x, y]) => `<button style="left:${x}%;top:${y}%" data-part="${id}" aria-label="${label}を拡大して調べる" aria-pressed="false" aria-controls="part-detail">${label}</button>`).join("")}</div><div id="part-detail" aria-live="polite"><p class="eyebrow">体の地図</p><h2>気になる場所をえらぼう</h2><p>耳の穴は羽毛にかくれていて、外から見える耳たぶはありません。図は位置を伝えるための模式図です。</p></div></div><p class="quiet">独自制作の模式図。色・大きさ・位置は説明のための表現を含みます。</p><div class="article-grid">${articles
+  return `${heading("文鳥のからだ探検", "どこを、よく見てみよう？", "丸い体に、暮らしのくふうがつまっている。名前を押して、写真を拡大しよう。")}<div class="body-explorer"><div class="body-diagram">${birdSvg("gray")}${parts.map(([label, id, x, y]) => `<button style="left:${x}%;top:${y}%" data-part="${id}" aria-label="${label}を拡大して調べる" aria-pressed="false" aria-controls="part-detail">${label}</button>`).join("")}</div><div id="part-detail" aria-live="polite"><p class="eyebrow">体の地図</p><h2>気になる場所をえらぼう</h2><p>耳の穴は羽毛にかくれていて、外から見える耳たぶはありません。左の写真と、部位ごとの拡大写真を見比べてみよう。</p></div></div><p class="quiet">${birdPhotoCredit()}</p><div class="article-grid">${articles
     .filter((a) => a.category === "からだ探検")
     .map(a => `<a class="body-topic-link" href="${url(`encyclopedia/${a.id}/`)}"><strong>${esc(a.title)}</strong><span>${a.summary}</span></a>`)
     .join("")}</div>`;
@@ -329,7 +330,7 @@ function bindQuiz() {
     const learnLink = `<a href="${url(`encyclopedia/${q.articleId}/`)}" target="_blank" rel="noopener">${esc(learning?.title || "関連する図鑑")}（別のタブ）</a>`;
     answered = false;
     document.querySelector("#quiz-root").innerHTML =
-      `<div class="quiz-progress"><span>${index + 1} / ${quizzes.length}</span><progress value="${index}" max="${quizzes.length}" aria-label="クイズの進み具合"></progress></div><details class="quiz-learning"><summary>この問題を学べるページ</summary><p>${learnLink}</p><p>${learning?.summary || ""}</p></details><h2>${q.question}</h2>${q.photoId ? `<figure>${image(q.photoId)}</figure>` : q.diagram ? `<figure class="quiz-diagram">${birdSvg("gray")}<figcaption>文鳥の体の模式図</figcaption></figure>` : ""}<div class="quiz-choices">${q.choices.map((c, i) => `<button data-answer="${i}">${esc(c)}</button>`).join("")}</div><div id="quiz-feedback" aria-live="polite"></div>`;
+      `<div class="quiz-progress"><span>${index + 1} / ${quizzes.length}</span><progress value="${index}" max="${quizzes.length}" aria-label="クイズの進み具合"></progress></div><details class="quiz-learning"><summary>この問題を学べるページ</summary><p>${learnLink}</p><p>${learning?.summary || ""}</p></details><h2>${q.question}</h2>${q.photoId ? `<figure>${image(q.photoId)}</figure>` : q.diagram ? `<figure class="quiz-diagram">${birdSvg("gray")}<figcaption>${birdPhotoCredit()}</figcaption></figure>` : ""}<div class="quiz-choices">${q.choices.map((c, i) => `<button data-answer="${i}">${esc(c)}</button>`).join("")}</div><div id="quiz-feedback" aria-live="polite"></div>`;
     document.querySelectorAll("[data-answer]").forEach(
       (b) =>
         (b.onclick = () => {
@@ -349,7 +350,7 @@ function bindQuiz() {
             if (index < quizzes.length) draw();
             else {
               document.querySelector("#quiz-root").innerHTML =
-                `${birdSvg()}<h2>${quizzes.length}の発見、おつかれさま！</h2><p>正解は ${correct} / ${quizzes.length} 問。まちがえた問題も、知識のたねになったね。</p><button id="quiz-restart" class="button">もう一度、チャレンジ</button><a class="text-link" href="${url("encyclopedia/")}">図鑑をひらく →</a>`;
+                `${birdSvg()}<p class="quiet">${birdPhotoCredit()}</p><h2>${quizzes.length}の発見、おつかれさま！</h2><p>正解は ${correct} / ${quizzes.length} 問。まちがえた問題も、知識のたねになったね。</p><button id="quiz-restart" class="button">もう一度、チャレンジ</button><a class="text-link" href="${url("encyclopedia/")}">図鑑をひらく →</a>`;
               document.querySelector("#quiz-restart").onclick = () => {
                 index = 0;
                 correct = 0;
@@ -510,7 +511,7 @@ function render(route) {
   if (query !== null) {
     document.querySelector("#search-results-form").onsubmit = submitSiteSearch;
     document.querySelector("#global-query").value = query.slice(0, 80);
-  } else if (route === "encyclopedia/") bindEncyclopedia();
+  } else if (route === "encyclopedia/") { bindEncyclopedia(); teardown = bindEditorialParallax(document.querySelector("#article-grid"), { enabled: settings.motion }); }
   else if (route.startsWith("encyclopedia/") && slug) {
     const a = articles.find((a) => a.id === slug);
     if (a) {

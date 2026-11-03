@@ -7,13 +7,17 @@ export const esc = (v) =>
         c
       ],
   );
-export function birdSvg(color = "white", stage = "adult") {
-  const grey = !["white", "白", "白文鳥"].includes(color),
-    chick = ["chick", "ひな", "juvenile", "幼鳥"].includes(stage),
-    egg = ["egg", "卵"].includes(stage);
-  if (egg)
-    return '<svg viewBox="0 0 140 130" role="img" aria-label="文鳥の卵のイラスト"><ellipse cx="70" cy="75" rx="27" ry="37" fill="#f5eddb" stroke="#756c53" stroke-width="2"/></svg>';
-  return `<svg viewBox="0 0 180 150" role="img" aria-label="${grey ? "桜" : "白"}文鳥の${chick ? "幼い姿の" : ""}イラスト"><path d="M99 108l46 11-25-29" fill="${grey ? "#404c4e" : "#d8dfd7"}" stroke="#52645a" stroke-width="1.5"/><ellipse cx="80" cy="86" rx="48" ry="40" fill="${grey ? "#9a9fa2" : "#fffdf4"}" stroke="#52645a" stroke-width="1.5"/><path d="M71 74q50 8 32 38-31-6-32-38Z" fill="${grey ? "#7d8589" : "#e9eee6"}" stroke="#849485"/><circle cx="57" cy="53" r="32" fill="${chick ? "#a9a49a" : grey ? "#303e40" : "#fffdf4"}" stroke="#52645a" stroke-width="1.5"/>${grey && !chick ? '<path d="M36 56q0 25 25 22l10-17Z" fill="#f9f8ee"/>' : ""}<path d="M30 45 8 54 31 67Z" fill="${chick ? "#70665f" : "#d76662"}" stroke="#b64f4c"/><circle cx="45" cy="48" r="6" fill="none" stroke="${chick ? "#8d7666" : "#d98d83"}" stroke-width="3"/><circle cx="45" cy="48" r="3.6" fill="#203d35"/><circle cx="44" cy="47" r="1" fill="white"/><path d="m70 120-2 14m22-13 3 12m-28 0 13 1m13-1 14-2" fill="none" stroke="#ce9688" stroke-width="3" stroke-linecap="round"/></svg>`;
+// Documentary photo: DickDaniels, CC BY-SA 3.0. The original WebP is unchanged.
+// The vector contour is a CC BY-SA 3.0 adaptation, traced from photo-23 pixels.
+// One left-facing view is shared by every former educational bird illustration.
+let birdPhotoSequence = 0;
+export const BIRD_PHOTO_SOURCE = "https://commons.wikimedia.org/wiki/File:Java_Finch_(Padda_oryzivora)_RWD.jpg";
+export function birdPhotoCredit() {
+  return '<span class="bird-photo-credit">写真：<a href="' + BIRD_PHOTO_SOURCE + '" target="_blank" rel="noopener noreferrer">DickDaniels / 元の写真</a> · <a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank" rel="noopener noreferrer">CC BY-SA 3.0</a>。背景の切り抜き・左右反転・縮小表示。同じライセンスで提供。一般の文鳥で、おもち本人ではありません。</span>';
+}
+export function birdSvg() {
+  const id = 'bird-photo-clip-' + (++birdPhotoSequence);
+  return `<svg class="bird-photo-cutout" viewBox="185 75 620 640" role="img" aria-label="左向きにそろえた灰色の文鳥の切り抜き写真" xmlns="http://www.w3.org/2000/svg"><title>文鳥の全身写真</title><desc>撮影：DickDaniels。CC BY-SA 3.0。背景を輪郭で切り抜き、左右反転。羽色・体の形は原写真のまま。おもち本人ではありません。</desc><defs><clipPath id="${id}"><path d="M 576 157 C 585 121 622 107 652 112 C 679 112 704 128 714 157 L 720 166 Q 742 187 765 234 Q 742 241 713 236 Q 708 257 701 274 C 705 319 675 380 642 413 Q 628 441 618 455 L 655 447 Q 669 442 669 451 L 660 461 Q 678 476 687 501 L 690 511 Q 682 511 678 505 L 666 490 L 661 499 Q 656 506 651 501 L 654 482 L 643 480 L 613 484 Q 595 489 580 509 L 570 526 Q 565 524 572 506 L 585 483 L 575 488 Q 570 486 580 475 L 591 463 Q 533 509 462 530 L 444 541 Q 476 563 533 585 Q 558 582 580 584 L 598 592 Q 607 600 599 603 L 577 596 L 550 601 L 575 612 Q 597 624 605 649 Q 611 663 603 666 L 594 646 L 584 631 L 583 641 Q 579 652 569 652 L 566 647 Q 580 640 574 630 L 554 619 L 548 622 Q 541 630 531 629 Q 527 623 537 617 L 526 608 L 512 616 Q 503 626 503 636 Q 496 635 498 622 L 516 595 Q 474 572 432 551 L 424 540 Q 357 557 294 614 L 237 677 L 226 686 Q 252 635 275 589 Q 291 555 312 523 Q 336 462 363 405 C 391 337 426 282 455 251 Q 510 197 576 157 Z"/></clipPath></defs><g transform="translate(990 0) scale(-1 1)"><image href="photos/photo-23.webp" width="1066" height="800" clip-path="url(#${id})"/></g></svg>`;
 }
 export function flourish(kind = "horizontal") {
   return `<svg class="flourish ${kind}" viewBox="0 0 500 80" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.4"><path d="M4 63C84 81 101 0 172 26S228 69 250 45C272 69 309 0 363 28S420 79 496 63"/><path d="M90 57q-5-35 28-36-3 29-28 36m55-27q1-22 24-25-1 20-24 25m266 28q5-35-28-36 3 29 28 36m-55-27q-1-22-24-25 1 20 24 25"/><path d="M235 36q15-27 30 0-15 24-30 0Z"/></g></svg>`;

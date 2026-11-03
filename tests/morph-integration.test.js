@@ -105,10 +105,8 @@ test('integrated SPA atlas navigation, search, filters, comparison reset, speech
     const query=d.querySelector('[data-morph-query]');query.value='NO_MATCH_123';query.dispatchEvent(new window.Event('input',{bubbles:true}));
     assert.equal(d.querySelectorAll('[data-morph-card]').length,0);
     d.querySelector('[data-morph-reset]').click();assert.equal(d.querySelectorAll('[data-morph-card]').length,5);assert.equal(d.activeElement,query);
-    const a=d.querySelector('[data-morph-compare="a"]'),b=d.querySelector('[data-morph-compare="b"]'),initial=[a.value,b.value];
-    change(a,'silver');change(b,'silver');assert.equal(d.querySelectorAll('.morph-comparison').length,0);
-    change(b,'white');assert.equal(d.querySelectorAll('.morph-comparison').length,2);
-    d.querySelector('[data-morph-compare-reset]').click();assert.deepEqual([a.value,b.value],initial);assert.equal(d.activeElement,a);
+    assert.equal(d.querySelector('#morph-compare'),null);
+    assert.equal(d.querySelector('[data-morph-compare-id]'),null);
     navigate('colors/silver/');assert.equal(d.querySelector('[data-morph-profile]').dataset.morphProfile,'silver');
     const oldSpeak=d.querySelector('[data-morph-speak]');oldSpeak.click();assert.equal(spoken.length,1);assert(!spoken[0].includes('<'));assert(spoken[0].includes('シルバー'));
     const before=stopped;navigate('colors/');assert(stopped>before);oldSpeak.click();assert.equal(spoken.length,1);
