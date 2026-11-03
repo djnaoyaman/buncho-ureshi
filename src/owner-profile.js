@@ -2,25 +2,10 @@
 export const OWNER_PROFILE_KEY='buncho.owner-profile.v1';
 export const LEGACY_OWNER_NAME_KEY='buncho.owner-name.v1';
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-export const OWNER_CHOICES=Object.freeze({
- hair:[['crop','こもれびショート'],['bob','まあるいボブ'],['wave','やわらかウェーブ'],['bun','おだんご'],['sweep','風の前髪']],
- skin:[['porcelain','さくら色','#f4d8c4'],['peach','もも色','#e8b89c'],['honey','はちみつ色','#c8946e'],['umber','こはく色','#9c674c'],['deep','くり色','#704a39']],
- hairColor:[['chestnut','くり','#624a3e'],['ink','すみ','#34383e'],['tea','ミルクティー','#ae8b64'],['silver','しろがね','#c8c9c2'],['rose','あずき','#8f6265'],['sage','セージ','#738c80']],
- outfit:[['apron','文鳥のエプロン'],['cardigan','羽根のカーディガン'],['smock','庭しごとのスモック'],['dress','こもれびワンピース'],['overalls','種まきオーバーオール']],
- palette:[['white','白文鳥','#e9e5d8','#a79c85'],['sakura','桜文鳥','#b8b9bf','#745e65'],['silver','シルバー','#c5d5d6','#698b96'],['cinnamon','シナモン','#cfaa83','#927253'],['leaf','若葉','#b7c7a8','#6b8564'],['petal','花びら','#e1b8bc','#a77780']],
- accessory:[['none','小物なし'],['birdpin','文鳥ブローチ'],['leafbag','葉っぱのポシェット'],['beret','どんぐりベレー'],['scarf','羽色のスカーフ']],
- face:[['round','まる顔'],['oval','たまご顔'],['soft','ふっくら顔']],
- eyes:[['gentle','やさしい目'],['bright','ぱっちり'],['smile','にっこり']]
-});
-export const DEFAULT_OWNER=Object.freeze({version:1,name:'飼い主さん',hair:'bob',skin:'peach',hairColor:'chestnut',outfit:'apron',palette:'leaf',accessory:'birdpin',eyes:'gentle',face:'round'});
+import { OWNER_CHOICES, DEFAULT_OWNER, normalizeOwnerProfile } from './owner-profile-data.js';
+import { renderOwnerPortrait } from './owner-peek.js';
+export { OWNER_CHOICES, DEFAULT_OWNER, normalizeOwnerProfile } from './owner-profile-data.js';
 const valid=(key,value)=>OWNER_CHOICES[key].some(row=>row[0]===value);
-export function normalizeOwnerProfile(value={}){
- const p={...DEFAULT_OWNER};
- if(!value||typeof value!=='object'||Array.isArray(value))return p;
- if(typeof value.name==='string')p.name=Array.from(value.name.replace(/[\u0000-\u001f\u007f]/g,'').trim()).slice(0,24).join('')||DEFAULT_OWNER.name;
- for(const key of Object.keys(OWNER_CHOICES))if(valid(key,value[key]))p[key]=value[key];
- return p;
-}
 const getStorage=()=>{try{return globalThis.localStorage;}catch{return null;}};
 export function readOwnerProfile(storage=getStorage()){
  try{
@@ -61,10 +46,10 @@ export function renderOwnerAvatar(value,{pose='idle',label='飼い主の試着�
 const categories=[['outfit','洋服'],['palette','羽色コーデ'],['hair','髪型'],['hairColor','髪の色'],['skin','肌の色'],['eyes','目'],['face','顔のかたち'],['accessory','小物']];
 export function renderOwnerProfileEditor(profile,{category='outfit'}={}){
  const p=normalizeOwnerProfile(profile),active=categories.some(([id])=>id===category)?category:'outfit';
- return `<section class="buncho-owner-editor" aria-label="飼い主のプロフィール"><div class="owner-fitting"><div class="owner-fitting-label">あなたと、文鳥の暮らし</div><div class="owner-preview" data-owner-preview>${renderOwnerAvatar(p)}</div><label class="owner-name-label">呼ばれたい名前<input data-owner-name maxlength="48" value="${esc(p.name)}" autocomplete="nickname" aria-describedby="owner-name-hint"></label><small id="owner-name-hint">24文字まで。あとから変えられます。</small></div><div class="owner-wardrobe"><div class="owner-tabs" role="tablist" aria-label="着替えるところ">${categories.map(([id,label])=>`<button type="button" role="tab" aria-selected="${id===active}" tabindex="${id===active?0:-1}" data-owner-category="${id}">${label}</button>`).join('')}</div><div class="owner-shelf" role="tabpanel" aria-label="${categories.find(([id])=>id===active)[1]}" data-owner-shelf>${renderShelf(p,active)}</div></div><p class="owner-save-status" role="status" aria-live="polite" data-owner-status>選んで、試着してみよう。</p><div class="owner-actions"><button type="button" data-owner-cancel>やめる</button><button type="button" class="owner-confirm" data-owner-save>これにする</button></div></section>`;
+ return `<section class="buncho-owner-editor" aria-label="飼い主のプロフィール"><div class="owner-fitting"><div class="owner-fitting-label">あなたと、文鳥の暮らし</div><div class="owner-preview" data-owner-preview>${renderOwnerPortrait(p,{label:'飼い主の試着プレビュー'})}</div><label class="owner-name-label">呼ばれたい名前<input data-owner-name maxlength="48" value="${esc(p.name)}" autocomplete="nickname" aria-describedby="owner-name-hint"></label><small id="owner-name-hint">24文字まで。あとから変えられます。</small></div><div class="owner-wardrobe"><div class="owner-tabs" role="tablist" aria-label="着替えるところ">${categories.map(([id,label])=>`<button type="button" role="tab" aria-selected="${id===active}" tabindex="${id===active?0:-1}" data-owner-category="${id}">${label}</button>`).join('')}</div><div class="owner-shelf" role="tabpanel" aria-label="${categories.find(([id])=>id===active)[1]}" data-owner-shelf>${renderShelf(p,active)}</div></div><p class="owner-save-status" role="status" aria-live="polite" data-owner-status>選んで、試着してみよう。</p><div class="owner-actions"><button type="button" data-owner-cancel>やめる</button><button type="button" class="owner-confirm" data-owner-save>これにする</button></div></section>`;
 }
 function renderShelf(p,category){return OWNER_CHOICES[category].map(([id,label,color])=>{
- const visual=['skin','hairColor','palette'].includes(category)?`<span class="owner-swatch" style="--swatch:${color}" aria-hidden="true"></span>`:renderOwnerAvatar({...p,[category]:id},{decorative:true});
+ const visual=['skin','hairColor','palette'].includes(category)?`<span class="owner-swatch" style="--swatch:${color}" aria-hidden="true"></span>`:renderOwnerPortrait({...p,[category]:id},{decorative:true});
  return `<button type="button" class="owner-choice" data-owner-choice="${id}" aria-pressed="${p[category]===id}" aria-label="${esc(label)}">${visual}<span>${esc(label)}</span></button>`;
 }).join('');}
 export function mountOwnerProfile(root,{storage=getStorage(),onSave=()=>{},onCancel=()=>{}}={}){
@@ -72,7 +57,7 @@ export function mountOwnerProfile(root,{storage=getStorage(),onSave=()=>{},onCan
  root.innerHTML=renderOwnerProfileEditor(draft);const status=root.querySelector('[data-owner-status]'),save=root.querySelector('[data-owner-save]');
  const message=text=>{status.textContent=text;};
  if(conflict){save.disabled=true;message('保存を読み取れませんでした。閉じてから、もう一度開いてください。');}
- const update=()=>{root.querySelector('[data-owner-preview]').innerHTML=renderOwnerAvatar(draft);root.querySelector('[data-owner-shelf]').innerHTML=renderShelf(draft,category);};
+ const update=()=>{root.querySelector('[data-owner-preview]').innerHTML=renderOwnerPortrait(draft,{label:'飼い主の試着プレビュー'});root.querySelector('[data-owner-shelf]').innerHTML=renderShelf(draft,category);};
  const selectCategory=(value,focus=false)=>{category=value;for(const b of root.querySelectorAll('[data-owner-category]')){const yes=b.dataset.ownerCategory===category;b.setAttribute('aria-selected',String(yes));b.tabIndex=yes?0:-1;if(yes&&focus)b.focus({preventScroll:true});}const shelf=root.querySelector('[data-owner-shelf]');shelf.setAttribute('aria-label',categories.find(([id])=>id===category)[1]);shelf.innerHTML=renderShelf(draft,category);};
  const input=e=>{if(e.target.matches('[data-owner-name]'))draft.name=e.target.value;};
  const click=e=>{
@@ -87,3 +72,4 @@ export function mountOwnerProfile(root,{storage=getStorage(),onSave=()=>{},onCan
  root.addEventListener('input',input);root.addEventListener('click',click);root.addEventListener('keydown',key);const win=root.ownerDocument.defaultView;win?.addEventListener('storage',sync);
  return {getDraft:()=>normalizeOwnerProfile(draft),dispose(){if(disposed)return;disposed=true;root.removeEventListener('input',input);root.removeEventListener('click',click);root.removeEventListener('keydown',key);win?.removeEventListener('storage',sync);}};
 }
+
