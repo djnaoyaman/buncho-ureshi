@@ -25,7 +25,7 @@ export function mountGameMusic(host,{base='',document=globalThis.document,window
   function firstGameTap(e){
     if(!e.isTrusted||!e.target.closest('#game-root,[data-game-title-slot],[data-game-world-control]'))return;
     if(e.target.closest('[data-music-off],[data-music],[data-music-auto]'))return;
-    const s=player.state();if(s.enabled&&s.status==='paused')void player.playCurrentFromGesture();
+    if(player.needsGesture())void player.playCurrentFromGesture();
   }
   function gardenChanged(e){const d=e.detail;if(!d||!(d.gardenId===null||typeof d.gardenId==='string')||typeof d.worldId!=='string')return;void player.setGarden(d.gardenId,d.worldId);}
   document.addEventListener('buncho-game-garden',gardenChanged);
