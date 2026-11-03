@@ -30,5 +30,6 @@ test('bird brooch is a complete bird; none leaves it out',()=>{
 
 test('glance occupies one tenth of its cycle',async()=>{
  const css=await (await import('node:fs/promises')).readFile(new URL('../src/game.css',import.meta.url),'utf8');
- assert.match(css,/@keyframes owner-glance\{0%,78%,88%,100%\{opacity:0\}79%,87%\{opacity:1\}\}/);
+ assert.match(css,/@keyframes owner-glance\{0%,79\.8%,90\.2%,100%\{opacity:0\}80\.2%,89\.8%\{opacity:1\}\}/);
+ assert.match(renderOwnerPeek({}),/owner-peek-back[\s\S]*owner-peek-glance/);
 });

@@ -29,7 +29,7 @@ test('painted owner keeps each selected hairstyle and outfit',async({page},info)
 test('glance naturally keeps its phase after a scene redraw',async({page},info)=>{
  await page.addInitScript(()=>{window.__ownerTestTime=1599999996000;Date.now=()=>window.__ownerTestTime;});
  await page.setViewportSize({width:390,height:844});await page.goto('game/');await expect(page.locator('.game-logo-intro')).toBeHidden();
- await expect(page.locator('.game-owner-companion')).toHaveCSS('--owner-delay','0ms');await expect(page.locator('[data-owner-birdpin]')).toBeAttached();await page.locator('.game-owner-companion').screenshot({path:info.outputPath('owner-brooch.png')});
+ await expect(page.locator('.game-owner-companion')).toHaveCSS('--owner-delay','0ms');await expect(page.locator('.owner-peek-back [data-owner-birdpin]')).toBeAttached();await page.locator('.game-owner-companion').screenshot({path:info.outputPath('owner-brooch.png')});
  await page.locator('.game-scene-controls-toggle').click();await page.locator('[data-game-open-menu]').click();await page.locator('.game-secondary-menu [data-game-panel=settings]').click();
  await page.evaluate(()=>{window.__ownerTestTime=1600000006000;});await page.locator('[data-game-close-panel]').click();
  const owner=page.locator('.game-owner-companion');await expect(owner).toHaveCSS('--owner-delay','-10000ms');
