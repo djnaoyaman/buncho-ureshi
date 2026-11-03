@@ -431,7 +431,7 @@ body[data-world="buncho"] .site-header .game-world-exit{box-sizing:border-box;di
 body[data-world="buncho"] .game-scene-controls-toggle{position:fixed;z-index:90;left:calc(8px + env(safe-area-inset-left,0px));bottom:calc(92px + env(safe-area-inset-bottom,0px));min-width:60px;min-height:44px;padding:8px 12px;border:2px solid #fff4ce;border-radius:22px;background:linear-gradient(#fffceb,#e5d3a2);color:#425c3d;box-shadow:0 3px 0 #a18a56,0 5px 14px #243a3030;font-size:12px;font-weight:800;line-height:1.2;white-space:nowrap;cursor:pointer}
 body[data-world="buncho"] .game-scene-controls-toggle:focus-visible{outline:3px solid #315c44;outline-offset:3px}
 body[data-world="buncho"] .game-scene-controls-toggle[hidden]{display:none}
-body[data-world="buncho"][data-scene-controls="closed"] :is(.game-field-bar,.game-field-nav,.game-main>.game-heading,.game-scene-toolbar,.game-bottom-dock,.game-secondary-menu,.finch-garden>header,.finch-garden-selector,.finch-garden-dock,.finch-garden-empty,.finch-garden>.finch-clues){display:none!important}
+body[data-world="buncho"][data-scene-controls="closed"] :is(.game-field-bar,.game-field-nav,.game-main>.game-heading,.game-scene-toolbar,.game-bottom-dock,.game-secondary-menu,.finch-garden>header,.finch-garden-selector-wrap,.finch-garden-selector,.finch-garden-dock,.finch-garden-empty,.finch-garden>.finch-clues){display:none!important}
 body[data-world="buncho"]:has(.game-panel-overlay[open]:not([data-scene=true])) .game-scene-controls-toggle{display:none}
 @media(max-height:500px){body[data-world="buncho"] .game-scene-controls-toggle{bottom:calc(80px + env(safe-area-inset-bottom,0px))}}
 

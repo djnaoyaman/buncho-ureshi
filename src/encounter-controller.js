@@ -8,8 +8,18 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
   const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   function render({focus=false}={}){
     if(!alive)return;const w=getWorld();
+    const oldSelector=root.querySelector('.finch-garden-selector');
+    const oldScroll=oldSelector?.scrollLeft, oldSelected=oldSelector?.querySelector('[aria-current=page]')?.dataset.gardenSelect;
     if(w.worldId!==worldId){worldId=w.worldId;generation++;busy=false;mode='notebook';pageId=null;notice='';}
     root.innerHTML=(mode==='event'?renderEncounterScene(w,{system,base}):mode==='garden'?renderFinchGarden(w,{system,base,selectedBirdId:getSelectedBirdId()}):mode==='entry'?renderEncounterPage(w,pageId,{system,base,showPhoto}):renderEncounterNotebook(w,{system,base}))+`<p class="finch-notice" role="status">${escape(notice)}</p>`;
+    const selector=root.querySelector('.finch-garden-selector');
+    if(selector){
+      const selected=selector.querySelector('[aria-current=page]');
+      if(oldScroll!=null)selector.scrollLeft=oldScroll;
+      if(selected && (oldScroll==null || selected.dataset.gardenSelect!==oldSelected)){
+        selector.scrollLeft=selected.offsetLeft-selector.offsetLeft;
+      }
+    }
     root.setAttribute('aria-busy',String(busy));
     if(busy)for(const button of root.querySelectorAll('button'))button.disabled=true;
     if(focus)root.querySelector('h3')?.focus({preventScroll:true});
@@ -22,6 +32,7 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
   }
   async function click(event){
     const button=event.target.closest('button');if(!button||!root.contains(button)||busy)return;
+    if(button.hasAttribute('data-garden-scroll')){const selector=root.querySelector('.finch-garden-selector');if(selector)selector.scrollBy({left:(button.dataset.gardenScroll==='next'?1:-1)*selector.clientWidth,behavior:'smooth'});return;}
     if(button.hasAttribute('data-garden-household')){const id=button.dataset.gardenHousehold,w=getWorld();if(w.birds.some(b=>b.id===id&&b.home==='resident'&&['juvenile','adult'].includes(b.stage)))onHouseholdBird(id);return;}
     if(button.hasAttribute('data-encounter-page')){pageId=button.dataset.encounterPage;mode='entry';showPhoto=false;notice='';render({focus:true});return;}
     if(button.hasAttribute('data-encounter-back')||button.hasAttribute('data-encounter-close')){const token=++generation,w=getWorld(),expected={worldId:w.worldId,revision:w.revision};await mutate(current=>system.leaveGarden(current,expected),token);if(!alive||token!==generation)return;mode='notebook';notice='';render({focus:true});return;}

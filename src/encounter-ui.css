@@ -92,3 +92,11 @@
 .finch-garden-stage[data-garden-density=compact]{--garden-row-gap:clamp(60px,8cqh,64px)}
 .finch-garden-stage[data-garden-density=compact] :is(.finch-garden-friend,.finch-garden-household,.finch-garden-visitor){width:44px;height:52px;min-width:44px;min-height:44px}
 .finch-garden-stage[data-garden-density=compact] :is(.finch-friend-name,.finch-garden-visitor>span){font-size:10px;line-height:13px;padding:1px 3px;max-width:58px;overflow:hidden;text-overflow:ellipsis}
+
+/* Keep horizontal garden choices discoverable and reachable on touch and desktop. */
+.finch-garden-selector-wrap{position:absolute;z-index:4;top:60px;left:10px;right:10px;display:flex;align-items:center;gap:4px;min-width:0}
+.finch-garden-selector-wrap .finch-garden-selector{position:static;flex:1 1 auto;min-width:0;gap:5px;padding:2px 0 6px;scrollbar-width:thin}
+.finch-garden-selector-wrap .finch-garden-scroll{flex:0 0 44px;width:44px;height:44px;min-width:44px;padding:0!important;font-size:24px;line-height:1}
+@media(max-height:500px){.finch-garden-selector-wrap{top:54px}}
+.finch-garden-selector-wrap .finch-garden-selector button{box-sizing:border-box;flex:0 0 calc((100% - 5px)/2);min-width:0;padding:6px 4px;scroll-snap-align:start}
+@media(min-width:600px){.finch-garden-selector-wrap .finch-garden-selector button{flex-basis:calc((100% - 10px)/3)}}
