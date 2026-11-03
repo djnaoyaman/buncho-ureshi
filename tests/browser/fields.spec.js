@@ -261,6 +261,7 @@ test('two tabs collecting the same dropping get exactly one Gem reward',async({p
 });
 
 test('all nine slots show 24 future items without granting locked or unowned equipment',async({page})=>{
+ test.setTimeout(120000); // 9 categories × every tier and two previews use real browser actions.
  const w=createWorld(fixedNow);w.paused=true;await seedWorld(page,w);await openGame(page);await tab(page,'decorate');
  for(const slot of DECOR_SLOTS){
   await page.locator(`[data-decor-slot="${slot.id}"]`).click();await expect(page.locator('[data-decor-preview]')).toHaveCount(24);

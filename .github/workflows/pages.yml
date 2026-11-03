@@ -32,6 +32,19 @@ jobs:
           pactl info
       - name: Native care audio (not mocked)
         run: npx playwright test tests/browser/care.spec.js --project=firefox --grep "care sound opt-in" --retries=0
+      - name: Focused scene geometry and short-height navigation
+        run: npx playwright test tests/browser/game.spec.js --grep "illustrated cage field|active social partners" --retries=0 --max-failures=3 --output=short-test-results
+        env:
+          PLAYWRIGHT_HTML_OUTPUT_DIR: short-playwright-report
+      - name: Upload focused scene evidence
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: short-scene-evidence-${{ github.sha }}
+          path: |
+            short-playwright-report/
+            short-test-results/
+          retention-days: 14
       - name: Diagnostic UI-only browser verification (max 12 failures; original BGM unverified)
         run: npx playwright test --max-failures=12
         env:

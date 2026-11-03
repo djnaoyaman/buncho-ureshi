@@ -4,7 +4,7 @@ import { fieldPositions } from '../../src/field-visuals.js';
 import { GAME_SPRITE_ASSETS, gameSpriteGeometry } from '../../src/game.js';
 import { POSE_ATLASES } from '../../src/bird-poses.js';
 const ALL_SPRITE_ASSETS={...GAME_SPRITE_ASSETS,...Object.fromEntries(Object.values(POSE_ATLASES).map(a=>[a.asset.replace(/\.webp$/,''),a]))};
-import { createWorld, createBird, advanceTicks, advanceTo, validateWorld, TICK_MS, LIMITS } from '../../src/engine.js';
+import { createWorld, createBird, advanceTicks, advanceTo, validateWorld, fieldBirds, TICK_MS, LIMITS } from '../../src/engine.js';
 
 const DB_NAME = 'buncho-ureshi-garden-v1';
 const fixedNow = Date.UTC(2026, 10, 2, 12, 0, 0);
@@ -443,7 +443,7 @@ function gardenVisualFixture(count) {
 // decode assets, preserve their native ratio, keep contact planes bounded, and
 // ensure every name remains reachable without blanket floating scene labels.
 for (const residents of [1, 10]) test(`${residents === 1 ? 'initial one-bird' : 'populated ten-bird'} illustrated cage field is bounded, proportional and accessible`, async ({ page }, testInfo) => {
-  test.setTimeout(90000);
+  test.setTimeout(180000);
   const seeded = gardenVisualFixture(residents);
   await seedWorld(page, seeded);
   await openGame(page);
@@ -456,21 +456,25 @@ for (const residents of [1, 10]) test(`${residents === 1 ? 'initial one-bird' : 
   for (const width of [320, 375, 390, 768, 1440]) for (const orientation of ['portrait', 'landscape']) {
     const height = orientation === 'portrait' ? Math.max(800, Math.round(width * 1.25)) : Math.max(240, Math.round(width * .65));
     await page.setViewportSize({ width, height });
+    const compact=height<=500;
+    await expect(page.locator('.game-room')).toHaveAttribute('data-compact',String(compact));
+    await expect(page.locator('.game-room-bird')).toHaveCount(compact?1:residents);
     await decodeScene(page);
     await expect.poll(() => page.locator('.game-room img').evaluateAll(images=>images.every(img=>img.complete&&img.naturalWidth>0))).toBe(true);
-    await expect.poll(() => page.evaluate(({ residents, viewportWidth, expectedPositions, assetGeometry }) => {
+    const assertGeometry=async()=>{await expect.poll(() => page.evaluate(({ residents, viewportWidth, compact, expectedPositions, assetGeometry }) => {
       const roomElement=document.querySelector('.game-room'),room=roomElement.getBoundingClientRect(),errors=[];
       const tall=viewportWidth<=600,ratio=tall?.75:1.6,stage=document.querySelector('.game-main').getBoundingClientRect(),dock=document.querySelector('.game-bottom-dock').getBoundingClientRect();
-      if(room.height<=0||room.top<stage.top+35||room.bottom>dock.top+1)errors.push('scene exceeds available viewport above dock');
+      if(room.height<=0||room.top<stage.top+(compact?0:35)||room.bottom>dock.top+1)errors.push('scene exceeds available viewport above dock');
       if(Math.abs(room.width/room.height-ratio)>.01)errors.push('habitat aspect ratio changed');
       if(room.width>stage.width+1||room.left<stage.left-1||room.right>stage.right+1)errors.push('scene exceeds available stage width');
       const inside=r=>r.left>=room.left-1&&r.right<=room.right+1&&r.top>=room.top-1&&r.bottom<=room.bottom+1;
       const birds=[...roomElement.querySelectorAll('.game-room-bird')],planes=[];
+      if(compact&&(birds.length!==1||birds[0]?.dataset.birdId!==document.querySelector('.game-bird-carousel-face').dataset.birdId))errors.push('short-height scene must show the selected bird only');
       for(const bird of birds){
         const r=bird.getBoundingClientRect(),sprite=bird.querySelector('.game-sprite'),plane=sprite?.getBoundingClientRect(),img=sprite?.querySelector('img');
         if(bird.tagName!=='BUTTON'||r.width<44||r.height<44)errors.push(`${bird.dataset.birdId} adult target below 44px: ${r.width} × ${r.height}`);
         if(!inside(r)||!plane||!inside(plane))errors.push(`${bird.dataset.birdId} contact plane outside scene`);
-        if(plane&&(plane.width<(residents===1?64:44)||Math.abs(plane.width/plane.height-.85)>.01))errors.push(`${bird.dataset.birdId} contact plane too small or stretched: ${plane.width} × ${plane.height}`);
+        if(plane&&(plane.width<(compact||residents===1?64:44)||Math.abs(plane.width/plane.height-.85)>.01))errors.push(`${bird.dataset.birdId} contact plane too small or stretched: ${plane.width} × ${plane.height}`);
         if(!img?.complete||!img.naturalWidth)errors.push(`${bird.dataset.birdId} image not decoded`);
         else {const drawn=img.getBoundingClientRect();if(Math.abs(drawn.width/drawn.height-img.naturalWidth/img.naturalHeight)>.01)errors.push(`${bird.dataset.birdId} image is stretched`);}
         if(plane){
@@ -495,7 +499,25 @@ for (const residents of [1, 10]) test(`${residents === 1 ? 'initial one-bird' : 
       if(getComputedStyle(roomElement).display==='grid')errors.push('rejected grid returned');
       if(document.documentElement.scrollWidth>innerWidth+1)errors.push('document overflow');
       return errors;
-    },{residents,viewportWidth:width,expectedPositions:Object.fromEntries(fieldPositions(seeded.birds,width<=600?'tall':'wide','home')),assetGeometry:ALL_SPRITE_ASSETS}),{message:`${residents} birds, ${width}px ${orientation}: decoded, bounded, proportional scene`}).toEqual([]);
+    },{residents,viewportWidth:width,compact,expectedPositions:compact?Object.fromEntries(seeded.birds.map(b=>[b.id,fieldPositions([b],width<=600?'tall':'wide','home').get(b.id)])):Object.fromEntries(fieldPositions(seeded.birds,width<=600?'tall':'wide','home')),assetGeometry:ALL_SPRITE_ASSETS}),{message:`${residents} birds, ${width}px ${orientation}: decoded, bounded, proportional scene`}).toEqual([]);};
+    await assertGeometry();
+    if(compact){
+      // Every saved bird remains reachable through actual 44px controls even
+      // when the narrow/short scene intentionally displays only one bird.
+      for(const b of seeded.birds){
+        await chooseBird(page,b.id);await decodeScene(page);
+        await expect(page.locator('.game-room-bird')).toHaveAttribute('data-bird-id',b.id);
+        await expect(page.locator('.game-bird-carousel-face strong')).toHaveText(b.name);
+        await assertGeometry();
+      }
+      const next=page.locator('.game-bird-carousel [data-bird-step="1"]');
+      for(const direction of [-1,1]){
+        const control=page.locator(`.game-bird-carousel [data-bird-step="${direction}"]`);
+        expect(await control.evaluate(el=>{const r=el.getBoundingClientRect(),hit=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);return r.width>=44&&r.height>=44&&r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight&&(hit===el||el.contains(hit));})).toBe(true);
+      }
+      if(residents>1){await next.focus();await page.keyboard.press('Enter');await expect(page.locator('.game-room-bird')).toHaveAttribute('data-bird-id',seeded.birds[0].id);await assertGeometry();}
+      if(testInfo.project.name==='chromium')await testInfo.attach(`game-short-${residents}-birds-${width}x${height}`,{body:await page.screenshot({animations:'disabled'}),contentType:'image/png'});
+    }
     if(testInfo.project.name==='chromium'&&[320,375,1440].includes(width)&&orientation==='portrait')await testInfo.attach(`game-field-${residents}-birds-${width}`,{body:await page.locator('.game-room').screenshot({animations:'disabled'}),contentType:'image/png'});
   }
   for(const bird of seeded.birds){
@@ -558,15 +580,20 @@ test('all color stages decode and nest-bound young remain reachable through the 
 
 test('active social partners meet on nearby real anchors and mobile keeps one readable exchange',async({page},info)=>{
   const world=createWorld(fixedNow,842911);advanceTicks(world,261);world.paused=true;validateWorld(world);
-  await seedWorld(page,world);await openGame(page);await chooseBird(page,'b7');
+  const active=fieldBirds(world);
+  const first=active.find(b=>['play','bath'].includes(b.action.kind)&&active.some(o=>o.id===b.action.target&&o.action.target===b.id&&o.action.kind===b.action.kind&&o.action.startedTick===b.action.startedTick));
+  expect(first,'fixture must contain a current reciprocal social pair').toBeTruthy();
+  const second=active.find(b=>b.id===first.action.target),pairIds=[first.id,second.id];
+  expect(second.action.target).toBe(first.id);expect(second.action.kind).toBe(first.action.kind);expect(second.action.startedTick).toBe(first.action.startedTick);
+  await seedWorld(page,world);await openGame(page);await chooseBird(page,first.id);
   for(const width of [320,375,1440]){
     await page.setViewportSize({width,height:1000});await decodeScene(page);
     await expect(page.locator('.game-scene-caption .game-bubble')).toBeVisible();
     await expect(page.locator('.game-scene-caption .game-bubble')).toHaveText('いっしょに♪');
-    const geometry=await page.locator('.game-room').evaluate(room=>{
-      const box=room.getBoundingClientRect(),point=id=>{const r=room.querySelector(`[data-bird-id="${id}"] .game-sprite`).getBoundingClientRect();return{x:r.left+r.width*.54,y:r.top+r.height*.975};},a=point('b7'),b=point('b11'),caption=room.querySelector('.game-scene-caption').getBoundingClientRect();
+    const geometry=await page.locator('.game-room').evaluate((room,pairIds)=>{
+      const box=room.getBoundingClientRect(),point=id=>{const r=room.querySelector(`[data-bird-id="${id}"] .game-sprite`).getBoundingClientRect();return{x:r.left+r.width*.54,y:r.top+r.height*.975};},a=point(pairIds[0]),b=point(pairIds[1]),caption=room.querySelector('.game-scene-caption').getBoundingClientRect();
       return{distance:Math.hypot(a.x-b.x,a.y-b.y)/box.width,captionInside:caption.left>=box.left&&caption.right<=box.right&&caption.bottom<=box.bottom,captionHeight:caption.height};
-    });
+    },pairIds);
     expect(geometry.distance).toBeLessThan(.35);expect(geometry.captionInside).toBe(true);expect(geometry.captionHeight).toBeLessThan(60);
     if(info.project.name==='chromium'&&width!==320)await info.attach(`game-field-social-${width}`,{body:await page.locator('.game-room').screenshot({animations:'disabled'}),contentType:'image/png'});
   }

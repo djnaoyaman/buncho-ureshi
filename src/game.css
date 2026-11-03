@@ -281,3 +281,37 @@ body[data-world="buncho"] .game-owner-editor{container-type:size}
 body[data-world="buncho"] .game-main{container-type:size}
 body[data-world="buncho"] .game-main .game-room{--scene-h:min(calc(100cqh - 100px),calc(100cqw * 5 / 8));height:var(--scene-h);width:auto;aspect-ratio:8/5;max-width:none;top:calc(36px + (100cqh - 100px - var(--scene-h)) / 2);bottom:auto}
 @media(max-width:600px){body[data-world="buncho"] .game-main .game-room{--scene-h:min(calc(100cqh - 100px),calc(100cqw * 4 / 3));aspect-ratio:3/4}}
+
+/* A short viewport is a focused scene, not ten competing tiny touch targets.
+   The existing swipe/previous/next controls still visit every bird. */
+@media(max-height:500px){
+ body[data-world="buncho"] .game-world-title{left:4px;transform:none;padding:0}
+ body[data-world="buncho"] .game-world-title img{width:90px;max-height:28px}
+ body[data-world="buncho"] #game-root{top:calc(30px + env(safe-area-inset-top,0px))}
+ body[data-world="buncho"] .game-field-bar{top:-28px;left:auto;right:86px;width:auto}
+ body[data-world="buncho"] .game-field-bar>div:first-child{display:none}
+ body[data-world="buncho"] .game-field-bar .game-wallet{gap:3px;padding:1px 4px}
+ body[data-world="buncho"] .game-field-bar .game-wallet strong{font-size:12px}
+ body[data-world="buncho"] .game-field-nav{top:0;left:4px;right:4px;width:auto;max-width:none;height:44px;gap:3px}
+ body[data-world="buncho"] .game-field-nav button{height:44px;min-height:44px;padding:2px;font-size:11px}
+ body[data-world="buncho"] .game-main .game-room{--scene-h:min(calc(100cqh - 92px),calc(100cqw * 5 / 8));top:calc(44px + (100cqh - 92px - var(--scene-h)) / 2)}
+ body[data-world="buncho"] .game-main .game-room .game-room-bird:not(.game-nestling){width:64px;min-width:64px;min-height:64px}
+ body[data-world="buncho"] .game-bottom-dock{height:48px;padding:0 4px;gap:2px;border-radius:12px 12px 0 0}
+ body[data-world="buncho"] .game-bottom-dock button{min-height:48px;gap:0;font-size:10px}
+ body[data-world="buncho"] .game-bottom-dock svg{width:22px;height:22px}
+ body[data-world="buncho"] .game-main>.game-heading{top:46px;left:4px;right:auto}
+ body[data-world="buncho"] .game-scene-toolbar{top:44px;bottom:48px;left:0;right:0;transform:none;width:100%;height:auto;max-height:none;display:block;pointer-events:none}
+ body[data-world="buncho"] .game-scene-toolbar .game-bird-carousel{position:absolute;inset:0;display:block;background:none;pointer-events:none}
+ body[data-world="buncho"] .game-scene-toolbar .game-bird-switch{display:contents}
+ body[data-world="buncho"] .game-scene-toolbar .game-bird-switch>span{display:none}
+ body[data-world="buncho"] .game-scene-toolbar [data-bird-step]{position:absolute;top:auto;bottom:0;transform:none;width:44px;height:44px;min-height:44px;pointer-events:auto}
+ body[data-world="buncho"] .game-scene-toolbar [data-bird-step="-1"]{left:4px}
+ body[data-world="buncho"] .game-scene-toolbar [data-bird-step="1"]{right:4px}
+ body[data-world="buncho"] .game-scene-toolbar .game-bird-carousel-face{position:absolute;left:50%;bottom:0;transform:translateX(-50%);max-width:calc(100% - 100px);padding:1px 6px;background:#fff8e7e8;border-radius:12px;pointer-events:auto}
+ body[data-world="buncho"] .game-scene-toolbar .game-bird-carousel-face .game-mini-bird{display:none}
+ body[data-world="buncho"] .game-scene-toolbar .game-bird-carousel-face strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:11px}
+ body[data-world="buncho"] .game-scene-toolbar .game-garden-care{top:2px;right:4px;bottom:auto;left:auto;display:flex!important;max-width:70px}
+ body[data-world="buncho"] .game-room .game-scene-caption,body[data-world="buncho"] .game-owner-companion{display:none}
+ body[data-world="buncho"] .game-main .game-secondary-menu{bottom:50px}
+}
+@media(max-height:500px) and (max-width:600px){body[data-world="buncho"] .game-main .game-room{--scene-h:min(calc(100cqh - 92px),calc(100cqw * 4 / 3))}}
