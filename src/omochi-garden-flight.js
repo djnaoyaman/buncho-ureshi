@@ -14,12 +14,13 @@ export function createOmochiFlightMount({ready=false,renderFrame,choosePlan}={})
    const bird=identity&&[...root.querySelectorAll('[data-garden-household]')].find(n=>n.dataset.gardenHousehold===identity.birdId);
    const next=bird&&stage&&slide?JSON.stringify([identity.worldId,identity.birdId,stage.dataset.gardenId]):null;
    if(next===key&&dispose)return;if(next!==key)stop();if(!next)return;
-   const rect=bird.getBoundingClientRect(),a=stage.getBoundingClientRect(),b=slide.getBoundingClientRect();
+   const raw=bird.getBoundingClientRect(),label=bird.querySelector('.finch-friend-name')?.getBoundingClientRect();
+   const rect={left:Math.min(raw.left,label?.left??raw.left),right:Math.max(raw.right,label?.right??raw.right),top:Math.min(raw.top,label?.top??raw.top),bottom:Math.max(raw.bottom,label?.bottom??raw.bottom)},a=stage.getBoundingClientRect(),b=slide.getBoundingClientRect();
    const clip={left:Math.max(a.left,b.left),right:Math.min(a.right,b.right),top:Math.max(a.top,b.top),bottom:Math.min(a.bottom,b.bottom)};
    const obstacles=[...root.querySelectorAll('.finch-garden-friend,.finch-garden-household,.finch-garden-visitor,.finch-garden-dock,.finch-garden-selector')].filter(n=>n!==bird).map(n=>n.getBoundingClientRect());
    const plan=choosePlan({identity,rect,clip});if(!flightEnvelopeSafe(rect,plan,clip,obstacles))return;
    reserved=[identity.birdId];key=next;
-   dispose=mountGardenFlight({root,birdId:identity.birdId,plan,renderFrame,enabled,isLocked:()=>{const current=omochiIdentity(getWorld());return !current||current.worldId!==identity.worldId||current.birdId!==identity.birdId;}});
+   dispose=mountGardenFlight({root,birdId:identity.birdId,plan,renderFrame,enabled,isLocked:()=>{const current=omochiIdentity(getWorld());return !current||current.worldId!==identity.worldId||current.birdId!==identity.birdId||root.querySelector('.finch-garden-stage')?.dataset.gardenId!==stage.dataset.gardenId;}});
   };
   check();const timer=win.setInterval(check,500);
   const resize=()=>stop();win.addEventListener('resize',resize);
