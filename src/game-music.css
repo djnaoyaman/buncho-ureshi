@@ -6,3 +6,13 @@
 .game-music button{font:inherit;color:inherit;min-height:44px;border:1px solid #d9c8a2;background:#fffdf6;border-radius:12px;padding:8px 12px;cursor:pointer}.game-music-tracks{display:grid;gap:7px}.game-music button[aria-pressed=true]{background:#e6efcd;border-color:#8d9d68;box-shadow:inset 3px 0 #8d9d68}.game-music-volume{display:flex;align-items:center;gap:12px;margin:10px 0}.game-music input{min-width:0;width:100%;min-height:44px;accent-color:#849563}.game-music [data-music-off]{width:100%}.game-music-status:empty{display:none}.game-music-status{font-size:.8em;line-height:1.5;margin:10px 0 0}.game-music :focus-visible{outline:3px solid #7e8f5d;outline-offset:3px}
 
 [data-game-title-slot]{position:relative}[data-game-title-slot] .game-music{position:absolute;right:4px;top:16px;width:44px}[data-game-title-slot] .game-music summary{width:44px;height:44px}[data-game-title-slot] .game-music-panel{z-index:60}.game-music button[aria-pressed=true]{background:#e6efcd!important;color:#3d5740!important}
+
+/* Keep essential controls above the optional, independently scrolling song list. */
+.game-music-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.game-music-actions button{min-width:0;padding:8px 6px}
+.game-music [data-music-choose]{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;text-align:left}
+.game-music-current{min-width:0;overflow-wrap:anywhere;font-size:.85em;line-height:1.4}
+.game-music-choose-label{flex-shrink:0;font-size:.8em}
+.game-music-tracks{max-height:176px;max-height:min(176px,30dvh);overflow-y:auto;overscroll-behavior:contain;scroll-padding:6px;padding:6px;margin-top:6px;border:1px solid #d9c8a2;border-radius:12px}
+.game-music-tracks[hidden]{display:none}
+.game-music-tracks button{width:100%;min-width:0;text-align:left;overflow-wrap:anywhere}
