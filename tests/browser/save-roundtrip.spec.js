@@ -6,7 +6,7 @@ const DB = 'buncho-ureshi-garden-v1';
 const now = Date.UTC(2026, 10, 2, 12);
 function fixture() {
   const world = createWorld(now, 5402);
-  advanceTicks(world, 1);
+  advanceTicks(world, 1, now);
   adoptBird(world, 'b2', 'こめ');
   world.paused = true;
   world.lastUpdated = now;
