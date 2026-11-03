@@ -7,6 +7,7 @@ test('owner is a visible foreground observer, customized and motion-aware',async
   const owner=page.locator('.game-owner-companion'), art=owner.locator('svg');
   expect(await art.innerHTML()).toContain('#8f6265');expect(await art.innerHTML()).toContain('#c8946e');
   let bounds=await owner.boundingBox();expect(bounds.width).toBeGreaterThanOrEqual(80);expect(bounds.x).toBeGreaterThanOrEqual(0);expect(bounds.y+bounds.height).toBeLessThanOrEqual(height);
+  const toggle=await page.locator('.game-scene-controls-toggle').boundingBox();if(toggle)expect(bounds.x).toBeGreaterThanOrEqual(toggle.x+toggle.width);
   await page.screenshot({path:info.outputPath(`peek-${width}.png`)});
   await page.emulateMedia({reducedMotion:'reduce'});expect(await owner.locator('.owner-peek-glance').evaluate(e=>getComputedStyle(e).animationName)).toBe('none');expect(await owner.locator('.owner-peek-glance').evaluate(e=>getComputedStyle(e).opacity)).toBe('0');
   await page.emulateMedia({reducedMotion:'no-preference'});
