@@ -168,10 +168,11 @@ export function mountStudio(root,{photos=[],birdSvg,seed}={}){
    const target=q(hash);if(!target)return;
    globalThis.history?.replaceState(null,'',a.getAttribute('href'));
    revealWorkspace();
-   options.scrollTo({top:target.offsetTop-options.offsetTop,behavior:'instant'});
+   options.scrollTo({top:options.scrollTop+target.getBoundingClientRect().top-options.getBoundingClientRect().top,behavior:'instant'});
   });
  });
  on(options,'focusin',revealWorkspace);
+ on(options,'click',revealWorkspace); // Safari touch buttons need not receive focus.
  // On-screen keyboards resize the visual viewport on phones, unlike layout vh.
  const viewport=globalThis.visualViewport;
  if(viewport){

@@ -11,24 +11,31 @@ async function visibleArtwork(page){
  expect(box.y+box.height).toBeLessThanOrEqual(size.height+1);
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
 }
+async function panel(page,number,id){
+ await page.locator('.studio-steps a').filter({hasText:number}).click();
+ const target=page.locator(id+' h3'),p=await option(page,'options').boundingBox(),h=await target.boundingBox();
+ expect(h.y).toBeGreaterThanOrEqual(p.y-1);
+ expect(h.y+h.height).toBeLessThanOrEqual(p.y+p.height+1);
+ await visibleArtwork(page);
+}
 for(const size of [{width:320,height:568},{width:390,height:844},{width:844,height:390},{width:1280,height:800},{width:640,height:400}]){
  test(`preview remains visible while editing every panel at ${size.width}x${size.height}`,async({page},info)=>{
   await page.setViewportSize(size);await page.goto('studio/');
-  await page.locator('.studio-steps a').filter({hasText:'③'}).click();
+  await panel(page,'③','#studio-tools');
   await visibleArtwork(page);
   const before=await saved(page);
   await action(page,'larger').click();await visibleArtwork(page);
   await action(page,'rotate-right').click();await visibleArtwork(page);
   await option(page,'color').fill('#446677');await visibleArtwork(page);
-  await page.locator('.studio-steps a').filter({hasText:'①'}).click();
+  await panel(page,'①','#studio-templates');
   // Navigating between panels must not re-mount the editor or erase undo.
   await action(page,'undo').click();await action(page,'undo').click();await action(page,'undo').click();
   expect(await saved(page)).toEqual(before);await action(page,'redo').click();
   await option(page,'background').selectOption('10');await visibleArtwork(page);
   await option(page,'title').fill('見ながらつくる');await action(page,'title').click();await visibleArtwork(page);
-  await page.locator('.studio-steps a').filter({hasText:'②'}).click();
+  await panel(page,'②','#studio-materials');
   await page.locator('[data-material="bird-white"]').click();await visibleArtwork(page);
-  await page.locator('.studio-steps a').filter({hasText:'④'}).click();
+  await panel(page,'④','#studio-save');
   await option(page,'format').selectOption('portrait');await visibleArtwork(page);
   await action(page,'export').click();
   await expect(option(page,'export-preview')).toBeVisible();
@@ -36,7 +43,7 @@ for(const size of [{width:320,height:568},{width:390,height:844},{width:844,heig
   await option(page,'download').scrollIntoViewIfNeeded();await visibleArtwork(page);
   await info.attach(`studio-bounded-${size.width}x${size.height}`,{body:await page.screenshot(),contentType:'image/png'});
   const retained=await saved(page);await page.reload();expect(await saved(page)).toEqual(retained);
-  await page.locator('.studio-steps a').filter({hasText:'③'}).click();await visibleArtwork(page);
+  await panel(page,'③','#studio-tools');await visibleArtwork(page);
  });
 }
 test('keyboard controls and reduced viewport retain preview, and site navigation remains available',async({page},info)=>{
@@ -48,4 +55,12 @@ test('keyboard controls and reduced viewport retain preview, and site navigation
  await info.attach('studio-keyboard-resized-viewport',{body:await page.screenshot(),contentType:'image/png'});
  const state=await saved(page);await page.goto('omochi/');await page.goBack();
  await expect(canvas(page)).toBeVisible();expect(await saved(page)).toEqual(state);
+});
+
+test('touch-like button activation without focus reveals the whole editor',async({page})=>{
+ await page.setViewportSize({width:390,height:844});await page.goto('studio/');
+ await panel(page,'③','#studio-tools');
+ await page.evaluate(()=>window.scrollBy(0,180));
+ // dispatchEvent deliberately does not focus or auto-scroll like Locator.click.
+ await action(page,'larger').dispatchEvent('click');await visibleArtwork(page);
 });
