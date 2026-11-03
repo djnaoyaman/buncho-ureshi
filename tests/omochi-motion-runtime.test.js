@@ -20,3 +20,24 @@ test('hidden/reduced motion have no scheduler; touch focus resumes; completed ro
   stop();assert.equal(rafs.size+timers.size,0);assert.equal(listeners.size,0);
  }finally{stop();await w.happyDOM.close()}
 });
+test('DOM redraw holds flight position and pointer lock until release',async()=>{
+ const w=new Window(),d=w.document,root=d.createElement('section');
+ root.innerHTML='<button data-garden-household="b1"><span class="garden-bird-sprite">original</span></button><input value="未保存の入力">';d.body.append(root);
+ let time=0,id=0;const jobs=new Map();Object.defineProperty(w.performance,'now',{value:()=>time,configurable:true});Object.defineProperty(d,'hidden',{value:false,configurable:true});w.matchMedia=()=>({matches:false});
+ w.requestAnimationFrame=w.setTimeout=f=>{jobs.set(++id,f);return id};w.cancelAnimationFrame=w.clearTimeout=n=>jobs.delete(n);
+ const step=()=>{time+=20;const pending=[...jobs.values()];jobs.clear();for(const f of pending)f(time)};
+ const stop=mountGardenFlight({root,birdId:'b1',plan,renderFrame:(el,frame)=>{el.dataset.frame=String(frame)}});
+ try{
+  for(let i=0;i<50;i++)step();let bird=root.firstElementChild;const position=bird.style.translate,frame=bird.firstElementChild.dataset.frame;
+  bird.dispatchEvent(new w.PointerEvent('pointerdown',{bubbles:true,pointerType:'touch'}));step();
+  const replacement=d.createElement('button');replacement.dataset.gardenHousehold='b1';replacement.innerHTML='<span class="garden-bird-sprite">refreshed</span>';bird.replaceWith(replacement);bird=replacement;
+  step();assert.equal(bird.style.translate,position);assert.equal(bird.firstElementChild.dataset.frame,frame);
+  for(let i=0;i<20;i++)step();assert.equal(bird.style.translate,position);assert.equal(root.querySelector('input').value,'未保存の入力');
+  d.dispatchEvent(new w.PointerEvent('pointerup',{bubbles:true,pointerType:'touch'}));step();step();assert.notEqual(bird.style.translate,position);
+  stop();assert.equal(bird.style.translate,'');assert.equal(bird.firstElementChild.textContent,'refreshed');
+ }finally{stop();await w.happyDOM.close()}
+});
+test('invalid corridor geometry fails closed',()=>{
+ const rect={left:50,right:150,top:200,bottom:330};
+ for(const invalid of [{...plan,lift:NaN},{...plan,from:{}},{...plan,to:{x:Infinity,y:1}},{...plan,lift:-1}])assert.equal(flightEnvelopeSafe(rect,invalid,clip),false);
+});
