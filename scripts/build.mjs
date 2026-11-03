@@ -78,7 +78,7 @@ function staticMain(route, description, title, article) {
   if (route === "") return renderHome({ photos, articles, quizzes, esc, url: route => base + route, image: (id, cls = "", eager = false) => {
     const p = photos.find(photo => photo.id === id) || photos[0];
     return `<img class="${cls}" src="${base + p.src.replace(/^\//, "")}" alt="${esc(p.alt)}" width="${p.width}" height="${p.height}" loading="${eager ? "eager" : "lazy"}" decoding="async"${eager ? ' fetchpriority="high"' : ''}>`;
-  }, atlasDoor: () => `<a class="challenge-banner morph-discovery-link" href="${base}colors/"><span><span class="eyebrow">写真でくらべる、小さな羽の世界</span><h2>文鳥の羽色ずかん</h2><p>5つの色・模様と、こどもからおとなへのちがい。大きな実写写真と出典から学ぼう。</p></span><span class="big-arrow" aria-hidden="true">↗</span></a>` });
+  }, atlasDoor: () => `<a class="challenge-banner morph-discovery-link" href="${base}colors/"><span><span class="eyebrow">写真で見つける、小さな羽の世界</span><h2>文鳥の羽色ずかん</h2><p>5つの色・模様と、こどもからおとなへのちがい。大きな実写写真と出典から学ぼう。</p></span><span class="big-arrow" aria-hidden="true">↗</span></a>` });
 
   if (route === "colors/") return renderMorphOverview(atlasData, { base });
   const morph = morphAtlas.profiles.find(profile => route === `colors/${profile.id}/`);

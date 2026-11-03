@@ -83,3 +83,10 @@
 @media (prefers-reduced-motion:reduce) { .studio *, .studio *::before, .studio *::after { scroll-behavior:auto; animation:none!important; transition:none!important; } }
 
 .studio-art-backgrounds{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:10px 0 18px}.studio-art-backgrounds button{padding:4px;border:2px solid transparent;border-radius:12px;background:#fff;min-height:44px;color:inherit}.studio-art-backgrounds button[aria-pressed=true]{border-color:#365c43;background:#f1f5de}.studio-art-backgrounds img{display:block;width:100%;height:auto;aspect-ratio:1;object-fit:cover;border-radius:8px}.studio-art-backgrounds span{display:block;font-size:.76rem;line-height:1.4;margin:8px 2px;overflow-wrap:anywhere}
+
+/* Music is an optional introduction to making art, not a separate atelier. */
+.studio-music-intro { display:grid; grid-template-columns:1fr 1fr; gap:24px; padding:24px; margin:24px 0; border:1px solid var(--studio-line); border-radius:18px; background:#f2f4ec; }
+.studio-music-intro h3 { margin-top:0; }
+.studio-music-intro p { margin:8px 0; }
+.studio-music-controls { min-width:0; }
+@media(max-width:680px) { .studio-music-intro { grid-template-columns:1fr; gap:12px; padding:20px; } }

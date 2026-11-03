@@ -1,3 +1,4 @@
+import { bindEditorialParallax } from "./editorial-parallax.js";
 import { mountGameMusic } from "./game-music-ui.js";
 import { renderHome } from "./home.js";
 import { createWorldChrome } from "./game-chrome.js";
@@ -156,7 +157,7 @@ function navigate(route, replace = false) {
 function heading(eyebrow, title, description = "") {
   return `<header class="page-heading"><p class="eyebrow">${eyebrow}</p><h1>${title}</h1>${description ? `<p class="lede">${description}</p>` : ""}</header>`;
 }
-// Covers are independent original photographs, never recoloured or duplicated crops.
+// Covers use distinct source photographs. Index-only CSS adds reversible editorial framing.
 const articleCoverOverrides = { conservation: "photo-03", beak: "photo-14", eyes: "photo-43", tail: "photo-26", observation: "photo-27", resting: "photo-21", voice: "photo-19", sleep: null, clean: "photo-11", molt: "photo-37", health: null };
 function articleCard(a) {
   const id = Object.hasOwn(articleCoverOverrides, a.id) ? articleCoverOverrides[a.id] : a.photos?.[0];
@@ -193,14 +194,14 @@ function submitSiteSearch(event) {
   navigate(`?q=${encodeURIComponent(query)}`);
 }
 function atlasDoor() {
-  return `<a class="challenge-banner morph-discovery-link" href="${url("colors/")}"><span><span class="eyebrow">写真でくらべる、小さな羽の世界</span><h2><ruby>文鳥<rt>ぶんちょう</rt></ruby>の<ruby>羽色<rt>はねいろ</rt></ruby>ずかん</h2><p>5つの色・模様と、こどもからおとなへのちがい。大きな実写写真と出典から、見えること・まだわからないことを学ぼう。</p></span><span class="big-arrow" aria-hidden="true">↗</span></a>`;
+  return `<a class="challenge-banner morph-discovery-link" href="${url("colors/")}"><span><span class="eyebrow">写真で見つける、小さな羽の世界</span><h2><ruby>文鳥<rt>ぶんちょう</rt></ruby>の<ruby>羽色<rt>はねいろ</rt></ruby>ずかん</h2><p>5つの色・模様と、こどもからおとなへのちがい。大きな実写写真と出典から、見えること・まだわからないことを学ぼう。</p></span><span class="big-arrow" aria-hidden="true">↗</span></a>`;
 }
 function home() {
   return renderHome({ photos, articles, quizzes, url, image, atlasDoor, esc });
 }
 
 function encyclopedia() {
-  return `${heading("文鳥を知る", "写真から、ふしぎをひらこう。", "同じ文鳥でも、色や姿、しぐさはいろいろ。気になる扉からどうぞ。")} ${atlasDoor()}<div class="encyclopedia-tools"><label class="search-field"><span>図鑑をさがす</span><input id="article-search" type="search" placeholder="くちばし、水浴び、食べ物…"></label><div class="filter-chips" role="group" aria-label="図鑑の分類"><button class="chip active" data-category="all">すべて</button>${[...new Set(articles.map((a) => a.category))].map((c) => `<button class="chip" data-category="${esc(c)}">${esc(c)}</button>`).join("")}<button class="chip" data-category="favorites">♡ お気に入り</button></div></div><p id="result-count" role="status"></p><div id="article-grid" class="article-grid"></div><a class="text-link" href="${url("body/")}">図から見つける「からだ探検」 →</a>`;
+  return `${heading("文鳥を知る", "写真から、ふしぎをひらこう。", "同じ文鳥でも、色や姿、しぐさはいろいろ。気になる扉からどうぞ。")} ${atlasDoor()}<div class="encyclopedia-tools"><label class="search-field"><span>図鑑をさがす</span><input id="article-search" type="search" placeholder="くちばし、水浴び、食べ物…"></label><div class="filter-chips" role="group" aria-label="図鑑の分類"><button class="chip active" data-category="all">すべて</button>${[...new Set(articles.map((a) => a.category))].map((c) => `<button class="chip" data-category="${esc(c)}">${esc(c)}</button>`).join("")}<button class="chip" data-category="favorites">♡ お気に入り</button></div></div><p class="photo-presentation-note">一覧の写真は、構図と明るさ・彩度を控えめに調整しています。羽色や細部は記事の写真で確かめてください。<a href="${url("credits/")}">元写真・作者・利用条件</a>。表示上の調整も元写真と同じライセンスです。</p><p id="result-count" role="status"></p><div id="article-grid" class="article-grid"></div><a class="text-link" href="${url("body/")}">図から見つける「からだ探検」 →</a>`;
 }
 function bindEncyclopedia(initial = "") {
   let category = "all";
@@ -510,7 +511,7 @@ function render(route) {
   if (query !== null) {
     document.querySelector("#search-results-form").onsubmit = submitSiteSearch;
     document.querySelector("#global-query").value = query.slice(0, 80);
-  } else if (route === "encyclopedia/") bindEncyclopedia();
+  } else if (route === "encyclopedia/") { bindEncyclopedia(); teardown = bindEditorialParallax(document.querySelector("#article-grid"), { enabled: settings.motion }); }
   else if (route.startsWith("encyclopedia/") && slug) {
     const a = articles.find((a) => a.id === slug);
     if (a) {

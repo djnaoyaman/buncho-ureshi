@@ -231,3 +231,15 @@ test('approved brand bitmap is drawn at its own ratio and missing brand blocks P
 test('three requested art backgrounds retain IDs across save and draw into export',async()=>{
  for(const index of [8,9,10]){const m=mockEnvironment();let cleanup;try{cleanup=mountStudio(m.root);m.el('background').value=String(index);await m.el('background').fire('change');assert.equal(m.state().background,index);assert(validateStudioState(m.state()));await m.button('export').click();assert.equal(m.el('export-panel').hidden,false);assert(m.images.some(i=>i.src.includes('/studio-backgrounds/')));}finally{cleanup?.();m.restore();}}
 });
+
+test('music introduction precedes art-making and changing a track does not reset the composition',async()=>{
+ const m=mockEnvironment();let cleanup;
+ try{cleanup=mountStudio(m.root);const html=m.root.html;
+  assert(!html.includes('音のアトリエ'));
+  assert(html.indexOf('studio-music-intro')<html.indexOf('studio-steps'));
+  assert.equal((html.match(/data-studio="music"/g)||[]).length,1);
+  assert(html.includes('聴きながらつくってね'));assert(html.includes('音なしでもつくれます'));
+  const before=JSON.stringify(m.state());m.el('music').value='2';await m.el('music').fire('change');
+  assert.equal(JSON.stringify(m.state()),before);assert(m.el('audio-status').textContent.includes('再生を押すと始まります'));
+ }finally{cleanup?.();m.restore();}
+});

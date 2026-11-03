@@ -13,14 +13,14 @@ function atlas(){const w=new Window();w.document.body.innerHTML=renderMorphOverv
 test('initial color browse contains no repeated image URLs and preserves five accurately named colors',()=>{
  const w=atlas(),d=w.document;const urls=[...d.querySelectorAll('img')].map(i=>i.src);assert.equal(new Set(urls).size,urls.length);
  assert.equal(d.querySelectorAll('[data-morph-card]').length,5);assert.equal(d.querySelectorAll('[data-morph-page]').length,2);
- assert.equal(d.querySelector('#morph-compare').open,false);assert.equal(d.querySelector('[data-morph-comparison]').children.length,0);
+ assert.equal(d.querySelector('#morph-compare'),null);assert.equal(d.querySelector('[data-morph-comparison]'),null);
  assert(d.querySelector('#morph-sources details:not([open])'));w.happyDOM.abort();
 });
-test('compare opens only when requested, closes without duplicate hidden pictures, and tears down',()=>{
- const w=atlas(),root=w.document.querySelector('.morph-atlas');root.querySelector('#morph-compare').scrollIntoView=()=>{};
- const end=bindMorphAtlas(root,{data});root.querySelector('[data-morph-compare-id="silver"]').click();
- const panel=root.querySelector('#morph-compare');assert(panel.open);assert.equal(root.querySelectorAll('.morph-comparison').length,2);
- panel.open=false;panel.dispatchEvent(new w.Event('toggle'));assert.equal(root.querySelector('[data-morph-comparison]').children.length,0);end();w.happyDOM.abort();
+test('comparison is removed while five unique photographs and their detail links remain',()=>{
+ const w=atlas(),root=w.document.querySelector('.morph-atlas');const end=bindMorphAtlas(root,{data});
+ assert.equal(root.querySelector('[data-morph-compare-id]'),null);assert.equal(root.querySelectorAll('.morph-card-actions a').length,5);
+ assert.deepEqual([...root.querySelectorAll('.morph-entry-nav a')].map(a=>a.dataset.morphJump),['morph-profiles','morph-terms']);
+ end();end();w.happyDOM.abort();
 });
 test('all thirty questions have titled learning destinations, before-question and answer hooks',async()=>{
  assert.equal(quizzes.length,30);for(const q of quizzes)assert(articles.find(a=>a.id===q.articleId)?.title);
