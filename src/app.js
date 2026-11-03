@@ -193,7 +193,7 @@ function submitSiteSearch(event) {
   navigate(`?q=${encodeURIComponent(query)}`);
 }
 function atlasDoor() {
-  return `<a class="challenge-banner morph-discovery-link" href="${url("colors/")}"><span><span class="eyebrow">写真でくらべる、小さな羽の世界</span><h2><ruby>文鳥<rt>ぶんちょう</rt></ruby>の<ruby>羽色<rt>はねいろ</rt></ruby>ずかん</h2><p>5つの色・模様と、こどもからおとなへのちがい。大きな実写写真と出典から、見えること・まだわからないことを学ぼう。</p></span><span class="big-arrow" aria-hidden="true">↗</span></a>`;
+  return `<a class="challenge-banner morph-discovery-link" href="${url("colors/")}"><span><span class="eyebrow">写真で見つける、小さな羽の世界</span><h2><ruby>文鳥<rt>ぶんちょう</rt></ruby>の<ruby>羽色<rt>はねいろ</rt></ruby>ずかん</h2><p>5つの色・模様と、こどもからおとなへのちがい。大きな実写写真と出典から、見えること・まだわからないことを学ぼう。</p></span><span class="big-arrow" aria-hidden="true">↗</span></a>`;
 }
 function home() {
   return renderHome({ photos, articles, quizzes, url, image, atlasDoor, esc });
