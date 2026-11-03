@@ -111,3 +111,24 @@ html[data-motion="off"] .game-care-cheer,.game-app[data-care-motion="off"] .game
 .game-friend-carousel-controls{display:flex;align-items:center;justify-content:center;gap:1rem;margin:.5rem 0}.game-friend-carousel-controls button{width:44px;min-height:44px;font-size:1.4rem;border-radius:50%}.game-friend-carousel-controls span{font-size:.75rem;color:#768066}.game-friend-houses{display:flex;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x mandatory;scroll-padding-inline:calc((100% - min(280px,78vw))/2);padding:1rem max(1rem,calc((100% - min(280px,78vw))/2)) 1.3rem;gap:16px;scrollbar-width:thin;touch-action:pan-x pan-y;-webkit-overflow-scrolling:touch}.game-friend-house{flex:0 0 min(280px,78vw);scroll-snap-align:center;box-sizing:border-box;padding:1.2rem}.game-friend-house .game-house-portrait{width:150px;height:172px}.game-friend-house .game-house-portrait .game-mini-bird{width:135px;flex-basis:135px}.game-friend-house h4{font-size:1.2rem}.game-friend-house>div:last-child{display:flex;flex-direction:column;gap:.5rem}.game-friend-house>div:last-child button{min-height:44px}.game-friend-houses .game-empty-home{flex:0 0 100%;box-sizing:border-box}@media(prefers-reduced-motion:reduce){.game-friend-houses{scroll-behavior:auto}}
 
 .game-family-tree{border-left:0;padding-left:0}
+
+/* The game is a separate illustrated world, not the editorial site's UI. */
+body[data-world="buncho"]{background:#f5f0df;color:#315342}
+body[data-world="buncho"] .game-bird-carousel{background:radial-gradient(ellipse at center,#fffdf4 0 48%,#eee8cf 100%);border:0;border-radius:42% 42% 32px 32px;padding:18px 14px 24px;box-shadow:inset 0 0 0 1px #fff9e8}
+body[data-world="buncho"] #game-open-bird,body[data-world="buncho"] .game-care-actions button{background:linear-gradient(#fff9dd,#f1db94);border:2px solid #b7a46d;border-radius:44% 44% 38% 38% / 48% 48% 42% 42%;color:#3d5740;box-shadow:0 4px 0 #b9a16a33,inset 0 2px 0 #fffef4;font-weight:700;min-height:52px;padding:12px 23px}
+body[data-world="buncho"] .game-bird-carousel [data-bird-step]{border:1px solid #b4ba8f;background:#fffbe8;box-shadow:0 3px 0 #c8bb8733;border-radius:48% 52% 45% 55%;color:#526b38}
+body[data-world="buncho"] .game-field-nav{background:#ebe2c5;padding:6px;border-radius:24px;border:1px solid #d0c59c;gap:4px}
+body[data-world="buncho"] .game-field-nav button{border:0!important;border-radius:18px!important;background:transparent;min-height:44px}
+body[data-world="buncho"] .game-field-nav button[aria-pressed=true]{background:#fff9df;box-shadow:0 2px 5px #665a2920}
+body[data-world="buncho"] .game-bird-sheet{background:#fffaf0;border-radius:30px 30px 18px 18px;border:2px solid #cbd0a8}
+body[data-world="buncho"] .game-reply{position:relative;background:#fffef7;border:1px solid #bfc9a9;border-radius:22px;padding:15px 19px;margin:16px 8px;box-shadow:0 3px 0 #d3cfad38}
+body[data-world="buncho"] .game-reply:before{content:"";position:absolute;top:-9px;left:42px;width:16px;height:16px;background:#fffef7;border-left:1px solid #bfc9a9;border-top:1px solid #bfc9a9;transform:rotate(45deg)}
+body[data-world="buncho"] .game-secondary-menu{border:0;background:transparent;padding:0}
+body[data-world="buncho"] .game-secondary-menu>summary{background:linear-gradient(110deg,#fffaf0,#f1edcf);border:1px solid #c4cba2;border-radius:22px 10px 22px 10px;box-shadow:0 3px 0 #c9c19a30;padding:16px 20px;min-height:54px;color:#46623d;font-weight:600}
+body[data-world="buncho"] .game-play-actions button{background:#e7edcb;border:1px solid #9cac79;border-radius:24px 14px 24px 14px;min-height:48px;box-shadow:0 3px 0 #9cac7928;color:#415934}
+
+/* Only the game gets this exit and its compact world controls. */
+body[data-world="buncho"] .game-world-exit{display:inline-flex;align-items:center;min-height:44px;padding:.4rem .6rem;color:#496044;font-size:.8rem;text-decoration:none}
+body[data-world="buncho"] .world-game-controls{display:grid;grid-template-columns:1fr;gap:.5rem}
+body[data-world="buncho"] .world-game-controls button{min-height:44px;padding:.6rem .9rem;border:1px solid #ac996e;border-radius:48% 45% 36% 42%;background:#f0dbab;color:#514432;font:inherit}
+body[data-world="buncho"] .game-world-exit:focus-visible,body[data-world="buncho"] .world-game-controls button:focus-visible{outline:3px solid #486b50;outline-offset:3px}

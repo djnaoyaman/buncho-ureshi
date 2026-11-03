@@ -40,7 +40,7 @@ test('pause and offline are deterministic, bounded and never auto-collect or pun
  const a=clone(w),b=clone(w);advanceTo(a,100+TICK_MS*1000);advanceTo(b,100+TICK_MS*1000);assert.deepEqual(a,b);assert.ok(a.gems.droppings.length<=12);assert.equal(new Set(a.gems.droppings.map(d=>d.birdId)).size,a.gems.droppings.length);assert.ok(a.gems.droppings.some(d=>d.id===gems.droppings[0].id));validateWorld(a);
 });
 test('passive simulation preserves v3 history kinship seed and balances exactly',()=>{
- for(const seed of [842911,19,420]){const a=createWorld(100,seed),b=old.createWorld(100,seed);advanceTicks(a,1500);old.advanceTicks(b,1500);assert.deepEqual(strip(a),b);validateWorld(a);}
+ for(const seed of [842911,19,420]){const a=createWorld(100,seed),b=old.createWorld(100,seed);b.settings.careSound=a.settings.careSound;advanceTicks(a,1500);old.advanceTicks(b,1500);assert.deepEqual(strip(a),b);validateWorld(a);}
 });
 test('malformed or duplicate dropping saves fail closed without mutation',()=>{
  for(const change of [w=>w.gems.droppings.push(clone(w.gems.droppings[0])),w=>w.gems.droppings[0].id='drop-01',w=>w.gems.droppings[0].birdId='missing',w=>w.gems.droppings[0].location='park',w=>w.gems.droppings[0].createdTick=0,w=>w.gems.nextDropId=1,w=>w.gems.extra=3,w=>w.birds[0].gemCare.lastChatTick=w.tick+1,w=>delete w.birds[0].gemCare,w=>w.version=5]){

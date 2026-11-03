@@ -1,0 +1,50 @@
+[
+  {
+    "file": "01_meadow_morning.wav",
+    "bytes": 8912888,
+    "sha256": "0512a0a9eb9a091eba519b08f18e60aa352436ef5c7800afcf6af142575ff1ff",
+    "channels": 2,
+    "sampleRate": 44100,
+    "bits": 16,
+    "frames": 2228211,
+    "seconds": 50.526326530612245,
+    "peak": 0.8299560546875,
+    "boundaryStep": 0.009307861328125
+  },
+  {
+    "file": "02_little_orchard.wav",
+    "bytes": 6048044,
+    "sha256": "cf38407f72fe7fec020ce24f8e47fb95fd38e3fb356852b4c9894773820d64a5",
+    "channels": 2,
+    "sampleRate": 44100,
+    "bits": 16,
+    "frames": 1512000,
+    "seconds": 34.285714285714285,
+    "peak": 0.8299560546875,
+    "boundaryStep": 0.015625
+  },
+  {
+    "file": "03_lakeside_breeze.wav",
+    "bytes": 9961456,
+    "sha256": "3a63c45b4835292e8dbaa6bcf2c1380a78f9b3cefb3ac0cd23781094a537eaba",
+    "channels": 2,
+    "sampleRate": 44100,
+    "bits": 16,
+    "frames": 2490353,
+    "seconds": 56.470589569161,
+    "peak": 0.8299560546875,
+    "boundaryStep": 0.00262451171875
+  },
+  {
+    "file": "04_village_waltz.wav",
+    "bytes": 6513276,
+    "sha256": "b5f9c876084b72bc2fd0b3aff6265f6d60921ba2480276b1b0ab46a9cc4d6302",
+    "channels": 2,
+    "sampleRate": 44100,
+    "bits": 16,
+    "frames": 1628308,
+    "seconds": 36.92308390022676,
+    "peak": 0.8299560546875,
+    "boundaryStep": 0.01263427734375
+  }
+]

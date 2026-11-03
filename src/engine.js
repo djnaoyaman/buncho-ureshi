@@ -126,7 +126,7 @@ function record(w, kind, ids, condition, result, data = {}) {
   for (const bid of ids) { const b = findBird(w, bid); if (b) remember(w, b, kind, ids.find(i => i !== bid) || null); }
 }
 export function createWorld(now = Date.now(), seed = 842911) {
-  const w = { version: SAVE_VERSION, revision: 0, worldId: `garden-${now}-${seed}`, epoch: now, lastUpdated: now, seed: seed >>> 0, tick: 0, nextId: 1, nextEvent: 1, paused: false, settings: { motion: true, careSound: false }, care: { cleanliness: 100, lastCleanTick: null }, birds: [], events: [], offlineSummary: null, field: initialField(), decor: initialDecor(), gems: {droppings:[],nextDropId:1} };
+  const w = { version: SAVE_VERSION, revision: 0, worldId: `garden-${now}-${seed}`, epoch: now, lastUpdated: now, seed: seed >>> 0, tick: 0, nextId: 1, nextEvent: 1, paused: false, settings: { motion: true, careSound: true }, care: { cleanliness: 100, lastCleanTick: null }, birds: [], events: [], offlineSummary: null, field: initialField(), decor: initialDecor(), gems: {droppings:[],nextDropId:1} };
   const b = createBird(w, { name: 'おもち', sex: 'female', color: 'white', home: 'resident' });
   b.personality = { curiosity: 65, sociability: 75, caution: 30 };
   record(w, 'welcome', [b.id], '新しい庭', '物語が始まった'); return w;
@@ -484,7 +484,7 @@ export function validateWorld(input) { return validateVersion(input, SAVE_VERSIO
 export function migrateV1ToV2(input) {
   const world = validateVersion(input, 1); // Validate the complete legacy object before adding anything.
   world.version = 2;
-  world.settings.careSound = false;
+  world.settings.careSound = true;
   world.care = { cleanliness: 100, lastCleanTick: null };
   for (const bird of world.birds) bird.care = { lastFedTick: null, lastPetTick: null };
   return migrateV2ToV3(validateVersion(world,2));

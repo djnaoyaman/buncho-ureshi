@@ -1,3 +1,4 @@
+import { mountGameMusic } from "./game-music-ui.js";
 import { renderHome } from "./home.js";
 import { createWorldChrome } from "./game-chrome.js";
 import { articles } from "./data/articles.js";
@@ -541,6 +542,8 @@ function render(route) {
     studioSeed = null;
   } else if (route === "game/") {
     const gameRoot = document.querySelector("#game-root");
+    const musicCleanup = mountGameMusic(document.querySelector("[data-game-title-slot]"), {base:BASE});
+    teardown = musicCleanup;
     Promise.resolve(
       mountGame(gameRoot, {
         birdSvg: gameBirdSvg,
@@ -564,8 +567,8 @@ function render(route) {
     )
       .then((cleanup) => {
         if (gameRoot.isConnected)
-          teardown = typeof cleanup === "function" ? cleanup : () => {};
-        else if (typeof cleanup === "function") cleanup();
+          teardown = () => { musicCleanup(); if(typeof cleanup === "function") cleanup(); };
+        else { musicCleanup(); if (typeof cleanup === "function") cleanup(); }
       })
       .catch((error) => {
         if (gameRoot.isConnected)
