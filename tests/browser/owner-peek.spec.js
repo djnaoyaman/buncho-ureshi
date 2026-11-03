@@ -29,7 +29,7 @@ test('painted owner keeps each selected hairstyle and outfit',async({page},info)
 test('glance naturally keeps its phase after a scene redraw',async({page},info)=>{
  await page.addInitScript(()=>{window.__ownerTestTime=1599999996000;Date.now=()=>window.__ownerTestTime;});
  await page.setViewportSize({width:390,height:844});await page.goto('game/');await expect(page.locator('.game-logo-intro')).toBeHidden();
- await expect(page.locator('.game-owner-companion')).toHaveCSS('--owner-delay','0ms');await expect(page.locator('[data-owner-birdpin]')).toBeAttached();await page.locator('.game-owner-companion').screenshot({path:info.outputPath('owner-brooch.png')});
+ await expect(page.locator('.game-owner-companion')).toHaveCSS('--owner-delay','0ms');await expect(page.locator('.owner-peek-back [data-owner-birdpin]')).toBeAttached();await page.locator('.game-owner-companion').screenshot({path:info.outputPath('owner-brooch.png')});
  await page.locator('.game-scene-controls-toggle').click();await page.locator('[data-game-open-menu]').click();await page.locator('.game-secondary-menu [data-game-panel=settings]').click();
  await page.evaluate(()=>{window.__ownerTestTime=1600000006000;});await page.locator('[data-game-close-panel]').click();
  const owner=page.locator('.game-owner-companion');await expect(owner).toHaveCSS('--owner-delay','-10000ms');
@@ -54,4 +54,17 @@ test('deep complexion and selected hair are visible in the smiling view',async({
  await page.goto('game/');await expect(page.locator('.game-logo-intro')).toBeHidden();const art=page.locator('.game-owner-companion .owner-peek-art');await expect(art).toHaveAttribute('data-skin-color','#704a39');
  await art.evaluate(el=>{for(const animation of el.getAnimations({subtree:true})){animation.pause();animation.effect.updateTiming({delay:0});animation.currentTime=10000;}});await expect(page.locator('.owner-peek-glance')).toHaveCSS('opacity','1');
  await page.screenshot({path:info.outputPath('watercolor-deep-skin-glance.png')});
+});
+
+test('the whole dressed figure turns, and all motion controls stop it',async({page},info)=>{
+ await page.setViewportSize({width:390,height:844});await page.goto('game/');await expect(page.locator('.game-logo-intro')).toBeHidden();
+ const owner=page.locator('.game-owner-companion'), body=owner.locator('.owner-peek-body');
+ const pose=async t=>owner.evaluate((el,t)=>{for(const a of el.getAnimations({subtree:true})){a.pause();a.effect.updateTiming({delay:0});a.currentTime=t;}},t);
+ await pose(9360);await expect(owner.locator('.owner-peek-back')).toHaveCSS('opacity','1');await owner.screenshot({path:info.outputPath('turn-away.png')});
+ await pose(9480);const turning=await body.evaluate(e=>getComputedStyle(e).transform);expect(turning).not.toBe('none');await owner.screenshot({path:info.outputPath('turn-midway.png')});
+ await pose(10000);await expect(owner.locator('.owner-peek-glance')).toHaveCSS('opacity','1');await owner.screenshot({path:info.outputPath('turn-smile.png')});
+ const views=await owner.evaluate(el=>['.owner-peek-back','.owner-peek-glance'].map(sel=>Array.from(el.querySelector(sel).querySelectorAll('svg')).map(s=>s.getAttribute('viewBox'))));
+ expect(views[0]).not.toEqual(views[1]);
+ await page.evaluate(()=>document.documentElement.dataset.motion='off');await expect(body).toHaveCSS('animation-name','none');await expect(owner.locator('.owner-peek-glance')).toHaveCSS('opacity','0');
+ await page.evaluate(()=>{delete document.documentElement.dataset.motion;document.querySelector('.game-app').dataset.careMotion='off';});await expect(body).toHaveCSS('animation-name','none');await expect(owner.locator('.owner-peek-glance')).toHaveCSS('opacity','0');
 });

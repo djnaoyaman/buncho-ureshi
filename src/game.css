@@ -496,9 +496,9 @@ body[data-world="buncho"] .owner-peek-art{display:block;width:100%;height:auto;t
 .owner-peek-body{transform-origin:50% 100%;animation:owner-lean 12s ease-in-out infinite}
 .owner-peek-glance{opacity:0;animation:owner-glance 12s ease-in-out infinite}
 .owner-peek-back{animation:owner-away 12s ease-in-out infinite}
-@keyframes owner-lean{0%,78%,88%,100%{transform:rotate(0)}79%,87%{transform:rotate(-3deg)}}
-@keyframes owner-glance{0%,78%,88%,100%{opacity:0}79%,87%{opacity:1}}
-@keyframes owner-away{0%,78%,88%,100%{opacity:1}79%,87%{opacity:0}}
+@keyframes owner-lean{0%,76%,94%,100%{transform:translateX(0) scaleX(1) rotate(0)}79%,91%{transform:translateX(3px) scaleX(.68) rotate(-3deg)}82%,88%{transform:translateX(1px) scaleX(1) rotate(-1deg)}}
+@keyframes owner-glance{0%,79.8%,90.2%,100%{opacity:0}80.2%,89.8%{opacity:1}}
+@keyframes owner-away{0%,79.8%,90.2%,100%{opacity:1}80.2%,89.8%{opacity:0}}
 @media(max-width:600px){body[data-world="buncho"] .game-owner-companion{width:clamp(120px,36cqw,160px)}}
 @media(max-height:500px){body[data-world="buncho"] .game-owner-companion{display:block;width:clamp(110px,29cqh,135px);bottom:calc(70px + env(safe-area-inset-bottom,0px))}}
 @media(prefers-reduced-motion:reduce){.owner-peek-body,.owner-peek-back,.owner-peek-glance{animation:none!important}}
