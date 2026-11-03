@@ -22,8 +22,8 @@ jobs:
       - run: npm run check
       - run: npm test
       - run: npm run build
-      - run: npx playwright install --with-deps chromium webkit
-      - run: npx playwright install chrome msedge
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright install chrome
       - name: Provide native CI audio output device
         run: |
           sudo apt-get update -qq
@@ -33,7 +33,7 @@ jobs:
           pactl set-default-sink ci_audio
           pactl info
       - name: Trial startup, actions and save integrity (actual Chrome)
-        run: npx playwright test tests/browser/trial-smoke.spec.js tests/browser/full-stage.spec.js tests/browser/garden-social.spec.js tests/browser/garden-protagonist.spec.js --project=chrome --retries=0
+        run: npx playwright test tests/browser/trial-smoke.spec.js tests/browser/full-stage.spec.js tests/browser/garden-social.spec.js tests/browser/garden-protagonist.spec.js tests/browser/garden-interaction.spec.js --project=chrome --retries=0
       - uses: actions/upload-artifact@v4
         if: always()
         with:

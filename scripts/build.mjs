@@ -17,7 +17,7 @@ const imageAlt = IMAGE_ALT;
 const styleVersion = createHash("sha256").update(await readFile(new URL("../src/style.css", import.meta.url))).digest("hex").slice(0, 12);
 const presentationVersion = createHash("sha256").update((await Promise.all(["home.js", "app.js", "studio.js", "morph-ui.js", "morph-ui.css"].map(name => readFile(new URL("../src/" + name, import.meta.url))))).map(bytes => bytes.toString()).join("\n")).digest("hex").slice(0, 12);
 const brandVersion = createHash("sha256").update(await readFile(new URL("../src/visuals.js", import.meta.url))).digest("hex").slice(0, 12);
-const gameVersion = createHash("sha256").update((await Promise.all(["game.js", "encounters.js", "encounter-controller.js", "garden-bird-motion.js", "encounter-ui.js", "encounter-ui.css", "garden-friends.js", "data/encounter-catalog.js", "data/gardens.js", "data/garden-assets.js", "economy.js", "game-chrome.js", "family-layout.js", "relationship-map.js", "relationship-map.css", "engine.js", "care-schedule.js", "bird-names.js", "game-store.js", "field-visuals.js", "furniture-forms.js", "game.css", "care-audio.js", "game-music.js", "game-music-ui.js", "game-music.css", "owner-profile.js", "owner-profile.css"].map(name => readFile(new URL("../src/" + name, import.meta.url))))).map(bytes=>bytes.toString()).join("\n")).digest("hex").slice(0,12);
+const gameVersion = createHash("sha256").update((await Promise.all(["game.js", "encounters.js", "encounter-controller.js", "garden-bird-motion.js", "garden-social-plan.js", "encounter-ui.js", "encounter-ui.css", "garden-friends.js", "data/encounter-catalog.js", "data/gardens.js", "data/garden-assets.js", "economy.js", "game-chrome.js", "family-layout.js", "relationship-map.js", "relationship-map.css", "engine.js", "care-schedule.js", "bird-names.js", "game-store.js", "field-visuals.js", "furniture-forms.js", "game.css", "care-audio.js", "game-music.js", "game-music-ui.js", "game-music.css", "owner-profile.js", "owner-profile.css"].map(name => readFile(new URL("../src/" + name, import.meta.url))))).map(bytes=>bytes.toString()).join("\n")).digest("hex").slice(0,12);
 const securityPolicy = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'";
 const secureLink = (href) => href?.replace(/^http:\/\/creativecommons\.org\//, "https://creativecommons.org/");
 const dest = new URL("../dist/", import.meta.url);
@@ -28,7 +28,7 @@ await cp(new URL("../src/", import.meta.url), new URL("src/", dest), {
 });
 await cp(new URL("../public/", import.meta.url), dest, { recursive: true });
 // A new app entry URL alone does not invalidate cached module dependencies.
-for (const name of ["app.js", "studio.js", "metadata.js", "engine.js", "game.js", "game-store.js", "field-visuals.js", "game-music.js", "game-music-ui.js", "encounters.js", "encounter-controller.js", "garden-bird-motion.js", "encounter-ui.js", "garden-friends.js", "economy.js", "data/gardens.js"]) {
+for (const name of ["app.js", "studio.js", "metadata.js", "engine.js", "game.js", "game-store.js", "field-visuals.js", "game-music.js", "game-music-ui.js", "encounters.js", "encounter-controller.js", "garden-bird-motion.js", "garden-social-plan.js", "encounter-ui.js", "garden-friends.js", "economy.js", "data/gardens.js"]) {
   const file = new URL("src/" + name, dest);
   const code = (await readFile(file, "utf8"))
     .replaceAll("./morph-ui.js", `./morph-ui.js?v=${presentationVersion}`)
@@ -46,6 +46,7 @@ for (const name of ["app.js", "studio.js", "metadata.js", "engine.js", "game.js"
     .replaceAll("./game-store.js", `./game-store.js?v=${gameVersion}`)
     .replaceAll("./encounters.js", `./encounters.js?v=${gameVersion}`)
     .replaceAll("./encounter-controller.js", `./encounter-controller.js?v=${gameVersion}`)
+    .replaceAll("./garden-social-plan.js", `./garden-social-plan.js?v=${gameVersion}`)
     .replaceAll("./garden-bird-motion.js", `./garden-bird-motion.js?v=${gameVersion}`)
     .replaceAll("./encounter-ui.js", `./encounter-ui.js?v=${gameVersion}`)
     .replaceAll("./garden-friends.js", `./garden-friends.js?v=${gameVersion}`)
