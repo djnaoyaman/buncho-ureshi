@@ -126,9 +126,10 @@ export function mountStudio(root,{photos=[],birdSvg,seed}={}){
  const abort=new AbortController(),signal=abort.signal;
  root.innerHTML='<section class="studio" aria-label="文鳥アート工房">'
  +'<div class="studio-intro"><p class="studio-kicker">BUNCHO BOTANICAL ATELIER</p><h2>文鳥アート工房</h2><p>かたちをえらんで、動かして。世界にひとつの文鳥の庭をつくろう。</p></div>'
- +'<nav class="studio-steps" aria-label="工房の目次"><a href="#studio-templates">① お手本</a><a href="#studio-materials">② そざい</a><a href="#studio-tools">③ 動かす</a><a href="#studio-save">④ 保存</a></nav>'
+ +'<div class="studio-workspace" data-studio="workspace"><nav class="studio-steps" aria-label="工房の目次"><a href="#studio-templates">① お手本</a><a href="#studio-materials">② そざい</a><a href="#studio-tools">③ 動かす</a><a href="#studio-save">④ 保存</a></nav>'
  +'<div class="studio-layout"><div class="studio-preview"><div class="studio-canvas-wrap"><canvas width="1000" height="1000" data-studio="canvas" tabindex="0" aria-label="作品。矢印キーで選んだ素材を移動、Deleteで削除。Tabで素材一覧へ。"></canvas></div>'
- +'<p class="studio-canvas-hint">動かすときは作品の上をドラッグ。ページをめくるときは作品の外をなぞってね。</p>'
+ +'<p class="studio-canvas-hint">作品はここに。道具のパネルをスクロールして、見ながらつくれます。</p>'
+ +'</div><aside class="studio-options" data-studio="options" aria-label="作品の材料と設定" tabindex="0">'
  +'<div class="studio-history"><button type="button" data-action="undo">↶ もどす</button><button type="button" data-action="redo">↷ やりなおす</button><button type="button" data-action="reset">作り直す</button></div>'
  +'<p class="studio-status" role="status" aria-live="polite" data-studio="status">お手本から、すぐにつくれます。</p>'
  +'<section id="studio-tools" class="studio-tools"><h3>③ えらんだものを動かす</h3><label>素材をえらぶ<select data-studio="layers" aria-label="作品内の素材"></select></label><p data-studio="selected" class="studio-selected"></p>'
@@ -140,7 +141,6 @@ export function mountStudio(root,{photos=[],birdSvg,seed}={}){
  +'<p class="studio-small">写真の色を変えた作品はアートです。図鑑の羽色とは区別してね。</p></section>'
  +'<section id="studio-save" class="studio-save"><h3>④ 作品を保存しよう</h3><label>かたち<select data-studio="format"><option value="square">正方形（1400 × 1400）</option><option value="portrait">縦長（1400 × 1750）</option></select></label><button type="button" class="studio-primary" data-action="export">画像をつくる・保存</button>'
  +'<p class="studio-small">画像には作品名・ロゴ・写真のクレジットも入ります。音楽は入りません。</p><div data-studio="export-panel" hidden><img data-studio="export-preview" alt="保存する完成作品"><a data-studio="download" download="buncho-art.png">PNG画像を保存</a><button type="button" data-action="share">画像を共有</button><p data-studio="share-help" class="studio-small"></p></div></section>'
- +'</div><aside class="studio-options" aria-label="作品の材料と設定">'
  +'<section id="studio-templates"><h3>① お手本をえらぶ</h3><div data-studio="templates" class="studio-template-grid"></div></section>'
  +'<section><h3>背景といろ</h3><div class="studio-art-backgrounds" data-studio="art-backgrounds" role="group" aria-label="3つのアート背景"></div><label>すべての背景<select data-studio="background"></select></label><div class="studio-palettes" data-studio="palettes" aria-label="配色"></div><p class="studio-small" data-studio="palette-name"></p><label>作品のタイトル<input type="text" data-studio="title" maxlength="36" autocomplete="off"></label><button type="button" data-action="title">タイトルを入れる</button></section>'
  +'<section id="studio-materials"><h3>② そざいをふやす</h3><p class="studio-small">写真は一般の文鳥です。実在のおもち本人の写真ではありません。</p><div class="studio-material-grid" data-studio="shapes"></div><details class="studio-photo-details"><summary>文鳥の写真をえらぶ</summary><div class="studio-photo-grid" data-studio="photos"></div></details>'
@@ -150,9 +150,62 @@ export function mountStudio(root,{photos=[],birdSvg,seed}={}){
  +'<details class="studio-help"><summary>あそび方・保存と写真のきまり</summary><p>お手本を選んだあと、素材をさわって動かします。下のボタンでも同じことができます。素材一覧で選び、矢印キーでも動かせます。もどす・やりなおすは50回まで。作り直す操作も「もどす」で取り消せます。</p>'
  +'<p>作品はこのブラウザ内に自動保存します。他の端末とは自動で同期しません。個人情報を書かず、完成した画像を手元に保存してね。共有ボタンは使える端末だけ表示されます。使えない場合は画像を保存してから共有できます。</p>'
  +'<p>図鑑写真の作者と利用条件を完成画像の下に入れます。共有するときも切り取らずに残してください。工房にはCC BYまたはCC0の写真だけを使っています。作者・元写真・ライセンスのリンクを残して共有してください。写真の出典・条件は素材台帳でも読めます。</p></details>'
- +'</aside></div></section>';
+ +'</aside></div></div></section>';
  const q=s=>root.querySelector(s),el=n=>q('[data-studio="'+n+'"]'),btn=n=>q('[data-action="'+n+'"]'),on=(target,type,fn)=>target.addEventListener(type,fn,{signal});
- root.querySelectorAll('.studio-steps a').forEach(a=>a.setAttribute('href',location.pathname+location.search+a.getAttribute('href')));
+ const workspace=el('workspace'),options=el('options');
+ let pointerInOptions=false;
+ // Keep the artwork and tools in one bounded viewport. Only tools scroll.
+ // Intercept local links before the site router so undo and pending edits survive.
+ function revealWorkspace(){
+  const r=workspace.getBoundingClientRect(),view=globalThis.visualViewport;
+  if(view&&view.scale!==1)return; // Respect user-controlled pinch pan.
+  const visibleTop=view?.offsetTop||0,margin=parseFloat(getComputedStyle(workspace).scrollMarginTop)||0;
+  const top=visibleTop+margin,bottom=visibleTop+(view?.height||globalThis.innerHeight);
+  if(r.top<top-1||r.bottom>bottom+1)
+   globalThis.scrollBy({top:r.top-top,behavior:'instant'});
+ }
+ root.querySelectorAll('.studio-steps a').forEach(a=>{
+  const hash=a.getAttribute('href');
+  a.setAttribute('href',location.pathname+location.search+hash);
+  on(a,'click',e=>{
+   e.preventDefault();e.stopPropagation();
+   const target=q(hash);if(!target)return;
+   globalThis.history?.replaceState(null,'',a.getAttribute('href'));
+   revealWorkspace();
+   options.scrollTo({top:options.scrollTop+target.getBoundingClientRect().top-options.getBoundingClientRect().top,behavior:'instant'});
+  });
+ });
+ // Moving a button between pointerdown and pointerup cancels its click. Keep
+ // pointer gestures stable; keyboard focus and completed clicks can reposition.
+ on(options,'pointerdown',()=>{pointerInOptions=true;});
+ on(options,'pointerleave',e=>{if(!e.buttons)pointerInOptions=false;});
+ on(options,'keydown',e=>{if(e.key==='Tab')pointerInOptions=false;});
+ on(options,'focusin',()=>{if(!pointerInOptions)revealWorkspace();});
+ on(options,'click',()=>{pointerInOptions=false;revealWorkspace();});
+ if(typeof globalThis.addEventListener==='function'){
+  const finishPointer=()=>{
+   if(!pointerInOptions)return;
+   pointerInOptions=false;
+   requestAnimationFrame(()=>{if(!destroyed&&!pointerInOptions)revealWorkspace();});
+  };
+  on(globalThis,'pointerup',finishPointer);
+  on(globalThis,'pointercancel',()=>{pointerInOptions=false;});
+  on(globalThis,'blur',()=>{pointerInOptions=false;});
+ }
+
+ // On-screen keyboards resize the visual viewport on phones, unlike layout vh.
+ const viewport=globalThis.visualViewport;
+ if(viewport){
+  const resize=()=>{
+   workspace.style.setProperty('--studio-visible-height',viewport.height+'px');
+   // Focus arrives before the keyboard finishes opening. Recheck after layout,
+   // using the visual viewport's pan offset, without interfering with pinch zoom.
+   if(!pointerInOptions&&viewport.scale===1&&options.contains(document.activeElement))
+    requestAnimationFrame(()=>{if(!destroyed&&!pointerInOptions&&viewport.scale===1&&options.contains(document.activeElement))revealWorkspace();});
+  };
+  on(viewport,'resize',resize);resize();
+ }
+
  const canvas=el('canvas'),ctx=canvas.getContext('2d');
  if(!ctx){root.textContent='この環境では画像を描く機能が使えません。別のブラウザで工房を開いてください。';return()=>{};}
  const tell=t=>{if(!destroyed)el('status').textContent=t;},current=()=>state.items.find(o=>o.id===selected);
