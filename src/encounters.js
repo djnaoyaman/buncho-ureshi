@@ -101,7 +101,7 @@ export function createEncounterSystem(catalog=ENCOUNTER_CATALOG,{knownCatalog=ca
     if(a.step<e.steps.length-1){a.step++;bump(w);return {changed:true,revealed:false,step:a.step};}
     const old=s.discoveries.find(d=>d.id===a.id),first=!old;
     if(old){old.lastTick=w.tick;old.visits=Math.min(ENCOUNTER_LIMITS.visits,old.visits+1);}else s.discoveries.push({id:a.id,firstTick:w.tick,lastTick:w.tick,visits:1,instanceId:a.instanceId});
-    s.cursor=(catalog.findIndex(e=>e.id===a.id)+1)%Math.max(1,catalog.length);const id=a.id;s.active=null;s.garden.lastGuest=id;s.garden.guestGardenId=null;s.garden.nextTurn=Math.min(ENCOUNTER_LIMITS.activity,s.garden.turn+3);s.garden.nextTick=w.tick+8;bump(w);
+    s.cursor=(catalog.findIndex(e=>e.id===a.id)+1)%Math.max(1,catalog.length);const id=a.id;s.active=null;s.garden.lastGuest=id;s.garden.nextTurn=Math.min(ENCOUNTER_LIMITS.activity,s.garden.turn+3);s.garden.nextTick=w.tick+8;bump(w);
     return {changed:true,revealed:true,first,id,message:first?`${e.name}との出会いを、図鑑に記録したよ。`:'また会えたね。'};
   }
   function status(w,id){const discovery=w.encounters.discoveries.find(d=>d.id===id);return {discovered:!!discovery,discovery:discovery?{...discovery}:null,ready:w.encounters.queue.includes(id),active:w.encounters.active?.id===id};}
