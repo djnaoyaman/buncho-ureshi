@@ -1,0 +1,50 @@
+name: Decoration panel scroll reachability
+on:
+  pull_request:
+    paths:
+      - 'src/game.css'
+      - 'src/game.js'
+      - 'tests/browser/decor-scroll.spec.js'
+      - '.github/workflows/decor-scroll.yml'
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chrome, edge, webkit]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium webkit
+      - run: npx playwright install chrome msedge
+      - name: Reproduce the reported clipping against the pre-fix stylesheet
+        run: |
+          cp src/game.css /tmp/decor-fixed.css
+          git fetch --depth=1 origin 7d9329c2cbb45b2711482c98bab5fb64775f227a
+          git show 7d9329c2cbb45b2711482c98bab5fb64775f227a:src/game.css > src/game.css
+          npm run build
+          DECOR_BASELINE=1 npx playwright test tests/browser/decor-scroll.spec.js --project=${{ matrix.browser }} --grep 390x664 --workers=1 --retries=0 --output=decor-baseline --reporter=list
+      - name: Restore the proposed stylesheet
+        if: always()
+        run: |
+          if [ -f /tmp/decor-fixed.css ]; then cp /tmp/decor-fixed.css src/game.css; fi
+          npm run build
+      - run: npx playwright test tests/browser/decor-scroll.spec.js --project=${{ matrix.browser }} --workers=2 --retries=0
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: decor-scroll-${{ matrix.browser }}-${{ github.sha }}
+          path: |
+            playwright-report/
+            test-results/
+            decor-baseline/
+          retention-days: 14
