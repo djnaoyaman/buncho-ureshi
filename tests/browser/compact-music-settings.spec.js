@@ -42,17 +42,21 @@ for(const width of [320,390])test(`compact music controls and all 13 choices at 
  await page.goBack();await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');await openSettings(page);
  await expect(page.locator('.game-music')).toHaveCount(1);await expect(list).toBeHidden();await expect(off).toHaveAttribute('aria-pressed','true');
 });
-test('settings keeps its scroll position through updates and resets on navigation',async({page})=>{
- await page.setViewportSize({width:390,height:600});await page.addInitScript(()=>localStorage.setItem('buncho.music.v1',JSON.stringify({enabled:false})));await page.goto('game/');await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');await openSettings(page);
+for(const viewport of [{width:320,height:568},{width:390,height:600},{width:844,height:390}])test(`settings keeps its scroll position through updates and resets on navigation ${viewport.width}x${viewport.height}`,async({page})=>{
+ await page.setViewportSize(viewport);await page.addInitScript(()=>localStorage.setItem('buncho.music.v1',JSON.stringify({enabled:false})));await page.goto('game/');await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');await openSettings(page);
  const panel=page.locator('.game-panel-overlay[open] > .game-panel');
+ // Polling replaces this node. evaluateAll resolves and reads the live DOM in
+ // one browser task; evaluate can read a detached handle and incorrectly get 0.
+ const scrollTop=()=>panel.evaluateAll(([el])=>el.scrollTop);
  await page.locator('[data-game-details=management] summary').click();
- const before=await panel.evaluate(el=>{el.scrollTop=el.scrollHeight;return el.scrollTop;});expect(before).toBeGreaterThan(100);
- await page.waitForTimeout(18000);
- expect(Math.abs((await panel.evaluate(el=>el.scrollTop))-before)).toBeLessThanOrEqual(2);
  await expect(page.locator('[data-game-details=management]')).toHaveAttribute('open','');
- await page.locator('[data-game-motion]').evaluate(el=>el.click());
+ const before=await panel.evaluateAll(([el])=>{el.scrollTop=el.scrollHeight;return el.scrollTop;});expect(before).toBeGreaterThan(100);
+ await page.waitForTimeout(18000);
+ expect(Math.abs((await scrollTop())-before)).toBeLessThanOrEqual(2);
+ await expect(page.locator('[data-game-details=management]')).toHaveAttribute('open','');
+ await page.locator('[data-game-motion]').evaluateAll(([el])=>el.click());
  await expect(page.locator('[data-game-motion]')).not.toBeChecked();await page.waitForTimeout(500);
- expect(Math.abs((await panel.evaluate(el=>el.scrollTop))-before)).toBeLessThanOrEqual(2);
+ expect(Math.abs((await scrollTop())-before)).toBeLessThanOrEqual(2);
  await page.locator('[data-game-close-panel]').click();await openSettings(page);
- expect(await panel.evaluate(el=>el.scrollTop)).toBe(0);
+ expect(await scrollTop()).toBe(0);
 });
