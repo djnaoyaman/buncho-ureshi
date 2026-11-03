@@ -39,3 +39,7 @@ test('game removes general navigation/search and restores original nodes/handler
  }
  assert.equal(submits,3);chrome.dispose();assert.equal(menu.innerHTML,before);assert.equal(doc.querySelector('.game-world-exit'),null);await window.happyDOM.close();
 });
+
+test('game visual viewport follows keyboard height and restores exact site custom properties',async()=>{
+ const {window,doc}=fixture();const viewport=new window.EventTarget();Object.assign(viewport,{height:844,offsetTop:0,scale:1});Object.defineProperty(window,'visualViewport',{value:viewport,configurable:true});doc.body.style.setProperty('--game-viewport-height','77px');const chrome=createWorldChrome(doc);chrome.set(true);assert.equal(doc.body.style.getPropertyValue('--game-viewport-height'),'844px');viewport.height=390;viewport.dispatchEvent(new window.Event('resize'));assert.equal(doc.body.style.getPropertyValue('--game-viewport-height'),'390px');viewport.scale=2;viewport.dispatchEvent(new window.Event('resize'));assert.equal(doc.body.style.getPropertyValue('--game-viewport-height'),'100dvh');chrome.set(false);assert.equal(doc.body.style.getPropertyValue('--game-viewport-height'),'77px');assert.equal(doc.body.style.getPropertyValue('--game-viewport-top'),'');chrome.dispose();viewport.height=120;viewport.dispatchEvent(new window.Event('resize'));assert.equal(doc.body.style.getPropertyValue('--game-viewport-height'),'77px');await window.happyDOM.close();
+});

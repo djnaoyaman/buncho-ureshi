@@ -4,7 +4,7 @@ import { Window } from 'happy-dom';
 import { IDBFactory } from 'fake-indexeddb';
 import { mountGame } from '../src/game.js';
 import { openGameStore, DB_NAME } from '../src/game-store.js';
-import { createWorld, renameBird, serializeWorld, bumpRevision, adoptBird, advanceTicks } from '../src/engine.js';
+import { SAVE_VERSION, createWorld, renameBird, serializeWorld, bumpRevision, adoptBird, advanceTicks } from '../src/engine.js';
 
 // Real engine/store code in a DOM emulator, not browser or visual acceptance.
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -117,9 +117,9 @@ test('mountGame delayed file reads: the latest requested import wins, not the la
   f.importLater(older, 'older.json');
   f.importLater(newer, 'newer.json');
   newer.resolve(serializeWorld(newWorld));
-  await until(async () => (await store.transact(w => w)).worldId === newWorld.worldId, 'newer world committed');
+  await until(async () => (await store.transact(w => w)).birds[0].name === newWorld.birds[0].name, 'newer world committed');
   await until(() => f.root.querySelector('.game-message').textContent.includes('復元'), 'newer import rendered');
-  const committed = await store.transact(w => w);
+  const committed = await store.transact(w => w);assert.notEqual(committed.worldId,newWorld.worldId);assert.notEqual(committed.worldId,f.initial.worldId);
   older.resolve(serializeWorld(oldWorld));
   await sleep(10);
   assert.deepEqual(await store.transact(w => w), committed, 'late older read cannot overwrite the new world');
@@ -212,7 +212,7 @@ test('photo habitat keeps one selected caption, accessible resident picker, and 
   assert.equal(f.root.querySelector('.game-scene-caption strong').textContent,'最初の庭');
   f.openBird();f.root.querySelector('.game-bird-sheet [data-game-panel="profile"]').click();
   assert.equal(f.root.querySelector('.game-profile h3').textContent,'最初の庭');
-  assert.equal(f.root.querySelector('.game-room'),null);
+  assert.equal(f.root.querySelectorAll('.game-room').length,1,'background scene stays behind the profile overlay');assert.equal(f.root.querySelector('.game-panel-overlay').open,true);
   f.root.querySelector('[data-game-panel="garden"]').click();
   f.root.querySelector('[data-game-panel="help"]').click();assert.equal(f.root.querySelector('.game-art-disclosure').textContent.includes('実際のおもちの写真'),true);f.root.querySelector('[data-game-panel="garden"]').click();
   assert.equal(f.root.querySelectorAll('.game-room-bird').length,2);
@@ -224,11 +224,11 @@ test('returning from a visitor profile aligns the scene, picker and resident pro
   await store.transact(w=>{w.paused=false;advanceTicks(w,1);w.paused=true;bumpRevision(w);return w;});
   await f.mount();
   f.root.querySelector('[data-game-scene-select][data-bird-id="b2"]').click();f.root.querySelector('.game-bird-sheet [data-game-panel="profile"]').click();
-  assert.match(f.root.querySelector('.game-profile-heading').textContent,/ななしの訪問者/);
+  const visitorName=(await rawWorld(f.indexedDB)).birds.find(b=>b.id==='b2').name;assert(f.root.querySelector('.game-profile-heading').textContent.includes(visitorName));assert.doesNotMatch(visitorName,/ななし|[0-9]/);
   f.root.querySelector('[data-game-panel="garden"]').click();
   assert.equal(f.root.querySelector('.game-bird-carousel-face').dataset.birdId,'b2');
-  assert.equal(f.root.querySelector('.game-scene-caption strong').textContent,'ななしの訪問者');
-  assert.equal(f.root.querySelector('.game-profile'),null,'scene no longer repeats full profile');f.openBird();assert.equal(f.root.querySelector('#game-sheet-title').textContent,'ななしの訪問者');
+  assert.equal(f.root.querySelector('.game-scene-caption strong').textContent,visitorName);
+  assert.equal(f.root.querySelector('.game-profile'),null,'scene no longer repeats full profile');f.openBird();assert.equal(f.root.querySelector('#game-sheet-title').textContent,visitorName);
 });
 
 test('other-tab refresh preserves dirty name and talk drafts after focus moves to a button',async t=>{
@@ -282,12 +282,12 @@ test('pointer cancellation flushes a pending refresh without saving the local dr
 
 test('field travel and return preserve story and real visitors in the same scene',async t=>{
  const f=await fixture(t),store=await f.otherTab();await store.transact(w=>{w.paused=false;advanceTicks(w,1);w.paused=true;bumpRevision(w);return w;});await f.mount();
- f.root.querySelector('[data-field-travel="park"]').click();await until(()=>f.root.querySelector('.game-room')?.dataset.field==='park','park arrived');
+ f.root.querySelector('[data-game-panel="outdoors"]').click();await until(()=>!!f.root.querySelector('[data-garden-select]'),'garden arrived');await until(async()=> (await rawWorld(f.indexedDB)).encounters.garden.open,'garden persisted');f.root.querySelector('[data-game-close-panel]').click();await until(()=>!f.root.querySelector('.game-panel-overlay').open,'garden closed');
  assert.equal(f.root.querySelectorAll('.game-room-bird').length,2);
  f.root.querySelector('[data-game-panel="friends"]').click();f.root.querySelector('[data-field-travel="friend"]').click();await until(()=>f.root.querySelector('.game-room')?.dataset.field==='friend','friend arrived');
- assert.match(f.root.querySelector('.game-field-bar h3').textContent,/ななしの訪問者/);
+ assert(f.root.querySelector('.game-field-bar h3').textContent.includes((await rawWorld(f.indexedDB)).birds.find(b=>b.id==='b2').name));
  f.root.querySelector('[data-field-travel="home"]').click();await until(()=>f.root.querySelector('.game-room')?.dataset.field==='home','home returned');
- const w=await rawWorld(f.indexedDB);assert.equal(w.birds[0].name,'最初の庭');assert(w.decor.points>=20);assert.equal(w.version,4);
+ const w=await rawWorld(f.indexedDB);assert.equal(w.birds[0].name,'最初の庭');assert(w.decor.points>=20);assert.equal(w.version,SAVE_VERSION);
 });
 test('draw is one transaction on double click; preview cancellation and equip preserve inventory',async t=>{
  const f=await fixture(t);await f.mount();f.root.querySelector('[data-game-panel="decorate"]').click();
@@ -298,8 +298,8 @@ test('draw is one transaction on double click; preview cancellation and equip pr
  f.root.querySelector('[data-field-travel="home"]').click();await until(()=>!!f.root.querySelector('.game-room'),'return after decorating');w=await rawWorld(f.indexedDB);assert.equal(f.root.querySelector('[data-equipped-slot="swing"]').dataset.equippedItem,w.decor.equipped.swing);
 });
 test('navigation away during a field transaction cannot reopen its old panel',async t=>{
- const f=await fixture(t);await f.mount();f.root.querySelector('[data-field-travel="park"]').click();f.root.querySelector('[data-game-panel="family"]').click();
- await until(async()=> (await rawWorld(f.indexedDB)).field.place==='park','travel committed');await sleep(20);assert(f.root.querySelector('.game-family-tree'));assert.equal(f.root.querySelector('.game-room'),null);
+ const f=await fixture(t);await f.mount();f.root.querySelector('[data-game-panel="outdoors"]').click();await sleep(0);f.root.querySelector('[data-game-panel="family"]').click();
+ await sleep(20);await sleep(20);assert(f.root.querySelector('.game-family-tree'));assert.equal(f.root.querySelectorAll('.game-room').length,1,'background scene stays behind the profile overlay');assert.equal(f.root.querySelector('.game-panel-overlay').open,true);
 });
 
 test('pending draw cannot replace a newer category or preview choice',async t=>{
@@ -312,8 +312,8 @@ test('pending draw cannot replace a newer category or preview choice',async t=>{
 
 test('one primary nav and a secondary disclosure preserve keyboard close focus',async t=>{
  const f=await fixture(t);await f.mount();assert.equal(f.root.querySelectorAll('.game-field-nav').length,1);assert.equal(f.root.querySelectorAll('.game-field-nav button').length,3);
- let menu=f.root.querySelector('.game-secondary-menu');assert.equal(menu.open,false);assert(f.root.querySelector('.game-room').compareDocumentPosition(menu)&4);menu.open=true;menu.querySelector('[data-game-panel="family"]').focus();menu.dispatchEvent(new f.window.KeyboardEvent('keydown',{key:'Escape',bubbles:true}));assert.equal(menu.open,false);assert.equal(f.window.document.activeElement.id,'game-nav-summary');
- menu.open=true;menu.querySelector('[data-game-close-menu]').click();assert.equal(menu.open,false);assert.equal(f.window.document.activeElement.id,'game-nav-summary');
+ let menu=f.root.querySelector('.game-secondary-menu');assert.equal(menu.open,false);assert(f.root.querySelector('.game-room').compareDocumentPosition(menu)&4);menu.open=true;menu.querySelector('[data-game-panel="family"]').focus();menu.dispatchEvent(new f.window.KeyboardEvent('keydown',{key:'Escape',bubbles:true}));assert.equal(menu.open,false);assert.equal(f.window.document.activeElement.id,'game-nav-open');
+ menu.open=true;menu.querySelector('[data-game-close-menu]').click();assert.equal(menu.open,false);assert.equal(f.window.document.activeElement.id,'game-nav-open');
  f.root.querySelector('[data-game-panel="decorate"]').click();assert.equal(f.root.querySelectorAll('.game-field-nav').length,1);assert.equal(f.root.querySelectorAll('[data-field-travel="home"]').length,1);assert(f.root.querySelector('.game-decoration'));
 });
 
@@ -363,3 +363,26 @@ test('stale rendered dropping cannot redeem after peer update even while poll de
 });
 
 test('family graph selection recenters and restores keyboard focus to the selected bird',async t=>{const f=await fixture(t),store=await f.otherTab();await store.transact(w=>{w.paused=false;advanceTicks(w,1);w.paused=true;return w;});await f.mount();f.root.querySelector('[data-game-panel="family"]').click();f.root.querySelector('[data-game-details="family-text"]').open=true;const other=f.root.querySelector('[data-game-details="family-text"] [data-family-focus="b2"]');other.focus();other.click();assert.equal(f.window.document.activeElement.dataset.familyFocus,'b2');assert(f.window.document.activeElement.classList.contains('is-focus'));});
+
+test('automatic gift and Gold purchase use rendered revision and commit once on repeated taps',async t=>{
+ const f=await fixture(t),store=await f.otherTab();await store.transact(w=>{w.economy.pending={id:'gift-1',amount:12};w.economy.nextGift=2;w.economy.reserved=12;w.economy.gold=16;w.economy.lifetimeGold=16;bumpRevision(w);return w;});await f.mount();
+ const gift=f.root.querySelector('[data-auto-gift]');assert(gift);gift.click();gift.click();await until(async()=>!(await rawWorld(f.indexedDB)).economy.pending,'gift consumed');assert.equal((await rawWorld(f.indexedDB)).decor.points,32);
+ f.root.querySelector('[data-game-panel="decorate"]').click();f.root.querySelector('[data-decor-preview="perch-rose-cozy"]').click();const buy=f.root.querySelector('[data-gold-buy]');assert(buy);buy.click();buy.click();await until(async()=>(await rawWorld(f.indexedDB)).economy.gold===0,'Gold debit');const w=await rawWorld(f.indexedDB);assert.equal(w.decor.inventory.filter(x=>x.id==='perch-rose-cozy').length,1);assert.equal(w.decor.equipped.perch,'perch-mint-cozy','purchase is not silent equip');assert.equal(w.decor.points,32,'Gold purchase preserves Gems');
+});
+
+test('nine gardens persist distinct selection and close without changing household or owner settings',async t=>{
+ const f=await fixture(t);await f.mount();const before=await rawWorld(f.indexedDB);f.root.querySelector('[data-game-panel="outdoors"]').click();await until(()=>!!f.root.querySelector('[data-garden-select="onsen"]'),'garden menu');await until(async()=>(await rawWorld(f.indexedDB)).encounters.garden.open,'first garden entry');
+ f.root.querySelector('[data-garden-select="onsen"]').click();await until(async()=>(await rawWorld(f.indexedDB)).encounters.garden.id==='onsen','onsen selected');assert.match(f.root.querySelector('#finch-garden-title').textContent,/湯気文吾温泉/);assert.equal(f.root.querySelectorAll('[data-garden-select]').length,9);
+ f.root.querySelector('[data-game-close-panel]').click();await until(()=>!f.root.querySelector('.game-panel-overlay').open,'closed');const after=await rawWorld(f.indexedDB);assert.equal(after.encounters.garden.open,false);assert.deepEqual(after.birds,before.birds);assert.deepEqual(after.decor,before.decor);assert.deepEqual(after.settings,before.settings);assert.equal(after.worldId,before.worldId);
+});
+
+test('adoption consultation defaults cancel, later retains friendship, and double accept admits only one bird',async t=>{
+ const f=await fixture(t),store=await f.otherTab();await store.transact(w=>{w.paused=false;for(let n=0;n<96&&!w.adoption.pending;n++)advanceTicks(w,1);w.paused=true;return w;});await f.mount();const before=await rawWorld(f.indexedDB),id=before.adoption.pending.birdId;
+ f.root.querySelector('[data-adoption-open]').click();assert.equal(f.window.document.activeElement.hasAttribute('data-adoption-cancel'),true);f.root.querySelector('[data-adoption-cancel]').click();assert.deepEqual(await rawWorld(f.indexedDB),before);assert(f.window.document.activeElement.hasAttribute('data-adoption-open'));
+ f.root.querySelector('[data-adoption-open]').click();const accept=f.root.querySelector('[data-adoption-decision="accept"]');accept.click();accept.click();await until(async()=>(await rawWorld(f.indexedDB)).birds.find(b=>b.id===id).home==='resident','accepted once');const after=await rawWorld(f.indexedDB);assert.equal(after.birds.filter(b=>b.home==='resident').length,2);assert.equal(after.adoption.pending,null);assert.equal(after.decor.points,before.decor.points,'no unbounded direct auto credit');assert.equal(f.root.querySelector('.game-adoption-dialog').open,false);
+});
+
+test('garden manual social reward is one per real care window across nine gardens; conversation remains available',async t=>{
+ const f=await fixture(t);await f.mount();f.root.querySelector('[data-game-panel="outdoors"]').click();await until(async()=>(await rawWorld(f.indexedDB)).encounters.garden.open,'garden entry');const before=await rawWorld(f.indexedDB);f.root.querySelector('[data-garden-friend]').click();await until(async()=>(await rawWorld(f.indexedDB)).decor.points===before.decor.points+5,'garden reward');
+ f.root.querySelector('[data-garden-select="mizukagami"]').click();await until(async()=>(await rawWorld(f.indexedDB)).encounters.garden.id==='mizukagami','new garden');f.root.querySelector('[data-garden-friend]').click();await sleep(30);const after=await rawWorld(f.indexedDB);assert.equal(after.decor.points,before.decor.points+5);assert.equal(after.economy.gold,before.economy.gold);assert(f.root.querySelector('[data-garden-friend]'));
+});

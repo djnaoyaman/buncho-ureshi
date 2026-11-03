@@ -24,7 +24,9 @@
 .morph-toc{display:flex;flex-wrap:wrap;justify-content:center;gap:8px 22px;border-block:1px solid var(--morph-line);padding:17px 0;margin:28px 0 38px;}
 .morph-toc a{display:inline-flex;align-items:center;min-height:40px;font-size:.87rem;}
 .morph-filterbar{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(180px,1fr) auto;gap:14px;align-items:end;margin:22px 0 18px;}
-.morph-atlas label{display:grid;gap:8px;font-size:.87rem;line-height:1.7;}
+.morph-atlas label{display:block;min-width:0;font-size:.87rem;line-height:1.7;}
+/* Keep ruby and text in one inline flow; only the control starts a new row. */
+.morph-atlas label>input,.morph-atlas label>select{display:block;margin-block-start:8px;}
 .morph-atlas input,.morph-atlas select{width:100%;font:inherit;font-size:16px;background:#fffdf8;border:1px solid #92a48b;color:var(--morph-ink);border-radius:7px;min-height:46px;padding:10px 12px;}
 .morph-atlas button{font:inherit;min-height:44px;line-height:1.5;padding:10px 16px;border:1px solid var(--morph-line);border-radius:8px;background:var(--morph-paper);color:var(--morph-ink);cursor:pointer;}
 .morph-atlas button:hover{background:#e9eee2;}

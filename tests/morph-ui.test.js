@@ -186,3 +186,12 @@ test('stylesheet explicitly retains full photo framing, visible ruby, responsive
   assert(css.includes('@media(max-width:560px)'));
   assert(css.includes('prefers-reduced-motion:reduce'));
 });
+
+
+test('ruby field labels use inline text flow and put only controls on the next row', async () => {
+  const css = await readFile(new URL('../src/morph-ui.css', import.meta.url), 'utf8');
+  assert.match(css, /\.morph-atlas label\{display:block;min-width:0;/);
+  assert.match(css, /\.morph-atlas label>input,\.morph-atlas label>select\{display:block;margin-block-start:8px;/);
+  assert(!/\.morph-atlas label\{[^}]*display:(?:grid|flex)/.test(css));
+  assert(css.includes('display:ruby-text!important'));
+});

@@ -1,9 +1,10 @@
+import { manualNaming } from '../../src/bird-names.js';
 import { test, expect } from '@playwright/test';
 import { fieldPositions } from '../../src/field-visuals.js';
 import { GAME_SPRITE_ASSETS, gameSpriteGeometry } from '../../src/game.js';
 import { POSE_ATLASES } from '../../src/bird-poses.js';
 const ALL_SPRITE_ASSETS={...GAME_SPRITE_ASSETS,...Object.fromEntries(Object.values(POSE_ATLASES).map(a=>[a.asset.replace(/\.webp$/,''),a]))};
-import { createWorld, createBird, advanceTicks, advanceTo, validateWorld, TICK_MS, LIMITS } from '../../src/engine.js';
+import { createWorld, createBird, advanceTicks, advanceTo, validateWorld, fieldBirds, TICK_MS, LIMITS } from '../../src/engine.js';
 
 const DB_NAME = 'buncho-ureshi-garden-v1';
 const fixedNow = Date.UTC(2026, 10, 2, 12, 0, 0);
@@ -74,7 +75,7 @@ async function openGame(page, query = '') {
 }
 
 async function closeBird(page) { if(await page.locator('.game-bird-sheet').isVisible())await page.locator('[data-game-close-bird]').click(); }
-async function openBird(page) { await page.locator('[data-game-open-bird]').click();await expect(page.locator('.game-bird-sheet')).toBeVisible(); }
+async function openBird(page) { const profile=page.locator('.game-panel-overlay[open] .game-profile [data-game-open-bird]');if(await profile.count())await profile.click();else await page.locator('.game-bottom-dock [data-game-open-bird]').click();await expect(page.locator('.game-bird-sheet')).toBeVisible(); }
 async function openTalk(page) { await openBird(page);const d=page.locator('[data-game-details="sheet-talk"]');if(!await d.evaluate(e=>e.open))await d.locator('summary').click(); }
 async function chooseBird(page,id){
   const face=page.locator('.game-bird-carousel-face');
@@ -86,8 +87,22 @@ async function chooseBird(page,id){
 }
 
 async function tab(page, name) {
-  await closeBird(page);
-  const target=page.locator(`[data-game-panel="${name}"]`).first();if(!await target.isVisible())await page.locator('.game-secondary-menu summary').click();await target.click();
+  if(await page.locator('.game-bird-sheet').isVisible())await page.locator('[data-game-close-bird]').click();
+  if(await page.locator('.game-panel-overlay').isVisible())await page.locator('[data-game-close-panel]').click();
+  const direct = name==='garden' ? '.game-field-nav [data-field-travel="home"]'
+    : ['decorate','family'].includes(name) ? `.game-bottom-dock [data-game-panel="${name}"]`
+    : ['friends','outdoors'].includes(name) ? `.game-field-nav [data-game-panel="${name}"]` : null;
+  if(direct)await page.locator(direct).click();
+  else {
+    const menu=page.locator('.game-secondary-menu');
+    if(!await menu.evaluate(el=>el.open))await page.locator('.game-bottom-dock [data-game-open-menu]').click();
+    await menu.locator(`[data-game-panel="${name}"]`).click();
+    await expect(menu).not.toHaveAttribute('open','');
+  }
+}
+async function openManagement(page) {
+  const details=page.locator('[data-game-details="management"]');
+  if(!await details.evaluate(el=>el.open))await details.locator(':scope > summary').click();
 }
 
 async function readDownload(download) {
@@ -111,7 +126,7 @@ test('game starts with Omochi, then names and welcomes the unrelated male visito
   await expect(page.locator('.game-profile-heading h3')).toHaveText('おもち');
   await expect(page.locator('.game-profile-heading')).toContainText('メス · 白文鳥 · 成鳥');
   let world = await readWorld(page);
-  expect(world.birds).toHaveLength(1);
+  expect(world.birds).toHaveLength(1);expect(world.settings.adoptionMode).toBe('ask');
   expect(world.birds[0]).toMatchObject({ id: 'b1', name: 'おもち', sex: 'female', color: 'white' });
   await seedWorld(page, world, fixedNow - TICK_MS);
   await openGame(page);
@@ -135,6 +150,7 @@ test('verification control produces autonomous generations, bounded roster, and 
   test.setTimeout(60000);
   await openGame(page, '?qa=1');
   await tab(page, 'settings');
+  await page.locator('[data-adoption-mode="auto"]').click();await expect(page.locator('[data-adoption-mode="auto"]')).toHaveAttribute('aria-pressed','true');
   await page.locator('summary').filter({ hasText: '検証用' }).click();
   // Only the explicitly gated QA UI advances time. Each step still runs the actual engine.
   for (let i = 0; i < 10; i++) {
@@ -161,7 +177,7 @@ test('verification control produces autonomous generations, bounded roster, and 
   await expect(page.locator('.game-roster [data-game-select]')).toHaveCount(world.birds.length);
   await tab(page, 'diary');
   await page.locator('.game-full-diary > summary').click();await expect(page.locator('.game-full-diary .game-diary li')).toHaveCount(world.events.length);
-  if (testInfo.project.name === 'chromium') {
+  if (testInfo.project.name === 'chrome') {
     await tab(page, 'garden');
     for (const width of [375, 768, 1440]) {
       await page.setViewportSize({ width, height: 1000 });
@@ -177,7 +193,7 @@ test('verification control produces autonomous generations, bounded roster, and 
 test('rename persists and conversations use needs, personality and memory', async ({ page }) => {
   const seeded = createWorld(fixedNow);
   advanceTicks(seeded, 10);
-  seeded.birds[0].needs.energy = 20;
+  seeded.birds[0].needs.energy = 10;
   seeded.birds[0].mood = 50;
   await seedWorld(page, seeded);
   await openGame(page);
@@ -192,7 +208,7 @@ test('rename persists and conversations use needs, personality and memory', asyn
   await page.locator('[data-game-talk="おやすみ"]').click();
   await expect.poll(async () => (await readWorld(page)).birds[0].action.kind).toBe('rest');
   const afterRest = await readWorld(page);
-  expect(afterRest.birds[0].needs.energy).toBe(28);
+  expect(afterRest.birds[0].needs.energy).toBe(50);
   expect(afterRest.birds[0].memories.at(-1).kind).toBe('user-rest');
   await page.locator('#game-words').fill('未対応のむずかしい質問');
   await page.locator('[data-game-form="talk"] button').click();
@@ -209,6 +225,7 @@ test('rename persists and conversations use needs, personality and memory', asyn
 
 test('rapid repeated conversations stay attached to the originally selected bird', async ({ page }) => {
   const seeded = createWorld(fixedNow);
+  seeded.birds[0].needs.energy=60;
   advanceTicks(seeded, 10);
   seeded.birds[0].mood = 50;
   await seedWorld(page, seeded);
@@ -229,22 +246,22 @@ test('rapid repeated conversations stay attached to the originally selected bird
 
 test('save download imports back exactly; malformed files do not replace the current world', async ({ page }) => {
   const seeded = createWorld(fixedNow);
-  advanceTicks(seeded, 300);
+  seeded.settings.adoptionMode='auto';advanceTicks(seeded, 300);
   await seedWorld(page, seeded);
   await openGame(page);
   await tab(page, 'settings');
-  const downloaded = page.waitForEvent('download');
+  await openManagement(page);const downloaded = page.waitForEvent('download');
   await page.locator('[data-game-action="export"]').click();
   const exportedText = await readDownload(await downloaded);
   const exported = validateWorld(JSON.parse(exportedText));
   expect(exported.tick).toBe(300);
-  expect(exported.version).toBe(4);
+  expect(exported.version).toBe(7);
   await tab(page, 'profile');
   await page.locator('#game-name').fill('あとから変えた名前');
   await page.locator('[data-game-form="rename"] button[type="submit"]').click();
   await expect.poll(async () => (await readWorld(page)).birds[0].name).toBe('あとから変えた名前');
   await tab(page, 'settings');
-  page.once('dialog', dialog => dialog.accept());
+  await openManagement(page);page.once('dialog', dialog => dialog.accept());
   await page.locator('#game-import').setInputFiles({ name: 'my-garden.json', mimeType: 'application/json', buffer: Buffer.from(exportedText) });
   await expect(page.locator('.game-message')).toContainText('復元しました');
   let restored = validateWorld(await readWorld(page));
@@ -267,6 +284,7 @@ test('save download imports back exactly; malformed files do not replace the cur
 
 test('simultaneous tabs serialize catch-up, hatch once, and preserve both users edits', async ({ page, context }) => {
   const seeded = createWorld(fixedNow - 1000 * TICK_MS);
+  seeded.settings.adoptionMode='auto';
   while (!seeded.birds.some(b => b.stage === 'egg') && seeded.tick < 500) advanceTicks(seeded, 1);
   const egg = seeded.birds.find(b => b.stage === 'egg');
   expect(egg).toBeTruthy();
@@ -351,10 +369,10 @@ test('pause survives reload, ignores elapsed absence, and resumes without catch-
 
 test('family card hands real game names and family composition into the art studio', async ({ page },info) => {
   const seeded = createWorld(fixedNow);
-  advanceTicks(seeded, 300);
+  seeded.settings.adoptionMode='auto';advanceTicks(seeded, 300);
   const child = seeded.birds.find(b => b.parents.length === 2);
   expect(child).toBeTruthy();
-  child.name = 'わかばの記念';
+  child.name = 'わかばの記念';child.naming=manualNaming(child.name);validateWorld(seeded);
   await seedWorld(page, seeded);
   await openGame(page);
   await tab(page, 'family');
@@ -365,7 +383,7 @@ test('family card hands real game names and family composition into the art stud
   for(const id of child.parents)await expect(page.locator(`.game-family-node[data-family-focus="${id}"]`)).toBeVisible();
   expect(await page.locator('.family-edge-blood').count()).toBeGreaterThan(0);
   await page.setViewportSize({width:390,height:900});
-  if(info.project.name==='chromium')await info.attach('gem-family-390',{body:await page.locator('.game-family-tree').screenshot({animations:'disabled'}),contentType:'image/png'});
+  if(info.project.name==='chrome')await info.attach('gem-family-390',{body:await page.locator('.game-family-tree').screenshot({animations:'disabled'}),contentType:'image/png'});
   await page.locator(`[data-game-art="${child.id}"]`).click();
   await expect(page).toHaveURL(/\/buncho-ureshi\/studio\/$/);
   await expect(page.locator('[data-studio="canvas"]')).toBeVisible();
@@ -413,7 +431,7 @@ function gardenVisualFixture(count) {
   if (count > 1) {
     const actionKinds = ['rest', 'eat', 'bath', 'explore', 'talk', 'play', 'nest', 'visit'];
     world.birds.forEach((bird, i) => {
-      bird.name = 'あいうえおかきくけこさしすせそ' + i;
+      bird.name = 'あいうえおかきくけこさしすせそ' + i;bird.naming=manualNaming(bird.name);
       bird.action = { kind: actionKinds[i % actionKinds.length], target: null, startedTick: world.tick };
     });
     for (let i = 0; i < world.birds.length; i += 2) {
@@ -427,7 +445,7 @@ function gardenVisualFixture(count) {
 // decode assets, preserve their native ratio, keep contact planes bounded, and
 // ensure every name remains reachable without blanket floating scene labels.
 for (const residents of [1, 10]) test(`${residents === 1 ? 'initial one-bird' : 'populated ten-bird'} illustrated cage field is bounded, proportional and accessible`, async ({ page }, testInfo) => {
-  test.setTimeout(90000);
+  test.setTimeout(180000);
   const seeded = gardenVisualFixture(residents);
   await seedWorld(page, seeded);
   await openGame(page);
@@ -440,21 +458,25 @@ for (const residents of [1, 10]) test(`${residents === 1 ? 'initial one-bird' : 
   for (const width of [320, 375, 390, 768, 1440]) for (const orientation of ['portrait', 'landscape']) {
     const height = orientation === 'portrait' ? Math.max(800, Math.round(width * 1.25)) : Math.max(240, Math.round(width * .65));
     await page.setViewportSize({ width, height });
+    const compact=height<=500;
+    await expect(page.locator('.game-room')).toHaveAttribute('data-compact',String(compact));
+    await expect(page.locator('.game-room-bird')).toHaveCount(compact?1:residents);
     await decodeScene(page);
     await expect.poll(() => page.locator('.game-room img').evaluateAll(images=>images.every(img=>img.complete&&img.naturalWidth>0))).toBe(true);
-    await expect.poll(() => page.evaluate(({ residents, viewportWidth, expectedPositions, assetGeometry }) => {
+    const assertGeometry=async()=>{await expect.poll(() => page.evaluate(({ residents, viewportWidth, compact, expectedPositions, assetGeometry }) => {
       const roomElement=document.querySelector('.game-room'),room=roomElement.getBoundingClientRect(),errors=[];
-      const tall=viewportWidth<=600,maxHeight=tall?500:600,ratio=tall?.75:1.6;
-      if(room.height<280||room.height>maxHeight+1)errors.push(`room height ${room.height} outside 280–${maxHeight}px`);
+      const tall=viewportWidth<=600,ratio=tall?.75:1.6,stage=document.querySelector('.game-main').getBoundingClientRect(),dock=document.querySelector('.game-bottom-dock').getBoundingClientRect();
+      if(room.height<=0||room.top<stage.top+(compact?0:35)||room.bottom>dock.top+1)errors.push('scene exceeds available viewport above dock');
       if(Math.abs(room.width/room.height-ratio)>.01)errors.push('habitat aspect ratio changed');
-      if(room.width>(tall?375:960)+1)errors.push('scene exceeds width bound');
+      if(room.width>stage.width+1||room.left<stage.left-1||room.right>stage.right+1)errors.push('scene exceeds available stage width');
       const inside=r=>r.left>=room.left-1&&r.right<=room.right+1&&r.top>=room.top-1&&r.bottom<=room.bottom+1;
       const birds=[...roomElement.querySelectorAll('.game-room-bird')],planes=[];
+      if(compact&&(birds.length!==1||birds[0]?.dataset.birdId!==document.querySelector('.game-bird-carousel-face').dataset.birdId))errors.push('short-height scene must show the selected bird only');
       for(const bird of birds){
         const r=bird.getBoundingClientRect(),sprite=bird.querySelector('.game-sprite'),plane=sprite?.getBoundingClientRect(),img=sprite?.querySelector('img');
         if(bird.tagName!=='BUTTON'||r.width<44||r.height<44)errors.push(`${bird.dataset.birdId} adult target below 44px: ${r.width} × ${r.height}`);
         if(!inside(r)||!plane||!inside(plane))errors.push(`${bird.dataset.birdId} contact plane outside scene`);
-        if(plane&&(plane.width<(residents===1?64:44)||Math.abs(plane.width/plane.height-.85)>.01))errors.push(`${bird.dataset.birdId} contact plane too small or stretched: ${plane.width} × ${plane.height}`);
+        if(plane&&(plane.width<(compact||residents===1?64:44)||Math.abs(plane.width/plane.height-.85)>.01))errors.push(`${bird.dataset.birdId} contact plane too small or stretched: ${plane.width} × ${plane.height}`);
         if(!img?.complete||!img.naturalWidth)errors.push(`${bird.dataset.birdId} image not decoded`);
         else {const drawn=img.getBoundingClientRect();if(Math.abs(drawn.width/drawn.height-img.naturalWidth/img.naturalHeight)>.01)errors.push(`${bird.dataset.birdId} image is stretched`);}
         if(plane){
@@ -479,8 +501,26 @@ for (const residents of [1, 10]) test(`${residents === 1 ? 'initial one-bird' : 
       if(getComputedStyle(roomElement).display==='grid')errors.push('rejected grid returned');
       if(document.documentElement.scrollWidth>innerWidth+1)errors.push('document overflow');
       return errors;
-    },{residents,viewportWidth:width,expectedPositions:Object.fromEntries(fieldPositions(seeded.birds,width<=600?'tall':'wide','home')),assetGeometry:ALL_SPRITE_ASSETS}),{message:`${residents} birds, ${width}px ${orientation}: decoded, bounded, proportional scene`}).toEqual([]);
-    if(testInfo.project.name==='chromium'&&[320,375,1440].includes(width)&&orientation==='portrait')await testInfo.attach(`game-field-${residents}-birds-${width}`,{body:await page.locator('.game-room').screenshot({animations:'disabled'}),contentType:'image/png'});
+    },{residents,viewportWidth:width,compact,expectedPositions:compact?Object.fromEntries(seeded.birds.map(b=>[b.id,{...fieldPositions([b],width<=600?'tall':'wide','home').get(b.id),x:.5}])):Object.fromEntries(fieldPositions(seeded.birds,width<=600?'tall':'wide','home')),assetGeometry:ALL_SPRITE_ASSETS}),{message:`${residents} birds, ${width}px ${orientation}: decoded, bounded, proportional scene`}).toEqual([]);};
+    await assertGeometry();
+    if(compact){
+      // Every saved bird remains reachable through actual 44px controls even
+      // when the narrow/short scene intentionally displays only one bird.
+      for(const b of seeded.birds){
+        await chooseBird(page,b.id);await decodeScene(page);
+        await expect(page.locator('.game-room-bird')).toHaveAttribute('data-bird-id',b.id);
+        await expect(page.locator('.game-bird-carousel-face strong')).toHaveText(b.name);
+        await assertGeometry();
+      }
+      const next=page.locator('.game-bird-carousel [data-bird-step="1"]');
+      for(const direction of [-1,1]){
+        const control=page.locator(`.game-bird-carousel [data-bird-step="${direction}"]`);
+        expect(await control.evaluate(el=>{const r=el.getBoundingClientRect(),hit=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);return r.width>=44&&r.height>=44&&r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight&&(hit===el||el.contains(hit));})).toBe(true);
+      }
+      if(residents>1){await next.focus();await page.keyboard.press('Enter');await expect(page.locator('.game-room-bird')).toHaveAttribute('data-bird-id',seeded.birds[0].id);await assertGeometry();}
+      if(testInfo.project.name==='chrome')await testInfo.attach(`game-short-${residents}-birds-${width}x${height}`,{body:await page.screenshot({animations:'disabled'}),contentType:'image/png'});
+    }
+    if(testInfo.project.name==='chrome'&&[320,375,1440].includes(width)&&orientation==='portrait')await testInfo.attach(`game-field-${residents}-birds-${width}`,{body:await page.locator('.game-room').screenshot({animations:'disabled'}),contentType:'image/png'});
   }
   for(const bird of seeded.birds){
     await page.locator(`.game-room-bird[data-game-select="${bird.id}"]`).click();
@@ -496,7 +536,7 @@ for (const residents of [1, 10]) test(`${residents === 1 ? 'initial one-bird' : 
 test('all color stages decode and nest-bound young remain reachable through the full-name carousel',async({page},testInfo)=>{
   const world=createWorld(fixedNow),colors=['white','sakura','cinnamon','silver'];
   while(world.birds.length<10)createBird(world,{home:'resident'});
-  world.birds.forEach((b,i)=>{b.color=colors[i%4];b.stage=i<4?'adult':i<8?'juvenile':i===8?'chick':'egg';b.name=`表示確認${i+1}`;});
+  world.birds.forEach((b,i)=>{b.color=colors[i%4];b.stage=i<4?'adult':i<8?'juvenile':i===8?'chick':'egg';b.name=`表示確認${i+1}`;b.naming=manualNaming(b.name);});
   world.paused=true;validateWorld(world);
   await seedWorld(page,world);await openGame(page);
   await expect(page.locator('.game-room-bird')).toHaveCount(10);
@@ -536,23 +576,28 @@ test('all color stages decode and nest-bound young remain reachable through the 
       return errors;
     },ALL_SPRITE_ASSETS);
     expect(errors).toEqual([]);
-    if(testInfo.project.name==='chromium')await testInfo.attach(`game-field-mixed-stages-${width}`,{body:await page.locator('.game-room').screenshot({animations:'disabled'}),contentType:'image/png'});
+    if(testInfo.project.name==='chrome')await testInfo.attach(`game-field-mixed-stages-${width}`,{body:await page.locator('.game-room').screenshot({animations:'disabled'}),contentType:'image/png'});
   }
 });
 
 test('active social partners meet on nearby real anchors and mobile keeps one readable exchange',async({page},info)=>{
-  const world=createWorld(fixedNow,842911);advanceTicks(world,261);world.paused=true;validateWorld(world);
-  await seedWorld(page,world);await openGame(page);await chooseBird(page,'b7');
+  const world=createWorld(fixedNow,842911);world.settings.adoptionMode='auto';advanceTicks(world,261);world.paused=true;validateWorld(world);
+  const active=fieldBirds(world);
+  const first=active.find(b=>['play','bath'].includes(b.action.kind)&&active.some(o=>o.id===b.action.target&&o.action.target===b.id&&o.action.kind===b.action.kind&&o.action.startedTick===b.action.startedTick));
+  expect(first,'fixture must contain a current reciprocal social pair').toBeTruthy();
+  const second=active.find(b=>b.id===first.action.target),pairIds=[first.id,second.id];
+  expect(second.action.target).toBe(first.id);expect(second.action.kind).toBe(first.action.kind);expect(second.action.startedTick).toBe(first.action.startedTick);
+  await seedWorld(page,world);await openGame(page);await chooseBird(page,first.id);
   for(const width of [320,375,1440]){
     await page.setViewportSize({width,height:1000});await decodeScene(page);
     await expect(page.locator('.game-scene-caption .game-bubble')).toBeVisible();
     await expect(page.locator('.game-scene-caption .game-bubble')).toHaveText('いっしょに♪');
-    const geometry=await page.locator('.game-room').evaluate(room=>{
-      const box=room.getBoundingClientRect(),point=id=>{const r=room.querySelector(`[data-bird-id="${id}"] .game-sprite`).getBoundingClientRect();return{x:r.left+r.width*.54,y:r.top+r.height*.975};},a=point('b7'),b=point('b11'),caption=room.querySelector('.game-scene-caption').getBoundingClientRect();
+    const geometry=await page.locator('.game-room').evaluate((room,pairIds)=>{
+      const box=room.getBoundingClientRect(),point=id=>{const r=room.querySelector(`[data-bird-id="${id}"] .game-sprite`).getBoundingClientRect();return{x:r.left+r.width*.54,y:r.top+r.height*.975};},a=point(pairIds[0]),b=point(pairIds[1]),caption=room.querySelector('.game-scene-caption').getBoundingClientRect();
       return{distance:Math.hypot(a.x-b.x,a.y-b.y)/box.width,captionInside:caption.left>=box.left&&caption.right<=box.right&&caption.bottom<=box.bottom,captionHeight:caption.height};
-    });
+    },pairIds);
     expect(geometry.distance).toBeLessThan(.35);expect(geometry.captionInside).toBe(true);expect(geometry.captionHeight).toBeLessThan(60);
-    if(info.project.name==='chromium'&&width!==320)await info.attach(`game-field-social-${width}`,{body:await page.locator('.game-room').screenshot({animations:'disabled'}),contentType:'image/png'});
+    if(info.project.name==='chrome'&&width!==320)await info.attach(`game-field-social-${width}`,{body:await page.locator('.game-room').screenshot({animations:'disabled'}),contentType:'image/png'});
   }
 });
 
@@ -583,7 +628,7 @@ test('real left and right social frames face their partner, and feeding uses the
   for(const width of [320,375,1440]){
     await page.setViewportSize({width,height:1000});await decodeScene(page);
     await expect.poll(()=>page.locator('.game-room-bird').evaluateAll(nodes=>{const pairs=nodes.map(n=>({x:n.getBoundingClientRect().x,pose:n.querySelector('.game-sprite').dataset.pose})).sort((a,b)=>a.x-b.x);return pairs.map(p=>p.pose);})).toEqual(['right','left']);
-    if(info.project.name==='chromium')await info.attach(`natural-pair-facing-${width}`,{body:await page.locator('.game-room').screenshot(),contentType:'image/png'});
+    if(info.project.name==='chrome')await info.attach(`natural-pair-facing-${width}`,{body:await page.locator('.game-room').screenshot(),contentType:'image/png'});
   }
   world.birds[0].action={kind:'eat',target:null,startedTick:world.tick};world.birds[1].action={kind:'rest',target:null,startedTick:world.tick};world.paused=false;await seedWorld(page,world);await openGame(page);
   await expect.poll(()=>page.locator(`.game-room [data-bird-id="${world.birds[0].id}"] .game-sprite`).getAttribute('data-pose'),{timeout:14000}).toBe('peck');
@@ -595,6 +640,6 @@ test('a lone juvenile silver feeding sideways remains fully inside the natural h
  for(const width of [320,375,1440]){await page.setViewportSize({width,height:1000});await decodeScene(page);
   await expect(page.locator('.game-room-bird .game-sprite')).toHaveAttribute('data-pose','right');
   const contained=await page.locator('.game-room').evaluate(room=>{const r=room.getBoundingClientRect(),v=room.querySelector('.game-pose-window').getBoundingClientRect();return v.left>=r.left-1&&v.right<=r.right+1&&v.top>=r.top-1&&v.bottom<=r.bottom+1;});expect(contained).toBe(true);
-  if(info.project.name==='chromium')await info.attach(`natural-single-sideways-food-${width}`,{body:await page.locator('.game-room').screenshot(),contentType:'image/png'});
+  if(info.project.name==='chrome')await info.attach(`natural-single-sideways-food-${width}`,{body:await page.locator('.game-room').screenshot(),contentType:'image/png'});
  }
 });

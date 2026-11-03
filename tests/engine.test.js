@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createWorld, createBird, advanceTicks, advanceTo, TICK_MS, MAX_SAVE_BYTES, LIMITS, isRelated, canPair, renameBird, talkToBird, adoptBird, parseSave, serializeWorld, validateWorld, eventText } from '../src/engine.js';
+import { createWorld as createBaseWorld, createBird, advanceTicks, advanceTo, TICK_MS, MAX_SAVE_BYTES, LIMITS, isRelated, canPair, renameBird, talkToBird, adoptBird, parseSave, serializeWorld, validateWorld, eventText } from '../src/engine.js';
 
 test('begins with the female white Omochi and an unrelated male visitor', () => {
   const w = createWorld(100); assert.equal(w.birds.length,1); assert.equal(w.birds[0].name,'おもち'); assert.equal(w.birds[0].sex,'female'); assert.equal(w.birds[0].color,'white');
@@ -40,8 +40,8 @@ test('invalid saves are rejected without mutating the existing world', () => {
 test('renaming retains IDs and resolves names dynamically in diary', () => {
   const w=createWorld(0); const oldId=w.birds[0].id; renameBird(w,oldId,'しらたま'); assert.equal(w.birds[0].id,oldId); assert.match(eventText(w,w.events[0]),/しらたま/); assert.doesNotMatch(eventText(w,w.events[0]),/おもち/);
 });
-test('conversation reflects needs, personality, friends and history and changes state', () => {
-  const w=createWorld(0), b=w.birds[0]; b.needs.energy=20; assert.match(talkToBird(w,b.id,'あそぼう').answer,/休みたい/); b.needs.energy=90; b.personality.curiosity=90; assert.match(talkToBird(w,b.id,'あそぼう').answer,/探検/); const before=b.needs.energy; talkToBird(w,b.id,'おやすみ'); assert.ok(b.needs.energy>before); assert.equal(b.action.kind,'rest'); assert.ok(b.memories.at(-1).kind.startsWith('user-')); assert.match(talkToBird(w,b.id,'むずかしい未対応の質問').answer,/まだわからない/);
+test('conversation reflects personality and history while sharing bounded care energy', () => {
+ const w=createWorld(0),b=w.birds[0];b.needs.energy=10;assert.match(talkToBird(w,b.id,'あそぼう',0).answer,/休みたい/);b.needs.energy=60;b.personality.curiosity=90;assert.match(talkToBird(w,b.id,'あそぼう',0).answer,/探検/);const before=b.needs.energy;talkToBird(w,b.id,'おやすみ',0);assert.equal(b.needs.energy,Math.min(100,before+20));assert.equal(b.action.kind,'rest');assert.ok(b.memories.at(-1).kind.startsWith('user-'));b.needs.energy=60;assert.match(talkToBird(w,b.id,'むずかしい未対応の質問',0).answer,/まだわからない/);
 });
 test('relationships are directional and social events have causes/results/memories', () => {
   const w=createWorld(0); advanceTicks(w,8); const a=w.birds[0], b=w.birds[1]; assert.notEqual(a.relations[b.id].affection,b.relations[a.id].affection); assert.ok(w.events.some(e=>e.condition && e.result)); assert.ok(a.memories.length>0);
@@ -84,7 +84,7 @@ test('imports enforce UTF-8 byte bounds and reject unknown nested payloads witho
 test('dense bounded relationship graphs export below the same import byte limit', () => {
   const w=createWorld(0); advanceTicks(w,20000);
   w.tick=500000000000;
-  for(const b of w.birds){b.name='鳥'.repeat(16);for(const other of w.birds)if(other.id!==b.id)b.relations[other.id]={affection:1.0000000000000002e-100,trust:1.0000000000000002e-100,compatibility:1.0000000000000002e-100,meetings:Number.MAX_SAFE_INTEGER,lastTick:w.tick};}
+  for(const b of w.birds){renameBird(w,b.id,'鳥'.repeat(16));for(const other of w.birds)if(other.id!==b.id)b.relations[other.id]={affection:1.0000000000000002e-100,trust:1.0000000000000002e-100,compatibility:1.0000000000000002e-100,meetings:Number.MAX_SAFE_INTEGER,lastTick:w.tick};}
   for(const e of w.events){e.condition='鳥'.repeat(120);e.result='鳥'.repeat(120);}
   const text=serializeWorld(w); assert.ok(Buffer.byteLength(text,'utf8')<=MAX_SAVE_BYTES);assert.deepEqual(parseSave(text),w);
 });
@@ -122,3 +122,6 @@ test('direct stored objects are bounded before clone and do not invoke serializa
   const nonfinite=createWorld(0);nonfinite.birds[0].needs.energy=NaN;
   assert.throws(()=>validateWorld(nonfinite),/数値/);
 });
+
+// Historical passive simulation tests explicitly retain automatic adoption.
+function createWorld(...args){const w=createBaseWorld(...args);w.settings.adoptionMode='auto';return w;}

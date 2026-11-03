@@ -1,5 +1,11 @@
+import {initialEncounterState,validateEncounterState,encounterSystem} from './encounters.js';
+import {initialEconomy,validateEconomy,syncEconomy,reserveAutomaticGems,awardCareGold,ECONOMY_RULES} from './economy.js';
 /** A deterministic, offline, non-punitive story simulation. No real husbandry advice. */
-export const SAVE_VERSION = 4;
+import { initializeCareSchedule, validateCareSchedule, syncCareSchedule, applyScheduledCare, reconcileImportedCare, careWindow } from './care-schedule.js';
+import { defaultNameFields, automaticNaming, manualNaming, legacyNaming, isValidNaming } from './bird-names.js';
+export const SAVE_VERSION = 7;
+const careTime = now => Math.max(0, Math.min(253402268399999, now));
+export { reconcileImportedCare, careWindow };
 export const TICK_MS = 15000;
 export const MAX_SAVE_BYTES = 4000000;
 const MAX_DATE_MS = 8640000000000000;
@@ -47,7 +53,7 @@ export function collectDropping(w,droppingId,expectedRevision){
   const index=w.gems.droppings.findIndex(d=>d.id===droppingId);
   if(index<0||w.field.place!=='home')return {changed:false,gemAward:0,droppingId,message:index<0?'もうきれいになっているよ。':'おうちで見つけてね。'};
   const [drop]=w.gems.droppings.splice(index,1),gemAward=grantGems(w,GEM_RULES.collect);
-  bumpRevision(w);return {changed:true,gemAward,droppingId,birdId:drop.birdId,message:`きれいになったよ。${gemAward} Gem！`};
+  bumpRevision(w);return {changed:true,gemAward,droppingId,birdId:drop.birdId,message:`きれいになったよ。${gemAward} Gems！`};
 }
 
 function initialField() { return {place:'home',hostId:null,enteredTick:0}; }
@@ -83,7 +89,7 @@ export function decorOdds(w) { const n=DECOR_TIERS.filter(t=>decorLevel(w)>=t.le
 export function drawDecoration(w,slot='perch') {
   if(!Object.hasOwn(SLOT_LABELS,slot))throw new Error('9種類の道具から選んでね。');
   if(w.decor.lastDrawTick===w.tick)return {changed:false,message:'さっきのお飾りを楽しもう。次のゲーム時間にまた引けるよ。'};
-  if(w.decor.points<DECOR_DRAW_COST)throw new Error('20Gemで1回。友達との交流や家族の成長を見守ろう。');
+  if(w.decor.points<DECOR_DRAW_COST)throw new Error('20 Gemsで1回。友達との交流や家族の成長を見守ろう。');
   const available=DECOR_TIERS.filter(t=>decorLevel(w)>=t.level);
   const roll=random(w),tier=available.length===3&&roll>=.9?available[2]:available.length>=2&&roll>=.65?available[1]:available[0];
   const color=pick(w,Object.keys(COLOR_HEX)),id=`${slot}-${color}-${tier.id}`;
@@ -91,17 +97,37 @@ export function drawDecoration(w,slot='perch') {
   w.decor.points-=DECOR_DRAW_COST;
   if(duplicate)w.decor.points=Math.min(POINT_CAP,w.decor.points+8);else w.decor.inventory.push(item);
   w.decor.draws=Math.min(POINT_CAP,w.decor.draws+1);w.decor.lastDrawTick=w.tick;bumpRevision(w);
-  return {changed:true,item,duplicate,message:duplicate?'同じお飾りだったので8Gemを返したよ。':`${SLOT_LABELS[slot]}のお飾りが仲間入り！`};
+  return {changed:true,item,duplicate,message:duplicate?'同じお飾りだったので8 Gemsを返したよ。':`${SLOT_LABELS[slot]}のお飾りが仲間入り！`};
 }
 export function equipDecoration(w,itemId) {
   const item=w.decor.inventory.find(x=>x.id===itemId);if(!item)throw new Error('持っているお飾りを選んでね。');
   if(w.decor.equipped[item.slot]===itemId)return {changed:false,message:'もう飾ってあるよ。'};
   w.decor.equipped[item.slot]=itemId;bumpRevision(w);return {changed:true,message:`${SLOT_LABELS[item.slot]}を飾ったよ。`};
 }
-function awardEvent(w,kind) {
-  const amount={play:2,bath:2,reconcile:3,movein:10,pair:30,egg:25,hatch:35,grow:20}[kind]||0;
-  if(!amount)return;
-  w.decor.points=Math.min(POINT_CAP,w.decor.points+amount);w.decor.lifetimePoints=Math.min(POINT_CAP,w.decor.lifetimePoints+amount);
+function awardEvent(w,kind) { reserveAutomaticGems(w.economy,kind); }
+
+export function economyToken(w){return {worldId:w.worldId,revision:w.revision};}
+function currentToken(w,token){return token&&token.worldId===w.worldId&&token.revision===w.revision;}
+const staleEconomy=()=>({changed:false,gemAward:0,goldAward:0,goldSpent:0,message:'お部屋が変わったよ。もう一度選んでね。'});
+export function claimAutomaticGift(w,giftId,expectedToken,now=Date.now()){
+ if(!currentToken(w,expectedToken))return staleEconomy();
+ const synced=syncEconomy(w.economy,careTime(now)),gift=w.economy.pending;
+ if(!gift||gift.id!==giftId){if(synced)bumpRevision(w);return {changed:false,gemAward:0,message:'もう受け取っているよ。'};}
+ const gemAward=grantGems(w,Math.min(gift.amount,POINT_CAP-w.decor.points));
+ if(gemAward){gift.amount-=gemAward;if(!gift.amount)w.economy.pending=null;}
+ if(synced||gemAward)bumpRevision(w);
+ return {changed:gemAward>0,gemAward,message:gemAward?`${gemAward} Gemsを受け取ったよ。`:'お財布がいっぱい。贈り物はここに残しておくね。'};
+}
+export function ordinaryFurnitureCatalog(w){return DECOR_SLOTS.flatMap(({id:slot})=>DECOR_COLORS.map(({id:color})=>({id:`${slot}-${color}-cozy`,slot,color,tier:'cozy',gold:ECONOMY_RULES.ordinaryFurnitureGold,owned:w.decor.inventory.some(i=>i.id===`${slot}-${color}-cozy`)})));}
+export function buyOrdinaryFurniture(w,itemId,expectedToken,now=Date.now()){
+ if(!currentToken(w,expectedToken))return staleEconomy();
+ const item=ordinaryFurnitureCatalog(w).find(i=>i.id===itemId);
+ if(!item)throw new Error('お店にある道具を選んでね。');
+ if(item.owned)return {changed:false,goldSpent:0,message:'この道具はもう持っているよ。'};
+ if(w.economy.gold<item.gold)return {changed:false,goldSpent:0,message:'16 Goldで選べるよ。お世話をしながら貯めよう。'};
+ syncEconomy(w.economy,careTime(now));w.economy.gold-=item.gold;
+ const owned={id:item.id,slot:item.slot,color:item.color,tier:item.tier};w.decor.inventory.push(owned);bumpRevision(w);
+ return {changed:true,goldSpent:item.gold,item:owned,message:'新しい道具を選んだよ。'};
 }
 
 export function findBird(w, id) { return w.birds.find(b => b.id === id); }
@@ -111,7 +137,11 @@ function id(w) { return `b${w.nextId++}`; }
 export function bumpRevision(w) { w.revision = w.revision >= Number.MAX_SAFE_INTEGER ? 0 : w.revision + 1; return w.revision; }
 export function createBird(w, options = {}) {
   if (w.birds.length >= LIMITS.birds) return null;
-  const b = { id: id(w), name: options.name || pick(w, names), sex: options.sex || (random(w) < .5 ? 'female' : 'male'), color: options.color || pick(w, COLORS), stage: options.stage || 'adult', bornTick: w.tick, stageTick: w.tick, arrivedTick: w.tick, parents: options.parents || [], generation: options.generation || 0, partner: null, pairTick: null, eggsLaid: 0, lastEggTick: -1000, home: options.home || 'visitor', personality: { curiosity: 25 + Math.floor(random(w) * 65), sociability: 35 + Math.floor(random(w) * 55), caution: 15 + Math.floor(random(w) * 65) }, preference: pick(w, PREFERENCES), mood: 70, needs: { energy: 80, food: 80, play: 60 }, care: { lastFedTick: null, lastPetTick: null }, gemCare: initialGemCare(), relations: {}, memories: [], milestones: [], action: { kind: 'rest', target: null, startedTick: w.tick }, lastSocialTick: -1 };
+  const birdId = id(w);
+  // Preserve the old story PRNG draw independently from human-readable naming.
+  if (!options.name && !options.skipNameDraw) random(w);
+  const namingFields = options.name ? {name:options.name,naming:options.automaticName?automaticNaming(options.name):manualNaming(options.name)} : defaultNameFields(w,birdId);
+  const b = { id: birdId, ...namingFields, sex: options.sex || (random(w) < .5 ? 'female' : 'male'), color: options.color || pick(w, COLORS), stage: options.stage || 'adult', bornTick: w.tick, stageTick: w.tick, arrivedTick: w.tick, parents: options.parents || [], generation: options.generation || 0, partner: null, pairTick: null, eggsLaid: 0, lastEggTick: -1000, home: options.home || 'visitor', personality: { curiosity: 25 + Math.floor(random(w) * 65), sociability: 35 + Math.floor(random(w) * 55), caution: 15 + Math.floor(random(w) * 65) }, preference: pick(w, PREFERENCES), mood: 70, needs: { energy: 80, food: 80, play: 60 }, care: { lastFedTick: null, lastPetTick: null }, gemCare: initialGemCare(), relations: {}, memories: [], milestones: [], action: { kind: 'rest', target: null, startedTick: w.tick }, lastSocialTick: -1 };
   w.birds.push(b); return b;
 }
 function remember(w, b, kind, otherId = null) { const memory = { kind, otherId, tick: w.tick }; b.memories.push(memory); if (b.memories.length > LIMITS.memories) b.memories.shift(); if (['welcome','adopt','movein','pair','egg','hatch','grow','depart'].includes(kind) && !b.milestones.some(m => m.kind === kind && m.otherId === otherId)) { b.milestones.push(memory); if (b.milestones.length > LIMITS.memories) b.milestones.shift(); } }
@@ -126,8 +156,9 @@ function record(w, kind, ids, condition, result, data = {}) {
   for (const bid of ids) { const b = findBird(w, bid); if (b) remember(w, b, kind, ids.find(i => i !== bid) || null); }
 }
 export function createWorld(now = Date.now(), seed = 842911) {
-  const w = { version: SAVE_VERSION, revision: 0, worldId: `garden-${now}-${seed}`, epoch: now, lastUpdated: now, seed: seed >>> 0, tick: 0, nextId: 1, nextEvent: 1, paused: false, settings: { motion: true, careSound: true }, care: { cleanliness: 100, lastCleanTick: null }, birds: [], events: [], offlineSummary: null, field: initialField(), decor: initialDecor(), gems: {droppings:[],nextDropId:1} };
-  const b = createBird(w, { name: 'おもち', sex: 'female', color: 'white', home: 'resident' });
+  const w = { version: SAVE_VERSION, revision: 0, worldId: `garden-${now}-${seed}`, epoch: now, lastUpdated: now, seed: seed >>> 0, tick: 0, nextId: 1, nextEvent: 1, paused: false, settings: { motion: true, careSound: true, adoptionMode:'ask' }, care: { cleanliness: 100, lastCleanTick: null }, birds: [], events: [], offlineSummary: null, field: initialField(), decor: initialDecor(), gems: {droppings:[],nextDropId:1}, encounters:initialEncounterState(), economy:initialEconomy(careTime(now)), adoption:{pending:null,dismissed:[]} };
+  initializeCareSchedule(w,careTime(now));
+  const b = createBird(w, { name: 'おもち', automaticName:true, sex: 'female', color: 'white', home: 'resident' });
   b.personality = { curiosity: 65, sociability: 75, caution: 30 };
   record(w, 'welcome', [b.id], '新しい庭', '物語が始まった'); return w;
 }
@@ -186,13 +217,14 @@ function interact(w, a, b) {
   ar.trust = clamp(ar.trust + 4); br.trust = clamp(br.trust + 3);
   a.mood = clamp(a.mood + 5); b.mood = clamp(b.mood + 4);
   a.needs.play = clamp(a.needs.play + 22); b.needs.play = clamp(b.needs.play + 14);
-  a.needs.energy = clamp(a.needs.energy - 3); b.needs.energy = clamp(b.needs.energy - 2);
+  // Real care energy is independent of fast autonomous social turns.
   setAction(w, a, kind, b.id); setAction(w, b, kind, a.id);
   record(w, recentRefusal ? 'reconcile' : kind, [a.id, b.id], recentRefusal ? '前は休んだけれど、今日は元気だった' : `${bath ? '水浴びの好み' : '遊びたい気分'}と相性が合った`, '親しさと信頼が少し育った');
   for (const visitor of [a, b].filter(x => x.home === 'visitor')) {
     const vr = visitor.relations[visitor.id === a.id ? b.id : a.id];
     if ((!visitor.partner || findBird(w, visitor.partner)?.home === 'resident') && vr.affection >= 32 && vr.meetings >= 4 && w.birds.filter(x => x.home === 'resident').length < LIMITS.residents) {
-      visitor.home = 'resident'; record(w, 'movein', [visitor.id], '何度も会って親しくなった', '庭の仲間になった');
+      if(w.settings.adoptionMode==='auto'){visitor.home = 'resident'; record(w, 'movein', [visitor.id], '何度も会って親しくなった', '庭の仲間になった');}
+      else if(!w.adoption.pending&&!w.adoption.dismissed.includes(visitor.id))w.adoption.pending={birdId:visitor.id,arrivedTick:visitor.arrivedTick};
     }
   }
   if (canPair(w, a, b) && ar.affection > 74 && br.affection > 70 && ar.trust > 55 && br.trust > 55 && ar.meetings >= 10 && w.tick - Math.max(a.arrivedTick, b.arrivedTick) >= 16 && ar.compatibility >= 55) {
@@ -204,7 +236,7 @@ function grow(w) {
   for (const b of w.birds) {
     const age = w.tick - b.stageTick;
     const next = b.stage === 'egg' && age >= 12 ? 'chick' : b.stage === 'chick' && age >= 24 ? 'juvenile' : b.stage === 'juvenile' && age >= 48 ? 'adult' : null;
-    if (next) { b.stage = next; b.stageTick = w.tick; if (next === 'chick' && /^たまご[12]$/.test(b.name)) b.name = `${pick(w, names)}${b.id.slice(1)}`; record(w, next === 'chick' ? 'hatch' : 'grow', [b.id, ...b.parents], '成長の時間がたった', `${STAGES[next]}になった`, { stage: next }); }
+    if (next) { b.stage = next; b.stageTick = w.tick; if (next === 'chick' && (b.naming.source === 'automatic' || b.naming.source === 'legacy' && /^たまご[12]$/.test(b.name))) random(w); record(w, next === 'chick' ? 'hatch' : 'grow', [b.id, ...b.parents], '成長の時間がたった', `${STAGES[next]}になった`, { stage: next }); }
   }
 }
 function births(w) {
@@ -213,7 +245,7 @@ function births(w) {
     const r = mother.relations[father.id], rr = father.relations[mother.id];
     if (!r || !rr || r.trust < 60 || rr.trust < 60 || mother.mood < 55 || father.mood < 55 || mother.needs.energy < 35 || mother.eggsLaid >= 2 || w.tick - mother.pairTick < 20 || w.tick - mother.lastEggTick < 65 || w.birds.filter(b => b.home === 'resident').length >= LIMITS.residents || w.birds.length >= LIMITS.birds) continue;
     if (w.tick % 7 !== 0) continue;
-    const egg = createBird(w, { name: `たまご${mother.eggsLaid + 1}`, stage: 'egg', parents: [mother.id, father.id], generation: Math.max(mother.generation, father.generation) + 1, home: 'resident' });
+    const egg = createBird(w, { skipNameDraw:true, stage: 'egg', parents: [mother.id, father.id], generation: Math.max(mother.generation, father.generation) + 1, home: 'resident' });
     mother.eggsLaid++; mother.lastEggTick = w.tick; setAction(w, mother, 'nest', egg.id);
     record(w, 'egg', [egg.id, mother.id, father.id], '成鳥・信頼・気分・時間・空き場所がそろった', '巣に卵が生まれた');
   }
@@ -224,7 +256,7 @@ function visits(w) {
     const visitors = w.birds.filter(b => b.home === 'visitor');
     if (visitors.length < LIMITS.visitors && resident.length < LIMITS.residents && w.birds.length < LIMITS.birds) {
       const single = resident.filter(b => b.stage === 'adult' && !b.partner).sort((a, b) => b.generation - a.generation)[0];
-      const v = createBird(w, { name: w.tick === 1 ? 'ななしの訪問者' : undefined, sex: single ? (single.sex === 'female' ? 'male' : 'female') : undefined });
+      const v = createBird(w, { skipNameDraw:w.tick === 1, sex: single ? (single.sex === 'female' ? 'male' : 'female') : undefined });
       if (w.tick === 1) { v.personality.sociability = 70; v.personality.caution = 25; }
       setAction(w, v, 'visit'); record(w, 'visit', [v.id], '庭の外からやって来た', '新しい出会い');
     }
@@ -246,18 +278,18 @@ function visits(w) {
   }
   for (const b of w.birds.filter(b => b.home === 'visitor' && w.tick - b.arrivedTick > 96)) { b.home = 'departed'; record(w, 'depart', [b.id], '外の庭にも暮らしがある', 'また会う約束をした'); }
 }
-export function stepWorld(w) {
+export function stepWorld(w, now=Date.now()) {
+  const economySynced=syncEconomy(w.economy,careTime(now));if(economySynced)bumpRevision(w);
   if (w.paused || !Number.isSafeInteger(w.tick + 1) || w.epoch + (w.tick + 1) * TICK_MS > MAX_DATE_MS) return w;
   w.tick++; w.care.cleanliness = Math.max(0, w.care.cleanliness - CARE_RULES.soilPerTick); grow(w); visits(w);
   if(w.field.place==='friend'&&findBird(w,w.field.hostId)?.home==='resident')w.field={place:'home',hostId:null,enteredTick:w.tick};
   const active = fieldBirds(w).filter(b => b.stage !== 'egg');
   for (const b of active) {
-    b.needs.energy = clamp(b.needs.energy - (b.stage === 'chick' ? 2 : 4), 12, 100);
-    b.needs.food = clamp(b.needs.food - 5, 12, 100); b.needs.play = clamp(b.needs.play - 4, 8, 100);
+    b.needs.play = clamp(b.needs.play - 4, 8, 100);
     b.mood = clamp(b.mood + (b.needs.energy > 40 ? .3 : -.3), 35, 100);
     if (b.stage === 'chick') { setAction(w, b, 'nest'); b.needs.food = 85; b.needs.energy = 90; continue; }
-    if (b.needs.energy < 33 || b.action.kind === 'rest' && b.needs.energy < 65) { b.needs.energy = clamp(b.needs.energy + 24); setAction(w, b, 'rest'); continue; }
-    if (b.needs.food < 35) { b.needs.food = 93; fullMeal(w,b); b.mood = clamp(b.mood + 2); setAction(w, b, 'eat'); continue; }
+    if (b.needs.energy < 33 || b.action.kind === 'rest' && b.needs.energy < 65) { setAction(w, b, 'rest'); continue; }
+    if (b.needs.food < 35) { b.mood = clamp(b.mood + 2); setAction(w, b, 'eat'); continue; }
     const social = (b.needs.play < 48 ? .68 : .42) + b.personality.sociability / 350;
     if (random(w) < social && b.lastSocialTick !== w.tick) {
       const target = chooseTarget(w, b, active);
@@ -266,21 +298,23 @@ export function stepWorld(w) {
     const repeat = b.action.kind;
     const options = ['bath', 'explore', 'rest'].filter(k => k !== repeat);
     const kind = pick(w, options); setAction(w, b, kind);
-    if (kind === 'rest') b.needs.energy = clamp(b.needs.energy + 15);
-    else { b.needs.play = clamp(b.needs.play + 12); if ((kind === 'bath' && b.preference === '水浴び') || (kind === 'explore' && b.personality.curiosity > 60)) b.mood = clamp(b.mood + 4); }
+    if (kind !== 'rest') { b.needs.play = clamp(b.needs.play + 12); if ((kind === 'bath' && b.preference === '水浴び') || (kind === 'explore' && b.personality.curiosity > 60)) b.mood = clamp(b.mood + 4); }
   }
-  births(w); produceDroppings(w); bumpRevision(w); return w;
+  births(w); refreshAdoption(w); produceDroppings(w); bumpRevision(w); return w;
 }
-export function advanceTicks(w, count) { if (!Number.isFinite(count) || count <= 0) return w; for (let i = 0; i < Math.min(Math.floor(count), 100000); i++) stepWorld(w); return w; }
+export function advanceTicks(w, count, now=Date.now()) { if (!Number.isFinite(count) || count <= 0) return w; for (let i = 0; i < Math.min(Math.floor(count), 100000); i++) stepWorld(w,now); return w; }
 export function advanceTo(w, now = Date.now()) {
   if (!Number.isSafeInteger(now) || now < 0 || now > MAX_DATE_MS) return w;
+  if(syncEconomy(w.economy,careTime(now)))bumpRevision(w);
+  const careSync=syncCareSchedule(w,careTime(now));
+  if(careSync.renewed)bumpRevision(w);
   // Keep a high-water mark: moving the wall clock back must not replay an interval.
   if (now < w.lastUpdated) return w;
   if (w.paused) { w.lastUpdated = now; return w; }
   const due = Math.floor((now - w.lastUpdated) / TICK_MS);
   if (!due) return w;
   const count = Math.min(due, LIMITS.offlineTicks, Math.max(0, Math.floor((MAX_DATE_MS - w.epoch) / TICK_MS) - w.tick)), before = { birds: w.birds.length, tick: w.tick };
-  advanceTicks(w, count);
+  advanceTicks(w, count, now);
   w.lastUpdated = due > LIMITS.offlineTicks ? now : w.lastUpdated + count * TICK_MS;
   if (due > 4) w.offlineSummary = { ticks: w.tick - before.tick, skipped: Math.max(0, due - (w.tick - before.tick)), newBirds: w.birds.length - before.birds, fromTick: before.tick, toTick: w.tick };
   return w;
@@ -288,13 +322,34 @@ export function advanceTo(w, now = Date.now()) {
 export function renameBird(w, birdId, name) {
   const b = findBird(w, birdId); const clean = typeof name === 'string' ? name.trim().slice(0, 16) : '';
   if (!b || !clean || /[\u0000-\u001f\u007f]/.test(clean)) throw new Error('名前を1〜16文字で入力してね。');
-  b.name = clean; bumpRevision(w); return b;
+  b.name = clean; b.naming=manualNaming(clean); bumpRevision(w); return b;
 }
 export function adoptBird(w, birdId, name) {
   const b = findBird(w, birdId); if (!b || b.home !== 'visitor') throw new Error('今来ている文鳥を選んでね。');
   if (w.birds.filter(x => x.home === 'resident').length >= LIMITS.residents) throw new Error('この庭は10羽まで。今いる仲間を見守ろう。');
   if (name) renameBird(w, b.id, name);
-  b.home = 'resident'; record(w, 'adopt', [b.id], '利用者が迎え入れた', 'この庭で暮らし始めた'); bumpRevision(w); return b;
+  b.home = 'resident'; refreshAdoption(w); record(w, 'adopt', [b.id], '利用者が迎え入れた', 'この庭で暮らし始めた'); bumpRevision(w); return b;
+}
+function refreshAdoption(w){
+ const p=w.adoption.pending,b=p&&findBird(w,p.birdId);
+ if(p&&(!b||b.home!=='visitor'||b.arrivedTick!==p.arrivedTick||w.birds.filter(b=>b.home==='resident').length>=LIMITS.residents))w.adoption.pending=null;
+}
+export function setAdoptionMode(w,mode,expectedToken){
+ if(!currentToken(w,expectedToken))return staleEconomy();
+ if(!['ask','auto'].includes(mode))throw new Error('お迎えの方法を選んでね。');
+ if(w.settings.adoptionMode===mode)return {changed:false,message:'今の設定だよ。'};
+ w.settings.adoptionMode=mode;if(mode==='auto')w.adoption.pending=null;bumpRevision(w);
+ return {changed:true,message:mode==='ask'?'お迎えの前に相談するよ。':'仲良くなったら自然にお迎えするよ。'};
+}
+export function resolveAdoption(w,birdId,choice,expectedToken,now=Date.now()){
+ if(!currentToken(w,expectedToken))return staleEconomy();
+ if(!['accept','later'].includes(choice))throw new Error('お迎えするか、また遊ぶかを選んでね。');
+ const p=w.adoption.pending,b=findBird(w,birdId);
+ if(!p||p.birdId!==birdId||!b||b.home!=='visitor'||b.arrivedTick!==p.arrivedTick)return {changed:false,message:'また会えるときを待とう。'};
+ if(choice==='accept'&&w.birds.filter(b=>b.home==='resident').length>=LIMITS.residents)return {changed:false,message:'おうちは10羽まで。また遊ぼう。'};
+ if(choice==='later'){if(!w.adoption.dismissed.includes(b.id))w.adoption.dismissed.push(b.id);w.adoption.pending=null;bumpRevision(w);return {changed:true,message:'また遊ぼうね。お友達のままだよ。'};}
+ syncEconomy(w.economy,careTime(now));w.adoption.pending=null;b.home='resident';record(w,'movein',[b.id],'利用者がお迎えの相談にこたえた','いっしょに暮らし始めた');bumpRevision(w);
+ return {changed:true,message:`${b.name}といっしょに暮らし始めたよ。`};
 }
 // Care is fictional interaction. Cleanliness never changes biological or social state.
 // Tick-based stamps survive memory eviction and are committed in the same store transaction.
@@ -312,32 +367,25 @@ function careBird(w, birdId) {
 }
 function remaining(lastTick, tick, interval) { return lastTick === null ? 0 : Math.max(0, interval - (tick - lastTick)); }
 function careResult(kind, birdId, changed, before, after, cooldownTicks, message, reason) {
-  return { kind, birdId, changed, before, after, cooldownTicks, message, reason, gemAward:0 };
+  return { kind, birdId, changed, before, after, cooldownTicks, message, reason, gemAward:0, goldAward:0 };
 }
-export function feedBird(w, birdId) {
-  const bird = careBird(w, birdId), before = bird.needs.food;
-  const wait = remaining(bird.care.lastFedTick, w.tick, CARE_RULES.feedCooldownTicks);
-  if (wait) return careResult('feed', birdId, false, before, before, wait, `${bird.name}はさっき食べたところ。少しゲームの時間を待とう。`, 'cooldown');
-  if (before >= 100) return careResult('feed', birdId, false, before, before, 0, `${bird.name}は、いまおなかいっぱい。見守っていよう。`, 'full');
-  bird.needs.food = clamp(before + CARE_RULES.feedGain);
-  bird.care.lastFedTick = w.tick; fullMeal(w,bird);
-  const gemAward=grantGems(w,GEM_RULES.feed);
-  setAction(w, bird, 'eat');
-  record(w, 'user-feed', [birdId], '利用者がゲームのごはんを選び、食べられる時期だった', 'おなかの満ちぐあいが増えた');
-  bumpRevision(w);
-  return {...careResult('feed', birdId, true, before, bird.needs.food, CARE_RULES.feedCooldownTicks, `${bird.name}がごはんを食べたよ。おなかの満ちぐあい ${Math.round(before)} → ${Math.round(bird.needs.food)}。`, 'success'),gemAward};
+export function feedBird(w, birdId, now=Date.now(), expectedToken) {
+  if(expectedToken&&!currentToken(w,expectedToken))return staleEconomy();
+  const bird=careBird(w,birdId),result=applyScheduledCare(w,birdId,'feed',careTime(now));
+  if(!result.changed)return {...careResult('feed',birdId,false,result.before,result.after,0,`${bird.name}は、おなかいっぱい。`,'full'),nextAt:result.nextAt};
+  bird.care.lastFedTick=w.tick;fullMeal(w,bird);setAction(w,bird,'eat');
+  const gemAward=grantGems(w,result.gemAward),goldAward=awardCareGold(w.economy);
+  record(w,'user-feed',[birdId],'利用者がゲームのごはんを選んだ','おなかの満ちぐあいが増えた');bumpRevision(w);
+  return {...careResult('feed',birdId,true,result.before,result.after,0,`${bird.name}がごはんを食べたよ。`,'success'),gemAward,goldAward,nextAt:result.nextAt};
 }
-export function petBird(w, birdId) {
-  const bird = careBird(w, birdId), before = bird.mood;
-  const wait = remaining(bird.care.lastPetTick, w.tick, CARE_RULES.petCooldownTicks);
-  if (wait) return careResult('pet', birdId, false, before, before, wait, `${bird.name}とのふれあいは、ひとやすみ。少しゲームの時間を待とう。`, 'cooldown');
-  bird.mood = clamp(before + CARE_RULES.petMoodGain);
-  bird.care.lastPetTick = w.tick;
-  const gemAward=grantGems(w,GEM_RULES.pet);
-  setAction(w, bird, 'talk');
-  record(w, 'user-pet', [birdId], '利用者がゲームのふれあいを選んだ', bird.mood > before ? '気分が少し明るくなった' : '明るいふれあいの記憶が増えた');
-  bumpRevision(w);
-  return {...careResult('pet', birdId, true, before, bird.mood, CARE_RULES.petCooldownTicks, `${bird.name}「ぴっ♪」うれしそうにこたえたよ。（ゲームの表現です）`, 'success'),gemAward};
+export function petBird(w, birdId, now=Date.now(), expectedToken) {
+  if(expectedToken&&!currentToken(w,expectedToken))return staleEconomy();
+  const bird=careBird(w,birdId),result=applyScheduledCare(w,birdId,'pet',careTime(now));
+  if(!result.changed)return {...careResult('pet',birdId,false,result.before,result.after,0,`${bird.name}は、元気いっぱい。`,'full'),nextAt:result.nextAt};
+  bird.mood=clamp(bird.mood+CARE_RULES.petMoodGain);bird.care.lastPetTick=w.tick;setAction(w,bird,'talk');
+  const gemAward=grantGems(w,result.gemAward),goldAward=awardCareGold(w.economy);
+  record(w,'user-pet',[birdId],'利用者がゲームのふれあいを選んだ','元気が少し増えた');bumpRevision(w);
+  return {...careResult('pet',birdId,true,result.before,result.after,0,`${bird.name}「ぴっ♪」`,'success'),gemAward,goldAward,nextAt:result.nextAt};
 }
 export function cleanGarden(w) {
   const before = w.care.cleanliness;
@@ -348,15 +396,18 @@ export function cleanGarden(w) {
   bumpRevision(w);
   return careResult('clean', null, true, before, 100, CARE_RULES.cleanCooldownTicks, '庭の床をきれいにしたよ。文鳥の羽の色は変わらないよ。', 'success');
 }
-export function talkToBird(w, birdId, text) {
+export function talkToBird(w, birdId, text, now=Date.now(), expectedToken) {
+  if(expectedToken&&!currentToken(w,expectedToken))return {...staleEconomy(),answer:"お部屋が変わったよ。もう一度話しかけてね。",careChanged:false};
   const b = findBird(w, birdId); if (!b) throw new Error('文鳥を選んでね。');
   const input = String(text).trim().slice(0, 100);
+  const care=applyScheduledCare(w,birdId,'talk',careTime(now),input);
+  if(care.reason==='empty'||care.reason==='full')return {answer:care.reason==='full'?`${b.name}は、元気いっぱい。またあとで遊ぼう。`:'ことばを入れてね。',topic:'hello',gemAward:0,goldAward:0,careChanged:false,nextAt:care.nextAt};
   const friend = Object.entries(b.relations).sort((a, c) => c[1].affection - a[1].affection).find(([bid]) => findBird(w, bid));
   const near = friend ? birdName(w, friend[0]) : '庭のみんな';
   const last = b.memories.at(-1);
   let topic = 'hello', answer;
   if (b.stage === 'egg') answer = `${b.name}は、巣のなかで静かに育っているよ。`;
-  else if (/(おやすみ|ねむ|眠|休)/.test(input)) { topic = 'rest'; b.needs.energy = clamp(b.needs.energy + 8); setAction(w, b, 'rest'); answer = `${b.name}だよ。${b.needs.energy < 50 ? 'ちょうど眠かったんだ。' : '静かな時間もいいね。'}枝でひとやすみするね。`; }
+  else if (/(おやすみ|ねむ|眠|休)/.test(input)) { topic = 'rest'; setAction(w, b, 'rest'); answer = `${b.name}だよ。${b.needs.energy < 50 ? 'ちょうど眠かったんだ。' : '静かな時間もいいね。'}枝でひとやすみするね。`; }
   else if (/(水|みず|おふろ|浴)/.test(input)) { topic = 'bath'; b.needs.play = clamp(b.needs.play - 10); b.preference === '水浴び' && (b.mood = clamp(b.mood + 6)); setAction(w, b, 'bath'); answer = `${b.name}だよ。${b.preference === '水浴び' ? '水浴びの話、大好き！' : '花びらの水場を見にいこうかな。'}${near}も来るかな？`; }
   else if (/(ともだち|友|家族|なかよし|好き)/.test(input)) { topic = 'friend'; b.needs.play = clamp(b.needs.play - 8); answer = `${b.name}だよ。${friend ? `${near}とは「${relationshipLabel(w, b, findBird(w, friend[0]))}」。会うたび少しずつ知っていくんだ。` : 'まだ出会ったばかり。少しずつ仲良くなりたいな。'}`; }
   else if (/(あそ|遊|探検|たんけん)/.test(input)) { topic = 'play'; b.needs.play = clamp(b.needs.play - 12); b.mood = clamp(b.mood + 5); answer = `${b.name}だよ。${b.needs.energy < 35 ? 'いまは少し休みたいな。元気になったらね。' : b.personality.curiosity > 60 ? '新しい葉っぱの向こうを探検したい！' : 'いつもの枝で、ゆっくり遊ぼう。'}`; }
@@ -364,9 +415,9 @@ export function talkToBird(w, birdId, text) {
   else if (/(今日|きょう|げんき|元気|どう|おは|こん|よん|呼)/.test(input) || input.includes(b.name)) {
     answer = `${b.name}だよ。いまは${b.needs.energy < 40 ? 'のんびりしたい気分' : b.mood > 75 ? 'わくわくした気分' : 'おだやかな気分'}。${last?.otherId ? `さっきは${birdName(w, last.otherId)}のことを考えていたよ。` : `${b.preference}が気になるな。`}`;
   } else { topic = 'unknown'; answer = `${b.name}だよ。そのお話はまだわからないけれど、声は届いたよ。「遊ぼう」「水浴び」「友達」「おやすみ」のお話ならできるよ。`; }
-  let gemAward=0;
-  if(input&&b.home!=='departed'&&['juvenile','adult'].includes(b.stage)&&remaining(b.gemCare.lastChatTick,w.tick,GEM_RULES.chatCooldownTicks)===0){b.gemCare.lastChatTick=w.tick;gemAward=grantGems(w,GEM_RULES.chat);}
-  b.mood = clamp(b.mood + 2); remember(w, b, `user-${topic}`); bumpRevision(w); return { answer, topic, gemAward };
+  let gemAward=0,goldAward=0;
+  if(care.changed){b.gemCare.lastChatTick=w.tick;gemAward=grantGems(w,care.gemAward);goldAward=awardCareGold(w.economy);}
+  b.mood = clamp(b.mood + 2); remember(w, b, `user-${topic}`); bumpRevision(w); return { answer, topic, gemAward, goldAward, careChanged:care.changed, nextAt:care.nextAt };
 }
 export function eventText(w, e) {
   const n = e.ids.map(i => birdName(w, i));
@@ -377,7 +428,7 @@ function validateVersion(input, version) {
   const fail = msg => { throw new Error(`保存データを読み込めません：${msg}`); };
   if (!input || typeof input !== 'object' || Array.isArray(input)) fail('形式が違います。');
   const shape = (value, keys) => value !== null && typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length === keys.length && keys.every(key => Object.hasOwn(value, key));
-  const worldKeys = ['version','revision','worldId','epoch','lastUpdated','seed','tick','nextId','nextEvent','paused','settings','birds','events','offlineSummary', ...(version >= 2 ? ['care'] : []), ...(version >= 3 ? ['field','decor'] : []), ...(version >= 4 ? ['gems'] : [])];
+  const worldKeys = ['version','revision','worldId','epoch','lastUpdated','seed','tick','nextId','nextEvent','paused','settings','birds','events','offlineSummary', ...(version >= 2 ? ['care'] : []), ...(version >= 3 ? ['field','decor'] : []), ...(version >= 4 ? ['gems'] : []), ...(version >= 5 ? ['careSchedule'] : []), ...(version >= 6 ? ['encounters'] : []), ...(version >= 7 ? ['economy','adoption'] : [])];
   if (!shape(input, worldKeys)) fail('保存の項目が不正です。');
   // Check bounded input before JSON cloning, including direct IndexedDB values.
   // Descriptors avoid invoking getters/toJSON on malformed non-JSON objects.
@@ -404,7 +455,7 @@ function validateVersion(input, version) {
   preflight(input);
   if (input.version !== version) fail('対応していない版です。元の保存はそのままです。');
   let w; try { w = clone(input); } catch { fail('JSONの構造が不正です。'); }
-  if (!shape(w.settings, version >= 2 ? ['motion', 'careSound'] : ['motion'])) fail('保存の項目が不正です。');
+  if (!shape(w.settings, version >= 7 ? ['motion','careSound','adoptionMode'] : version >= 2 ? ['motion', 'careSound'] : ['motion'])) fail('保存の項目が不正です。');
   const num = (n, lo = 0, hi = Number.MAX_SAFE_INTEGER) => typeof n === 'number' && Number.isFinite(n) && n >= lo && n <= hi;
   const integer = (n, lo = 0, hi = Number.MAX_SAFE_INTEGER) => Number.isInteger(n) && num(n, lo, hi);
   const str = (v, max = 100) => typeof v === 'string' && v.length > 0 && v.length <= max && !/[\u0000-\u001f\u007f]/.test(v);
@@ -412,12 +463,13 @@ function validateVersion(input, version) {
   const validEvents = version >= 2 ? EVENT_KINDS : LEGACY_EVENT_KINDS, validMemories = version >= 2 ? MEMORY_KINDS : LEGACY_MEMORY_KINDS;
   if (!str(w.worldId) || !integer(w.revision) || !integer(w.seed, 0, 4294967295) || !integer(w.tick) || !integer(w.nextId, 1, LIMITS.birds + 1) || !integer(w.nextEvent, 2) || !integer(w.epoch, 0, MAX_DATE_MS) || !integer(w.lastUpdated, 0, MAX_DATE_MS) || !integer(w.epoch + w.tick * TICK_MS, 0, MAX_DATE_MS) || typeof w.paused !== 'boolean' || !w.settings || typeof w.settings.motion !== 'boolean') fail('基本情報が不正です。');
   if (!Array.isArray(w.birds) || !w.birds.length || w.birds.length > LIMITS.birds || !Array.isArray(w.events) || !w.events.length || w.events.length > LIMITS.events) fail('鳥や日記が多すぎます。');
-  if (w.birds.some(b => !shape(b, ['id','name','sex','color','stage','bornTick','stageTick','arrivedTick','parents','generation','partner','pairTick','eggsLaid','lastEggTick','home','personality','preference','mood','needs','relations','memories','milestones','action','lastSocialTick', ...(version >= 2 ? ['care'] : []), ...(version >= 4 ? ['gemCare'] : [])]))) fail('文鳥の項目が不正です。');
+  if (w.birds.some(b => !shape(b, ['id','name','sex','color','stage','bornTick','stageTick','arrivedTick','parents','generation','partner','pairTick','eggsLaid','lastEggTick','home','personality','preference','mood','needs','relations','memories','milestones','action','lastSocialTick', ...(version >= 2 ? ['care'] : []), ...(version >= 4 ? ['gemCare'] : []), ...(version >= 5 ? ['naming'] : [])]))) fail('文鳥の項目が不正です。');
   const ids = new Set(w.birds.map(b => b.id));
   if (ids.size !== w.birds.length) fail('同じIDが重なっています。');
   if (w.nextId !== w.birds.length + 1 || w.birds.some((_, i) => !ids.has(`b${i + 1}`))) fail('文鳥のIDの順序が不正です。');
   const ref = (bid, optional = false) => optional && bid === null || typeof bid === 'string' && ids.has(bid);
   for (const b of w.birds) {
+    if(version>=5&&(!isValidNaming(b.naming)||b.naming.assignedName!==b.name))fail('名前の情報が不正です。');
     if (!/^b[1-9]\d{0,8}$/.test(b.id) || Number(b.id.slice(1)) >= w.nextId || !str(b.name, 16) || !b.name.trim() || !['female', 'male'].includes(b.sex) || !COLORS.includes(b.color) || !Object.hasOwn(STAGES, b.stage) || !['resident','visitor','departed'].includes(b.home) || !PREFERENCES.includes(b.preference)) fail('文鳥の情報が不正です。');
     for (const k of ['bornTick', 'stageTick', 'arrivedTick']) if (!integer(b[k], 0, w.tick) || k !== 'bornTick' && b[k] < b.bornTick) fail('成長の時刻が不正です。');
     if (!integer(b.generation, 0, LIMITS.birds) || !integer(b.eggsLaid, 0, 2) || !integer(b.lastEggTick, -1000, w.tick) || !integer(b.lastSocialTick, -1, w.tick) || !(b.pairTick === null || integer(b.pairTick, 0, w.tick)) || !num(b.mood, 0, 100) || !b.personality || !b.needs) fail('状態が不正です。');
@@ -476,34 +528,58 @@ function validateVersion(input, version) {
       drops.add(d.id);owners.add(d.birdId);previous=n;
     }
   }
+  if(version>=5)validateCareSchedule(w.careSchedule);
+  if(version>=6)validateEncounterState(w.encounters,w.tick);
+  if(version>=7){
+   validateEconomy(w.economy);
+   if(w.economy.firstMeetingClaimed.some(id=>!w.encounters.discoveries.some(d=>d.id===id)))fail('初出会いの記録が不正です。');
+   if(!['ask','auto'].includes(w.settings.adoptionMode)||!shape(w.adoption,['pending','dismissed'])||!Array.isArray(w.adoption.dismissed)||w.adoption.dismissed.length>LIMITS.birds||new Set(w.adoption.dismissed).size!==w.adoption.dismissed.length||w.adoption.dismissed.some(id=>!ref(id)))fail('お迎え相談の情報が不正です。');
+   const p=w.adoption.pending;
+   if(p!==null){const b=findBird(w,p?.birdId);if(!shape(p,['birdId','arrivedTick'])||w.settings.adoptionMode!=='ask'||!b||b.home!=='visitor'||b.stage!=='adult'||p.arrivedTick!==b.arrivedTick||w.adoption.dismissed.includes(b.id)||w.birds.filter(b=>b.home==='resident').length>=LIMITS.residents)fail('お迎え相談の相手が不正です。');}
+  }
   return w;
 }
 /** Strict current-version validator for transactions; use compatibility only at read boundaries. */
 export function validateWorld(input) { return validateVersion(input, SAVE_VERSION); }
 /** Historical export retained: validates v1, applies v2 care, then upgrades to current. */
-export function migrateV1ToV2(input) {
+export function migrateV1ToV2(input, now=Date.now()) {
   const world = validateVersion(input, 1); // Validate the complete legacy object before adding anything.
   world.version = 2;
   world.settings.careSound = true;
   world.care = { cleanliness: 100, lastCleanTick: null };
   for (const bird of world.birds) bird.care = { lastFedTick: null, lastPetTick: null };
-  return migrateV2ToV3(validateVersion(world,2));
+  return migrateV2ToV3(validateVersion(world,2),now);
 }
-export function migrateV2ToV3(input) {
-  const world=validateVersion(input,2);world.version=3;world.field=initialField();world.decor=initialDecor();return migrateV3ToV4(validateVersion(world,3));
+export function migrateV2ToV3(input, now=Date.now()) {
+  const world=validateVersion(input,2);world.version=3;world.field=initialField();world.decor=initialDecor();return migrateV3ToV4(validateVersion(world,3),now);
 }
-export function migrateV3ToV4(input){
+export function migrateV3ToV4(input, now=Date.now()){
   const world=validateVersion(input,3);world.version=4;world.gems={droppings:[],nextDropId:1};
   for(const b of world.birds)b.gemCare=initialGemCare();
-  return validateWorld(world);
+  return migrateV4ToV5(validateVersion(world,4),now);
 }
-export function readCompatibleWorld(input) {
+export function migrateV4ToV5(input, now=Date.now()) {
+  const world=validateVersion(input,4);world.version=5;
+  initializeCareSchedule(world,careTime(now));
+  for(const b of world.birds)b.naming=legacyNaming(b.name);
+  return migrateV5ToV6(world,now);
+}
+export function migrateV5ToV6(input, now=Date.now()) {
+ const world=validateVersion(input,5);world.version=6;world.encounters=initialEncounterState();return migrateV6ToV7(world,now);
+}
+export function migrateV6ToV7(input, now=Date.now()) {
+ const world=validateVersion(input,6);world.version=7;world.economy=initialEconomy(careTime(now));world.settings.adoptionMode='auto';world.adoption={pending:null,dismissed:[]};world.economy.firstMeetingClaimed=world.encounters.discoveries.map(d=>d.id);return validateWorld(world);
+}
+export function readCompatibleWorld(input, now=Date.now()) {
   // Do not execute an accessor even to discover the version of an untrusted object.
   const descriptor = input && typeof input === 'object' ? Object.getOwnPropertyDescriptor(input, 'version') : null;
   if (!descriptor || !Object.hasOwn(descriptor, 'value')) throw new Error('保存データを読み込めません：版の形式が違います。');
-  if (descriptor.value === 1) return migrateV1ToV2(input);
-  if (descriptor.value === 2) return migrateV2ToV3(input);
-  if (descriptor.value === 3) return migrateV3ToV4(input);
+  if (descriptor.value === 1) return migrateV1ToV2(input,now);
+  if (descriptor.value === 2) return migrateV2ToV3(input,now);
+  if (descriptor.value === 3) return migrateV3ToV4(input,now);
+  if (descriptor.value === 4) return migrateV4ToV5(input,now);
+  if (descriptor.value === 5) return migrateV5ToV6(input,now);
+  if (descriptor.value === 6) return migrateV6ToV7(input,now);
   if (descriptor.value === SAVE_VERSION) return validateWorld(input);
   throw new Error('保存データを読み込めません：対応していない版です。元の保存はそのままです。');
 }
@@ -515,3 +591,84 @@ export function serializeWorld(w) {
 }
 /** Versioned import boundary. Strict v1/v2/v3 migrate purely to v4; future versions fail closed. */
 export function parseSave(text) { if (typeof text !== 'string' || text.length > MAX_SAVE_BYTES || new TextEncoder().encode(text).byteLength > MAX_SAVE_BYTES) throw new Error('保存ファイルは4MB以下のJSONを選んでください。'); return readCompatibleWorld(JSON.parse(text)); }
+
+/** Restore temporary wellbeing only. Never lower a full bar or reopen reward capacity.
+ * Fresh-state transaction required. No story tick, care clock, RNG or history writes.
+ */
+export function resetTemporaryState(world) {
+  let changed=false;
+  for(const bird of world.birds){
+    if(bird.home==='departed'||!['juvenile','adult'].includes(bird.stage))continue;
+    for(const [key,floor] of Object.entries({food:80,energy:80,play:60})){
+      if(bird.needs[key]<floor){bird.needs[key]=floor;changed=true;}
+    }
+    if(bird.mood<70){bird.mood=70;changed=true;}
+  }
+  if(world.care.cleanliness<100){world.care.cleanliness=100;changed=true;}
+  if(changed)bumpRevision(world);
+  return changed;
+}
+
+/** Initial owned furniture only; never grant items or alter inventory/currency. */
+export function resetFurniturePlacement(world){
+  let changed=false;
+  for(const slot of Object.keys(world.decor.equipped)){
+    const id=`${slot}-mint-cozy`;
+    const item=world.decor.inventory.find(i=>i.id===id&&i.slot===slot)||world.decor.inventory.find(i=>i.slot===slot);
+    if(item&&world.decor.equipped[slot]!==item.id){world.decor.equipped[slot]=item.id;changed=true;}
+  }
+  if(changed)bumpRevision(world);return changed;
+}
+
+/** Strict whole-world replacement boundary. No care bar merge/decrement, no money
+ * merge. A restored snapshot carries its own wallet, items, receipts and quota.
+ * Only clock high-water marks are advanced to prevent replaying elapsed absence.
+ */
+export function prepareWorldReplacement(current,replacement,now=Date.now(),newWorldId){
+ if(!Number.isSafeInteger(now)||now<0||now>MAX_DATE_MS)throw new Error('端末の日時を確認してください。');
+ if(typeof newWorldId!=='string'||!newWorldId||newWorldId===current.worldId)throw new Error('新しい庭の識別子が必要です。');
+ const next=readCompatibleWorld(replacement,now);
+ if(newWorldId===next.worldId)throw new Error('新しい庭の識別子が必要です。');
+ const effective=Math.max(now,current.lastUpdated,next.lastUpdated,current.careSchedule.seenAt,next.careSchedule.seenAt,current.economy.seenAt,next.economy.seenAt);
+ const at=careTime(effective);
+ next.lastUpdated=effective;
+ next.careSchedule={seenAt:at,windowAt:careWindow(at).at};
+ syncEconomy(next.economy,at);
+ next.settings={...next.settings,motion:current.settings.motion,careSound:current.settings.careSound};next.worldId=newWorldId;
+ return validateWorld(next);
+}
+
+/** Hand-triggered social thank-you: one real JST care window across all gardens.
+ * Pure encounter system remains reward-free for fixtures/observation-only callers.
+ */
+export function meetGardenFriendReward(w,friendId,action,expectedToken,now=Date.now()){
+ if(!currentToken(w,expectedToken))return staleEconomy();
+ const at=careTime(Math.max(now,w.economy.seenAt,w.careSchedule.seenAt));
+ const windowAt=careWindow(at).at;
+ const result=encounterSystem.meetGardenFriend(w,friendId,action,expectedToken);
+ if(!result.changed)return {...result,gemAward:0,goldAward:0};
+ syncEconomy(w.economy,at);
+ let gemAward=0;
+ if(w.economy.gardenWindowAt===null||windowAt>w.economy.gardenWindowAt){
+  gemAward=grantGems(w,5);if(gemAward)w.economy.gardenWindowAt=windowAt;
+ }
+ // Encounter interaction already increments world.revision in this same transaction.
+ return {...result,gemAward,goldAward:0};
+}
+
+/** First completed encounter only, independent of ordinary garden social quota.
+ * Explicit system injection is for trusted local fixtures; UI uses approved catalog.
+ */
+export function completeEncounterReward(w,instanceId,action,expectedToken,now=Date.now(),system=encounterSystem){
+ if(!currentToken(w,expectedToken))return staleEconomy();
+ const at=careTime(Math.max(now,w.economy.seenAt,w.careSchedule.seenAt));careWindow(at);
+ const result=system.act(w,instanceId,action,expectedToken);
+ let gemAward=0;
+ if(result.changed){
+  syncEconomy(w.economy,at);
+  if(result.revealed&&result.first&&!w.economy.firstMeetingClaimed.includes(result.id)){
+   gemAward=grantGems(w,5);w.economy.firstMeetingClaimed.push(result.id);
+  }
+ }
+ return {...result,gemAward,goldAward:0};
+}

@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {formatGameAmount} from '../src/game.js';
+test('compact display preserves semantic value outside formatting, bounds maximum width without rounding up',()=>{const pairs=[[0,'0'],[9999,'9,999'],[10000,'1万'],[19999,'1.9万'],[100000000,'1億'],[1000000000,'10億']];for(const [amount,label]of pairs)assert.equal(formatGameAmount(amount),label);});
