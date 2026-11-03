@@ -38,7 +38,7 @@ for(const [width,height] of [[320,240],[320,568],[390,664],[390,844],[844,390],[
  if(process.env.DECOR_BASELINE){
   const panel=page.locator('.game-panel-overlay[open] > .game-panel');await panel.evaluate(p=>p.scrollTop=0);
   const metrics=await panel.evaluate(p=>({overflow:getComputedStyle(p).overflowY,panelBottom:p.getBoundingClientRect().bottom,decorationBottom:p.querySelector('.game-decoration').getBoundingClientRect().bottom,messageHeight:p.querySelector('.game-overlay-message').getBoundingClientRect().height}));
-  console.log('LEGACY_DECOR_METRICS',JSON.stringify(metrics));await info.attach('legacy-decor-after-equip',{body:await page.screenshot(),contentType:'image/png'});
+  console.log('LEGACY_DECOR_METRICS',JSON.stringify(metrics));await page.screenshot({path:info.outputPath('legacy-decor-after-equip.png')});
   expect(metrics.overflow).toBe('hidden');expect(metrics.decorationBottom-metrics.panelBottom).toBeGreaterThan(20);return;
  }
  await shelfEnd(page,info,`decor-${width}x${height}-after-equip`);
@@ -49,6 +49,7 @@ for(const [width,height] of [[320,240],[320,568],[390,664],[390,844],[844,390],[
  }
  const lastSlot=page.locator('[data-decor-slot]').last();await reachable(lastSlot);await lastSlot.tap();await expect(lastSlot).toHaveAttribute('aria-pressed','true');
  await reachable(page.locator('[data-decor-draw]'));await page.locator('[data-decor-draw]').tap();await expect(page.locator('.game-overlay-message')).not.toBeEmpty();
+ await reachable(page.locator('[data-draw-result-close]'));await page.locator('[data-draw-result-close]').tap();await expect(page.locator('.game-draw-result')).toHaveCount(0);
  await shelfEnd(page,info,`decor-${width}x${height}-after-draw`);
  for(const filter of ['owned','all']){const button=page.locator(`[data-decor-filter="${filter}"]`);await reachable(button);await button.tap();await expect(button).toHaveAttribute('aria-pressed','true');}
  const odds=page.locator('[data-game-details="draw-odds"]');await reachable(odds.locator('summary'));await odds.locator('summary').tap();await expect(odds).toHaveAttribute('open','');await odds.locator('summary').tap();await expect(odds).not.toHaveAttribute('open','');
