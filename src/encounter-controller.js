@@ -8,6 +8,9 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
   const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   function render({focus=false}={}){
     if(!alive)return;const w=getWorld();
+    const oldGarden=root.querySelector('.finch-garden');
+    const oldOpenDetails=new Set([...root.querySelectorAll('details[data-garden-details][open]')].map(d=>d.dataset.gardenDetails));
+    const oldDockScroll=root.querySelector('.finch-garden-dock details[name="garden-tools"][open]')?.scrollTop;
     const oldSelector=root.querySelector('.finch-garden-selector');
     const oldScroll=oldSelector?.scrollLeft, oldSelected=oldSelector?.querySelector('[aria-current=page]')?.dataset.gardenSelect;
     if(w.worldId!==worldId){worldId=w.worldId;generation++;busy=false;mode='notebook';pageId=null;notice='';}
@@ -19,6 +22,13 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
       if(selected && (oldScroll==null || selected.dataset.gardenSelect!==oldSelected)){
         selector.scrollLeft=selected.offsetLeft-selector.offsetLeft;
       }
+    }
+    // Restore only within the same garden and world; navigation starts fresh.
+    const newGarden=root.querySelector('.finch-garden');
+    if(oldGarden && newGarden && oldGarden.dataset.gardenWorld===newGarden.dataset.gardenWorld && oldSelected===newGarden.querySelector('[aria-current=page]')?.dataset.gardenSelect){
+      for(const detail of root.querySelectorAll('details[data-garden-details]'))if(oldOpenDetails.has(detail.dataset.gardenDetails))detail.open=true;
+      const openDock=root.querySelector('.finch-garden-dock details[name="garden-tools"][open]');
+      if(openDock && oldDockScroll!=null)openDock.scrollTop=oldDockScroll;
     }
     root.setAttribute('aria-busy',String(busy));
     if(busy)for(const button of root.querySelectorAll('button'))button.disabled=true;
