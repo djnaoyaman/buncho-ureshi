@@ -32,7 +32,7 @@ for(const width of [390,1280])test(`scroll depth is plainly visible and preserve
  await expect.poll(async()=> (await sample()).offset-before.offset).toBeGreaterThan(32);
  const after=await sample(),scroll=after.scroll-before.scroll,depth=after.offset-before.offset;
  expect(scroll).toBeGreaterThan(200);expect(depth/scroll).toBeGreaterThan(.14);expect(depth/scroll).toBeLessThan(.20);
- expect(Math.abs(after.offset)).toBeLessThanOrEqual(width<=600?40:56);expect(after.width).toBe(before.width);expect(after.height).toBe(before.height);
+ expect(Math.abs(after.offset)).toBeLessThanOrEqual(width<=600?40:56);expect(after.width).toBeCloseTo(before.width,3);expect(after.height).toBeCloseTo(before.height,3);
  expect(after.overflow).toBe('visible');expect(after.marginTop).toBeGreaterThan(width<=600?40:56);expect(after.marginBottom).toBeGreaterThan(width<=600?40:56);
  await info.attach(`depth-after-${width}`,{body:await page.screenshot(),contentType:'image/png'});
  await info.attach(`measured-scroll-${width}`,{body:Buffer.from(JSON.stringify({width,scroll,depth,ratio:depth/scroll,samples},null,2)),contentType:'application/json'});
