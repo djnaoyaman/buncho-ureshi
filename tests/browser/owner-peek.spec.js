@@ -3,7 +3,7 @@ test('owner is a visible foreground observer, customized and motion-aware',async
  for(const [width,height] of [[390,844],[844,390],[1280,800]]){
   await page.setViewportSize({width,height});await page.goto('');
   await page.evaluate(()=>localStorage.setItem('buncho.owner-profile.v1',JSON.stringify({version:1,name:'A',hair:'bun',skin:'honey',hairColor:'rose',outfit:'overalls',palette:'sakura',accessory:'beret',eyes:'bright',face:'oval'})));
-  await page.goto('game/');await expect(page.locator('.game-owner-companion')).toBeVisible();
+  await page.goto('game/');await expect(page.locator('.game-owner-companion')).toBeVisible();await expect(page.locator('.game-logo-intro')).toBeHidden();
   const owner=page.locator('.game-owner-companion'), art=owner.locator('svg');
   expect(await art.innerHTML()).toContain('#8f6265');expect(await art.innerHTML()).toContain('#c8946e');
   let bounds=await owner.boundingBox();expect(bounds.width).toBeGreaterThanOrEqual(80);expect(bounds.x).toBeGreaterThanOrEqual(0);expect(bounds.y+bounds.height).toBeLessThanOrEqual(height);
