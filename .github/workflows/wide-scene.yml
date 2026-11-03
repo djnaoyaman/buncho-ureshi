@@ -1,0 +1,35 @@
+name: Wide scene viewport
+on:
+  pull_request:
+    paths:
+      - 'src/game.css'
+      - 'src/style.css'
+      - 'src/game.js'
+      - 'src/game-chrome.js'
+      - 'tests/browser/wide-scene.spec.js'
+      - '.github/workflows/wide-scene.yml'
+permissions:
+  contents: read
+jobs:
+  viewport:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium webkit
+      - run: npx playwright install chrome msedge
+      - run: npx playwright test tests/browser/wide-scene.spec.js --retries=0
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: wide-scene-${{ github.sha }}
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14

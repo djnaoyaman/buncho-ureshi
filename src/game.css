@@ -529,3 +529,6 @@ body[data-world="buncho"] .game-owner-setting .owner-portrait-art{width:70px;hei
 @media(max-width:600px) and (max-height:280px){
  body[data-world="buncho"][data-scene-controls="open"] .game-main>.game-scene-caption{display:none}
 }
+
+/* The full-window game must override the legacy article-width shell. */
+body[data-world="buncho"] #main.page-content{max-width:none;padding:0}
