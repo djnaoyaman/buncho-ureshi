@@ -22,7 +22,7 @@ test('every turn frame keeps a complete registered side pose',async({page},info)
  const owner=page.locator('.game-owner-companion');
  for(const t of [9000,9360,9600,9840,10000,10600,10920,11280,11520]){
   await owner.evaluate((el,t)=>{for(const a of el.getAnimations({subtree:true})){a.pause();a.effect.updateTiming({delay:0});a.currentTime=t;}},t);
-  await owner.screenshot({path:info.outputPath(`frame-${t}.png`)});
+  await page.screenshot({path:info.outputPath(`frame-${t}.png`)});
  }
  const views=await owner.evaluate(el=>[...el.querySelectorAll('.owner-peek-glance svg')].map(e=>e.getAttribute('viewBox')));
  expect(views.every(v=>v?.split(' ')[1]==='648')).toBe(true);

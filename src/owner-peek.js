@@ -24,7 +24,7 @@ function tintFilter(id,color,reference){
 // Each atlas cell was registered to the same anatomical neck/collar anchor.
 // Keep equal-size cells; centering visible bounds would move the neck when the
 // hair, pose, or clothing changes.
-const sprite=(src,col,row,x,y,w,h,extra='')=>`<svg x="${x}" y="${y}" width="${w}" height="${h}" viewBox="${col*CELL} ${row*CELL} ${CELL} ${CELL}" overflow="hidden" ${extra}><image href="${src}" x="0" y="0" width="1620" height="972"/></svg>`;
+const sprite=(src,col,row,x,y,w,h,extra='')=>`<svg x="${x}" y="${y}" width="${w}" height="${h}" viewBox="${col*CELL} ${row*CELL} ${CELL} ${CELL}" style="overflow:hidden" ${extra}><image href="${src}" x="0" y="0" width="1620" height="972"/></svg>`;
 export function renderOwnerPortrait(value,options={}){return renderOwnerPeek(value,{decorative:false,...options,portrait:true});}
 export function renderOwnerPeek(value,{portrait=false,decorative=true,label='飼い主の試着プレビュー'}={}){
   const uid=`owner-art-${++ownerArtId}`;
