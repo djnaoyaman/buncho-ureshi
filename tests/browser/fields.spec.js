@@ -133,7 +133,7 @@ test('home nine gardens and known friend visits retain family and persist travel
  await seedWorld(page,w);await openGame(page);await expect(page.locator(`.game-room [data-bird-id="${chick.id}"]`)).toHaveCount(1);
  await tab(page,'outdoors');await expect(page.locator('.finch-garden-selector [data-garden-select]')).toHaveCount(9);
  await page.locator('.finch-garden-selector [data-garden-select="mizukagami"]').click();await expect(page.locator('.finch-garden-scenery')).toHaveAttribute('data-garden-id','mizukagami');
- await expect(page.locator('.finch-companion-walk')).toContainText(w.birds[0].name);await expect(page.locator('.finch-companion-walk')).not.toContainText(chick.name);
+ await expect(page.locator(`[data-garden-household="${w.birds[0].id}"]`)).toHaveAccessibleName(`${w.birds[0].name}とふれあう`);await expect(page.locator(`[data-garden-household="${chick.id}"]`)).toHaveCount(0);
  const gardenSave=await readWorld(page);expect(gardenSave.encounters.garden.id).toBe('mizukagami');expect(gardenSave.worldId).toBe(w.worldId);expect(gardenSave.birds).toEqual(w.birds);
  await page.reload();await expect(page.locator('.game-app')).toBeVisible();expect((await readWorld(page)).encounters.garden.id).toBe('mizukagami');await tab(page,'outdoors');await expect(page.locator('.finch-garden-scenery')).toHaveAttribute('data-garden-id','mizukagami');
  await tab(page,'garden');await expect(page.locator('.game-room')).toHaveAttribute('data-field','home');expect((await readWorld(page)).encounters.garden.open).toBe(false);
@@ -212,8 +212,7 @@ test('secondary drawer opens and closes by real keyboard controls without losing
  await summary.click();await menu.locator('[data-game-panel="family"]').click();await expect(page.locator('.game-family-tree')).toBeVisible();await expect(page.locator('.game-field-nav button')).toHaveCount(3);await tab(page,'garden');await expect(page.locator('.game-room')).toHaveAttribute('data-field','home');
 });
 
-// These are actual browser interactions and viewport checks, not the separate
-// twenty manually played sessions requested by the user.
+// Actual browser interactions and viewport checks remain distinct from manual play sessions.
 for(const size of [{width:320,height:568},{width:390,height:844},{width:1440,height:1000}])test(`bird action sheet keeps care in context and restores focus at ${size.width}px`,async({page},info)=>{
  const w=createWorld(fixedNow);w.paused=true;w.birds[0].needs.food=40;
  await seedWorld(page,w);await page.setViewportSize(size);await openGame(page);await decodeScene(page);
@@ -305,7 +304,7 @@ test('horizontal bird gestures and keyboard arrows preserve drafts while vertica
  // Gesture click suppression uses real elapsed time. Restore a monotonic,
  // integer test clock here; the world stays paused throughout the interaction.
  await page.evaluate(()=>{const base=Date.now(),start=performance.now();Date.now=()=>base+Math.floor(performance.now()-start);});
- const gesture=async(locator,dx,dy)=>{await locator.scrollIntoViewIfNeeded();const r=await locator.boundingBox(),x=r.x+r.width/2,y=r.y+r.height/2;await page.mouse.move(x,y);await page.mouse.down();await page.mouse.move(x+dx,y+dy,{steps:8});await page.mouse.up();await page.waitForTimeout(450);};
+ const gesture=async(locator,dx,dy)=>{let r;await expect.poll(async()=>{try{await locator.scrollIntoViewIfNeeded();r=await locator.boundingBox();return !!r;}catch(error){if(/Element is not attached/.test(error.message))return false;throw error;}},{message:'measure the currently attached gesture surface before pointerdown'}).toBe(true);const x=r.x+r.width/2,y=r.y+r.height/2;await page.mouse.move(x,y);await page.mouse.down();await page.mouse.move(x+dx,y+dy,{steps:8});await page.mouse.up();await page.waitForTimeout(450);};
  const face=page.locator('.game-bird-carousel-face');await expect(face).toHaveAttribute('data-bird-id','b1');await gesture(face,-80,4);await expect(face).toHaveAttribute('data-bird-id','b2');
  await gesture(face,4,-80);await expect(face).toHaveAttribute('data-bird-id','b2');
  const prev=page.locator('.game-bird-carousel [data-bird-step="-1"]');await prev.focus();await page.keyboard.press('Enter');await expect(face).toHaveAttribute('data-bird-id','b1');
