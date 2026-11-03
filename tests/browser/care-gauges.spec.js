@@ -8,7 +8,7 @@ function fixture({stage='adult',home='resident',sound=false}={}){
 async function record(page,value){return page.evaluate(({dbName,value})=>new Promise((resolve,reject)=>{const open=indexedDB.open(dbName,1);open.onupgradeneeded=()=>open.result.createObjectStore('world');open.onerror=()=>reject(open.error);open.onsuccess=()=>{const db=open.result,tx=db.transaction('world',value?'readwrite':'readonly'),store=tx.objectStore('world'),request=value?store.put(value,'current'):store.get('current');tx.oncomplete=()=>{db.close();resolve(value||request.result);};tx.onerror=()=>{db.close();reject(tx.error);};};}),{dbName:DB,value});}
 async function seed(page,w=fixture()){await page.goto('');await page.evaluate(sound=>{localStorage.setItem('buncho.music.v1',JSON.stringify({enabled:false}));if(typeof sound==='boolean')localStorage.setItem('buncho.care-sound-choice.v1',JSON.stringify({explicit:true,enabled:sound}));},w.settings.careSound);await record(page,w);await page.goto('game/');await expect(page.locator('.game-app')).toBeVisible();if(w.birds[0].home!=='departed')await openCare(page);}
 async function openCare(page){const profile=page.locator('.game-panel-overlay[open] [data-game-open-bird]');if(await profile.count())await profile.click();else{if(await page.locator('.game-panel-overlay').isVisible())await page.locator('[data-game-close-panel]').click();await page.locator('.game-bottom-dock [data-game-open-bird]').click();}await expect(page.locator('.game-bird-sheet')).toBeVisible();}
-test('care gauges show accurate values and fit the bird sheet on narrow screens',async({page})=>{
+test('care gauges show accurate values and fit the bird sheet on narrow screens',async({page},testInfo)=>{
   for(const width of [320,390,844]){
     await page.setViewportSize({width,height:700});await seed(page);
     const sheet=page.locator('.game-bird-sheet');
@@ -18,6 +18,7 @@ test('care gauges show accurate values and fit the bird sheet on narrow screens'
     const metrics=await sheet.locator('.game-fullness').evaluate(el=>{const r=el.getBoundingClientRect();return {left:r.left,right:r.right,meters:[...el.querySelectorAll('meter')].map(m=>{const b=m.getBoundingClientRect();return {left:b.left,right:b.right,width:b.width,height:b.height};})};});
     expect(await sheet.locator('.game-care-meter-heading').evaluateAll(nodes=>nodes.every(node=>node.scrollWidth<=node.clientWidth))).toBe(true);
     expect(metrics.meters).toHaveLength(2);for(const m of metrics.meters){expect(m.left).toBeGreaterThanOrEqual(metrics.left);expect(m.right).toBeLessThanOrEqual(metrics.right);expect(m.width).toBeGreaterThan(60);expect(m.height).toBeGreaterThan(5);}
+    await page.screenshot({path:testInfo.outputPath(`care-gauges-${width}.png`)});
     await sheet.locator('[data-game-care="feed"]').click();await expect(food).toHaveAttribute('value','60');await expect(sheet.locator('[data-game-fullness]')).toHaveText('60 / 100');
   }
 });
