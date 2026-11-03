@@ -21,6 +21,14 @@ async function seed(page,{friend=false}={}){
   return world;
 }
 
+async function showBird(page,id){
+  if(await page.locator('body').getAttribute('data-scene-controls')==='closed')await page.locator('.game-scene-controls-toggle').click();
+  const face=page.locator('.game-bird-carousel-face');
+  if(await face.getAttribute('data-bird-id')!==id)await page.locator('.game-bird-carousel [data-bird-step="1"]').click();
+  await expect(face).toHaveAttribute('data-bird-id',id);
+  await expect(page.locator(`.game-room [data-bird-id="${id}"]`)).toHaveCount(1);
+}
+
 for(const viewport of [{width:320,height:568},{width:390,height:844},{width:844,height:390},{width:768,height:1024},{width:1440,height:900}]){
   test(`save feedback keeps navigation usable at ${viewport.width}x${viewport.height}`,async({page},info)=>{
     await page.setViewportSize(viewport);await page.addInitScript(time=>{Date.now=()=>time;},now);
@@ -58,9 +66,9 @@ for(const viewport of [{width:320,height:568},{width:390,height:844},{width:844,
     await expect(message).toBeVisible();await expect(message).toHaveCSS('pointer-events','none');
     await info.attach(`invited-${viewport.width}x${viewport.height}`,{body:await page.screenshot({animations:'disabled'}),contentType:'image/png'});
     await page.locator('.game-field-nav [data-field-travel="home"]').click();
-    await expect(page.locator(`.game-room [data-bird-id="${friend.id}"]`)).toHaveCount(1);
+    await showBird(page,friend.id);
     await page.reload();await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');
-    await expect(page.locator(`.game-room [data-bird-id="${friend.id}"]`)).toHaveCount(1);
+    await showBird(page,friend.id);
   });
 
 }
