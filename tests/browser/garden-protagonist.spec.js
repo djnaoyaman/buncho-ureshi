@@ -3,6 +3,8 @@ import {test, expect} from '@playwright/test';
 async function ready(page, width) {
   await page.setViewportSize({width, height: width === 320 ? 568 : 844});
   await page.addInitScript(() => {
+    // Freeze only wall time: paused-world heartbeat metadata must not invalidate the save identity assertion.
+    Date.now = () => 1793683200000;
     localStorage.setItem('buncho.music.v1', JSON.stringify({enabled:false}));
     localStorage.setItem('buncho.care-sound-choice.v1', JSON.stringify({explicit:true,enabled:false}));
   });
