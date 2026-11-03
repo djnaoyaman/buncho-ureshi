@@ -2,7 +2,7 @@ import {createGameMusic,MUSIC_TRACKS} from './game-music.js';
 /** Mount once outside the repainting game field. Return cleanup on route exit. */
 export function mountGameMusic(host,{base='',document=globalThis.document,window=globalThis.window,...options}={}) {
   const shell=document.createElement('details');shell.className='game-music';
-  shell.innerHTML=`<summary aria-label="音楽を選ぶ"><span aria-hidden="true">♫</span><span class="game-music-label">音楽</span></summary><div class="game-music-panel"><div class="game-music-tracks" role="group" aria-label="庭の音楽">${MUSIC_TRACKS.map(t=>`<button type="button" data-music="${t.id}" aria-pressed="false">${t.title}</button>`).join('')}</div><label class="game-music-volume">音量<input type="range" min="0" max="60" step="1" aria-label="音楽の音量"></label><button type="button" data-music-off>音楽をオフ</button><p class="game-music-status" role="status" aria-live="polite"></p></div>`;
+  shell.innerHTML=`<summary aria-label="音楽を選ぶ"><span aria-hidden="true">♫</span><span class="game-music-label">音楽</span></summary><div class="game-music-panel"><div class="game-music-tracks" role="group" aria-label="庭の音楽">${MUSIC_TRACKS.map(t=>`<button type="button" data-music="${t.id}" aria-pressed="false">${t.title}</button>`).join('')}</div><label class="game-music-volume"><span>音量</span><input type="range" min="0" max="60" step="1" aria-label="音楽の音量"></label><button type="button" data-music-off>音楽をオフ</button><p class="game-music-status" role="status" aria-live="polite"></p></div>`;
   host.append(shell);
   let storage;try{storage=window.localStorage;}catch{}
   const range=shell.querySelector('input'),message=shell.querySelector('[role=status]');

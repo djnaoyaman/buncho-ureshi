@@ -47,3 +47,10 @@ test('separate game menu has only world controls, restores site search, and keep
   await page.goBack();await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');await expect(page.locator('.world-menu-extras')).toHaveCount(1);
  }
 });
+
+test('music volume label and slider fit one row at 320px',async({page},info)=>{
+ await page.setViewportSize({width:320,height:568});await page.addInitScript(()=>{localStorage.setItem('buncho.music.v1',JSON.stringify({enabled:false}));localStorage.setItem('buncho.care-sound-choice.v1',JSON.stringify({explicit:true,enabled:false}));});
+ await page.goto('game/');await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');await page.locator('.game-music summary').click();
+ const label=page.locator('.game-music-volume>span'),slider=page.locator('.game-music-volume input');await expect(label).toHaveText('音量');await expect(label).toHaveCSS('white-space','nowrap');const a=await label.boundingBox(),b=await slider.boundingBox();expect(b.width).toBeGreaterThan(80);expect(a.x+a.width).toBeLessThanOrEqual(b.x);expect(Math.abs(a.y+a.height/2-b.y-b.height/2)).toBeLessThan(2);
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);await info.attach('game-music-volume-320',{body:await page.screenshot(),contentType:'image/png'});
+});
