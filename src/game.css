@@ -404,3 +404,16 @@ body[data-world="buncho"] .game-bottom-dock button{box-sizing:border-box}
 @media(max-height:500px){body[data-world="buncho"] .game-bottom-dock{height:68px;bottom:env(safe-area-inset-bottom,0px);padding:4px 10px 10px}}
 body[data-world="buncho"] .game-panel-overlay[data-scene=true] [data-encounter-slot]{height:100%;min-height:0}
 body[data-world="buncho"] .game-panel-overlay[data-scene=true] .game-overlay-message{position:absolute;z-index:6;top:132px;left:12px;right:12px;pointer-events:none;margin:0;background:#fff9e9e8;border-radius:16px}
+/* The compact switcher replaces the old three-row profile card. */
+body[data-world="buncho"] .game-scene-toolbar .game-bird-carousel{display:grid!important;grid-template-columns:44px minmax(0,1fr) 44px;grid-template-rows:48px;gap:2px!important;height:54px;min-height:0;overflow:hidden}
+body[data-world="buncho"] .game-scene-toolbar .game-bird-switch{display:contents}
+body[data-world="buncho"] .game-scene-toolbar .game-bird-switch>span{display:none}
+body[data-world="buncho"] .game-scene-toolbar [data-bird-step="-1"]{grid-column:1;grid-row:1}
+body[data-world="buncho"] .game-scene-toolbar [data-bird-step="1"]{grid-column:3;grid-row:1}
+body[data-world="buncho"] .game-scene-toolbar .game-bird-carousel-face{grid-column:2;grid-row:1;flex-direction:row;overflow:hidden}
+body[data-world="buncho"] .game-scene-toolbar .game-bird-carousel-face strong{white-space:nowrap;text-overflow:ellipsis;overflow:hidden;max-width:115px}
+body[data-world="buncho"] .game-scene-toolbar .game-garden-care{width:64px;max-width:64px}
+body[data-world="buncho"] .game-scene-toolbar .game-garden-care button{white-space:nowrap;min-width:60px;padding:6px;font-size:12px;border-radius:22px;background:linear-gradient(#fff9dd,#e4d09d);border:2px solid #fff3d2;box-shadow:0 3px 0 #ad945f}
+body[data-world="buncho"] .game-app .game-bottom-dock #game-open-bird{padding:2px;min-width:0;min-height:64px;border-radius:23px 23px 30px 30px;background:linear-gradient(145deg,#c9e4a6,#77a47b);color:#294e34;border:3px solid #e7f3c3;box-shadow:0 5px 0 #68815a,0 7px 16px #28452d3b}
+body[data-world="buncho"] .game-app .game-bottom-dock #game-open-bird span{white-space:nowrap}
+@media(max-height:500px){body[data-world="buncho"] .game-app .game-bottom-dock #game-open-bird{min-height:54px;border-radius:19px}}

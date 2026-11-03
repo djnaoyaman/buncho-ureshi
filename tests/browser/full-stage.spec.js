@@ -35,6 +35,8 @@ for(const [width,height] of [[320,568],[390,844],[844,390]]) {
     await page.locator('.game-status [data-game-action=pause]').click();
     const bird=page.locator('.game-room-bird.is-selected'),habitat=page.locator('.game-main .game-habitat img');
     await cover(page,habitat);
+    expect((await page.locator('.game-scene-toolbar .game-bird-carousel').boundingBox()).height).toBeLessThanOrEqual(60);
+    expect(await page.locator('#game-open-bird').evaluate(el=>getComputedStyle(el).borderTopLeftRadius)).not.toBe('6px');
     await reachable(page,bird,page.locator('.game-field-nav'),page.locator('.game-bottom-dock'));
     await noScroll(page); await page.screenshot({path:testInfo.outputPath(`house-${width}x${height}.png`)});
     await bird.click(); await expect(page.locator('.game-bird-sheet')).toBeVisible();
