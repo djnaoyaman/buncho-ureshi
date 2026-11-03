@@ -153,6 +153,7 @@ export function mountStudio(root,{photos=[],birdSvg,seed}={}){
  +'</aside></div></div></section>';
  const q=s=>root.querySelector(s),el=n=>q('[data-studio="'+n+'"]'),btn=n=>q('[data-action="'+n+'"]'),on=(target,type,fn)=>target.addEventListener(type,fn,{signal});
  const workspace=el('workspace'),options=el('options');
+ let pointerInOptions=false;
  // Keep the artwork and tools in one bounded viewport. Only tools scroll.
  // Intercept local links before the site router so undo and pending edits survive.
  function revealWorkspace(){
@@ -173,8 +174,23 @@ export function mountStudio(root,{photos=[],birdSvg,seed}={}){
    options.scrollTo({top:options.scrollTop+target.getBoundingClientRect().top-options.getBoundingClientRect().top,behavior:'instant'});
   });
  });
- on(options,'focusin',revealWorkspace);
- on(options,'click',revealWorkspace); // Safari touch buttons need not receive focus.
+ // Moving a button between pointerdown and pointerup cancels its click. Keep
+ // pointer gestures stable; keyboard focus and completed clicks can reposition.
+ on(options,'pointerdown',()=>{pointerInOptions=true;});
+ on(options,'pointerleave',e=>{if(!e.buttons)pointerInOptions=false;});
+ on(options,'keydown',e=>{if(e.key==='Tab')pointerInOptions=false;});
+ on(options,'focusin',()=>{if(!pointerInOptions)revealWorkspace();});
+ on(options,'click',()=>{pointerInOptions=false;revealWorkspace();});
+ if(typeof globalThis.addEventListener==='function'){
+  const finishPointer=()=>{
+   if(!pointerInOptions)return;
+   pointerInOptions=false;
+   requestAnimationFrame(()=>{if(!destroyed)revealWorkspace();});
+  };
+  on(globalThis,'pointerup',finishPointer);on(globalThis,'pointercancel',finishPointer);
+  on(globalThis,'blur',()=>{pointerInOptions=false;});
+ }
+
  // On-screen keyboards resize the visual viewport on phones, unlike layout vh.
  const viewport=globalThis.visualViewport;
  if(viewport){
@@ -182,7 +198,7 @@ export function mountStudio(root,{photos=[],birdSvg,seed}={}){
    workspace.style.setProperty('--studio-visible-height',viewport.height+'px');
    // Focus arrives before the keyboard finishes opening. Recheck after layout,
    // using the visual viewport's pan offset, without interfering with pinch zoom.
-   if(viewport.scale===1&&options.contains(document.activeElement))
+   if(!pointerInOptions&&viewport.scale===1&&options.contains(document.activeElement))
     requestAnimationFrame(()=>{if(!destroyed)revealWorkspace();});
   };
   on(viewport,'resize',resize);resize();

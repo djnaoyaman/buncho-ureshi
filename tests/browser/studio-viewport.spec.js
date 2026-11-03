@@ -77,3 +77,14 @@ test('touch-like button activation without focus reveals the whole editor',async
  // dispatchEvent deliberately does not focus or auto-scroll like Locator.click.
  await action(page,'larger').dispatchEvent('click');await visibleArtwork(page);
 });
+
+test('first pointer action opens photos and applies backgrounds without a prior panel link',async({page})=>{
+ await page.setViewportSize({width:390,height:844});await page.goto('studio/');
+ await page.locator('[data-art-background="8"]').click();
+ await expect(page.locator('[data-art-background="8"]')).toHaveAttribute('aria-pressed','true');
+ await page.locator('.studio-photo-details summary').click();
+ await expect(page.locator('.studio-photo-details')).toHaveAttribute('open','');
+ await page.locator('[data-photo]').first().click();
+ expect((await saved(page)).items.at(-1).kind).toBe('photo');await visibleArtwork(page);
+ await action(page,'export').click();await expect(option(page,'export-preview')).toBeVisible();
+});
