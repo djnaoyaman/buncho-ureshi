@@ -40,6 +40,17 @@ for(const size of [{width:320,height:568},{width:390,height:844},{width:844,heig
   await action(page,'export').click();
   await expect(option(page,'export-preview')).toBeVisible();
   await expect.poll(()=>option(page,'export-preview').evaluate(i=>[i.naturalWidth,i.naturalHeight])).toEqual([1400,1750]);
+  await option(page,'export-preview').evaluate(async image=>{await image.decode();await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));});
+  if(size.width===320){
+   const pending=page.waitForEvent('download');await option(page,'download').click();
+   const download=await pending,stream=await download.createReadStream(),chunks=[];
+   for await(const chunk of stream)chunks.push(chunk);
+   const bytes=Buffer.concat(chunks);
+   expect(bytes.subarray(1,4).toString('ascii')).toBe('PNG');
+   expect(bytes.readUInt32BE(16)).toBe(1400);expect(bytes.readUInt32BE(20)).toBe(1750);
+   expect(bytes.length).toBeGreaterThan(20000);
+   await info.attach('studio-export-actual-png',{body:bytes,contentType:'image/png'});
+  }
   await option(page,'download').scrollIntoViewIfNeeded();await visibleArtwork(page);
   await info.attach(`studio-bounded-${size.width}x${size.height}`,{body:await page.screenshot(),contentType:'image/png'});
   const retained=await saved(page);await page.reload();expect(await saved(page)).toEqual(retained);
