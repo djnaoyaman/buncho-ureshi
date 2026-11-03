@@ -33,3 +33,11 @@ test('glance occupies one tenth of its cycle',async()=>{
  assert.match(css,/@keyframes owner-glance\{0%,79\.8%,90\.2%,100%\{opacity:0\}80\.2%,89\.8%\{opacity:1\}\}/);
  assert.match(renderOwnerPeek({}),/owner-peek-back[\s\S]*owner-peek-glance/);
 });
+
+test('the scene glances sideways while the wardrobe keeps a front portrait',()=>{
+ const scene=renderOwnerPeek({hair:'bob',outfit:'dress'});
+ const side=scene.split('class="owner-peek-glance"')[1];
+ assert.match(side,/viewBox="324 648 324 324"/);
+ assert.match(side,/viewBox="972 648 324 324"/);
+ assert.doesNotMatch(side,/viewBox="324 324 324 324"/);
+});
