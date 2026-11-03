@@ -488,3 +488,18 @@ body[data-world="buncho"] .game-app .game-draw-result button{display:block;min-w
    padding:calc(.85rem + env(safe-area-inset-top,0px)) 1rem calc(1rem + env(safe-area-inset-bottom,0px));
  }
 }
+
+
+/* A foreground observer, facing the birds rather than hidden behind controls. */
+body[data-world="buncho"] .game-owner-companion{display:block;position:absolute;left:auto;right:0;bottom:calc(72px + env(safe-area-inset-bottom,0px));width:clamp(104px,18cqw,190px);z-index:12;pointer-events:none}
+body[data-world="buncho"] .owner-peek-art{display:block;width:100%;height:auto;transform:scaleX(-1);filter:drop-shadow(0 3px 3px #4d49322c)}
+.owner-peek-body{transform-origin:50% 100%;animation:owner-lean 8s ease-in-out infinite}
+.owner-peek-glance{opacity:0;animation:owner-glance 8s ease-in-out infinite}
+.owner-peek-back{animation:owner-away 8s ease-in-out infinite}
+@keyframes owner-lean{0%,65%,100%{transform:rotate(0)}74%,88%{transform:rotate(-3deg)}}
+@keyframes owner-glance{0%,67%,94%,100%{opacity:0}73%,88%{opacity:1}}
+@keyframes owner-away{0%,67%,94%,100%{opacity:1}73%,88%{opacity:0}}
+@media(max-width:600px){body[data-world="buncho"] .game-owner-companion{width:clamp(120px,36cqw,160px)}}
+@media(max-height:500px){body[data-world="buncho"] .game-owner-companion{display:block;width:clamp(110px,29cqh,135px);bottom:calc(70px + env(safe-area-inset-bottom,0px))}}
+@media(prefers-reduced-motion:reduce){.owner-peek-body,.owner-peek-back,.owner-peek-glance{animation:none!important}}
+html[data-motion="off"] .owner-peek-body,html[data-motion="off"] .owner-peek-back,html[data-motion="off"] .owner-peek-glance,.game-app[data-care-motion="off"] :is(.owner-peek-body,.owner-peek-back,.owner-peek-glance){animation:none!important}

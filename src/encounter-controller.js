@@ -91,9 +91,16 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
     if(!alive||busy)return false;const token=++generation,originalWorld=getWorld().worldId;notice='';
     try{await onGarden(gardenId);}catch{if(alive&&token===generation){notice='庭をひらけなかったよ。もう一度試してね。';render();}return false;}
     if(!alive||token!==generation||getWorld().worldId!==originalWorld)return false;
-    const w=getWorld(),expected={worldId:w.worldId,revision:w.revision};
-    const result=await mutate(current=>system.selectGarden(current,gardenId,expected),token);
-    if(!alive||token!==generation||!(result?.changed||result?.resumed))return false;
+    const w=getWorld(),expected={worldId:w.worldId,revision:w.revision},startingGarden=w.encounters.garden.id;
+    // A clock tick may advance the revision while this transaction waits. A
+    // newer selection in another tab must still win, but unrelated updates do
+    // not invalidate this garden choice.
+    const result=await mutate(current=>{
+      const sameChoiceContext=current.worldId===expected.worldId&&current.encounters.garden.id===startingGarden;
+      return system.selectGarden(current,gardenId,sameChoiceContext?{worldId:current.worldId,revision:current.revision}:expected);
+    },token);
+    if(!alive||token!==generation)return false;
+    if(!(result?.changed||result?.resumed)){notice=result?.message||'庭をひらけなかったよ。もう一度試してね。';render();return false;}
     mode='garden';render({focus:true});try{Promise.resolve(onGardenChanged({gardenId,worldId:getWorld().worldId,generation:token})).catch(()=>{});}catch{}return true;
   }
   async function open(id){
