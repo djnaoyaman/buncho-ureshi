@@ -44,17 +44,17 @@ for(const width of [320,390])test(`compact music controls and all 13 choices at 
 });
 for(const viewport of [{width:320,height:568},{width:390,height:600},{width:844,height:390}])test(`settings keeps its scroll position through updates and resets on navigation ${viewport.width}x${viewport.height}`,async({page})=>{
  await page.setViewportSize(viewport);await page.addInitScript(()=>localStorage.setItem('buncho.music.v1',JSON.stringify({enabled:false})));await page.goto('game/');await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');await openSettings(page);
- const panel=page.locator('.game-panel-overlay[open] > .game-panel');
- // Polling replaces this node. evaluateAll resolves and reads the live DOM in
- // one browser task; evaluate can read a detached handle and incorrectly get 0.
- const scrollTop=()=>panel.evaluateAll(([el])=>el.scrollTop);
+ const panelSelector='.game-panel-overlay[open] > .game-panel';
+ // Polling replaces this node. Query and read within one page.evaluate task;
+ // locator.evaluate can retain a detached handle and incorrectly return 0.
+ const scrollTop=()=>page.evaluate(selector=>document.querySelector(selector).scrollTop,panelSelector);
  await page.locator('[data-game-details=management] summary').click();
  await expect(page.locator('[data-game-details=management]')).toHaveAttribute('open','');
- const before=await panel.evaluateAll(([el])=>{el.scrollTop=el.scrollHeight;return el.scrollTop;});expect(before).toBeGreaterThan(100);
+ const before=await page.evaluate(selector=>{const el=document.querySelector(selector);el.scrollTop=el.scrollHeight;return el.scrollTop;},panelSelector);expect(before).toBeGreaterThan(100);
  await page.waitForTimeout(18000);
  expect(Math.abs((await scrollTop())-before)).toBeLessThanOrEqual(2);
  await expect(page.locator('[data-game-details=management]')).toHaveAttribute('open','');
- await page.locator('[data-game-motion]').evaluateAll(([el])=>el.click());
+ await page.evaluate(()=>document.querySelector('[data-game-motion]').click());
  await expect(page.locator('[data-game-motion]')).not.toBeChecked();await page.waitForTimeout(500);
  expect(Math.abs((await scrollTop())-before)).toBeLessThanOrEqual(2);
  await page.locator('[data-game-close-panel]').click();await openSettings(page);
