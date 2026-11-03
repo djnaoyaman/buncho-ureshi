@@ -1,0 +1,30 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {Window} from 'happy-dom';
+import {createWorld} from '../src/engine.js';
+import {mountEncounterPanel} from '../src/encounter-controller.js';
+
+const settle=()=>new Promise(resolve=>setTimeout(resolve,0));
+test('garden menus stay open through refresh and friend actions, but honor close and garden navigation', async t=>{
+ const window=new Window(), root=window.document.body, world=createWorld(1000);
+ const panel=mountEncounterPanel(root,{getWorld:()=>world,transact:async fn=>fn(world),initialMode:'garden'});
+ t.after(()=>{panel.destroy();window.happyDOM.close();});
+ await panel.garden();
+ const get=key=>root.querySelector(`[data-garden-details="${key}"]`);
+ get('friends').open=true;
+ panel.refresh();
+ assert.equal(get('friends').open,true,'periodic refresh');
+ get('friends').querySelector('[data-garden-friend-action]').click();
+ await settle();
+ assert.equal(get('friends').open,true,'interaction redraw');
+ const memory=get('friends').querySelector('details[data-garden-details]');
+ assert.ok(memory,'interaction creates a memory');
+ const memoryKey=memory.dataset.gardenDetails;memory.open=true;
+ panel.refresh();
+ assert.equal(get(memoryKey).open,true,'nested memory');
+ get('friends').open=false;panel.refresh();
+ assert.equal(get('friends').open,false,'explicit close persists');
+ get('companions').open=true;panel.refresh();assert.equal(get('companions').open,true);
+ root.querySelector('[data-garden-select="mizukagami"]').click();await settle();
+ assert.equal(get('companions').open,false,'new garden starts closed');
+});
