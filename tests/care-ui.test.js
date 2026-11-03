@@ -30,13 +30,13 @@ async function fixture(t,options={}){
 }
 
 test('care UI feeds captured bird, shows numeric fullness, cleans only cosmetic floor, and no-op repeats preserve revision',async t=>{
-  const f=await fixture(t);await f.mount();assert.match(f.root.querySelector('[data-game-fullness]').textContent,/40 \/ 100/);assert.match(f.root.querySelector('.game-fullness').textContent,/おなか/);
+  const f=await fixture(t);await f.mount();assert.match(f.root.querySelector('[data-game-fullness]').textContent,/40 \/ 100/);assert.match(f.root.querySelector('.game-fullness').textContent,/おなか/);assert.equal(f.root.querySelector('meter[aria-label=おなか]').getAttribute('value'),'40');assert.equal(f.root.querySelector('meter[aria-label=元気]').getAttribute('value'),String(Math.round(f.initial.birds[0].needs.energy)));
   assert.equal(f.soundChecked(),false);assert.equal(f.rig.contexts.length,0);
   const imageBefore=f.root.querySelector('.game-room-bird .game-sprite img').getAttribute('src');
   assert.equal(Number(f.root.querySelector('.game-floor-soil').style.getPropertyValue('--care-soil-opacity')), .194);
-  f.clickCare('feed');await f.settle();assert.equal(f.read().birds[0].needs.food,60);assert.match(f.root.querySelector('[data-game-fullness]').textContent,/60 \/ 100/);
+  f.clickCare('feed');await f.settle();assert.equal(f.read().birds[0].needs.food,60);assert.match(f.root.querySelector('[data-game-fullness]').textContent,/60 \/ 100/);assert.equal(f.root.querySelector('meter[aria-label=おなか]').getAttribute('value'),'60');
   assert.equal(f.read().events.filter(e=>e.kind==='user-feed').length,1);const after=f.read();
-  f.clickCare('feed');await f.settle();f.clickCare('feed');await f.settle();assert.equal(f.read().birds[0].needs.food,100);const full=f.read();f.clickCare('feed');await f.settle();assert.deepEqual(f.read(),full);assert.equal(f.root.querySelector('[data-game-care=feed]').disabled,true);
+  f.clickCare('feed');await f.settle();f.clickCare('feed');await f.settle();assert.equal(f.read().birds[0].needs.food,100);assert.equal(f.root.querySelector('meter[aria-label=おなか]').getAttribute('value'),'100');const full=f.read();f.clickCare('feed');await f.settle();assert.deepEqual(f.read(),full);assert.equal(f.root.querySelector('[data-game-care=feed]').disabled,true);
   f.clickCare('clean');await f.settle();assert.equal(f.read().care.cleanliness,100);assert.equal(f.root.querySelector('.game-floor-soil').style.getPropertyValue('--care-soil-opacity'),'0.000');assert.equal(f.root.querySelector('[data-game-cleanliness-value]').textContent,'100 / 100');
   const clean=f.read();f.clickCare('clean');await f.settle();assert.deepEqual(f.read(),clean);assert.equal(f.rig.starts,0);assert.equal(f.root.querySelector('.game-room-bird .game-sprite img').getAttribute('src'),imageBefore);
 });
