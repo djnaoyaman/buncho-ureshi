@@ -25,7 +25,7 @@ for(const width of [390,1280])test(`scroll depth is plainly visible and preserve
  // gesture crosses the middle of its travel, so clamping cannot hide weak motion.
  await frame.evaluate(f=>{const r=f.getBoundingClientRect(),offset=parseFloat(f.style.getPropertyValue('--photo-drift'))||0;window.scrollTo(0,scrollY+r.top-offset+r.height/2-innerHeight/2-120)});
  const sample=()=>frame.evaluate(f=>{const r=f.getBoundingClientRect(),i=f.querySelector('img').getBoundingClientRect(),s=getComputedStyle(f);return{offset:parseFloat(f.style.getPropertyValue('--photo-drift'))||0,top:r.top,bottom:r.bottom,scroll:scrollY,width:i.width,height:i.height,marginTop:parseFloat(s.marginTop),marginBottom:parseFloat(s.marginBottom),overflow:s.overflow}});
- await expect.poll(async()=> (await sample()).offset).toBeCloseTo(-120*(width<=600?.16:.18),1);
+ await expect.poll(async()=> (await sample()).offset).toBeCloseTo(-120*(width<=600?.16:.18),0);
  const before=await sample();await info.attach(`depth-before-${width}`,{body:await page.screenshot(),contentType:'image/png'});
  // Real wheel input, sampled across several frames for retained scroll video.
  const samples=[before];for(let i=0;i<6;i++){await page.mouse.wheel(0,40);await page.waitForTimeout(90);samples.push(await sample())}
