@@ -17,13 +17,28 @@ for(const width of [390,1280])test(`editorial photographs retain credits and rea
  await page.goBack();await expect(frames).toHaveCount(33);
  await page.locator('#article-grid .article-card').first().scrollIntoViewIfNeeded();await info.attach(`index-${width}`,{body:await page.screenshot(),contentType:'image/png'});
 });
-test('scroll parallax moves the plate without clipping, resets for reduced motion and site preference',async({page})=>{
- await page.emulateMedia({reducedMotion:'no-preference'});await page.goto('encyclopedia/');const grid=page.locator('#article-grid'),frame=grid.locator('.article-cover-frame').first();await frame.scrollIntoViewIfNeeded();
- await expect(grid).toHaveAttribute('data-photo-parallax','on');
- const before=await frame.evaluate(f=>Number.parseFloat(f.style.getPropertyValue('--photo-drift'))||0);await page.mouse.wheel(0,150);
- await expect.poll(()=>frame.evaluate(f=>Number.parseFloat(f.style.getPropertyValue('--photo-drift'))||0)).not.toBe(before);
- const after=await frame.evaluate(f=>Number.parseFloat(f.style.getPropertyValue('--photo-drift'))||0);expect(Math.abs(after)).toBeLessThanOrEqual(8);
- expect(await frame.evaluate(f=>getComputedStyle(f).overflow)).toBe('visible');
- await page.emulateMedia({reducedMotion:'reduce'});await expect.poll(()=>frame.evaluate(f=>getComputedStyle(f).transform)).toBe('none');
+for(const width of [390,1280])test(`scroll depth is plainly visible and preserves the whole photograph at ${width}`,async({page},info)=>{
+ await page.setViewportSize({width,height:900});await page.emulateMedia({reducedMotion:'no-preference'});await page.goto('encyclopedia/');
+ const grid=page.locator('#article-grid'),frame=grid.locator('.article-cover-frame').first(),photo=frame.locator('img');
+ await expect(grid).toHaveAttribute('data-photo-parallax','on');await photo.evaluate(i=>i.decode());
+ // Place the untransformed plate center 120px below viewport center. The 240px
+ // gesture crosses the middle of its travel, so clamping cannot hide weak motion.
+ await frame.evaluate(f=>{const r=f.getBoundingClientRect(),offset=parseFloat(f.style.getPropertyValue('--photo-drift'))||0;window.scrollTo(0,scrollY+r.top-offset+r.height/2-innerHeight/2-120)});
+ const sample=()=>frame.evaluate(f=>{const r=f.getBoundingClientRect(),i=f.querySelector('img').getBoundingClientRect(),s=getComputedStyle(f);return{offset:parseFloat(f.style.getPropertyValue('--photo-drift'))||0,top:r.top,bottom:r.bottom,scroll:scrollY,width:i.width,height:i.height,marginTop:parseFloat(s.marginTop),marginBottom:parseFloat(s.marginBottom),overflow:s.overflow}});
+ await expect.poll(async()=> (await sample()).offset).toBeCloseTo(-120*(width<=600?.16:.18),0);
+ const before=await sample();await info.attach(`depth-before-${width}`,{body:await page.screenshot(),contentType:'image/png'});
+ // Real wheel input, sampled across several frames for retained scroll video.
+ const samples=[before];for(let i=0;i<6;i++){await page.mouse.wheel(0,40);await page.waitForTimeout(90);samples.push(await sample())}
+ await expect.poll(async()=> (await sample()).offset-before.offset).toBeGreaterThan(32);
+ const after=await sample(),scroll=after.scroll-before.scroll,depth=after.offset-before.offset;
+ expect(scroll).toBeGreaterThan(200);expect(depth/scroll).toBeGreaterThan(.14);expect(depth/scroll).toBeLessThan(.20);
+ expect(Math.abs(after.offset)).toBeLessThanOrEqual(width<=600?40:56);expect(after.width).toBeCloseTo(before.width,3);expect(after.height).toBeCloseTo(before.height,3);
+ expect(after.overflow).toBe('visible');expect(after.marginTop).toBeGreaterThan(width<=600?40:56);expect(after.marginBottom).toBeGreaterThan(width<=600?40:56);
+ await info.attach(`depth-after-${width}`,{body:await page.screenshot(),contentType:'image/png'});
+ await info.attach(`measured-scroll-${width}`,{body:Buffer.from(JSON.stringify({width,scroll,depth,ratio:depth/scroll,samples},null,2)),contentType:'application/json'});
+ // Reverse scroll must move back smoothly rather than restart an animation.
+ for(let i=0;i<6;i++){await page.mouse.wheel(0,-40);await page.waitForTimeout(90)}
+ await expect.poll(async()=>Math.abs((await sample()).offset-before.offset)).toBeLessThan(2);
+ await page.emulateMedia({reducedMotion:'reduce'});await expect.poll(()=>frame.evaluate(f=>getComputedStyle(f).transform)).toBe('none');expect(await frame.evaluate(f=>parseFloat(getComputedStyle(f).marginTop))).toBe(10);
  await page.emulateMedia({reducedMotion:'no-preference'});await page.evaluate(()=>localStorage.setItem('buncho-settings',JSON.stringify({motion:false,ruby:true})));await page.reload();await expect.poll(()=>page.locator('#article-grid .article-cover-frame').first().evaluate(f=>getComputedStyle(f).transform)).toBe('none');
 });

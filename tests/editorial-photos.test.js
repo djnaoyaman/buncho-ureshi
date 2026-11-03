@@ -17,7 +17,14 @@ test('editorial index has individual non-destructive profiles and conserves ever
 });
 import { photoDrift, bindEditorialParallax } from '../src/editorial-parallax.js';
 test('parallax stays within reserved space and gracefully supports a static document',()=>{
- for(const center of [-5000,0,200,500,1000,9000]) assert(Math.abs(photoDrift(center,900))<=8);
+ for(const center of [-5000,0,200,500,1000,9000]) assert(Math.abs(photoDrift(center,900))<=56);
  assert.equal(photoDrift(450,900),0);assert.equal(photoDrift(0,0),0);assert.equal(photoDrift(NaN,900),0);
  assert.equal(typeof bindEditorialParallax(null),'function');
+});
+
+test('scroll has perceptible depth, not merely a nonzero transform',()=>{
+ assert.equal(photoDrift(300,900)-photoDrift(600,900),54);
+ assert.equal(photoDrift(300,900,40,.16)-photoDrift(600,900,40,.16),48);
+ assert.equal(photoDrift(-10000,900),56);assert.equal(photoDrift(10000,900),-56);
+ assert.equal(photoDrift(-10000,900,40,.16),40);
 });
