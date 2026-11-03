@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './qa-test-fixture.js';
 import { photos } from '../../src/data/photos.js';
 
 const KEY = 'buncho-ureshi-studio-v1';

@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './qa-test-fixture.js';
 import {createWorld,createBird,advanceTicks,validateWorld,feedBird,DECOR_SLOTS,DECOR_COLORS,DECOR_TIERS,drawDecoration} from '../../src/engine.js';
 const DB_NAME = 'buncho-ureshi-garden-v1';
 const fixedNow = Date.UTC(2026, 10, 2, 12, 0, 0);
@@ -70,7 +70,7 @@ async function openGame(page, query = '') {
 
 async function tab(page, name) {
   if(await page.locator('.game-bird-sheet').isVisible())await page.locator('[data-game-close-bird]').click();
-  const target=page.locator(`[data-game-panel="${name}"]`).first();if(!await target.isVisible())await page.locator('.game-secondary-menu summary').click();await target.click();
+  const target=page.locator(`[data-game-panel="${name}"]`).first();if(!await target.isVisible())await page.locator('[data-game-open-menu]').click();await target.click();
 }
 
 async function readDownload(download) {
@@ -125,11 +125,11 @@ test('draw repeated clicks and concurrent tabs charge exactly once; preview does
  await expect.poll(async()=> (await readWorld(page)).decor.draws).toBe(1);const saved=validateWorld(await readWorld(page));expect(saved.decor).toEqual(expected.decor);expect(saved.decor.equipped.toy).toBe('toy-mint-cozy');await expect(page.locator('[data-decor-draw="toy"]')).toBeDisabled();expect(result.item.slot).toBe('toy');await second.close();
 });
 
-test('v2 import cancellation preserves state; accepted migration keeps birds diary care and exports v4',async({page})=>{
- const old=createWorld(fixedNow);advanceTicks(old,80);old.paused=true;old.birds[0].name='大切なおもち';old.version=2;delete old.field;delete old.decor;delete old.gems;for(const b of old.birds)delete b.gemCare;
+test('v2 import cancellation preserves state; accepted migration keeps birds diary care and exports v5',async({page})=>{
+ const old=createWorld(fixedNow);advanceTicks(old,80);old.paused=true;old.birds[0].name='大切なおもち';old.version=2;delete old.field;delete old.decor;delete old.gems;delete old.careSchedule;for(const b of old.birds){delete b.gemCare;delete b.naming;}
  await openGame(page);await tab(page,'settings');const before=await readWorld(page);const file={name:'old-world-v2.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(old))};
  page.once('dialog',dialog=>dialog.dismiss());await page.locator('#game-import').setInputFiles(file);await expect.poll(async()=> (await readWorld(page)).worldId).toBe(before.worldId);expect((await readWorld(page)).birds).toEqual(before.birds);
- page.once('dialog',dialog=>dialog.accept());await page.locator('#game-import').setInputFiles(file);await expect(page.locator('.game-message')).toContainText('復元しました');const saved=validateWorld(await readWorld(page));expect(saved.version).toBe(4);expect(saved.birds.map(({gemCare,...bird})=>bird)).toEqual(old.birds);expect(saved.events).toEqual(old.events);expect(saved.care).toEqual(old.care);expect(saved.decor.points).toBe(20);
+ page.once('dialog',dialog=>dialog.accept());await page.locator('#game-import').setInputFiles(file);await expect(page.locator('.game-message')).toContainText('復元しました');const saved=validateWorld(await readWorld(page));expect(saved.version).toBe(5);expect(saved.birds.map(({gemCare,naming,...bird})=>bird)).toEqual(old.birds);expect(saved.events).toEqual(old.events);expect(saved.care).toEqual(old.care);expect(saved.decor.points).toBe(20);
  const download=page.waitForEvent('download');await page.locator('[data-game-action="export"]').click();expect(JSON.parse(await readDownload(await download)).decor).toEqual(saved.decor);
 });
 
@@ -298,4 +298,36 @@ test('approved title logo starts centered for two seconds once per game entry an
  const box=await intro.locator('img').boundingBox();expect(Math.abs(box.x+box.width/2-195)).toBeLessThan(2);expect(Math.abs(box.y+box.height/2-422)).toBeLessThan(2);
  if(info.project.name==='chromium')await info.attach('gem-startup-logo-390',{body:await page.screenshot(),contentType:'image/png'});
  await expect(intro).toHaveCount(0);expect(Date.now()-started).toBeGreaterThan(1200);await page.locator('[data-field-travel="park"]').click();await expect(page.locator('.game-logo-intro')).toHaveCount(0);await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');
+});
+// Append to tests/browser/fields.spec.js to reuse its supported seed/decode helpers.
+for(const width of [320,390])test(`furniture: eight actual forms keep mounted contacts with twelve birds at ${width}px`,async({page},info)=>{
+ test.setTimeout(120000);await page.setViewportSize({width,height:1000});
+ for(let variant=0;variant<8;variant++){
+  const w=createWorld(fixedNow);for(let i=1;i<12;i++)createBird(w,{home:i<10?'resident':'visitor'});w.paused=true;
+  w.decor.inventory=DECOR_SLOTS.flatMap(s=>DECOR_COLORS.flatMap(c=>DECOR_TIERS.map(t=>({id:`${s.id}-${c.id}-${t.id}`,slot:s.id,color:c.id,tier:t.id}))));w.decor.lifetimePoints=9999;
+  for(const slot of DECOR_SLOTS)w.decor.equipped[slot.id]=`${slot.id}-${DECOR_COLORS[variant].id}-lovely`;
+  validateWorld(w);await seedWorld(page,w);await openGame(page);await decodeScene(page);
+  await expect(page.locator('.game-room-bird')).toHaveCount(12);await expect(page.locator('[data-equipped-slot]')).toHaveCount(9);
+  for(const slot of DECOR_SLOTS)await expect(page.locator(`[data-equipped-slot="${slot.id}"] svg`)).toHaveAttribute('data-form',String(variant));
+  const outliers=await page.locator('.game-room').evaluate(room=>{const r=room.getBoundingClientRect();return [...room.querySelectorAll('.game-furnishing')].filter(e=>e.dataset.equippedSlot!=='paper').flatMap(e=>{const b=e.getBoundingClientRect();return b.left<r.left-1||b.right>r.right+1||b.top<r.top-1||b.bottom>r.bottom+1?[e.dataset.equippedSlot]:[];});});expect(outliers).toEqual([]);
+  const restored=await readWorld(page);expect(restored.decor.inventory).toEqual(w.decor.inventory);expect(restored.decor.equipped).toEqual(w.decor.equipped);
+  if(info.project.name==='chromium')await info.attach(`furniture-mounted-${width}-form-${variant+1}`,{body:await page.locator('.game-room').screenshot({animations:'disabled'}),contentType:'image/png'});
+ }
+});
+
+for(const width of [320,390,1024])for(const contacts of [0,1,2,3,12,127])test(`relationship map has bounded directed contacts at ${width}px with ${contacts} links`,async({page},info)=>{
+ await page.setViewportSize({width,height:1000});const w=createWorld(fixedNow);w.paused=true;
+ for(let i=0;i<contacts;i++){
+  const b=createBird(w,{home:i<9?'resident':i<11?'visitor':'departed',name:i<2?'そら':'長い名前のおともだち'});
+  w.birds[0].relations[b.id]={affection:80,trust:70,compatibility:60,meetings:4,lastTick:0};b.relations.b1={affection:20,trust:30,compatibility:60,meetings:4,lastTick:0};
+ }
+ validateWorld(w);await seedWorld(page,w);await openGame(page);await tab(page,'relations');const map=page.locator('[data-rel-map]');await expect(map).toHaveAttribute('data-rel-selected','b1');await expect(map).toHaveAttribute('data-rel-total',String(contacts));await expect(map.locator('select')).toHaveCount(0);await expect(map.locator('[data-rel-peer-id]')).toHaveCount(Math.min(contacts,2));
+ for(const img of await map.locator('img').all())await img.evaluate(image=>image.decode());
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+ const before=await readWorld(page);
+ if(contacts){await map.locator('summary').first().click();await expect(map.locator('details').first()).toHaveAttribute('open','');await expect(map.locator('details').first()).toContainText('親しさ 80');await expect(map.locator('details').first()).toContainText('親しさ 20');await map.locator('summary').first().click();}
+ if(info.project.name==='chromium')await info.attach(`relationship-map-${width}-${contacts}`,{body:await map.screenshot({animations:'disabled'}),contentType:'image/png'});
+ if(contacts>2){await page.locator('#game-rel-page-next').click();await expect(map).toHaveAttribute('data-rel-page','1');await page.locator('#game-rel-page-prev').click();await expect(map).toHaveAttribute('data-rel-page','0');}
+ if(contacts){await map.locator('[data-rel-focus-id="b2"]').click();await expect(map).toHaveAttribute('data-rel-selected','b2');await expect(map).toBeFocused();}
+ expect(await readWorld(page)).toEqual(before);
 });

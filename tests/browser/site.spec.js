@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./qa-test-fixture.js";
 import { articles } from "../../src/data/articles.js";
 import { quizzes } from "../../src/data/quizzes.js";
 import { photos } from "../../src/data/photos.js";

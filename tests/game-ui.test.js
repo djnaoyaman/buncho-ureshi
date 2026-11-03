@@ -212,7 +212,7 @@ test('photo habitat keeps one selected caption, accessible resident picker, and 
   assert.equal(f.root.querySelector('.game-scene-caption strong').textContent,'最初の庭');
   f.openBird();f.root.querySelector('.game-bird-sheet [data-game-panel="profile"]').click();
   assert.equal(f.root.querySelector('.game-profile h3').textContent,'最初の庭');
-  assert.equal(f.root.querySelector('.game-room'),null);
+  assert.equal(f.root.querySelectorAll('.game-room').length,1,'background scene stays behind the profile overlay');assert.equal(f.root.querySelector('.game-panel-overlay').open,true);
   f.root.querySelector('[data-game-panel="garden"]').click();
   f.root.querySelector('[data-game-panel="help"]').click();assert.equal(f.root.querySelector('.game-art-disclosure').textContent.includes('実際のおもちの写真'),true);f.root.querySelector('[data-game-panel="garden"]').click();
   assert.equal(f.root.querySelectorAll('.game-room-bird').length,2);
@@ -224,11 +224,11 @@ test('returning from a visitor profile aligns the scene, picker and resident pro
   await store.transact(w=>{w.paused=false;advanceTicks(w,1);w.paused=true;bumpRevision(w);return w;});
   await f.mount();
   f.root.querySelector('[data-game-scene-select][data-bird-id="b2"]').click();f.root.querySelector('.game-bird-sheet [data-game-panel="profile"]').click();
-  assert.match(f.root.querySelector('.game-profile-heading').textContent,/ななしの訪問者/);
+  const visitorName=(await rawWorld(f.indexedDB)).birds.find(b=>b.id==='b2').name;assert(f.root.querySelector('.game-profile-heading').textContent.includes(visitorName));assert.doesNotMatch(visitorName,/ななし|[0-9]/);
   f.root.querySelector('[data-game-panel="garden"]').click();
   assert.equal(f.root.querySelector('.game-bird-carousel-face').dataset.birdId,'b2');
-  assert.equal(f.root.querySelector('.game-scene-caption strong').textContent,'ななしの訪問者');
-  assert.equal(f.root.querySelector('.game-profile'),null,'scene no longer repeats full profile');f.openBird();assert.equal(f.root.querySelector('#game-sheet-title').textContent,'ななしの訪問者');
+  assert.equal(f.root.querySelector('.game-scene-caption strong').textContent,visitorName);
+  assert.equal(f.root.querySelector('.game-profile'),null,'scene no longer repeats full profile');f.openBird();assert.equal(f.root.querySelector('#game-sheet-title').textContent,visitorName);
 });
 
 test('other-tab refresh preserves dirty name and talk drafts after focus moves to a button',async t=>{
@@ -285,9 +285,9 @@ test('field travel and return preserve story and real visitors in the same scene
  f.root.querySelector('[data-field-travel="park"]').click();await until(()=>f.root.querySelector('.game-room')?.dataset.field==='park','park arrived');
  assert.equal(f.root.querySelectorAll('.game-room-bird').length,2);
  f.root.querySelector('[data-game-panel="friends"]').click();f.root.querySelector('[data-field-travel="friend"]').click();await until(()=>f.root.querySelector('.game-room')?.dataset.field==='friend','friend arrived');
- assert.match(f.root.querySelector('.game-field-bar h3').textContent,/ななしの訪問者/);
+ assert(f.root.querySelector('.game-field-bar h3').textContent.includes((await rawWorld(f.indexedDB)).birds.find(b=>b.id==='b2').name));
  f.root.querySelector('[data-field-travel="home"]').click();await until(()=>f.root.querySelector('.game-room')?.dataset.field==='home','home returned');
- const w=await rawWorld(f.indexedDB);assert.equal(w.birds[0].name,'最初の庭');assert(w.decor.points>=20);assert.equal(w.version,4);
+ const w=await rawWorld(f.indexedDB);assert.equal(w.birds[0].name,'最初の庭');assert(w.decor.points>=20);assert.equal(w.version,5);
 });
 test('draw is one transaction on double click; preview cancellation and equip preserve inventory',async t=>{
  const f=await fixture(t);await f.mount();f.root.querySelector('[data-game-panel="decorate"]').click();
@@ -299,7 +299,7 @@ test('draw is one transaction on double click; preview cancellation and equip pr
 });
 test('navigation away during a field transaction cannot reopen its old panel',async t=>{
  const f=await fixture(t);await f.mount();f.root.querySelector('[data-field-travel="park"]').click();f.root.querySelector('[data-game-panel="family"]').click();
- await until(async()=> (await rawWorld(f.indexedDB)).field.place==='park','travel committed');await sleep(20);assert(f.root.querySelector('.game-family-tree'));assert.equal(f.root.querySelector('.game-room'),null);
+ await until(async()=> (await rawWorld(f.indexedDB)).field.place==='park','travel committed');await sleep(20);assert(f.root.querySelector('.game-family-tree'));assert.equal(f.root.querySelectorAll('.game-room').length,1,'background scene stays behind the profile overlay');assert.equal(f.root.querySelector('.game-panel-overlay').open,true);
 });
 
 test('pending draw cannot replace a newer category or preview choice',async t=>{
@@ -312,8 +312,8 @@ test('pending draw cannot replace a newer category or preview choice',async t=>{
 
 test('one primary nav and a secondary disclosure preserve keyboard close focus',async t=>{
  const f=await fixture(t);await f.mount();assert.equal(f.root.querySelectorAll('.game-field-nav').length,1);assert.equal(f.root.querySelectorAll('.game-field-nav button').length,3);
- let menu=f.root.querySelector('.game-secondary-menu');assert.equal(menu.open,false);assert(f.root.querySelector('.game-room').compareDocumentPosition(menu)&4);menu.open=true;menu.querySelector('[data-game-panel="family"]').focus();menu.dispatchEvent(new f.window.KeyboardEvent('keydown',{key:'Escape',bubbles:true}));assert.equal(menu.open,false);assert.equal(f.window.document.activeElement.id,'game-nav-summary');
- menu.open=true;menu.querySelector('[data-game-close-menu]').click();assert.equal(menu.open,false);assert.equal(f.window.document.activeElement.id,'game-nav-summary');
+ let menu=f.root.querySelector('.game-secondary-menu');assert.equal(menu.open,false);assert(f.root.querySelector('.game-room').compareDocumentPosition(menu)&4);menu.open=true;menu.querySelector('[data-game-panel="family"]').focus();menu.dispatchEvent(new f.window.KeyboardEvent('keydown',{key:'Escape',bubbles:true}));assert.equal(menu.open,false);assert.equal(f.window.document.activeElement.id,'game-nav-open');
+ menu.open=true;menu.querySelector('[data-game-close-menu]').click();assert.equal(menu.open,false);assert.equal(f.window.document.activeElement.id,'game-nav-open');
  f.root.querySelector('[data-game-panel="decorate"]').click();assert.equal(f.root.querySelectorAll('.game-field-nav').length,1);assert.equal(f.root.querySelectorAll('[data-field-travel="home"]').length,1);assert(f.root.querySelector('.game-decoration'));
 });
 

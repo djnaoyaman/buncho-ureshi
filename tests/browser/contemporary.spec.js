@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './qa-test-fixture.js';
 
 // Real rendered evidence for the contemporary art redesign, not DOM-only claims.
 for (const width of [320,390,768,1280]) {

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './qa-test-fixture.js';
 import { morphAtlas } from '../../src/data/morphs.js';
 import { morphPhotos, newMorphPhotos } from '../../src/data/morph-photos.js';
 import { routeMetadata, BASE_PATH } from '../../src/metadata.js';

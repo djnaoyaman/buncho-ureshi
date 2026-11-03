@@ -1,5 +1,9 @@
 /** A deterministic, offline, non-punitive story simulation. No real husbandry advice. */
-export const SAVE_VERSION = 4;
+import { initializeCareSchedule, validateCareSchedule, syncCareSchedule, applyScheduledCare, reconcileImportedCare, careWindow } from './care-schedule.js';
+import { defaultNameFields, automaticNaming, manualNaming, legacyNaming, isValidNaming } from './bird-names.js';
+export const SAVE_VERSION = 5;
+const careTime = now => Math.max(0, Math.min(253402268399999, now));
+export { reconcileImportedCare, careWindow };
 export const TICK_MS = 15000;
 export const MAX_SAVE_BYTES = 4000000;
 const MAX_DATE_MS = 8640000000000000;
@@ -111,7 +115,11 @@ function id(w) { return `b${w.nextId++}`; }
 export function bumpRevision(w) { w.revision = w.revision >= Number.MAX_SAFE_INTEGER ? 0 : w.revision + 1; return w.revision; }
 export function createBird(w, options = {}) {
   if (w.birds.length >= LIMITS.birds) return null;
-  const b = { id: id(w), name: options.name || pick(w, names), sex: options.sex || (random(w) < .5 ? 'female' : 'male'), color: options.color || pick(w, COLORS), stage: options.stage || 'adult', bornTick: w.tick, stageTick: w.tick, arrivedTick: w.tick, parents: options.parents || [], generation: options.generation || 0, partner: null, pairTick: null, eggsLaid: 0, lastEggTick: -1000, home: options.home || 'visitor', personality: { curiosity: 25 + Math.floor(random(w) * 65), sociability: 35 + Math.floor(random(w) * 55), caution: 15 + Math.floor(random(w) * 65) }, preference: pick(w, PREFERENCES), mood: 70, needs: { energy: 80, food: 80, play: 60 }, care: { lastFedTick: null, lastPetTick: null }, gemCare: initialGemCare(), relations: {}, memories: [], milestones: [], action: { kind: 'rest', target: null, startedTick: w.tick }, lastSocialTick: -1 };
+  const birdId = id(w);
+  // Preserve the old story PRNG draw independently from human-readable naming.
+  if (!options.name && !options.skipNameDraw) random(w);
+  const namingFields = options.name ? {name:options.name,naming:options.automaticName?automaticNaming(options.name):manualNaming(options.name)} : defaultNameFields(w,birdId);
+  const b = { id: birdId, ...namingFields, sex: options.sex || (random(w) < .5 ? 'female' : 'male'), color: options.color || pick(w, COLORS), stage: options.stage || 'adult', bornTick: w.tick, stageTick: w.tick, arrivedTick: w.tick, parents: options.parents || [], generation: options.generation || 0, partner: null, pairTick: null, eggsLaid: 0, lastEggTick: -1000, home: options.home || 'visitor', personality: { curiosity: 25 + Math.floor(random(w) * 65), sociability: 35 + Math.floor(random(w) * 55), caution: 15 + Math.floor(random(w) * 65) }, preference: pick(w, PREFERENCES), mood: 70, needs: { energy: 80, food: 80, play: 60 }, care: { lastFedTick: null, lastPetTick: null }, gemCare: initialGemCare(), relations: {}, memories: [], milestones: [], action: { kind: 'rest', target: null, startedTick: w.tick }, lastSocialTick: -1 };
   w.birds.push(b); return b;
 }
 function remember(w, b, kind, otherId = null) { const memory = { kind, otherId, tick: w.tick }; b.memories.push(memory); if (b.memories.length > LIMITS.memories) b.memories.shift(); if (['welcome','adopt','movein','pair','egg','hatch','grow','depart'].includes(kind) && !b.milestones.some(m => m.kind === kind && m.otherId === otherId)) { b.milestones.push(memory); if (b.milestones.length > LIMITS.memories) b.milestones.shift(); } }
@@ -126,8 +134,9 @@ function record(w, kind, ids, condition, result, data = {}) {
   for (const bid of ids) { const b = findBird(w, bid); if (b) remember(w, b, kind, ids.find(i => i !== bid) || null); }
 }
 export function createWorld(now = Date.now(), seed = 842911) {
-  const w = { version: SAVE_VERSION, revision: 0, worldId: `garden-${now}-${seed}`, epoch: now, lastUpdated: now, seed: seed >>> 0, tick: 0, nextId: 1, nextEvent: 1, paused: false, settings: { motion: true, careSound: false }, care: { cleanliness: 100, lastCleanTick: null }, birds: [], events: [], offlineSummary: null, field: initialField(), decor: initialDecor(), gems: {droppings:[],nextDropId:1} };
-  const b = createBird(w, { name: 'おもち', sex: 'female', color: 'white', home: 'resident' });
+  const w = { version: SAVE_VERSION, revision: 0, worldId: `garden-${now}-${seed}`, epoch: now, lastUpdated: now, seed: seed >>> 0, tick: 0, nextId: 1, nextEvent: 1, paused: false, settings: { motion: true, careSound: true }, care: { cleanliness: 100, lastCleanTick: null }, birds: [], events: [], offlineSummary: null, field: initialField(), decor: initialDecor(), gems: {droppings:[],nextDropId:1} };
+  initializeCareSchedule(w,careTime(now));
+  const b = createBird(w, { name: 'おもち', automaticName:true, sex: 'female', color: 'white', home: 'resident' });
   b.personality = { curiosity: 65, sociability: 75, caution: 30 };
   record(w, 'welcome', [b.id], '新しい庭', '物語が始まった'); return w;
 }
@@ -186,7 +195,7 @@ function interact(w, a, b) {
   ar.trust = clamp(ar.trust + 4); br.trust = clamp(br.trust + 3);
   a.mood = clamp(a.mood + 5); b.mood = clamp(b.mood + 4);
   a.needs.play = clamp(a.needs.play + 22); b.needs.play = clamp(b.needs.play + 14);
-  a.needs.energy = clamp(a.needs.energy - 3); b.needs.energy = clamp(b.needs.energy - 2);
+  // Real care energy is independent of fast autonomous social turns.
   setAction(w, a, kind, b.id); setAction(w, b, kind, a.id);
   record(w, recentRefusal ? 'reconcile' : kind, [a.id, b.id], recentRefusal ? '前は休んだけれど、今日は元気だった' : `${bath ? '水浴びの好み' : '遊びたい気分'}と相性が合った`, '親しさと信頼が少し育った');
   for (const visitor of [a, b].filter(x => x.home === 'visitor')) {
@@ -204,7 +213,7 @@ function grow(w) {
   for (const b of w.birds) {
     const age = w.tick - b.stageTick;
     const next = b.stage === 'egg' && age >= 12 ? 'chick' : b.stage === 'chick' && age >= 24 ? 'juvenile' : b.stage === 'juvenile' && age >= 48 ? 'adult' : null;
-    if (next) { b.stage = next; b.stageTick = w.tick; if (next === 'chick' && /^たまご[12]$/.test(b.name)) b.name = `${pick(w, names)}${b.id.slice(1)}`; record(w, next === 'chick' ? 'hatch' : 'grow', [b.id, ...b.parents], '成長の時間がたった', `${STAGES[next]}になった`, { stage: next }); }
+    if (next) { b.stage = next; b.stageTick = w.tick; if (next === 'chick' && (b.naming.source === 'automatic' || b.naming.source === 'legacy' && /^たまご[12]$/.test(b.name))) random(w); record(w, next === 'chick' ? 'hatch' : 'grow', [b.id, ...b.parents], '成長の時間がたった', `${STAGES[next]}になった`, { stage: next }); }
   }
 }
 function births(w) {
@@ -213,7 +222,7 @@ function births(w) {
     const r = mother.relations[father.id], rr = father.relations[mother.id];
     if (!r || !rr || r.trust < 60 || rr.trust < 60 || mother.mood < 55 || father.mood < 55 || mother.needs.energy < 35 || mother.eggsLaid >= 2 || w.tick - mother.pairTick < 20 || w.tick - mother.lastEggTick < 65 || w.birds.filter(b => b.home === 'resident').length >= LIMITS.residents || w.birds.length >= LIMITS.birds) continue;
     if (w.tick % 7 !== 0) continue;
-    const egg = createBird(w, { name: `たまご${mother.eggsLaid + 1}`, stage: 'egg', parents: [mother.id, father.id], generation: Math.max(mother.generation, father.generation) + 1, home: 'resident' });
+    const egg = createBird(w, { skipNameDraw:true, stage: 'egg', parents: [mother.id, father.id], generation: Math.max(mother.generation, father.generation) + 1, home: 'resident' });
     mother.eggsLaid++; mother.lastEggTick = w.tick; setAction(w, mother, 'nest', egg.id);
     record(w, 'egg', [egg.id, mother.id, father.id], '成鳥・信頼・気分・時間・空き場所がそろった', '巣に卵が生まれた');
   }
@@ -224,7 +233,7 @@ function visits(w) {
     const visitors = w.birds.filter(b => b.home === 'visitor');
     if (visitors.length < LIMITS.visitors && resident.length < LIMITS.residents && w.birds.length < LIMITS.birds) {
       const single = resident.filter(b => b.stage === 'adult' && !b.partner).sort((a, b) => b.generation - a.generation)[0];
-      const v = createBird(w, { name: w.tick === 1 ? 'ななしの訪問者' : undefined, sex: single ? (single.sex === 'female' ? 'male' : 'female') : undefined });
+      const v = createBird(w, { skipNameDraw:w.tick === 1, sex: single ? (single.sex === 'female' ? 'male' : 'female') : undefined });
       if (w.tick === 1) { v.personality.sociability = 70; v.personality.caution = 25; }
       setAction(w, v, 'visit'); record(w, 'visit', [v.id], '庭の外からやって来た', '新しい出会い');
     }
@@ -252,12 +261,11 @@ export function stepWorld(w) {
   if(w.field.place==='friend'&&findBird(w,w.field.hostId)?.home==='resident')w.field={place:'home',hostId:null,enteredTick:w.tick};
   const active = fieldBirds(w).filter(b => b.stage !== 'egg');
   for (const b of active) {
-    b.needs.energy = clamp(b.needs.energy - (b.stage === 'chick' ? 2 : 4), 12, 100);
-    b.needs.food = clamp(b.needs.food - 5, 12, 100); b.needs.play = clamp(b.needs.play - 4, 8, 100);
+    b.needs.play = clamp(b.needs.play - 4, 8, 100);
     b.mood = clamp(b.mood + (b.needs.energy > 40 ? .3 : -.3), 35, 100);
     if (b.stage === 'chick') { setAction(w, b, 'nest'); b.needs.food = 85; b.needs.energy = 90; continue; }
-    if (b.needs.energy < 33 || b.action.kind === 'rest' && b.needs.energy < 65) { b.needs.energy = clamp(b.needs.energy + 24); setAction(w, b, 'rest'); continue; }
-    if (b.needs.food < 35) { b.needs.food = 93; fullMeal(w,b); b.mood = clamp(b.mood + 2); setAction(w, b, 'eat'); continue; }
+    if (b.needs.energy < 33 || b.action.kind === 'rest' && b.needs.energy < 65) { setAction(w, b, 'rest'); continue; }
+    if (b.needs.food < 35) { b.mood = clamp(b.mood + 2); setAction(w, b, 'eat'); continue; }
     const social = (b.needs.play < 48 ? .68 : .42) + b.personality.sociability / 350;
     if (random(w) < social && b.lastSocialTick !== w.tick) {
       const target = chooseTarget(w, b, active);
@@ -266,14 +274,15 @@ export function stepWorld(w) {
     const repeat = b.action.kind;
     const options = ['bath', 'explore', 'rest'].filter(k => k !== repeat);
     const kind = pick(w, options); setAction(w, b, kind);
-    if (kind === 'rest') b.needs.energy = clamp(b.needs.energy + 15);
-    else { b.needs.play = clamp(b.needs.play + 12); if ((kind === 'bath' && b.preference === '水浴び') || (kind === 'explore' && b.personality.curiosity > 60)) b.mood = clamp(b.mood + 4); }
+    if (kind !== 'rest') { b.needs.play = clamp(b.needs.play + 12); if ((kind === 'bath' && b.preference === '水浴び') || (kind === 'explore' && b.personality.curiosity > 60)) b.mood = clamp(b.mood + 4); }
   }
   births(w); produceDroppings(w); bumpRevision(w); return w;
 }
 export function advanceTicks(w, count) { if (!Number.isFinite(count) || count <= 0) return w; for (let i = 0; i < Math.min(Math.floor(count), 100000); i++) stepWorld(w); return w; }
 export function advanceTo(w, now = Date.now()) {
   if (!Number.isSafeInteger(now) || now < 0 || now > MAX_DATE_MS) return w;
+  const careSync=syncCareSchedule(w,careTime(now));
+  if(careSync.renewed)bumpRevision(w);
   // Keep a high-water mark: moving the wall clock back must not replay an interval.
   if (now < w.lastUpdated) return w;
   if (w.paused) { w.lastUpdated = now; return w; }
@@ -288,7 +297,7 @@ export function advanceTo(w, now = Date.now()) {
 export function renameBird(w, birdId, name) {
   const b = findBird(w, birdId); const clean = typeof name === 'string' ? name.trim().slice(0, 16) : '';
   if (!b || !clean || /[\u0000-\u001f\u007f]/.test(clean)) throw new Error('名前を1〜16文字で入力してね。');
-  b.name = clean; bumpRevision(w); return b;
+  b.name = clean; b.naming=manualNaming(clean); bumpRevision(w); return b;
 }
 export function adoptBird(w, birdId, name) {
   const b = findBird(w, birdId); if (!b || b.home !== 'visitor') throw new Error('今来ている文鳥を選んでね。');
@@ -314,30 +323,21 @@ function remaining(lastTick, tick, interval) { return lastTick === null ? 0 : Ma
 function careResult(kind, birdId, changed, before, after, cooldownTicks, message, reason) {
   return { kind, birdId, changed, before, after, cooldownTicks, message, reason, gemAward:0 };
 }
-export function feedBird(w, birdId) {
-  const bird = careBird(w, birdId), before = bird.needs.food;
-  const wait = remaining(bird.care.lastFedTick, w.tick, CARE_RULES.feedCooldownTicks);
-  if (wait) return careResult('feed', birdId, false, before, before, wait, `${bird.name}はさっき食べたところ。少しゲームの時間を待とう。`, 'cooldown');
-  if (before >= 100) return careResult('feed', birdId, false, before, before, 0, `${bird.name}は、いまおなかいっぱい。見守っていよう。`, 'full');
-  bird.needs.food = clamp(before + CARE_RULES.feedGain);
-  bird.care.lastFedTick = w.tick; fullMeal(w,bird);
-  const gemAward=grantGems(w,GEM_RULES.feed);
-  setAction(w, bird, 'eat');
-  record(w, 'user-feed', [birdId], '利用者がゲームのごはんを選び、食べられる時期だった', 'おなかの満ちぐあいが増えた');
-  bumpRevision(w);
-  return {...careResult('feed', birdId, true, before, bird.needs.food, CARE_RULES.feedCooldownTicks, `${bird.name}がごはんを食べたよ。おなかの満ちぐあい ${Math.round(before)} → ${Math.round(bird.needs.food)}。`, 'success'),gemAward};
+export function feedBird(w, birdId, now=Date.now()) {
+  const bird=careBird(w,birdId),result=applyScheduledCare(w,birdId,'feed',careTime(now));
+  if(!result.changed)return {...careResult('feed',birdId,false,result.before,result.after,0,`${bird.name}は、おなかいっぱい。`,'full'),nextAt:result.nextAt};
+  bird.care.lastFedTick=w.tick;fullMeal(w,bird);setAction(w,bird,'eat');
+  const gemAward=grantGems(w,result.gemAward);
+  record(w,'user-feed',[birdId],'利用者がゲームのごはんを選んだ','おなかの満ちぐあいが増えた');bumpRevision(w);
+  return {...careResult('feed',birdId,true,result.before,result.after,0,`${bird.name}がごはんを食べたよ。`,'success'),gemAward,nextAt:result.nextAt};
 }
-export function petBird(w, birdId) {
-  const bird = careBird(w, birdId), before = bird.mood;
-  const wait = remaining(bird.care.lastPetTick, w.tick, CARE_RULES.petCooldownTicks);
-  if (wait) return careResult('pet', birdId, false, before, before, wait, `${bird.name}とのふれあいは、ひとやすみ。少しゲームの時間を待とう。`, 'cooldown');
-  bird.mood = clamp(before + CARE_RULES.petMoodGain);
-  bird.care.lastPetTick = w.tick;
-  const gemAward=grantGems(w,GEM_RULES.pet);
-  setAction(w, bird, 'talk');
-  record(w, 'user-pet', [birdId], '利用者がゲームのふれあいを選んだ', bird.mood > before ? '気分が少し明るくなった' : '明るいふれあいの記憶が増えた');
-  bumpRevision(w);
-  return {...careResult('pet', birdId, true, before, bird.mood, CARE_RULES.petCooldownTicks, `${bird.name}「ぴっ♪」うれしそうにこたえたよ。（ゲームの表現です）`, 'success'),gemAward};
+export function petBird(w, birdId, now=Date.now()) {
+  const bird=careBird(w,birdId),result=applyScheduledCare(w,birdId,'pet',careTime(now));
+  if(!result.changed)return {...careResult('pet',birdId,false,result.before,result.after,0,`${bird.name}は、元気いっぱい。`,'full'),nextAt:result.nextAt};
+  bird.mood=clamp(bird.mood+CARE_RULES.petMoodGain);bird.care.lastPetTick=w.tick;setAction(w,bird,'talk');
+  const gemAward=grantGems(w,result.gemAward);
+  record(w,'user-pet',[birdId],'利用者がゲームのふれあいを選んだ','元気が少し増えた');bumpRevision(w);
+  return {...careResult('pet',birdId,true,result.before,result.after,0,`${bird.name}「ぴっ♪」`,'success'),gemAward,nextAt:result.nextAt};
 }
 export function cleanGarden(w) {
   const before = w.care.cleanliness;
@@ -348,15 +348,17 @@ export function cleanGarden(w) {
   bumpRevision(w);
   return careResult('clean', null, true, before, 100, CARE_RULES.cleanCooldownTicks, '庭の床をきれいにしたよ。文鳥の羽の色は変わらないよ。', 'success');
 }
-export function talkToBird(w, birdId, text) {
+export function talkToBird(w, birdId, text, now=Date.now()) {
   const b = findBird(w, birdId); if (!b) throw new Error('文鳥を選んでね。');
   const input = String(text).trim().slice(0, 100);
+  const care=applyScheduledCare(w,birdId,'talk',careTime(now),input);
+  if(care.reason==='empty'||care.reason==='full')return {answer:care.reason==='full'?`${b.name}は、元気いっぱい。またあとで遊ぼう。`:'ことばを入れてね。',topic:'hello',gemAward:0,careChanged:false,nextAt:care.nextAt};
   const friend = Object.entries(b.relations).sort((a, c) => c[1].affection - a[1].affection).find(([bid]) => findBird(w, bid));
   const near = friend ? birdName(w, friend[0]) : '庭のみんな';
   const last = b.memories.at(-1);
   let topic = 'hello', answer;
   if (b.stage === 'egg') answer = `${b.name}は、巣のなかで静かに育っているよ。`;
-  else if (/(おやすみ|ねむ|眠|休)/.test(input)) { topic = 'rest'; b.needs.energy = clamp(b.needs.energy + 8); setAction(w, b, 'rest'); answer = `${b.name}だよ。${b.needs.energy < 50 ? 'ちょうど眠かったんだ。' : '静かな時間もいいね。'}枝でひとやすみするね。`; }
+  else if (/(おやすみ|ねむ|眠|休)/.test(input)) { topic = 'rest'; setAction(w, b, 'rest'); answer = `${b.name}だよ。${b.needs.energy < 50 ? 'ちょうど眠かったんだ。' : '静かな時間もいいね。'}枝でひとやすみするね。`; }
   else if (/(水|みず|おふろ|浴)/.test(input)) { topic = 'bath'; b.needs.play = clamp(b.needs.play - 10); b.preference === '水浴び' && (b.mood = clamp(b.mood + 6)); setAction(w, b, 'bath'); answer = `${b.name}だよ。${b.preference === '水浴び' ? '水浴びの話、大好き！' : '花びらの水場を見にいこうかな。'}${near}も来るかな？`; }
   else if (/(ともだち|友|家族|なかよし|好き)/.test(input)) { topic = 'friend'; b.needs.play = clamp(b.needs.play - 8); answer = `${b.name}だよ。${friend ? `${near}とは「${relationshipLabel(w, b, findBird(w, friend[0]))}」。会うたび少しずつ知っていくんだ。` : 'まだ出会ったばかり。少しずつ仲良くなりたいな。'}`; }
   else if (/(あそ|遊|探検|たんけん)/.test(input)) { topic = 'play'; b.needs.play = clamp(b.needs.play - 12); b.mood = clamp(b.mood + 5); answer = `${b.name}だよ。${b.needs.energy < 35 ? 'いまは少し休みたいな。元気になったらね。' : b.personality.curiosity > 60 ? '新しい葉っぱの向こうを探検したい！' : 'いつもの枝で、ゆっくり遊ぼう。'}`; }
@@ -365,8 +367,8 @@ export function talkToBird(w, birdId, text) {
     answer = `${b.name}だよ。いまは${b.needs.energy < 40 ? 'のんびりしたい気分' : b.mood > 75 ? 'わくわくした気分' : 'おだやかな気分'}。${last?.otherId ? `さっきは${birdName(w, last.otherId)}のことを考えていたよ。` : `${b.preference}が気になるな。`}`;
   } else { topic = 'unknown'; answer = `${b.name}だよ。そのお話はまだわからないけれど、声は届いたよ。「遊ぼう」「水浴び」「友達」「おやすみ」のお話ならできるよ。`; }
   let gemAward=0;
-  if(input&&b.home!=='departed'&&['juvenile','adult'].includes(b.stage)&&remaining(b.gemCare.lastChatTick,w.tick,GEM_RULES.chatCooldownTicks)===0){b.gemCare.lastChatTick=w.tick;gemAward=grantGems(w,GEM_RULES.chat);}
-  b.mood = clamp(b.mood + 2); remember(w, b, `user-${topic}`); bumpRevision(w); return { answer, topic, gemAward };
+  if(care.changed){b.gemCare.lastChatTick=w.tick;gemAward=grantGems(w,care.gemAward);}
+  b.mood = clamp(b.mood + 2); remember(w, b, `user-${topic}`); bumpRevision(w); return { answer, topic, gemAward, careChanged:care.changed, nextAt:care.nextAt };
 }
 export function eventText(w, e) {
   const n = e.ids.map(i => birdName(w, i));
@@ -377,7 +379,7 @@ function validateVersion(input, version) {
   const fail = msg => { throw new Error(`保存データを読み込めません：${msg}`); };
   if (!input || typeof input !== 'object' || Array.isArray(input)) fail('形式が違います。');
   const shape = (value, keys) => value !== null && typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length === keys.length && keys.every(key => Object.hasOwn(value, key));
-  const worldKeys = ['version','revision','worldId','epoch','lastUpdated','seed','tick','nextId','nextEvent','paused','settings','birds','events','offlineSummary', ...(version >= 2 ? ['care'] : []), ...(version >= 3 ? ['field','decor'] : []), ...(version >= 4 ? ['gems'] : [])];
+  const worldKeys = ['version','revision','worldId','epoch','lastUpdated','seed','tick','nextId','nextEvent','paused','settings','birds','events','offlineSummary', ...(version >= 2 ? ['care'] : []), ...(version >= 3 ? ['field','decor'] : []), ...(version >= 4 ? ['gems'] : []), ...(version >= 5 ? ['careSchedule'] : [])];
   if (!shape(input, worldKeys)) fail('保存の項目が不正です。');
   // Check bounded input before JSON cloning, including direct IndexedDB values.
   // Descriptors avoid invoking getters/toJSON on malformed non-JSON objects.
@@ -412,12 +414,13 @@ function validateVersion(input, version) {
   const validEvents = version >= 2 ? EVENT_KINDS : LEGACY_EVENT_KINDS, validMemories = version >= 2 ? MEMORY_KINDS : LEGACY_MEMORY_KINDS;
   if (!str(w.worldId) || !integer(w.revision) || !integer(w.seed, 0, 4294967295) || !integer(w.tick) || !integer(w.nextId, 1, LIMITS.birds + 1) || !integer(w.nextEvent, 2) || !integer(w.epoch, 0, MAX_DATE_MS) || !integer(w.lastUpdated, 0, MAX_DATE_MS) || !integer(w.epoch + w.tick * TICK_MS, 0, MAX_DATE_MS) || typeof w.paused !== 'boolean' || !w.settings || typeof w.settings.motion !== 'boolean') fail('基本情報が不正です。');
   if (!Array.isArray(w.birds) || !w.birds.length || w.birds.length > LIMITS.birds || !Array.isArray(w.events) || !w.events.length || w.events.length > LIMITS.events) fail('鳥や日記が多すぎます。');
-  if (w.birds.some(b => !shape(b, ['id','name','sex','color','stage','bornTick','stageTick','arrivedTick','parents','generation','partner','pairTick','eggsLaid','lastEggTick','home','personality','preference','mood','needs','relations','memories','milestones','action','lastSocialTick', ...(version >= 2 ? ['care'] : []), ...(version >= 4 ? ['gemCare'] : [])]))) fail('文鳥の項目が不正です。');
+  if (w.birds.some(b => !shape(b, ['id','name','sex','color','stage','bornTick','stageTick','arrivedTick','parents','generation','partner','pairTick','eggsLaid','lastEggTick','home','personality','preference','mood','needs','relations','memories','milestones','action','lastSocialTick', ...(version >= 2 ? ['care'] : []), ...(version >= 4 ? ['gemCare'] : []), ...(version >= 5 ? ['naming'] : [])]))) fail('文鳥の項目が不正です。');
   const ids = new Set(w.birds.map(b => b.id));
   if (ids.size !== w.birds.length) fail('同じIDが重なっています。');
   if (w.nextId !== w.birds.length + 1 || w.birds.some((_, i) => !ids.has(`b${i + 1}`))) fail('文鳥のIDの順序が不正です。');
   const ref = (bid, optional = false) => optional && bid === null || typeof bid === 'string' && ids.has(bid);
   for (const b of w.birds) {
+    if(version>=5&&(!isValidNaming(b.naming)||b.naming.assignedName!==b.name))fail('名前の情報が不正です。');
     if (!/^b[1-9]\d{0,8}$/.test(b.id) || Number(b.id.slice(1)) >= w.nextId || !str(b.name, 16) || !b.name.trim() || !['female', 'male'].includes(b.sex) || !COLORS.includes(b.color) || !Object.hasOwn(STAGES, b.stage) || !['resident','visitor','departed'].includes(b.home) || !PREFERENCES.includes(b.preference)) fail('文鳥の情報が不正です。');
     for (const k of ['bornTick', 'stageTick', 'arrivedTick']) if (!integer(b[k], 0, w.tick) || k !== 'bornTick' && b[k] < b.bornTick) fail('成長の時刻が不正です。');
     if (!integer(b.generation, 0, LIMITS.birds) || !integer(b.eggsLaid, 0, 2) || !integer(b.lastEggTick, -1000, w.tick) || !integer(b.lastSocialTick, -1, w.tick) || !(b.pairTick === null || integer(b.pairTick, 0, w.tick)) || !num(b.mood, 0, 100) || !b.personality || !b.needs) fail('状態が不正です。');
@@ -476,34 +479,42 @@ function validateVersion(input, version) {
       drops.add(d.id);owners.add(d.birdId);previous=n;
     }
   }
+  if(version>=5)validateCareSchedule(w.careSchedule);
   return w;
 }
 /** Strict current-version validator for transactions; use compatibility only at read boundaries. */
 export function validateWorld(input) { return validateVersion(input, SAVE_VERSION); }
 /** Historical export retained: validates v1, applies v2 care, then upgrades to current. */
-export function migrateV1ToV2(input) {
+export function migrateV1ToV2(input, now=Date.now()) {
   const world = validateVersion(input, 1); // Validate the complete legacy object before adding anything.
   world.version = 2;
-  world.settings.careSound = false;
+  world.settings.careSound = true;
   world.care = { cleanliness: 100, lastCleanTick: null };
   for (const bird of world.birds) bird.care = { lastFedTick: null, lastPetTick: null };
-  return migrateV2ToV3(validateVersion(world,2));
+  return migrateV2ToV3(validateVersion(world,2),now);
 }
-export function migrateV2ToV3(input) {
-  const world=validateVersion(input,2);world.version=3;world.field=initialField();world.decor=initialDecor();return migrateV3ToV4(validateVersion(world,3));
+export function migrateV2ToV3(input, now=Date.now()) {
+  const world=validateVersion(input,2);world.version=3;world.field=initialField();world.decor=initialDecor();return migrateV3ToV4(validateVersion(world,3),now);
 }
-export function migrateV3ToV4(input){
+export function migrateV3ToV4(input, now=Date.now()){
   const world=validateVersion(input,3);world.version=4;world.gems={droppings:[],nextDropId:1};
   for(const b of world.birds)b.gemCare=initialGemCare();
+  return migrateV4ToV5(validateVersion(world,4),now);
+}
+export function migrateV4ToV5(input, now=Date.now()) {
+  const world=validateVersion(input,4);world.version=5;
+  initializeCareSchedule(world,careTime(now));
+  for(const b of world.birds)b.naming=legacyNaming(b.name);
   return validateWorld(world);
 }
-export function readCompatibleWorld(input) {
+export function readCompatibleWorld(input, now=Date.now()) {
   // Do not execute an accessor even to discover the version of an untrusted object.
   const descriptor = input && typeof input === 'object' ? Object.getOwnPropertyDescriptor(input, 'version') : null;
   if (!descriptor || !Object.hasOwn(descriptor, 'value')) throw new Error('保存データを読み込めません：版の形式が違います。');
-  if (descriptor.value === 1) return migrateV1ToV2(input);
-  if (descriptor.value === 2) return migrateV2ToV3(input);
-  if (descriptor.value === 3) return migrateV3ToV4(input);
+  if (descriptor.value === 1) return migrateV1ToV2(input,now);
+  if (descriptor.value === 2) return migrateV2ToV3(input,now);
+  if (descriptor.value === 3) return migrateV3ToV4(input,now);
+  if (descriptor.value === 4) return migrateV4ToV5(input,now);
   if (descriptor.value === SAVE_VERSION) return validateWorld(input);
   throw new Error('保存データを読み込めません：対応していない版です。元の保存はそのままです。');
 }
@@ -515,3 +526,31 @@ export function serializeWorld(w) {
 }
 /** Versioned import boundary. Strict v1/v2/v3 migrate purely to v4; future versions fail closed. */
 export function parseSave(text) { if (typeof text !== 'string' || text.length > MAX_SAVE_BYTES || new TextEncoder().encode(text).byteLength > MAX_SAVE_BYTES) throw new Error('保存ファイルは4MB以下のJSONを選んでください。'); return readCompatibleWorld(JSON.parse(text)); }
+
+/** Restore temporary wellbeing only. Never lower a full bar or reopen reward capacity.
+ * Fresh-state transaction required. No story tick, care clock, RNG or history writes.
+ */
+export function resetTemporaryState(world) {
+  let changed=false;
+  for(const bird of world.birds){
+    if(bird.home==='departed'||!['juvenile','adult'].includes(bird.stage))continue;
+    for(const [key,floor] of Object.entries({food:80,energy:80,play:60})){
+      if(bird.needs[key]<floor){bird.needs[key]=floor;changed=true;}
+    }
+    if(bird.mood<70){bird.mood=70;changed=true;}
+  }
+  if(world.care.cleanliness<100){world.care.cleanliness=100;changed=true;}
+  if(changed)bumpRevision(world);
+  return changed;
+}
+
+/** Initial owned furniture only; never grant items or alter inventory/currency. */
+export function resetFurniturePlacement(world){
+  let changed=false;
+  for(const slot of Object.keys(world.decor.equipped)){
+    const id=`${slot}-mint-cozy`;
+    const item=world.decor.inventory.find(i=>i.id===id&&i.slot===slot)||world.decor.inventory.find(i=>i.slot===slot);
+    if(item&&world.decor.equipped[slot]!==item.id){world.decor.equipped[slot]=item.id;changed=true;}
+  }
+  if(changed)bumpRevision(world);return changed;
+}

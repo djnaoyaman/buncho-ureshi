@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './qa-test-fixture.js';
 
 // Service-worker requests cannot bypass the isolated reference allowlist.
 test.use({ serviceWorkers: 'block' });

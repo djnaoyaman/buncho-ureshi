@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './qa-test-fixture.js';
 import { createHash } from 'node:crypto';
 import { SITE_NAME } from '../../src/visuals.js';
 

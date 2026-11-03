@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './qa-test-fixture.js';
 import { routeMetadata, PAGE_CATALOG, BASE_PATH } from '../../src/metadata.js';
 import { SITE_NAME } from '../../src/visuals.js';
 

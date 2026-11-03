@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './qa-test-fixture.js';
 import { fieldPositions } from '../../src/field-visuals.js';
 import { GAME_SPRITE_ASSETS, gameSpriteGeometry } from '../../src/game.js';
 import { POSE_ATLASES } from '../../src/bird-poses.js';
@@ -87,7 +87,7 @@ async function chooseBird(page,id){
 
 async function tab(page, name) {
   await closeBird(page);
-  const target=page.locator(`[data-game-panel="${name}"]`).first();if(!await target.isVisible())await page.locator('.game-secondary-menu summary').click();await target.click();
+  const target=page.locator(`[data-game-panel="${name}"]`).first();if(!await target.isVisible())await page.locator('[data-game-open-menu]').click();await target.click();
 }
 
 async function readDownload(download) {
@@ -177,7 +177,7 @@ test('verification control produces autonomous generations, bounded roster, and 
 test('rename persists and conversations use needs, personality and memory', async ({ page }) => {
   const seeded = createWorld(fixedNow);
   advanceTicks(seeded, 10);
-  seeded.birds[0].needs.energy = 20;
+  seeded.birds[0].needs.energy = 10;
   seeded.birds[0].mood = 50;
   await seedWorld(page, seeded);
   await openGame(page);
@@ -192,7 +192,7 @@ test('rename persists and conversations use needs, personality and memory', asyn
   await page.locator('[data-game-talk="おやすみ"]').click();
   await expect.poll(async () => (await readWorld(page)).birds[0].action.kind).toBe('rest');
   const afterRest = await readWorld(page);
-  expect(afterRest.birds[0].needs.energy).toBe(28);
+  expect(afterRest.birds[0].needs.energy).toBe(50);
   expect(afterRest.birds[0].memories.at(-1).kind).toBe('user-rest');
   await page.locator('#game-words').fill('未対応のむずかしい質問');
   await page.locator('[data-game-form="talk"] button').click();
@@ -209,6 +209,7 @@ test('rename persists and conversations use needs, personality and memory', asyn
 
 test('rapid repeated conversations stay attached to the originally selected bird', async ({ page }) => {
   const seeded = createWorld(fixedNow);
+  seeded.birds[0].needs.energy=60;
   advanceTicks(seeded, 10);
   seeded.birds[0].mood = 50;
   await seedWorld(page, seeded);
@@ -238,7 +239,7 @@ test('save download imports back exactly; malformed files do not replace the cur
   const exportedText = await readDownload(await downloaded);
   const exported = validateWorld(JSON.parse(exportedText));
   expect(exported.tick).toBe(300);
-  expect(exported.version).toBe(4);
+  expect(exported.version).toBe(5);
   await tab(page, 'profile');
   await page.locator('#game-name').fill('あとから変えた名前');
   await page.locator('[data-game-form="rename"] button[type="submit"]').click();
@@ -401,7 +402,7 @@ test('rapid navigation and Back clean up a pending async game mount without orph
   await expect(page.locator('#game-root .game-app')).toBeVisible();
   await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');
   await expect.poll(async () => page.evaluate(() => [...window.__gameTestIntervals.values()].filter(delay => delay === 3000).length)).toBe(1);
-  await page.locator('#menu-toggle').click();await page.locator('#menu a[href$="encyclopedia/"]').click();
+  await page.locator('.game-world-exit').click();
   await expect.poll(async () => page.evaluate(() => [...window.__gameTestIntervals.values()].filter(delay => delay === 3000).length)).toBe(0);
   expect(errors).toEqual([]);
 });
@@ -574,7 +575,7 @@ test('natural poses vary asynchronously while stable controls, drafts and save s
   await info.attach('natural-unsynchronized-poses-375',{body:await page.locator('.game-room').screenshot(),contentType:'image/png'});
   await page.locator('[data-game-action="pause"]').first().click();const paused=await poses();await page.waitForTimeout(1800);expect(await poses()).toEqual(paused);
   await page.emulateMedia({reducedMotion:'reduce'});await page.locator('[data-game-action="pause"]').first().click();const reduced=await poses();await page.waitForTimeout(1800);expect(await poses()).toEqual(reduced);
-  await page.locator('#menu-toggle').click();await page.locator('#menu a[href$="encyclopedia/"]').click();await expect(page.locator('#game-root')).toHaveCount(0);await page.waitForTimeout(700);
+  await page.locator('.game-world-exit').click();await expect(page.locator('#game-root')).toHaveCount(0);await page.waitForTimeout(700);
 });
 
 test('real left and right social frames face their partner, and feeding uses the peck frame',async({page},info)=>{

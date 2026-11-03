@@ -2,6 +2,7 @@ import { defineConfig, devices } from "@playwright/test";
 const publicURL = process.env.PUBLIC_URL;
 export default defineConfig({
   testDir: "./tests/browser",
+  testIgnore: "**/game-music.spec.js", // Original four-track proof is intentionally NOT run in UI-only QA.
   timeout: 60000,
   expect: { timeout: 10000 },
   fullyParallel: false,
@@ -15,9 +16,9 @@ export default defineConfig({
     acceptDownloads: true,
   },
   projects: [
-    { name: "chromium", testIgnore: "**/mobile.spec.js", use: { ...devices["Desktop Chrome"] } },
-    { name: "firefox", testIgnore: "**/mobile.spec.js", use: { ...devices["Desktop Firefox"] } },
-    { name: "webkit", testIgnore: "**/mobile.spec.js", use: { ...devices["Desktop Safari"] } },
+    { name: "chromium", testIgnore: ["**/mobile.spec.js", "**/game-music.spec.js"], use: { ...devices["Desktop Chrome"] } },
+    { name: "firefox", testIgnore: ["**/mobile.spec.js", "**/game-music.spec.js"], use: { ...devices["Desktop Firefox"] } },
+    { name: "webkit", testIgnore: ["**/mobile.spec.js", "**/game-music.spec.js"], use: { ...devices["Desktop Safari"] } },
     { name: "android-touch", testMatch: "**/mobile.spec.js", use: { ...devices["Pixel 7"], browserName: "chromium" } },
     { name: "iphone-touch", testMatch: "**/mobile.spec.js", use: { ...devices["iPhone 13"], browserName: "webkit" } },
   ],

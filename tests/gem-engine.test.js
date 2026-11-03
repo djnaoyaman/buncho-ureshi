@@ -3,24 +3,26 @@ import assert from 'node:assert/strict';
 import {IDBFactory} from 'fake-indexeddb';
 import {readFileSync} from 'node:fs';
 import * as old from './fixtures/engine-v3.js';
-import {createWorld,createBird,advanceTicks,advanceTo,feedBird,petBird,talkToBird,collectDropping,travelTo,validateWorld,parseSave,serializeWorld,readCompatibleWorld,GEM_RULES,TICK_MS} from '../src/engine.js';
+import {createWorld,createBird,advanceTicks,advanceTo,feedBird as feed,petBird as pet,talkToBird as talk,collectDropping,travelTo,validateWorld,parseSave,serializeWorld,readCompatibleWorld,GEM_RULES,TICK_MS} from '../src/engine.js';
 import {openGameStore} from '../src/game-store.js';
 const clone=structuredClone;
-const strip=w=>{const x=clone(w);x.version=3;delete x.gems;for(const b of x.birds)delete b.gemCare;return x;};
+const feedBird=(w,id)=>feed(w,id,100),petBird=(w,id)=>pet(w,id,100),talkToBird=(w,id,text)=>talk(w,id,text,100);
+const strip=w=>{const x=clone(w);x.version=3;delete x.gems;delete x.careSchedule;for(const b of x.birds){delete b.gemCare;delete b.naming;}return x;};
 function ready(){const w=createWorld(100);feedBird(w,'b1');advanceTicks(w,2);assert.equal(w.gems.droppings.length,1);return w;}
 test('v3 migration is pure additive and preserves all balances inventory names care histories',()=>{
  const legacy=old.createWorld(100);old.advanceTicks(legacy,300);legacy.paused=true;legacy.birds[0].name='大切なおもち';old.drawDecoration(legacy,'swing');const before=clone(legacy),w=readCompatibleWorld(legacy);
- assert.equal(w.version,4);assert.deepEqual(strip(w),legacy);assert.deepEqual(legacy,before);assert.deepEqual(w.gems,{droppings:[],nextDropId:1});assert.ok(w.birds.every(b=>Object.values(b.gemCare).every(v=>v===null)));
+ assert.equal(w.version,5);assert.deepEqual(strip(w),legacy);assert.deepEqual(legacy,before);assert.deepEqual(w.gems,{droppings:[],nextDropId:1});assert.ok(w.birds.every(b=>Object.values(b.gemCare).every(v=>v===null)));
  for(let i=0;i<4;i++)assert.deepEqual(parseSave(serializeWorld(w)),w);
 });
 test('v1 and v2 migrate without losing legacy state or giving extra welcome Gems',()=>{
- const v1=JSON.parse(readFileSync(new URL('./fixtures/v1-world.json',import.meta.url)));const one=readCompatibleWorld(v1);assert.equal(one.version,4);assert.deepEqual(one.events,v1.events);assert.equal(one.decor.points,20);
- const v2=old.createWorld(100);v2.version=2;delete v2.field;delete v2.decor;const two=readCompatibleWorld(v2);assert.deepEqual(two.birds.map(b=>{const x=clone(b);delete x.gemCare;return x;}),v2.birds);assert.equal(two.decor.points,20);
+ const v1=JSON.parse(readFileSync(new URL('./fixtures/v1-world.json',import.meta.url)));const one=readCompatibleWorld(v1);assert.equal(one.version,5);assert.deepEqual(one.events,v1.events);assert.equal(one.decor.points,20);
+ const v2=old.createWorld(100);v2.version=2;delete v2.field;delete v2.decor;const two=readCompatibleWorld(v2);assert.deepEqual(two.birds.map(b=>{const x=clone(b);delete x.gemCare;delete x.naming;return x;}),v2.birds);assert.equal(two.decor.points,20);
 });
-test('feed pet and meaningful chat earn faster Gems with per-bird existing cooldowns',()=>{
- const w=createWorld(100);const start=w.decor.points;assert.equal(feedBird(w,'b1').gemAward,6);assert.equal(petBird(w,'b1').gemAward,5);assert.equal(talkToBird(w,'b1','こんにちは').gemAward,5);assert.equal(w.decor.points,start+16);
+test('feed pet and meaningful chat earn bounded Gems until their real-window bars are full',()=>{
+ const w=createWorld(100);w.birds[0].needs.energy=60;const start=w.decor.points;
+ assert.equal(feedBird(w,'b1').gemAward,6);assert.equal(petBird(w,'b1').gemAward,5);assert.equal(talkToBird(w,'b1','こんにちは').gemAward,5);assert.equal(w.decor.points,start+16);
  for(let i=0;i<20;i++){assert.equal(feedBird(w,'b1').gemAward,0);assert.equal(petBird(w,'b1').gemAward,0);assert.equal(talkToBird(w,'b1','こんにちは').gemAward,0);}assert.equal(w.decor.points,start+16);
- advanceTicks(w,1);assert.equal(feedBird(w,'b1').gemAward,0);assert.equal(petBird(w,'b1').gemAward,5);assert.equal(talkToBird(w,'b1','水浴び').gemAward,5);advanceTicks(w,1);assert.equal(feedBird(w,'b1').gemAward,6);validateWorld(w);
+ advanceTicks(w,20);assert.equal(feedBird(w,'b1').gemAward,0);assert.equal(petBird(w,'b1').gemAward,0);validateWorld(w);
 });
 test('nonempty natural words award without hidden vocabulary penalty; empty young departed do not',()=>{
  const w=createWorld(100);assert.equal(talkToBird(w,'b1','').gemAward,0);assert.equal(talkToBird(w,'b1','今日の空はきれいだね').gemAward,5);w.birds[0].needs.food=100;assert.equal(feedBird(w,'b1').gemAward,0);
@@ -39,11 +41,11 @@ test('pause and offline are deterministic, bounded and never auto-collect or pun
  const w=ready();w.paused=true;const gems=clone(w.gems),points=w.decor.points;advanceTicks(w,100);assert.deepEqual(w.gems,gems);assert.equal(w.decor.points,points);w.paused=false;
  const a=clone(w),b=clone(w);advanceTo(a,100+TICK_MS*1000);advanceTo(b,100+TICK_MS*1000);assert.deepEqual(a,b);assert.ok(a.gems.droppings.length<=12);assert.equal(new Set(a.gems.droppings.map(d=>d.birdId)).size,a.gems.droppings.length);assert.ok(a.gems.droppings.some(d=>d.id===gems.droppings[0].id));validateWorld(a);
 });
-test('passive simulation preserves v3 history kinship seed and balances exactly',()=>{
- for(const seed of [842911,19,420]){const a=createWorld(100,seed),b=old.createWorld(100,seed);advanceTicks(a,1500);old.advanceTicks(b,1500);assert.deepEqual(strip(a),b);validateWorld(a);}
+test('new real-care simulation is deterministic with bounded Gems and stable food/energy',()=>{
+ for(const seed of [842911,19,420]){const a=createWorld(100,seed),b=createWorld(100,seed);advanceTicks(a,1500);advanceTicks(b,1500);assert.deepEqual(a,b);assert.equal(a.birds[0].needs.food,80);assert.equal(a.birds[0].needs.energy,80);validateWorld(a);}
 });
 test('malformed or duplicate dropping saves fail closed without mutation',()=>{
- for(const change of [w=>w.gems.droppings.push(clone(w.gems.droppings[0])),w=>w.gems.droppings[0].id='drop-01',w=>w.gems.droppings[0].birdId='missing',w=>w.gems.droppings[0].location='park',w=>w.gems.droppings[0].createdTick=0,w=>w.gems.nextDropId=1,w=>w.gems.extra=3,w=>w.birds[0].gemCare.lastChatTick=w.tick+1,w=>delete w.birds[0].gemCare,w=>w.version=5]){
+ for(const change of [w=>w.gems.droppings.push(clone(w.gems.droppings[0])),w=>w.gems.droppings[0].id='drop-01',w=>w.gems.droppings[0].birdId='missing',w=>w.gems.droppings[0].location='park',w=>w.gems.droppings[0].createdTick=0,w=>w.gems.nextDropId=1,w=>w.gems.extra=3,w=>w.birds[0].gemCare.lastChatTick=w.tick+1,w=>delete w.birds[0].gemCare,w=>w.version=6]){
  const w=ready();change(w);const before=JSON.stringify(w);assert.throws(()=>readCompatibleWorld(w));assert.equal(JSON.stringify(w),before);}
  const w=ready();let called=false;Object.defineProperty(w.gems,'droppings',{enumerable:true,get(){called=true;return [];}});assert.throws(()=>readCompatibleWorld(w));assert.equal(called,false);
 });
