@@ -1,0 +1,29 @@
+name: Omochi flight integration
+on:
+  pull_request:
+    paths:
+      - 'src/omochi-*.js'
+      - 'src/garden-bird-motion.js'
+      - 'src/encounter-controller.js'
+      - 'tests/omochi-*.test.js'
+      - 'tests/garden-social-runtime.test.js'
+      - 'tests/browser/omochi-flight.spec.js'
+      - 'tests/fixtures/omochi-flight/**'
+      - 'playwright.omochi-flight.config.js'
+      - '.github/workflows/omochi-flight.yml'
+permissions:
+  contents: read
+jobs:
+  flight:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: node --test tests/omochi-identity.test.js tests/omochi-garden-flight.test.js tests/omochi-motion-plan.test.js tests/omochi-motion-runtime.test.js tests/garden-bird-motion.test.js tests/garden-social-runtime.test.js tests/garden-social-plan.test.js tests/encounter-garden.test.js
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test --config=playwright.omochi-flight.config.js

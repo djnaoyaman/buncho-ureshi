@@ -27,8 +27,9 @@ export function renderGardenBirdSprite(color, id, { base = '/buncho-ureshi/', po
   return `<span class="garden-bird-sprite" data-garden-bird-id="${escape(id)}" data-color="${geometry.color}" data-pose="${geometry.pose}" data-foot-x="${geometry.footX}" data-foot-y="${geometry.footY}" aria-hidden="true" style="${reset}position:relative;width:var(--garden-bird-width,100%);aspect-ratio:850 / 1000;overflow:visible;pointer-events:none;animation:none;transition:none"><span class="garden-bird-pose-window" style="${style.frame}"><img src="${escape(base + 'game-art/' + geometry.asset + '.' + geometry.extension)}" alt="" width="${geometry.width}" height="${geometry.height}" draggable="false" decoding="sync" style="${style.image}"></span></span>`;
 }
 
-function refresh(root, elapsed, overrides = new Map()) {
+function refresh(root, elapsed, overrides = new Map(), reserved = new Set()) {
   for (const sprite of root.querySelectorAll('.garden-bird-sprite[data-garden-bird-id]')) {
+    if (reserved.has(sprite.dataset.gardenBirdId)) continue;
     const pose = overrides.get(sprite)?.pose ?? gardenBirdPose(sprite.dataset.gardenBirdId, elapsed);
     if (pose === sprite.dataset.pose) continue;
     const frame = sprite.querySelector('.garden-bird-pose-window'), image = frame?.querySelector('img');
@@ -46,13 +47,13 @@ function refresh(root, elapsed, overrides = new Map()) {
 /** One scheduler: a 1s idle poll OR RAF during bounded movement, never both.
  * Translation belongs to the complete button, preserving hit target and art.
  * All state below is presentation-only and discarded when the garden closes. */
-export function mountGardenBirdMotion(root, { enabled = () => true, maxTravel = 20 } = {}) {
+export function mountGardenBirdMotion(root, { enabled = () => true, maxTravel = 20, reservedIds = () => [] } = {}) {
   const document = root.ownerDocument, window = document.defaultView;
   const motion = window?.matchMedia?.('(prefers-reduced-motion: reduce)');
   const clock = createPoseClock(() => window?.performance?.now?.() ?? Date.now());
   const selector = '.finch-garden-image-plane > .finch-garden-friend, .finch-garden-image-plane > .finch-garden-household';
   const hover = new Set(), pressed = new Set(), owned = new Map();
-  let timer = null, raf = null, disposed = false, pair = null, actors = [], pairCycle = -1, invalid = true, semanticKey = null, observedStage = null, keyboardFocus = true;
+  let timer = null, raf = null, disposed = false, pair = null, actors = [], pairCycle = -1, invalid = true, semanticKey = null, observedStage = null, keyboardFocus = true, reservationKey = null;
   const allowed = () => !document.hidden && !motion?.matches;
   const interacting = () => actors.some(b => hover.has(b.node) || pressed.has(b.node) || (keyboardFocus && b.node.contains(document.activeElement)));
   const sheetOpen = () => !!document.querySelector('.game-bird-sheet[open]') || !!root.querySelector('.finch-garden details[open], details[open]');
@@ -80,7 +81,8 @@ export function mountGardenBirdMotion(root, { enabled = () => true, maxTravel = 
     const r = stage?.getBoundingClientRect(), s = slide?.getBoundingClientRect();
     const clip = r && s && { left: Math.max(r.left, s.left), right: Math.min(r.right, s.right), top: Math.max(r.top, s.top), bottom: Math.min(r.bottom, s.bottom) };
     const obstacles = [...root.querySelectorAll('.finch-garden-visitor, .finch-garden-family, .finch-garden-selector, .finch-garden-dock')].map(box);
-    pair = chooseGardenPair(actors, clip, { obstacles, cycle, maxTravel });
+    const reserved = new Set(reservedIds());
+    pair = chooseGardenPair(actors.map(actor => ({...actor, locked:reserved.has(actor.id)})), clip, { obstacles, cycle, maxTravel });
     pairCycle = cycle; invalid = false;
   };
   const schedule = moving => {
@@ -117,6 +119,8 @@ export function mountGardenBirdMotion(root, { enabled = () => true, maxTravel = 
     const active = allowed() && root.isConnected && !!enabled() && !interacting() && !sheetOpen();
     const elapsed = clock.advance(active);
     if (!active) { schedule(false); return; }
+    const reserved = new Set(reservedIds()), nextReservationKey = JSON.stringify([...reserved].sort());
+    if (nextReservationKey !== reservationKey) { invalid = true; reservationKey = nextReservationKey; }
     const cycle = Math.floor(elapsed / SOCIAL_PERIOD), local = elapsed % SOCIAL_PERIOD;
     if (invalid || pairCycle !== cycle) rebuild(nodes, cycle);
     const frame = gardenPairFrame(pair, local, cycle), overrides = new Map();
@@ -132,7 +136,7 @@ export function mountGardenBirdMotion(root, { enabled = () => true, maxTravel = 
       sprite.style.setProperty('translate', `0px ${action.hop.toFixed(3)}px`);
       overrides.set(sprite, action);
     }
-    refresh(root, elapsed, overrides);
+    refresh(root, elapsed, overrides, reserved);
     const moving = !!frame && ((local >= 4000 && local < 8000) || (local >= 13000 && local < 13500) || (local >= 16000 && local < 20000));
     schedule(moving);
   };
@@ -177,3 +181,4 @@ export function mountGardenBirdMotion(root, { enabled = () => true, maxTravel = 
     if (motion?.removeEventListener) motion.removeEventListener('change', sync); else motion?.removeListener?.(sync);
   };
 }
+

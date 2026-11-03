@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { Window } from 'happy-dom';
 import { mountGardenBirdMotion, renderGardenBirdSprite } from '../src/garden-bird-motion.js';
 const rect=(left,top,width,height)=>({left,top,right:left+width,bottom:top+height,width,height});
-async function fixture(t, width=390) {
+async function fixture(t, width=390, reservedIds=()=>[]) {
  const w=new Window(),d=w.document,root=d.createElement('section');
  root.innerHTML=`<div class="finch-garden"><div class="finch-garden-stage"><div class="finch-garden-slide"><div class="finch-garden-image-plane"><button class="finch-garden-friend">${renderGardenBirdSprite('white','a')}</button><button class="finch-garden-household">${renderGardenBirdSprite('sakura','b')}</button><button class="finch-garden-visitor">visitor</button></div></div></div><details><summary>Tools</summary></details></div>`;
  d.body.append(root);
@@ -15,7 +15,7 @@ async function fixture(t, width=390) {
  Object.defineProperty(d,'hidden',{get:()=>hidden}); Object.defineProperty(w.performance,'now',{value:()=>now,configurable:true});
  w.matchMedia=()=>media; w.setInterval=(f,ms)=>{assert.equal(ms,1000);intervals.set(++id,f);return id;}; w.clearInterval=id=>intervals.delete(id);
  w.requestAnimationFrame=f=>{rafs.set(++id,f);return id;};w.cancelAnimationFrame=id=>rafs.delete(id);
- const dispose=mountGardenBirdMotion(root,{enabled:()=>enabled});
+ const dispose=mountGardenBirdMotion(root,{enabled:()=>enabled,reservedIds});
  t.after(async()=>{dispose();await w.happyDOM.close();});
  return {w,d,root,a,b,visitor,intervals,rafs,dispose,step(ms=1000){now+=ms;const callbacks=[...intervals.values(),...rafs.values()];rafs.clear();for(const f of callbacks)f();assert.ok(intervals.size+rafs.size<=1);},hide(v){hidden=v;d.dispatchEvent(new w.Event('visibilitychange'));},reduce(v){media.matches=v;for(const f of mediaListeners)f();},enable(v){enabled=v;},event(node,type){node.dispatchEvent(new w.Event(type,{bubbles:true}));}};
 }
@@ -97,4 +97,10 @@ test('depth and hops use uniform whole-button scale, sprite-only lift and restor
  for(let n=0;n<160;n++){f.step(16);const y=parseFloat(f.a.style.translate.split(' ')[1]);if(Math.abs(y)>0)sawDepth=true;if(parseFloat(f.a.firstElementChild.style.translate.split(' ')[1])<-.1)sawHop=true;assert.ok(Math.abs(y)<=4);assert.ok(Math.abs(parseFloat(f.a.style.scale)-1)<=.0121);}
  assert.equal(sawDepth,true);assert.equal(sawHop,true);
  const sprite=f.a.firstElementChild;f.dispose();for(const prop of ['translate','scale','transform-origin','z-index'])assert.equal(f.a.style.getPropertyValue(prop),'');assert.equal(sprite.style.translate,'');
+});
+
+test('reserved flight actor is excluded from social transforms and pose refresh',async t=>{
+ const f=await fixture(t,390,()=>['b']);const sprite=f.b.firstElementChild;const pose=sprite.dataset.pose;f.b.style.translate='35px -70px';
+ for(let i=0;i<12;i++)f.step();
+ assert.equal(f.b.style.translate,'35px -70px');assert.equal(sprite.dataset.pose,pose);assert.equal(f.a.style.translate,'');
 });
