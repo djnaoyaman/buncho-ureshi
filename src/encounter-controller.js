@@ -100,7 +100,7 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
   async function click(event){
     const button=event.target.closest('button');if(!button||!root.contains(button)||busy)return;
     if(rub){rub=null;clearTimeout(petTimer);generation++;}
-    if(button.hasAttribute('data-finch-go-home')){onHome();return;}
+    if(button.hasAttribute('data-finch-go-home')){const token=++generation,originalWorld=getWorld().worldId,isCurrent=()=>alive&&token===generation&&getWorld().worldId===originalWorld;busy=true;render();try{await onHome(isCurrent);}catch{if(isCurrent())notice='籠をひらけなかったよ。もう一度試してね。';}finally{if(isCurrent()){busy=false;render();}}return;}
     if(button.hasAttribute('data-encounter-invite-garden')||button.hasAttribute('data-encounter-invite-cage')||button.hasAttribute('data-encounter-dismiss-cage')){
       const token=++generation,w=getWorld(),expected={worldId:w.worldId,revision:w.revision};
       const gardenInvite=button.hasAttribute('data-encounter-invite-garden'),cageInvite=button.hasAttribute('data-encounter-invite-cage');
