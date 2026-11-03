@@ -181,6 +181,8 @@ body[data-world="buncho"] :is(.game-app,.game-main,.game-panel,.game-scene-base)
 body[data-world="buncho"] .game-main{position:relative;max-width:100%;padding:0}
 body[data-world="buncho"] .game-main>.game-heading{display:none}
 body[data-world="buncho"] .game-main>.game-message:not(:empty),body[data-world="buncho"] .game-welcome{position:absolute;top:90px;left:8px;right:8px;z-index:45;max-height:90px;overflow:auto;margin:0;padding:8px;background:#fff8e8ed;border-radius:12px}
+/* Text-only status feedback must not intercept the scene navigation below it. */
+body[data-world="buncho"] .game-main>.game-message{pointer-events:none}
 body[data-world="buncho"] .game-main>:is(.game-panel,.game-scene-base){position:relative;padding:0}
 body[data-world="buncho"] .game-field-bar{position:absolute;top:0;left:8px;right:8px;margin:0;z-index:10;pointer-events:none}
 body[data-world="buncho"] .game-field-bar h3{font-size:14px}.game-field-bar .game-eyebrow{display:none}
