@@ -297,6 +297,23 @@ test('draw is one transaction on double click; preview cancellation and equip pr
  if(item){assert.equal(f.root.querySelector('.game-decor-preview').dataset.previewItem,item.id);f.root.querySelector('[data-decor-cancel]').click();assert.equal(f.root.querySelector('.game-decor-preview').dataset.previewItem,w.decor.equipped.swing);f.root.querySelector(`[data-decor-preview="${item.id}"]`).click();f.root.querySelector('[data-decor-equip]').click();await until(async()=> (await rawWorld(f.indexedDB)).decor.equipped.swing===item.id,'equipped');}
  f.root.querySelector('[data-field-travel="home"]').click();await until(()=>!!f.root.querySelector('.game-room'),'return after decorating');w=await rawWorld(f.indexedDB);assert.equal(f.root.querySelector('[data-equipped-slot="swing"]').dataset.equippedItem,w.decor.equipped.swing);
 });
+test('draw result opens a dismissible modal and does not reopen on refresh',async t=>{
+ const f=await fixture(t);await f.mount();f.root.querySelector('[data-game-panel="decorate"]').click();
+ f.root.querySelector('[data-decor-draw]').click();await until(()=>f.root.querySelector('.game-draw-result')?.open,'draw modal opened');
+ const dialog=f.root.querySelector('.game-draw-result');assert.equal(dialog.getAttribute('aria-labelledby'),'game-draw-result-title');
+ dialog.querySelector('[data-draw-result-close]').click();assert.equal(f.root.querySelector('.game-draw-result'),null);
+ await [...f.timers.values()][0]();assert.equal(f.root.querySelector('.game-draw-result'),null);
+});
+test('route teardown closes the draw result modal',async t=>{
+ const f=await fixture(t);await f.mount();f.root.querySelector('[data-game-panel="decorate"]').click();
+ f.root.querySelector('[data-decor-draw]').click();await until(()=>f.root.querySelector('.game-draw-result')?.open,'draw modal opened');
+ const dialog=f.root.querySelector('.game-draw-result');f.stop();assert.equal(dialog.open,false);assert.equal(dialog.isConnected,false);
+});
+test('care window retains scroll through updates and resets on reopen',async t=>{
+ const f=await fixture(t);await f.mount();f.openBird();const sheet=f.root.querySelector('.game-bird-sheet');
+ sheet.scrollTop=120;f.root.querySelector('[data-game-care="feed"]').click();await sleep(50);assert.equal(sheet.scrollTop,120);
+ f.closeBird();f.openBird();assert.equal(sheet.scrollTop,0);
+});
 test('navigation away during a field transaction cannot reopen its old panel',async t=>{
  const f=await fixture(t);await f.mount();f.root.querySelector('[data-game-panel="outdoors"]').click();await sleep(0);f.root.querySelector('[data-game-panel="family"]').click();
  await sleep(20);await sleep(20);assert(f.root.querySelector('.game-family-tree'));assert.equal(f.root.querySelectorAll('.game-room').length,1,'background scene stays behind the profile overlay');assert.equal(f.root.querySelector('.game-panel-overlay').open,true);
