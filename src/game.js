@@ -441,6 +441,8 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     root.querySelector('.game-app').dataset.careMotion=world.settings.motion&&!world.paused&&document.documentElement.dataset.motion!=='off'&&!globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches?'on':'off';
     root.querySelector('.game-main').innerHTML=`<header class="game-heading"><div class="game-status"><span>${day(world.tick)}</span><span>${world.paused?'おやすみ中':'のんびり進行中'}</span><button data-game-action="pause">${world.paused?'つづける':'一時停止'}</button></div></header>${store.mode==='memory'?'<p class="game-warning" role="alert">このブラウザでは端末保存が使えません。いまのタブだけで遊べます。閉じる前に設定から保存ファイルを書き出してください。</p>':''}${automaticGift()}${adoptionInvitation()}${welcomeCard()}<p class="game-message ${error?'is-error':''}" role="status">${escape(error||message)}</p><div class="${panel==='garden'?'game-panel':'game-scene-base'}">${garden(panel!=='garden')}</div>${panel==='garden'?sceneCaption():''}`;
     const overlay=root.querySelector('.game-panel-overlay');
+    // Removing the host while replacing the overlay resets nested scroll offsets.
+    const gardenSelectorScroll=encounterRoot?.querySelector('.finch-garden-selector')?.scrollLeft;
     if(panel!=='garden'){
       overlay.innerHTML=`<div class="game-overlay-head"><button data-game-close-panel>${panel==='owner'?'設定に戻る':panel==='outdoors'?'おうちへ':'もどる'}</button></div><div class="game-panel">${error||message?`<p class="game-overlay-message" role="status">${escape(error||message)}</p>`:''}${panels[panel]()}</div>`;
       const fullScene=panel==='outdoors';if(overlay.open&&overlay.dataset.scene!==String(fullScene))overlay.close();overlay.dataset.scene=String(fullScene);if(!overlay.open){if(fullScene)overlay.show();else overlay.showModal();}
@@ -454,6 +456,8 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
         },onGardenChanged:({gardenId,worldId})=>document.dispatchEvent(new document.defaultView.CustomEvent('buncho-game-garden',{detail:{gardenId,worldId}}))});
       }
       overlay.querySelector('[data-encounter-slot]').append(encounterRoot);
+      const gardenSelector=encounterRoot.querySelector('.finch-garden-selector');
+      if(gardenSelector&&gardenSelectorScroll!=null)gardenSelector.scrollLeft=gardenSelectorScroll;
       if(encounterMode!==panel){encounterMode=panel;if(panel==='outdoors')queueMicrotask(()=>{if(alive&&panel==='outdoors')encounterController?.garden();});else encounterController.notebook();}
       else if(!interactionActive())encounterController.refresh();
     }else if(encounterRoot){encounterController?.destroy();encounterController=null;encounterRoot=null;encounterMode=null;document.dispatchEvent(new document.defaultView.CustomEvent('buncho-game-garden',{detail:{gardenId:null,worldId:world.worldId}}));}
