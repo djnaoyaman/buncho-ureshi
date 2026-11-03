@@ -74,19 +74,17 @@ test('atlas filters handle aliases, zero results, keyboard submission and repeat
   expect(await page.evaluate(()=>Object.keys(localStorage).filter(key=>key.startsWith('morph')))).toEqual([]);
 });
 
-test('atlas comparison handles repeated identical selections, keyboard alternatives, profile shortcuts and explicit reset', async ({ page }) => {
-  await page.goto('colors/');await ready(page);
-  await page.locator('#morph-compare > summary').click();
-  await expect(page.locator('#morph-compare')).toHaveAttribute('open', '');
-  const a=page.locator('[data-morph-compare="a"]'),b=page.locator('[data-morph-compare="b"]');
-  const initial=[await a.inputValue(),await b.inputValue()];
-  await a.selectOption('silver');await b.selectOption('silver');await b.selectOption('silver');
-  await expect(page.locator('.morph-comparison')).toHaveCount(0);await expect(page.locator('[data-morph-compare-status]')).toContainText('ちがう名前');
-  await b.selectOption('cinnamon');await expect(page.locator('.morph-comparison')).toHaveCount(2);
-  expect(await plainText(page.locator('[data-morph-comparison]'))).toContain('3.000秒');
-  await page.locator('[data-morph-compare-reset]').focus();await page.keyboard.press('Enter');await expect(a).toBeFocused();expect([await a.inputValue(),await b.inputValue()]).toEqual(initial);
-  await page.locator('[data-morph-compare-id="white"]').focus();await page.keyboard.press('Enter');await expect(a).toHaveValue('white');await expect(a).toBeFocused();expect(await b.inputValue()).not.toBe('white');await expect(page.locator('.morph-comparison')).toHaveCount(2);
-  await page.locator('[data-morph-compare-reset]').click();expect([await a.inputValue(),await b.inputValue()]).toEqual(initial);
+test('atlas removes comparison controls and keeps both remaining destinations usable', async ({ page }, testInfo) => {
+  await page.goto('colors/#morph-compare');await ready(page);
+  await expect(page.locator('#morph-compare,[data-morph-compare],[data-morph-compare-id]')).toHaveCount(0);
+  await expect(page.locator('.morph-entry-nav a')).toHaveCount(2);
+  await expect(page.locator('[data-morph-card]')).toHaveCount(5);
+  await page.locator('[data-morph-jump="morph-terms"]').click();
+  await expect(page.locator('#morph-terms')).toHaveAttribute('open','');
+  await expect(page.locator('#morph-terms > summary')).toContainText('02 名前を知る');
+  await page.locator('[data-morph-jump="morph-profiles"]').click();
+  await expect(page.locator('#morph-profiles')).toBeInViewport();
+  await testInfo.attach('colors-without-comparison',{body:await page.screenshot({fullPage:true}),contentType:'image/png'});
 });
 
 test('atlas reading is user-triggered, stops on navigation and Back, and never hides ruby or private settings', async ({ page }) => {
