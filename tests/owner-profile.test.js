@@ -31,3 +31,39 @@ test('eyes and face selections render differently and persist across reopening',
  const b=setup(s);assert.equal(b.editor.getDraft().eyes,'bright');assert.equal(b.editor.getDraft().face,'oval');b.root.querySelector('[data-owner-category="face"]').click();assert.equal(b.root.querySelector('[data-owner-choice="oval"]').getAttribute('aria-pressed'),'true');b.close();
  assert.equal(normalizeOwnerProfile({version:1,eyes:'smile'}).face,DEFAULT_OWNER.face);
 });
+
+
+test('painted wardrobe preview and choices use the same accessible artwork',()=>{
+ const a=setup();
+ let preview=a.root.querySelector('[data-owner-preview] > .owner-peek-art');
+ assert(preview);assert.equal(preview.getAttribute('role'),'img');assert.equal(preview.getAttribute('aria-label'),'飼い主の試着プレビュー');
+ const thumbs=[...a.root.querySelectorAll('[data-owner-shelf] .owner-peek-art')];
+ assert.equal(thumbs.length,OWNER_CHOICES.outfit.length);
+ for(const thumb of thumbs)assert.equal(thumb.getAttribute('aria-hidden'),'true');
+ const ids=[...a.root.querySelectorAll('.owner-peek-art [id]')].map(el=>el.id);
+ assert(ids.length>0);assert.equal(new Set(ids).size,ids.length,'each rendered illustration has unique SVG definitions');
+ a.root.querySelector('[data-owner-choice="dress"]').click();
+ preview=a.root.querySelector('[data-owner-preview] > .owner-peek-art');
+ assert.equal(preview.getAttribute('data-outfit'),'dress');assert.equal(a.editor.getDraft().outfit,'dress');
+ assert.equal(a.storage.getItem(OWNER_PROFILE_KEY),null);
+ a.root.querySelector('[data-owner-category="hair"]').click();a.root.querySelector('[data-owner-choice="bun"]').click();
+ preview=a.root.querySelector('[data-owner-preview] > .owner-peek-art');assert.equal(preview.getAttribute('data-hair'),'bun');
+ assert.equal(preview.getAttribute('data-outfit'),'dress');
+ a.root.querySelector('[data-owner-save]').click();assert.equal(loadOwnerProfile(a.storage).hair,'bun');assert.equal(loadOwnerProfile(a.storage).outfit,'dress');
+ a.close();
+});
+
+test('painted editor preserves every wardrobe category on save and reopening',()=>{
+ const storage=memory(),a=setup(storage),expected={};
+ for(const [category,choices] of Object.entries(OWNER_CHOICES)){
+  a.root.querySelector(`[data-owner-category="${category}"]`).click();
+  for(const [id] of choices){
+   a.root.querySelector(`[data-owner-choice="${id}"]`).click();
+   assert.equal(a.editor.getDraft()[category],id,`${category}:${id}`);
+  }
+  expected[category]=choices.at(-1)[0];
+ }
+ assert.equal(storage.getItem(OWNER_PROFILE_KEY),null);
+ a.root.querySelector('[data-owner-save]').click();a.close();
+ const b=setup(storage);for(const [category,id] of Object.entries(expected))assert.equal(b.editor.getDraft()[category],id,category);b.close();
+});
