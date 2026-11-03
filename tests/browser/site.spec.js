@@ -43,7 +43,7 @@ for (const width of [320, 375, 390, 768, 1024, 1440]) {
         if (route === "studio/") await expect(page.locator('[data-studio="canvas"]')).toBeVisible();
         if (route === "game/") await expect(page.locator('#game-root .game-app')).toBeVisible();
         await page.waitForTimeout(200);
-        if (route === "studio/" && orientation === "portrait" && [375, 768, 1440].includes(width) && info.project.name === "chromium") {
+        if (route === "studio/" && orientation === "portrait" && [375, 768, 1440].includes(width) && info.project.name === "chrome") {
           await info.attach(`studio-responsive-${width}`, { body: await page.locator('#studio-root').screenshot({ animations: "disabled" }), contentType: "image/png" });
         }
         expect(
@@ -340,7 +340,7 @@ test('body explorer enlarges seven real photo regions with truthful ear context 
       });
       expect(comparison.full).toEqual([0, 0, region.imageWidth, region.imageHeight]);
       expect(comparison.crop).toEqual([region.x, region.y, region.width, region.height]);
-      if (testInfo.project.name === 'chromium') await testInfo.attach('body-beak-photo-and-crop', { body: await page.locator('#part-detail').screenshot(), contentType: 'image/png' });
+      if (testInfo.project.name === 'chrome') await testInfo.attach('body-beak-photo-and-crop', { body: await page.locator('#part-detail').screenshot(), contentType: 'image/png' });
     }
   }
   expect(regionSignatures.size).toBe(7);

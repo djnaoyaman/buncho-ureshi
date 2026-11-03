@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { IDBFactory } from 'fake-indexeddb';
 import { openGameStore, STORAGE_KEY, DB_NAME } from '../src/game-store.js';
-import { createWorld, advanceTo, TICK_MS } from '../src/engine.js';
+import { createWorld, renameBird, advanceTo, TICK_MS } from '../src/engine.js';
 const now=Date.UTC(2026,10,2,3);
 class Storage {
  constructor(){this.data=new Map();this.writes=0;}
@@ -15,8 +15,8 @@ const settle=()=>new Promise(r=>setTimeout(r,0));
 
 test('IndexedDB transactions preserve forty simultaneous edits and advance one shared interval only once',async()=>{
  const indexedDB=new IDBFactory(),a=await openGameStore({indexedDB}),b=await openGameStore({indexedDB});
- const world=createWorld(now);world.birds[0].name='0';await a.transact(()=>world);
- await Promise.all(Array.from({length:40},(_,i)=>(i%2?a:b).transact(w=>{advanceTo(w,now+20*TICK_MS);w.birds[0].name=String(Number(w.birds[0].name)+1);w.revision++;return w;})));
+ const world=createWorld(now);renameBird(world,'b1','0');await a.transact(()=>world);
+ await Promise.all(Array.from({length:40},(_,i)=>(i%2?a:b).transact(w=>{advanceTo(w,now+20*TICK_MS);renameBird(w,'b1',String(Number(w.birds[0].name)+1));return w;})));
  const result=await a.transact(w=>w);assert.equal(result.tick,20);assert.equal(result.birds[0].name,'40');assert.equal(new Set(result.events.map(e=>e.id)).size,result.events.length);a.close();b.close();
 });
 
@@ -41,9 +41,9 @@ test('a newer incompatible database or synchronous open error is not replaced by
 });
 
 test('a previously saved locked-local world remains the same backend after IndexedDB becomes available',async()=>{
- const storage=new Storage(),world=createWorld(now);world.birds[0].name='0';storage.setItem(STORAGE_KEY,JSON.stringify(world));let opens=0;const platform={indexedDB:{open(){opens++;throw Error('must not open');}},localStorage:storage,navigator:{locks:locks()}};
+ const storage=new Storage(),world=createWorld(now);renameBird(world,'b1','0');storage.setItem(STORAGE_KEY,JSON.stringify(world));let opens=0;const platform={indexedDB:{open(){opens++;throw Error('must not open');}},localStorage:storage,navigator:{locks:locks()}};
  const a=await openGameStore(platform),b=await openGameStore(platform);assert.equal(a.mode,'locked-local');assert.equal(opens,0);
- await Promise.all(Array.from({length:20},(_,i)=>(i%2?a:b).transact(w=>{w.birds[0].name=String(Number(w.birds[0].name)+1);w.revision++;return w;})));
+ await Promise.all(Array.from({length:20},(_,i)=>(i%2?a:b).transact(w=>{renameBird(w,'b1',String(Number(w.birds[0].name)+1));return w;})));
  assert.equal((await a.transact(w=>w)).birds[0].name,'20');a.close();b.close();
 });
 

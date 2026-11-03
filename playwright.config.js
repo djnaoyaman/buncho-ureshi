@@ -15,10 +15,10 @@ export default defineConfig({
     acceptDownloads: true,
   },
   projects: [
-    { name: "chromium", testIgnore: "**/mobile.spec.js", use: { ...devices["Desktop Chrome"] } },
-    { name: "firefox", testIgnore: "**/mobile.spec.js", use: { ...devices["Desktop Firefox"] } },
+    { name: "chrome", testIgnore: "**/mobile.spec.js", use: { ...devices["Desktop Chrome"], channel: "chrome" } },
+    { name: "edge", testIgnore: "**/mobile.spec.js", use: { ...devices["Desktop Edge"], channel: "msedge" } },
     { name: "webkit", testIgnore: "**/mobile.spec.js", use: { ...devices["Desktop Safari"] } },
-    { name: "android-touch", testMatch: "**/mobile.spec.js", use: { ...devices["Pixel 7"], browserName: "chromium" } },
+    { name: "android-touch", testMatch: "**/mobile.spec.js", use: { ...devices["Pixel 7"], browserName: "chromium", channel: "chrome" } },
     { name: "iphone-touch", testMatch: "**/mobile.spec.js", use: { ...devices["iPhone 13"], browserName: "webkit" } },
   ],
   webServer: publicURL

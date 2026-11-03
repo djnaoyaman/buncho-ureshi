@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { Window } from 'happy-dom';
 import { mountGame, careFloorOpacity, gameSpriteGeometry } from '../src/game.js';
 import { createCareAudio } from '../src/care-audio.js';
-import { createWorld, advanceTicks, adoptBird, serializeWorld, validateWorld, bumpRevision } from '../src/engine.js';
+import { careWindow,renameBird,createWorld, advanceTicks, adoptBird, serializeWorld, validateWorld, bumpRevision } from '../src/engine.js';
 import { STORAGE_KEY } from '../src/game-store.js';
 import { audioRig, deferred } from './audio-fixture.js';
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
@@ -25,28 +25,28 @@ async function fixture(t,options={}){
   for(const [key,value]of Object.entries(values)){globals.set(key,Object.getOwnPropertyDescriptor(globalThis,key));Object.defineProperty(globalThis,key,{value,configurable:true,writable:true});}
   const root=window.document.createElement('main');window.document.body.append(root);
   t.after(async()=>{dispose?.();await window.happyDOM.close();for(const[key,descriptor]of globals)descriptor?Object.defineProperty(globalThis,key,descriptor):delete globalThis[key];});
-  const f={window,root,rig,initial,failNext(){nextFailure=new Error('test save failure');},setConfirm(value){confirmResult=value;},importWorld(world){const input=root.querySelector('#game-import'),file=new window.File(['save'],'care.json',{type:'application/json'});Object.defineProperty(file,'text',{value:async()=>serializeWorld(world)});Object.defineProperty(input,'files',{configurable:true,value:[file]});input.dispatchEvent(new window.Event('change',{bubbles:true}));},read:()=>JSON.parse(window.localStorage.getItem(STORAGE_KEY)),write:w=>window.localStorage.setItem(STORAGE_KEY,serializeWorld(w)),hold(){const gate=deferred();nextGate=gate;return gate;},async mount(){dispose=await mountGame(root,{audioFactory:()=>createCareAudio({Context:rig.Context})});if(options.home!=='departed')f.openCare();},openCare(){root.querySelector('[data-game-open-bird]').click();assert(root.querySelector('.game-bird-sheet').open);},closeCare(){if(root.querySelector('.game-bird-sheet')?.open)root.querySelector('[data-game-close-bird]').click();},stop(){dispose?.();dispose=null;},async settle(){await tail;await sleep(3);},async poll(){await [...timers.values()][0]();},change(node,value){if(node.type==='checkbox')node.checked=value;else node.value=value;node.dispatchEvent(new window.Event('change',{bubbles:true}));},select(id){f.closeCare();for(let n=0;n<128&&root.querySelector('.game-bird-carousel-face').dataset.birdId!==id;n++)root.querySelector('.game-bird-carousel [data-bird-step="1"]').click();assert.equal(root.querySelector('.game-bird-carousel-face').dataset.birdId,id);f.openCare();},clickCare(kind){if(kind==='clean')f.closeCare();root.querySelector(`[data-game-care="${kind}"]`).click();},async sound(enabled){f.change(root.querySelector('[data-game-care-sound]'),enabled);await f.settle();}};
+  const f={window,root,rig,initial,failNext(){nextFailure=new Error('test save failure');},setConfirm(value){confirmResult=value;},importWorld(world){const input=root.querySelector('#game-import'),file=new window.File(['save'],'care.json',{type:'application/json'});Object.defineProperty(file,'text',{value:async()=>serializeWorld(world)});Object.defineProperty(input,'files',{configurable:true,value:[file]});input.dispatchEvent(new window.Event('change',{bubbles:true}));},read:()=>{const raw=JSON.parse(window.localStorage.getItem(STORAGE_KEY));return raw.current||raw;},write:w=>window.localStorage.setItem(STORAGE_KEY,serializeWorld(w)),hold(){const gate=deferred();nextGate=gate;return gate;},async mount(){dispose=await mountGame(root,{audioFactory:()=>createCareAudio({Context:rig.Context})});if(options.home!=='departed')f.openCare();},soundControl(){f.closeCare();window.document.dispatchEvent(new window.CustomEvent('buncho-world-action',{detail:'settings'}));return root.querySelector('[data-game-care-sound]');},soundChecked(){const value=f.soundControl().checked;f.openCare();return value;},openCare(){const overlay=root.querySelector('.game-panel-overlay[open]'),profileAction=overlay?.querySelector('[data-game-open-bird]');if(profileAction)profileAction.click();else{if(overlay)root.querySelector('[data-game-close-panel]').click();root.querySelector('[data-game-open-bird]').click();}assert(root.querySelector('.game-bird-sheet').open);},closeCare(){if(root.querySelector('.game-bird-sheet')?.open)root.querySelector('[data-game-close-bird]').click();},stop(){dispose?.();dispose=null;},async settle(){await tail;await sleep(3);},async poll(){await [...timers.values()][0]();},change(node,value){if(node.type==='checkbox')node.checked=value;else node.value=value;node.dispatchEvent(new window.Event('change',{bubbles:true}));},select(id){f.closeCare();for(let n=0;n<128&&root.querySelector('.game-bird-carousel-face').dataset.birdId!==id;n++)root.querySelector('.game-bird-carousel [data-bird-step="1"]').click();assert.equal(root.querySelector('.game-bird-carousel-face').dataset.birdId,id);f.openCare();},clickCare(kind){if(kind==='clean'){f.closeCare();if(root.querySelector('.game-panel-overlay')?.open)root.querySelector('[data-game-close-panel]').click();}else if(!root.querySelector('.game-bird-sheet')?.open)f.openCare();root.querySelector(`[data-game-care="${kind}"]`).click();},async sound(enabled){f.change(f.soundControl(),enabled);await f.settle();f.openCare();}};
   return f;
 }
 
 test('care UI feeds captured bird, shows numeric fullness, cleans only cosmetic floor, and no-op repeats preserve revision',async t=>{
   const f=await fixture(t);await f.mount();assert.match(f.root.querySelector('[data-game-fullness]').textContent,/40 \/ 100/);assert.match(f.root.querySelector('.game-fullness').textContent,/おなか/);
-  assert.equal(f.root.querySelector('[data-game-care-sound]').checked,false);assert.equal(f.rig.contexts.length,0);
+  assert.equal(f.soundChecked(),false);assert.equal(f.rig.contexts.length,0);
   const imageBefore=f.root.querySelector('.game-room-bird .game-sprite img').getAttribute('src');
   assert.equal(Number(f.root.querySelector('.game-floor-soil').style.getPropertyValue('--care-soil-opacity')), .194);
   f.clickCare('feed');await f.settle();assert.equal(f.read().birds[0].needs.food,60);assert.match(f.root.querySelector('[data-game-fullness]').textContent,/60 \/ 100/);
   assert.equal(f.read().events.filter(e=>e.kind==='user-feed').length,1);const after=f.read();
-  f.clickCare('feed');f.clickCare('feed');await f.settle();assert.deepEqual(f.read(),after);assert.match(f.root.querySelector('.game-care-feedback').textContent,/さっき食べた/);
+  f.clickCare('feed');await f.settle();f.clickCare('feed');await f.settle();assert.equal(f.read().birds[0].needs.food,100);const full=f.read();f.clickCare('feed');await f.settle();assert.deepEqual(f.read(),full);assert.equal(f.root.querySelector('[data-game-care=feed]').disabled,true);
   f.clickCare('clean');await f.settle();assert.equal(f.read().care.cleanliness,100);assert.equal(f.root.querySelector('.game-floor-soil').style.getPropertyValue('--care-soil-opacity'),'0.000');assert.equal(f.root.querySelector('[data-game-cleanliness-value]').textContent,'100 / 100');
   const clean=f.read();f.clickCare('clean');await f.settle();assert.deepEqual(f.read(),clean);assert.equal(f.rig.starts,0);assert.equal(f.root.querySelector('.game-room-bird .game-sprite img').getAttribute('src'),imageBefore);
 });
 
 test('care UI pet response is silent by default, opt-in produces only one successful chirp and immediate mute stops it',async t=>{
   const f=await fixture(t);await f.mount();f.clickCare('pet');await f.settle();assert.equal(f.rig.contexts.length,0);assert.equal(f.read().birds[0].mood,64);assert.match(f.root.querySelector('.game-care-feedback').textContent,/ぴっ/);
-  const world=f.read();world.tick++;world.birds[0].care.lastPetTick=null;bumpRevision(world);f.write(world);await f.poll();
+  const world=f.read();world.tick++;world.birds[0].care.lastPetTick=null;world.birds[0].needs.energy=80;bumpRevision(world);f.write(world);await f.poll();
   await f.sound(true);assert.equal(f.read().settings.careSound,true);assert.equal(f.rig.starts,0);f.clickCare('pet');await f.settle();await until(()=>f.rig.starts===2);assert(f.root.querySelector('.game-care-cheer'));
   const after=f.read();f.clickCare('pet');f.clickCare('pet');await f.settle();assert.deepEqual(f.read(),after);assert.equal(f.rig.starts,2);
-  f.change(f.root.querySelector('[data-game-care-sound]'),false);assert(f.rig.contexts[0].nodes.every(node=>node.stops.includes(undefined)));await f.settle();assert.equal(f.read().settings.careSound,false);assert.equal(f.root.querySelector('.game-care-cheer'),null);
+  f.change(f.soundControl(),false);assert(f.rig.contexts[0].nodes.every(node=>node.stops.includes(undefined)));await f.settle();assert.equal(f.read().settings.careSound,false);assert.equal(f.root.querySelector('.game-care-cheer'),null);
   f.closeCare();f.root.querySelector('[data-game-panel="help"]').click();const disclosure=f.root.querySelector('[data-game-details="help-care"]');assert(disclosure);disclosure.open=true;assert.match(disclosure.textContent,/本物の文鳥に無理に触らず/);assert.match(disclosure.textContent,/実際のおもちや文鳥の声ではありません/);
 });
 
@@ -56,7 +56,7 @@ test('care UI delayed transaction keeps immutable bird ID but suppresses old fee
 });
 
 test('care UI stale world IDs cannot feed or pet a same-ID bird imported by another tab',async t=>{
-  const f=await fixture(t,{sound:true});await f.mount();const next=worldFixture({sound:true});next.worldId+='-replacement';next.birds[0].name='別の鳥';bumpRevision(next);f.write(next);
+  const f=await fixture(t,{sound:true});await f.mount();const next=worldFixture({sound:true});next.worldId+='-replacement';renameBird(next,'b1','別の鳥');bumpRevision(next);f.write(next);
   f.clickCare('pet');await f.settle();assert.deepEqual(f.read(),next);assert.match(f.root.querySelector('.game-message').textContent,/別のタブで別の庭/);assert.equal(f.rig.starts,0);
   await f.poll();assert.equal(f.root.querySelector('.game-bird-sheet').open,false);f.openCare();assert.match(f.root.querySelector('#game-sheet-title').textContent,/別の鳥/);assert.equal(f.rig.starts,0);
 });
@@ -80,8 +80,8 @@ test('care UI eggs, chicks and departed birds get disabled buttons with explicit
 
 test('care UI rapid opt-in then mute keeps saved and local audio off; reload of sound preference never autoplays',async t=>{
   const f=await fixture(t,{sound:true});await f.mount();assert.equal(f.rig.contexts.length,0);assert.equal(f.rig.starts,0);
-  const gate=f.hold();f.change(f.root.querySelector('[data-game-care-sound]'),true);f.change(f.root.querySelector('[data-game-care-sound]'),false);gate.resolve();await f.settle();assert.equal(f.read().settings.careSound,false);assert.equal(f.root.querySelector('[data-game-care-sound]').checked,false);assert.equal(f.rig.starts,0);
-  f.stop();await f.mount();assert.equal(f.rig.starts,0);assert.equal(f.root.querySelector('[data-game-care-sound]').checked,false);
+  const gate=f.hold();f.change(f.soundControl(),true);f.change(f.soundControl(),false);gate.resolve();await f.settle();assert.equal(f.read().settings.careSound,false);assert.equal(f.soundChecked(),false);assert.equal(f.rig.starts,0);
+  f.stop();await f.mount();assert.equal(f.rig.starts,0);assert.equal(f.soundChecked(),false);
 });
 
 test('care UI preserves reduced-motion choice, natural sprite contacts, floor opacity cap and bounded CSS-only ground patch',async t=>{
@@ -98,16 +98,16 @@ test('care UI transaction failure never presents a success or plays a chirp',asy
   const f=await fixture(t,{sound:true});await f.mount();const before=f.read();f.failNext();f.clickCare('pet');await f.settle();assert.deepEqual(f.read(),before);assert.equal(f.rig.starts,0);assert.equal(f.root.querySelector('.game-care-feedback'),null);assert.match(f.root.querySelector('.game-message').textContent,/test save failure/);
 });
 
-test('care UI import cancel preserves the exact world, confirmed v2 import preserves care values and never autoplays',async t=>{
+test('care UI import cancel preserves the exact world, confirmed snapshot import preserves care values and existing sound choice without autoplay',async t=>{
   const f=await fixture(t);await f.mount();f.closeCare();f.root.querySelector('[data-game-panel="settings"]').click();const before=f.read(),imported=worldFixture({sound:true});imported.worldId+='-import';imported.care.cleanliness=33;imported.birds[0].needs.food=77;
   f.setConfirm(false);f.importWorld(imported);await sleep(5);await f.settle();assert.deepEqual(f.read(),before);assert.equal(f.rig.starts,0);
-  f.setConfirm(true);f.importWorld(imported);await until(()=>f.read().worldId===imported.worldId);await f.settle();assert.equal(f.read().care.cleanliness,33);assert.equal(f.read().birds[0].needs.food,77);assert.equal(f.read().settings.careSound,true);assert.equal(f.rig.starts,0);assert.equal(f.rig.contexts.length,0);
+  f.setConfirm(true);f.importWorld(imported);await until(()=>f.read().worldId!==before.worldId);assert.notEqual(f.read().worldId,imported.worldId);await f.settle();assert.equal(f.read().care.cleanliness,33);assert.equal(f.read().birds[0].needs.food,77);assert.equal(f.read().settings.careSound,before.settings.careSound);assert.equal(f.rig.starts,0);assert.equal(f.rig.contexts.length,0);
   f.root.querySelector('[data-game-panel="garden"]').click();f.openCare();assert.equal(f.root.querySelector('[data-game-fullness]').textContent,'77 / 100');assert.equal(f.root.querySelector('[data-game-cleanliness-value]').textContent,'33 / 100');
 });
 
 test('care UI denied audio still commits pet feedback, and failed preference persistence cannot unmute the current view',async t=>{
   const rig=audioRig({reject:true}),f=await fixture(t,{rig,sound:true});await f.mount();f.clickCare('pet');await f.settle();assert.equal(f.read().birds[0].mood,64);assert.match(f.root.querySelector('.game-care-feedback').textContent,/ぴっ/);assert.match(f.root.querySelector('.game-message').textContent,/合成音を鳴らせません/);assert.equal(rig.starts,0);
-  f.failNext();f.change(f.root.querySelector('[data-game-care-sound]'),false);await f.settle();assert.equal(f.read().settings.careSound,true,'failed write is not falsely reported persisted');assert.equal(f.root.querySelector('[data-game-care-sound]').checked,false,'local mute remains immediate despite storage failure');
+  f.failNext();f.change(f.soundControl(),false);await f.settle();assert.equal(f.read().settings.careSound,true,'failed write is not falsely reported persisted');assert.equal(f.soundChecked(),false,'local mute remains immediate despite storage failure');
 });
 
 test('care UI closing during a queued pet commits once without stale feedback, reopening or audio',async t=>{
@@ -146,7 +146,7 @@ test('bird sheet queued text submission clears only its sent draft, not newer un
 test('unsent talk survives park and home travel; empty submission never mutates history',async t=>{
  const f=await fixture(t);await f.mount();f.root.querySelector('[data-game-details="sheet-talk"]').open=true;
  const input=f.root.querySelector('#game-words');input.value='あとで水浴びしよう';input.dispatchEvent(new f.window.Event('input',{bubbles:true}));f.closeCare();
- f.root.querySelector('[data-field-travel="park"]').click();await f.settle();assert.equal(f.read().field.place,'park');
+ f.root.querySelector('[data-game-panel="outdoors"]').click();await f.settle();assert.equal(f.read().encounters.garden.open,true);f.root.querySelector('[data-game-close-panel]').click();await f.settle();assert.equal(f.read().encounters.garden.open,false);
  f.root.querySelector('[data-field-travel="home"]').click();await f.settle();assert.equal(f.read().field.place,'home');f.openCare();
  assert.equal(f.root.querySelector('#game-words').value,'あとで水浴びしよう');
  const before=f.read(),blank=f.root.querySelector('#game-words');blank.value='  ';blank.dispatchEvent(new f.window.Event('input',{bubbles:true}));f.root.querySelector('[data-game-form="talk"]').dispatchEvent(new f.window.Event('submit',{bubbles:true,cancelable:true}));await f.settle();
@@ -159,16 +159,61 @@ test('unmarked legacy mute migrates on once; explicit device mute survives remou
 
 test('explicit device mute remains authoritative after imported and peer ON worlds',async t=>{
  const f=await fixture(t,{sound:false});await f.mount();f.closeCare();f.root.querySelector('[data-game-panel="settings"]').click();
- const imported=worldFixture({sound:true});imported.worldId+='-import';f.importWorld(imported);await f.settle();f.root.querySelector('[data-game-panel="garden"]').click();f.openCare();assert.equal(f.root.querySelector('[data-game-care-sound]').checked,false);f.clickCare('pet');await f.settle();assert.equal(f.rig.starts,0);
- const peer=f.read();peer.worldId+='-peer';peer.settings.careSound=true;bumpRevision(peer);f.write(peer);await f.poll();f.openCare();assert.equal(f.root.querySelector('[data-game-care-sound]').checked,false);assert.equal(f.rig.starts,0);
+ const imported=worldFixture({sound:true});imported.worldId+='-import';f.importWorld(imported);await f.settle();f.root.querySelector('[data-game-panel="garden"]').click();f.openCare();assert.equal(f.soundChecked(),false);f.clickCare('pet');await f.settle();assert.equal(f.rig.starts,0);
+ const peer=f.read();peer.worldId+='-peer';peer.settings.careSound=true;bumpRevision(peer);f.write(peer);await f.poll();f.openCare();assert.equal(f.soundChecked(),false);assert.equal(f.rig.starts,0);
 });
 test('pagehide cancels pending care chirp without needing visibilitychange',async t=>{
  const rig=audioRig({held:true}),f=await fixture(t,{sound:true,rig});await f.mount();f.clickCare('pet');await f.settle();f.window.dispatchEvent(new f.window.Event('pagehide'));rig.gate.resolve();await sleep(10);assert.equal(rig.starts,0);f.stop();f.window.dispatchEvent(new f.window.Event('pagehide'));assert.equal(rig.starts,0);
 });
 test('explicit peer mute storage event immediately cancels and persists across world refresh',async t=>{
- const rig=audioRig({held:true}),f=await fixture(t,{sound:true,rig});await f.mount();f.clickCare('pet');await f.settle();f.window.dispatchEvent(new f.window.StorageEvent('storage',{key:'buncho.care-sound-choice.v1',newValue:JSON.stringify({explicit:true,enabled:false})}));rig.gate.resolve();await sleep(10);assert.equal(rig.starts,0);assert.equal(f.root.querySelector('[data-game-care-sound]').checked,false);await f.poll();assert.equal(f.root.querySelector('[data-game-care-sound]').checked,false);
+ const rig=audioRig({held:true}),f=await fixture(t,{sound:true,rig});await f.mount();f.clickCare('pet');await f.settle();f.window.dispatchEvent(new f.window.StorageEvent('storage',{key:'buncho.care-sound-choice.v1',newValue:JSON.stringify({explicit:true,enabled:false})}));rig.gate.resolve();await sleep(10);assert.equal(rig.starts,0);assert.equal(f.soundChecked(),false);await f.poll();assert.equal(f.soundChecked(),false);
+});
+
+test('paused story reopens real-JST care and shows both bars without a fast-tick refill',async t=>{
+ const f=await fixture(t);await f.mount();const w=f.read();w.paused=true;w.birds[0].needs.food=100;w.birds[0].needs.energy=100;const now=Date.now(),prior=careWindow(now).at-1;w.careSchedule={seenAt:prior,windowAt:careWindow(prior).at};bumpRevision(w);f.write(w);await f.poll();
+ assert.equal(f.read().birds[0].needs.food,60);assert.equal(f.read().birds[0].needs.energy,60);assert.equal(f.root.querySelector('[data-game-care=feed]').disabled,false);assert.equal(f.root.querySelector('[data-game-care=pet]').disabled,false);
+ f.clickCare('pet');await f.settle();f.clickCare('pet');await f.settle();assert.equal(f.read().birds[0].needs.energy,100);assert.equal(f.root.querySelector('[data-game-care=pet]').disabled,true);assert.equal(f.root.querySelector('[data-game-talk="名前を呼ぶ"]').disabled,true);assert.match(f.root.querySelector('[data-next-care]').textContent,/日本時間/);
+});
+
+test('queued talk after peer fills energy gives no Gem, no history and no success chirp',async t=>{
+ const f=await fixture(t,{sound:true});await f.mount();const gate=f.hold();f.root.querySelector('[data-game-talk="名前を呼ぶ"]').click();const peer=f.read();peer.birds[0].needs.energy=100;bumpRevision(peer);f.write(peer);gate.resolve();await f.settle();
+ assert.equal(f.read().decor.points,peer.decor.points);assert.deepEqual(f.read().birds[0].memories,peer.birds[0].memories);assert.equal(f.rig.starts,0);assert.equal(f.root.querySelector('[data-game-talk="名前を呼ぶ"]').disabled,true);assert.match(f.root.querySelector('.game-reply').textContent,/お部屋が変わった/);
+});
+
+test('legacy numbered name suggestions stay drafts, cancel safely and never cross birds or stale peer names',async t=>{
+ const f=await fixture(t);const old=f.read();old.birds[0].name='こはく1';old.birds[0].naming={version:1,source:'legacy',assignedName:'こはく1'};f.write(old);await f.mount();f.closeCare();f.root.querySelector('[data-game-panel="profile"]').click();const before=f.read();
+ f.root.querySelector('[data-game-name-suggest]').click();const suggestion=f.root.querySelector('#game-name').value;assert.doesNotMatch(suggestion,/[0-9]/);assert.notEqual(suggestion,'こはく1');assert.deepEqual(f.read(),before);
+ f.root.querySelector('[data-bird-step="1"]').click();assert.equal(f.root.querySelector('#game-name').value,'こめ');f.root.querySelector('[data-bird-step="-1"]').click();assert.equal(f.root.querySelector('#game-name').value,suggestion);
+ f.root.querySelector('[data-game-name-cancel]').click();assert.equal(f.root.querySelector('#game-name').value,'こはく1');assert.deepEqual(f.read(),before);
+ f.root.querySelector('[data-game-name-suggest]').click();const stale=f.root.querySelector('[data-game-name-suggest]');const peer=f.read();renameBird(peer,'b1','大切な名前7');f.write(peer);await f.poll();stale.click();assert.equal(f.read().birds[0].name,'大切な名前7');assert.notEqual(f.root.querySelector('#game-name')?.value,'こめ');
+});
+
+test('suggested legacy name is saved only by the existing explicit save action',async t=>{
+ const f=await fixture(t);const old=f.read();old.birds[0].name='すず1';old.birds[0].naming={version:1,source:'legacy',assignedName:'すず1'};f.write(old);await f.mount();f.closeCare();f.root.querySelector('[data-game-panel="profile"]').click();f.root.querySelector('[data-game-name-suggest]').click();const value=f.root.querySelector('#game-name').value;assert.equal(f.read().birds[0].name,'すず1');f.root.querySelector('[data-game-form="rename"] button[type="submit"]').click();await f.settle();assert.equal(f.read().birds[0].name,value);assert.equal(f.read().birds[0].naming.source,'manual');assert.equal(f.root.querySelector('[data-game-name-suggest]'),null);
+});
+
+test('saving a generated suggestion after peer rename rejects the stale name draft',async t=>{
+ const f=await fixture(t);const old=f.read();old.birds[0].name='すず1';old.birds[0].naming={version:1,source:'legacy',assignedName:'すず1'};f.write(old);await f.mount();f.closeCare();f.root.querySelector('[data-game-panel="profile"]').click();f.root.querySelector('[data-game-name-suggest]').click();const peer=f.read();renameBird(peer,'b1','家族が決めた名前');f.write(peer);f.root.querySelector('[data-game-form="rename"] button[type="submit"]').click();await f.settle();assert.equal(f.read().birds[0].name,'家族が決めた名前');assert.equal(f.read().birds[0].naming.source,'manual');assert.match(f.root.textContent,/名前が変わったよ/);await f.poll();assert.equal(f.root.querySelector('#game-name').value,'家族が決めた名前');
 });
 
 test('game-only shell actions focus settings/help and their listener is removed on route exit',async t=>{
- const f=await fixture(t);await f.mount();document.dispatchEvent(new window.CustomEvent('buncho-world-action',{detail:'settings'}));assert(f.root.querySelector('.game-settings'));assert.equal(f.root.querySelector('.game-bird-sheet').open,false);assert.equal(document.activeElement.textContent,'つづきの保存と設定');document.dispatchEvent(new window.CustomEvent('buncho-world-action',{detail:'help'}));assert(f.root.querySelector('.game-help'));const before=f.root.innerHTML;f.stop();document.dispatchEvent(new window.CustomEvent('buncho-world-action',{detail:'settings'}));assert.equal(f.root.innerHTML,before);
+ const f=await fixture(t);await f.mount();document.dispatchEvent(new window.CustomEvent('buncho-world-action',{detail:'settings'}));assert(f.root.querySelector('.game-settings'));assert.equal(f.root.querySelector('.game-bird-sheet').open,false);assert.equal(document.activeElement.textContent,'暮らしの設定');document.dispatchEvent(new window.CustomEvent('buncho-world-action',{detail:'help'}));assert(f.root.querySelector('.game-help'));const before=f.root.innerHTML;f.stop();document.dispatchEvent(new window.CustomEvent('buncho-world-action',{detail:'settings'}));assert.equal(f.root.innerHTML,before);
+});
+
+test('reset defaults cancel, confirms once, preserves Gem and focus, full reset has second confirmation',async t=>{
+ const f=await fixture(t);await f.mount();f.closeCare();f.window.document.dispatchEvent(new f.window.CustomEvent('buncho-world-action',{detail:'settings'}));
+ const open=()=>f.root.querySelector('[data-game-action="reset-state"]').click();const before=f.read();open();assert.equal(f.window.document.activeElement.dataset.gameAction,'reset-cancel');f.root.querySelector('[data-reset-kind="care"]').click();assert.match(f.root.querySelector('.game-reset-dialog').textContent,/家族・Gem・家具などは残ります/);f.root.querySelector('[data-game-action="reset-cancel"]').click();assert.deepEqual(f.read(),before);assert.equal(f.window.document.activeElement.dataset.gameAction,'reset-state');
+ open();f.root.querySelector('[data-reset-kind="care"]').click();const gate=f.hold(),confirm=f.root.querySelector('[data-game-action="reset-confirm"]');confirm.click();confirm.click();assert.equal(confirm.disabled,true);gate.resolve();await f.settle();assert.equal(f.read().birds[0].needs.food,80);assert.equal(f.read().decor.points,before.decor.points);assert.equal(f.root.querySelector('.game-reset-dialog').open,false);assert.equal(f.window.document.activeElement.dataset.gameAction,'reset-state');
+ open();f.root.querySelector('[data-reset-kind="all"]').click();f.root.querySelector('[data-game-action="reset-confirm"]').click();assert.match(f.root.querySelector('.game-reset-dialog').textContent,/最後の確認/);assert.equal(f.window.document.activeElement.dataset.gameAction,'reset-cancel');f.root.querySelector('.game-reset-dialog').dispatchEvent(new f.window.KeyboardEvent('keydown',{key:'Escape',bubbles:true}));assert.equal(f.root.querySelector('.game-reset-dialog').open,false);assert.equal(f.read().worldId,before.worldId);
+});
+test('reset uses fresh peer state and failed save leaves world intact',async t=>{
+ const f=await fixture(t);await f.mount();f.closeCare();f.window.document.dispatchEvent(new f.window.CustomEvent('buncho-world-action',{detail:'settings'}));const open=()=>{f.root.querySelector('[data-game-action="reset-state"]').click();f.root.querySelector('[data-reset-kind="care"]').click();};open();const peer=f.read();peer.birds[0].needs.food=100;peer.decor.points+=7;peer.decor.lifetimePoints+=7;bumpRevision(peer);f.write(peer);f.root.querySelector('[data-game-action="reset-confirm"]').click();await f.settle();assert.equal(f.read().birds[0].needs.food,100);assert.equal(f.read().decor.points,peer.decor.points);const low=f.read();low.birds[0].needs.food=20;bumpRevision(low);f.write(low);await f.poll();const persisted=f.read();open();f.failNext();f.root.querySelector('[data-game-action="reset-confirm"]').click();await f.settle();assert.deepEqual(f.read(),persisted);assert.match(f.root.textContent,/test save failure/);
+});
+test('full reset requires two confirmations, preserves owner/music, and can restore last local backup',async t=>{
+ const f=await fixture(t);await f.mount();f.closeCare();f.window.localStorage.setItem('buncho.owner-name.v1','家族の名前');f.window.localStorage.setItem('buncho.music.v1','{"enabled":false,"volume":0.2}');f.window.document.dispatchEvent(new f.window.CustomEvent('buncho-world-action',{detail:'settings'}));
+ const old=f.read(),open=()=>f.root.querySelector('[data-game-action="reset-state"]').click();open();f.root.querySelector('[data-reset-kind="all"]').click();f.root.querySelector('[data-game-action="reset-confirm"]').click();assert.equal(f.read().worldId,old.worldId);f.root.querySelector('[data-game-action="reset-confirm"]').click();await f.settle();const fresh=f.read();assert.equal(fresh.birds.length,1);assert.equal(fresh.birds[0].name,'おもち');assert.notEqual(fresh.worldId,old.worldId);assert.equal(f.window.localStorage.getItem('buncho.owner-name.v1'),'家族の名前');assert.equal(f.window.localStorage.getItem('buncho.music.v1'),'{"enabled":false,"volume":0.2}');assert.deepEqual(fresh.settings,old.settings);
+ open();await until(()=>!f.root.querySelector('[data-reset-kind="restore"]').disabled);f.root.querySelector('[data-reset-kind="restore"]').click();f.root.querySelector('[data-game-action="reset-confirm"]').click();await f.settle();const restored=f.read();assert.notEqual(restored.worldId,old.worldId);assert.notEqual(restored.worldId,fresh.worldId);assert.deepEqual(restored.birds,old.birds);assert.deepEqual(restored.decor,old.decor);
+});
+test('owner name and avatar stay optional drafts until explicit save, never mutate game world',async t=>{
+ const f=await fixture(t);await f.mount();f.closeCare();f.window.document.dispatchEvent(new f.window.CustomEvent('buncho-world-action',{detail:'settings'}));const before=f.read();f.root.querySelector('[data-game-panel="owner"]').click();let input=f.root.querySelector('[data-owner-name]');assert.equal(input.value,'飼い主さん');input.value='<b>だいすき</b>';input.dispatchEvent(new f.window.Event('input',{bubbles:true}));f.root.querySelector('[data-owner-save]').click();assert.match(f.root.querySelector('.game-owner-setting').textContent,/<b>だいすき<\/b>/);assert.equal(f.root.querySelector('.game-owner-setting b'),null);assert.deepEqual(f.read(),before);f.root.querySelector('[data-game-panel="owner"]').click();input=f.root.querySelector('[data-owner-name]');input.value='まだ保存しない';input.dispatchEvent(new f.window.Event('input',{bubbles:true}));await f.poll();assert.equal(f.root.querySelector('[data-owner-name]').value,'まだ保存しない');f.root.querySelector('[data-owner-cancel]').click();assert.match(f.root.querySelector('.game-owner-setting').textContent,/<b>だいすき/);
 });

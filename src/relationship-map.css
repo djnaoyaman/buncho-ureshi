@@ -1,0 +1,38 @@
+/* Scoped solely to the illustrated game. Never applied to article/atlas pages. */
+.buncho-rel-map{--twig:#bc8b58;--leaf:#527b60;--paper:#fff8df;max-width:660px;margin-inline:auto;padding:12px;color:#514332;background:radial-gradient(ellipse at 50% 15%,#fffbee 0 32%,transparent 70%),#f4efd9;border-radius:35px 26px 40px 25px;font-family:inherit;overflow-wrap:anywhere}
+.buncho-rel-map h3{text-align:center;color:var(--leaf);margin:8px 0;font-size:1.3rem;letter-spacing:.06em}
+.buncho-rel-map button{font:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.buncho-rel-map button:focus-visible,.buncho-rel-map summary:focus-visible,.buncho-rel-map:focus-visible{outline:3px solid #416d55;outline-offset:4px}
+.buncho-rel-picker,.buncho-rel-pager{display:flex;align-items:center;justify-content:center;gap:16px;text-align:center;margin:10px 0}
+.buncho-rel-picker>button,.buncho-rel-pager>button{width:48px;height:48px;flex:0 0 48px;padding:0;border:2px solid #a77a4b;border-radius:48% 55% 42% 55%;background:#eecb8d;box-shadow:0 3px 0 #a77a4b;font-size:2rem;line-height:1;transform:rotate(-5deg)}
+.buncho-rel-picker>button:last-child,.buncho-rel-pager>button:last-child{transform:rotate(5deg)}
+.buncho-rel-map button:disabled{opacity:.4;cursor:default;box-shadow:none}
+.buncho-rel-focus{width:min(75%,240px);margin:auto;text-align:center;display:flex;flex-direction:column;align-items:center}
+.buncho-rel-focus>strong{font-size:1.3rem}
+.buncho-rel-map small{display:block;font-size:.75rem;line-height:1.6;font-weight:400}
+.buncho-rel-portrait{width:100%;height:100px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.buncho-rel-focus .buncho-rel-portrait{height:142px}
+.buncho-rel-map .game-mini-bird{width:100px!important;height:100px!important;display:block}
+.buncho-rel-focus .game-mini-bird{width:142px!important;height:142px!important}
+.buncho-rel-portrait svg{width:100%;height:100%;max-width:142px;display:block}
+.buncho-rel-branches{width:100%;height:66px;display:block;overflow:visible}
+.buncho-rel-branches path{fill:none;stroke:var(--twig);stroke-width:3;vector-effect:non-scaling-stroke;stroke-linecap:round}
+.buncho-rel-peers{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0;align-items:start}
+.buncho-rel-peers[data-count="1"]{grid-template-columns:minmax(0,1fr);max-width:50%;margin-inline:auto}
+.buncho-rel-peer{min-width:0;text-align:center;margin-inline:6px}
+.buncho-rel-bird{display:flex;flex-direction:column;align-items:center;width:100%;padding:6px;border:0!important;background:#fff9e8!important;border-radius:48% 45% 22% 20%;box-shadow:0 3px 0 #dfd2ab;min-height:44px}
+.buncho-rel-bird strong{font-size:1rem}
+.buncho-rel-feeling{margin:10px 0;line-height:1.55;font-size:.75rem}
+.buncho-rel-feeling>span{display:block}
+.buncho-rel-feeling>strong{display:inline-block;margin-top:3px;padding:3px 8px;border-radius:12px 15px 12px 5px;background:#dfe9ca;color:#35593f;font-size:.875rem}
+.buncho-rel-peer details{text-align:left;font-size:.75rem;padding:0}
+.buncho-rel-peer summary{cursor:pointer;min-height:44px;display:flex;align-items:center;justify-content:center;color:var(--leaf);text-decoration:underline;text-underline-offset:4px}
+.buncho-rel-peer dl{margin:0;padding:8px;background:var(--paper);border-radius:14px}
+.buncho-rel-peer dt{font-weight:700}.buncho-rel-peer dd{margin:6px 0 12px;line-height:1.7}
+.buncho-rel-caption,.buncho-rel-empty{text-align:center;font-size:.8rem;line-height:1.7;margin:20px 6px}
+.buncho-rel-picker,.buncho-rel-diagram{touch-action:pan-y}
+.buncho-rel-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
+@media(prefers-reduced-motion:no-preference){.buncho-rel-bird{transition:transform .16s ease}.buncho-rel-bird:active{transform:translateY(3px)}}
+@media(max-width:360px){.buncho-rel-map{padding:8px}.buncho-rel-peer{margin-inline:4px}.buncho-rel-map small{font-size:.7rem}.buncho-rel-feeling>strong{padding:3px 6px}}
+
+@media(prefers-reduced-motion:no-preference){.buncho-rel-peers{animation:buncho-rel-arrive .18s ease-out}@keyframes buncho-rel-arrive{from{opacity:.6;transform:translateY(4px)}to{opacity:1;transform:none}}}
