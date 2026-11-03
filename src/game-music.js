@@ -6,7 +6,7 @@ export const MUSIC_TRACKS = Object.freeze([
   {id:'village', title:'村のワルツ', file:'04_village_waltz.wav'},
 ]);
 export function createGameMusic({base='', Context=globalThis.AudioContext||globalThis.webkitAudioContext,
-  fetcher=globalThis.fetch?.bind(globalThis), storage, onChange=()=>{}, activationTimeout=1200, loadTimeout=20000}={}) {
+  fetcher=globalThis.fetch?.bind(globalThis), storage, onChange=()=>{}, activationTimeout=5000, loadTimeout=20000}={}) {
   const key='buncho.music.v1';
   let saved={}; try {saved=JSON.parse(storage?.getItem(key)||'{}')||{};} catch {}
   let selected=MUSIC_TRACKS.some(t=>t.id===saved.selected)?saved.selected:'meadow';
@@ -38,6 +38,9 @@ export function createGameMusic({base='', Context=globalThis.AudioContext||globa
       if(typeof Context!=='function')throw Error('この端末では音楽を再生できません');
       context ||= new Context();
       const resumed=context.state==='running'?Promise.resolve():context.resume();
+      // BGM is a continuing user choice, unlike a short care chirp. Allow a cold
+      // native device up to five seconds; generation guards still cancel every
+      // OFF, hidden-page, route exit or superseding selection before playback.
       const activation=Promise.race([Promise.resolve(resumed),new Promise((_,reject)=>{activationTimer=setTimeout(()=>reject(Error('もう一度、曲をタップしてください')),activationTimeout);})]);
       // Fade old track to silence; stop before starting its replacement.
       const now=context.currentTime;

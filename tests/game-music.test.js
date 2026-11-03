@@ -53,3 +53,24 @@ test('cached reselect preserves scheduled old fade and starts replacement only a
 });
 
 test('new music is armed but silent; explicit saved off stays off',()=>{const a=fixture();assert.equal(a.player.state().enabled,true);assert.equal(a.contexts.length,0);a.player.dispose();const b=fixture({storage:{getItem:()=>JSON.stringify({enabled:false})}});assert.equal(b.player.state().enabled,false);assert.equal(b.contexts.length,0);b.player.dispose();});
+
+test('BGM cold device can become ready after the former 1200ms chirp deadline',async()=>{
+ const f=fixture();class Cold extends f.Context{resume(){return new Promise(resolve=>setTimeout(()=>{this.state='running';resolve();},1350));}}
+ const p=createGameMusic({Context:Cold,fetcher:async()=>({ok:true,arrayBuffer:async()=>new ArrayBuffer(4)})});
+ assert.equal(await p.playFromGesture(),true);assert.equal(p.state().status,'playing');assert.equal(f.started.length,1);p.dispose();
+});
+for(const action of ['off','pause','dispose'])test(`${action} while native activation is pending prevents all delayed audio`,async()=>{
+ const f=fixture();let release;class Cold extends f.Context{resume(){return new Promise(resolve=>{release=()=>{this.state='running';resolve();};});}}
+ const requests=[];const p=createGameMusic({Context:Cold,fetcher:async url=>{requests.push(url);return{ok:true,arrayBuffer:async()=>new ArrayBuffer(4)};}});
+ const attempt=p.playFromGesture();p[action]();release();assert.equal(await attempt,false);assert.equal(requests.length,0);assert.equal(f.started.length,0);if(action!=='dispose')p.dispose();
+});
+test('activation timeout never revives old playback; explicit later gesture recovers',async()=>{
+ const f=fixture();let release;class Cold extends f.Context{resume(){return new Promise(resolve=>{release=()=>{this.state='running';resolve();};});}}
+ const p=createGameMusic({Context:Cold,activationTimeout:5,fetcher:async()=>({ok:true,arrayBuffer:async()=>new ArrayBuffer(4)})});
+ assert.equal(await p.playFromGesture(),false);assert.equal(p.state().status,'error');release();await tick();assert.equal(f.started.length,0);assert.equal(p.state().status,'error');assert.equal(await p.playFromGesture('orchard'),true);assert.equal(f.started.length,1);p.dispose();
+});
+test('latest chosen song alone starts after two pending native activations settle',async()=>{
+ const f=fixture();const releases=[];class Cold extends f.Context{resume(){return new Promise(resolve=>releases.push(()=>{this.state='running';resolve();}));}}
+ const requests=[];const p=createGameMusic({Context:Cold,fetcher:async url=>{requests.push(url);return{ok:true,arrayBuffer:async()=>new ArrayBuffer(4)};}});
+ const first=p.playFromGesture('meadow'),last=p.playFromGesture('village');releases[1]();releases[0]();assert.deepEqual(await Promise.all([first,last]),[false,true]);assert.deepEqual(requests,['audio/04_village_waltz.wav']);assert.equal(f.started.length,1);p.dispose();
+});
