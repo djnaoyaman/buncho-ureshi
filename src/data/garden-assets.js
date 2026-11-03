@@ -32,6 +32,7 @@ export const GARDEN_ASSETS=Object.freeze({
       },
       "visualArtReviewed": true,
       "integratedUiReviewed": false,
+      "trialAvailable": true,
       "releaseReady": false
     },
     "music": {
@@ -47,6 +48,7 @@ export const GARDEN_ASSETS=Object.freeze({
       "key": "D major",
       "fullDecodePassed": true,
       "browserPlaybackReviewed": false,
+      "trialAvailable": true,
       "releaseReady": false
     }
   },
@@ -82,6 +84,7 @@ export const GARDEN_ASSETS=Object.freeze({
       },
       "visualArtReviewed": true,
       "integratedUiReviewed": false,
+      "trialAvailable": true,
       "releaseReady": false
     },
     "music": {
@@ -97,6 +100,7 @@ export const GARDEN_ASSETS=Object.freeze({
       "key": "G major",
       "fullDecodePassed": true,
       "browserPlaybackReviewed": false,
+      "trialAvailable": true,
       "releaseReady": false
     }
   },
@@ -132,6 +136,7 @@ export const GARDEN_ASSETS=Object.freeze({
       },
       "visualArtReviewed": true,
       "integratedUiReviewed": false,
+      "trialAvailable": true,
       "releaseReady": false
     },
     "music": {
@@ -147,6 +152,7 @@ export const GARDEN_ASSETS=Object.freeze({
       "key": "C major",
       "fullDecodePassed": true,
       "browserPlaybackReviewed": false,
+      "trialAvailable": true,
       "releaseReady": false
     }
   },
@@ -182,6 +188,7 @@ export const GARDEN_ASSETS=Object.freeze({
       },
       "visualArtReviewed": true,
       "integratedUiReviewed": false,
+      "trialAvailable": true,
       "releaseReady": false
     },
     "music": {
@@ -197,6 +204,7 @@ export const GARDEN_ASSETS=Object.freeze({
       "key": "F major",
       "fullDecodePassed": true,
       "browserPlaybackReviewed": false,
+      "trialAvailable": true,
       "releaseReady": false
     }
   },
@@ -232,6 +240,7 @@ export const GARDEN_ASSETS=Object.freeze({
       },
       "visualArtReviewed": true,
       "integratedUiReviewed": false,
+      "trialAvailable": true,
       "releaseReady": false
     },
     "music": {
@@ -247,6 +256,7 @@ export const GARDEN_ASSETS=Object.freeze({
       "key": "A major",
       "fullDecodePassed": true,
       "browserPlaybackReviewed": false,
+      "trialAvailable": true,
       "releaseReady": false
     }
   },
@@ -282,6 +292,7 @@ export const GARDEN_ASSETS=Object.freeze({
       },
       "visualArtReviewed": true,
       "integratedUiReviewed": false,
+      "trialAvailable": true,
       "releaseReady": false
     },
     "music": {
@@ -297,6 +308,7 @@ export const GARDEN_ASSETS=Object.freeze({
       "key": "E-flat major",
       "fullDecodePassed": true,
       "browserPlaybackReviewed": false,
+      "trialAvailable": true,
       "releaseReady": false
     }
   },
@@ -332,6 +344,7 @@ export const GARDEN_ASSETS=Object.freeze({
       },
       "visualArtReviewed": true,
       "integratedUiReviewed": false,
+      "trialAvailable": true,
       "releaseReady": false
     },
     "music": {
@@ -347,6 +360,7 @@ export const GARDEN_ASSETS=Object.freeze({
       "key": "D major",
       "fullDecodePassed": true,
       "browserPlaybackReviewed": false,
+      "trialAvailable": true,
       "releaseReady": false
     }
   },
@@ -382,6 +396,7 @@ export const GARDEN_ASSETS=Object.freeze({
       },
       "visualArtReviewed": true,
       "integratedUiReviewed": false,
+      "trialAvailable": true,
       "releaseReady": false
     },
     "music": {
@@ -397,6 +412,7 @@ export const GARDEN_ASSETS=Object.freeze({
       "key": "D pentatonic",
       "fullDecodePassed": true,
       "browserPlaybackReviewed": false,
+      "trialAvailable": true,
       "releaseReady": false
     }
   },
@@ -432,6 +448,7 @@ export const GARDEN_ASSETS=Object.freeze({
       },
       "visualArtReviewed": true,
       "integratedUiReviewed": false,
+      "trialAvailable": true,
       "releaseReady": false
     },
     "music": {
@@ -447,6 +464,7 @@ export const GARDEN_ASSETS=Object.freeze({
       "key": "G major",
       "fullDecodePassed": true,
       "browserPlaybackReviewed": false,
+      "trialAvailable": true,
       "releaseReady": false
     }
   }
