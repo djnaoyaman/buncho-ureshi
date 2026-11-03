@@ -24,6 +24,6 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: node --test tests/omochi-identity.test.js tests/omochi-garden-flight.test.js tests/omochi-motion-plan.test.js tests/omochi-motion-runtime.test.js tests/garden-bird-motion.test.js tests/garden-social-runtime.test.js tests/garden-social-plan.test.js tests/encounter-garden.test.js
+      - run: node --test tests/omochi-identity.test.js tests/omochi-sprite-geometry.test.js tests/omochi-garden-flight.test.js tests/omochi-motion-plan.test.js tests/omochi-motion-runtime.test.js tests/garden-bird-motion.test.js tests/garden-social-runtime.test.js tests/garden-social-plan.test.js tests/encounter-garden.test.js
       - run: npx playwright install --with-deps chromium
       - run: npx playwright test --config=playwright.omochi-flight.config.js
