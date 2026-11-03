@@ -21,6 +21,7 @@ async function chooseBird(page,id){
 async function tab(page, name) {
   if(await page.locator('.game-bird-sheet').isVisible())await page.locator('[data-game-close-bird]').click();
   if(await page.locator('.game-panel-overlay').isVisible())await page.locator('[data-game-close-panel]').click();
+  if(await page.locator('body').getAttribute('data-scene-controls')==='closed')await page.locator('.game-scene-controls-toggle').click();
   const direct = name==='garden' ? '.game-field-nav [data-field-travel="home"]'
     : ['decorate','family'].includes(name) ? `.game-bottom-dock [data-game-panel="${name}"]`
     : ['friends','outdoors'].includes(name) ? `.game-field-nav [data-game-panel="${name}"]` : null;
@@ -114,12 +115,16 @@ for(const cancel of ['selection','route','mute','close'])test(`care pending audi
   await page.evaluate(()=>window.__releaseCareAudio());await page.waitForTimeout(50);expect(await page.evaluate(()=>window.__careStarts)).toBe(0);
 });
 
-test('care unavailable stages explain disabled actions and retain their natural stage artwork',async({page})=>{
+for(const width of [320,768,1440])test(`care unavailable stages explain disabled actions and retain their natural stage artwork at ${width}px`,async({page})=>{
+  await page.setViewportSize({width,height:950});
   for(const options of [{stage:'egg'},{stage:'chick'},{home:'departed'}]){
-    await seed(page,fixture(options));if(options.home){await tab(page,'roster');await page.locator('[data-game-select="b1"]').click();await openCare(page);}
+    await seed(page,fixture(options));if(options.home){await expect(page.locator('body')).toHaveAttribute('data-scene-controls','closed');await tab(page,'roster');await page.locator('[data-game-select="b1"]').click();await openCare(page);}
     await expect(page.locator('[data-game-care="feed"]')).toBeDisabled();await expect(page.locator('[data-game-care="pet"]')).toBeDisabled();
     await expect(page.locator('#game-care-explanation')).toContainText(options.home?'別の庭に巣立った':'巣で育つ時間');
     if(options.stage)await expect(page.locator('.game-sheet-heading .game-sprite')).toHaveAttribute('data-stage',options.stage);
+    const before=await record(page);await closeCare(page);await openCare(page);
+    await expect(page.locator('[data-game-care="feed"]')).toBeDisabled();await expect(page.locator('[data-game-care="pet"]')).toBeDisabled();
+    expect(await record(page)).toEqual(before);
   }
 });
 
