@@ -22,7 +22,9 @@ async function cover(page,image) {
 }
 async function reachable(page,bird,top,bottom) {
   await expect(bird).toBeVisible();
-  const r=await bird.boundingBox(),t=await top.boundingBox(),b=await bottom.boundingBox();
+  let r,t,b;
+  // Each locator can resolve during a routine render; retry the measurement, never a failed assertion.
+  await expect.poll(async()=>{[r,t,b]=await Promise.all([bird.boundingBox(),top.boundingBox(),bottom.boundingBox()]);return !!(r&&t&&b);}).toBe(true);
   expect(r.width).toBeGreaterThanOrEqual(44); expect(r.height).toBeGreaterThanOrEqual(44);
   expect(r.x).toBeGreaterThanOrEqual(0); expect(r.x+r.width).toBeLessThanOrEqual(page.viewportSize().width);
   expect(r.y).toBeGreaterThanOrEqual(t.y+t.height); expect(r.y+r.height).toBeLessThanOrEqual(b.y);

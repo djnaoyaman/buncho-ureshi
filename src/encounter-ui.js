@@ -41,7 +41,7 @@ export function renderJavaBaselinePage(w,{baseline=PUBLISHED_JAVA_BASELINE,base=
 
 /** Presentation-only preview option is for the isolated QA fixture; never changes readiness. */
 export function renderGardenStage(w,{system=encounterSystem,base='/buncho-ureshi/',previewBackgrounds=false,selectedBirdId=null}={}){
- const place=gardenById(w.encounters.garden.id),bg=place.background,friends=gardenFriendRoster(w,place.id),companions=gardenCompanionRoster(w);
+ const place=gardenById(w.encounters.garden.id),bg=place.background,companions=gardenCompanionRoster(w);
  const art=(bg.releaseReady||bg.trialAvailable||previewBackgrounds)&&bg.src;
  // CSS consumes the same source anchor and cover clamp as gardenStageGeometry.
  const native=gardenStageGeometry(place.id,bg.width,bg.height),ratio=bg.width/bg.height;
@@ -49,14 +49,28 @@ export function renderGardenStage(w,{system=encounterSystem,base='/buncho-ureshi
  const offsets=place.id==='mizukagami'?[[-1.15,-.65],[1.15,-.65],[-1.15,.15],[1.15,.15]]:[[-1.2,-.55],[1.2,-.55],[-1.2,.75],[1.2,.75]];
  const eligible=b=>b.home==='resident'&&['juvenile','adult'].includes(b.stage);
  const lead=w.birds.find(b=>b.id===selectedBirdId&&eligible(b))||w.birds.find(eligible);
- const party=companions.filter(b=>b.birdId!==lead?.id);
+ const householdBirds=[...(lead?[{birdId:lead.id,name:lead.name,color:lead.color}]:[]),...companions].filter((b,i,all)=>all.findIndex(x=>x.birdId===b.birdId)===i);
+ const householdIds=new Set(householdBirds.map(b=>b.birdId));
+ const friends=gardenFriendRoster(w,place.id).filter(f=>!f.birdId||!householdIds.has(f.birdId));
  const p=native.friends[native.selectedIndex];
  const guestId=w.encounters.garden.guestGardenId===place.id?(w.encounters.active?.id||w.encounters.queue[0]):null,guest=guestId&&system.catalog.find(e=>e.id===guestId);
- const visitor=guest?`<button class="finch-garden-visitor" data-encounter-open="${esc(guest.id)}" aria-label="庭に来たお客さまに会う" style="left:${p.x/bg.width*100}%;top:calc(${p.y/bg.height*100}% - ${place.id==='mizukagami'?'.65':'.55'} * min(17cqh,110px))">${picture(guest,base)}<span>お客さま</span></button>`:'';
- const bird=(f,index)=>{const [dx,dy]=offsets[index%4],color=['white','sakura','silver','cinnamon'].includes(f.color)?f.color:'white';return `<button class="finch-garden-friend" style="left:calc(${p.x/bg.width*100}% + ${dx} * min(22cqw,120px));top:calc(${p.y/bg.height*100}% + ${dy} * min(17cqh,110px))" data-garden-friend="${esc(f.friendId)}" data-garden-friend-action="chat" aria-label="${esc(f.name)}と庭でおしゃべり">${renderGardenBirdSprite(color,f.friendId,{base})}<span class="finch-friend-name">${esc(f.name)}</span></button>`;};
- const household=lead?`<button type="button" class="finch-garden-household" data-garden-household="${esc(lead.id)}" aria-label="${esc(lead.name)}とふれあう" style="left:${p.x/bg.width*100}%;top:calc(${p.y/bg.height*100}% + ${place.id==='mizukagami'?'.15':'.75'} * min(17cqh,110px))">${renderGardenBirdSprite(lead.color,lead.id,{base})}<span class="finch-friend-name">${esc(lead.name)}</span></button>`:'';
- const family=party.length?`<nav class="finch-garden-family" aria-label="いっしょに来た家族">${party.map(b=>`<button type="button" data-garden-household="${esc(b.birdId)}" aria-label="${esc(b.name)}とふれあう">${renderGardenBirdSprite(b.color,b.birdId,{base})}<span>${esc(b.name)}</span></button>`).join('')}</nav>`:'';
- return `<div class="finch-garden-scenery finch-garden-stage" data-garden-id="${place.id}" data-garden-fit="cover" aria-label="${esc(place.description)}"><div class="finch-garden-carousel"><div class="finch-garden-slide"><div class="finch-garden-image-plane" style="--garden-image-ratio:${ratio};--garden-anchor-x:${p.x/bg.width};--garden-anchor-y:${p.y/bg.height}" data-image-width="${bg.width}" data-image-height="${bg.height}">${backdrop()}${friends.map(bird).join('')}${household}${visitor}</div></div></div>${family}</div>`;
+ const count=friends.length+householdBirds.length+(guest?1:0),compact=count>6;
+ // Keep the established six terrain positions; companions occupy any unused positions.
+ const slots=[...offsets,[0,place.id==='mizukagami'?.15:.75],[0,place.id==='mizukagami'?-.65:-.55]];
+ const occupied=new Set([...friends.map((_,i)=>i),...(lead?[4]:[]),...(guest?[5]:[])]);
+ const free=slots.map((_,i)=>i).filter(i=>!occupied.has(i));
+ const dense=[[-1.15,0],[0,0],[1.15,0],[-1.5,1],[-.5,1],[.5,1],[1.5,1],[-1.15,2],[0,2],[1.15,2]];
+ let denseIndex=0;
+ const position=slot=>{
+  const [dx,dy]=compact?dense[denseIndex++]:slots[slot];
+  const y=compact?`calc(${p.y/bg.height*100}% + ${place.id==='mizukagami'?'.15':'.75'} * min(17cqh,110px) - ${2-dy} * var(--garden-row-gap))`:`calc(${p.y/bg.height*100}% + ${dy} * min(17cqh,110px))`;
+  return `left:calc(${p.x/bg.width*100}% + ${dx} * min(22cqw,120px));top:${y}`;
+ };
+ const bird=(f,index)=>{const color=['white','sakura','silver','cinnamon'].includes(f.color)?f.color:'white';return `<button type="button" class="finch-garden-friend" style="${position(index)}" data-garden-friend="${esc(f.friendId)}" data-garden-friend-action="chat" aria-label="${esc(f.name)}と庭でおしゃべり">${renderGardenBirdSprite(color,f.friendId,{base})}<span class="finch-friend-name">${esc(f.name)}</span></button>`;};
+ const friendMarkup=friends.map(bird).join('');
+ const household=householdBirds.map(b=>`<button type="button" class="finch-garden-household" data-garden-household="${esc(b.birdId)}" aria-label="${esc(b.name)}とふれあう" style="${position(b.birdId===lead?.id?4:free.shift())}">${renderGardenBirdSprite(b.color,b.birdId,{base})}<span class="finch-friend-name">${esc(b.name)}</span></button>`).join('');
+ const visitor=guest?`<button type="button" class="finch-garden-visitor" data-encounter-open="${esc(guest.id)}" aria-label="庭に来たお客さまに会う" style="${position(5)}">${picture(guest,base)}<span>お客さま</span></button>`:'';
+ return `<div class="finch-garden-scenery finch-garden-stage" data-garden-id="${place.id}" data-garden-count="${count}" data-garden-density="${compact?'compact':'regular'}" data-garden-fit="cover" aria-label="${esc(place.description)}"><div class="finch-garden-carousel"><div class="finch-garden-slide"><div class="finch-garden-image-plane" style="--garden-image-ratio:${ratio};--garden-anchor-x:${p.x/bg.width};--garden-anchor-y:${p.y/bg.height}" data-image-width="${bg.width}" data-image-height="${bg.height}">${backdrop()}${friendMarkup}${household}${visitor}</div></div></div></div>`;
 }
 
 export function renderFinchGarden(w,{system=encounterSystem,base='/buncho-ureshi/',selectedBirdId=null}={}){

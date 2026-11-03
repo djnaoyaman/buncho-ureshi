@@ -98,7 +98,7 @@ test('selected family member is the lead and other companions remain individuall
   t.after(()=>panel.destroy());
   assert.equal(root.querySelector('.finch-garden-household').dataset.gardenHousehold,second.id);
   assert.equal(root.querySelectorAll('[data-garden-household]').length,2);
-  const companion = root.querySelector('.finch-garden-family [data-garden-household]');
+  const companion = root.querySelector(`[data-garden-household="${world.birds[0].id}"]`);
   assert.equal(companion.dataset.gardenHousehold,world.birds[0].id);
   companion.click();
   panel.refresh();
