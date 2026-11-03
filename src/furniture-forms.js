@@ -22,7 +22,7 @@ export function formArtwork(slot,index,level,p,h){
  const clamp=(x,y)=>`<ellipse cx="${x}" cy="${y}" rx="5" ry="12" fill="${g('glaze')}" stroke="${edge}"/>${line(`M${x-2} ${y-7}v13`,1.3,pale)}`;
  const tierTrim=(d)=>level>1?line(d,level===3?2.5:1.5,level===3?g('gold'):ivory):'';
  if(slot==='perch'){
-  const beam=path('M16 84Q78 77 184 84L184 100Q87 94 16 101Z')+line('M20 87Q85 81 179 87',1.5,'#f8e5bc')+line('M24 94q29-5 58-1t90 0',.8,'#a17b4f');
+  const beam=path(level===2?'M16 84Q100 80 184 84L180 99Q100 94 20 99Z':'M16 84Q78 77 184 84L184 100Q87 94 16 101Z')+line('M20 87Q85 81 179 87',1.5,'#f8e5bc')+line('M24 94q29-5 58-1t90 0',.8,'#a17b4f');
   const branch=d=>path(d,'none','#99734b',13)+path(d,'none',g('wood'),10)+line(d,1.1,'#e9cd97');
   const forms=[
    branch('M53 90Q63 71 79 65M136 88q12 13 27 18'),
@@ -75,15 +75,15 @@ export function formArtwork(slot,index,level,p,h){
   return shadow(100,162,72,9)+(index===5?`<g transform="translate(15 64) scale(.58)">${leaves}</g><g transform="translate(71 64) scale(.58)">${leaves}</g>`:leaves)+forms[index]()+tierTrim('M78 143q22 10 44 0');
  }
  if(slot==='swing'){
-  const frame=d=>path(d,'none','#907b57',7)+path(d,'none','#e5d1a9',4)+line(d,1,'#fff0ce');
+  const frame=d=>level===2?path(d,'none','#59351f',10)+path(d,'none',g('wood'),7)+line(d,1,'#d3ad76'):level===3?path(d,'none','#957137',10)+path(d,'none',g('gold'),7)+line(d,1.5,'#fff0bd'):path(d,'none','#907b57',7)+path(d,'none','#e5d1a9',4)+line(d,1,'#fff0ce');
   const outlines=['M45 133V82a55 55 0 01110 0v51','M36 135L100 28 164 135Z','M100 28a56 56 0 110 112a56 56 0 010-112','M43 133V40h114v93','M43 133V40L100 28 157 40V133','M100 28Q8 119 57 140H143Q192 119 100 28','M100 28L157 59v64l-57 26-57-26V59Z','M40 133Q36 70 100 28Q150 68 161 133'];
-  const seat=path('M33 133h134v16H33Z',g('wood'))+line('M39 137h122',1.4,'#f6e1b4')+line('M43 144q41-5 111 0',.8,'#aa875c');
+  const seat=path(level===2?'M33 133Q100 127 167 133l-6 16H39Z':'M33 133h134v16H33Z',g('wood'))+line('M39 137h122',1.4,'#f6e1b4')+line('M43 144q41-5 111 0',.8,'#aa875c');
   const wrap=index===4?line('M41 47l5 4m-5 10 5 4m-5 10 5 4m-5 10 5 4m108-44 5 4m-5 10 5 4m-5 10 5 4',2,c):'';
   return `<ellipse cx="100" cy="13" rx="6" ry="9" fill="none" stroke="#ac9467" stroke-width="3"/>`+line(index===3?'M100 22v18':'M100 22v6',3,'#ac9467')+frame(outlines[index])+seat+wrap+path('M46 133v16m108-16v16','none',g('glaze'),8)+tierTrim('M58 141h84')+(level===3?circle(46,141,2,g('gold'))+circle(154,141,2,g('gold')):'');
  }
  if(slot==='toy'){
   const cord=d=>line(d,2.8,'#a38c62')+line(d,1,'#e8d6ae');
-  const bead=(x,y,r=14)=>circle(x,y,r)+line(`M${x-r*.6} ${y-3}q3-${r*.7} ${r*.7}-${r*.6}`,1.6,ivory);
+  const bead=(x,y,r=14)=>(level===2?path(`M${x-r} ${y}Q${x-r} ${y-r*.65} ${x} ${y-r*.65}Q${x+r} ${y-r*.65} ${x+r} ${y}Q${x+r} ${y+r*.65} ${x} ${y+r*.65}Q${x-r} ${y+r*.65} ${x-r} ${y}Z`,g('glaze'),edge):circle(x,y,r))+line(`M${x-r*.6} ${y-3}q3-${r*.7} ${r*.7}-${r*.6}`,1.6,ivory);
   const ring=(x,y,r)=>`<circle cx="${x}" cy="${y}" r="${r}" fill="none" stroke="${edge}" stroke-width="8"/><circle cx="${x}" cy="${y}" r="${r}" fill="none" stroke="${g('glaze')}" stroke-width="5"/>`;
   const leaf=(x,y,flip=1)=>path(`M${x} ${y}q${-30*flip}-25 ${-14*flip}-42q${34*flip} 4 ${14*flip} 42Z`,g('wood'))+line(`M${x} ${y}l${-12*flip}-32`,1,pale);
   const forms=[()=>cord('M100 22v129')+bead(100,50,22)+path('M100 81l23 21-23 20-23-20Z',g('wood'))+path('M83 151q0-23 17-24q17 1 17 24Z',g('gold'),edge)+`<ellipse cx="100" cy="151" rx="17" ry="5" fill="#ac8b56"/>`,()=>cord('M100 22v14')+ring(100,56,23)+ring(100,94,23)+ring(100,132,23),()=>cord('M100 22L64 43v107M100 22l36 21v107')+[53,82,111,140].map((y,i)=>path(`M58 ${y}h84v11H58Z`,i%2?g('glaze'):g('wood'),edge)).join(''),()=>cord('M100 22v132')+[[-18,-10],[18,-10],[0,-28],[-12,18],[12,18]].map(([x,y])=>bead(100+x,75+y,13)).join('')+bead(100,75,12)+bead(100,129,17),()=>cord('M100 22v30M53 57h94M53 57v40m94-40v40M100 57v78')+ring(53,115,20)+ring(147,115,20)+ring(100,145,16),()=>cord('M100 22v132M100 51L66 74m34-2 34 22')+leaf(67,94)+leaf(133,114,-1)+leaf(100,157),()=>cord('M100 22v135')+[48,88,128].map((y,i)=>path(`M100 ${y-19}l24 13v26l-24 13-24-13v-26Z`,i%2?g('wood'):g('glaze'),edge)+line(`M76 ${y-6}l24 13 24-13M100 ${y+7}v26`,1,pale)).join(''),()=>cord('M100 22v130')+[57,118].map(y=>bead(100,y,26)+[-14,-7,0,7,14].map(x=>line(`M${100+x} ${y-22}q${-x} 22 0 44`,1,'#b89b68')).join('')+[-12,0,12].map(dy=>line(`M78 ${y+dy}q22 6 44 0`,1,'#eaddb9')).join('')).join('')];
@@ -93,7 +93,7 @@ export function formArtwork(slot,index,level,p,h){
   const outlines=['M38 46H162L187 145H13Z','M49 46H151Q161 46 164 57L184 132Q188 145 174 145H26Q12 145 17 132L36 57Q39 46 49 46Z','M38 46q15 8 31 0t31 0t31 0t31 0l25 99q-20-8-43 0t-44 0t-44 0t-43 0Z','M56 46h88l40 49-21 50H37L16 95Z','M38 46H162L187 145H13Z','M38 46H162L187 145H13Z','M38 46H162L187 145H13Z','M38 46H162L187 145H13Z'];
   const id=`paper-form-${index}-${c.slice(1)}-${level}`;
   let out=shadow(100,153,88,9)+(index===7?path('M29 53h131l33 95-174 7Z','#d8caa8','#ae9c7a'):'')+path(outlines[index],g('paper'),'#b9a887');
-  const motifs=Array.from({length:20},(_,i)=>{const x=45+i%5*27,y=64+Math.floor(i/5)*21;const motif=index%4;return motif===0?line(`M${x} ${y+8}q-8-11 0-15q8 4 0 15m0-7 7-5`,1,c):motif===1?`<circle cx="${x}" cy="${y}" r="4" fill="none" stroke="${c}"/>`:motif===2?path(`M${x-7} ${y-5}h13v10h-13Z`,i%2?pale:c,'none'):line(`M${x-6} ${y}l6-6 6 6-6 6Z`,1,c);}).join('');
+  const motifs=Array.from({length:20},(_,i)=>{const x=45+i%5*27,y=64+Math.floor(i/5)*21;const motif=index%4;if(level===2)return motif===0?path(`M${x-6} ${y-5}q14-7 12 4q-7 13-12-4Z`,i%2?c:g('wood')):motif===1?line(`M${x-7} ${y}h14m-7-7v14m-5-12 10 10m-10 0 10-10`,1.6,c):motif===2?path(`M${x-7} ${y-5}h13v10h-13Z`,i%2?c:g('wood')):path(`M${x-7} ${y+5}l7-12 7 12Z`,i%2?c:g('wood'));return motif===0?line(`M${x} ${y+8}q-8-11 0-15q8 4 0 15m0-7 7-5`,1,c):motif===1?`<circle cx="${x}" cy="${y}" r="4" fill="none" stroke="${c}"/>`:motif===2?path(`M${x-7} ${y-5}h13v10h-13Z`,i%2?pale:c,'none'):line(`M${x-6} ${y}l6-6 6 6-6 6Z`,1,c);}).join('');
   out+=`<clipPath id="${id}">${path(outlines[index])}</clipPath><g clip-path="url(#${id})">${motifs}</g>`;
   out+=index===4?path('M162 46l25 99q-16-15-37-9Z',g('rim'),'#b6a37f'):line('M42 54H157L177 137H24',1,ivory);
   if(level>1)out+=line('M48 60h104m-123 76h141',level===3?2:1,level===3?g('gold'):c);
