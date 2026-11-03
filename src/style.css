@@ -2095,3 +2095,9 @@ body[data-world="buncho"] .game-gem-reward{background:#e5f2bb;color:#304631;bord
 #article-grid img[src$="photo-40.webp"]{--photo-ratio:4/3;--photo-position:50% 50%;--photo-saturation:1;--photo-brightness:1}
 #article-grid img[src$="photo-41.webp"]{--photo-ratio:3/2;--photo-position:50% 50%;--photo-saturation:0.98;--photo-brightness:1.05}
 #article-grid img[src$="photo-43.webp"]{--photo-ratio:4/3;--photo-position:50% 50%;--photo-saturation:0.98;--photo-brightness:1.01}
+
+/* A small scroll counter-movement of the whole plate preserves every crop edge. */
+#article-grid .article-cover-frame{margin-block:10px 18px}
+#article-grid[data-photo-parallax="on"] .article-cover-frame{transform:translate3d(0,var(--photo-drift,0px),0)}
+html[data-motion="off"] #article-grid .article-cover-frame{transform:none!important}
+@media(prefers-reduced-motion:reduce){#article-grid .article-cover-frame{transform:none!important}}

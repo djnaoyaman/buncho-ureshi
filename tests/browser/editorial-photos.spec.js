@@ -17,3 +17,13 @@ for(const width of [390,1280])test(`editorial photographs retain credits and rea
  await page.goBack();await expect(frames).toHaveCount(33);
  await page.locator('#article-grid .article-card').first().scrollIntoViewIfNeeded();await info.attach(`index-${width}`,{body:await page.screenshot(),contentType:'image/png'});
 });
+test('scroll parallax moves the plate without clipping, resets for reduced motion and site preference',async({page})=>{
+ await page.emulateMedia({reducedMotion:'no-preference'});await page.goto('encyclopedia/');const grid=page.locator('#article-grid'),frame=grid.locator('.article-cover-frame').first();await frame.scrollIntoViewIfNeeded();
+ await expect(grid).toHaveAttribute('data-photo-parallax','on');
+ const before=await frame.evaluate(f=>Number.parseFloat(f.style.getPropertyValue('--photo-drift'))||0);await page.mouse.wheel(0,150);
+ await expect.poll(()=>frame.evaluate(f=>Number.parseFloat(f.style.getPropertyValue('--photo-drift'))||0)).not.toBe(before);
+ const after=await frame.evaluate(f=>Number.parseFloat(f.style.getPropertyValue('--photo-drift'))||0);expect(Math.abs(after)).toBeLessThanOrEqual(8);
+ expect(await frame.evaluate(f=>getComputedStyle(f).overflow)).toBe('visible');
+ await page.emulateMedia({reducedMotion:'reduce'});await expect.poll(()=>frame.evaluate(f=>getComputedStyle(f).transform)).toBe('none');
+ await page.emulateMedia({reducedMotion:'no-preference'});await page.evaluate(()=>localStorage.setItem('buncho-settings',JSON.stringify({motion:false,ruby:true})));await page.reload();await expect.poll(()=>page.locator('#article-grid .article-cover-frame').first().evaluate(f=>getComputedStyle(f).transform)).toBe('none');
+});

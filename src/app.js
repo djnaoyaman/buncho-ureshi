@@ -1,3 +1,4 @@
+import { bindEditorialParallax } from "./editorial-parallax.js";
 import { mountGameMusic } from "./game-music-ui.js";
 import { renderHome } from "./home.js";
 import { createWorldChrome } from "./game-chrome.js";
@@ -510,7 +511,7 @@ function render(route) {
   if (query !== null) {
     document.querySelector("#search-results-form").onsubmit = submitSiteSearch;
     document.querySelector("#global-query").value = query.slice(0, 80);
-  } else if (route === "encyclopedia/") bindEncyclopedia();
+  } else if (route === "encyclopedia/") { bindEncyclopedia(); teardown = bindEditorialParallax(document.querySelector("#article-grid"), { enabled: settings.motion }); }
   else if (route.startsWith("encyclopedia/") && slug) {
     const a = articles.find((a) => a.id === slug);
     if (a) {

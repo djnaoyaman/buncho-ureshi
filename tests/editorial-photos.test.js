@@ -15,3 +15,9 @@ test('editorial index has individual non-destructive profiles and conserves ever
  assert(section.includes('--photo-ratio:3/4'));assert(section.includes('--photo-ratio:9/10'));
  const app=await read('src/app.js');assert(app.includes('一覧の写真は、構図と明るさ・彩度'));assert(app.includes('元写真・作者・利用条件'));assert(app.includes('article-cover-credit'));
 });
+import { photoDrift, bindEditorialParallax } from '../src/editorial-parallax.js';
+test('parallax stays within reserved space and gracefully supports a static document',()=>{
+ for(const center of [-5000,0,200,500,1000,9000]) assert(Math.abs(photoDrift(center,900))<=8);
+ assert.equal(photoDrift(450,900),0);assert.equal(photoDrift(0,0),0);assert.equal(photoDrift(NaN,900),0);
+ assert.equal(typeof bindEditorialParallax(null),'function');
+});

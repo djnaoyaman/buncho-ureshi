@@ -1,10 +1,10 @@
 name: Editorial photographs
 on:
   pull_request:
-    paths: ['src/app.js', 'src/style.css', 'tests/editorial-photos.test.js', 'tests/browser/editorial-photos.spec.js', 'playwright.editorial.config.js', '.github/workflows/editorial-photos.yml']
+    paths: ['src/editorial-parallax.js', 'src/app.js', 'src/style.css', 'tests/editorial-photos.test.js', 'tests/browser/editorial-photos.spec.js', 'playwright.editorial.config.js', '.github/workflows/editorial-photos.yml']
   push:
     branches: [main]
-    paths: ['src/app.js', 'src/style.css', 'tests/editorial-photos.test.js', 'tests/browser/editorial-photos.spec.js', 'playwright.editorial.config.js', '.github/workflows/editorial-photos.yml']
+    paths: ['src/editorial-parallax.js', 'src/app.js', 'src/style.css', 'tests/editorial-photos.test.js', 'tests/browser/editorial-photos.spec.js', 'playwright.editorial.config.js', '.github/workflows/editorial-photos.yml']
 permissions:
   contents: read
 jobs:
