@@ -158,6 +158,7 @@ export function mountStudio(root,{photos=[],birdSvg,seed}={}){
  // Intercept local links before the site router so undo and pending edits survive.
  function revealWorkspace(){
   const r=workspace.getBoundingClientRect(),view=globalThis.visualViewport;
+  if(view&&view.scale!==1)return; // Respect user-controlled pinch pan.
   const visibleTop=view?.offsetTop||0,margin=parseFloat(getComputedStyle(workspace).scrollMarginTop)||0;
   const top=visibleTop+margin,bottom=visibleTop+(view?.height||globalThis.innerHeight);
   if(r.top<top-1||r.bottom>bottom+1)
@@ -185,9 +186,10 @@ export function mountStudio(root,{photos=[],birdSvg,seed}={}){
   const finishPointer=()=>{
    if(!pointerInOptions)return;
    pointerInOptions=false;
-   requestAnimationFrame(()=>{if(!destroyed)revealWorkspace();});
+   requestAnimationFrame(()=>{if(!destroyed&&!pointerInOptions)revealWorkspace();});
   };
-  on(globalThis,'pointerup',finishPointer);on(globalThis,'pointercancel',finishPointer);
+  on(globalThis,'pointerup',finishPointer);
+  on(globalThis,'pointercancel',()=>{pointerInOptions=false;});
   on(globalThis,'blur',()=>{pointerInOptions=false;});
  }
 
@@ -199,7 +201,7 @@ export function mountStudio(root,{photos=[],birdSvg,seed}={}){
    // Focus arrives before the keyboard finishes opening. Recheck after layout,
    // using the visual viewport's pan offset, without interfering with pinch zoom.
    if(!pointerInOptions&&viewport.scale===1&&options.contains(document.activeElement))
-    requestAnimationFrame(()=>{if(!destroyed)revealWorkspace();});
+    requestAnimationFrame(()=>{if(!destroyed&&!pointerInOptions&&viewport.scale===1&&options.contains(document.activeElement))revealWorkspace();});
   };
   on(viewport,'resize',resize);resize();
  }

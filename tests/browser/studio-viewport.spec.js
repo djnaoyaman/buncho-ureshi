@@ -88,3 +88,22 @@ test('first pointer action opens photos and applies backgrounds without a prior 
  expect((await saved(page)).items.at(-1).kind).toBe('photo');await visibleArtwork(page);
  await action(page,'export').click();await expect(option(page,'export-preview')).toBeVisible();
 });
+
+test('deferred reposition cannot interrupt a newer pointer gesture and cancellation releases it',async({page})=>{
+ await page.setViewportSize({width:390,height:844});await page.goto('studio/');
+ await panel(page,'③','#studio-tools');await page.evaluate(()=>window.scrollBy(0,150));
+ const movement=await page.evaluate(async()=>{
+  const tools=document.querySelector('[data-studio="options"]');
+  tools.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerId:81,buttons:1}));
+  window.dispatchEvent(new PointerEvent('pointerup',{pointerId:81}));
+  tools.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerId:82,buttons:1}));
+  const before=scrollY;await new Promise(resolve=>requestAnimationFrame(resolve));
+  return {before,after:scrollY};
+ });
+ expect(movement.after).toBe(movement.before);
+ await page.evaluate(()=>window.dispatchEvent(new PointerEvent('pointercancel',{pointerId:82})));
+ // Cancellation may mean the browser owns scrolling; do not fight that gesture.
+ expect(await page.evaluate(()=>scrollY)).toBe(movement.before);
+ await action(page,'larger').focus();
+ await expect.poll(()=>canvas(page).boundingBox().then(b=>b.y>=0&&b.y+b.height<=844)).toBe(true);
+});
