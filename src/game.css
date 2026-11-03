@@ -228,9 +228,10 @@ body[data-world="buncho"] .game-scene-toolbar .game-bird-carousel{pointer-events
 body[data-world="buncho"] .game-scene-toolbar .game-garden-care{left:auto;right:calc(100% + 4px);bottom:0;pointer-events:auto}
 body[data-world="buncho"] .game-settings-management{margin-top:32px;border-top:1px solid #cbbf9b;padding-top:12px}
 @media(max-width:360px){body[data-world="buncho"] .game-world-title img{width:128px;max-height:48px}.game-world-exit{font-size:10px!important;max-width:55px!important}}
-/* Room preview stays above the compact category + inventory shelf. */
-body[data-world="buncho"] .game-panel-overlay:has(.game-decoration)>.game-panel{overflow:hidden;padding:8px}
-body[data-world="buncho"] .game-decoration{height:100%;display:grid;grid-template-rows:32px 46px minmax(100px,1fr) 36px 36px 134px;gap:3px;position:relative}
+/* A single scroll surface keeps feedback and the complete shelf reachable. */
+body[data-world="buncho"] .game-panel-overlay:has(.game-decoration)>.game-panel{display:flex;flex-direction:column;overflow:auto;padding:8px 8px 16px;touch-action:pan-x pan-y}
+body[data-world="buncho"] .game-panel-overlay:has(.game-decoration) .game-overlay-message{flex:none;margin:0 0 8px}
+body[data-world="buncho"] .game-decoration{width:100%;height:auto;min-height:0;flex:1 0 auto;margin:0 auto;display:grid;grid-template-rows:minmax(32px,auto) 46px minmax(180px,1fr) 44px 44px auto;gap:4px;position:relative}
 body[data-world="buncho"] .game-decoration>.game-section-title,body[data-world="buncho"] .game-collection-heading{display:none}
 body[data-world="buncho"] .game-decor-intro{margin:0;display:flex;justify-content:space-between;align-items:center;font-size:12px}
 body[data-world="buncho"] .game-decor-intro .game-wallet{padding:3px 6px;position:static}
@@ -252,16 +253,17 @@ body[data-world="buncho"] .game-decor-draw details{margin:0;font-size:10px}
 body[data-world="buncho"] .game-decor-draw details[open]{position:absolute;inset:10px;z-index:20;background:#fff9e9;border:1px solid #bdae82;border-radius:14px;padding:12px;overflow:auto}
 body[data-world="buncho"] .game-decor-draw .game-draw-result{position:absolute;top:0;left:0;right:110px;z-index:8;font-size:10px;padding:5px;margin:0}.game-draw-result p{font-size:10px!important}
 body[data-world="buncho"] :is(.game-decor-filter,.game-decor-tiers){display:flex;gap:4px;min-width:0}
-body[data-world="buncho"] :is(.game-decor-filter,.game-decor-tiers) button{flex:1;min-height:34px;padding:2px;font-size:11px;border-radius:12px 12px 0 0}
+body[data-world="buncho"] :is(.game-decor-filter,.game-decor-tiers) button{flex:1;min-height:44px;padding:2px;font-size:11px;border-radius:12px 12px 0 0}
 body[data-world="buncho"] .game-decor-tiers small{font-size:9px;margin-left:4px}
 body[data-world="buncho"] :is(.game-decor-filter,.game-decor-tiers) button[aria-pressed=true]{background:#dbe7bd;border-bottom:3px solid #7d9158}
-body[data-world="buncho"] .game-collection{min-height:0;overflow:auto}.game-collection-tier[hidden],.game-owned-items button[hidden]{display:none!important}
+body[data-world="buncho"] .game-collection{min-height:0;overflow:visible}
+body[data-world="buncho"] .game-collection-tier{margin:0}.game-collection-tier[hidden],.game-owned-items button[hidden]{display:none!important}
 body[data-world="buncho"] .game-collection-tier h5{display:none}
 body[data-world="buncho"] .game-collection .game-owned-items{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;margin:0}
 body[data-world="buncho"] .game-collection .game-owned-items button{display:flex;flex-direction:column;align-items:center;padding:2px;gap:0;min-height:60px;max-height:64px;border-radius:8px}
 body[data-world="buncho"] .game-collection .game-owned-items svg{width:42px;height:36px;flex:0 0 36px}.game-owned-items span{font-size:9px!important;line-height:1.2;max-width:100%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.game-owned-items small{display:inline;margin-left:3px;font-size:8px!important}
 @media(max-width:600px){body[data-world="buncho"] .game-room-preview{aspect-ratio:3/4}}
-@media(max-height:500px) and (min-width:601px){body[data-world="buncho"] .game-decoration{grid-template-rows:28px 44px minmax(95px,1fr) 34px;grid-template-columns:1fr 1fr}body[data-world="buncho"] .game-decor-workbench{grid-column:1;grid-row:3/5}body[data-world="buncho"] .game-decor-filter{grid-column:2;grid-row:1}body[data-world="buncho"] .game-decor-tiers{grid-column:2;grid-row:2}body[data-world="buncho"] .game-collection{grid-column:2;grid-row:3/5}}
+@media(max-height:500px) and (min-width:601px){body[data-world="buncho"] .game-decoration{grid-template-rows:44px 46px minmax(180px,1fr);grid-template-columns:1fr 1fr}body[data-world="buncho"] .game-decor-workbench{grid-column:1;grid-row:3}body[data-world="buncho"] .game-decor-filter{grid-column:2;grid-row:1}body[data-world="buncho"] .game-decor-tiers{grid-column:2;grid-row:2}body[data-world="buncho"] .game-collection{grid-column:2;grid-row:3}}
 body[data-world="buncho"]{height:var(--game-viewport-height,100dvh)}
 body[data-world="buncho"] #main{top:var(--game-viewport-top,0px);bottom:auto;height:var(--game-viewport-height,100dvh)}
 body[data-world="buncho"] .game-panel-overlay{height:calc(var(--game-viewport-height,100dvh) - 16px);max-height:calc(var(--game-viewport-height,100dvh) - 16px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))}
@@ -527,3 +529,6 @@ body[data-world="buncho"] .game-owner-setting .owner-portrait-art{width:70px;hei
 @media(max-width:600px) and (max-height:280px){
  body[data-world="buncho"][data-scene-controls="open"] .game-main>.game-scene-caption{display:none}
 }
+
+/* The full-window game must override the legacy article-width shell. */
+body[data-world="buncho"] #main.page-content{max-width:none;padding:0}
