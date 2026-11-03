@@ -20,6 +20,7 @@ async function fixture(t,options={}){
   const locks={request(name,fn){const gate=nextGate,failure=nextFailure;nextGate=null;nextFailure=null;const job=tail.then(async()=>{if(gate)await gate.promise;if(failure)throw failure;return fn();});tail=job.catch(()=>{});return job;}};
   Object.defineProperty(window.navigator,'locks',{value:locks,configurable:true});
   window.localStorage.setItem(STORAGE_KEY,serializeWorld(initial));
+  if(!options.legacyUnmarked)window.localStorage.setItem('buncho.care-sound-choice.v1',JSON.stringify({explicit:true,enabled:initial.settings.careSound}));
   const values={window,document:window.document,location:window.location,navigator:window.navigator,localStorage:window.localStorage,FormData:window.FormData,matchMedia:window.matchMedia.bind(window),indexedDB:undefined,BroadcastChannel:undefined,confirm:()=>confirmResult,setInterval:callback=>{const id=timers.size+1;timers.set(id,callback);return id;},clearInterval:id=>timers.delete(id)};
   for(const [key,value]of Object.entries(values)){globals.set(key,Object.getOwnPropertyDescriptor(globalThis,key));Object.defineProperty(globalThis,key,{value,configurable:true,writable:true});}
   const root=window.document.createElement('main');window.document.body.append(root);
@@ -150,4 +151,24 @@ test('unsent talk survives park and home travel; empty submission never mutates 
  assert.equal(f.root.querySelector('#game-words').value,'あとで水浴びしよう');
  const before=f.read(),blank=f.root.querySelector('#game-words');blank.value='  ';blank.dispatchEvent(new f.window.Event('input',{bubbles:true}));f.root.querySelector('[data-game-form="talk"]').dispatchEvent(new f.window.Event('submit',{bubbles:true,cancelable:true}));await f.settle();
  assert.deepEqual(f.read(),before);assert.match(f.root.querySelector('.game-reply').textContent,/ひとこと/);
+});
+
+test('unmarked legacy mute migrates on once; explicit device mute survives remount',async t=>{
+ const f=await fixture(t,{sound:false,legacyUnmarked:true});await f.mount();assert.equal(f.read().settings.careSound,true);assert.equal(f.rig.contexts.length,0);f.clickCare('feed');await f.settle();await until(()=>f.rig.starts===2);await f.sound(false);f.stop();await f.mount();assert.equal(f.read().settings.careSound,false);assert.equal(JSON.parse(f.window.localStorage.getItem('buncho.care-sound-choice.v1')).explicit,true);
+});
+
+test('explicit device mute remains authoritative after imported and peer ON worlds',async t=>{
+ const f=await fixture(t,{sound:false});await f.mount();f.closeCare();f.root.querySelector('[data-game-panel="settings"]').click();
+ const imported=worldFixture({sound:true});imported.worldId+='-import';f.importWorld(imported);await f.settle();f.root.querySelector('[data-game-panel="garden"]').click();f.openCare();assert.equal(f.root.querySelector('[data-game-care-sound]').checked,false);f.clickCare('pet');await f.settle();assert.equal(f.rig.starts,0);
+ const peer=f.read();peer.worldId+='-peer';peer.settings.careSound=true;bumpRevision(peer);f.write(peer);await f.poll();f.openCare();assert.equal(f.root.querySelector('[data-game-care-sound]').checked,false);assert.equal(f.rig.starts,0);
+});
+test('pagehide cancels pending care chirp without needing visibilitychange',async t=>{
+ const rig=audioRig({held:true}),f=await fixture(t,{sound:true,rig});await f.mount();f.clickCare('pet');await f.settle();f.window.dispatchEvent(new f.window.Event('pagehide'));rig.gate.resolve();await sleep(10);assert.equal(rig.starts,0);f.stop();f.window.dispatchEvent(new f.window.Event('pagehide'));assert.equal(rig.starts,0);
+});
+test('explicit peer mute storage event immediately cancels and persists across world refresh',async t=>{
+ const rig=audioRig({held:true}),f=await fixture(t,{sound:true,rig});await f.mount();f.clickCare('pet');await f.settle();f.window.dispatchEvent(new f.window.StorageEvent('storage',{key:'buncho.care-sound-choice.v1',newValue:JSON.stringify({explicit:true,enabled:false})}));rig.gate.resolve();await sleep(10);assert.equal(rig.starts,0);assert.equal(f.root.querySelector('[data-game-care-sound]').checked,false);await f.poll();assert.equal(f.root.querySelector('[data-game-care-sound]').checked,false);
+});
+
+test('game-only shell actions focus settings/help and their listener is removed on route exit',async t=>{
+ const f=await fixture(t);await f.mount();document.dispatchEvent(new window.CustomEvent('buncho-world-action',{detail:'settings'}));assert(f.root.querySelector('.game-settings'));assert.equal(f.root.querySelector('.game-bird-sheet').open,false);assert.equal(document.activeElement.textContent,'つづきの保存と設定');document.dispatchEvent(new window.CustomEvent('buncho-world-action',{detail:'help'}));assert(f.root.querySelector('.game-help'));const before=f.root.innerHTML;f.stop();document.dispatchEvent(new window.CustomEvent('buncho-world-action',{detail:'settings'}));assert.equal(f.root.innerHTML,before);
 });

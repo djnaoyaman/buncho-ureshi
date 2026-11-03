@@ -6,7 +6,7 @@ function fixture({stage='adult',home='resident',sound=false}={}){
   const w=createWorld(now,5402);advanceTicks(w,1);adoptBird(w,'b2','こめ');w.paused=true;w.lastUpdated=now;w.care.cleanliness=15;w.settings.careSound=sound;w.birds[0].needs.food=40;w.birds[0].mood=60;w.birds[0].stage=stage;w.birds[0].home=home;return validateWorld(w);
 }
 async function record(page,value){return page.evaluate(({dbName,value})=>new Promise((resolve,reject)=>{const open=indexedDB.open(dbName,1);open.onupgradeneeded=()=>open.result.createObjectStore('world');open.onerror=()=>reject(open.error);open.onsuccess=()=>{const db=open.result,tx=db.transaction('world',value?'readwrite':'readonly'),store=tx.objectStore('world'),request=value?store.put(value,'current'):store.get('current');tx.oncomplete=()=>{db.close();resolve(value||request.result);};tx.onerror=()=>{db.close();reject(tx.error);};};}),{dbName:DB,value});}
-async function seed(page,w=fixture()){await page.goto('');await record(page,w);await page.goto('game/');await expect(page.locator('.game-app')).toBeVisible();if(w.birds[0].home!=='departed')await openCare(page);}
+async function seed(page,w=fixture()){await page.goto('');await page.evaluate(sound=>{localStorage.setItem('buncho.music.v1',JSON.stringify({enabled:false}));if(typeof sound==='boolean')localStorage.setItem('buncho.care-sound-choice.v1',JSON.stringify({explicit:true,enabled:sound}));},w.settings.careSound);await record(page,w);await page.goto('game/');await expect(page.locator('.game-app')).toBeVisible();if(w.birds[0].home!=='departed')await openCare(page);}
 async function openCare(page){await page.locator('[data-game-open-bird]').click();await expect(page.locator('.game-bird-sheet')).toBeVisible();}
 async function closeCare(page){if(await page.locator('.game-bird-sheet').isVisible()){await page.locator('[data-game-close-bird]').click();await expect(page.locator('.game-bird-sheet')).not.toBeVisible();}}
 async function chooseBird(page,id){
@@ -47,7 +47,7 @@ test('an existing v1 device save migrates in place without advancing paused fami
   await seed(page,legacy);const migrated=await record(page);
   expect(migrated.version).toBe(4);expect(migrated.worldId).toBe(legacy.worldId);expect(migrated.tick).toBe(legacy.tick);
   expect(migrated.birds.map(({care,gemCare,...bird})=>bird)).toEqual(legacy.birds);expect(migrated.events).toEqual(legacy.events);
-  expect(migrated.care).toEqual({cleanliness:100,lastCleanTick:null});expect(migrated.settings.careSound).toBe(false);
+  expect(migrated.care).toEqual({cleanliness:100,lastCleanTick:null});expect(migrated.settings.careSound).toBe(true);
   expect(migrated.birds.every(b=>b.care.lastFedTick===null&&b.care.lastPetTick===null)).toBe(true);expect(migrated.birds.every(b=>Object.values(b.gemCare).every(value=>value===null))).toBe(true);expect(migrated.gems).toEqual({droppings:[],nextDropId:1});
   await page.reload();await expect(page.locator('.game-app')).toBeVisible();expect(await record(page)).toEqual(migrated);
 });
@@ -64,6 +64,11 @@ test('care feed increases displayed fullness and free cleaning resets the floor 
 test('care sound opt-in schedules a short native synthetic chirp or reports unavailable native output; mute and reload stay silent',async({page},info)=>{
   await trackNativeAudio(page);await seed(page);expect(await page.evaluate(()=>window.__careAudio.contexts)).toBe(0);
   await page.locator('[data-game-care-sound]').check();await expect.poll(async()=> (await record(page)).settings.careSound).toBe(true);expect(await page.evaluate(()=>window.__careAudio.starts)).toBe(0);
+  // ON is an activation gesture, not a chirp. A cold native device may resolve
+  // after the conservative activation deadline; the next deliberate pet must
+  // still sound once the actual device is running. Late old sounds stay forbidden
+  // by the separate bounded-activation regression in care-audio.test.js.
+  await expect.poll(()=>page.evaluate(()=>window.__careNativeContext?.state),{timeout:10000}).toBe('running');
   await page.locator('[data-game-care="pet"]').click();await expect(page.locator('.game-care-feedback')).toContainText('ぴっ');
   // No false audible claim: missing browser audio must retain explicit text fallback.
   const unavailable=await page.evaluate(()=>window.__careAudio.unavailable);
@@ -89,7 +94,7 @@ test('care sound opt-in schedules a short native synthetic chirp or reports unav
 for(const cancel of ['selection','route','mute','close'])test(`care pending audio is discarded after ${cancel}`,async({page})=>{
   await holdAudio(page);await seed(page,fixture({sound:true}));await page.locator('[data-game-care="pet"]').click();await expect.poll(async()=> (await record(page)).birds[0].mood).toBe(64);expect(await page.evaluate(()=>window.__careStarts)).toBe(0);
   if(cancel==='selection'){await closeCare(page);await chooseBird(page,'b2');await openCare(page);}if(cancel==='close')await closeCare(page);
-  if(cancel==='route'){await closeCare(page);await page.locator('#menu-toggle').click();await page.locator('#menu a[href$="encyclopedia/"]').click();await expect(page.locator('#article-grid')).toBeVisible();}
+  if(cancel==='route'){await closeCare(page);await page.locator('.game-world-exit').click();await expect(page.locator('#article-grid')).toBeVisible();}
   if(cancel==='mute')await page.locator('[data-game-care-sound]').uncheck();
   await page.evaluate(()=>window.__releaseCareAudio());await page.waitForTimeout(50);expect(await page.evaluate(()=>window.__careStarts)).toBe(0);
 });
@@ -110,7 +115,7 @@ test('care export preserves v2 values, cancelled import is exact, confirmed impo
   const file={name:'care.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(next))},before=await record(page);
   page.once('dialog',dialog=>dialog.dismiss());await page.locator('#game-import').setInputFiles(file);await expect(page.locator('#game-import')).toHaveValue('');expect(await record(page)).toEqual(before);
   page.once('dialog',dialog=>dialog.accept());await page.locator('#game-import').setInputFiles(file);await expect(page.locator('.game-message')).toContainText('復元');expect((await record(page)).worldId).toBe(next.worldId);expect(await page.evaluate(()=>window.__careAudio.starts)).toBe(0);
-  await tab(page,'garden');await openCare(page);await expect(page.locator('[data-game-fullness]')).toHaveText('73 / 100');await expect(page.locator('[data-game-cleanliness-value]')).toHaveText('44 / 100');await expect(page.locator('[data-game-care-sound]')).toBeChecked();
+  await tab(page,'garden');await openCare(page);await expect(page.locator('[data-game-fullness]')).toHaveText('73 / 100');await expect(page.locator('[data-game-cleanliness-value]')).toHaveText('44 / 100');await expect(page.locator('[data-game-care-sound]')).not.toBeChecked();
 });
 
 for(const width of [320,768,1440])test(`care controls and floor-only tint fit ${width}px without changing bird contacts`,async({page},info)=>{

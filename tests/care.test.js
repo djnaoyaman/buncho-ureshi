@@ -18,7 +18,7 @@ function stripCare(world){const copy=structuredClone(world);copy.version=1;delet
 test('strict v1 migration preserves the complete world and adds only the documented care defaults',()=>{
  const before=JSON.stringify(legacy);validateLegacyWorld(legacy);
  const migrated=migrateV1ToV2(legacy);assert.equal(SAVE_VERSION,4);assert.equal(migrated.version,4);
- assert.deepEqual(stripCare(migrated),legacy);assert.deepEqual(migrated.care,{cleanliness:100,lastCleanTick:null});assert.equal(migrated.settings.careSound,false);
+ assert.deepEqual(stripCare(migrated),legacy);assert.deepEqual(migrated.care,{cleanliness:100,lastCleanTick:null});assert.equal(migrated.settings.careSound,true);
  assert.ok(migrated.birds.every(b=>b.care.lastFedTick===null&&b.care.lastPetTick===null));
  assert.deepEqual(readCompatibleWorld(migrated),migrated);const paused=structuredClone(legacy);paused.paused=true;paused.settings.motion=false;assert.deepEqual(stripCare(migrateV1ToV2(paused)),paused);assert.deepEqual(parseSave(before),migrated);assert.deepEqual(parseSave(serializeWorld(legacy)),migrated);assert.equal(JSON.stringify(legacy),before);
  assert.throws(()=>validateWorld(legacy));assert.throws(()=>migrateV1ToV2(migrated));

@@ -401,7 +401,7 @@ test('rapid navigation and Back clean up a pending async game mount without orph
   await expect(page.locator('#game-root .game-app')).toBeVisible();
   await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');
   await expect.poll(async () => page.evaluate(() => [...window.__gameTestIntervals.values()].filter(delay => delay === 3000).length)).toBe(1);
-  await page.locator('#menu-toggle').click();await page.locator('#menu a[href$="encyclopedia/"]').click();
+  await page.locator('.game-world-exit').click();
   await expect.poll(async () => page.evaluate(() => [...window.__gameTestIntervals.values()].filter(delay => delay === 3000).length)).toBe(0);
   expect(errors).toEqual([]);
 });
@@ -574,7 +574,7 @@ test('natural poses vary asynchronously while stable controls, drafts and save s
   await info.attach('natural-unsynchronized-poses-375',{body:await page.locator('.game-room').screenshot(),contentType:'image/png'});
   await page.locator('[data-game-action="pause"]').first().click();const paused=await poses();await page.waitForTimeout(1800);expect(await poses()).toEqual(paused);
   await page.emulateMedia({reducedMotion:'reduce'});await page.locator('[data-game-action="pause"]').first().click();const reduced=await poses();await page.waitForTimeout(1800);expect(await poses()).toEqual(reduced);
-  await page.locator('#menu-toggle').click();await page.locator('#menu a[href$="encyclopedia/"]').click();await expect(page.locator('#game-root')).toHaveCount(0);await page.waitForTimeout(700);
+  await page.locator('.game-world-exit').click();await expect(page.locator('#game-root')).toHaveCount(0);await page.waitForTimeout(700);
 });
 
 test('real left and right social frames face their partner, and feeding uses the peck frame',async({page},info)=>{

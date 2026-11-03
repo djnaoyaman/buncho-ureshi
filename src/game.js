@@ -55,7 +55,11 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
   let decorSlot='perch', previewItem=null, drawResult=null, fieldPending=false, fieldViewRequest=0;
   let alive=true, store, world, panel='garden', selected='b1', message='', error='', busy=0, lastReply='', replyBird=null, timer, channel, importRequest=0;
   root.innerHTML='<div class="game-loading" role="status">文鳥たちの庭をひらいているよ…</div>';
-  try { store=await openGameStore();world=await store.transact(w=>advanceTo(w)); } catch(e){store?.close();if(!root.isConnected)return()=>{};root.innerHTML=`<div role="alert"><h2>保存を開けませんでした</h2><p>${escape(e.message)}</p><p>いまの保存は削除していません。ほかのタブを閉じて、再読み込みしてください。</p></div>`;return()=>{};}
+  // Older false values were the old default, not proof of an explicit mute.
+  // Keep the explicit device preference separate from interchangeable world saves.
+  let explicitSound=null;
+  try { const p=JSON.parse(localStorage.getItem('buncho.care-sound-choice.v1')||'null');if(p?.explicit===true&&typeof p.enabled==='boolean')explicitSound=p.enabled; } catch {}
+  try { store=await openGameStore();world=await store.transact(w=>{advanceTo(w);const desired=explicitSound??true;if(w.settings.careSound!==desired){w.settings.careSound=desired;bumpRevision(w);}return w;}); } catch(e){store?.close();if(!root.isConnected)return()=>{};root.innerHTML=`<div role="alert"><h2>保存を開けませんでした</h2><p>${escape(e.message)}</p><p>いまの保存は削除していません。ほかのタブを閉じて、再読み込みしてください。</p></div>`;return()=>{};}
   if(!alive||!root.isConnected){store.close();return()=>{};}
   // Unsaved local text belongs to an immutable bird in one world. A background
   // refresh must not replace it just because the submit button took focus.
@@ -98,7 +102,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
   }
   const poseClock=createPoseClock(),reducedMotion=globalThis.matchMedia?.('(prefers-reduced-motion: reduce)'),poseLayout=globalThis.matchMedia?.('(max-width: 600px)');
   const poseEnabled=()=>alive&&root.isConnected&&panel==='garden'&&!document.hidden&&world.settings.motion&&!world.paused&&document.documentElement.dataset.motion!=='off'&&!reducedMotion?.matches;
-  const holdPoses=()=>poseClock.hold();
+  const holdPoses=()=>{poseClock.hold();if(document.hidden)cancelCareEffects();};
   const poseFor=(bird,positions,birds)=>birdPose(bird,{worldId:world.worldId,elapsed:poseClock.elapsed,positions,birds});
   function updatePoses(force=false){
     poseClock.advance(poseEnabled());if((!force&&!poseEnabled())||!alive||!root.isConnected||panel!=='garden')return;
@@ -108,7 +112,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
   const reframePoses=()=>updatePoses(true);
   const audio = audioFactory();
   let careGeneration=0, soundRequest=0, soundChoice=null, careFeedback=null, careGesture=null, gestureTimer;
-  const careSoundEnabled = () => soundChoice === null ? world.settings.careSound : soundChoice;
+  const careSoundEnabled = () => soundChoice ?? explicitSound ?? true;
   function cancelCareEffects() { careGeneration++;audio.cancel();clearTimeout(gestureTimer);careGesture=null;careFeedback=null;root.querySelectorAll('.game-care-cheer,.game-gem-reward').forEach(node=>node.remove()); }
   const latest = w => {
     if(findBird(world,selected)?.name!==findBird(w,selected)?.name){lastReply='';replyBird=null;}
@@ -335,7 +339,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     if(!['feed','pet','clean'].includes(kind)||button.disabled)return;
     const current=()=>alive&&root.isConnected&&world.worldId===expectedWorldId&&selected===expectedSelection&&panel===expectedPanel&&generation===careGeneration;
     // Unlock starts synchronously in this click; no sound plays before commit.
-    const unlocked=kind==='pet'&&careSoundEnabled()?audio.unlockFromGesture():Promise.resolve(false);
+    const unlocked=careSoundEnabled()?audio.unlockFromGesture():Promise.resolve(false);
     let feedback;
     const committed=await mutate(w=>{
       if(w.worldId!==expectedWorldId)throw new Error('庭が変わりました。もう一度えらんでね。');
@@ -350,8 +354,8 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     }
     render();
     showGemReward(feedback.gemAward);
-    if(kind==='pet'&&feedback.changed&&careSoundEnabled()&&world.settings.careSound){
-      const canPlay=()=>current()&&!document.hidden&&Date.now()-gestureAt<=1500&&careSoundEnabled()&&world.settings.careSound;
+    if(feedback.changed&&careSoundEnabled()){
+      const canPlay=()=>current()&&!document.hidden&&Date.now()-gestureAt<=1500&&careSoundEnabled();
       const opened=await unlocked;
       if(!canPlay())return;
       const played=opened&&await audio.chirp(canPlay);
@@ -360,7 +364,8 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
   }
   async function changeCareSound(enabled) {
     const request=++soundRequest,expectedWorldId=world.worldId;
-    soundChoice=enabled;cancelCareEffects();audio.setEnabled(enabled);
+    explicitSound=enabled;soundChoice=enabled;cancelCareEffects();audio.setEnabled(enabled);
+    try { localStorage.setItem('buncho.care-sound-choice.v1',JSON.stringify({explicit:true,enabled})); } catch { /* The immediate mute remains effective even if device preferences cannot save. */ }
     if(enabled)audio.unlockFromGesture(); // gesture only; enabling does not chirp
     const guard=()=>alive&&root.isConnected&&request===soundRequest&&world.worldId===expectedWorldId;
     const committed=await mutate(w=>{w.settings.careSound=enabled;},enabled?'合成音をONにしました。ふれあいを選ぶと短い音が鳴ります。':'合成音を止めました。',guard);
@@ -382,6 +387,13 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
       return;
     }
     if(ev.key==='Escape'&&ev.target.closest('.game-secondary-menu[open]')){ev.preventDefault();closeGameMenu();}
+  }
+  function syncCarePreference(ev) {
+    if(ev.key!=='buncho.care-sound-choice.v1')return;
+    try {const p=JSON.parse(ev.newValue||'null');if(p?.explicit!==true||typeof p.enabled!=='boolean')return;explicitSound=p.enabled;soundChoice=null;cancelCareEffects();audio.setEnabled(careSoundEnabled());render();} catch {}
+  }
+  function unlockCareCapture(ev) {
+    if(ev.isTrusted&&alive&&root.isConnected&&ev.target.closest?.('#game-root,[data-game-title-slot],[data-game-world-control]')&&careSoundEnabled())audio.unlockFromGesture();
   }
   async function click(ev) {
     if(Date.now()<suppressSwipeClickUntil){ev.preventDefault();return;}
@@ -416,9 +428,15 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     if(action==='qa-step'&&new URLSearchParams(location.search).get('qa')==='1')await mutate(w=>{const paused=w.paused;w.paused=false;advanceTicks(w,1000);w.paused=paused;markCurrentTime(w);},'検証用に1000時間を進めました。');
   }
   async function talkAction(text){
-    const birdId=selected,generation=careGeneration,worldId=world.worldId;let answer,gemAward;
+    const birdId=selected,generation=careGeneration,worldId=world.worldId,gestureAt=Date.now();let answer,gemAward;
+    const eligible=['adult','juvenile'].includes(findBird(world,birdId)?.stage)&&findBird(world,birdId)?.home!=='departed';
+    const unlocked=eligible&&careSoundEnabled()?audio.unlockFromGesture():Promise.resolve(false);
     const committed=await mutate(w=>{const b=findBird(w,birdId);const reply=talkToBird(w,birdId,text==='名前を呼ぶ'?b.name:text);answer=reply.answer;gemAward=reply.gemAward;});
     if(committed&&generation===careGeneration&&selected===birdId&&world.worldId===worldId){lastReply=answer;replyBird=birdId;render();showGemReward(gemAward);}
+    if(committed&&eligible&&careSoundEnabled()){
+      const current=()=>alive&&root.isConnected&&generation===careGeneration&&selected===birdId&&world.worldId===worldId&&!document.hidden&&careSoundEnabled()&&Date.now()-gestureAt<=1500;
+      if(await unlocked&&current())await audio.chirp(current);
+    }
     return committed;
   }
   async function submit(ev){
@@ -437,12 +455,17 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     }
   }
   async function change(ev){if(ev.target.matches('[data-game-care-sound]')){await changeCareSound(ev.target.checked);return;}if(ev.target.matches('[data-game-choose], [data-game-scene-choose]')){cancelCareEffects();selected=ev.target.value;render();}if(ev.target.matches('[data-game-motion]'))await mutate(w=>{w.settings.motion=ev.target.checked;});if(ev.target.id==='game-import'&&ev.target.files?.[0]){cancelCareEffects();const file=ev.target.files[0],request=++importRequest;const currentRequest=()=>alive&&root.isConnected&&request===importRequest;try{if(file.size>MAX_SAVE_BYTES)throw new Error('4MB以下の保存ファイルを選んでね。');const text=await file.text();if(!currentRequest())return;const imported=parseSave(text);if(!confirm(`「${imported.birds[0].name}」の庭（${imported.birds.length}羽）を読み込み、今の庭と入れ替えますか？`)){ev.target.value='';return;}await mutate(w=>{const now=Date.now();if(!Number.isSafeInteger(now)||now<0||now>8640000000000000)throw new Error('端末の日時を確認してから、もう一度読み込んでください。');imported.lastUpdated=now;imported.revision=w.revision;return imported;},'保存ファイルから庭を復元しました。',currentRequest);}catch(e){if(!currentRequest())return;error=`読み込めませんでした。今の保存はそのままです。 ${e.message}`;render();}}}
+  const worldAction=event=>{if(!alive||!root.isConnected||!['settings','help'].includes(event.detail))return;sheetOpen=false;fieldViewRequest++;cancelCareEffects();panel=event.detail;message='';render();focusPanel();};
+  document.addEventListener('buncho-world-action',worldAction);
+  root.ownerDocument.defaultView.addEventListener('storage',syncCarePreference);
+  document.addEventListener('click',unlockCareCapture,true);
+  root.ownerDocument.defaultView.addEventListener('pagehide',cancelCareEffects);
   root.addEventListener('cancel',sheetCancel,true);root.addEventListener('keydown',menuKeydown);root.addEventListener('click',click);root.addEventListener('submit',submit);root.addEventListener('change',change);root.addEventListener('input',rememberDraft);root.addEventListener('pointerdown',pointerStart);document.addEventListener('pointerup',pointerEnd);document.addEventListener('pointercancel',pointerEnd);
   if(globalThis.BroadcastChannel){channel=new BroadcastChannel('buncho-garden-updates');channel.onmessage=()=>poll();}
   async function poll(){if(!alive||busy||document.hidden)return;busy++;try{const next=await store.transact(w=>w.paused?w:advanceTo(w));const replaced=next.worldId!==world.worldId,changed=replaced||next.revision!==world.revision||next.paused!==world.paused||refreshPending;if(!alive)return;latest(next);if(changed){if(!replaced&&interactionActive())refreshPending=true;else render();}}catch(e){if(alive){error=e.message;render();}}finally{busy--;}}
-  timer=setInterval(poll,3000);render();
+  timer=setInterval(poll,3000);render();document.dispatchEvent(new document.defaultView.CustomEvent('buncho-game-ready'));
   const poseTimer=setInterval(updatePoses,600);
   root.ownerDocument.defaultView.addEventListener('resize',resizeFamily);
   document.addEventListener('visibilitychange',holdPoses);reducedMotion?.addEventListener?.('change',holdPoses);poseLayout?.addEventListener?.('change',reframePoses);
-  return ()=>{alive=false;importRequest++;soundRequest++;cancelCareEffects();audio.close();clearInterval(timer);clearInterval(poseTimer);root.ownerDocument.defaultView.removeEventListener('resize',resizeFamily);document.removeEventListener('visibilitychange',holdPoses);reducedMotion?.removeEventListener?.('change',holdPoses);poseLayout?.removeEventListener?.('change',reframePoses);channel?.close();store.close();root.querySelector('.game-bird-sheet')?.close();root.removeEventListener('cancel',sheetCancel,true);root.removeEventListener('keydown',menuKeydown);root.removeEventListener('click',click);root.removeEventListener('submit',submit);root.removeEventListener('change',change);root.removeEventListener('input',rememberDraft);root.removeEventListener('pointerdown',pointerStart);document.removeEventListener('pointerup',pointerEnd);document.removeEventListener('pointercancel',pointerEnd);clearTimeout(releaseTimer);pressedPointers.clear();drafts.clear();};
+  return ()=>{document.removeEventListener('buncho-world-action',worldAction);root.ownerDocument.defaultView.removeEventListener('storage',syncCarePreference);document.removeEventListener('click',unlockCareCapture,true);root.ownerDocument.defaultView.removeEventListener('pagehide',cancelCareEffects);alive=false;importRequest++;soundRequest++;cancelCareEffects();audio.close();clearInterval(timer);clearInterval(poseTimer);root.ownerDocument.defaultView.removeEventListener('resize',resizeFamily);document.removeEventListener('visibilitychange',holdPoses);reducedMotion?.removeEventListener?.('change',holdPoses);poseLayout?.removeEventListener?.('change',reframePoses);channel?.close();store.close();root.querySelector('.game-bird-sheet')?.close();root.removeEventListener('cancel',sheetCancel,true);root.removeEventListener('keydown',menuKeydown);root.removeEventListener('click',click);root.removeEventListener('submit',submit);root.removeEventListener('change',change);root.removeEventListener('input',rememberDraft);root.removeEventListener('pointerdown',pointerStart);document.removeEventListener('pointerup',pointerEnd);document.removeEventListener('pointercancel',pointerEnd);clearTimeout(releaseTimer);pressedPointers.clear();drafts.clear();};
 }
