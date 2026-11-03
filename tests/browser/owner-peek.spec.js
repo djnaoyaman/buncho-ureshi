@@ -19,8 +19,8 @@ test('painted owner keeps each selected hairstyle and outfit',async({page},info)
  await page.setViewportSize({width:390,height:844});await page.goto('');
  const hairs=['crop','bob','wave','bun','sweep'],outfits=['apron','cardigan','smock','dress','overalls'];
  for(let i=0;i<hairs.length;i++){
-  await page.evaluate(({hair,outfit})=>localStorage.setItem('buncho.owner-profile.v1',JSON.stringify({version:1,hair,outfit,skin:'peach',hairColor:'chestnut',palette:'leaf',accessory:'none',eyes:'gentle',face:'round'})),{hair:hairs[i],outfit:outfits[i]});
+  await page.evaluate(({hair,outfit})=>localStorage.setItem('buncho.owner-profile.v1',JSON.stringify({version:1,hair,outfit,skin:'peach',hairColor:'chestnut',palette:'leaf',accessory:'none',eyes:hair==='sweep'?'smile':'gentle',face:hair==='sweep'?'soft':'round'})),{hair:hairs[i],outfit:outfits[i]});
   await page.goto('game/');await expect(page.locator('.game-logo-intro')).toBeHidden();const art=page.locator('.owner-peek-art');await expect(art).toHaveAttribute('data-hair',hairs[i]);await expect(art).toHaveAttribute('data-outfit',outfits[i]);
-  await page.screenshot({path:info.outputPath(`variant-${i}.png`)});
+  await page.screenshot({path:info.outputPath(`variant-${i}.png`)});if(i===4){await art.evaluate(el=>{for(const animation of el.getAnimations({subtree:true})){animation.pause();animation.currentTime=6400;}});await page.screenshot({path:info.outputPath('variant-smile-glance.png')});}
  }
 });
