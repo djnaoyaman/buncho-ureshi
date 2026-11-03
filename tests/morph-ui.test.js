@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { Window } from 'happy-dom';
-import { prepareMorphAtlas, renderMorphOverview, renderMorphProfile, renderMorphComparison, renderMorphPhoto, renderMorphRuby, filterMorphProfiles, buildMorphSearchIndex, morphSpeechText, bindMorphAtlas } from '../src/morph-ui.js';
+import { prepareMorphAtlas, renderMorphOverview, renderMorphProfile, renderMorphPhoto, renderMorphRuby, filterMorphProfiles, buildMorphSearchIndex, morphSpeechText, bindMorphAtlas } from '../src/morph-ui.js';
 
 import { morphAtlas as raw } from '../src/data/morphs.js';
 import { morphPhotos as photos } from '../src/data/morph-photos.js';
@@ -126,7 +126,7 @@ test('escaping blocks injected markup, protocol URLs and arbitrary trusted-field
   } finally { await close(); }
 });
 
-test('scoped binding filters, resets, submits and compares without replacing controls or moving focus unexpectedly', async () => {
+test('scoped binding filters, resets and submits without comparison controls or unexpected focus changes', async () => {
   const { root, window, close } = dom(renderMorphOverview(data));
   const teardown = bindMorphAtlas(root, { data });
   try {
@@ -142,15 +142,8 @@ test('scoped binding filters, resets, submits and compares without replacing con
     assert.equal(root.querySelectorAll('.morph-card').length, 1);
     const submitted = root.querySelector('[data-morph-filter-form]').dispatchEvent(new window.Event('submit', { bubbles: true, cancelable: true }));
     assert.equal(submitted, false);
-    const a = root.querySelector('[data-morph-compare="a"]'), b = root.querySelector('[data-morph-compare="b"]');
-    a.value = 'white'; b.value = 'white'; a.dispatchEvent(new window.Event('change', { bubbles: true }));
-    assert.equal(root.querySelectorAll('.morph-comparison').length, 0);
-    assert(root.querySelector('[data-morph-compare-status]').textContent.includes('ちがう'));
-    b.value = 'silver'; b.dispatchEvent(new window.Event('change', { bubbles: true }));
-    assert.equal(root.querySelectorAll('.morph-comparison').length, 2);
-    root.querySelector('[data-morph-compare-id="silver"]').click();
-    assert.equal(a.value, 'silver'); assert.notEqual(a.value, b.value);
-    assert.equal(root.querySelectorAll('.morph-comparison').length, 2);
+    assert.equal(root.querySelector('[data-morph-compare]'),null);
+    assert.equal(root.querySelector('[data-morph-compare-id]'),null);
     teardown(); teardown();
     query.value = 'ごましお'; query.dispatchEvent(new window.Event('input', { bubbles: true }));
     assert.equal(root.querySelector('[data-morph-card]').dataset.morphCard, 'silver');
@@ -219,11 +212,11 @@ test('overview leads with bird identity and keeps detailed research folded witho
  }finally{await close();}
 });
 
-test('overview explains three destinations and exposes all five color shortcuts without duplicate photographs', async()=>{
+test('overview explains two destinations and exposes all five color shortcuts without duplicate photographs', async()=>{
  const {root,close}=dom(renderMorphOverview(data));
  try{
   const links=[...root.querySelectorAll('.morph-entry-nav a')];
-  assert.deepEqual(links.map(a=>a.dataset.morphJump),['morph-profiles','morph-compare','morph-terms']);
+  assert.deepEqual(links.map(a=>a.dataset.morphJump),['morph-profiles','morph-terms']);
   for(const a of links){assert(root.querySelector('#'+a.dataset.morphJump));assert(a.querySelector('strong'));assert(a.querySelector('small'));}
   assert.equal(root.querySelectorAll('[data-morph-show]').length,5);
   assert.equal(root.querySelectorAll('.morph-card img').length,5);
