@@ -34,6 +34,8 @@ jobs:
           pactl info
       - name: Trial startup, actions and save integrity (actual Chrome)
         run: npx playwright test tests/browser/trial-smoke.spec.js tests/browser/care-gauges.spec.js tests/browser/owner-peek.spec.js tests/browser/full-stage.spec.js tests/browser/garden-social.spec.js tests/browser/garden-protagonist.spec.js tests/browser/garden-interaction.spec.js tests/browser/garden-selector-scroll.spec.js tests/browser/compact-music-settings.spec.js tests/browser/game-music.spec.js --project=chrome --retries=0
+      - name: Game share cards before and after JavaScript
+        run: npx playwright test tests/browser/game-sharing.spec.js --project=chrome --project=webkit --retries=0
       - name: Encyclopedia photographs and reduced-motion scroll
         run: npx playwright test --config=playwright.editorial.config.js --output=editorial-test-results
       - uses: actions/upload-artifact@v4

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1200" height="630" viewBox="0 0 1200 630">
+  <title>おもちの文鳥ぐらし — ゲーム専用共有カード</title>
+  <desc>公開済みのゲームタイトルをそのまま使ったオリジナルの共有カードレイアウト。個人写真は含まれません。</desc>
+  <defs><radialGradient id="paper"><stop offset="0" stop-color="#fffef5"/><stop offset="1" stop-color="#f5f4df"/></radialGradient></defs>
+  <rect width="1200" height="630" fill="#e1e9cc"/>
+  <rect x="14" y="14" width="1172" height="602" fill="url(#paper)"/>
+  <rect x="335" y="51" width="530" height="52" rx="26" fill="#edf1dd" stroke="#c4d2af"/>
+  <g fill="#35543a" font-family="Noto Sans CJK JP, sans-serif" font-weight="700" text-anchor="middle">
+    <text x="600" y="86" font-size="24">ブラウザで遊べる文鳥の育成ゲーム</text>
+    <text x="600" y="558" font-size="28">お世話も、模様替えも。おもちと、ゆっくり暮らそう。</text>
+  </g>
+  <image x="65" y="135" width="1070" height="370" preserveAspectRatio="xMidYMid meet" xlink:href="../public/game-art/game-title.png"/>
+</svg>
