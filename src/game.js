@@ -377,6 +377,10 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     document.dispatchEvent(new document.defaultView.CustomEvent('buncho-game-will-render'));
     if(!poseEnabled())poseClock.hold();
     refreshPending=false;
+    // A background refresh replaces the panel node. Keep the reader's place
+    // only when the same panel remains open; navigation starts at the top.
+    const oldPanelScroll=root.querySelector('.game-app')?.dataset.panel===panel
+      ? root.querySelector('.game-panel-overlay[open] > .game-panel')?.scrollTop : undefined;
     const oldFriendScroll=root.querySelector('.game-friend-houses')?.scrollLeft;
     const oldFamilyScroll=root.querySelector('.game-family-pan')?.scrollLeft;
     const openDetails=new Set([...root.querySelectorAll("details[open][data-game-details]")].map(d=>d.dataset.gameDetails));
@@ -414,6 +418,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     if(sheetOpen){sheet.innerHTML=birdSheet();if(opening)sheet.showModal();}else{if(sheet.open)sheet.close();sheet.innerHTML='';}
     for(const [id,value] of Object.entries(drafts.get(draftKey())||{})){const input=root.querySelector(`#${id}`);if(input)input.value=value;}
     root.querySelectorAll('details[data-game-details]').forEach(d=>{if(openDetails.has(d.dataset.gameDetails))d.open=true;});
+    if(oldPanelScroll!==undefined&&panel!=='garden')overlay.querySelector(':scope > .game-panel').scrollTop=oldPanelScroll;
     if(oldFriendScroll!==undefined&&root.querySelector('.game-friend-houses'))root.querySelector('.game-friend-houses').scrollLeft=oldFriendScroll;
     if(oldFamilyScroll!==undefined&&root.querySelector('.game-family-pan'))root.querySelector('.game-family-pan').scrollLeft=oldFamilyScroll;
     const room=root.querySelector('.game-room');
