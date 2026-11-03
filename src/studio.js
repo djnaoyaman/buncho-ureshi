@@ -156,9 +156,11 @@ export function mountStudio(root,{photos=[],birdSvg,seed}={}){
  // Keep the artwork and tools in one bounded viewport. Only tools scroll.
  // Intercept local links before the site router so undo and pending edits survive.
  function revealWorkspace(){
-  const r=workspace.getBoundingClientRect(),top=88;
-  if(r.top<top-1||r.bottom>(globalThis.visualViewport?.height||globalThis.innerHeight)+1)
-   workspace.scrollIntoView?.({block:'start',behavior:'instant'});
+  const r=workspace.getBoundingClientRect(),view=globalThis.visualViewport;
+  const visibleTop=view?.offsetTop||0,margin=parseFloat(getComputedStyle(workspace).scrollMarginTop)||0;
+  const top=visibleTop+margin,bottom=visibleTop+(view?.height||globalThis.innerHeight);
+  if(r.top<top-1||r.bottom>bottom+1)
+   globalThis.scrollBy({top:r.top-top,behavior:'instant'});
  }
  root.querySelectorAll('.studio-steps a').forEach(a=>{
   const hash=a.getAttribute('href');
@@ -176,7 +178,13 @@ export function mountStudio(root,{photos=[],birdSvg,seed}={}){
  // On-screen keyboards resize the visual viewport on phones, unlike layout vh.
  const viewport=globalThis.visualViewport;
  if(viewport){
-  const resize=()=>{workspace.style.setProperty('--studio-visible-height',viewport.height+'px');};
+  const resize=()=>{
+   workspace.style.setProperty('--studio-visible-height',viewport.height+'px');
+   // Focus arrives before the keyboard finishes opening. Recheck after layout,
+   // using the visual viewport's pan offset, without interfering with pinch zoom.
+   if(viewport.scale===1&&options.contains(document.activeElement))
+    requestAnimationFrame(()=>{if(!destroyed)revealWorkspace();});
+  };
   on(viewport,'resize',resize);resize();
  }
 

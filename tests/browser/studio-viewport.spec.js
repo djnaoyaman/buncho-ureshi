@@ -49,8 +49,10 @@ for(const size of [{width:320,height:568},{width:390,height:844},{width:844,heig
 test('keyboard controls and reduced viewport retain preview, and site navigation remains available',async({page},info)=>{
  await page.setViewportSize({width:390,height:844});await page.goto('studio/');
  await option(page,'title').fill('保存する作品');await option(page,'title').press('Tab');
+ await option(page,'title').focus();
  await page.setViewportSize({width:390,height:420});
- await option(page,'title').click();await visibleArtwork(page);
+ await expect.poll(()=>canvas(page).boundingBox().then(b=>b.y+b.height<=420)).toBe(true);
+ await visibleArtwork(page);
  await action(page,'title').click();await action(page,'rotate-right').focus();await page.keyboard.press('Enter');await visibleArtwork(page);
  await info.attach('studio-keyboard-resized-viewport',{body:await page.screenshot(),contentType:'image/png'});
  const state=await saved(page);await page.goto('omochi/');await page.goBack();
