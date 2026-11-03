@@ -9,7 +9,7 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
   function render({focus=false}={}){
     if(!alive)return;const w=getWorld();
     const oldGarden=root.querySelector('.finch-garden');
-    const oldOpenDetails=new Set([...root.querySelectorAll('details[data-garden-details][open]')].map(d=>d.dataset.gardenDetails));
+    const oldOpenDetails=new Set(oldGarden?[...oldGarden.querySelectorAll('details[data-garden-details][open]')].map(d=>d.dataset.gardenDetails):[]);
     const oldDockScroll=root.querySelector('.finch-garden-dock details[name="garden-tools"][open]')?.scrollTop;
     const oldSelector=root.querySelector('.finch-garden-selector');
     const oldScroll=oldSelector?.scrollLeft, oldSelected=oldSelector?.querySelector('[aria-current=page]')?.dataset.gardenSelect;
