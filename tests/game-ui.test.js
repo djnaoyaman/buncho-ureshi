@@ -405,12 +405,13 @@ test('garden manual social reward is one per real care window across nine garden
 });
 
 test('decoration category and collection scroll survive preview, cancellation and background refresh',async t=>{
- const f=await fixture(t);await f.mount();f.root.querySelector('[data-game-panel="decorate"]').click();
+ const f=await fixture(t);f.initial.decor.inventory.push({id:'toy-rose-cozy',slot:'toy',color:'rose',tier:'cozy'});await rawWorld(f.indexedDB,f.initial);await f.mount();f.root.querySelector('[data-game-panel="decorate"]').click();
  const slots=()=>f.root.querySelector('.game-decor-slots'),collection=()=>f.root.querySelector('.game-collection');
  slots().scrollLeft=310;f.root.querySelector('[data-decor-slot="toy"]').click();
  assert.equal(slots().scrollLeft,310,'choosing a later category must not jump to the first category');
  collection().scrollTop=68;f.root.querySelector('[data-decor-preview="toy-rose-cozy"]').click();
  assert.equal(slots().scrollLeft,310);assert.equal(collection().scrollTop,68,'preview retains the collection page');
+ f.root.querySelector('[data-decor-cancel]').click();assert.equal(slots().scrollLeft,310);assert.equal(collection().scrollTop,68,'cancellation retains the collection page');
  f.root.querySelector('[data-decor-filter="owned"]').click();assert.equal(slots().scrollLeft,310);
  f.root.querySelector('[data-decor-filter="all"]').click();collection().scrollTop=62;
  const peer=await f.otherTab();await peer.transact(w=>{bumpRevision(w);return w;});

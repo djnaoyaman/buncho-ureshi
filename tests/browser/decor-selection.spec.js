@@ -23,7 +23,8 @@ for(const size of [{width:390,height:680},{width:390,height:844}])test(`later de
  await activate(page,'[data-decor-filter="owned"]');await activate(page,'[data-decor-tier="lovely"]');await visibleSelectedCategory(page);await activate(page,'[data-decor-tier="cozy"]');
  // Exercise the second row and then a real periodic refresh. The peer changes
  // only a revision in this synthetic context, never a user's save.
- await activate(page,'[data-decor-preview="paper-peach-cozy"]');await expect(page.locator('[data-preview-item]')).toHaveAttribute('data-preview-item','paper-peach-cozy');
+ await page.locator('[data-decor-preview="paper-peach-cozy"]').scrollIntoViewIfNeeded();await settled(page);const beforeSecondRow=await offsets(page);
+ await activate(page,'[data-decor-preview="paper-peach-cozy"]');await expect(page.locator('[data-preview-item]')).toHaveAttribute('data-preview-item','paper-peach-cozy');await settled(page);const afterSecondRow=await offsets(page);for(const key of ['slots','collection','panel'])expect(Math.abs(afterSecondRow[key]-beforeSecondRow[key]),'selection '+key).toBeLessThanOrEqual(2);
  await settled(page);const tracks=await offsets(page),oldPanel=await page.locator('.game-decoration').elementHandle();const peer=await record(page);peer.revision++;await record(page,peer);
  await expect.poll(()=>oldPanel.evaluate(el=>el.isConnected),{timeout:10000}).toBe(false);await settled(page);const refreshed=await offsets(page);for(const key of ['slots','collection','panel'])expect(Math.abs(refreshed[key]-tracks[key]),key).toBeLessThanOrEqual(2);
  await expect(page.locator('[data-preview-item]')).toHaveAttribute('data-preview-item','paper-peach-cozy');await visibleSelectedCategory(page);
