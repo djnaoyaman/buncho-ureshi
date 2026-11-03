@@ -83,3 +83,33 @@
 @media (prefers-reduced-motion:reduce) { .studio *, .studio *::before, .studio *::after { scroll-behavior:auto; animation:none!important; transition:none!important; } }
 
 .studio-art-backgrounds{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:10px 0 18px}.studio-art-backgrounds button{padding:4px;border:2px solid transparent;border-radius:12px;background:#fff;min-height:44px;color:inherit}.studio-art-backgrounds button[aria-pressed=true]{border-color:#365c43;background:#f1f5de}.studio-art-backgrounds img{display:block;width:100%;height:auto;aspect-ratio:1;object-fit:cover;border-radius:8px}.studio-art-backgrounds span{display:block;font-size:.76rem;line-height:1.4;margin:8px 2px;overflow-wrap:anywhere}
+
+/* Editor viewport: artwork never belongs to the scrolling tool stack. */
+body .studio-workspace{--studio-visible-height:100dvh;scroll-margin-top:88px;border:1px solid var(--studio-line);background:#fff;display:flex;flex-direction:column;height:calc(var(--studio-visible-height) - 100px);min-height:160px;max-height:900px}
+body .studio-workspace .studio-steps{flex:none;margin:0;padding:0 8px;gap:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:0;border-bottom:1px solid var(--studio-line)}
+body .studio-workspace .studio-steps a{justify-content:center;min-width:0;padding:7px 2px;min-height:44px;font-size:.8rem;text-decoration:none;line-height:1.35}
+body .studio-workspace .studio-steps a:hover,body .studio-workspace .studio-steps a:focus-visible{background:#edf0e8}
+body .studio-workspace .studio-layout{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1.4fr) minmax(260px,1fr);gap:0;align-items:stretch;overflow:hidden}
+body .studio-workspace .studio-preview{display:flex;flex-direction:column;align-items:center;min-height:0;padding:14px;background:#e8ece3}
+body .studio-workspace .studio-canvas-wrap{display:flex;align-items:center;justify-content:center;flex:1;min-height:0;width:100%;max-width:none;margin:0;padding:0;background:transparent}
+body .studio-workspace .studio-canvas-wrap canvas{width:auto;height:auto;max-width:100%;max-height:100%;object-fit:contain;flex:none}
+body .studio-workspace .studio-canvas-hint{flex:none;font-size:.7rem;line-height:1.4;margin:8px 0 0}
+body .studio-workspace .studio-options{display:block;position:relative;min-height:0;height:100%;width:100%;overflow:auto;overscroll-behavior:contain;scroll-behavior:auto;padding:14px;scroll-padding:8px}
+body .studio-workspace .studio-options>section{scroll-margin:8px;padding:18px 0}
+body .studio-workspace .studio-options h3{font-size:1rem;margin-bottom:12px}
+body .studio-workspace .studio-status{min-height:0;margin:10px 0;padding:8px 10px;font-size:.76rem;line-height:1.5}
+body .studio-workspace .studio-history{gap:4px}
+body .studio-workspace .studio-history button{min-width:0;font-size:.72rem;padding:7px 3px}
+@media(max-width:760px){
+ body .studio-workspace .studio-layout{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,44fr) minmax(0,56fr)}
+ body .studio-workspace .studio-preview{padding:8px}
+ body .studio-workspace .studio-canvas-hint{display:none}
+ body .studio-workspace .studio-options{border-top:1px solid var(--studio-line);padding:10px 12px}
+}
+@media(orientation:landscape) and (max-height:600px){
+ body .studio-workspace{scroll-margin-top:76px;height:calc(var(--studio-visible-height) - 84px)}
+ body .studio-workspace .studio-layout{grid-template-columns:minmax(0,1fr) minmax(220px,1.2fr);grid-template-rows:minmax(0,1fr)}
+ body .studio-workspace .studio-preview{padding:6px}
+ body .studio-workspace .studio-canvas-hint{display:none}
+ body .studio-workspace .studio-options{padding:6px 10px;border-top:0}
+}
