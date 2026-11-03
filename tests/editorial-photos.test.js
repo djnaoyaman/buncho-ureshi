@@ -12,6 +12,6 @@ test('editorial index has individual non-destructive profiles and conserves ever
  for(const p of photos){const file=await readFile(new URL('../public'+p.src,import.meta.url));assert.equal(createHash('sha256').update(file).digest('hex'),p.sha256,p.id);}
  assert(!section.includes('hue-rotate'));assert(!section.includes('sepia'));
  assert(!section.includes('.article-hero'));assert(!section.includes('.photo-row'));
- assert(section.includes('--photo-ratio:3/4'));assert(section.includes('--photo-ratio:4/5'));
+ assert(section.includes('--photo-ratio:3/4'));assert(section.includes('--photo-ratio:9/10'));
  const app=await read('src/app.js');assert(app.includes('一覧の写真は、構図と明るさ・彩度'));assert(app.includes('元写真・作者・利用条件'));assert(app.includes('article-cover-credit'));
 });
