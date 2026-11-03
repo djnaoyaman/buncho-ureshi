@@ -33,7 +33,7 @@ jobs:
           pactl set-default-sink ci_audio
           pactl info
       - name: Trial startup, actions and save integrity (actual Chrome)
-        run: npx playwright test tests/browser/trial-smoke.spec.js tests/browser/care-gauges.spec.js tests/browser/full-stage.spec.js tests/browser/garden-social.spec.js tests/browser/garden-protagonist.spec.js tests/browser/garden-interaction.spec.js tests/browser/garden-selector-scroll.spec.js tests/browser/compact-music-settings.spec.js tests/browser/game-music.spec.js --project=chrome --retries=0
+        run: npx playwright test tests/browser/trial-smoke.spec.js tests/browser/care-gauges.spec.js tests/browser/owner-peek.spec.js tests/browser/full-stage.spec.js tests/browser/garden-social.spec.js tests/browser/garden-protagonist.spec.js tests/browser/garden-interaction.spec.js tests/browser/garden-selector-scroll.spec.js tests/browser/compact-music-settings.spec.js tests/browser/game-music.spec.js --project=chrome --retries=0
       - uses: actions/upload-artifact@v4
         if: always()
         with:

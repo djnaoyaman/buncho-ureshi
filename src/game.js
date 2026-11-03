@@ -1,6 +1,7 @@
 import {mountEncounterPanel} from './encounter-controller.js';
 import {encounterSystem} from './encounters.js';
 import {loadOwnerProfile,renderOwnerAvatar,mountOwnerProfile} from './owner-profile.js';
+import {renderOwnerPeek} from './owner-peek.js';
 import { renderRelationshipMap, navigateRelationships, bindRelationshipNavigation } from './relationship-map.js';
 import { suggestLegacyNumberedNames } from './bird-names.js';
 import { familyLayout } from './family-layout.js';
@@ -395,7 +396,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
       }).join('')}
 
     </div>
-    <div class="game-scene-toolbar"><div class="game-scene-picker game-bird-carousel" aria-label="スワイプで文鳥を選ぶ">${birdSwitchControls()}<div class="game-bird-carousel-face" data-bird-id="${current?.id||''}">${current?smallBird(current):''}<div><strong>${current?escape(current.name):''}</strong><small>${current?colorName[current.color]+'・'+STAGES[current.stage]:''}</small></div></div></div>${world.field.place==='home'?gardenCare():''}</div>${secondaryMenu()}<div class="game-owner-companion" aria-hidden="true">${renderOwnerAvatar(loadOwnerProfile(),{decorative:true,idPrefix:'scene-owner',pose:careGesture?.kind==='feed'?'feed':careGesture?.kind==='pet'?'pet':'idle'})}</div>${bottomDock()}`;
+    <div class="game-scene-toolbar"><div class="game-scene-picker game-bird-carousel" aria-label="スワイプで文鳥を選ぶ">${birdSwitchControls()}<div class="game-bird-carousel-face" data-bird-id="${current?.id||''}">${current?smallBird(current):''}<div><strong>${current?escape(current.name):''}</strong><small>${current?colorName[current.color]+'・'+STAGES[current.stage]:''}</small></div></div></div>${world.field.place==='home'?gardenCare():''}</div>${secondaryMenu()}${world.field.place==='home'?`<div class="game-owner-companion" aria-hidden="true">${renderOwnerPeek(loadOwnerProfile())}</div>`:''}${bottomDock()}`;
   }
   function profile() {
     const b=chosen(),nameSuggestion=suggestLegacyNumberedNames(world).find(item=>item.birdId===b.id),parentNames=b.parents.map(id=>birdName(world,id)),last=world.events.slice().reverse().find(e=>e.ids.includes(b.id));
