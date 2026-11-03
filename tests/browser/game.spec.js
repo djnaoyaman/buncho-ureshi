@@ -460,10 +460,10 @@ for (const residents of [1, 10]) test(`${residents === 1 ? 'initial one-bird' : 
     await expect.poll(() => page.locator('.game-room img').evaluateAll(images=>images.every(img=>img.complete&&img.naturalWidth>0))).toBe(true);
     await expect.poll(() => page.evaluate(({ residents, viewportWidth, expectedPositions, assetGeometry }) => {
       const roomElement=document.querySelector('.game-room'),room=roomElement.getBoundingClientRect(),errors=[];
-      const tall=viewportWidth<=600,maxHeight=tall?500:600,ratio=tall?.75:1.6;
-      if(room.height<280||room.height>maxHeight+1)errors.push(`room height ${room.height} outside 280–${maxHeight}px`);
+      const tall=viewportWidth<=600,ratio=tall?.75:1.6,stage=document.querySelector('.game-main').getBoundingClientRect(),dock=document.querySelector('.game-bottom-dock').getBoundingClientRect();
+      if(room.height<=0||room.top<stage.top+35||room.bottom>dock.top+1)errors.push('scene exceeds available viewport above dock');
       if(Math.abs(room.width/room.height-ratio)>.01)errors.push('habitat aspect ratio changed');
-      if(room.width>(tall?375:960)+1)errors.push('scene exceeds width bound');
+      if(room.width>stage.width+1||room.left<stage.left-1||room.right>stage.right+1)errors.push('scene exceeds available stage width');
       const inside=r=>r.left>=room.left-1&&r.right<=room.right+1&&r.top>=room.top-1&&r.bottom<=room.bottom+1;
       const birds=[...roomElement.querySelectorAll('.game-room-bird')],planes=[];
       for(const bird of birds){

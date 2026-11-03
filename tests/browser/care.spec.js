@@ -83,6 +83,7 @@ test('care feed increases displayed fullness and free cleaning resets the floor 
 test('care sound opt-in schedules a short native synthetic chirp or reports unavailable native output; mute and reload stay silent',async({page},info)=>{
   await trackNativeAudio(page);await seed(page);expect(await page.evaluate(()=>window.__careAudio.contexts)).toBe(0);
   await sound(page,true);await expect.poll(async()=> (await record(page)).settings.careSound).toBe(true);expect(await page.evaluate(()=>window.__careAudio.starts)).toBe(0);
+  await expect.poll(()=>page.evaluate(()=>window.__careNativeContext?.state),{timeout:10000}).toBe('running');
   await page.locator('[data-game-care="pet"]').click();await expect(page.locator('.game-care-feedback')).toContainText('ぴっ');
   // No false audible claim: missing browser audio must retain explicit text fallback.
   const unavailable=await page.evaluate(()=>window.__careAudio.unavailable);

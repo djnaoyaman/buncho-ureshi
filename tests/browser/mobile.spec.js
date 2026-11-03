@@ -139,13 +139,15 @@ async function gameTouchFlow(page, context, name) {
   await page.locator('#game-name').fill(name);
   await page.locator('[data-game-action="adopt"]').tap();
   await expect(page.locator('.game-profile-heading h3')).toHaveText(name);
-  await page.locator('[data-game-open-bird]').tap();await expect(page.locator('.game-bird-sheet')).toBeVisible();
+  await page.locator('.game-profile [data-game-open-bird]').tap();await expect(page.locator('.game-bird-sheet')).toBeVisible();
   await page.locator('[data-game-details="sheet-talk"] summary').tap();
   await page.locator('[data-game-talk="あそぼう"]').tap();
   await expect(page.locator('.game-reply')).toContainText(name);
   await page.locator('[data-game-close-bird]').tap();
+  await page.locator('[data-game-close-panel]').tap();
   if(!await page.locator('.game-tabs [data-game-panel="settings"]').isVisible())await page.locator('[data-game-open-menu]').tap();
   await page.locator('.game-tabs [data-game-panel="settings"]').tap();
+  await page.locator('[data-game-details="management"] > summary').tap();
   const pending = page.waitForEvent('download');
   await page.locator('[data-game-action="export"]').tap();
   const world = parseSave((await downloadBytes(await pending)).toString('utf8'));
