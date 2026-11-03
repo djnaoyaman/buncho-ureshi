@@ -56,6 +56,9 @@ export function createGameMusic({base='', gardenAssets=GARDEN_ASSETS, Context=gl
       await activation;clearTimeout(activationTimer);
       if(token!==generation||disposed)return false;
       if(context.state!=='running')throw Error('もう一度、曲をタップしてください');
+      // Garden selection can finish while iOS is still resuming. Follow the
+      // latest committed garden rather than starting the now-stale track.
+      if(mode==='auto'&&autoTarget()!==id)return playTrack(autoTarget(),false);
       let buffer=buffers.get(id);
       if(!buffer){
         const current=()=>token===generation&&!disposed&&!controller.signal.aborted;
@@ -105,6 +108,7 @@ export function createGameMusic({base='', gardenAssets=GARDEN_ASSETS, Context=gl
     if(replaced||target!==selected)return playTrack(target,false);
     return Promise.resolve(false);
   }
+  function needsGesture(){return enabled&&(status==='paused'||status==='error'||(status==='playing'&&context?.state!=='running'));}
   function dispose(){if(disposed)return;invalidate();disposed=true;buffers.clear();try{context?.close()?.catch(()=>{});}catch{};context=null;}
-  return {state,tracks:()=>tracks.map(t=>({...t})),playFromGesture,playCurrentFromGesture,playAutoFromGesture,setGarden,off,pause,setVolume,dispose};
+  return {state,tracks:()=>tracks.map(t=>({...t})),playFromGesture,playCurrentFromGesture,playAutoFromGesture,setGarden,off,pause,setVolume,needsGesture,dispose};
 }

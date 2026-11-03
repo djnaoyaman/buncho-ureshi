@@ -6,17 +6,17 @@ import {GARDEN_ASSETS} from '../src/data/garden-assets.js';
 function setup(gardenAssets={komorebi:{music:{themeId:'garden-komorebi',asset:'audio/gardens/komorebi.mp3',releaseReady:true,loopEndSeconds:11,loopStartSeconds:0}}}){
  const window=new Window({url:'https://example.test/buncho-ureshi/game/'}),document=window.document;
  document.body.innerHTML='<div data-game-title-slot></div><div id="game-root"><button id="care">ふれあう</button><div data-settings-music></div></div>';
- const docListeners=new Map(),shellListeners=new Map(),requests=[],started=[];let contexts=0;
+ const docListeners=new Map(),shellListeners=new Map(),requests=[],started=[];let contexts=0,context;
  const originalAdd=document.addEventListener.bind(document),originalRemove=document.removeEventListener.bind(document);
  document.addEventListener=(type,fn,...args)=>{if(!docListeners.has(type))docListeners.set(type,new Set());docListeners.get(type).add(fn);return originalAdd(type,fn,...args);};
  document.removeEventListener=(type,fn,...args)=>{docListeners.get(type)?.delete(fn);return originalRemove(type,fn,...args);};
  const create=document.createElement.bind(document);document.createElement=(name,...args)=>{const element=create(name,...args);if(name==='details'){const add=element.addEventListener.bind(element);element.addEventListener=(type,fn,...rest)=>{shellListeners.set(type,fn);return add(type,fn,...rest);};}return element;};
- class Context{constructor(){contexts++;this.state='suspended';this.currentTime=0;this.destination={};}resume(){this.state='running';return Promise.resolve();}suspend(){this.state='suspended';return Promise.resolve();}close(){this.state='closed';return Promise.resolve();}decodeAudioData(){return Promise.resolve({duration:12});}createGain(){return{gain:{value:.18,cancelScheduledValues(){},setValueAtTime(){},linearRampToValueAtTime(){},setTargetAtTime(){}},connect(){},disconnect(){}};}createBufferSource(){const s={connect(){},disconnect(){},start(){started.push(s);s.live=true;},stop(){s.live=false;s.onended?.();}};return s;}}
+ class Context{constructor(){contexts++;context=this;this.state='suspended';this.currentTime=0;this.destination={};}resume(){this.state='running';return Promise.resolve();}suspend(){this.state='suspended';return Promise.resolve();}close(){this.state='closed';return Promise.resolve();}decodeAudioData(){return Promise.resolve({duration:12});}createGain(){return{gain:{value:.18,cancelScheduledValues(){},setValueAtTime(){},linearRampToValueAtTime(){},setTargetAtTime(){}},connect(){},disconnect(){}};}createBufferSource(){const s={connect(){},disconnect(){},start(){started.push(s);s.live=true;},stop(){s.live=false;s.onended?.();}};return s;}}
  const dispose=mountGameMusic(document.querySelector('[data-game-title-slot]'),{window,document,Context,fetcher:async url=>{requests.push(url);return{ok:true,arrayBuffer:async()=>new ArrayBuffer(1)};},gardenAssets});
  const trustedShell=selector=>shellListeners.get('click')({isTrusted:true,target:document.querySelector(selector)});
  const trustedField=()=>{for(const fn of docListeners.get('click')||[])fn({isTrusted:true,target:document.querySelector('#care')});};
  const emit=(name,detail)=>document.dispatchEvent(new window.CustomEvent(name,{detail}));
- return {window,document,docListeners,dispose,trustedShell,trustedField,emit,requests,started,contexts:()=>contexts};
+ return {window,document,docListeners,dispose,trustedShell,trustedField,emit,requests,started,contexts:()=>contexts,context:()=>context};
 }
 const tick=()=>new Promise(resolve=>setTimeout(resolve,0));
 test('music settings shell preserves native node/focus across game repaint then cleans all garden listeners',async()=>{
@@ -64,5 +64,12 @@ test('production catalogue retains all thirteen choices in the collapsed chooser
  assert.equal(f.document.querySelectorAll('[data-music]').length,13);
  assert.equal(f.document.querySelector('.game-music-tracks').hidden,true);
  f.trustedShell('[data-music-choose]');assert.equal(f.document.querySelectorAll('[data-music]').length,13);
+ f.dispose();f.window.happyDOM.abort();
+});
+
+test('trusted game tap resumes an externally interrupted context',async()=>{
+ const f=setup();f.emit('buncho-game-garden',{gardenId:'komorebi',worldId:'one'});f.trustedField();await tick();
+ assert.equal(f.started.length,1);f.context().state='interrupted';f.trustedField();await tick();
+ assert.equal(f.context().state,'running');assert.equal(f.started.length,2);assert.equal(f.started.filter(x=>x.live).length,1);
  f.dispose();f.window.happyDOM.abort();
 });
