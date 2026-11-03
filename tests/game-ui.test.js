@@ -403,3 +403,29 @@ test('garden manual social reward is one per real care window across nine garden
  const f=await fixture(t);await f.mount();f.root.querySelector('[data-game-panel="outdoors"]').click();await until(async()=>(await rawWorld(f.indexedDB)).encounters.garden.open,'garden entry');const before=await rawWorld(f.indexedDB);f.root.querySelector('[data-garden-friend]').click();await until(async()=>(await rawWorld(f.indexedDB)).decor.points===before.decor.points+5,'garden reward');
  f.root.querySelector('[data-garden-select="mizukagami"]').click();await until(async()=>(await rawWorld(f.indexedDB)).encounters.garden.id==='mizukagami','new garden');f.root.querySelector('[data-garden-friend]').click();await sleep(30);const after=await rawWorld(f.indexedDB);assert.equal(after.decor.points,before.decor.points+5);assert.equal(after.economy.gold,before.economy.gold);assert(f.root.querySelector('[data-garden-friend]'));
 });
+
+test('decoration category and collection scroll survive preview, cancellation and background refresh',async t=>{
+ const f=await fixture(t);f.initial.decor.inventory.push({id:'toy-rose-cozy',slot:'toy',color:'rose',tier:'cozy'});await rawWorld(f.indexedDB,f.initial);await f.mount();f.root.querySelector('[data-game-panel="decorate"]').click();
+ const slots=()=>f.root.querySelector('.game-decor-slots'),collection=()=>f.root.querySelector('.game-collection');
+ slots().scrollLeft=310;f.root.querySelector('[data-decor-slot="toy"]').click();
+ assert.equal(slots().scrollLeft,310,'choosing a later category must not jump to the first category');
+ collection().scrollTop=68;f.root.querySelector('[data-decor-preview="toy-rose-cozy"]').click();
+ assert.equal(slots().scrollLeft,310);assert.equal(collection().scrollTop,68,'preview retains the collection page');
+ f.root.querySelector('[data-decor-cancel]').click();assert.equal(slots().scrollLeft,310);assert.equal(collection().scrollTop,68,'cancellation retains the collection page');
+ f.root.querySelector('[data-decor-filter="owned"]').click();assert.equal(slots().scrollLeft,310);
+ f.root.querySelector('[data-decor-filter="all"]').click();collection().scrollTop=62;
+ const peer=await f.otherTab();await peer.transact(w=>{bumpRevision(w);return w;});
+ for(const poll of f.timers.values())await poll();await sleep(20);
+ assert.equal(slots().scrollLeft,310,'background refresh keeps category page');assert.equal(collection().scrollTop,62,'background refresh keeps collection page');
+ const saved=await rawWorld(f.indexedDB);assert.deepEqual(saved.decor,f.initial.decor,'preview and filter navigation do not change owned items or equipment');
+});
+
+test('new decoration choices clear old equipment feedback and change only the requested slot',async t=>{
+ const f=await fixture(t);const world=await rawWorld(f.indexedDB);world.decor.inventory.push({id:'greens-rose-cozy',slot:'greens',color:'rose',tier:'cozy'});await rawWorld(f.indexedDB,world);await f.mount();
+ f.root.querySelector('[data-game-panel="decorate"]').click();f.root.querySelector('[data-decor-slot="greens"]').click();f.root.querySelector('[data-decor-preview="greens-rose-cozy"]').click();
+ f.root.querySelector('[data-decor-equip]').click();await until(()=>f.root.querySelector('.game-overlay-message')?.textContent.includes('飾ったよ'),'equip feedback');
+ const equipped=await rawWorld(f.indexedDB);assert.deepEqual(equipped.decor.equipped,{...world.decor.equipped,greens:'greens-rose-cozy'});
+ f.root.querySelector('[data-decor-slot="water"]').click();assert.ok(!f.root.querySelector('.game-overlay-message'),'old category success must not describe the new selection: '+f.root.querySelector('.game-overlay-message')?.textContent);
+ assert.equal(f.root.querySelector('[data-preview-item]').dataset.previewItem,world.decor.equipped.water);
+ f.root.querySelector('[data-decor-preview="water-rose-cozy"]').click();assert.deepEqual((await rawWorld(f.indexedDB)).decor.equipped,equipped.decor.equipped,'unowned preview does not equip or affect another category');
+});
