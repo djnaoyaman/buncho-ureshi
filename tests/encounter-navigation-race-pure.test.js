@@ -23,3 +23,14 @@ test('old transaction cleanup cannot clear a newer garden operation busy state',
 test('destroyed operation does not write or resurrect a panel',async()=>{
  const {world,root,pending,panel}=setup();const first=panel.garden();await Promise.resolve();panel.destroy();pending.shift()();assert.equal(await first,false);assert.equal(world.encounters.garden.open,false);assert.equal(root.attrs['aria-busy'],undefined);
 });
+
+test('unrelated revision while garden selection waits does not discard the choice',async()=>{
+ const {world,root,pending,panel}=setup();const choice=panel.garden('onsen');await Promise.resolve();
+ world.revision++;pending.shift()();assert.equal(await choice,true);
+ assert.equal(world.encounters.garden.id,'onsen');assert.equal(root.attrs['aria-busy'],'false');panel.destroy();
+});
+test('a newer different garden in another transaction is not overwritten',async()=>{
+ const {world,root,pending,panel}=setup();const choice=panel.garden('onsen');await Promise.resolve();
+ world.encounters.garden.id='komugi';world.revision++;pending.shift()();assert.equal(await choice,false);
+ assert.equal(world.encounters.garden.id,'komugi');assert.match(root.html,/もう一度/);panel.destroy();
+});
