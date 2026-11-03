@@ -2055,3 +2055,11 @@ body[data-world="buncho"] .game-gem-reward{background:#e5f2bb;color:#304631;bord
 
 /* Small screens use separate touch targets, not overlapping diagram labels. */
 @media(max-width:480px){.body-diagram{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;aspect-ratio:auto;border-radius:24px;padding:18px}.body-diagram>svg{grid-column:1/-1;width:100%;height:auto;max-height:260px}.body-diagram button{position:static;transform:none;min-width:0;min-height:44px;padding:8px 4px}}
+
+/* The educational photo never receives anatomy labels as overlays. */
+.body-diagram { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; aspect-ratio:auto; border-radius:24px; padding:18px; }
+.body-diagram > svg { grid-column:1/-1; width:100%; height:auto; max-height:360px; }
+.body-diagram button { position:static; transform:none; min-width:0; min-height:44px; padding:8px 4px; }
+.bird-photo-cutout { max-width:100%; height:auto; }
+.quiz-root > .bird-photo-cutout { display:block; max-width:280px; margin:0 auto; }
+.bird-photo-credit { font-size:.78rem; line-height:1.7; }
