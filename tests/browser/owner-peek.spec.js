@@ -47,3 +47,11 @@ test('wardrobe and scene share watercolor art and save the chosen look',async({p
  await page.screenshot({path:info.outputPath('watercolor-wardrobe.png')});await editor.locator('[data-owner-save]').click();await page.locator('[data-game-close-panel]').click();
  await expect(page.locator('.game-owner-companion .owner-peek-art')).toHaveAttribute('data-hair','bun');await page.screenshot({path:info.outputPath('watercolor-scene-saved.png')});
 });
+
+test('deep complexion and selected hair are visible in the smiling view',async({page},info)=>{
+ await page.setViewportSize({width:390,height:844});await page.goto('');
+ await page.evaluate(()=>localStorage.setItem('buncho.owner-profile.v1',JSON.stringify({version:1,hair:'wave',skin:'deep',hairColor:'ink',outfit:'cardigan',palette:'silver',accessory:'none',eyes:'bright',face:'oval'})));
+ await page.goto('game/');await expect(page.locator('.game-logo-intro')).toBeHidden();const art=page.locator('.game-owner-companion .owner-peek-art');await expect(art).toHaveAttribute('data-skin-color','#704a39');
+ await art.evaluate(el=>{for(const animation of el.getAnimations({subtree:true})){animation.pause();animation.effect.updateTiming({delay:0});animation.currentTime=10000;}});await expect(page.locator('.owner-peek-glance')).toHaveCSS('opacity','1');
+ await page.screenshot({path:info.outputPath('watercolor-deep-skin-glance.png')});
+});
