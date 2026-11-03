@@ -385,3 +385,124 @@ for (const [width, height] of [[320, 568], [390, 844]]) {
     await expect(page.locator('.game-room-bird')).toHaveCount(seeded.birds.length);
   });
 }
+
+for (const [width, height] of [[320, 568], [390, 844], [844, 390]]) {
+  test(`scene caption remains readable outside the terrain ${width}x${height}`, async ({page}, info) => {
+    await page.setViewportSize({width, height});
+    await page.emulateMedia({reducedMotion: 'reduce'});
+    await page.addInitScript(() => { Date.now = () => 1793683200000; });
+    await ready(page, false);
+    const caption = page.locator('.game-scene-caption');
+    const toggle = page.locator('.game-scene-controls-toggle');
+    const initialBird = {
+      id: await page.locator('.game-room-bird.is-selected').getAttribute('data-bird-id'),
+      name: await caption.locator('strong').innerText(),
+      action: await caption.locator(':scope > span').first().innerText(),
+    };
+    await expect(page.locator('.game-room-bird')).toHaveCount(1);
+    await readable(initialBird, 'closed');
+    await toggle.click();
+    await readable(initialBird, 'open');
+    if (width <= 390) await page.screenshot({path:info.outputPath(`caption-one-bird-open-${width}.png`)});
+    await toggle.click();
+    const fixture = await page.evaluate(async () => {
+      const urls = performance.getEntriesByType('resource').map(entry => entry.name);
+      const find = name => urls.find(url => url.includes('/src/' + name + '.js'));
+      const engine = await import(find('engine'));
+      const {openGameStore} = await import(find('game-store'));
+      const store = await openGameStore();
+      try {
+        const world = await store.transact(world => {
+          world.paused = true;
+          world.offlineSummary = null;
+          engine.renameBird(world, world.birds[0].id, 'あいうえおかきくけこさしすせそた');
+          engine.createBird(world, {name:'しろまる', home:'resident', color:'white'});
+          engine.bumpRevision(world);
+          return world;
+        });
+        return world.birds.map(bird => ({id:bird.id, name:bird.name, action:engine.ACTIONS[bird.action.kind]}));
+      } finally { store.close(); }
+    });
+    expect([...fixture[0].name]).toHaveLength(16);
+    await page.reload();
+    await expect(page.locator('body')).toHaveAttribute('data-game-intro', 'done');
+    async function readable(expectedBird, state) {
+      await expect(page.locator('body')).toHaveAttribute('data-scene-controls', state);
+      await expect(caption).toHaveCount(1);
+      await expect(page.locator('.game-main > .game-scene-caption')).toBeVisible();
+      await expect(page.locator('.game-room .game-scene-caption')).toHaveCount(0);
+      await expect(caption.locator('strong')).toHaveText(expectedBird.name);
+      await expect(caption.locator(':scope > span').first()).toHaveText(expectedBird.action);
+      await expect(page.locator('.game-room-bird.is-selected')).toHaveAttribute('data-bird-id', expectedBird.id);
+      const geometry = await caption.evaluate(el => {
+        const r = el.getBoundingClientRect();
+        const neighbors = ['.game-bottom-dock', '.game-field-nav', '.game-field-bar .game-wallet', '.game-room-bird', '.game-scene-toolbar', '.game-scene-controls-toggle'];
+        const overlaps = neighbors.filter(selector => {
+          return [...document.querySelectorAll(selector)].some(other => {
+            if (!other.getClientRects().length || getComputedStyle(other).visibility === 'hidden') return false;
+            const b = other.getBoundingClientRect();
+            return Math.min(r.right,b.right) > Math.max(r.left,b.left) && Math.min(r.bottom,b.bottom) > Math.max(r.top,b.top);
+          });
+        });
+        const text = [...el.querySelectorAll('strong,span')].map(node => {
+          const box = node.getBoundingClientRect(), range = document.createRange();
+          range.selectNodeContents(node);
+          return {
+            overflow: getComputedStyle(node).textOverflow,
+            fits: [...range.getClientRects()].every(t => t.left >= box.left - 1 && t.right <= box.right + 1
+              && t.top >= box.top - 1 && t.bottom <= box.bottom + 1
+              && t.left >= r.left && t.right <= r.right && t.top >= r.top && t.bottom <= r.bottom),
+          };
+        });
+        return {x:r.x,y:r.y,right:r.right,bottom:r.bottom,overlaps,text};
+      });
+      expect(geometry.x).toBeGreaterThanOrEqual(0);
+      expect(geometry.y).toBeGreaterThanOrEqual(0);
+      expect(geometry.right).toBeLessThanOrEqual(width);
+      expect(geometry.bottom).toBeLessThanOrEqual(height);
+      expect(geometry.overlaps).toEqual([]);
+      for (const text of geometry.text) {
+        expect(text.overflow).not.toBe('ellipsis');
+        expect(text.fits).toBe(true);
+      }
+      await noScroll(page);
+    }
+    await readable(fixture[0], 'closed');
+    if (width <= 390) await page.screenshot({path:info.outputPath(`caption-long-name-closed-${width}.png`)});
+    await toggle.click();
+    await readable(fixture[0], 'open');
+    if (width <= 390) await page.screenshot({path:info.outputPath(`caption-long-name-open-${width}.png`)});
+    await page.locator('.game-scene-toolbar [data-bird-step="1"]').click();
+    await readable(fixture[1], 'open');
+    await toggle.click();
+    await readable(fixture[1], 'closed');
+    await toggle.click();
+    await page.locator('.game-scene-toolbar [data-bird-step="-1"]').click();
+    await readable(fixture[0], 'open');
+    // Fill both adult perch rows so placement cannot pass by avoiding only the selected bird.
+    await page.evaluate(async () => {
+      const urls = performance.getEntriesByType('resource').map(entry => entry.name);
+      const find = name => urls.find(url => url.includes('/src/' + name + '.js'));
+      const engine = await import(find('engine'));
+      const {openGameStore} = await import(find('game-store'));
+      const store = await openGameStore();
+      try {
+        await store.transact(world => {
+          while (world.birds.length < 8) engine.createBird(world, {name:`なかま${world.birds.length}`, home:'resident', color:'white', stage:'adult'});
+          engine.bumpRevision(world);
+          return world;
+        });
+      } finally { store.close(); }
+    });
+    await page.reload();
+    await expect(page.locator('body')).toHaveAttribute('data-game-intro', 'done');
+    // Short landscape deliberately shows one selected bird, with all eight still switchable.
+    await expect(page.locator('.game-room-bird')).toHaveCount(height <= 500 ? 1 : 8);
+    await readable(fixture[0], 'closed');
+    if (width <= 390) await page.screenshot({path:info.outputPath(`caption-eight-birds-closed-${width}.png`)});
+    await toggle.click();
+    await readable(fixture[0], 'open');
+    if (width <= 390) await page.screenshot({path:info.outputPath(`caption-eight-birds-open-${width}.png`)});
+
+  });
+}
