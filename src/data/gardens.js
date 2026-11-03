@@ -29,10 +29,12 @@ export function gardenAudioIntent({gardenId,mode='off',selectedTrackId=null,enab
  return (g.music.releaseReady||g.music.trialAvailable)&&g.music.asset?{kind:'garden-theme',themeId:g.music.themeId,asset:g.music.asset,loopStartSeconds:g.music.loopStartSeconds,loopEndSeconds:g.music.loopEndSeconds,fadeMs:reducedMotion?0:1400}:{kind:'retain-current',reason:'theme-not-ready',fadeMs:0};
 }
 
-/** Full-image contain geometry shared with the stage. No cropped terrain or offstage feet. */
+/** Cover crop preserves the selected source terrain contact point, never stretches art. */
 export function gardenStageGeometry(gardenId,width,height){
  const bg=gardenById(gardenId)?.background;if(!bg||!Number.isFinite(width)||!Number.isFinite(height)||!(width>0&&height>0))return null;
- const scale=Math.min(width/bg.width,height/bg.height),drawWidth=bg.width*scale,drawHeight=bg.height*scale,offsetX=(width-drawWidth)*bg.position.x,offsetY=(height-drawHeight)*bg.position.y;
+ const selectedIndex=Math.min(1,bg.friendFeet.length-1),anchor=bg.friendFeet[selectedIndex],scale=Math.max(width/bg.width,height/bg.height),drawWidth=bg.width*scale,drawHeight=bg.height*scale;
+ const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
+ const offsetX=clamp(width*.5-anchor.x*drawWidth,width-drawWidth,0),offsetY=clamp(height*.65-anchor.y*drawHeight,height-drawHeight,0);
  const map=p=>{const x=offsetX+p.x*drawWidth,y=offsetY+p.y*drawHeight;return {x,y,visible:x>=0&&x<=width&&y>=0&&y<=height};};
- return {fit:'contain',mode:width<=479||height<=860?'carousel':'group',drawWidth,drawHeight,offsetX,offsetY,friends:bg.friendFeet.map(map),owner:map(bg.ownerFoot),integratedUiReviewed:false};
+ return {fit:'cover',mode:'carousel',selectedIndex,drawWidth,drawHeight,offsetX,offsetY,friends:bg.friendFeet.map(map),owner:map(bg.ownerFoot),integratedUiReviewed:false};
 }

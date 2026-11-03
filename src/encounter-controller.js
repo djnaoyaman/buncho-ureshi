@@ -1,9 +1,9 @@
 import {encounterSystem} from './encounters.js';
 import {renderEncounterNotebook,renderEncounterPage,renderEncounterScene,renderFinchGarden} from './encounter-ui.js';
 /** Host injects its single existing transaction store. Never creates a second save/backend. */
-export function mountEncounterPanel(root,{getWorld,transact,onGarden=async()=>{},onGardenChanged=()=>{},onReward=()=>{},meetFriend=null,completeEncounter=null,system=encounterSystem,base='/buncho-ureshi/'}={}){
+export function mountEncounterPanel(root,{getWorld,transact,onGarden=async()=>{},onGardenChanged=()=>{},onReward=()=>{},meetFriend=null,completeEncounter=null,system=encounterSystem,initialMode='notebook',base='/buncho-ureshi/'}={}){
   if(typeof getWorld!=='function'||typeof transact!=='function')throw new Error('図鑑の保存先が必要です。');
-  let alive=true,busy=false,mode='notebook',pageId=null,showPhoto=false,generation=0,notice='',worldId=getWorld().worldId;
+  let alive=true,busy=false,mode=initialMode==='garden'?'garden':'notebook',pageId=null,showPhoto=false,generation=0,notice='',worldId=getWorld().worldId;
   const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   function render({focus=false}={}){
     if(!alive)return;const w=getWorld();
@@ -68,5 +68,5 @@ export function mountEncounterPanel(root,{getWorld,transact,onGarden=async()=>{}
     if(feedback?.changed||feedback?.resumed)mode='event';else notice=feedback?.message||'今は会えないみたい。また庭で探してみよう。';render({focus:true});
   }
   root.classList.add('finch-overlay-content');root.addEventListener('click',click);render();
-  return {open,garden,notebook(){generation++;mode='notebook';pageId=null;notice='';render({focus:true});},refresh(){render();},destroy(){alive=false;generation++;root.removeEventListener('click',click);root.removeAttribute('aria-busy');root.classList.remove('finch-overlay-content');}};
+  return {open,garden,notebook(){generation++;busy=false;mode='notebook';pageId=null;notice='';render({focus:true});},refresh(){render();},destroy(){alive=false;generation++;root.removeEventListener('click',click);root.removeAttribute('aria-busy');root.classList.remove('finch-overlay-content');}};
 }
