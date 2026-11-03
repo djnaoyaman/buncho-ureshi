@@ -214,7 +214,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     const back=sheetReturn;sheetOpen=false;cancelCareEffects();root.querySelector('.game-panel-overlay')?.close();root.querySelector('.game-bird-sheet')?.close();
     render();if(restore&&back?.worldId===world.worldId){
       const generation=careGeneration,view=fieldViewRequest;
-      const focusBack=(deferred=false)=>{if(!alive||sheetOpen||generation!==careGeneration||view!==fieldViewRequest||back.worldId!==world.worldId)return;const active=document.activeElement;if(deferred&&active?.isConnected&&active!==document.body&&active!==document.documentElement&&!active.closest('.game-bird-sheet'))return;const target=root.querySelector('.game-panel-overlay[open] [data-game-open-bird]')||root.querySelector(`[data-game-scene-select][data-bird-id="${back.birdId}"]`)||root.querySelector('#game-open-bird');target?.focus({preventScroll:true});};
+      const focusBack=(deferred=false)=>{if(!alive||sheetOpen||generation!==careGeneration||view!==fieldViewRequest||back.worldId!==world.worldId)return;const active=document.activeElement;if(deferred&&active?.isConnected&&active!==document.body&&active!==document.documentElement&&!active.closest('.game-bird-sheet'))return;const target=root.querySelector(`[data-garden-household="${back.birdId}"]`)||root.querySelector('.game-panel-overlay[open] [data-game-open-bird]')||root.querySelector(`[data-game-scene-select][data-bird-id="${back.birdId}"]`)||root.querySelector('#game-open-bird');target?.focus({preventScroll:true});};
       focusBack();root.ownerDocument.defaultView.requestAnimationFrame(()=>focusBack(true));
     }
   }
@@ -385,7 +385,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     if(['outdoors','notebook'].includes(panel)){
       if(!encounterRoot){
         encounterRoot=document.createElement('div');encounterRoot.className='game-encounter-host';
-        encounterController=mountEncounterPanel(encounterRoot,{initialMode:panel==='outdoors'?'garden':'notebook',getWorld:()=>world,meetFriend:(w,id,action,token)=>meetGardenFriendReward(w,id,action,token),completeEncounter:(w,id,action,token)=>completeEncounterReward(w,id,action,token),onReward:amount=>showGemReward(amount),base:new URL('../',GAME_ART).href,transact:async operation=>{
+        encounterController=mountEncounterPanel(encounterRoot,{initialMode:panel==='outdoors'?'garden':'notebook',getWorld:()=>world,getSelectedBirdId:()=>selected,onHouseholdBird:id=>openBirdSheet(id),meetFriend:(w,id,action,token)=>meetGardenFriendReward(w,id,action,token),completeEncounter:(w,id,action,token)=>completeEncounterReward(w,id,action,token),onReward:amount=>showGemReward(amount),base:new URL('../',GAME_ART).href,transact:async operation=>{
           const committed=await mutate(operation,'',()=>alive,{bump:false,advanceCurrent:false});
           if(!committed)throw new Error('記録できませんでした。');return world;
         },onGardenChanged:({gardenId,worldId})=>document.dispatchEvent(new document.defaultView.CustomEvent('buncho-game-garden',{detail:{gardenId,worldId}}))});
