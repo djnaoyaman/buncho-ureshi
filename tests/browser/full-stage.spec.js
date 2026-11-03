@@ -19,7 +19,7 @@ async function noScroll(page) {
 }
 async function cover(page,image) {
   await expect(image).toBeVisible(); await image.evaluate(i=>i.decode());
-  const r=await image.boundingBox(),v=page.viewportSize();
+  let r;const v=page.viewportSize();await expect.poll(async()=>{r=await image.boundingBox();return !!r;}).toBe(true);
   expect(r.x).toBeLessThanOrEqual(1); expect(r.y).toBeLessThanOrEqual(1);
   expect(r.x+r.width).toBeGreaterThanOrEqual(v.width-1);
   expect(r.y+r.height).toBeGreaterThanOrEqual(v.height-1);
