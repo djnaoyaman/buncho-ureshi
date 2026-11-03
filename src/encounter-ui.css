@@ -60,3 +60,28 @@
 .finch-overlay-content:has(>.finch-garden){height:100%;overflow:hidden;scrollbar-gutter:auto}.finch-overlay-content:has(>.finch-garden)>.finch-notice{position:absolute;z-index:5;top:132px;left:50%;transform:translateX(-50%);max-width:85%;border-radius:16px;background:#fff9edee;color:#294533;padding:8px 14px;pointer-events:none;font-size:13px;box-sizing:border-box}.finch-notice:empty{display:none}
 @media(max-height:500px){.finch-garden>header{top:6px;left:10px;right:10px}.finch-garden>header h3{font-size:15px;padding:6px 12px}.finch-garden-selector{top:56px;left:10px;right:10px}.finch-garden-dock{bottom:8px;left:10px;right:10px;flex-wrap:nowrap}.finch-garden-actions{flex:1;min-width:0}.finch-garden-dock>details>summary{font-size:11px;padding:8px}.finch-garden>.finch-clues{bottom:68px}.finch-garden-stage .finch-garden-friend{width:64px;height:64px}}
 @media(prefers-reduced-motion:reduce){.finch-garden-carousel{scroll-behavior:auto}.finch-garden button{transition:none}}
+/* Garden play keeps the view open: four birds together and small floating tools. */
+.finch-garden-stage .finch-garden-carousel{overflow:hidden;touch-action:pan-y}
+.finch-garden-stage .finch-garden-friend{width:clamp(64px,18cqw,100px);height:clamp(75px,21.18cqw,117.65px);transform:translate(-54%,-97.5%)}
+.finch-garden-stage .finch-garden-friend>.finch-friend-name{font-size:11px;line-height:16px;padding:1px 7px;max-width:100px;overflow:hidden;text-overflow:ellipsis}
+.finch-garden>header h3{font-size:14px!important;line-height:1.3!important;padding:5px 9px!important;max-width:calc(100% - 50px)}
+.finch-garden>header>button{font-size:11px;min-width:44px;padding:6px 9px}
+.finch-garden-selector{top:60px;left:10px;right:10px;gap:5px;padding:2px 0 6px}
+.finch-garden-selector button{font-size:11px;padding:6px 10px;min-height:44px}
+.finch-garden-dock{bottom:12px;left:10px;right:10px;flex-wrap:nowrap;gap:5px;justify-content:center}
+.finch-garden-dock>details{flex:1;min-width:0}
+.finch-garden-dock>details>summary{font-size:11px;justify-content:center;white-space:nowrap;padding:6px 8px;min-height:44px;list-style:none}
+.finch-garden-dock>details[open]{position:absolute;bottom:54px;left:0;right:0;max-height:min(55dvh,360px);padding:10px;z-index:8;font-size:12px}
+.finch-garden-dock>details[open]>summary{justify-content:space-between}
+.finch-garden-dock>details[open]>summary:after{content:'閉じる';font-size:11px}
+.finch-garden-dock>details[open] .finch-garden-actions{display:flex;flex-wrap:wrap;overflow:visible}
+.finch-garden-dock>details[open] button{font-size:12px;min-height:44px;padding:7px 10px}
+.finch-garden>.finch-clues{bottom:70px;font-size:12px}
+.finch-overlay-content:has(>.finch-garden)>.finch-notice{top:112px;font-size:11px;padding:5px 10px}
+@media(max-height:500px){.finch-garden-selector{top:54px}.finch-garden-dock{bottom:8px}.finch-garden-stage .finch-garden-friend{width:64px;height:75.3px}}
+.finch-garden-stage .finch-garden-visitor{position:absolute;transform:translate(-50%,-100%);width:70px;height:80px;padding:0!important;min-height:44px;border:0!important;background:none!important;box-shadow:none!important;z-index:3}
+.finch-garden-stage .finch-garden-visitor .finch-art{width:100%;height:100%;max-width:none;object-fit:contain;filter:none;margin:0}
+.finch-garden-visitor>span{position:absolute;top:100%;left:50%;transform:translateX(-50%);font-size:10px;white-space:nowrap;background:#fff4c9;padding:2px 6px;border-radius:12px;color:#3e593b;box-shadow:0 2px 5px #243b2329}
+
+.finch-garden-stage[data-garden-id=mizukagami] .finch-garden-friend{width:60px;height:70.6px}
+.finch-garden-stage .finch-garden-visitor:active{transform:translate(-50%,-100%)}

@@ -1,3 +1,4 @@
+import {mountGardenBirdMotion} from './garden-bird-motion.js';
 import {encounterSystem} from './encounters.js';
 import {renderEncounterNotebook,renderEncounterPage,renderEncounterScene,renderFinchGarden} from './encounter-ui.js';
 /** Host injects its single existing transaction store. Never creates a second save/backend. */
@@ -68,5 +69,6 @@ export function mountEncounterPanel(root,{getWorld,transact,onGarden=async()=>{}
     if(feedback?.changed||feedback?.resumed)mode='event';else notice=feedback?.message||'今は会えないみたい。また庭で探してみよう。';render({focus:true});
   }
   root.classList.add('finch-overlay-content');root.addEventListener('click',click);render();
-  return {open,garden,notebook(){generation++;busy=false;mode='notebook';pageId=null;notice='';render({focus:true});},refresh(){render();},destroy(){alive=false;generation++;root.removeEventListener('click',click);root.removeAttribute('aria-busy');root.classList.remove('finch-overlay-content');}};
+  const motion=mountGardenBirdMotion(root,{enabled:()=>alive&&!getWorld().paused&&getWorld().settings.motion});
+  return {open,garden,notebook(){generation++;busy=false;mode='notebook';pageId=null;notice='';render({focus:true});},refresh(){render();},destroy(){motion();alive=false;generation++;root.removeEventListener('click',click);root.removeAttribute('aria-busy');root.classList.remove('finch-overlay-content');}};
 }
