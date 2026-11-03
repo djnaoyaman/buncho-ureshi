@@ -228,7 +228,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
   function fieldTitle(){return world.field.place==='park'?'みんなの文鳥公園':world.field.place==='friend'?`${birdName(world,world.field.hostId)}のお部屋`:'おもちたちの籠のおうち';}
   function fieldControls(){return `<nav class="game-field-nav" aria-label="文鳥のおでかけ"><button data-field-travel="home" data-game-panel="garden" aria-label="籠のおうちへ" aria-pressed="${panel==='garden'&&world.field.place==='home'}">おうち</button><button data-game-panel="outdoors" aria-label="庭へ遊びに行く" aria-pressed="${panel==='outdoors'}">庭へ</button><button data-game-panel="friends" aria-label="友達のお部屋へ" aria-pressed="${panel==='friends'||panel==='garden'&&world.field.place==='friend'}">友達</button></nav><div class="game-play-actions"><button data-game-panel="decorate" aria-label="お部屋を飾る" aria-pressed="${panel==='decorate'}"><span aria-hidden="true">✧</span> お飾りのアトリエ</button></div>`;}
   function secondaryMenu(){return `<details class="game-secondary-menu" data-game-details="navigation"><summary id="game-nav-summary">文鳥のこと・家族・記録</summary><nav class="game-tabs" aria-label="文鳥ぐらしのメニュー">${[['profile','文鳥の紹介'],['relations','関係図'],['family','家系図'],['diary','日記'],['roster','名簿'],['notebook','出会いの図鑑'],['settings','保存・設定'],['help','あそびかた']].map(([id,label])=>`<button id="game-menu-${id}" data-game-panel="${id}" aria-pressed="${panel===id}">${label}</button>`).join('')}</nav><button class="game-menu-close" data-game-close-menu>メニューを閉じる</button></details>`;}
-  function wallet(){return `<div class="game-wallet"><strong data-decor-points data-full-amount="${world.decor.points}" title="${world.decor.points.toLocaleString('ja-JP')} Gems" aria-label="${world.decor.points.toLocaleString('ja-JP')} Gems">${formatGameAmount(world.decor.points)}<small> Gems</small></strong><strong data-gold-balance data-full-amount="${world.economy.gold}" title="${world.economy.gold.toLocaleString('ja-JP')} Gold" aria-label="${world.economy.gold.toLocaleString('ja-JP')} Gold">${formatGameAmount(world.economy.gold)}<small> Gold</small></strong><span>Lv.${decorLevel(world)}</span></div>`;}
+  function wallet(){return `<div class="game-wallet"><strong role="group" data-decor-points data-full-amount="${world.decor.points}" title="${world.decor.points.toLocaleString('ja-JP')} Gems" aria-label="${world.decor.points.toLocaleString('ja-JP')} Gems">${formatGameAmount(world.decor.points)}<small> Gems</small></strong><strong role="group" data-gold-balance data-full-amount="${world.economy.gold}" title="${world.economy.gold.toLocaleString('ja-JP')} Gold" aria-label="${world.economy.gold.toLocaleString('ja-JP')} Gold">${formatGameAmount(world.economy.gold)}<small> Gold</small></strong><span>Lv.${decorLevel(world)}</span></div>`;}
   function fieldNavigation(){
     const level=decorLevel(world);
     return `<div class="game-field-bar"><div><p class="game-eyebrow">${world.field.place==='park'?'BUNCHO PARK':'LITTLE HOME'}</p><h3 title="${escape(fieldTitle())}">${escape(fieldTitle())}</h3></div>${wallet()}</div>${fieldControls()}`;
@@ -260,7 +260,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     let feedback;
     try{
       const committed=await mutate(w=>{
-        if(button.hasAttribute('data-field-travel'))feedback=travelTo(w,button.dataset.fieldTravel,button.dataset.fieldHost||null);
+        if(button.hasAttribute('data-field-travel')){if(w.encounters.garden.open)encounterSystem.leaveGarden(w,{worldId:w.worldId,revision:w.revision});feedback=travelTo(w,button.dataset.fieldTravel,button.dataset.fieldHost||null);}
         else if(button.dataset.fieldInvite)feedback=inviteFriend(w,button.dataset.fieldInvite);
         else if(button.dataset.decorDraw)feedback=drawDecoration(w,button.dataset.decorDraw);
         else feedback=equipDecoration(w,button.dataset.decorEquip);
@@ -280,7 +280,8 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
   }
   function gemCollectibles(){
     if(world.field.place!=='home')return '';
-    return `<div class="game-droppings" aria-label="落としものを拾う">${(world.gems?.droppings||[]).map((drop,i)=>`<button type="button" data-gem-collect="${drop.id}" data-gem-revision="${world.revision}" data-gem-world="${escape(world.worldId)}" class="game-dropping" style="--drop-x:${17+(i%6)*13}%;--drop-y:${82+Math.floor(i/6)*9}%" aria-label="${escape(birdName(world,drop.birdId))}の落としものを拾う・8 Gems"><span class="game-dropping-art" aria-hidden="true"></span><span class="game-dropping-spark" aria-hidden="true">✧</span></button>`).join('')}</div>`;
+    const g=roomGeometry((root.ownerDocument.defaultView.innerWidth||390)<=600?'tall':'wide');
+    return `<div class="game-droppings" aria-label="落としものを拾う">${(world.gems?.droppings||[]).map((drop,i)=>`<button type="button" data-gem-collect="${drop.id}" data-gem-revision="${world.revision}" data-gem-world="${escape(world.worldId)}" class="game-dropping" style="--drop-x:${(g.left+g.width*(.17+(i%6)*.13))/g.planeWidth*100}%;--drop-y:${(g.height-104-(1-Math.floor(i/6))*48-g.top)/g.planeHeight*100}%" aria-label="${escape(birdName(world,drop.birdId))}の落としものを拾う・8 Gems"><span class="game-dropping-art" aria-hidden="true"></span><span class="game-dropping-spark" aria-hidden="true">✧</span></button>`).join('')}</div>`;
   }
   function showGemReward(amount,origin,gold=0){
     if((!amount&&!gold)||!alive)return;
@@ -303,6 +304,15 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     const icon=path=>`<svg viewBox="0 0 32 32" width="26" height="26" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${path}</svg>`;
     return `<nav class="game-bottom-dock" aria-label="庭のあそび"><button data-game-panel="decorate" aria-pressed="${panel==='decorate'}">${icon('<path d="M5 12h22v15H5zM3 12l13-8 13 8M11 27v-9h10v9"/>')}<span>お飾り</span></button><button id="game-open-bird" data-game-open-bird>${icon('<path d="M7 20c-4-10 9-16 15-9l5 2-5 3c0 10-11 12-15 4zM6 19l-4 5 7-2M14 26v3m5-4v4"/><circle cx="19" cy="12" r="1"/>')}<span>ふれあう</span></button><button data-game-panel="family" aria-pressed="${panel==='family'}">${icon('<circle cx="10" cy="9" r="4"/><circle cx="23" cy="9" r="4"/><path d="M10 13v5h13v-5M16 18v5"/><circle cx="16" cy="27" r="3"/>')}<span>家族</span></button><button id="game-nav-open" data-game-open-menu>${icon('<circle cx="8" cy="8" r="2"/><circle cx="16" cy="8" r="2"/><circle cx="24" cy="8" r="2"/><circle cx="8" cy="16" r="2"/><circle cx="16" cy="16" r="2"/><circle cx="24" cy="16" r="2"/><circle cx="8" cy="24" r="2"/><circle cx="16" cy="24" r="2"/><circle cx="24" cy="24" r="2"/>')}<span>メニュー</span></button></nav>`;
   }
+  function roomGeometry(kind){
+    const win=root.ownerDocument.defaultView,width=win.innerWidth||390,height=Number.parseFloat(document.body.style.getPropertyValue('--game-viewport-height'))||win.innerHeight||844,ratio=kind==='tall'?.75:1.6;
+    const planeWidth=Math.max(width,height*ratio),planeHeight=Math.max(height,width/ratio),top=Math.max(height-planeHeight,Math.min(0,height*.7-planeHeight*.79));
+    return {width,height,planeWidth,planeHeight,top,left:(planeWidth-width)/2};
+  }
+  function visibleFieldPositions(birds,kind,place){
+    const positions=fieldPositions(birds,kind,place),g=roomGeometry(kind),fraction=g.width/g.planeWidth;
+    return new Map([...positions].map(([id,p])=>[id,{...p,x:(1-fraction)/2+p.x*fraction,width:p.width*fraction}]));
+  }
   function garden(preserveSelection=false) {
     const active=fieldBirds(world);
 
@@ -311,7 +321,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     if(!preserveSelection&&!active.some(b=>b.id===selected)&&active.length){cancelCareEffects();selected=active[0].id;}
     const current=active.find(b=>b.id===selected)||active[0];
     const shown=compactLayout?.matches?[current].filter(Boolean):active;
-    const positions=fieldPositions(shown,'wide',world.field.place),mobilePositions=fieldPositions(shown,'tall',world.field.place);
+    const positions=visibleFieldPositions(shown,'wide',world.field.place),mobilePositions=visibleFieldPositions(shown,'tall',world.field.place);
     const related=current&&world.events.slice(-8).reverse().find(e=>e.ids.includes(current.id)&&world.tick-e.tick<2&&['play','bath','declined','pair','reconcile'].includes(e.kind));
     const selectedSpeech=related?(related.kind==='declined'?'またあとでね':related.kind==='pair'?'これからも一緒':'いっしょに♪'):'';
     return `${fieldNavigation()}<div class="game-room" data-compact="${!!compactLayout?.matches}" data-field="${world.field.place}" aria-label="${escape(fieldTitle())}。イラストのゲーム用風景です。">
@@ -340,7 +350,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     const graph=familyLayout(world,selected),focus=findBird(world,graph.focusId);if(!familyZoomManual&&root.clientWidth)familyZoom=Math.max(.9,Math.min(1,Math.round(root.clientWidth/Math.max(300,Math.min(graph.children.length,4)*140+40)*10)/10));
     return `<section class="game-family-tree"><div class="game-family-heading"><h3>${escape(focus.name)}の家系図</h3><div class="game-family-zoom" aria-label="家系図の大きさ"><button data-family-zoom="-1" aria-label="家系図を縮小" ${familyZoom<=.7?'disabled':''}>−</button><output>${Math.round(familyZoom*100)}%</output><button data-family-zoom="1" aria-label="家系図を拡大" ${familyZoom>=1.2?'disabled':''}>＋</button></div></div><p class="game-family-legend"><span>━━ 親子</span><span>┄┄ つがい</span><small>左右に動かして、家族を見よう</small></p><div class="game-family-pan" tabindex="0" aria-label="家族の図。左右にスクロールできます"><div style="width:${graph.width*familyZoom}px;height:${graph.height*familyZoom}px"><div class="game-family-canvas" style="width:${graph.width}px;height:${graph.height}px;transform:scale(${familyZoom})"><svg class="game-family-lines" width="${graph.width}" height="${graph.height}" viewBox="0 0 ${graph.width} ${graph.height}" aria-hidden="true">${graph.edges.map(e=>`<path class="family-edge-${e.kind}" d="${e.path}"/>`).join('')}</svg>${graph.nodes.map(n=>{const b=findBird(world,n.id);return `<button class="game-family-node ${n.role==='focus'?'is-focus':''}" data-family-focus="${b.id}" style="left:${n.x-graph.cardW/2}px;top:${n.y}px" aria-label="${escape(b.name)}、${STAGES[b.stage]}。この文鳥の家族を見る">${smallBird(b)}<strong>${escape(b.name)}</strong><small>${colorName[b.color]}・${STAGES[b.stage]}</small></button>`;}).join('')}</div></div></div><div class="game-profile-actions"><button data-game-panel="profile">${escape(focus.name)}の紹介</button><button data-game-art="${focus.id}">家族の記念カード</button></div><details data-game-details="family-text"><summary>家族をことばで読む・みんなの名簿</summary><ul>${world.birds.map(b=>`<li><button data-family-focus="${b.id}">${escape(b.name)}</button>：${b.parents.length?'親 '+b.parents.map(id=>escape(birdName(world,id))).join(' と '):'庭の外から来た文鳥'}${b.partner?'／つがい '+escape(birdName(world,b.partner)):''}</li>`).join('')}</ul><p class="game-small">実線は血縁、点線はつがい。近い親せき同士はつがいになりません。</p></details></section>`;
   }
-  function resizeFamily(){if(panel==='family'){render();centerFamily();}}
+  function resizeFamily(){if(panel==='family'){render();centerFamily();}else if(panel==='garden'&&!interactionActive())render();}
   function centerFamily(){const pan=root.querySelector('.game-family-pan'),canvas=root.querySelector('.game-family-canvas');if(pan&&canvas)pan.scrollLeft=Math.max(0,parseFloat(canvas.style.width)*familyZoom/2-pan.clientWidth/2);}
   function diary() {
     const all=world.events.slice().reverse(),important=all.filter(e=>['pair','egg','hatch','grow','adopt','movein','depart'].includes(e.kind));
@@ -364,17 +374,18 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     const panels={outdoors:()=>'<div data-encounter-slot></div>',notebook:()=>'<div data-encounter-slot></div>',garden:()=>garden(),decorate:()=>decorationRoom(),friends:()=>friendRooms(),profile:()=>profile(),owner:()=>'<div data-owner-editor-slot></div>',relations,family,diary,roster,settings,help};
     if(!root.querySelector('.game-main'))root.innerHTML='<div class="game-app"><div class="game-main"></div><dialog class="game-panel-overlay" aria-label="文鳥ぐらしの遊び"></dialog><dialog class="game-bird-sheet" aria-labelledby="game-sheet-title"></dialog></div>';
     root.querySelector('.game-app').dataset.panel=panel;
+    root.querySelector('.game-main').inert=panel==='outdoors';
     root.querySelector('.game-app').dataset.careMotion=world.settings.motion&&!world.paused&&document.documentElement.dataset.motion!=='off'&&!globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches?'on':'off';
     root.querySelector('.game-main').innerHTML=`<header class="game-heading"><div class="game-status"><span>${day(world.tick)}</span><span>${world.paused?'おやすみ中':'のんびり進行中'}</span><button data-game-action="pause">${world.paused?'つづける':'一時停止'}</button></div></header>${store.mode==='memory'?'<p class="game-warning" role="alert">このブラウザでは端末保存が使えません。いまのタブだけで遊べます。閉じる前に設定から保存ファイルを書き出してください。</p>':''}${automaticGift()}${adoptionInvitation()}${world.offlineSummary?`<div class="game-welcome"><strong>おかえりなさい。</strong>留守のあいだの${Math.round(world.offlineSummary.ticks/24)}日ぶんを、順番に進めたよ。${world.offlineSummary.newBirds?`${world.offlineSummary.newBirds}羽との出会いがあったよ。`:''}${world.offlineSummary.skipped?'長いお休みのぶんは、ゆっくり待っていたよ。':''}<button data-game-action="dismiss-welcome" aria-label="おかえりメッセージを閉じる">閉じる</button></div>`:''}<p class="game-message ${error?'is-error':''}" role="status">${escape(error||message)}</p><div class="${panel==='garden'?'game-panel':'game-scene-base'}">${garden(panel!=='garden')}</div>`;
     const overlay=root.querySelector('.game-panel-overlay');
     if(panel!=='garden'){
-      overlay.innerHTML=`<div class="game-overlay-head"><button data-game-close-panel>${panel==='owner'?'設定に戻る':'庭に戻る'}</button></div><div class="game-panel">${error||message?`<p class="game-overlay-message" role="status">${escape(error||message)}</p>`:''}${panels[panel]()}</div>`;
-      if(!overlay.open)overlay.showModal();
+      overlay.innerHTML=`<div class="game-overlay-head"><button data-game-close-panel>${panel==='owner'?'設定に戻る':panel==='outdoors'?'おうちへ':'もどる'}</button></div><div class="game-panel">${error||message?`<p class="game-overlay-message" role="status">${escape(error||message)}</p>`:''}${panels[panel]()}</div>`;
+      const fullScene=panel==='outdoors';if(overlay.open&&overlay.dataset.scene!==String(fullScene))overlay.close();overlay.dataset.scene=String(fullScene);if(!overlay.open){if(fullScene)overlay.show();else overlay.showModal();}
     }else{if(overlay.open)overlay.close();overlay.innerHTML='';}
     if(['outdoors','notebook'].includes(panel)){
       if(!encounterRoot){
         encounterRoot=document.createElement('div');encounterRoot.className='game-encounter-host';
-        encounterController=mountEncounterPanel(encounterRoot,{getWorld:()=>world,meetFriend:(w,id,action,token)=>meetGardenFriendReward(w,id,action,token),completeEncounter:(w,id,action,token)=>completeEncounterReward(w,id,action,token),onReward:amount=>showGemReward(amount),base:new URL('../',GAME_ART).href,transact:async operation=>{
+        encounterController=mountEncounterPanel(encounterRoot,{initialMode:panel==='outdoors'?'garden':'notebook',getWorld:()=>world,meetFriend:(w,id,action,token)=>meetGardenFriendReward(w,id,action,token),completeEncounter:(w,id,action,token)=>completeEncounterReward(w,id,action,token),onReward:amount=>showGemReward(amount),base:new URL('../',GAME_ART).href,transact:async operation=>{
           const committed=await mutate(operation,'',()=>alive,{bump:false,advanceCurrent:false});
           if(!committed)throw new Error('記録できませんでした。');return world;
         },onGardenChanged:({gardenId,worldId})=>document.dispatchEvent(new document.defaultView.CustomEvent('buncho-game-garden',{detail:{gardenId,worldId}}))});
@@ -471,6 +482,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
   }
   function closeGameMenu(){const menu=root.querySelector('.game-secondary-menu');if(!menu)return;menu.open=false;(root.querySelector('[data-game-open-menu]')||menu.querySelector('summary')).focus({preventScroll:true});}
   function menuKeydown(ev){
+    if(ev.key==='Escape'&&panel==='outdoors'&&!sheetOpen){ev.preventDefault();closePanel();return;}
     if(ev.key==='Escape'&&root.querySelector('.game-adoption-dialog[open]')){ev.preventDefault();if(!adoptionBusy)closeAdoptionDialog();return;}
     if(ev.key==='Escape'&&root.querySelector('.game-reset-dialog[open]')){ev.preventDefault();if(!resetPending)closeResetDialog();return;}
     const sheet=root.querySelector('.game-reset-dialog[open],.game-adoption-dialog[open],.game-bird-sheet[open]');
