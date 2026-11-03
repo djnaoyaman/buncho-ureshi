@@ -1,4 +1,6 @@
 import { test, expect } from '@playwright/test';
+// Live game nodes are replaced on normal heartbeat renders. Measure the next attached node.
+async function measuredBox(locator){let box;await expect.poll(async()=>{box=await locator.boundingBox();return !!box;}).toBe(true);return box;}
 async function ready(page, openControls = true) {
   await page.addInitScript(() => {
     localStorage.setItem('buncho.music.v1', JSON.stringify({enabled:false}));
@@ -41,7 +43,7 @@ for(const [width,height] of [[320,568],[390,844],[844,390]]) {
     await page.locator('.game-status [data-game-action=pause]').click();
     const bird=page.locator('.game-room-bird.is-selected'),habitat=page.locator('.game-main .game-habitat img');
     await cover(page,habitat);
-    expect((await page.locator('.game-scene-toolbar .game-bird-carousel').boundingBox()).height).toBeLessThanOrEqual(60);
+    expect((await measuredBox(page.locator('.game-scene-toolbar .game-bird-carousel'))).height).toBeLessThanOrEqual(60);
     expect(await page.locator('#game-open-bird').evaluate(el=>getComputedStyle(el).borderTopLeftRadius)).not.toBe('6px');
     await reachable(page,bird,page.locator('.game-field-nav'),page.locator('.game-bottom-dock'));
     await noScroll(page); await page.screenshot({path:testInfo.outputPath(`house-${width}x${height}.png`)});
@@ -153,7 +155,7 @@ for (const [width, height] of [[320, 568], [390, 844]]) {
     }
     async function target(element) {
       await expect(element).toBeVisible();
-      const r = await element.boundingBox();
+      const r = await measuredBox(element);
       expect(r.width).toBeGreaterThanOrEqual(44);
       expect(r.height).toBeGreaterThanOrEqual(44);
       expect(r.x).toBeGreaterThanOrEqual(0);
@@ -279,7 +281,7 @@ for (const [width, height] of [[320, 568], [390, 844]]) {
     }
     expect(await menu.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
     const close = menu.locator('[data-game-close-menu]');
-    const closeBounds = await close.boundingBox();
+    const closeBounds = await measuredBox(close);
     expect(closeBounds.width).toBeGreaterThanOrEqual(44);
     expect(closeBounds.height).toBeGreaterThanOrEqual(44);
     await noScroll(page);
@@ -329,7 +331,7 @@ for (const [width, height] of [[320, 568], [390, 844]]) {
     await expect(welcome).not.toContainText('0日');
     await expect(close).toBeFocused();
     await expect(page.locator('body')).toHaveAttribute('data-scene-controls', 'closed');
-    const rect = await welcome.boundingBox();
+    const rect = await measuredBox(welcome);
     expect(Math.abs(rect.x + rect.width / 2 - width / 2)).toBeLessThanOrEqual(2);
     expect(Math.abs(rect.y + rect.height / 2 - height / 2)).toBeLessThanOrEqual(2);
     expect(rect.width).toBeGreaterThan(rect.height);
@@ -337,7 +339,7 @@ for (const [width, height] of [[320, 568], [390, 844]]) {
     expect(rect.x + rect.width).toBeLessThanOrEqual(width);
     expect(rect.y).toBeGreaterThanOrEqual(0);
     expect(rect.y + rect.height).toBeLessThanOrEqual(height);
-    const closeRect = await close.boundingBox();
+    const closeRect = await measuredBox(close);
     expect(closeRect.width).toBeGreaterThanOrEqual(44);
     expect(closeRect.height).toBeGreaterThanOrEqual(44);
     await close.click({trial:true});
