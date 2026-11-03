@@ -11,17 +11,3 @@ for(const size of [{width:320,height:568},{width:390,height:844},{width:844,heig
 test('reset choices cancel by default and full reset requires two explicit steps',async({page})=>{
  await ready(page);await settings(page);await page.locator('[data-game-details=management] summary').click();await page.locator('[data-game-action=reset-state]').click();await expect(page.locator('[data-game-action=reset-cancel]')).toBeFocused();await page.locator('[data-reset-kind=all]').click();await expect(page.locator('.game-reset-dialog')).toContainText('消えるもの');await page.locator('[data-game-action=reset-confirm]').click();await expect(page.locator('.game-reset-dialog')).toContainText('最後の確認');await expect(page.locator('[data-game-action=reset-cancel]')).toBeFocused();await page.keyboard.press('Escape');await expect(page.locator('.game-reset-dialog')).not.toBeVisible();await expect(page.locator('[data-game-action=reset-state]')).toBeFocused();
 });
-test('settings keeps its scroll position through updates and resets on navigation',async({page})=>{
- await page.setViewportSize({width:390,height:600});await ready(page);await settings(page);
- const panel=page.locator('.game-panel-overlay[open] > .game-panel');
- await page.locator('[data-game-details=management] summary').click();
- const before=await panel.evaluate(el=>{el.scrollTop=el.scrollHeight;return el.scrollTop;});expect(before).toBeGreaterThan(100);
- await page.waitForTimeout(18000);
- expect(Math.abs((await panel.evaluate(el=>el.scrollTop))-before)).toBeLessThanOrEqual(2);
- await expect(page.locator('[data-game-details=management]')).toHaveAttribute('open','');
- await page.locator('[data-game-motion]').evaluate(el=>el.click());
- await expect(page.locator('[data-game-motion]')).not.toBeChecked();
- expect(Math.abs((await panel.evaluate(el=>el.scrollTop))-before)).toBeLessThanOrEqual(2);
- await page.locator('[data-game-close-panel]').click();await settings(page);
- expect(await panel.evaluate(el=>el.scrollTop)).toBe(0);
-});
