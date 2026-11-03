@@ -5,9 +5,9 @@ import { photos } from '../src/data/photos.js';
 
 const KEY = 'buncho-ureshi-studio-v1';
 
-test('studio has six distinct valid templates, eight backgrounds and eight palettes', () => {
+test('studio has six distinct valid templates, eleven backgrounds and eight palettes', () => {
   assert.equal(STUDIO_TEMPLATES.length, 6);
-  assert.equal(STUDIO_BACKGROUNDS.length, 8);
+  assert.equal(STUDIO_BACKGROUNDS.length, 11);
   assert.equal(STUDIO_PALETTES.length, 8);
   const layouts = new Set();
   for (let i = 0; i < 6; i++) {
@@ -36,7 +36,7 @@ test('all four game feather colors and four growth stages survive family handoff
 test('storage validation rejects malformed state, duplicate IDs, unsupported references, and oversized input', () => {
   const state = makeStudioTemplate(0);
   const mutations = [
-    s => { s.version = 99; }, s => { s.background = 9; }, s => { s.palette = -1; },
+    s => { s.version = 99; }, s => { s.background = 11; }, s => { s.palette = -1; },
     s => { s.items[0].x = NaN; }, s => { s.items[0].y = -1; }, s => { s.items[0].w = 10000; },
     s => { s.items[0].r = Infinity; }, s => { s.items[0].color = '<script>'; },
     s => { s.items.push(s.items[0]); }, s => { s.title = 'あ'.repeat(37); },
@@ -182,7 +182,7 @@ test('strict saves reject hidden oversized fields and preserve corrupt raw data 
 
 test('photo admission rejects nonlocal/blob/credential sources, duplicate IDs and unsupported licenses without fetching them',()=>{
  const m=mockEnvironment();let cleanup;
- try{cleanup=mountStudio(m.root,{photos:[specimen(),specimen('external',{src:'https://elsewhere.test/p.webp'}),specimen('blob',{src:'blob:https://example.test/token'}),specimen('credential',{src:'https://user:pass@example.test/buncho-ureshi/photos/b.webp'}),specimen('outside',{src:'/unrelated/photo.webp'}),specimen('svg',{src:'/photos/photo.svg'}),specimen('sa',{license:'CC BY-SA 4.0'}),specimen('source-credentials',{source:'https://user:pass@example.com/photo'}),specimen('p1',{src:'/photos/duplicate.webp'}),specimen('huge',{author:'a'.repeat(513)})]});assert.equal(m.el('photos').children.length,1);assert.equal(m.el('photos').children[0].dataset.photo,'p1');assert(m.images.every(img=>img.src?.includes('/buncho-ureshi/photos/p1.webp')||img.src==='https://example.test/buncho-ureshi/brand/wordmark-04-transparent.webp'));}finally{cleanup?.();m.restore();}
+ try{cleanup=mountStudio(m.root,{photos:[specimen(),specimen('external',{src:'https://elsewhere.test/p.webp'}),specimen('blob',{src:'blob:https://example.test/token'}),specimen('credential',{src:'https://user:pass@example.test/buncho-ureshi/photos/b.webp'}),specimen('outside',{src:'/unrelated/photo.webp'}),specimen('svg',{src:'/photos/photo.svg'}),specimen('sa',{license:'CC BY-SA 4.0'}),specimen('source-credentials',{source:'https://user:pass@example.com/photo'}),specimen('p1',{src:'/photos/duplicate.webp'}),specimen('huge',{author:'a'.repeat(513)})]});assert.equal(m.el('photos').children.length,1);assert.equal(m.el('photos').children[0].dataset.photo,'p1');assert(m.images.every(img=>img.src?.includes('/buncho-ureshi/photos/p1.webp')||img.src==='https://example.test/buncho-ureshi/brand/wordmark-04-transparent.webp'||['art-nouveau','bauhaus','rinpa'].some(id=>img.src==='https://example.test/buncho-ureshi/studio-backgrounds/'+id+'.png')));}finally{cleanup?.();m.restore();}
 });
 
 test('literal attribution is preserved, and excess credit text blocks export rather than overlapping the image',async()=>{
@@ -226,4 +226,8 @@ test('studio mute cancels queued gain automation and sets native gain immediatel
 test('approved brand bitmap is drawn at its own ratio and missing brand blocks PNG export',async()=>{
  const m=mockEnvironment();let cleanup;
  try{cleanup=mountStudio(m.root);const logo=m.images.find(i=>i.src.endsWith('/brand/wordmark-04-transparent.webp'));assert(logo);assert(m.imageCalls.some(c=>c.src===logo.src&&c.args[2]===295&&Math.abs(c.args[3]-295*645/1120)<.001));await m.button('export').click();assert.equal(m.blobCalls,1);logo.naturalWidth=0;await m.button('export').click();assert.equal(m.blobCalls,1,'must not export without the approved bitmap');assert.match(m.el('status').textContent,/画像を作れません/);}finally{cleanup?.();m.restore();}
+});
+
+test('three requested art backgrounds retain IDs across save and draw into export',async()=>{
+ for(const index of [8,9,10]){const m=mockEnvironment();let cleanup;try{cleanup=mountStudio(m.root);m.el('background').value=String(index);await m.el('background').fire('change');assert.equal(m.state().background,index);assert(validateStudioState(m.state()));await m.button('export').click();assert.equal(m.el('export-panel').hidden,false);assert(m.images.some(i=>i.src.includes('/studio-backgrounds/')));}finally{cleanup?.();m.restore();}}
 });

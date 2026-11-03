@@ -1,0 +1,26 @@
+[
+  {
+    "path": "omochi/omochi-original.jpeg",
+    "sha256": "11fa183108c92551d249405d6a716aa89c4197c9e4efdcb69067b0f3d730ad85",
+    "provenance": "Family-provided photograph identified as Omochi; owner requested this website publication. No general reuse license granted.",
+    "modifications": "Original bytes unchanged; rounded display frame via CSS only."
+  },
+  {
+    "path": "studio-backgrounds/art-nouveau.png",
+    "sha256": "db32e49d59d834f3542d8a3cf4fa4d67cf661906a18ceac23fe8ee65b2b7d5c2",
+    "provenance": "Original generated art commissioned for this site; not a historical work or external photograph.",
+    "modifications": "Original generated PNG bytes unchanged; canvas fits background to selected format."
+  },
+  {
+    "path": "studio-backgrounds/bauhaus.png",
+    "sha256": "aa11a662fb110f558ee245aaa483f0d91b14db5372d280cdff1892cf61e1b230",
+    "provenance": "Original generated art commissioned for this site; not a historical work or external photograph.",
+    "modifications": "Original generated PNG bytes unchanged; canvas fits background to selected format."
+  },
+  {
+    "path": "studio-backgrounds/rinpa.png",
+    "sha256": "5b0193b7730d5d7dc3ece661926437b06715b0076d3970e3d0881e1ee3b75a82",
+    "provenance": "Original generated art commissioned for this site; not a historical work or external photograph.",
+    "modifications": "Original generated PNG bytes unchanged; canvas fits background to selected format."
+  }
+]

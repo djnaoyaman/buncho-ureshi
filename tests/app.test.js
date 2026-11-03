@@ -61,7 +61,7 @@ test("integrated DOM navigation, learning tools, quiz and truthful observation f
     doc
       .querySelector(".art-cover-photo img")
       .getAttribute("src")
-      .includes("/buncho-ureshi/photos/"),
+      .includes("/buncho-ureshi/omochi/omochi-original.jpeg"),
   );
   const navigate = (route) => {
     const link = doc.createElement("a");
@@ -101,7 +101,7 @@ test("integrated DOM navigation, learning tools, quiz and truthful observation f
   assert.ok(
     doc
       .querySelector("main")
-      .textContent.includes("本人の実写写真はこのサイトでは公開していません"),
+      .textContent.includes("写真は、ご家族から「おもちです」と紹介された本人です"),
   );
   const form = doc.querySelector("#observation-form");
   form.querySelector("[name=note]").value =

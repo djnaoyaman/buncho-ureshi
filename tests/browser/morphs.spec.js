@@ -75,6 +75,8 @@ test('atlas filters handle aliases, zero results, keyboard submission and repeat
 
 test('atlas comparison handles repeated identical selections, keyboard alternatives, profile shortcuts and explicit reset', async ({ page }) => {
   await page.goto('colors/');await ready(page);
+  await page.locator('#morph-compare > summary').click();
+  await expect(page.locator('#morph-compare')).toHaveAttribute('open', '');
   const a=page.locator('[data-morph-compare="a"]'),b=page.locator('[data-morph-compare="b"]');
   const initial=[await a.inputValue(),await b.inputValue()];
   await a.selectOption('silver');await b.selectOption('silver');await b.selectOption('silver');
@@ -121,7 +123,7 @@ for(const width of [320,375,768,1440])test(`atlas fits ${width}px with full-fram
   for(const route of routes){
     await page.goto(route);await ready(page);await decodePhotos(page);
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),route).toBe(true);
-    const overflowing=await page.locator('main .morph-atlas').evaluate(root=>[...root.querySelectorAll('h1,h2,h3,select,button,img,figure')].filter(node=>{const r=node.getBoundingClientRect();return r.width>0&&(r.left< -1||r.right>innerWidth+1);}).map(node=>({tag:node.tagName,text:node.textContent.slice(0,60)})));
+    const overflowing=await page.locator('main .morph-atlas').evaluate(root=>[...root.querySelectorAll('h1,h2,h3,select,button,img,figure')].filter(node=>{const r=node.getBoundingClientRect(),gallery=node.closest('[data-morph-results]');if(gallery&&getComputedStyle(gallery).overflowX==='auto'){const g=gallery.getBoundingClientRect(),card=node.closest('[data-morph-card]'),c=card?.getBoundingClientRect();return g.left< -1||g.right>innerWidth+1||!!(c&&(r.left<c.left-1||r.right>c.right+1));}return r.width>0&&(r.left< -1||r.right>innerWidth+1);}).map(node=>({tag:node.tagName,text:node.textContent.slice(0,60)})));
     expect(overflowing,route).toEqual([]);
     if(info.project.name==='chromium'){
       const name=`atlas-${route.split('/')[1]||'overview'}-${width}.png`;

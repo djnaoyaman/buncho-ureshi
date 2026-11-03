@@ -2024,3 +2024,34 @@ body[data-world="buncho"] .game-gem-reward{background:#e5f2bb;color:#304631;bord
  body[data-world="buncho"] .game-field-nav button{padding-block:.4rem}
  body[data-world="buncho"] .game-play-actions{margin-block:.3rem .4rem}
 }
+
+/* Real Omochi portrait and a small gallery of geometric photographic frames. */
+.art-cover-photo .omochi-real-photo{height:auto;aspect-ratio:925/1536;object-fit:contain;border-radius:44% 44% 24px 24px;max-height:680px;background:#ece8df}
+.art-feature figure img{border-radius:36px 8px 36px 8px}
+.omochi-real-portrait{margin:0;background:transparent!important;border:0!important;padding:0!important;aspect-ratio:auto}
+.omochi-real-portrait img{display:block;width:100%;height:auto;max-height:620px;object-fit:contain;border-radius:42% 42% 20px 20px}
+.omochi-real-portrait figcaption{font-size:.78rem;margin-top:12px}
+.art-door.art-door-game{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;position:relative}
+.art-door-game .art-door-number{align-self:flex-start}
+.art-door-game .art-game-door-logo{display:block;width:min(100%,340px);height:auto;object-fit:contain;margin:auto}
+.art-door-game .art-door-arrow{position:absolute;right:0;bottom:18px}
+@media(max-width:600px){.art-cover-photo .omochi-real-photo{max-height:520px}.art-door-game .art-game-door-logo{width:260px;max-width:90%}}
+/* Photo / reading refinements: retain the artwork, reduce repeated decoration. */
+.header-menu nav{display:flex!important;flex-direction:column;gap:0!important}
+.header-menu nav a,body[data-world="buncho"] .header-menu nav a{display:grid;grid-template-columns:minmax(0,1fr);gap:5px;padding:14px 10px;border-bottom:1px solid var(--line);text-align:left}
+.header-menu nav a strong{font-size:1rem}.header-menu nav a span{font-size:.78rem;font-weight:400;line-height:1.6;opacity:.75}
+.article-cover-frame{padding:12px;background:#edf0e8;border-radius:24px 24px 8px 24px;overflow:hidden}
+.article-card:nth-child(3n+2) .article-cover-frame{border-radius:72px 72px 14px 14px}
+.article-card:nth-child(3n) .article-cover-frame{border-radius:12px 40px 12px 40px}
+.article-card .article-cover-frame img{width:100%;height:210px;object-fit:contain!important;border-radius:10px}
+.article-cover-credit{display:block;font-size:.62rem;line-height:1.5;margin-top:8px;overflow-wrap:anywhere;font-weight:400}
+.article-card--text{min-height:200px;padding-top:24px;border-top:1px solid var(--ink)}
+.body-topic-link{display:grid;gap:8px;padding-block:22px;border-bottom:1px solid var(--line);text-decoration:none}
+.body-topic-link span{font-size:.88rem;line-height:1.8}
+.research-details summary,.quiz-learning summary{font-weight:700;cursor:pointer;min-height:44px;padding-block:12px}
+.quiz-learning{border-block:1px solid var(--line);padding:4px 0;margin:20px 0}.quiz-learning p{font-size:.88rem;line-height:1.8}
+.quiz-learning-result a{text-underline-offset:4px}
+@media(max-width:480px){.morph-discovery-link{padding:24px 20px!important}.morph-discovery-link h2{font-size:1.35rem!important;letter-spacing:-.035em}.morph-discovery-link .big-arrow{display:none}.morph-discovery-link h2 ruby{white-space:nowrap}.header-menu{max-height:calc(100dvh - 95px);overflow-y:auto;overscroll-behavior:contain}}
+
+/* Small screens use separate touch targets, not overlapping diagram labels. */
+@media(max-width:480px){.body-diagram{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;aspect-ratio:auto;border-radius:24px;padding:18px}.body-diagram>svg{grid-column:1/-1;width:100%;height:auto;max-height:260px}.body-diagram button{position:static;transform:none;min-width:0;min-height:44px;padding:8px 4px}}

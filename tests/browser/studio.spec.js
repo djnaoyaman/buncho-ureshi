@@ -88,9 +88,9 @@ test.beforeEach(async ({ context, page }) => {
   await page.route(/youtube|youtu\.be|googlevideo|ytimg/i, route => route.abort());
 });
 
-test('six templates, eight backgrounds and palettes, and local table of contents work', async ({ page }, testInfo) => {
+test('six templates, eleven backgrounds and eight palettes, and local table of contents work', async ({ page }, testInfo) => {
   await openStudio(page);
-  await expect(control(page, 'background').locator('option')).toHaveCount(8);
+  await expect(control(page, 'background').locator('option')).toHaveCount(11);
   await expect(control(page, 'palettes').locator('button')).toHaveCount(8);
   const compositions = new Set();
   for (let i = 0; i < 6; i++) {
@@ -390,4 +390,18 @@ test('game memorial uses real game name labels and undo restores the preceding s
   expect((await page.evaluate(() => window.__studioAudit.text)).join('')).toContain('おもち');
   await action(page, 'undo').click();
   expect(await saved(page)).toEqual(before);
+});
+
+test('three requested art backgrounds are selectable, persist and appear in exported pixels',async({page},info)=>{
+ await page.setViewportSize({width:390,height:900});await openStudio(page);
+ const signatures=[];
+ for(const index of [8,9,10]){
+  await page.locator(`[data-art-background="${index}"]`).click();
+  await expect(page.locator(`[data-art-background="${index}"]`)).toHaveAttribute('aria-pressed','true');
+  await expect.poll(async()=> (await saved(page)).background).toBe(index);
+  await action(page,'export').click();await expect(control(page,'export-panel')).toBeVisible();
+  const sig=await control(page,'export-preview').evaluate(async img=>{await img.decode();const c=document.createElement('canvas');c.width=img.naturalWidth;c.height=img.naturalHeight;const ctx=c.getContext('2d');ctx.drawImage(img,0,0);const d=ctx.getImageData(8,8,55,55).data;const totals=[0,0,0];for(let i=0;i<d.length;i+=4){for(let k=0;k<3;k++)totals[k]+=d[i+k];if(d[i+3]!==255)throw Error('Background export is not opaque');}return totals.map(x=>Math.round(x/(d.length/4))).join(',');});
+  signatures.push(sig);await control(page,'canvas').scrollIntoViewIfNeeded();await info.attach(`studio-art-background-${index}-390`,{body:await page.screenshot(),contentType:'image/png'});
+ }
+ expect(new Set(signatures).size).toBe(3);await page.reload();await expect(control(page,'background')).toHaveValue('10');
 });

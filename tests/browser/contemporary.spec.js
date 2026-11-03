@@ -14,13 +14,15 @@ for (const width of [320,390,768,1280]) {
       // Full-page evidence must visit lazy media, just as a reader scrolling does.
       if (!['encyclopedia','atlas'].includes(name)) {
         for (const img of await page.locator('main img[loading=lazy][src]').all()) {
-          if (await img.isVisible()) { await img.scrollIntoViewIfNeeded(); await img.evaluate(node=>node.decode()); }
+          if (await img.isVisible()) { await img.scrollIntoViewIfNeeded(); await expect.poll(()=>img.evaluate(node=>node.complete && node.naturalWidth>0), {message:await img.getAttribute('src')}).toBe(true); await img.evaluate(node=>node.decode()); }
         }
         await page.evaluate(()=>window.scrollTo(0,0));
       }
       // Studio's hidden export preview intentionally has no source until export.
       // A visible empty image or any sourced eager image failing decode still fails.
       await page.locator('main img').evaluateAll(async images => Promise.all(images.filter(img=>img.loading!=='lazy').map(async img=>{
+        const style=getComputedStyle(img);
+        if (img.closest('details:not([open])') || !img.getClientRects().length || style.visibility==='hidden' || style.display==='none') return;
         if (!img.getAttribute('src') && !img.getAttribute('srcset') && img.closest('[hidden]')) return;
         await img.decode();
         if (!img.naturalWidth) throw new Error(`Image has no decoded pixels: ${img.currentSrc}`);
@@ -39,8 +41,8 @@ test('photographic cover survives without JavaScript and has source attribution'
  const context=await browser.newContext({javaScriptEnabled:false,viewport:{width:390,height:844}});
  const page=await context.newPage(); await page.goto(baseURL);
  await expect(page.locator('.art-cover h1')).toHaveText('ちいさな鳥。ひろがる、世界。');
- await expect(page.locator('.art-cover-photo figcaption')).toContainText('おもち本人ではありません');
- expect(await page.locator('.art-cover-photo figcaption a').getAttribute('href')).toMatch(/^https:\/\//);
+ await expect(page.locator('.art-cover-photo figcaption')).toContainText('おもち本人 · ご家族からの提供写真');
+ await expect(page.locator('.art-cover-photo img')).toHaveAttribute('src',/omochi\/omochi-original\.jpeg$/);
  await expect(page.locator('.art-door')).toHaveCount(4);
  await info.attach('contemporary-nojs-390',{body:await page.screenshot(),contentType:'image/png'});
  await context.close();

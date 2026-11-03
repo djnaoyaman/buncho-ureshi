@@ -20,7 +20,12 @@ export const STUDIO_PALETTES=[
  ['ゆうやけ','#f9e7da','#754a3a','#9b9b73','#d79270'],
  ['白い花','#fffdfa','#343e3b','#a7b5ac','#d8cbb4']
 ];
-export const STUDIO_BACKGROUNDS=['植物の縁飾り','花のメダリオン','しなやかな帯','木の実の庭','水の波紋','葉の便り','花びらの窓','静かな紙'];
+export const STUDIO_ART_BACKGROUNDS=Object.freeze([
+ {index:8,name:'アール・ヌーヴォー',file:'art-nouveau.png'},
+ {index:9,name:'バウハウス',file:'bauhaus.png'},
+ {index:10,name:'琳派',file:'rinpa.png'}
+]);
+export const STUDIO_BACKGROUNDS=['植物の縁飾り','花のメダリオン','しなやかな帯','木の実の庭','水の波紋','葉の便り','花びらの窓','静かな紙',...STUDIO_ART_BACKGROUNDS.map(x=>x.name)];
 export const STUDIO_TEMPLATES=['文鳥ポスター','植物図譜','家族の肖像','孵化のお祝い','お名前の花園','季節の便り'];
 const STORE='buncho-ureshi-studio-v1',MAX_ITEMS=36,MAX_PHOTOS=6,HISTORY=50,MAX_SAVE_CHARS=64000;
 const STATE_KEYS=new Set(['version','format','background','palette','title','items']);
@@ -53,7 +58,7 @@ export function makeStudioTemplate(index=0,seed={}){
 }
 export function validateStudioState(v,photoIds=[]){
  const photos=new Set(photoIds),ids=new Set();
- if(!isRecord(v)||Object.keys(v).some(k=>!STATE_KEYS.has(k))||v.version!==1||!['square','portrait'].includes(v.format)||!Number.isInteger(v.background)||v.background<0||v.background>7||!Number.isInteger(v.palette)||v.palette<0||v.palette>7||!boundedText(v.title,36)||!Array.isArray(v.items)||v.items.length>MAX_ITEMS)return false;
+ if(!isRecord(v)||Object.keys(v).some(k=>!STATE_KEYS.has(k))||v.version!==1||!['square','portrait'].includes(v.format)||!Number.isInteger(v.background)||v.background<0||v.background>=STUDIO_BACKGROUNDS.length||!Number.isInteger(v.palette)||v.palette<0||v.palette>7||!boundedText(v.title,36)||!Array.isArray(v.items)||v.items.length>MAX_ITEMS)return false;
  for(const o of v.items){if(!isRecord(o)||Object.keys(o).some(k=>!ITEM_KEYS.has(k))||!boundedText(o.id,100)||!o.id.length||ids.has(o.id)||!['bird','photo','branch','leaf','flower','ribbon','medallion','egg','nest','text'].includes(o.kind)||!['x','y','w','r','tint'].every(k=>Number.isFinite(o[k]))||o.x<0||o.x>1||o.y<0||o.y>1||o.w<60||o.w>900||Math.abs(o.r)>360||o.tint<0||o.tint>.8||!/^#[0-9a-f]{6}$/i.test(o.color))return false;ids.add(o.id);if(o.text!==undefined&&!boundedText(o.text,48)||o.birdName!==undefined&&!boundedText(o.birdName,16)||o.birdColor!==undefined&&!['white','sakura','silver','cinnamon','juvenile'].includes(o.birdColor)||o.birdStage!==undefined&&!['egg','chick','juvenile','adult'].includes(o.birdStage)||o.photoId!==undefined&&!boundedText(o.photoId,100)||o.clip!==undefined&&!['rectangle','oval','leaf'].includes(o.clip))return false;if(o.kind==='photo'&&(!boundedText(o.photoId,100)||!photos.has(o.photoId)||(o.clip&&!['rectangle','oval','leaf'].includes(o.clip))))return false;if(o.kind==='text'&&(!boundedText(o.text,48)))return false;if(o.kind==='bird'&&(!['white','sakura','silver','cinnamon','juvenile'].includes(o.birdColor)||(o.birdStage&&!['egg','chick','juvenile','adult'].includes(o.birdStage))||(o.birdName!==undefined&&(!boundedText(o.birdName,16)))))return false;}
  return new Set(v.items.filter(o=>o.kind==='photo').map(o=>o.photoId)).size<=MAX_PHOTOS;
 }
@@ -82,8 +87,10 @@ function logo(c, image) {
  c.save();c.drawImage(image,(1000-w)/2,8,w,h);c.restore();
 }
 function wrap(c,text,width){const out=[];let line='';for(const ch of String(text)){if(line&&c.measureText(line+ch).width>width){out.push(line);line='';}line+=ch;}if(line)out.push(line);return out;}
-function background(c,index,p,H){
- c.fillStyle=p[1];c.fillRect(0,0,1000,H);c.save();
+function background(c,index,p,H,art=null){
+ c.fillStyle=p[1];c.fillRect(0,0,1000,H);
+ if(index>=8){if(art?.complete&&art.naturalWidth){const scale=Math.max(1000/art.naturalWidth,H/art.naturalHeight),w=art.naturalWidth*scale,h=art.naturalHeight*scale;c.drawImage(art,(1000-w)/2,(H-h)/2,w,h);}return;}
+ c.save();
  if(index===0){vine(c,65,190,155,H-380,p);vine(c,935,190,155,H-380,p,-1);}
  if(index===1){c.strokeStyle=p[3];c.lineWidth=2;for(const d of [0,15]){c.beginPath();c.ellipse(500,H*.49,350+d,H*.32+d,0,0,Math.PI*2);c.stroke();}for(let i=0;i<8;i++){const a=i*Math.PI/4;flower(c,500+355*Math.cos(a),H*.49+H*.325*Math.sin(a),22,p);}}
  if(index===2){c.globalAlpha=.28;c.strokeStyle=p[3];c.lineWidth=95;for(let i=0;i<3;i++){c.beginPath();c.moveTo(-60,270+i*290);c.bezierCurveTo(300,130+i*270,650,600+i*220,1100,250+i*280);c.stroke();}}
@@ -135,7 +142,7 @@ export function mountStudio(root,{photos=[],birdSvg,seed}={}){
  +'<p class="studio-small">画像には作品名・ロゴ・写真のクレジットも入ります。音楽は入りません。</p><div data-studio="export-panel" hidden><img data-studio="export-preview" alt="保存する完成作品"><a data-studio="download" download="buncho-art.png">PNG画像を保存</a><button type="button" data-action="share">画像を共有</button><p data-studio="share-help" class="studio-small"></p></div></section>'
  +'</div><aside class="studio-options" aria-label="作品の材料と設定">'
  +'<section id="studio-templates"><h3>① お手本をえらぶ</h3><div data-studio="templates" class="studio-template-grid"></div></section>'
- +'<section><h3>背景といろ</h3><label>背景<select data-studio="background"></select></label><div class="studio-palettes" data-studio="palettes" aria-label="配色"></div><p class="studio-small" data-studio="palette-name"></p><label>作品のタイトル<input type="text" data-studio="title" maxlength="36" autocomplete="off"></label><button type="button" data-action="title">タイトルを入れる</button></section>'
+ +'<section><h3>背景といろ</h3><div class="studio-art-backgrounds" data-studio="art-backgrounds" role="group" aria-label="3つのアート背景"></div><label>すべての背景<select data-studio="background"></select></label><div class="studio-palettes" data-studio="palettes" aria-label="配色"></div><p class="studio-small" data-studio="palette-name"></p><label>作品のタイトル<input type="text" data-studio="title" maxlength="36" autocomplete="off"></label><button type="button" data-action="title">タイトルを入れる</button></section>'
  +'<section id="studio-materials"><h3>② そざいをふやす</h3><p class="studio-small">写真は一般の文鳥です。実在のおもち本人の写真ではありません。</p><div class="studio-material-grid" data-studio="shapes"></div><details class="studio-photo-details"><summary>文鳥の写真をえらぶ</summary><div class="studio-photo-grid" data-studio="photos"></div></details>'
  +'<label>短いことば<input type="text" data-studio="text" maxlength="48" placeholder="おたんじょうび おめでとう" autocomplete="off"></label><button type="button" data-action="text">ことばを追加</button><button type="button" data-action="apply-text">選んだことばを変更</button><p class="studio-small">素材は36個、写真は6種類まで。一部の素材は自由に色を変えられます。</p></section>'
  +'<section class="studio-audio"><h3>音のアトリエ</h3><p class="studio-small">工房のためのオリジナル合成音。文鳥の本物の鳴き声ではありません。</p><label>音楽<select data-studio="music"><option value="0">花のワルツ</option><option value="1">朝のしずく</option><option value="2">月の温室</option></select></label><div class="studio-edit-row"><button type="button" data-action="play">音楽を再生</button><button type="button" data-action="stop">停止</button></div>'
@@ -149,6 +156,13 @@ export function mountStudio(root,{photos=[],birdSvg,seed}={}){
  const canvas=el('canvas'),ctx=canvas.getContext('2d');
  if(!ctx){root.textContent='この環境では画像を描く機能が使えません。別のブラウザで工房を開いてください。';return()=>{};}
  const tell=t=>{if(!destroyed)el('status').textContent=t;},current=()=>state.items.find(o=>o.id===selected);
+ const artBackgroundImages=new Map();
+ function getArtBackground(index){
+  const data=STUDIO_ART_BACKGROUNDS.find(x=>x.index===index);if(!data)return null;
+  if(artBackgroundImages.has(index))return artBackgroundImages.get(index);
+  const img=new Image();img.decoding='async';img.onload=()=>{if(!destroyed)draw();};img.onerror=()=>{if(!destroyed&&state.background===index)tell('背景を読み込めませんでした。通信を確かめて選び直してください。');};
+  img.src=new URL('studio-backgrounds/'+data.file,document.baseURI).href;artBackgroundImages.set(index,img);return img;
+ }
  const brandImage=new Image();brandImage.decoding='async';
  brandImage.onload=()=>{if(!destroyed)draw();};
  brandImage.onerror=()=>{if(!destroyed)tell('ロゴを読み込めません。通信を確かめて、もう一度開いてください。');};
@@ -179,7 +193,7 @@ export function mountStudio(root,{photos=[],birdSvg,seed}={}){
   if(selection){c.strokeStyle='#ba5d48';c.lineWidth=3;c.setLineDash([8,6]);c.strokeRect(-pos.w/2-8,-pos.h/2-8,pos.w+16,pos.h+16);c.setLineDash([]);c.fillStyle='#ba5d48';for(const x of [-pos.w/2-8,pos.w/2+8])for(const y of [-pos.h/2-8,pos.h/2+8])c.fillRect(x-4,y-4,8,8);}c.restore();
  }
  function draw(c=ctx,selection=true){
-  const L=layout(c),p=STUDIO_PALETTES[state.palette];if(c===ctx&&canvas.height!==L.H)canvas.height=L.H;background(c,state.background,p,L.H);logo(c,brandImage);
+  const L=layout(c),p=STUDIO_PALETTES[state.palette];if(c===ctx&&canvas.height!==L.H)canvas.height=L.H;background(c,state.background,p,L.H,getArtBackground(state.background));logo(c,brandImage);
   c.fillStyle=p[2];c.font='500 35px "Noto Serif JP", "Yu Mincho", serif';c.textAlign='center';c.textBaseline='middle';let size=35;while(c.measureText(state.title).width>880&&size>20)c.font='500 '+(--size)+'px "Noto Serif JP", "Yu Mincho", serif';c.fillText(state.title,500,202);
   c.save();c.beginPath();c.rect(0,L.top,1000,L.height);c.clip();state.items.forEach(o=>drawItem(c,o,L,selection&&o.id===selected));c.restore();c.fillStyle=p[1];c.fillRect(0,L.H-L.footer,1000,L.footer);c.strokeStyle=p[3];c.lineWidth=1;c.beginPath();c.moveTo(50,L.H-L.footer+8);c.lineTo(950,L.H-L.footer+8);c.stroke();
   c.fillStyle=p[2];c.textAlign='left';c.textBaseline='top';c.font='13px sans-serif';c.fillText('文鳥アート工房 ｜ 文鳥♬文鳥♬文鳥って嬉しいな♪',50,L.H-L.footer+19);c.font='11px sans-serif';c.fillText('写真の色・構図の加工を含むアート作品です。実在のおもちの写真ではありません。',50,L.H-L.footer+39);
@@ -190,7 +204,7 @@ export function mountStudio(root,{photos=[],birdSvg,seed}={}){
   el('selected').textContent=o?label(o):'そざいをえらんでね';el('size').value=o?.w||280;el('rotation').value=o?.r||0;el('color').value=o?.color||STUDIO_PALETTES[state.palette][3];el('tint').value=o?.tint||0;
   el('size-value').textContent=o?Math.round(o.w/10)+'%':'';el('rotation-value').textContent=o?o.r+'°':'';el('tint-value').textContent=o?.kind==='photo'?Math.round(o.tint*100)+'%':'';
   for(const n of ['size','rotation','color'])el(n).disabled=!o;el('color').disabled=!o||['bird','egg'].includes(o.kind);el('tint').disabled=o?.kind!=='photo';el('clip').disabled=o?.kind!=='photo';el('clip').value=o?.clip||'rectangle';btn('apply-text').disabled=o?.kind!=='text';for(const n of ['left','right','up','down','smaller','larger','rotate-left','rotate-right','back','front','duplicate','delete'])btn(n).disabled=!o;
-  btn('undo').disabled=!undo.length;btn('redo').disabled=!redo.length;el('format').value=state.format;el('background').value=String(state.background);el('title').value=state.title;el('palette-name').textContent=STUDIO_PALETTES[state.palette][0];el('palettes').querySelectorAll('button').forEach((b,i)=>b.setAttribute('aria-pressed',String(i===state.palette)));
+  btn('undo').disabled=!undo.length;btn('redo').disabled=!redo.length;el('format').value=state.format;el('background').value=String(state.background);el('title').value=state.title;el('palette-name').textContent=STUDIO_PALETTES[state.palette][0];el('art-backgrounds').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(Number(b.dataset.artBackground)===state.background)));el('palettes').querySelectorAll('button').forEach((b,i)=>b.setAttribute('aria-pressed',String(i===state.palette)));
  }
  function add(o){
   if(state.items.length>=MAX_ITEMS){tell('そざいは36個まで。いらないものを消してから入れてね。');return;}
@@ -201,6 +215,7 @@ export function mountStudio(root,{photos=[],birdSvg,seed}={}){
   const b=document.createElement('button');b.type='button';b.className='studio-template';b.dataset.template=String(i);const mini=document.createElement('canvas');mini.width=160;mini.height=160;mini.setAttribute('aria-hidden','true');const saved=state;state=makeStudioTemplate(i);const mc=mini.getContext('2d');mc.scale(.16,.16);background(mc,state.background,STUDIO_PALETTES[state.palette],1000);mc.translate(500,510);mc.scale(2.6,2.6);drawBird(mc,i===2?'sakura':'white');state=saved;
   const text=document.createElement('span');text.textContent=name;b.append(mini,text);on(b,'click',()=>edit(()=>{state=makeStudioTemplate(i,seed||{});selected=state.items.at(-1)?.id;},name+'を開きました。前の作品は「もどす」で戻せます。'));el('templates').append(b);
  });
+ STUDIO_ART_BACKGROUNDS.forEach(data=>{const b=document.createElement('button');b.type='button';b.dataset.artBackground=String(data.index);b.setAttribute('aria-pressed',String(state.background===data.index));const img=new Image();img.src=new URL('studio-backgrounds/'+data.file,document.baseURI).href;img.alt='';img.loading='lazy';img.width=1254;img.height=1254;const text=document.createElement('span');text.textContent=data.name;b.append(img,text);on(b,'click',()=>edit(()=>{state.background=data.index;},data.name+'の背景にしました。'));el('art-backgrounds').append(b);});
  STUDIO_BACKGROUNDS.forEach((name,i)=>{const option=document.createElement('option');option.value=String(i);option.textContent=name;el('background').append(option);});
  STUDIO_PALETTES.forEach((p,i)=>{const b=document.createElement('button');b.type='button';b.style.background='linear-gradient(135deg,'+p[1]+' 0 45%,'+p[3]+' 45% 75%,'+p[4]+' 75%)';b.setAttribute('aria-label',p[0]+'の配色');b.title=p[0];on(b,'click',()=>edit(()=>{state.palette=i;state.items.filter(o=>!['photo','bird','egg'].includes(o.kind)).forEach(o=>o.color=o.kind==='flower'?p[4]:p[3]);},p[0]+'のいろにしました。'));el('palettes').append(b);});
  const materials=[['bird','白文鳥','white'],['bird','桜文鳥','sakura'],['bird','幼鳥','juvenile'],['bird','シルバー','silver'],['bird','シナモン','cinnamon'],['branch','葉の枝'],['flower','お花'],['leaf','葉っぱ'],['ribbon','曲線の帯'],['medallion','花の輪'],['nest','巣'],['egg','たまご']];
@@ -232,7 +247,7 @@ export function mountStudio(root,{photos=[],birdSvg,seed}={}){
  function finishDrag(e,cancel=false){if(!drag||e.pointerId!==drag.pointer)return;const finished=drag;drag=null;if(cancel){state=finished.start;invalidate();refresh();tell('移動を取り消しました。');}else if(finished.moved){undo.push(finished.start);if(undo.length>HISTORY)undo.shift();redo=[];invalidate();refresh();persist();tone('move');tell('素材を動かしました。');}if(canvas.hasPointerCapture?.(finished.pointer))canvas.releasePointerCapture(finished.pointer);}
  on(canvas,'pointerup',e=>finishDrag(e));on(canvas,'pointercancel',e=>finishDrag(e,true));on(canvas,'lostpointercapture',e=>{if(drag)finishDrag(e,true);});
  on(canvas,'keydown',e=>{const map={ArrowLeft:'left',ArrowRight:'right',ArrowUp:'up',ArrowDown:'down',Delete:'delete',Backspace:'delete'};if(map[e.key]){e.preventDefault();btn(map[e.key]).click();}if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();btn(e.shiftKey?'redo':'undo').click();}});
- async function loadNeeded(){await Promise.all([brandImage,...[...new Set(state.items.filter(o=>o.kind==='photo').map(o=>o.photoId))].map(getImage)].map(img=>new Promise((resolve,reject)=>{if(!img){reject(new Error('photo'));return;}let timer,settled=false;const finish=error=>{if(settled)return;settled=true;clearTimeout(timer);img.removeEventListener('load',loaded);img.removeEventListener('error',failed);signal.removeEventListener('abort',cancelled);error?reject(new Error(img===brandImage&&error==='photo'?'brand':error)):resolve();},loaded=()=>{if(!img.naturalWidth){finish('photo');return;}try{Promise.resolve(typeof img.decode==='function'?img.decode():undefined).then(()=>finish(),()=>finish('photo'));}catch{finish('photo');}},failed=()=>finish('photo'),cancelled=()=>finish('cancelled');timer=setTimeout(()=>finish('timeout'),15000);signal.addEventListener('abort',cancelled,{once:true});if(signal.aborted){cancelled();return;}if(img.complete)loaded();else{img.addEventListener('load',loaded,{once:true});img.addEventListener('error',failed,{once:true});}})));}
+ async function loadNeeded(){await Promise.all([brandImage,...(state.background>=8?[getArtBackground(state.background)]:[]),...[...new Set(state.items.filter(o=>o.kind==='photo').map(o=>o.photoId))].map(getImage)].map(img=>new Promise((resolve,reject)=>{if(!img){reject(new Error('photo'));return;}let timer,settled=false;const finish=error=>{if(settled)return;settled=true;clearTimeout(timer);img.removeEventListener('load',loaded);img.removeEventListener('error',failed);signal.removeEventListener('abort',cancelled);error?reject(new Error(img===brandImage&&error==='photo'?'brand':error)):resolve();},loaded=()=>{if(!img.naturalWidth){finish('photo');return;}try{Promise.resolve(typeof img.decode==='function'?img.decode():undefined).then(()=>finish(),()=>finish('photo'));}catch{finish('photo');}},failed=()=>finish('photo'),cancelled=()=>finish('cancelled');timer=setTimeout(()=>finish('timeout'),15000);signal.addEventListener('abort',cancelled,{once:true});if(signal.aborted){cancelled();return;}if(img.complete)loaded();else{img.addEventListener('load',loaded,{once:true});img.addEventListener('error',failed,{once:true});}})));}
  on(btn('export'),'click',async()=>{
   if(drag)finishDrag({pointerId:drag.pointer});const ticket=revision;btn('export').disabled=true;tell('写真と文字をたしかめて、画像をつくっています。');
   try{await loadNeeded();if(document.fonts?.ready)await document.fonts.ready;if(destroyed)return;if(ticket!==revision)throw new Error('changed');if(layout().overflow)throw new Error('credits');
@@ -258,5 +273,5 @@ export function mountStudio(root,{photos=[],birdSvg,seed}={}){
  on(btn('sfx'),'click',()=>{if(!sfx&&!audioReady())return;sfx=!sfx;btn('sfx').setAttribute('aria-pressed',String(sfx));btn('sfx').textContent=sfx?'操作音を消す':'操作音をつける';el('audio-status').textContent=sfx?'操作に合わせた合成音が鳴ります。':'操作音を消しました。';tone('add');});
  on(document,'visibilitychange',()=>{if(document.hidden){stopMusic();if(audio)audio.suspend().catch(()=>{});}else if(audio&&sfx)audio.resume().catch(()=>{});});
  refresh();persist();if(invalidSaved)tell('以前の保存を読み込めませんでした。元のデータは上書きせず残しています。今の作品はPNGで保存できます。「作り直す」を確認すると端末の保存を置き換えます。');else if(seed)tell('ゲームの記念カードをつくりました。前の作品は「もどす」で戻せます。');
- return()=>{destroyed=true;abort.abort();if(musicTimer)clearInterval(musicTimer);if(audio)audio.close().catch(()=>{});if(exportURL)URL.revokeObjectURL(exportURL);images.forEach(img=>{img.onload=null;img.onerror=null;});};
+ return()=>{destroyed=true;abort.abort();if(musicTimer)clearInterval(musicTimer);if(audio)audio.close().catch(()=>{});if(exportURL)URL.revokeObjectURL(exportURL);images.forEach(img=>{img.onload=null;img.onerror=null;});artBackgroundImages.forEach(img=>{img.onload=null;img.onerror=null;});};
 }
