@@ -53,7 +53,7 @@ for(const [width,height] of [[320,568],[390,844],[844,390]]) {
       await cover(page,page.locator('.finch-garden-slide').first().locator('.finch-garden-background'));
       await noScroll(page);
     }
-    await reachable(page,page.locator('.finch-garden-slide').first().locator('.finch-garden-friend'),selector,page.locator('.finch-garden-dock'));
+    await reachable(page,page.locator('.finch-garden-slide').first().locator('.finch-garden-friend').first(),selector,page.locator('.finch-garden-dock'));
     await page.screenshot({path:testInfo.outputPath(`garden-${width}x${height}.png`)});
     await page.locator('[data-game-close-panel]').click();
     await expect(page.locator('.game-panel-overlay')).not.toBeVisible();

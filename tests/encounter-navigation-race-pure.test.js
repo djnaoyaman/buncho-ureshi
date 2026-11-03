@@ -1,9 +1,10 @@
 import test from 'node:test';
+import {Window} from 'happy-dom';
 import assert from 'node:assert/strict';
 import {createWorld} from '../src/engine.js';
 import {mountEncounterPanel} from '../src/encounter-controller.js';
 // Minimal render sink: no browser, third-party dependencies or network access.
-function sink(){return {html:'',attrs:{},buttons:[],classList:{add(){},remove(){}},addEventListener(){},removeEventListener(){},setAttribute(k,v){this.attrs[k]=v;},removeAttribute(k){delete this.attrs[k];},querySelector(){return null;},querySelectorAll(){return this.buttons;},set innerHTML(s){this.html=s;this.buttons=Array.from(s.matchAll(/<button\b/g),()=>({disabled:false}));}};}
+function sink(){return {ownerDocument:new Window().document,html:'',attrs:{},buttons:[],classList:{add(){},remove(){}},addEventListener(){},removeEventListener(){},setAttribute(k,v){this.attrs[k]=v;},removeAttribute(k){delete this.attrs[k];},querySelector(){return null;},querySelectorAll(){return this.buttons;},set innerHTML(s){this.html=s;this.buttons=Array.from(s.matchAll(/<button\b/g),()=>({disabled:false}));}};}
 function setup(){const world=createWorld(1000,42),root=sink(),pending=[];const panel=mountEncounterPanel(root,{getWorld:()=>world,transact:fn=>new Promise(resolve=>pending.push(()=>resolve(fn(world))))});return {world,root,pending,panel};}
 test('notebook navigation cancels a pending garden operation and releases disabled controls',async()=>{
  const {world,root,pending,panel}=setup();const first=panel.garden();await Promise.resolve();
