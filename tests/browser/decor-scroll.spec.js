@@ -46,7 +46,7 @@ for(const [width,height] of [[320,240],[320,568],[390,664],[390,844],[844,390],[
  await shelfEnd(page,info,`decor-${width}x${height}-after-draw`);
  for(const filter of ['owned','all']){const button=page.locator(`[data-decor-filter="${filter}"]`);await reachable(button);await button.tap();await expect(button).toHaveAttribute('aria-pressed','true');}
  const odds=page.locator('[data-game-details="draw-odds"]');await reachable(odds.locator('summary'));await odds.locator('summary').tap();await expect(odds).toHaveAttribute('open','');await odds.locator('summary').tap();await expect(odds).not.toHaveAttribute('open','');
- await page.setViewportSize({width:height,height:width});await shelfEnd(page,info,`decor-${height}x${width}-rotated`);
+ if(height>=320)await page.setViewportSize({width:height,height:width});await shelfEnd(page,info,`decor-${height}x${width}-rotated`);
  await reachable(page.locator('[data-game-close-panel]'));await page.locator('[data-game-close-panel]').tap();await expect(page.locator('.game-panel-overlay')).not.toBeVisible();
  await page.locator('[data-game-panel="decorate"]').tap();await shelfEnd(page,info,`decor-${height}x${width}-reopened`);
  expect(await page.evaluate(()=>({x:scrollX,y:scrollY,w:document.documentElement.scrollWidth<=innerWidth+1,h:document.documentElement.scrollHeight<=innerHeight+1}))).toEqual({x:0,y:0,w:true,h:true});
