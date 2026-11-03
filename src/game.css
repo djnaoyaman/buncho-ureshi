@@ -503,3 +503,7 @@ body[data-world="buncho"] .owner-peek-art{display:block;width:100%;height:auto;t
 @media(max-height:500px){body[data-world="buncho"] .game-owner-companion{display:block;width:clamp(110px,29cqh,135px);bottom:calc(70px + env(safe-area-inset-bottom,0px))}}
 @media(prefers-reduced-motion:reduce){.owner-peek-body,.owner-peek-back,.owner-peek-glance{animation:none!important}}
 html[data-motion="off"] .owner-peek-body,html[data-motion="off"] .owner-peek-back,html[data-motion="off"] .owner-peek-glance,.game-app[data-care-motion="off"] :is(.owner-peek-body,.owner-peek-back,.owner-peek-glance){animation:none!important}
+
+
+/* Keep the observer in phase when the self-running scene redraws. */
+.owner-peek-body,.owner-peek-back,.owner-peek-glance{animation-delay:var(--owner-delay,0ms)}
