@@ -2,6 +2,9 @@ name: Garden target audit
 on:
   pull_request:
     paths:
+      - 'src/encounter-ui.*'
+      - 'src/data/gardens.js'
+      - 'src/garden*'
       - 'tests/browser/garden-hit-targets.spec.js'
       - '.github/workflows/garden-target-audit.yml'
 permissions:
