@@ -432,6 +432,14 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     refreshPending=false;
     const oldFriendScroll=root.querySelector('.game-friend-houses')?.scrollLeft;
     const oldFamilyScroll=root.querySelector('.game-family-pan')?.scrollLeft;
+    const decorSlots=root.querySelector('.game-decor-slots');
+    const oldDecorScroll=panel==='decorate'&&decorSlots?{
+      slots:decorSlots.scrollLeft,
+      collection:decorSlots.querySelector('[aria-pressed=true]')?.dataset.decorSlot===decorSlot
+        &&root.querySelector('[data-decor-tier][aria-pressed=true]')?.dataset.decorTier===decorTier
+        &&root.querySelector('[data-decor-filter][aria-pressed=true]')?.dataset.decorFilter===decorFilter
+        ?root.querySelector('.game-collection')?.scrollTop:0,
+    }:null;
     const openDetails=new Set([...root.querySelectorAll("details[open][data-game-details]")].map(d=>d.dataset.gameDetails));
     const oldBirdPositions=new Map([...root.querySelectorAll('.game-room-bird')].map(el=>[el.dataset.birdId,el.getBoundingClientRect()]));
     const focus=document.activeElement,focusBird=root.contains(focus)?focus.dataset?.gameSelect:null,focusIndex=root.contains(focus)?[...root.querySelectorAll('button,input,select,summary')].indexOf(focus):-1,focusId=root.contains(focus)?focus.id:null,focusValue=focusId&&'value'in focus&&(!focus.dataset.gameDraftBird||(focus.dataset.gameDraftBird===selected&&focus.dataset.gameDraftWorld===world.worldId&&drafts.get(draftKey())?.[focusId]!==undefined))?focus.value:null,selectionStart=focus?.selectionStart,selectionEnd=focus?.selectionEnd;
@@ -477,6 +485,17 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     if(oldPanelScroll!==undefined&&panel!=='garden')overlay.querySelector(':scope > .game-panel').scrollTop=oldPanelScroll;
     if(oldFriendScroll!==undefined&&root.querySelector('.game-friend-houses'))root.querySelector('.game-friend-houses').scrollLeft=oldFriendScroll;
     if(oldFamilyScroll!==undefined&&root.querySelector('.game-family-pan'))root.querySelector('.game-family-pan').scrollLeft=oldFamilyScroll;
+    // Replacing the decoration DOM must not move the next item under a finger.
+    // Keep both scroll tracks across preview, equip and background refresh.
+    if(panel==='decorate'){
+      const slots=root.querySelector('.game-decor-slots'),collection=root.querySelector('.game-collection');
+      if(oldDecorScroll){slots.scrollLeft=oldDecorScroll.slots;collection.scrollTop=oldDecorScroll.collection||0;}
+      else if(slots){
+        const active=slots.querySelector('[aria-pressed=true]'),track=slots.getBoundingClientRect(),item=active?.getBoundingClientRect();
+        if(item&&item.right>track.right)slots.scrollLeft+=item.right-track.right;
+        else if(item&&item.left<track.left)slots.scrollLeft+=item.left-track.left;
+      }
+    }
     const room=root.querySelector('.game-room');
     if(room){
       const tall=globalThis.matchMedia?.('(max-width: 600px)').matches;
@@ -639,8 +658,8 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     if(button.hasAttribute('data-field-travel')||button.dataset.fieldInvite||button.dataset.decorDraw||button.dataset.decorEquip){await fieldAction(button);return;}
     if(button.dataset.decorFilter){fieldViewRequest++;decorFilter=button.dataset.decorFilter;render();return;}
     if(button.dataset.decorTier){fieldViewRequest++;decorTier=button.dataset.decorTier;render();return;}
-    if(button.dataset.decorSlot){fieldViewRequest++;decorSlot=button.dataset.decorSlot;previewItem=null;drawResult=null;render();return;}
-    if(button.dataset.decorPreview){fieldViewRequest++;previewItem=button.dataset.decorPreview;render();return;}
+    if(button.dataset.decorSlot){fieldViewRequest++;decorSlot=button.dataset.decorSlot;previewItem=null;drawResult=null;message='';render();return;}
+    if(button.dataset.decorPreview){fieldViewRequest++;previewItem=button.dataset.decorPreview;message='';render();return;}
     if(button.hasAttribute('data-decor-cancel')){fieldViewRequest++;previewItem=null;drawResult=null;render();return;}
     if(button.dataset.gameCare){await careAction(button);return;}
     if(button.dataset.gamePanel){const menu=root.querySelector('.game-secondary-menu');if(menu)menu.open=false;sheetOpen=false;fieldViewRequest++;cancelCareEffects();panel=button.dataset.gamePanel;message='';render();focusPanel();if(panel==='family')centerFamily();return;}
