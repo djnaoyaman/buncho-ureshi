@@ -9,7 +9,7 @@ async function ready(page, width) {
     localStorage.setItem('buncho.care-sound-choice.v1', JSON.stringify({explicit:true,enabled:false}));
   });
   await page.goto('game/');
-  await expect(page.locator('body')).toHaveAttribute('data-game-intro', 'done');
+  await expect(page.locator('body')).toHaveAttribute('data-game-intro', 'done');await page.locator('.game-scene-controls-toggle').click();await expect(page.locator('.game-scene-controls-toggle')).toHaveAttribute('aria-expanded','true');
   await page.locator('.game-field-nav [data-game-panel=outdoors]').click();
   await expect(page.locator('.game-encounter-host')).toHaveAttribute('aria-busy', 'false');
 }
@@ -82,7 +82,7 @@ for (const width of [320,390]) for (const garden of ['komorebi','mizukagami']) t
     } finally { store.close(); }
   },garden);
   await page.reload();
-  await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');
+  await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');await page.locator('.game-scene-controls-toggle').click();await expect(page.locator('.game-scene-controls-toggle')).toHaveAttribute('aria-expanded','true');
   await page.locator('.game-field-nav [data-game-panel=outdoors]').click();
   await expect(page.locator('.game-encounter-host')).toHaveAttribute('aria-busy','false');
   const lead=page.locator('.finch-garden-stage [data-garden-household]');
