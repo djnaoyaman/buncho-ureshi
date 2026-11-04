@@ -201,3 +201,20 @@
 @media(min-height:341px) and (max-height:500px){.finch-garden:has(.finch-raptor-scale-scene)>header h3{display:none}.finch-garden:has(.finch-raptor-scale-scene)>header{top:78px!important}}
 
 @media(max-width:359px) and (min-height:501px){.finch-raptor-scale-scene{bottom:calc(23% + 40px)}}
+
+/* The enemy notebook has several groups. Keep them in one scroll flow:
+   capping each grid separately clips its last row beneath the next heading. */
+.finch-overlay-content .finch-crow-notebook .finch-catalog{
+  max-height:none;
+  overflow:visible;
+  align-content:start;
+}
+.finch-crow-notebook .finch-raptor-catalog{
+  display:flow-root;
+  margin-top:1.5rem;
+}
+.finch-crow-notebook .finch-raptor-catalog>.finch-catalog+h4{
+  margin-block:1.5rem .75rem;
+  padding-top:1rem;
+  border-top:1px solid #d9c9a0;
+}
