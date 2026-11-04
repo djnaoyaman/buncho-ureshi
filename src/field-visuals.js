@@ -87,6 +87,12 @@ export function friendFurnishing(host,slot,colors,tiers) {
  * vocabulary; these vessels have an elliptical rim, inner wall and contact base. */
 export function furnitureSceneSvg(slot,color='#8fbea6',tier=1){
  const svg=furnitureSvg(slot,color,tier);
+ // Scene fixtures are separate from the collectible artwork. Bowls and
+ // bottles sit in a bracket fixed to the cage bars, not on the floor. This
+ // preserves all 216 product silhouettes and the existing inventory IDs.
+ const wall=['feed','water','greens','shellgrit'].includes(slot);
+ const mount=wall?'wall':slot==='perch'?'perch':['swing','toy'].includes(slot)?'ceiling':'floor';
+ const fixture=wall?`<g data-scene-fixture="wall" transform="${['water','shellgrit'].includes(slot)?'translate(200 0) scale(-1 1)':'translate(0 0)'}" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M25 55v105m0-7h144M26 124l37 29" stroke="#8d7959" stroke-width="5"/><path d="M25 55v105m0-7h144M26 124l37 29" stroke="#d7c5a0" stroke-width="2"/><rect x="17" y="50" width="16" height="18" rx="5" fill="#c7b58a" stroke="#8d7959" stroke-width="1.5"/><path d="M21 57h8m-4-4v9" stroke="#f7ecd0" stroke-width="1.5"/></g>`:'';
  const box=slot==='perch'?'0 55 200 120':slot==='paper'?'0 32 200 125':'0 0 200 170';
- return svg.replace('viewBox="0 0 200 180"',`viewBox="${box}"`).replace('data-item-art="atelier-v3"','data-item-art="atelier-v3" data-scene-art="true"');
+ return svg.replace('</defs>',`</defs>${fixture}`).replace('viewBox="0 0 200 180"',`viewBox="${box}"`).replace('data-item-art="atelier-v3"',`data-item-art="atelier-v3" data-scene-art="true" data-scene-mount="${mount}"`);
 }

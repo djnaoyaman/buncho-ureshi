@@ -126,38 +126,46 @@ body[data-world="buncho"] .game-reply:before{content:"";position:absolute;top:-9
 body[data-world="buncho"] .game-secondary-menu{border:0;background:transparent;padding:0}
 body[data-world="buncho"] .game-secondary-menu>summary{background:linear-gradient(110deg,#fffaf0,#f1edcf);border:1px solid #c4cba2;border-radius:22px 10px 22px 10px;box-shadow:0 3px 0 #c9c19a30;padding:16px 20px;min-height:54px;color:#46623d;font-weight:600}
 body[data-world="buncho"] .game-play-actions button{background:#e7edcb;border:1px solid #9cac79;border-radius:24px 14px 24px 14px;min-height:48px;box-shadow:0 3px 0 #9cac7928;color:#415934}
-/* Shared form artwork, supported at an explicit contact instead of centered
-   arbitrarily. Append after game.css. Background rails remain structural. */
+/* Furniture belongs to the cage structure: the perch and dishes attach to
+   bars, hanging toys attach overhead, and only bath/paper sit on the tray.
+   The same rules render the player's room, friend rooms and atelier previews. */
 .game-furnishings{z-index:2;isolation:isolate}
 .game-furnishing{transform:translate(-50%,-94%);filter:none}
 .game-furnishing svg{width:100%;height:auto;overflow:visible}
-.furnishing-feed{left:23%;top:82%;width:12%}
-.furnishing-water{left:37%;top:80%;width:11%}
-.furnishing-greens{left:51%;top:82%;width:10%}
-.furnishing-shellgrit{left:62%;top:82%;width:9%}
-.furnishing-bath{left:77%;top:82%;width:17%}
-/* Two collars grip the painted lower rail; no replacement floating in space. */
-.furnishing-perch{left:40%;top:58.1%;width:25%;transform:translate(-50%,-24.2%)}
-/* The hook is the upper contact. No unbounded pseudo-element rope. */
-.furnishing-swing{left:66%;top:11.5%;width:14%;transform:translate(-50%,0)}
-.furnishing-toy{left:78%;top:15.6%;width:9%;transform:translate(-50%,0)}
+.furnishing-feed{--furniture-x:25%;left:var(--furniture-x);top:50%;--furniture-width:12%;width:var(--furniture-width)}
+.furnishing-water{--furniture-x:75%;left:var(--furniture-x);top:49%;--furniture-width:11%;width:var(--furniture-width)}
+.furnishing-greens{--furniture-x:25%;left:var(--furniture-x);top:65%;--furniture-width:10%;width:var(--furniture-width)}
+.furnishing-shellgrit{--furniture-x:74%;left:var(--furniture-x);top:67%;--furniture-width:9%;width:var(--furniture-width)}
+.furnishing-bath{--furniture-x:75%;left:var(--furniture-x);top:82%;--furniture-width:17%;width:var(--furniture-width)}
+.furnishing-perch{--furniture-x:44%;left:var(--furniture-x);top:38.4%;--furniture-width:27%;width:var(--furniture-width);transform:translate(-50%,-24.2%)}
+.furnishing-swing{--furniture-x:53%;left:var(--furniture-x);top:11.5%;--furniture-width:14%;width:var(--furniture-width);transform:translate(-50%,0)}
+.furnishing-toy{--furniture-x:65%;left:var(--furniture-x);top:13%;--furniture-width:9%;width:var(--furniture-width);transform:translate(-50%,0)}
 .furnishing-swing:before,.furnishing-toy:before{display:none}
-.furnishing-paper{left:50%;top:83%;width:64%;z-index:-1;opacity:.8;transform:translate(-50%,-85%) scaleY(.31);transform-origin:50% 85%}
-/* Hooks on these vessels clip to the same lower rail, not a random cage bar. */
-.furnishing-water[data-furniture-form="4"]{left:31%;top:58.1%;width:10%;transform:translate(-50%,-24.7%)}
-.furnishing-greens[data-furniture-form="3"]{left:65%;top:58.1%;width:10%;transform:translate(-50%,-53.5%)}
+.furnishing-paper{--furniture-x:50%;left:var(--furniture-x);top:83%;--furniture-width:64%;width:var(--furniture-width);z-index:-1;opacity:.8;transform:translate(-50%,-85%) scaleY(.31);transform-origin:50% 85%}
 @media(max-width:600px){
- .furnishing-perch{left:46%;top:55.7%;width:38%}
- .furnishing-feed{left:22%;top:82%;width:16%}
- .furnishing-water{left:38%;top:80%;width:14%}
- .furnishing-greens{left:53%;top:82%;width:13%}
- .furnishing-shellgrit{left:66%;top:82%;width:11%}
- .furnishing-bath{left:80%;top:82%;width:19%}
- .furnishing-swing{left:64%;top:9%;width:22%}
- .furnishing-toy{left:78%;top:13%;width:13%}
- .furnishing-paper{left:50%;top:83%;width:76%;transform:translate(-50%,-85%) scaleY(.48)}
- .furnishing-water[data-furniture-form="4"]{left:31%;top:55.7%;width:14%}
- .furnishing-greens[data-furniture-form="3"]{left:65%;top:55.7%;width:13%}
+ .furnishing-perch{--furniture-x:46%;left:var(--furniture-x);top:37.6%;--furniture-width:38%;width:var(--furniture-width)}
+ .furnishing-feed{--furniture-x:26%;left:var(--furniture-x);top:49%;--furniture-width:14%;width:var(--furniture-width)}
+ .furnishing-water{--furniture-x:74%;left:var(--furniture-x);top:48%;--furniture-width:13%;width:var(--furniture-width)}
+ .furnishing-greens{--furniture-x:27%;left:var(--furniture-x);top:64%;--furniture-width:12%;width:var(--furniture-width)}
+ .furnishing-shellgrit{--furniture-x:73%;left:var(--furniture-x);top:67%;--furniture-width:10%;width:var(--furniture-width)}
+ .furnishing-bath{--furniture-x:72%;left:var(--furniture-x);top:82%;--furniture-width:19%;width:var(--furniture-width)}
+ .furnishing-swing{--furniture-x:53%;left:var(--furniture-x);top:9%;--furniture-width:22%;width:var(--furniture-width)}
+ .furnishing-toy{--furniture-x:72%;left:var(--furniture-x);top:13%;--furniture-width:13%;width:var(--furniture-width)}
+ .furnishing-paper{--furniture-x:50%;left:var(--furniture-x);top:83%;--furniture-width:76%;width:var(--furniture-width);transform:translate(-50%,-85%) scaleY(.48)}
+}
+/* Keep fixtures inside the visible portion of a full-bleed cage. The image
+   can crop at unusual aspect ratios; collectible furnishings must not vanish. */
+body[data-world="buncho"] .game-main .game-room .game-furnishing:not(.furnishing-paper){left:clamp(calc(max(0px,(100% - 100cqw)/2) + var(--furniture-width)/2 + 2px),var(--furniture-x),calc(100% - max(0px,(100% - 100cqw)/2) - var(--furniture-width)/2 - 2px))}
+body[data-world="buncho"] .game-main .game-room .furnishing-swing,
+body[data-world="buncho"] .game-main .game-room .furnishing-toy{--roof-visible-top:calc(0px - clamp(calc(100cqh - var(--plane-h)),calc(70cqh - var(--plane-h)*.79),0px));top:max(var(--roof-y),calc(var(--roof-visible-top) + 8cqh))}
+body[data-world="buncho"] .game-main .game-room .furnishing-swing{--roof-y:11.5%;--roof-fraction:.115}
+body[data-world="buncho"] .game-main .game-room .furnishing-toy{--roof-y:13%;--roof-fraction:.13}
+body[data-world="buncho"] .game-main .game-room .furnishing-swing:before,
+body[data-world="buncho"] .game-main .game-room .furnishing-toy:before{display:block;bottom:98%;height:max(0px,calc(var(--roof-visible-top) + 8cqh - var(--plane-h)*var(--roof-fraction)));width:2px}
+@media(max-width:600px){body[data-world="buncho"] .game-main .game-room .furnishing-swing{--roof-y:9%;--roof-fraction:.09}}
+@media(max-height:500px){
+ body[data-world="buncho"] .game-main .game-room .furnishing-swing{--furniture-width:11%;width:var(--furniture-width)}
+ body[data-world="buncho"] .game-main .game-room .furnishing-toy{--furniture-width:7%;width:var(--furniture-width)}
 }
 
 /* Only the game gets this exit and its compact world controls. */
@@ -569,3 +577,4 @@ body[data-world="buncho"][data-scene-controls="closed"]:has(.game-room[data-home
 @media(forced-colors:active){.game-care-pet-bird:focus-visible{outline-color:Highlight}.game-care-rub-note{color:ButtonText}}
 
 .game-care-pet-bird:disabled>.game-sprite{touch-action:pan-y}
+
