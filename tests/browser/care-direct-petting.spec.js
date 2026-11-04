@@ -92,10 +92,10 @@ test('one enlarged upper bird at four sizes; native mouse rub saves exactly once
     await expect.poll(()=>pet.locator('img').evaluate(img=>img.complete&&img.naturalWidth>0)).toBe(true);
     await expect(pet).toHaveAccessibleName(/なで/);
     const geometry = await pet.evaluate(el => {
-      const r = el.getBoundingClientRect(), a = document.querySelector('.game-care-actions').getBoundingClientRect(), image=el.querySelector('img');
-      return {width:r.width, actionsWidth:a.width, above:r.bottom <= a.top + 1, height:r.height, fit:getComputedStyle(image).objectFit, overflow:document.documentElement.scrollWidth > innerWidth + 1};
+      const r = el.getBoundingClientRect(), a = document.querySelector('.game-care-actions').getBoundingClientRect(), image=el.querySelector('img'), help=document.querySelector('#game-care-pet-help').getBoundingClientRect(), close=document.querySelector('#game-sheet-close').getBoundingClientRect();
+      return {width:r.width, actionsWidth:a.width, above:r.bottom <= a.top + 1, height:r.height, fit:getComputedStyle(image).objectFit, clearClose:help.top>=close.bottom+4, overflow:document.documentElement.scrollWidth > innerWidth + 1};
     });
-    expect(geometry.fit).toBe('contain'); expect(geometry.above).toBe(true); expect(geometry.height).toBeGreaterThanOrEqual(250); expect(geometry.overflow).toBe(false);
+    expect(geometry.clearClose).toBe(true); expect(geometry.fit).toBe('contain'); expect(geometry.above).toBe(true); expect(geometry.height).toBeGreaterThanOrEqual(250); expect(geometry.overflow).toBe(false);
     expect(geometry.width).toBeGreaterThanOrEqual(geometry.actionsWidth * .85);
     await page.locator('.game-bird-sheet').evaluate(el=>el.scrollTop=0);
     await info.attach(`single-care-top-${size.width}x${size.height}`, {body:await page.screenshot(), contentType:'image/png'});
