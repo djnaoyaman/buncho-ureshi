@@ -217,3 +217,22 @@ test('full reset requires two confirmations, preserves owner/music, and can rest
 test('owner name and avatar stay optional drafts until explicit save, never mutate game world',async t=>{
  const f=await fixture(t);await f.mount();f.closeCare();f.window.document.dispatchEvent(new f.window.CustomEvent('buncho-world-action',{detail:'settings'}));const before=f.read();f.root.querySelector('[data-game-panel="owner"]').click();let input=f.root.querySelector('[data-owner-name]');assert.equal(input.value,'飼い主さん');input.value='<b>だいすき</b>';input.dispatchEvent(new f.window.Event('input',{bubbles:true}));f.root.querySelector('[data-owner-save]').click();assert.match(f.root.querySelector('.game-owner-setting').textContent,/<b>だいすき<\/b>/);assert.equal(f.root.querySelector('.game-owner-setting b'),null);assert.deepEqual(f.read(),before);f.root.querySelector('[data-game-panel="owner"]').click();input=f.root.querySelector('[data-owner-name]');input.value='まだ保存しない';input.dispatchEvent(new f.window.Event('input',{bubbles:true}));await f.poll();assert.equal(f.root.querySelector('[data-owner-name]').value,'まだ保存しない');f.root.querySelector('[data-owner-cancel]').click();assert.match(f.root.querySelector('.game-owner-setting').textContent,/<b>だいすき/);
 });
+
+
+
+test('care dock keeps its labelled button and bird-coloured line icon through repeated open and close',async t=>{
+  const f=await fixture(t);await f.mount();f.closeCare();const before=f.read();
+  for(let i=0;i<3;i++){
+    const button=f.root.querySelector('#game-open-bird'),svg=button.querySelector('svg');
+    assert.equal(button.textContent,'ふれあう');assert(button.hasAttribute('data-game-open-bird'));
+    assert.equal(svg.getAttribute('viewBox'),'0 0 32 32');assert.equal(svg.getAttribute('aria-hidden'),'true');
+    assert.equal(svg.getAttribute('fill'),'none');assert.equal(svg.getAttribute('stroke'),'currentColor');
+    assert.equal(svg.getAttribute('stroke-width'),'1.7');assert.equal(svg.querySelectorAll('path').length,2);
+    assert.equal(svg.querySelector('circle').getAttribute('fill'),'currentColor');assert.equal(svg.querySelector('circle').getAttribute('stroke'),'none');
+    svg.querySelector('path').dispatchEvent(new f.window.MouseEvent('click',{bubbles:true}));
+    assert(f.root.querySelector('.game-bird-sheet').open);assert.equal(f.root.querySelector('#game-sheet-title').textContent,before.birds[0].name);
+    f.closeCare();assert.equal(f.root.querySelector('.game-bird-sheet').open,false);
+  }
+  await f.settle();assert.deepEqual(f.read(),before,'opening and closing care leaves the saved world unchanged');
+});
+
