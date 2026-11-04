@@ -26,7 +26,7 @@ test('real DOM + fake IndexedDB: a real store poll followed immediately by pet c
  await polling;
  for(let i=0;i<30;i++)await sleep(2);
  const after=await read(db);
- assert.equal(after.revision,before.revision+2,'one clock poll and one care revision');
+ assert.equal(after.revision,before.revision+3,'economy and lifecycle clock revisions plus exactly one care revision');
  assert.equal(after.birds[0].needs.energy,100);assert.equal(after.decor.points,before.decor.points+5);assert.equal(after.economy.gold,4);assert.equal(starts,1);
  assert.match(root.querySelector('.game-care-feedback').textContent,/ぴっ/);
 
