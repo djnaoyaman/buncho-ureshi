@@ -176,3 +176,10 @@
  .finch-crow-scale-scene{left:62%;bottom:76px}
  .finch-crow-actor figcaption,.finch-crow-java>span:last-child{position:absolute;inline-size:1px;block-size:1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 }
+/* The short embedded notebook has its own toolbar. During the visible visit,
+   reserve the remaining strip for both birds; Home and the book stay available. */
+@media(max-height:340px){
+ body[data-world="buncho"] .game-app[data-panel=notebook] .finch-garden:has(.finch-crow-scale-scene)>.finch-garden-selector-wrap{visibility:hidden}
+ body[data-world="buncho"] .game-app[data-panel=notebook] .finch-garden-stage:has(.finch-crow-scale-scene){--crow-unit:min(9cqw,7cqh,30px)}
+ body[data-world="buncho"] .game-app[data-panel=notebook] .finch-crow-scale-scene{bottom:64px}
+}
