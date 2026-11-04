@@ -312,7 +312,7 @@ test('portrait and original photo loading, failure, retry and reopening leave th
   await expect(photoMedia).toHaveAttribute('data-media-state', 'ready');
   await decodedImages(photo);
   await expect(photo).toBeVisible();
-  const ndSource = `/buncho-ureshi/${ndEntry.photo.src}`;
+  const ndSource = new URL(`/buncho-ureshi/${ndEntry.photo.src}`, page.url()).href;
   await expect(photo).toHaveAttribute('src', ndSource);
   await expect(photo).toHaveAttribute('data-media-src', ndSource);
   expect(await photo.evaluate(image => {
