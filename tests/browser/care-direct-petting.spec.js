@@ -54,7 +54,7 @@ async function onePet(page, before) {
   return await record(page);
 }
 async function point(page) {
-  await page.locator(PET).scrollIntoViewIfNeeded();
+  await page.locator(PET).evaluate(el => el.scrollIntoView({block:'center'}));
   const box = await page.locator(PET).boundingBox();
   expect(box.width).toBeGreaterThan(100);
   return {x:box.x + box.width / 2, y:box.y + box.height / 2};
@@ -76,6 +76,7 @@ test('large bird follows actions at four sizes; native mouse rub saves exactly o
   const before = await record(page);
   for (const size of [{width:390,height:844}, {width:320,height:240}, {width:844,height:390}, {width:1440,height:900}]) {
     await page.setViewportSize(size);
+    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
     const pet = page.locator(PET);
     await expect(page.locator('.game-care-actions button')).toHaveCount(2);
     await expect(page.locator('.game-care-actions [data-game-care=pet]')).toHaveCount(0);
@@ -90,7 +91,7 @@ test('large bird follows actions at four sizes; native mouse rub saves exactly o
     });
     expect(geometry.below).toBe(true); expect(geometry.overflow).toBe(false);
     expect(geometry.width).toBeGreaterThanOrEqual(geometry.actionsWidth * .85);
-    await pet.scrollIntoViewIfNeeded();
+    await pet.evaluate(el => el.scrollIntoView({block:'center'}));
     await info.attach(`petting-${size.width}x${size.height}`, {body:await page.screenshot(), contentType:'image/png'});
   }
   if (info.project.use.hasTouch) await page.locator(PET).tap();
@@ -162,7 +163,8 @@ test('cancel, leaving target, second pointer, close, switch and navigation never
   await unchanged(page, before);
 });
 
-test('native Chromium touch sequence rewards once and real multitouch cancels', async ({page, context}) => {
+test('native Chromium touch sequence rewards once and real multitouch cancels', async ({page, context, browserName}, info) => {
+  test.skip(browserName !== 'chromium' || !info.project.use.hasTouch, 'Native CDP touch requires a Chromium touch project');
   await page.setViewportSize({width:390,height:844}); await ready(page);
   const session = await context.newCDPSession(page);
   const touch = (type, points) => session.send('Input.dispatchTouchEvent', {type, touchPoints:points.map(p => ({...p, radiusX:2, radiusY:2, force:1}))});
