@@ -31,7 +31,7 @@ test('all generated pages have exact formal name and subpath canonical/OGP metad
       assert.equal(d.querySelector('meta[property="og:url"]').content,origin+base+route,route);
       assert.ok(d.querySelector('meta[name="description"]').content.length>10,route);
       assert.equal(d.querySelector('base').getAttribute('href'),base,route);
-      assert.equal(d.querySelector('meta[name="apple-mobile-web-app-title"]').content,SITE_NAME);
+      assert.equal(d.querySelector('meta[name="apple-mobile-web-app-title"]').content,route === 'game/' ? '文鳥ぐらし' : SITE_NAME);
       assert.equal(d.querySelector('#ruby-toggle'),null);
       assert.equal(d.documentElement.dataset.ruby,'on');
       assert.equal(d.querySelector('meta[name="robots"]').content,'index, follow, max-image-preview:large',route);

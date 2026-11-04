@@ -101,6 +101,8 @@ export function routeMetadata(route = "", { query = null, notFound = false } = {
     title, description, canonical: PRODUCTION_ORIGIN + BASE_PATH + canonicalRoute,
     robots: isSearch || missing ? "noindex, follow" : "index, follow, max-image-preview:large",
     imageAlt, imageURL,
+    installManifest: route === "game/" && !missing ? "game.webmanifest" : "manifest.webmanifest",
+    installName: route === "game/" && !missing ? "文鳥ぐらし" : SITE_NAME,
     ogType: article || morph ? "article" : "website",
     structuredData: structuredData(canonicalRoute, description, title, article, morph, imageURL, imageAlt),
   };
