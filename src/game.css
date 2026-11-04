@@ -171,14 +171,14 @@ body[data-world="buncho"] .game-main .game-room .furnishing-toy:before{display:b
 
 
 /* In wide, shallow windows the illustrated roof is outside the visible crop.
-   Keep a compact, vertically ordered set of fixtures in the visible cage. */
+   Use the visible lower crossbar for the perch and keep dishes on the back wall. */
 @media(min-width:601px) and (min-aspect-ratio:2/1){
  body[data-world="buncho"] .game-main .game-room .game-furnishing:not(.furnishing-paper){top:calc(var(--roof-visible-top) + var(--compact-mount-y));transform:translate(-50%,0)}
- body[data-world="buncho"] .game-main .game-room .furnishing-perch{--compact-mount-y:22cqh;--furniture-width:40cqh}
- body[data-world="buncho"] .game-main .game-room .furnishing-feed{--compact-mount-y:34cqh;--furniture-width:16cqh}
- body[data-world="buncho"] .game-main .game-room .furnishing-water{--compact-mount-y:34cqh;--furniture-width:15cqh}
- body[data-world="buncho"] .game-main .game-room .furnishing-greens{--compact-mount-y:55cqh;--furniture-width:14cqh}
- body[data-world="buncho"] .game-main .game-room .furnishing-shellgrit{--compact-mount-y:57cqh;--furniture-width:12cqh}
+ body[data-world="buncho"] .game-main .game-room .game-furnishing.furnishing-perch{--furniture-width:40cqh;top:59.2%;transform:translate(-50%,-24.2%)}
+ body[data-world="buncho"] .game-main .game-room .furnishing-feed{--compact-mount-y:28cqh;--furniture-width:14cqh}
+ body[data-world="buncho"] .game-main .game-room .furnishing-water{--compact-mount-y:28cqh;--furniture-width:13cqh}
+ body[data-world="buncho"] .game-main .game-room .furnishing-greens{--compact-mount-y:40cqh;--furniture-width:9cqh}
+ body[data-world="buncho"] .game-main .game-room .furnishing-shellgrit{--compact-mount-y:40cqh;--furniture-width:8cqh}
  body[data-world="buncho"] .game-main .game-room .furnishing-swing{--compact-mount-y:8cqh;--furniture-width:18cqh}
  body[data-world="buncho"] .game-main .game-room .furnishing-toy{--compact-mount-y:10cqh;--furniture-width:12cqh}
  body[data-world="buncho"] .game-main .game-room .game-furnishing.furnishing-bath{--compact-mount-y:90cqh;--furniture-width:24cqh;transform:translate(-50%,-94%)}

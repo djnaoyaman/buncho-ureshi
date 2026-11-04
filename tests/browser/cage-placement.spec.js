@@ -6,7 +6,7 @@ function furnished(tier='cozy',form=0){const w=createWorld(now);w.paused=true;w.
 async function inspect(page){
  await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');
  await expect(page.locator('.game-room [data-scene-mount="wall"]')).toHaveCount(4);
- const geometry=await page.evaluate(()=>{const room=document.querySelector('.game-room'),r=room.getBoundingClientRect(),items={};for(const el of room.querySelectorAll('.game-furnishing')){const box=el.getBoundingClientRect();items[el.dataset.equippedSlot]={x:box.x,y:box.y,right:box.right,bottom:box.bottom,width:box.width,height:box.height,mount:el.querySelector('svg').dataset.sceneMount,pointer:getComputedStyle(el).pointerEvents};}return{items,viewport:{width:innerWidth,height:innerHeight},room:{y:r.y,height:r.height}};});
+ const geometry=await page.evaluate(()=>{const room=document.querySelector('.game-room'),r=room.getBoundingClientRect(),items={};for(const el of room.querySelectorAll('.game-furnishing')){const box=el.getBoundingClientRect();items[el.dataset.equippedSlot]={x:box.x,y:box.y,right:box.right,bottom:box.bottom,width:box.width,height:box.height,mount:el.querySelector('svg').dataset.sceneMount,pointer:getComputedStyle(el).pointerEvents,anchor:parseFloat(getComputedStyle(el).top)};}return{items,viewport:{width:innerWidth,height:innerHeight},room:{y:r.y,height:r.height}};});
  const {items,viewport}=geometry;
  for(const [slot,item] of Object.entries(items)){
   expect(item.pointer,slot).toBe('none');
@@ -15,6 +15,7 @@ async function inspect(page){
   expect(item.y,slot).toBeGreaterThanOrEqual(-1);expect(item.bottom,slot).toBeLessThan(viewport.height);
  }
  for(const slot of ['feed','water','greens','shellgrit']){expect(items[slot].mount).toBe('wall');expect(items[slot].bottom).toBeLessThan(items.bath.bottom-Math.min(geometry.room.height,viewport.height)*.1);}
+ if(viewport.width>600&&viewport.width/viewport.height>=2)expect(Math.abs(items.perch.anchor/geometry.room.height-.592)).toBeLessThan(.003);
  expect(items.shellgrit.bottom).toBeLessThan(items.bath.y);
  expect(items.perch.y).toBeLessThan(items.feed.bottom);expect(items.swing.y).toBeLessThan(items.perch.y);expect(items.toy.y).toBeLessThan(items.feed.y);
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);

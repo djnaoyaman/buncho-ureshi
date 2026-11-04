@@ -7,7 +7,7 @@ This is illustrative game furniture, not a real bird-keeping prescription. The e
 - Food, water, greens and shellgrit: held in visible wall brackets at separate heights on the left/right of the central flight area. No form silently falls back to a floor position.
 - Bath and liner: remain on the bottom tray.
 - Scene fixtures are render-only. Product previews retain their original collectible artwork, while the cage preview, player home and friend homes all use the same placement rules.
-- Side fixtures stay inside the visible part of a cropped cage. Wide, shallow windows use a smaller, vertically ordered arrangement within the visible cage; shellgrit remains above the bath. They remain noninteractive and behind bird controls.
+- Side fixtures stay inside the visible part of a cropped cage. Wide, shallow windows use the visible lower crossbar for the perch and a smaller arrangement of wall-mounted dishes; shellgrit remains above the bath. They remain noninteractive and behind bird controls.
 
 ## References checked 2026-11-04
 
