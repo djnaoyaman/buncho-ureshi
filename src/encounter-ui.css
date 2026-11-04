@@ -199,3 +199,5 @@
 
 .finch-garden:has(.finch-raptor-scale-scene)>.finch-garden-selector-wrap{visibility:hidden}
 @media(min-height:341px) and (max-height:500px){.finch-garden:has(.finch-raptor-scale-scene)>header h3{display:none}.finch-garden:has(.finch-raptor-scale-scene)>header{top:78px!important}}
+
+@media(max-width:359px) and (min-height:501px){.finch-raptor-scale-scene{bottom:calc(23% + 40px)}}
