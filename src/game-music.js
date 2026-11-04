@@ -84,7 +84,12 @@ export function createGameMusic({base='', gardenAssets=GARDEN_ASSETS, Context=gl
       }
       if(token!==generation||disposed||!enabled)return false;
       const source=context.createBufferSource(),gain=context.createGain();
-      const track=tracks.find(t=>t.id===id),loopStart=track.loopStartSeconds??0,loopEnd=track.loopEndSeconds??buffer.duration;
+      const track=tracks.find(t=>t.id===id),loopStart=track.loopStartSeconds??0,requestedLoopEnd=track.loopEndSeconds??buffer.duration;
+      // Native resampling can shorten decoded audio by less than one output sample.
+      // Only tolerate this quantization error, never a materially truncated file.
+      const sampleTolerance=Number.isFinite(buffer.sampleRate)&&buffer.sampleRate>0?1/buffer.sampleRate:0;
+      const loopEnd=requestedLoopEnd>buffer.duration&&requestedLoopEnd-buffer.duration<=sampleTolerance+Number.EPSILON*Math.max(1,buffer.duration)
+        ?buffer.duration:requestedLoopEnd;
       if(!Number.isFinite(loopStart)||!Number.isFinite(loopEnd)||loopStart<0||loopEnd<=loopStart||loopEnd>buffer.duration)throw Error('曲のループ範囲を確認できませんでした');
       source.buffer=buffer;source.loop=true;source.loopStart=loopStart;source.loopEnd=loopEnd;
       const entry={source,gain};active.add(entry);source.onended=()=>{active.delete(entry);try{source.disconnect();gain.disconnect();}catch{}};

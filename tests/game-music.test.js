@@ -1,3 +1,4 @@
+import {GARDEN_ASSETS} from '../src/data/garden-assets.js';
 import test from 'node:test';import assert from 'node:assert/strict';import {createGameMusic,MUSIC_TRACKS} from '../src/game-music.js';
 function fixture(options={}){let contexts=[],requests=[],started=[];const values=new Map();class Context{constructor(){this.state='suspended';this.currentTime=0;this.destination={};contexts.push(this);}resume(){this.state='running';return Promise.resolve();}suspend(){this.state='suspended';return Promise.resolve();}close(){this.state='closed';return Promise.resolve();}decodeAudioData(){return Promise.resolve({duration:12});}createGain(){return{gain:{value:.18,cancelScheduledValues(){},setValueAtTime(){},linearRampToValueAtTime(){},setTargetAtTime(){}},connect(){},disconnect(){}};}createBufferSource(){const s={connect(){},disconnect(){},start(){started.push(s);s.live=true;},stop(){s.live=false;s.onended?.();}};return s;}}
  const storage={getItem:k=>values.get(k),setItem:(k,v)=>values.set(k,v)};const player=createGameMusic({Context,storage,fetcher:async(url)=>{requests.push(url);return{ok:true,arrayBuffer:async()=>new ArrayBuffer(4)};},...options});return{player,contexts,requests,started,values,Context};}
@@ -89,4 +90,24 @@ test('saved fixed choice is superseded by first garden arrival but leaving resto
  await f.player.setGarden('onsen','one');assert.equal(f.player.state().mode,'auto');assert.equal(f.requests.length,0);
  await f.player.playCurrentFromGesture();assert.equal(f.player.state().selected,'garden-onsen');
  await f.player.setGarden(null,'one');assert.equal(f.player.state().selected,'lakeside');f.player.dispose();
+});
+
+
+// Native decoders resample 44.1 kHz MP3s into the output device's sample rate.
+// A floor-rounded 48 kHz buffer is shorter than five garden loop endpoints.
+for(const sampleRate of [44100,48000])for(const[id,asset]of Object.entries(GARDEN_ASSETS)){
+ test(`garden ${id} tolerates one output sample of resampling at ${sampleRate} Hz`,async()=>{
+  const duration=Math.floor(asset.music.loopSamples*sampleRate/asset.music.sampleRate+1e-8)/sampleRate;
+  const f=fixture();class Resampled extends f.Context{decodeAudioData(){return Promise.resolve({duration,sampleRate});}}
+  const p=createGameMusic({Context:Resampled,fetcher:async()=>({ok:true,arrayBuffer:async()=>new ArrayBuffer(1)})});
+  await p.setGarden(id);assert.equal(await p.playCurrentFromGesture(),true);assert.equal(p.state().status,'playing');
+  const source=f.started.at(-1);assert.ok(source.loopEnd<=duration);assert.ok(Math.abs(source.loopEnd-asset.music.loopEndSeconds)<=1/sampleRate);
+  p.dispose();
+ });
+}
+for(const missingSamples of [2,48,48000])test(`rejects ${missingSamples} missing output samples`,async()=>{
+ const sampleRate=48000,duration=GARDEN_ASSETS.komorebi.music.loopEndSeconds-missingSamples/sampleRate;
+ const f=fixture();class Truncated extends f.Context{decodeAudioData(){return Promise.resolve({duration,sampleRate});}}
+ const p=createGameMusic({Context:Truncated,fetcher:async()=>({ok:true,arrayBuffer:async()=>new ArrayBuffer(1)})});
+ await p.setGarden('komorebi');assert.equal(await p.playCurrentFromGesture(),false);assert.equal(f.started.length,0);assert.match(p.state().error,/ループ範囲/);p.dispose();
 });
