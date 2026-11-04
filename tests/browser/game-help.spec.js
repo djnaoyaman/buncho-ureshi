@@ -5,8 +5,9 @@ for(const width of [320,390,768,1440])test(`game help ruby and disclosure at wid
  await page.goto('game/');await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');
  await page.evaluate(()=>document.dispatchEvent(new CustomEvent('buncho-world-action',{detail:'help'})));
  const help=page.locator('.game-help');await expect(help).toBeVisible();await expect(help.locator('ol > li')).toHaveCount(5);
- const ruby=help.locator('h3 rt').first();await expect(ruby).toBeVisible();expect(await ruby.evaluate(el=>getComputedStyle(el).display)).toBe('ruby-text');
- expect(await help.evaluate(el=>el.scrollWidth<=el.clientWidth+1)).toBe(true);
+ const ruby=help.locator('h3 rt').first();await expect(ruby).toBeVisible();await expect(ruby).toHaveCSS('display','ruby-text');
+ await expect.poll(()=>help.evaluate(el=>el.isConnected&&el.scrollWidth<=el.clientWidth+1)).toBe(true);
+ await page.screenshot({path:`test-results/game-help-${width}-${test.info().project.name}.png`});
  for(const key of ['help-care','help-life','help-story']){
   const detail=help.locator(`[data-game-details="${key}"]`);await detail.locator('summary').click();await expect(detail).toHaveAttribute('open','');
   await expect(detail.locator('p').last()).toBeVisible();await page.waitForTimeout(1600);await expect(detail).toHaveAttribute('open','');
