@@ -89,6 +89,6 @@ test('a founder warning clears immediately on succession refresh before the next
  const {w,child,succeed}=await successorFamily(),s=setup(w);try{await s.run(121);assert.ok(s.root.querySelector('[data-crow-phase=warning]'));succeed();assert.equal(w.protagonist.birdId,child.id);s.panel.refresh();assert.equal(s.root.querySelector('[data-crow-phase]'),null);assert.equal(w.encounters.crow.visits.length,0);await s.run(120);assert.equal(s.root.querySelector('[data-crow-phase]'),null);await s.run(1);assert.ok(s.root.querySelector('[data-crow-phase=warning]'));}finally{s.close();}
 });
 
-test('early entry warns after one visible second and still allows six seconds to leave',async()=>{
- const w=fixture(),s=setup(w,{earlyPredatorVisits:true});try{await s.run(2);assert.ok(s.root.querySelector('[data-crow-phase=warning]'));assert.equal(w.encounters.crow.visits.length,0);await s.run(5);assert.equal(w.encounters.crow.visits.length,0);await s.run(1);assert.equal(w.encounters.crow.visits.length,1);}finally{s.close();}
+test('early entry warns after twenty visible seconds and still allows six seconds to leave',async()=>{
+ const w=fixture(),s=setup(w,{earlyPredatorVisits:true});try{await s.run(20);assert.equal(s.root.querySelector('[data-crow-phase=warning]'),null);await s.run(1);assert.ok(s.root.querySelector('[data-crow-phase=warning]'));assert.equal(w.encounters.crow.visits.length,0);await s.run(5);assert.equal(w.encounters.crow.visits.length,0);await s.run(1);assert.equal(w.encounters.crow.visits.length,1);}finally{s.close();}
 });

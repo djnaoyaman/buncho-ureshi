@@ -3,7 +3,7 @@ import {RAPTOR_SPECIES} from './data/raptor-species.js';
 import {getProtagonistBird} from './protagonist.js';
 import {isAlive} from './life-care.js';
 export {RAPTOR_SPECIES};
-export const RAPTOR_RULES=Object.freeze({earlyMs:1000,earlyChance:.01,earlyCooldownMs:120000,dwellMs:120000,checkMs:60000,chance:.01,warningMs:60000,dailyCooldownMs:86400000,friendPoints:100,maxSampleGapMs:2500,visitMs:18000,maxPetPoints:1000000});
+export const RAPTOR_RULES=Object.freeze({earlyMs:20000,earlyChance:.01,earlyCooldownMs:120000,dwellMs:120000,checkMs:60000,chance:.01,warningMs:60000,dailyCooldownMs:86400000,friendPoints:100,maxSampleGapMs:2500,visitMs:18000,maxPetPoints:1000000});
 const MAX_TIME=253402268399999;
 const int=(n,min=0,max=Number.MAX_SAFE_INTEGER)=>Number.isSafeInteger(n)&&n>=min&&n<=max;
 const shape=(v,keys)=>v&&typeof v==='object'&&!Array.isArray(v)&&Object.keys(v).length===keys.length&&keys.every(k=>Object.hasOwn(v,k));

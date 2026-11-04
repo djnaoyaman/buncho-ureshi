@@ -2,7 +2,7 @@ import {getProtagonistBird} from './protagonist.js';
 /** Crow visits are game fiction. Only visible, continuous garden time qualifies.
  * This clock has no access to the world's PRNG, offline progress or storage. */
 import {isAlive} from './life-care.js';
-export const CROW_RULES=Object.freeze({earlyMs:1000,earlyChance:.05,earlyCooldownMs:120000,dwellMs:120000,checkMs:15000,chance:.2,warningMs:6000,cooldownMs:600000,visitMs:18000,retreatMs:45000,maxSampleGapMs:2500,friendPoints:100,maxPetPoints:1000000});
+export const CROW_RULES=Object.freeze({earlyMs:20000,earlyChance:.05,earlyCooldownMs:120000,dwellMs:120000,checkMs:15000,chance:.2,warningMs:6000,cooldownMs:600000,visitMs:18000,retreatMs:45000,maxSampleGapMs:2500,friendPoints:100,maxPetPoints:1000000});
 export const JAVA_LENGTH_CM=14;
 export const CROW_SPECIES=Object.freeze([
  {id:'large-billed-crow',name:'ハシブトガラス',scientific:'Corvus macrorhynchos',lengthCm:56,description:'太く湾曲したくちばしと、額の盛り上がりが特徴。日本でもよく見られます。'},
