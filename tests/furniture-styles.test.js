@@ -9,7 +9,7 @@ test('all 216 art finishes have valid stroke values and explicit style identity'
   const svg=furnitureSvg(slot.id,color.hex,i+1);assert(svg.includes(`data-furniture-style="${style}"`));
   for(const [,value] of svg.matchAll(/stroke-width="([^"]+)"/g))assert(Number.isFinite(Number(value))&&Number(value)>0,`${slot.id} ${style}: ${value}`);
   for(const [,value] of svg.matchAll(/stroke="([^"]+)"/g))assert(/^(none|#[a-f\d]{6}|url\(#.+\))$/i.test(value),value);
-  assert.equal(svg.replace(/viewBox="[^"]+"/,''),furnitureSceneSvg(slot.id,color.hex,i+1).replace(/viewBox="[^"]+"/,'').replace(' data-scene-art="true"',''));
+  assert.equal(svg.replace(/viewBox="[^"]+"/,''),furnitureSceneSvg(slot.id,color.hex,i+1).replace(/viewBox="[^"]+"/,'').replace(' data-scene-art="true"','').replace(/ data-scene-mount="[^"]+"/,'').replace(/<g data-scene-fixture="wall"[\s\S]*?<\/g>/,''));
  }
 });
 test('mid-century floor plinths and hanging furniture retain separate support geometry',()=>{
