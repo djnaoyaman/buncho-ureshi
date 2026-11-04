@@ -4,7 +4,7 @@ import { encounterSystem,FRIENDSHIP_RULES,cageVisitorCount } from './encounters.
 import {GARDENS,gardenById,gardenFriendRoster,gardenCompanionRoster,gardenStageGeometry} from './data/gardens.js';
 import {PUBLISHED_JAVA_BASELINE} from './data/encounter-catalog.js';
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const asset=(base,path)=>typeof path==='string'&&(/^(?:game-art\/finches\/[a-z0-9/_-]+(?:\.(?:screen|thumb))?\.(png|webp|jpe?g)|game-art\/sakura\.webp)$/.test(path))&&!path.includes('..')?esc(base+path):'';
+const asset=(base,path)=>typeof path==='string'&&(/^(?:game-art\/finches\/[A-Za-z0-9/_-]+(?:\.(?:screen|thumb))?\.(png|webp|jpe?g)|game-art\/sakura\.webp)$/.test(path))&&!path.includes('..')?esc(base+path):'';
 const link=url=>typeof url==='string'&&/^https:\/\/[^\s<>"']+$/.test(url)?esc(url):'';
 const delivery=(path,thumbnail=false)=>/^game-art\/finches\/[a-z0-9_-]+\.png$/.test(path)?path.replace(/\.png$/,thumbnail?'.thumb.webp':'.screen.webp'):path;
 const mediaStatus='<span class="finch-media-status" aria-hidden="true"><span class="finch-loading-bird">♪</span><span data-media-label>読み込み中…</span></span>';

@@ -14,13 +14,15 @@ const escaped = value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const assetPattern = path => new RegExp(`/${escaped(path)}(?:\\?|$)`);
 const screenPath = path => path.replace(/\.(png|webp|jpe?g)$/, '.screen.webp');
 
-function savedWorld() {
+function savedWorld(entries = [entry]) {
   const world = createWorld(NOW);
   world.paused = true;
   world.settings.careSound = false;
-  inviteFixture(system, world, entry.id);
-  system.open(world, entry.id, token(world));
-  for (const step of entry.steps) system.act(world, world.encounters.active.instanceId, step.action, token(world));
+  for (const discovered of entries) {
+    inviteFixture(system, world, discovered.id);
+    system.open(world, discovered.id, token(world));
+    for (const step of discovered.steps) system.act(world, world.encounters.active.instanceId, step.action, token(world));
+  }
   system.leaveGarden(world, token(world));
   return validateWorld(world);
 }
@@ -42,7 +44,7 @@ async function record(page, world) {
   }), world);
 }
 
-async function start(page) {
+async function start(page, world = savedWorld()) {
   await page.addInitScript(now => {
     // Keep paused-world heartbeat timestamps stable without freezing browser timers.
     Date.now = () => now;
@@ -50,7 +52,6 @@ async function start(page) {
     localStorage.setItem('buncho.care-sound-choice.v1', JSON.stringify({explicit: true, enabled: false}));
   }, NOW);
   await page.goto('');
-  const world = savedWorld();
   await record(page, world);
   await page.goto('game/');
   await expect(page.locator('body')).toHaveAttribute('data-game-intro', 'done');
@@ -261,7 +262,9 @@ test('back and close stay usable while garden requests are stalled', async ({pag
 });
 
 test('portrait and original photo loading, failure, retry and reopening leave the real save unchanged', async ({page}, info) => {
-  const original = await start(page);
+  const ndEntry = system.catalog.find(bird => bird.id === 'society-finch');
+  expect(ndEntry.photo.noDerivatives).toBe(true);
+  const original = await start(page, savedWorld([ndEntry, entry]));
   const portrait = await holdImages(page, assetPattern(screenPath(entry.art.src)));
   let photoFails = true;
   let photoAttempts = 0;
@@ -301,6 +304,25 @@ test('portrait and original photo loading, failure, retry and reopening leave th
   await expect(page.locator('.finch-photo figcaption')).toContainText(entry.photo.creator);
   await expect(page.locator('.finch-photo figcaption')).toContainText(entry.photo.license);
   await screenshot(page, info, 'original-photo-retried');
+  await page.locator('[data-encounter-back]').click();
+  await expect(page.locator('.finch-catalog')).toBeVisible();
+  await page.locator(`[data-encounter-page="${ndEntry.id}"]`).click();
+  await page.locator('[data-encounter-view="photo"]').click();
+  await expect(page.locator('.finch-photo')).toHaveAttribute('data-photo-unaltered', 'true');
+  await expect(photoMedia).toHaveAttribute('data-media-state', 'ready');
+  await decodedImages(photo);
+  await expect(photo).toBeVisible();
+  const ndSource = `/buncho-ureshi/${ndEntry.photo.src}`;
+  await expect(photo).toHaveAttribute('src', ndSource);
+  await expect(photo).toHaveAttribute('data-media-src', ndSource);
+  expect(await photo.evaluate(image => {
+    const style = getComputedStyle(image);
+    return {filter: style.filter, clipPath: style.clipPath, transform: style.transform, objectFit: style.objectFit, opacity: style.opacity};
+  })).toEqual({filter: 'none', clipPath: 'none', transform: 'none', objectFit: 'contain', opacity: '1'});
+  await expect(page.locator('.finch-photo figcaption')).toContainText(ndEntry.photo.creator);
+  await expect(page.locator('.finch-photo figcaption')).toContainText(ndEntry.photo.license);
+  await screenshot(page, info, 'original-ND-photo-ready');
+  expect(await record(page)).toEqual(original);
   await page.locator('[data-encounter-back]').click();
   await expect(page.locator('.finch-catalog')).toBeVisible();
   await page.locator('[data-game-close-panel]').click();

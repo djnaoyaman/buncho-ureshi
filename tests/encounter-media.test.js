@@ -60,6 +60,21 @@ test('cage visitors are visible without an encounter panel loader',()=>{
  const win=new Window();win.document.body.innerHTML=renderEncounterCageGuest(encounterSystem.catalog[0]);
  assert.equal(win.document.querySelector('.finch-media'),null);const img=win.document.querySelector('img');assert.match(img.getAttribute('src'),/\.screen\.webp$/);assert.ok(img.alt);
 });
+test('all catalog photographs retain exact original URLs, unaltered styles and license credits',()=>{
+ const win=new Window(),world=createWorld(1000,42),before=JSON.stringify(world),base='/buncho-ureshi/';
+ const visibleSystem={...encounterSystem,status:()=>({discovered:true})};
+ assert.equal(encounterSystem.catalog.length,30);
+ for(const entry of encounterSystem.catalog){
+  win.document.body.innerHTML=renderEncounterPage(world,entry.id,{system:visibleSystem,base,showPhoto:true});
+  const figure=win.document.querySelector('.finch-photo'),img=figure.querySelector('img'),caption=figure.querySelector('figcaption'),links=caption.querySelectorAll('a');
+  assert.equal(img.getAttribute('src'),base+entry.photo.src,entry.id);assert.equal(img.dataset.mediaSrc,base+entry.photo.src,entry.id);
+  assert.equal(img.getAttribute('style'),'object-fit:contain;object-position:center;filter:none;clip-path:none;transform:none;border-radius:0;opacity:1',entry.id);
+  assert.equal(figure.dataset.photoUnaltered,String(entry.photo.noDerivatives===true),entry.id);assert.equal(img.alt,entry.photo.alt,entry.id);
+  assert.ok(caption.textContent.includes(entry.photo.creator),entry.id);assert.ok(caption.textContent.includes(entry.photo.license),entry.id);assert.ok(caption.textContent.includes(entry.photo.modifications),entry.id);
+  assert.equal(links[0].getAttribute('href'),entry.photo.source,entry.id);assert.equal(links[1].getAttribute('href'),entry.photo.licenseUrl,entry.id);
+ }
+ assert.equal(JSON.stringify(world),before);
+});
 test('reused bytes adopt the new discovery, alt and pose presentation',async()=>{
  const {win,root,media}=setup('<span class="finch-media" data-media-state="pending"><img src="/same.webp" data-media-src="/same.webp" class="finch-art is-silhouette" alt="" style="left:-10px"></span>');media.refresh();const old=root.querySelector('img');load(win,old);await Promise.resolve();
  media.preserve();root.innerHTML='<span class="finch-media" data-media-state="pending"><img src="/same.webp" data-media-src="/same.webp" class="finch-art" alt="コキンチョウ" style="left:-20px"></span>';media.refresh();
