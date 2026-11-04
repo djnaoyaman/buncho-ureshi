@@ -628,10 +628,28 @@ function render(route) {
 mountPageTools();
 worldChrome = createWorldChrome(document);
 document.querySelector("#brand").innerHTML = logoSvg("header-logo");
+const siteMenu = document.querySelector("#menu");
+function fitSiteMenu() {
+  if (siteMenu.hidden || document.body.dataset.world === "buncho") return;
+  // iOS can shrink only the visual viewport when the keyboard opens. dvh alone
+  // still includes the obscured area, so measure the space below this menu.
+  const viewport = window.visualViewport;
+  const bottom = (viewport?.offsetTop || 0) + (viewport?.height || window.innerHeight);
+  const available = Math.max(0, bottom - siteMenu.getBoundingClientRect().top - 12);
+  siteMenu.style.setProperty("--site-menu-max-height", `${available}px`);
+}
+window.visualViewport?.addEventListener("resize", fitSiteMenu);
+window.visualViewport?.addEventListener("scroll", fitSiteMenu);
+window.addEventListener("resize", fitSiteMenu);
+window.addEventListener("scroll", fitSiteMenu, { passive: true });
+siteMenu.addEventListener("focusin", fitSiteMenu);
 document.querySelector("#menu-toggle").onclick = (e) => {
-  const menu = document.querySelector("#menu");
-  menu.hidden = !menu.hidden;
-  e.currentTarget.setAttribute("aria-expanded", String(!menu.hidden));
+  siteMenu.hidden = !siteMenu.hidden;
+  e.currentTarget.setAttribute("aria-expanded", String(!siteMenu.hidden));
+  if (!siteMenu.hidden && document.body.dataset.world !== "buncho") {
+    siteMenu.scrollTop = 0;
+    fitSiteMenu();
+  }
 };
 document.querySelector("#site-search").onsubmit = submitSiteSearch;
 document.addEventListener("click", (e) => {
@@ -672,3 +690,4 @@ render(
     ? location.pathname.slice(BASE.length)
     : "",
 );
+

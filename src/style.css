@@ -2110,3 +2110,19 @@ html[data-motion="off"] #article-grid .article-cover-window img{transform:none!i
 .bird-photo-cutout { max-width:100%; height:auto; }
 .quiz-root > .bird-photo-cutout { display:block; max-width:280px; margin:0 auto; }
 .bird-photo-credit { font-size:.78rem; line-height:1.7; }
+
+/* Keep site search visible first, including above a mobile on-screen keyboard. */
+body:not([data-world="buncho"]) .header-menu {
+  max-height: var(--site-menu-max-height, calc(100dvh - 100px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-padding-block: 12px;
+}
+.header-menu form { grid-template-columns: minmax(0, 1fr) auto; }
+.header-menu input { min-width: 0; font-size: 16px; }
+body:not([data-world="buncho"]) .header-menu #site-search {
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--line);
+}
+body:not([data-world="buncho"]) .header-menu nav { margin-bottom: 0; }
