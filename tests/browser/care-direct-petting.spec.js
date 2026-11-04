@@ -70,7 +70,7 @@ async function pointer(page, type, p, extra = {}) {
   await page.locator(PET).dispatchEvent(type, {pointerId:7, pointerType:'touch', isPrimary:true, button:0, buttons:type === 'pointerup' ? 0 : 1, clientX:p.x, clientY:p.y, ...extra});
 }
 
-test('large bird follows actions at four sizes; native mouse rub saves exactly once', async ({page}, info) => {
+test('one enlarged upper bird at four sizes; native mouse rub saves exactly once', async ({page}, info) => {
   await page.emulateMedia({reducedMotion:'reduce'});
   await ready(page);
   const before = await record(page);
@@ -78,19 +78,27 @@ test('large bird follows actions at four sizes; native mouse rub saves exactly o
     await page.setViewportSize(size);
     await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
     const pet = page.locator(PET);
+    await expect(page.locator('.game-bird-sheet img')).toHaveCount(1);
+    await expect(page.locator('.game-sheet-heading #game-care-pet')).toHaveCount(1);
+    await expect(page.locator('.game-bird-sheet .game-mini-bird')).toHaveCount(0);
     await expect(page.locator('.game-care-actions button')).toHaveCount(2);
     await expect(page.locator('.game-care-actions [data-game-care=pet]')).toHaveCount(0);
     await expect(pet).toHaveAttribute('data-care-rub', '');
     await expect(pet).toHaveAttribute('data-game-care', 'pet');
     await expect(pet).toHaveClass(/game-care-pet-bird/);
     await expect(pet.locator('.game-sprite img')).toBeVisible();
+    await expect(pet.locator('.game-care-illustration')).toHaveAttribute('data-art-style','finch-illustration');
+    await expect(pet.locator('img')).toHaveAttribute('src',/care-illustrations\/white-adult\.webp$/);
+    await expect.poll(()=>pet.locator('img').evaluate(img=>img.complete&&img.naturalWidth>0)).toBe(true);
     await expect(pet).toHaveAccessibleName(/なで/);
     const geometry = await pet.evaluate(el => {
-      const r = el.getBoundingClientRect(), a = document.querySelector('.game-care-actions').getBoundingClientRect();
-      return {width:r.width, actionsWidth:a.width, below:r.top >= a.bottom - 1, overflow:document.documentElement.scrollWidth > innerWidth + 1};
+      const r = el.getBoundingClientRect(), a = document.querySelector('.game-care-actions').getBoundingClientRect(), image=el.querySelector('img'), help=document.querySelector('#game-care-pet-help').getBoundingClientRect(), close=document.querySelector('#game-sheet-close').getBoundingClientRect();
+      return {width:r.width, actionsWidth:a.width, above:r.bottom <= a.top + 1, height:r.height, fit:getComputedStyle(image).objectFit, clearClose:help.top>=close.bottom+4, overflow:document.documentElement.scrollWidth > innerWidth + 1};
     });
-    expect(geometry.below).toBe(true); expect(geometry.overflow).toBe(false);
+    expect(geometry.clearClose).toBe(true); expect(geometry.fit).toBe('contain'); expect(geometry.above).toBe(true); expect(geometry.height).toBeGreaterThanOrEqual(250); expect(geometry.overflow).toBe(false);
     expect(geometry.width).toBeGreaterThanOrEqual(geometry.actionsWidth * .85);
+    await page.locator('.game-bird-sheet').evaluate(el=>el.scrollTop=0);
+    await info.attach(`single-care-top-${size.width}x${size.height}`, {body:await page.screenshot(), contentType:'image/png'});
     await pet.evaluate(el => el.scrollIntoView({block:'center'}));
     await info.attach(`petting-${size.width}x${size.height}`, {body:await page.screenshot(), contentType:'image/png'});
   }

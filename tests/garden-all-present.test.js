@@ -21,7 +21,7 @@ test('every garden renders every actual companion once in the same animated scen
   world.encounters.queue=[encounterSystem.catalog[0].id];
   world.encounters.gardenFriends.companions=world.birds.slice(1,number+1).map(b=>b.id);
   const selected=selectedIsCompanion&&number?world.birds[1]:world.birds[0];
-  const expected=new Set([selected.id,...world.encounters.gardenFriends.companions]);
+  const expected=new Set([world.birds[0].id,...world.encounters.gardenFriends.companions]);
   const before=structuredClone(world);
   root.innerHTML=renderGardenStage(world,{selectedBirdId:selected.id});
   const plane=root.querySelector('.finch-garden-image-plane');

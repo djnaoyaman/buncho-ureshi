@@ -1,3 +1,4 @@
+import {getProtagonistBird} from './protagonist.js';
 /** Crow visits are game fiction. Only visible, continuous garden time qualifies.
  * This clock has no access to the world's PRNG, offline progress or storage. */
 import {isAlive} from './life-care.js';
@@ -10,15 +11,19 @@ export const CROW_SPECIES=Object.freeze([
  {id:'common-raven',name:'ワタリガラス',scientific:'Corvus corax',lengthCm:63,range:'56〜69',description:'大きなくちばし、喉の長めの羽と、くさび形の尾が特徴。表示は全長の代表値63cmです。'},
  {id:'hooded-crow',name:'ズキンガラス',scientific:'Corvus cornix',lengthCm:46,range:'45〜47',description:'灰色の胴と黒い頭・翼・尾の組み合わせが特徴。ヨーロッパなどに分布します。'}
 ].map(s=>Object.freeze(s)));
+export function crowTarget(world){
+ const bird=getProtagonistBird(world);
+ return bird&&bird.home==='resident'&&['juvenile','adult'].includes(bird.stage)&&isAlive(world,bird)?bird:null;
+}
 export const crowSpecies=id=>CROW_SPECIES.find(s=>s.id===id)||null;
-export const initialCrowState=()=>({lastArrivalAt:null,gardenId:null,speciesId:null,lastHostile:false,visits:[]});
+export const initialCrowState=()=>({lastArrivalAt:null,gardenId:null,speciesId:null,arrivalBirdId:null,lastHostile:false,visits:[]});
 const int=(n,min=0,max=Number.MAX_SAFE_INTEGER)=>Number.isSafeInteger(n)&&n>=min&&n<=max;
 const shape=(v,keys)=>v&&typeof v==='object'&&!Array.isArray(v)&&Object.keys(v).length===keys.length&&keys.every(k=>Object.hasOwn(v,k));
 export function validateCrowState(s,tick,gardenIds){
  const fail=()=>{throw new Error('カラスとの出会いの記録が不正です。');};
- if(!shape(s,['lastArrivalAt','gardenId','speciesId','lastHostile','visits'])||typeof s.lastHostile!=='boolean'||!Array.isArray(s.visits)||s.visits.length>CROW_SPECIES.length||new Set(s.visits.map(v=>v?.id)).size!==s.visits.length)fail();
- if(s.lastArrivalAt===null){if(s.gardenId!==null||s.speciesId!==null||s.lastHostile||s.visits.length)fail();}
- else if(!int(s.lastArrivalAt,0,8640000000000000)||!gardenIds.includes(s.gardenId)||!crowSpecies(s.speciesId)||!s.visits.some(v=>v.id===s.speciesId))fail();
+ if(!shape(s,['lastArrivalAt','gardenId','speciesId','arrivalBirdId','lastHostile','visits'])||typeof s.lastHostile!=='boolean'||!Array.isArray(s.visits)||s.visits.length>CROW_SPECIES.length||new Set(s.visits.map(v=>v?.id)).size!==s.visits.length)fail();
+ if(s.lastArrivalAt===null){if(s.gardenId!==null||s.speciesId!==null||s.arrivalBirdId!==null||s.lastHostile||s.visits.length)fail();}
+ else if(!int(s.lastArrivalAt,0,8640000000000000)||!gardenIds.includes(s.gardenId)||!crowSpecies(s.speciesId)||!/^b[1-9][0-9]*$/.test(s.arrivalBirdId)||!s.visits.some(v=>v.id===s.speciesId))fail();
  for(const v of s.visits)if(!shape(v,['id','firstTick','lastTick','count','petPoints'])||!crowSpecies(v.id)||!int(v.firstTick,0,tick)||!int(v.lastTick,v.firstTick,tick)||!int(v.count,1,1000000)||!int(v.petPoints,0,CROW_RULES.maxPetPoints))fail();
  return s;
 }
@@ -37,11 +42,12 @@ export function petGardenCrow(world,id,amount,expected){
  const friendly=visit.petPoints>=CROW_RULES.friendPoints;
  if(friendly&&s.speciesId===id)s.lastHostile=false;
  world.revision=world.revision===Number.MAX_SAFE_INTEGER?0:world.revision+1;
- return {changed:true,points:visit.petPoints,friendly,message:friendly?'なかよしになったよ。もうおもちを驚かせないよ。':`親しみ +${gain} ♪`};
+ return {changed:true,points:visit.petPoints,friendly,message:friendly?'なかよしになったよ。もう文鳥を驚かせないよ。':`親しみ +${gain} ♪`};
 }
 export function crowScene(world,now=Date.now()){
  const s=world.encounters?.crow;
  if(!s||s.lastArrivalAt===null||s.gardenId!==world.encounters.garden.id)return null;
+ const bird=crowTarget(world);if(!bird||bird.id!==s.arrivalBirdId)return null;
  const elapsed=Math.max(0,now-s.lastArrivalAt);
  if(elapsed>=CROW_RULES.retreatMs)return null;
  return {species:crowSpecies(s.speciesId),phase:elapsed<CROW_RULES.visitMs?'visiting':'quiet',retreat:s.lastHostile};
@@ -52,12 +58,12 @@ export function crowCoolingDown(world,now=Date.now()){
 }
 /** Must execute inside the host's single atomic store transaction. */
 export function arriveGardenCrow(world,id,now,expected){
- const g=world.encounters.garden,s=world.encounters.crow,bird=world.birds.find(b=>b.id==='b1');
+ const g=world.encounters.garden,s=world.encounters.crow,bird=crowTarget(world);
  if(!s||!expected||expected.worldId!==world.worldId||expected.revision!==world.revision||expected.gardenId!==g.id)return {changed:false,reason:'stale'};
- if(!g.open||world.paused||!bird||!isAlive(world,bird)||bird.home!=='resident'||!crowSpecies(id)||!int(now,0,8640000000000000))return {changed:false,reason:'inactive'};
+ if(!g.open||world.paused||!bird||!crowSpecies(id)||!int(now,0,8640000000000000))return {changed:false,reason:'inactive'};
  if(crowCoolingDown(world,now))return {changed:false,reason:'cooldown'};
  const before=bird.needs.energy,hostile=!crowFriendship(world,id).friendly;if(hostile)bird.needs.energy=Math.max(0,before/2);
- s.lastArrivalAt=now;s.gardenId=g.id;s.speciesId=id;s.lastHostile=hostile;
+ s.lastArrivalAt=now;s.gardenId=g.id;s.speciesId=id;s.arrivalBirdId=bird.id;s.lastHostile=hostile;
  const visit=s.visits.find(v=>v.id===id);
  if(visit){visit.lastTick=world.tick;visit.count=Math.min(1000000,visit.count+1);}else s.visits.push({id,firstTick:world.tick,lastTick:world.tick,count:1,petPoints:0});
  world.revision=world.revision===Number.MAX_SAFE_INTEGER?0:world.revision+1;

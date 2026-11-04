@@ -1,4 +1,4 @@
-import {createGardenCrowClock,arriveGardenCrow,crowCoolingDown,crowScene,petGardenCrow} from './garden-crows.js';
+import {createGardenCrowClock,arriveGardenCrow,crowCoolingDown,crowScene,petGardenCrow,crowTarget} from './garden-crows.js';
 import {renderCrowNotebook,renderCrowFriendship} from './garden-crow-ui.js';
 import {mountEncounterMedia} from './encounter-media.js';
 import {mountGardenBirdMotion} from './garden-bird-motion.js';
@@ -10,8 +10,9 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
   let alive=true,busy=false,mode=initialMode==='garden'?'garden':'notebook',pageId=null,showPhoto=false,generation=0,notice='',worldId=getWorld().worldId,revealGardenId=null,renderedView=null;
   let rub=null,petFlight=false,petTimer=null;
  const crowClock=createGardenCrowClock({random:crowRandom});
- let crowFlight=false,crowTimer=null,crowPhase=null,crowEpoch=0;
+ let crowFlight=false,crowTimer=null,crowPhase=null,crowEpoch=0,crowContext=null;
  const stopCrow=()=>{crowClock.reset();crowEpoch++;};
+ const syncCrowContext=w=>{const key=`${w.worldId}:${w.encounters.garden.id}:${crowTarget(w)?.id}`;if(key!==crowContext){stopCrow();crowContext=key;}return key;};
   const doc=root.ownerDocument,win=doc.defaultView;
   const media=mountEncounterMedia(root);
   let hostCatalogScroll=null;
@@ -19,7 +20,7 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
   doc.addEventListener('buncho-game-will-render',rememberCatalog);
   const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   function render({focus=false}={}){
-    if(!alive)return;const w=getWorld();
+    if(!alive)return;const w=getWorld();syncCrowContext(w);
     if(mode!=='garden'||w.paused||w.worldId!==worldId||doc.querySelector('.game-bird-sheet[open]'))stopCrow();
     if(w.worldId===worldId&&rub&&rub.generation===generation&&['entry','crows'].includes(mode)&&pageId===rub.id){refreshBond();return;}
     if(w.worldId!==worldId){rub=null;clearTimeout(petTimer);}
@@ -185,18 +186,18 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
   }
   function crowEligible(){
     const w=getWorld();
-    return alive&&mode==='garden'&&root.isConnected&&doc.visibilityState!=='hidden'&&win?.navigator?.onLine!==false&&!w.paused&&w.encounters.garden.open&&!doc.querySelector('.game-bird-sheet[open]')&&root.querySelector('.finch-garden-stage')?.dataset.sceneState==='ready';
+    return !!crowTarget(w)&&alive&&mode==='garden'&&root.isConnected&&doc.visibilityState!=='hidden'&&win?.navigator?.onLine!==false&&!w.paused&&w.encounters.garden.open&&!doc.querySelector('.game-bird-sheet[open]')&&root.querySelector('.finch-garden-stage')?.dataset.sceneState==='ready';
   }
   async function pollCrow(){
     if(!alive)return;
     const w=getWorld(),now=Date.now(),phase=crowScene(w,now)?.phase||null,priorWarning=crowClock.warning;
-    const event=crowClock.sample({key:`${w.worldId}:${w.encounters.garden.id}`,now:win.performance.now(),eligible:crowEligible(),available:!busy&&!crowFlight&&!crowCoolingDown(w,now)});
+    const event=crowClock.sample({key:syncCrowContext(w),now:win.performance.now(),eligible:crowEligible(),available:!busy&&!crowFlight&&!crowCoolingDown(w,now)});
     if(event?.kind!=='arrive'&&(phase!==crowPhase||event?.kind==='warning'||priorWarning!==crowClock.warning)){crowPhase=phase;render();}
     if(event?.kind==='arrive'){
-      const originalWorld=w.worldId,gardenId=w.encounters.garden.id,token=generation,session=crowEpoch;
+      const originalWorld=w.worldId,originalBird=crowTarget(w)?.id,gardenId=w.encounters.garden.id,token=generation,session=crowEpoch;
       crowFlight=true;let feedback,committed=false;
       try{await transact(current=>{
-        if(!alive||token!==generation||session!==crowEpoch||!crowEligible()||current.worldId!==originalWorld||current.encounters.garden.id!==gardenId)return current;
+        if(!alive||token!==generation||session!==crowEpoch||!crowEligible()||current.worldId!==originalWorld||crowTarget(current)?.id!==originalBird||current.encounters.garden.id!==gardenId)return current;
         feedback=arriveGardenCrow(current,event.id,Date.now(),{worldId:current.worldId,revision:current.revision,gardenId});return current;
       });committed=!!feedback?.changed;if(alive&&token===generation&&feedback?.changed){notice='';crowPhase=crowScene(getWorld())?.phase||null;render();}}
       catch{if(alive&&token===generation){notice='カラスの記録を保存できなかったよ。元気と保存はそのままです。';render();}}

@@ -197,7 +197,7 @@ test('photo habitat keeps one selected caption, accessible resident picker, and 
   assert.match(f.root.querySelector('.game-habitat img').getAttribute('src'),/field-home-wide\.webp$/);
   assert.equal(f.root.querySelectorAll('.game-scene-caption').length,1);
   assert.equal(f.root.querySelectorAll('.game-room-bird button').length,0);
-  assert.equal(f.root.querySelectorAll('.game-room-bird .game-sprite svg').length,0);assert.equal(f.root.querySelectorAll('[data-home-role=family]').length,2);
+  assert.equal(f.root.querySelectorAll('.game-room-bird .game-sprite svg').length,0);assert.equal(f.root.querySelectorAll('[data-home-role=family]').length,1);assert.equal(f.root.querySelectorAll('[data-home-role=self]').length,1);
   assert.equal(f.root.querySelectorAll('.game-room-bird').length,2);
   assert.equal(f.root.querySelector('.game-bird-carousel .game-bird-switch span').textContent,'1 / 2');assert.equal(f.root.querySelector('#game-scene-resident'),null);
   const bird=f.root.querySelector('[data-game-scene-select][data-bird-id="b2"]');
@@ -343,7 +343,9 @@ test('bird sheet Tab loop excludes closed disclosure descendants and wraps visib
  const key=shiftKey=>f.window.document.activeElement.dispatchEvent(new f.window.KeyboardEvent('keydown',{key:'Tab',shiftKey,bubbles:true,cancelable:true}));
  key(false);assert.equal(f.window.document.activeElement.id,'game-sheet-health');
  key(false);assert.equal(f.window.document.activeElement.id,'game-care-feed');
- close.focus();key(true);assert.equal(f.window.document.activeElement.dataset.gamePanel,'profile');
+ close.focus();key(true);assert.equal(f.window.document.activeElement.id,'game-care-pet');
+ key(true);assert.equal(f.window.document.activeElement.dataset.gamePanel,'profile');
+ key(false);assert.equal(f.window.document.activeElement.id,'game-care-pet');
  key(false);assert.equal(f.window.document.activeElement.id,'game-sheet-close');
  for(let i=0;i<20;i++){key(false);assert.equal(sheet.contains(f.window.document.activeElement),true);assert.notEqual(f.window.document.activeElement.id,'game-words');assert.notEqual(f.window.document.activeElement.dataset.gameTalk,'あそぼう');}
 });
@@ -433,7 +435,7 @@ test('new decoration choices clear old equipment feedback and change only the re
 
 test('home closing clears visitors once, keeps family selected and persists after remount',async t=>{
  const f=await fixture(t),store=await f.otherTab();await store.transact(w=>{w.paused=false;advanceTicks(w,1);w.paused=true;return w;});await f.mount();const before=await store.transact(w=>w),guest=before.birds.find(b=>b.home==='visitor');assert.ok(guest);
- assert.equal(f.root.querySelectorAll('[data-home-role=family]').length,1);assert.equal(f.root.querySelectorAll('[data-home-role=friend]').length,1);
+ assert.equal(f.root.querySelectorAll('[data-home-role=self]').length,1);assert.equal(f.root.querySelectorAll('[data-home-role=family]').length,0);assert.equal(f.root.querySelectorAll('[data-home-role=friend]').length,1);
  const close=f.root.querySelector('#game-home-close');close.click();close.click();await until(async()=>!(await store.transact(w=>w)).birds.some(b=>b.home==='visitor'),'guests sent home');
  const saved=await store.transact(w=>w);assert.deepEqual({...saved.birds[0],action:before.birds[0].action},before.birds[0]);assert.equal(saved.birds[0].action.target,null);assert.equal(saved.birds.length,before.birds.length);assert.deepEqual(saved.encounters.discoveries,before.encounters.discoveries);assert.ok(saved.encounters.homeClosedUntil>Date.now());assert.equal(f.root.querySelectorAll('.game-room-bird').length,1);assert.equal(f.root.querySelector('#game-home-close').disabled,true);
  f.stop();await f.mount();assert.equal(f.root.querySelectorAll('.game-room-bird').length,1);assert.equal(f.root.querySelector('#game-home-close').disabled,true);f.root.querySelector('[data-field-travel=friend]')?.click();
@@ -442,4 +444,14 @@ test('home closing clears visitors once, keeps family selected and persists afte
 test('new navigation before queued home closing cancels it without affecting visitors',async t=>{
  const f=await fixture(t),store=await f.otherTab();await store.transact(w=>{w.paused=false;advanceTicks(w,1);w.paused=true;return w;});await f.mount();const before=await store.transact(w=>w);
  f.root.querySelector('#game-home-close').click();f.profile();await sleep(25);assert.equal(f.root.querySelector('.game-app').dataset.panel,'profile');assert.deepEqual(await store.transact(w=>w),before);assert.ok(f.root.querySelector('.game-panel-overlay[open]'));
+});
+
+
+test('home self role follows stable original identity and renamed label, not a duplicate name or selection',async t=>{
+ const f=await fixture(t),store=await f.otherTab();await store.transact(w=>{w.paused=false;advanceTicks(w,1);w.paused=true;adoptBird(w,w.birds[1].id,'おもち');renameBird(w,'b1','しらたま');bumpRevision(w);return w;});await f.mount();
+ const self=()=>f.root.querySelector('.game-room-bird[data-bird-id="b1"]'),family=()=>f.root.querySelector('.game-room-bird[data-bird-id="b2"]');
+ assert.equal(self().querySelector('[data-home-role=self]').textContent,'自分＝しらたま');assert.match(self().getAttribute('aria-label'),/^しらたま、自分、/);assert.equal(family().querySelector('[data-home-role=family]').textContent,'家族');assert.match(family().getAttribute('aria-label'),/^おもち、家族、/);
+ const before=await store.transact(w=>w);family().click();f.closeBird();assert.equal(family().getAttribute('aria-pressed'),'true');assert.equal(self().querySelector('[data-home-role=self]').textContent,'自分＝しらたま');assert.deepEqual(await store.transact(w=>w),before,'role rendering and switching selection never rewrite saved identity');
+ await store.transact(w=>{renameBird(w,'b1','もちのすけ');bumpRevision(w);return w;});await [...f.timers.values()][0]();assert.equal(self().querySelector('[data-home-role=self]').textContent,'自分＝もちのすけ');assert.match(self().getAttribute('aria-label'),/^もちのすけ、自分、/);
+ f.stop();await f.mount();assert.equal(self().querySelector('[data-home-role=self]').textContent,'自分＝もちのすけ');assert.equal(f.root.querySelectorAll('[data-home-role=self]').length,1);
 });

@@ -1,4 +1,4 @@
-import {CROW_SPECIES,JAVA_LENGTH_CM,crowScene,crowSpecies,crowFriendship,CROW_RULES} from './garden-crows.js';
+import {CROW_SPECIES,JAVA_LENGTH_CM,crowTarget,crowScene,crowSpecies,crowFriendship,CROW_RULES} from './garden-crows.js';
 import {renderGardenBirdSprite} from './garden-bird-motion.js';
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export const CROW_ART={"large-billed-crow":{"width":1254,"height":1254,"artWidthFraction":0.9505582137161085,"footX":0.6188197767145136,"footY":0.9082934609250398},"carrion-crow":{"width":1254,"height":1254,"artWidthFraction":0.9513556618819776,"footX":0.5988835725677831,"footY":0.9122807017543859},"rook":{"width":1254,"height":1254,"artWidthFraction":0.9186602870813397,"footX":0.5801435406698564,"footY":0.9346092503987241},"common-raven":{"width":1254,"height":1254,"artWidthFraction":0.9617224880382775,"footX":0.6339712918660287,"footY":0.8763955342902712},"hooded-crow":{"width":1254,"height":1254,"artWidthFraction":0.9529505582137161,"footX":0.6471291866028708,"footY":0.9242424242424242}};
@@ -12,7 +12,7 @@ const sources={
 };
 export const crowImage=(id,base)=>`${esc(base)}game-art/crows/${esc(id)}.webp`;
 export function renderCrowNotice(w,{warning=null,now=Date.now()}={}){
- const scene=crowScene(w,now),name=w.birds.find(b=>b.id==='b1')?.name||'おもち';
+ const scene=crowScene(w,now),name=crowTarget(w)?.name||'文鳥';
  if(warning)return '<aside class="finch-crow-notice" role="status" data-crow-phase="warning"><strong>大きな影が近づいてきた…</strong><span>カラスが来るかも。おうちに戻ると安心だよ。</span><button type="button" data-finch-go-home>おうちへ戻る</button></aside>';
  if(!scene)return '';
  return `<aside class="finch-crow-notice" role="status" data-crow-phase="${scene.phase}"><strong>${scene.phase==='visiting'?esc(scene.species.name)+'が来たよ':'カラスは飛んでいったよ'}</strong><span>${!scene.retreat?'なかよしのカラスだよ。みんな安心していっしょに過ごせるよ。':scene.phase==='visiting'?`友達は安全な場所へ。${esc(name)}の元気は半分に。おうちでお世話すると回復できるよ。`:'友達は少し休んでいるよ。しばらくすると戻ってくるよ。'}</span><button type="button" data-finch-go-home>おうちへ戻る</button><button type="button" data-crow-entry="${scene.species.id}">カラスの記録</button></aside>`;
@@ -21,14 +21,14 @@ export function renderCrowNotice(w,{warning=null,now=Date.now()}={}){
  * explicit so a padded image canvas is never mistaken for biological length. */
 export function renderCrowScene(w,{base='/buncho-ureshi/',warning=null,now=Date.now()}={}){
  if(warning)return '<div class="finch-crow-shadow" aria-hidden="true"><svg viewBox="0 0 600 200"><path d="M300 150C250 190 205 100 20 20Q170 15 275 95L300 70 325 95Q430 15 580 20C395 100 350 190 300 150L320 195H280Z" fill="currentColor"/></svg></div>';
- const scene=crowScene(w,now),b=w.birds.find(b=>b.id==='b1');if(scene?.phase!=='visiting'||!b)return '';
+ const scene=crowScene(w,now),b=crowTarget(w);if(scene?.phase!=='visiting'||!b)return '';
  const ratio=scene.species.lengthCm/JAVA_LENGTH_CM,art=CROW_ART[scene.species.id],javaWidth=JAVA_ART_LENGTH[b.color]||JAVA_ART_LENGTH.white;
  const imageRatio=ratio*javaWidth/art.artWidthFraction;
  return `<div class="finch-crow-scale-scene" data-crow-species="${scene.species.id}" data-length-ratio="${ratio}" aria-label="${esc(b.name)}と${esc(scene.species.name)}。同じ縮尺での全長の目安。"><div class="finch-crow-java">${renderGardenBirdSprite(b.color,'crow-omochi',{base,pose:'right'})}<span>${esc(b.name)} · 約14cm</span></div><figure class="finch-crow-actor" style="--crow-ratio:${imageRatio};--crow-foot-y:${art.footY}"><img src="${crowImage(scene.species.id,base)}" width="1254" height="1254" alt="${esc(scene.species.name)}のオリジナルイラスト" decoding="async"><figcaption>${esc(scene.species.name)} · 約${scene.species.lengthCm}cm</figcaption></figure></div>`;
 }
 export function renderCrowFriendship(w,id){
  const bond=crowFriendship(w,id);if(!bond.discovered)return '';
- return `<section class="finch-friendship" data-crow-friendship><h4>${bond.friendly?'なかよし':'親しみを育てよう'}</h4><label>親しみ <span data-crow-points>${bond.points}</span> ポイント<meter min="0" max="${CROW_RULES.friendPoints}" value="${Math.min(bond.points,CROW_RULES.friendPoints)}">${Math.min(bond.points,CROW_RULES.friendPoints)}</meter></label><p>${bond.friendly?'もう襲わないよ。おもちの元気は減らず、友達も逃げずに過ごせるよ。':'絵をなでると少しずつ親しくなるよ。親しみ100でなかよしになると、もう襲わなくなるよ。'}</p><p>絵の上を指やマウスで動かしてなでてね。キーボードは絵に合わせてEnterまたはスペース。</p></section>`;
+ return `<section class="finch-friendship" data-crow-friendship><h4>${bond.friendly?'なかよし':'親しみを育てよう'}</h4><label>親しみ <span data-crow-points>${bond.points}</span> ポイント<meter min="0" max="${CROW_RULES.friendPoints}" value="${Math.min(bond.points,CROW_RULES.friendPoints)}">${Math.min(bond.points,CROW_RULES.friendPoints)}</meter></label><p>${bond.friendly?'もう襲わないよ。文鳥の元気は減らず、友達も逃げずに過ごせるよ。':'絵をなでると少しずつ親しくなるよ。親しみ100でなかよしになると、もう襲わなくなるよ。'}</p><p>絵の上を指やマウスで動かしてなでてね。キーボードは絵に合わせてEnterまたはスペース。</p></section>`;
 }
 export function renderCrowNotebook(w,{base='/buncho-ureshi/',id=null}={}){
  const seen=w.encounters.crow?.visits||[],s=id&&crowSpecies(id),visit=seen.find(v=>v.id===id);

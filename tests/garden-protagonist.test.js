@@ -29,15 +29,16 @@ test('every garden visibly renders the original household bird without changing 
   }
 });
 
-test('selection and renamed identities are rendered from save data rather than an Omochi constant', t => {
+test('saved protagonist identity and its renamed label are independent of inspection selection', t => {
   const root = fixture(t), world = createWorld(1000);
   renameBird(world, world.birds[0].id, 'しろまる');
   const second = structuredClone(world.birds[0]);
   Object.assign(second, { id: 'saved-resident-42', name: 'あずき<&>', color: 'cinnamon' });
   world.birds.push(second);
+  world.protagonist.birdId=second.id;
   const before = structuredClone(world);
   for (const render of [renderGardenStage, renderFinchGarden]) {
-    root.innerHTML = render(world, { selectedBirdId: second.id });
+    root.innerHTML = render(world, { selectedBirdId: world.birds[0].id });
     const lead = root.querySelector('[data-garden-household]');
     assert.equal(lead.dataset.gardenHousehold, second.id);
     assert.ok(lead.textContent.includes(second.name));
@@ -82,7 +83,7 @@ test('guest and protagonist coexist and tapping the protagonist only calls the h
   assert.deepEqual(world, before);
 });
 
-test('selected family member is the lead and other companions remain individually tappable', t => {
+test('selected family member stays a companion while the saved protagonist remains the lead', t => {
   const root = fixture(t), world = createWorld(1000), calls = [];
   world.paused = true;
   const second = {...structuredClone(world.birds[0]), id:'family-second', name:'こまめ', color:'silver'};
@@ -96,13 +97,13 @@ test('selected family member is the lead and other companions remain individuall
     onHouseholdBird:id=>{calls.push(id);selected=id;},
   });
   t.after(()=>panel.destroy());
-  assert.equal(root.querySelector('.finch-garden-household').dataset.gardenHousehold,second.id);
+  assert.equal(root.querySelector('.finch-garden-household').dataset.gardenHousehold,world.birds[0].id);
   assert.equal(root.querySelectorAll('[data-garden-household]').length,2);
-  const companion = root.querySelector(`[data-garden-household="${world.birds[0].id}"]`);
-  assert.equal(companion.dataset.gardenHousehold,world.birds[0].id);
+  const companion = root.querySelector(`[data-garden-household="${second.id}"]`);
+  assert.equal(companion.dataset.gardenHousehold,second.id);
   companion.click();
   panel.refresh();
   assert.equal(root.querySelector('.finch-garden-household').dataset.gardenHousehold,world.birds[0].id);
-  assert.deepEqual(calls,[world.birds[0].id]);
+  assert.deepEqual(calls,[second.id]);
   assert.deepEqual(world,before);
 });

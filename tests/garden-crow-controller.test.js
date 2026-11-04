@@ -74,3 +74,17 @@ test('subsecond household modal resets dwell without needing the one-second poll
  modal.setAttribute('open','');modal.removeAttribute('open');await sleep(5);await s.run(120);assert.equal(s.root.querySelector('[data-crow-phase="warning"]'),null);await s.run(1);assert.ok(s.root.querySelector('[data-crow-phase="warning"]'));
  }finally{s.close();}
 });
+test('absent or young protagonist never accumulates a warning while no eligible bird is in the garden',async()=>{
+ for(const field of ['departed','chick','egg']){const w=fixture();if(field==='departed')w.birds[0].home=field;else w.birds[0].stage=field;const s=setup(w);try{await s.run(200);assert.equal(s.root.querySelector('[data-crow-phase]'),null);assert.equal(w.encounters.crow.visits.length,0);w.birds[0].home='resident';w.birds[0].stage='adult';await s.run(120);assert.equal(s.root.querySelector('[data-crow-phase]'),null);await s.run(1);assert.ok(s.root.querySelector('[data-crow-phase=warning]'));}finally{s.close();}}
+});
+async function successorFamily(){const {createBird,advanceTo}=await import('../src/engine.js');const {lifeStatus}=await import('../src/life-care.js');const w=fixture();w.paused=false;const father=createBird(w,{sex:'male',home:'resident'});w.tick=10;const child=createBird(w,{sex:'female',home:'resident',parents:['b1',father.id],generation:1});lifeStatus(w,'b1').condition={kind:'injury',sinceAt:now,deadlineAt:now+86400000};return {w,child,succeed:()=>{w.paused=true;advanceTo(w,now+86400000);w.paused=false;}};}
+test('a queued old-protagonist arrival cannot hit the successor after real lifecycle inheritance',async()=>{
+ const {w,child,succeed}=await successorFamily();let release;const s=setup(w,{transact:fn=>new Promise(resolve=>{release=()=>resolve(fn(w));})});try{await s.run(126);const {flight}=await s.tick();succeed();const energy=child.needs.energy;assert.equal(w.protagonist.birdId,child.id);release();await flight;assert.equal(child.needs.energy,energy);assert.equal(w.encounters.crow.visits.length,0);validateWorld(w);}finally{s.close();}
+});
+test('a new protagonist must spend their own full continuous two minutes in the garden',async()=>{
+ const {w,child,succeed}=await successorFamily(),s=setup(w);try{await s.run(120);succeed();assert.equal(w.protagonist.birdId,child.id);await s.run(120);assert.equal(s.root.querySelector('[data-crow-phase]'),null);await s.run(1);assert.ok(s.root.querySelector('[data-crow-phase=warning]'));}finally{s.close();}
+});
+
+test('a founder warning clears immediately on succession refresh before the next timer sample',async()=>{
+ const {w,child,succeed}=await successorFamily(),s=setup(w);try{await s.run(121);assert.ok(s.root.querySelector('[data-crow-phase=warning]'));succeed();assert.equal(w.protagonist.birdId,child.id);s.panel.refresh();assert.equal(s.root.querySelector('[data-crow-phase]'),null);assert.equal(w.encounters.crow.visits.length,0);await s.run(120);assert.equal(s.root.querySelector('[data-crow-phase]'),null);await s.run(1);assert.ok(s.root.querySelector('[data-crow-phase=warning]'));}finally{s.close();}
+});
