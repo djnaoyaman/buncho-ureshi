@@ -249,7 +249,7 @@ for (const [width, height] of [[320, 568], [390, 844]]) {
 }
 
 for (const [width, height] of [[320, 568], [390, 844]]) {
-  test(`designed menu fits eight cards and restores keyboard focus ${width}`, async ({page}, info) => {
+  test(`designed menu fits ten cards and restores keyboard focus ${width}`, async ({page}, info) => {
     await page.setViewportSize({width, height});
     await ready(page);
     const opener = page.locator('#game-nav-open');
@@ -257,9 +257,9 @@ for (const [width, height] of [[320, 568], [390, 844]]) {
     await opener.click();
     await expect(menu).toBeVisible();
     const cards = menu.locator('.game-tabs button');
-    await expect(cards).toHaveCount(8);
+    await expect(cards).toHaveCount(10);
     expect(await menu.evaluate(el => el.contains(document.activeElement))).toBe(true);
-    const ids = ['profile', 'relations', 'family', 'diary', 'roster', 'notebook', 'settings', 'help'];
+    const ids = ['health', 'memorial', 'profile', 'relations', 'family', 'diary', 'roster', 'notebook', 'settings', 'help'];
     for (const id of ids) {
       const card = menu.locator(`#game-menu-${id}`);
       await expect(card).toBeVisible();

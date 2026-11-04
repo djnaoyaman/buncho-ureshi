@@ -341,6 +341,7 @@ test('bird sheet Tab loop excludes closed disclosure descendants and wraps visib
  for(const node of sheet.querySelectorAll('button,input,summary'))node.getClientRects=()=>[{}];
  const close=sheet.querySelector('#game-sheet-close');close.focus();
  const key=shiftKey=>f.window.document.activeElement.dispatchEvent(new f.window.KeyboardEvent('keydown',{key:'Tab',shiftKey,bubbles:true,cancelable:true}));
+ key(false);assert.equal(f.window.document.activeElement.id,'game-sheet-health');
  key(false);assert.equal(f.window.document.activeElement.id,'game-care-feed');
  close.focus();key(true);assert.equal(f.window.document.activeElement.dataset.gamePanel,'profile');
  key(false);assert.equal(f.window.document.activeElement.id,'game-sheet-close');
