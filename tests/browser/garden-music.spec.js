@@ -88,14 +88,18 @@ test.describe('nine garden MP3 native playback, test-only readiness preview',()=
   await info.attach('nine-garden-native-audio-measurements',{body:Buffer.from(JSON.stringify(report,null,2)),contentType:'application/json'});
  });
 
- test('four original fixed choices ignore gardens, OFF dominates and leaving auto restores chosen original',async({page},info)=>{
+ test('garden arrival replaces each fixed choice, OFF dominates and home restores chosen original',async({page},info)=>{
   await mountNativeGardenFixture(page);
   for(const id of ORIGINAL_IDS){
+   await page.locator('#garden-music-leave').click();
    await page.locator(`#garden-fixed-${id}`).click();await playing(page,id);
    const before=await page.evaluate(()=>window.__gardenMusicFixture.snapshot().requests.length);
-   await page.locator('#garden-music-onsen').click();await playing(page,id);
-   expect(await page.evaluate(()=>window.__gardenMusicFixture.snapshot().requests.length)).toBe(before);
-   expect(await page.evaluate(()=>window.__gardenMusicFixture.player.state().mode)).toBe('fixed');
+   await page.locator('#garden-music-onsen').click();await playing(page,'garden-onsen');
+   expect(await page.evaluate(()=>window.__gardenMusicFixture.snapshot().requests.length)).toBe(before+1);
+   expect(await page.evaluate(()=>window.__gardenMusicFixture.player.state().mode)).toBe('auto');
+   const arrived=await page.evaluate(()=>window.__gardenMusicFixture.snapshot().starts.length);
+   await page.locator('#garden-music-onsen').click();
+   expect(await page.evaluate(()=>window.__gardenMusicFixture.snapshot().starts.length)).toBe(arrived);
   }
   await page.locator('#garden-music-auto').click();await playing(page,'garden-onsen');
   await page.locator('#garden-music-leave').click();await playing(page,'village');
