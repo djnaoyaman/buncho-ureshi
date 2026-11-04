@@ -1,4 +1,4 @@
-import {initialEncounterState,validateEncounterState,encounterSystem} from './encounters.js';
+import {initialEncounterState,validateEncounterState,encounterSystem,upgradeEncounterState,cageVisitorCount,expireEncounterVisitors} from './encounters.js';
 import {initialEconomy,validateEconomy,syncEconomy,reserveAutomaticGems,awardCareGold,ECONOMY_RULES} from './economy.js';
 /** A deterministic, offline, non-punitive story simulation. No real husbandry advice. */
 import { initializeCareSchedule, validateCareSchedule, syncCareSchedule, applyScheduledCare, reconcileImportedCare, careWindow } from './care-schedule.js';
@@ -81,7 +81,7 @@ export function inviteFriend(w,birdId) {
   const b=findBird(w,birdId);
   if(!b||b.home==='resident'||b.stage!=='adult')throw new Error('お友達の成鳥を選んでね。');
   if(b.home==='visitor')return {changed:false,message:'もう遊びに来ているよ。'};
-  if(w.birds.filter(x=>x.home==='visitor').length>=LIMITS.visitors)throw new Error('お客さんは2羽まで。今いる友達と過ごそう。');
+  if(cageVisitorCount(w)>=LIMITS.visitors)throw new Error('お客さんは2羽まで。今いる友達と過ごそう。');
   b.home='visitor';b.arrivedTick=w.tick;setAction(w,b,'visit');record(w,'revisit',[b.id],'お友達を自分たちの籠へ招いた','いっしょに過ごす時間が始まった');bumpRevision(w);
   return {changed:true,message:`${b.name}を招いたよ。籠に帰って一緒に過ごそう。`};
 }
@@ -254,7 +254,7 @@ function visits(w) {
   if (w.tick === 1 || w.tick % 28 === 0) {
     const resident = w.birds.filter(b => b.home === 'resident');
     const visitors = w.birds.filter(b => b.home === 'visitor');
-    if (visitors.length < LIMITS.visitors && resident.length < LIMITS.residents && w.birds.length < LIMITS.birds) {
+    if (cageVisitorCount(w) < LIMITS.visitors && resident.length < LIMITS.residents && w.birds.length < LIMITS.birds) {
       const single = resident.filter(b => b.stage === 'adult' && !b.partner).sort((a, b) => b.generation - a.generation)[0];
       const v = createBird(w, { skipNameDraw:w.tick === 1, sex: single ? (single.sex === 'female' ? 'male' : 'female') : undefined });
       if (w.tick === 1) { v.personality.sociability = 70; v.personality.caution = 25; }
@@ -262,7 +262,7 @@ function visits(w) {
     }
     if (w.tick % 84 === 0) {
       const away = w.birds.filter(b => b.home === 'departed' && b.stage === 'adult');
-      if (away.length && w.birds.filter(b => b.home === 'visitor').length < LIMITS.visitors) {
+      if (away.length && cageVisitorCount(w) < LIMITS.visitors) {
         const v = pick(w, away); v.home = 'visitor'; v.arrivedTick = w.tick; setAction(w, v, 'visit'); record(w, 'revisit', [v.id], '昔の庭のことを覚えていた', 'また遊びに来た');
       }
     }
@@ -281,7 +281,7 @@ function visits(w) {
 export function stepWorld(w, now=Date.now()) {
   const economySynced=syncEconomy(w.economy,careTime(now));if(economySynced)bumpRevision(w);
   if (w.paused || !Number.isSafeInteger(w.tick + 1) || w.epoch + (w.tick + 1) * TICK_MS > MAX_DATE_MS) return w;
-  w.tick++; w.care.cleanliness = Math.max(0, w.care.cleanliness - CARE_RULES.soilPerTick); grow(w); visits(w);
+  w.tick++; w.care.cleanliness = Math.max(0, w.care.cleanliness - CARE_RULES.soilPerTick); grow(w); expireEncounterVisitors(w); visits(w);
   if(w.field.place==='friend'&&findBird(w,w.field.hostId)?.home==='resident')w.field={place:'home',hostId:null,enteredTick:w.tick};
   const active = fieldBirds(w).filter(b => b.stage !== 'egg');
   for (const b of active) {
@@ -486,7 +486,7 @@ function validateVersion(input, version) {
   const visiting = new Set(), done = new Set();
   function visit(bid) { if (visiting.has(bid)) fail('家系が循環しています。'); if (done.has(bid)) return; visiting.add(bid); for (const p of findBird(w,bid).parents) visit(p); visiting.delete(bid); done.add(bid); }
   for (const b of w.birds) visit(b.id);
-  if (w.birds.filter(b => b.home === 'resident').length > LIMITS.residents || w.birds.filter(b => b.home === 'visitor').length > LIMITS.visitors) fail('庭の定員を超えています。');
+  if (w.birds.filter(b => b.home === 'resident').length > LIMITS.residents || cageVisitorCount(w) > LIMITS.visitors) fail('庭の定員を超えています。');
   for (const b of w.birds) {
     if (b.parents.length && (b.generation !== Math.max(...b.parents.map(p => findBird(w,p).generation)) + 1 || b.parents.some(p => findBird(w,p).bornTick > b.bornTick))) fail('世代の順序が不正です。');
     if (b.parents.length && (findBird(w, b.parents[0]).sex !== 'female' || findBird(w, b.parents[1]).sex !== 'male' || b.parents.some(id => { const p = findBird(w, id); return p.stage !== 'adult' || p.stageTick > b.bornTick; }) || isRelated(w, b.parents[0], b.parents[1]))) fail('親の血縁または性別が不正です。');
@@ -529,7 +529,7 @@ function validateVersion(input, version) {
     }
   }
   if(version>=5)validateCareSchedule(w.careSchedule);
-  if(version>=6)validateEncounterState(w.encounters,w.tick);
+  if(version>=6){validateEncounterState(w.encounters,w.tick);upgradeEncounterState(w.encounters);}
   if(version>=7){
    validateEconomy(w.economy);
    if(w.economy.firstMeetingClaimed.some(id=>!w.encounters.discoveries.some(d=>d.id===id)))fail('初出会いの記録が不正です。');

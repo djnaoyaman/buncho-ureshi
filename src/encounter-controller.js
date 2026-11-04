@@ -1,13 +1,19 @@
 import {mountGardenBirdMotion} from './garden-bird-motion.js';
 import {encounterSystem} from './encounters.js';
-import {renderEncounterNotebook,renderEncounterPage,renderEncounterScene,renderFinchGarden} from './encounter-ui.js';
+import {renderEncounterNotebook,renderEncounterPage,renderEncounterScene,renderFinchGarden,renderEncounterFriendship} from './encounter-ui.js';
 /** Host injects its single existing transaction store. Never creates a second save/backend. */
-export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()=>null,onHouseholdBird=()=>{},onGarden=async()=>{},onGardenChanged=()=>{},onReward=()=>{},meetFriend=null,completeEncounter=null,system=encounterSystem,initialMode='notebook',base='/buncho-ureshi/'}={}){
+export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()=>null,onHouseholdBird=()=>{},onGarden=async()=>{},onGardenChanged=()=>{},onHome=()=>{},onReward=()=>{},meetFriend=null,completeEncounter=null,system=encounterSystem,initialMode='notebook',base='/buncho-ureshi/'}={}){
   if(typeof getWorld!=='function'||typeof transact!=='function')throw new Error('図鑑の保存先が必要です。');
-  let alive=true,busy=false,mode=initialMode==='garden'?'garden':'notebook',pageId=null,showPhoto=false,generation=0,notice='',worldId=getWorld().worldId,revealGardenId=null;
+  let alive=true,busy=false,mode=initialMode==='garden'?'garden':'notebook',pageId=null,showPhoto=false,generation=0,notice='',worldId=getWorld().worldId,revealGardenId=null,renderedView=null;
+  let rub=null,petFlight=false,petTimer=null;
+  const doc=root.ownerDocument;
   const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   function render({focus=false}={}){
     if(!alive)return;const w=getWorld();
+    if(w.worldId===worldId&&rub&&rub.generation===generation&&mode==='entry'&&pageId===rub.id){refreshBond();return;}
+    if(w.worldId!==worldId){rub=null;clearTimeout(petTimer);}
+    const view=`${w.worldId}:${mode}:${pageId}:${showPhoto}`,oldEntryScroll=view===renderedView?root.scrollTop:0;
+    renderedView=view;
     const oldGarden=root.querySelector('.finch-garden');
     const oldOpenDetails=new Set(oldGarden?[...oldGarden.querySelectorAll('details[data-garden-details][open]')].map(d=>d.dataset.gardenDetails):[]);
     const oldDockScroll=root.querySelector('.finch-garden-dock details[name="garden-tools"][open]')?.scrollTop;
@@ -42,9 +48,48 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
       const openDock=root.querySelector('.finch-garden-dock details[name="garden-tools"][open]');
       if(openDock && oldDockScroll!=null)openDock.scrollTop=oldDockScroll;
     }
+    root.scrollTop=oldEntryScroll;
     root.setAttribute('aria-busy',String(busy));
     if(busy)for(const button of root.querySelectorAll('button'))button.disabled=true;
     if(focus)root.querySelector('h3')?.focus({preventScroll:true});
+  }
+  function refreshBond(){
+    if(!alive||mode!=='entry')return;
+    const bond=root.querySelector('[data-finch-friendship]');
+    if(bond)bond.outerHTML=renderEncounterFriendship(getWorld(),pageId,{system});
+    const status=root.querySelector('.finch-notice');if(status)status.textContent=notice;
+  }
+  async function flushPet(){
+    if(petFlight||!rub||!rub.pending||!alive)return;
+    const session=rub,amount=Math.min(8,session.pending);session.pending-=amount;petFlight=true;let feedback;
+    try{await transact(w=>{
+      if(!alive||session.generation!==generation||session.worldId!==w.worldId||mode!=='entry'||pageId!==session.id)return w;
+      feedback=system.pet(w,session.id,amount,{worldId:w.worldId,revision:w.revision});return w;
+    },{gesture:true});if(alive&&session.generation===generation){notice=feedback?.message||'';refreshBond();}}
+    catch{if(alive&&session.generation===generation){notice='記録できなかったよ。もう一度なでてね。';refreshBond();}}
+    finally{petFlight=false;if(rub===session){if(session.pending)petTimer=setTimeout(flushPet,100);else if(!session.active){rub=null;render();if(session.keyboard)root.querySelector('[data-encounter-rub]')?.focus({preventScroll:true});}}}
+  }
+  function startRub(event){
+    const target=event.target.closest('[data-encounter-rub]');
+    if(!target||!root.contains(target)||busy||petFlight||rub||event.isPrimary===false||event.button!==0)return;
+    event.preventDefault();const w=getWorld();
+    rub={id:target.dataset.encounterRub,worldId:w.worldId,generation,pointerId:event.pointerId,x:event.clientX,y:event.clientY,distance:0,pending:0,active:true};
+  }
+  function moveRub(event){
+    if(!rub||!rub.active||event.pointerId!==rub.pointerId)return;
+    if(!alive||mode!=='entry'||pageId!==rub.id||getWorld().worldId!==rub.worldId){rub=null;return;}
+    const target=root.querySelector('[data-encounter-rub]'),box=target?.getBoundingClientRect();
+    const distance=Math.hypot(event.clientX-rub.x,event.clientY-rub.y);rub.x=event.clientX;rub.y=event.clientY;
+    if(!box||event.clientX<box.left||event.clientX>box.right||event.clientY<box.top||event.clientY>box.bottom){rub.distance=0;return;}
+    event.preventDefault();rub.distance+=Math.min(distance,96);
+    const strokes=Math.floor(rub.distance/24);rub.distance%=24;
+    if(strokes){rub.pending=Math.min(32,rub.pending+strokes);if(!petFlight)flushPet();}
+  }
+  function endRub(event){if(!rub||event.pointerId!==rub.pointerId)return;rub.active=false;if(!petFlight&&rub.pending)flushPet();else if(!petFlight){rub=null;render();}}
+  function keyRub(event){
+    const target=event.target.closest('[data-encounter-rub]');
+    if(!target||!root.contains(target)||!['Enter',' '].includes(event.key)||event.repeat||busy||petFlight||rub)return;
+    event.preventDefault();const w=getWorld();rub={id:target.dataset.encounterRub,worldId:w.worldId,generation,pending:1,active:false,keyboard:true};flushPet();
   }
   async function mutate(operation,token){
     busy=true;render();let feedback;
@@ -54,6 +99,17 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
   }
   async function click(event){
     const button=event.target.closest('button');if(!button||!root.contains(button)||busy)return;
+    if(rub){rub=null;clearTimeout(petTimer);generation++;}
+    if(button.hasAttribute('data-finch-go-home')){const token=++generation,originalWorld=getWorld().worldId,isCurrent=()=>alive&&token===generation&&getWorld().worldId===originalWorld;busy=true;render();try{await onHome(isCurrent);}catch{if(isCurrent())notice='籠をひらけなかったよ。もう一度試してね。';}finally{if(isCurrent()){busy=false;render();}}return;}
+    if(button.hasAttribute('data-encounter-invite-garden')||button.hasAttribute('data-encounter-invite-cage')||button.hasAttribute('data-encounter-dismiss-cage')){
+      const token=++generation,w=getWorld(),expected={worldId:w.worldId,revision:w.revision};
+      const gardenInvite=button.hasAttribute('data-encounter-invite-garden'),cageInvite=button.hasAttribute('data-encounter-invite-cage');
+      const id=gardenInvite?button.dataset.encounterInviteGarden:cageInvite?button.dataset.encounterInviteCage:button.dataset.encounterDismissCage;
+      const result=await mutate(current=>(gardenInvite?system.inviteGarden:cageInvite?system.inviteCage:system.dismissCage)(current,id,expected),token);
+      if(!alive||token!==generation)return;notice=result?.message||'';
+      if(gardenInvite&&(result?.changed||result?.resumed)){mode='garden';try{onGardenChanged({gardenId:getWorld().encounters.garden.id,worldId:getWorld().worldId,generation:token});}catch{}}
+      render({focus:true});return;
+    }
     if(button.hasAttribute('data-garden-scroll')){const selector=root.querySelector('.finch-garden-selector');if(selector)selector.scrollLeft+=(button.dataset.gardenScroll==='next'?1:-1)*selector.clientWidth;return;}
     if(button.hasAttribute('data-garden-household')){const id=button.dataset.gardenHousehold,w=getWorld();if(w.birds.some(b=>b.id===id&&b.home==='resident'&&['juvenile','adult'].includes(b.stage)))onHouseholdBird(id);return;}
     if(button.hasAttribute('data-encounter-page')){pageId=button.dataset.encounterPage;mode='entry';showPhoto=false;notice='';render({focus:true});return;}
@@ -109,7 +165,7 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
     const feedback=await mutate(current=>system.open(current,id,expected),token);if(!alive||token!==generation)return;
     if(feedback?.changed||feedback?.resumed)mode='event';else notice=feedback?.message||'今は会えないみたい。また庭で探してみよう。';render({focus:true});
   }
-  root.classList.add('finch-overlay-content');root.addEventListener('click',click);render();
+  root.classList.add('finch-overlay-content');root.addEventListener('click',click);root.addEventListener('pointerdown',startRub);root.addEventListener('keydown',keyRub);doc.addEventListener('pointermove',moveRub,{passive:false});doc.addEventListener('pointerup',endRub);doc.addEventListener('pointercancel',endRub);render();
   const motion=mountGardenBirdMotion(root,{enabled:()=>alive&&!getWorld().paused&&getWorld().settings.motion});
-  return {open,garden,notebook(){generation++;busy=false;mode='notebook';pageId=null;notice='';render({focus:true});},refresh(){render();},destroy(){motion();alive=false;generation++;root.removeEventListener('click',click);root.removeAttribute('aria-busy');root.classList.remove('finch-overlay-content');}};
+  return {open,garden,entry(id){generation++;rub=null;busy=false;mode='entry';pageId=id;showPhoto=false;notice='';render({focus:true});},notebook(){rub=null;generation++;busy=false;mode='notebook';pageId=null;notice='';render({focus:true});},refresh(){render();},destroy(){motion();alive=false;generation++;rub=null;clearTimeout(petTimer);root.removeEventListener('pointerdown',startRub);root.removeEventListener('keydown',keyRub);doc.removeEventListener('pointermove',moveRub);doc.removeEventListener('pointerup',endRub);doc.removeEventListener('pointercancel',endRub);root.removeEventListener('click',click);root.removeAttribute('aria-busy');root.classList.remove('finch-overlay-content');}};
 }
