@@ -101,7 +101,11 @@ test('large bird follows actions at four sizes; native mouse rub saves exactly o
   await unchanged(page, before);
   await expect(page.locator('#game-sheet-title')).toHaveText(title);
   await page.mouse.up();
-  const after = await onePet(page, before);
+  let after = await onePet(page, before);
+  await mouseStroke(page, false);
+  await page.waitForTimeout(950);
+  await expect(page.locator(PET)).toHaveAttribute('data-rubbing', 'ready');
+  await page.mouse.up(); after = await onePet(page, after);
   await page.reload();
   await expect(page.locator('body')).toHaveAttribute('data-game-intro', 'done');
   expect(snapshot(await record(page))).toEqual(snapshot(after));

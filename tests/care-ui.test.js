@@ -298,3 +298,11 @@ test('direct care suppresses repeated keyboard activation and handles failed sav
   const before=f.read();f.failNext();directRub(f,'pointerdown');directRub(f,'pointermove',{x:160});directRub(f,'pointerup',{x:160});await f.settle();assert.deepEqual(f.read(),before);assert.match(f.root.querySelector('.game-message').textContent,/test save failure/);
   f.root.querySelector('[data-care-rub]').click();await f.settle();assert.equal(f.read().events.filter(e=>e.kind==='user-pet').length,1,'assistive/keyboard click remains supported');
 });
+
+test('direct care preserves a second slow stroke while the previous feedback timer clears',async t=>{
+  const f=await fixture(t);const initial=f.read();initial.birds[0].needs.energy=0;f.write(initial);await f.mount();
+  f.root.querySelector('[data-care-rub]').click();await f.settle();
+  const target=f.root.querySelector('[data-care-rub]');directRub(f,'pointerdown');directRub(f,'pointermove',{x:140});
+  await sleep(900);assert.ok(f.root.querySelector('[data-care-rub]')===target,'old feedback must not remove an active gesture target');
+  directRub(f,'pointerup',{x:140});await f.settle();assert.equal(f.read().events.filter(e=>e.kind==='user-pet').length,2);
+});
