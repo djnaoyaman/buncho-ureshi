@@ -11,4 +11,4 @@
 
 保存全体の版は7のまま、出会いの内部版を4から5へ純粋移行します。元データを変更せず、既存の回数・発見・途中の出会い・時刻・家系・通貨・乱数を保持します。IndexedDBへの内部版更新も永続化します。
 
-検証: `npm run check`、`npm test`、`npx playwright test --config=playwright.friendship.config.js`。専用CIはChromium touch、WebKit touch、desktopの320px・横向き・1440px、なでる操作、招待、帰還、再読込、写真の無加工表示、キーボード、2羽上限を検証します。実機指操作と聴覚による音の確認は別です。
+検証: `npm run check`、`npm test`、`npx playwright test --config=playwright.friendship.config.js`。専用CIはChromium touch、WebKit touch、desktopの320×568・320×240・844×390・1440×900、なでる操作、招待、帰還、再読込、写真の無加工表示、キーボード、2羽上限を検証します。実機指操作と聴覚による音の確認は別です。

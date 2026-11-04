@@ -14,16 +14,26 @@ for (const size of sizes) test(`garden targets remain reachable ${size.width}x${
     const stage=page.locator('.finch-garden-stage:visible');
     await expect(stage).toHaveAttribute('data-garden-id', garden);
     await expect(stage.locator('.finch-garden-friend:visible').first()).toBeVisible();
-    const bad=await stage.evaluate(root => {
-      const s=root.getBoundingClientRect();
-      return [...root.querySelectorAll('.finch-garden-friend,.finch-garden-household,.finch-garden-visitor')].map(b => {
+    // Query and measure in one browser task: the live game's periodic refresh
+    // can detach an ElementHandle between locator resolution and evaluate.
+    const measured=await page.evaluate(garden => {
+      const root=document.querySelector(`.finch-garden-stage[data-garden-id="${garden}"]`);
+      if(!root?.isConnected)return {connected:false,size:[0,0],count:0,bad:[]};
+      const s=root.getBoundingClientRect(),birds=[...root.querySelectorAll('.finch-garden-friend,.finch-garden-household,.finch-garden-visitor')];
+      const bad=birds.map(b => {
         const r=b.getBoundingClientRect(), x=r.left+r.width/2, y=r.top+r.height/2, hit=document.elementFromPoint(x,y);
         return {name:b.getAttribute('aria-label'),rect:[r.left,r.top,r.right,r.bottom].map(Math.round),
           stage:[s.left,s.top,s.right,s.bottom].map(Math.round),
           fits:r.left>=s.left-1&&r.right<=s.right+1&&r.top>=s.top-1&&r.bottom<=s.bottom+1,
           hit:!!hit&&(hit===b||b.contains(hit))};
       }).filter(b=>!b.fits||!b.hit);
-    });
+      return {connected:root.isConnected,size:[s.width,s.height],count:birds.length,bad};
+    },garden);
+    expect(measured.connected,`live stage for ${garden}`).toBe(true);
+    expect(measured.size[0],`stage width for ${garden}`).toBeGreaterThan(0);
+    expect(measured.size[1],`stage height for ${garden}`).toBeGreaterThan(0);
+    expect(measured.count,`birds in ${garden}`).toBeGreaterThan(0);
+    const {bad}=measured;
     if (bad.length) await info.attach(`${garden}-${size.width}x${size.height}`,{body:await page.screenshot(),contentType:'image/png'});
     expect(bad, JSON.stringify({garden,size,bad},null,2)).toEqual([]);
   }
