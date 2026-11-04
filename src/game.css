@@ -551,3 +551,24 @@ body[data-world="buncho"] .game-owner-companion[data-home-crowded="true"]{width:
 
 @media(max-width:600px) and (min-height:501px){body[data-world="buncho"] .game-owner-companion[data-home-crowded="true"]{width:min(72px,10cqh)}}
 body[data-world="buncho"][data-scene-controls="closed"]:has(.game-room[data-home-crowded="true"]) .game-scene-controls-toggle{left:auto;right:calc(72px + env(safe-area-inset-right,0px));top:calc(4px + env(safe-area-inset-top,0px));bottom:auto}
+
+/* Direct care: the bird itself is the gesture surface, not another action tile. */
+.game-bird-sheet .game-care-actions{grid-template-columns:repeat(2,minmax(0,1fr))}
+.game-care-petting{display:grid;justify-items:center;gap:.25rem;width:100%;margin:.75rem 0 .2rem;text-align:center}
+.game-care-pet-help{font-size:.8rem;line-height:1.6;margin:0;color:#35482e}
+.game-app .game-care-pet-bird{position:relative;display:block;--care-bird-height:min(clamp(250px,40dvh,390px),calc((100vw - 40px) / .85));width:100%;height:var(--care-bird-height);aspect-ratio:auto;min-height:0;padding:0;border:0;border-radius:1rem;background:transparent;box-shadow:none;cursor:grab;touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
+.game-app .game-care-pet-bird:disabled{opacity:1;cursor:default;touch-action:pan-y;background:transparent}
+.game-app .game-care-pet-bird:hover,.game-app .game-care-pet-bird:active{background:transparent;box-shadow:none;transform:none}
+.game-care-pet-bird>.game-sprite{position:absolute;top:0;left:50%;width:calc(var(--care-bird-height) * .85);height:100%;transform:translateX(-50%);pointer-events:auto;touch-action:none}
+.game-care-pet-bird:focus-visible{outline:3px solid #405c35;outline-offset:3px}
+.game-care-pet-bird[data-rubbing]{cursor:grabbing}
+.game-care-rub-note{position:absolute;right:5%;top:15%;color:#587241;font-size:2.2rem;pointer-events:none}
+.game-care-pet-bird[data-rubbing=ready] .game-care-rub-note:empty::after{content:'♪'}
+.game-care-petting>small{font-size:.68rem;line-height:1.5;color:#52624b}
+@media(max-height:500px){.game-app .game-care-pet-bird{--care-bird-height:259px}}
+@media(forced-colors:active){.game-care-pet-bird:focus-visible{outline-color:Highlight}.game-care-rub-note{color:ButtonText}}
+
+.game-care-pet-bird:disabled>.game-sprite{touch-action:pan-y}
+
+/* Leave room for the four-character exit even at 200% text size in landscape. */
+@media(max-height:500px) and (min-width:601px){body[data-world="buncho"] .game-field-bar{right:128px}}

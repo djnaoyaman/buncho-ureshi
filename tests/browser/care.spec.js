@@ -84,7 +84,7 @@ test('care sound opt-in schedules a short native synthetic chirp or reports unav
   await trackNativeAudio(page);await seed(page);expect(await page.evaluate(()=>window.__careAudio.contexts)).toBe(0);
   await sound(page,true);await expect.poll(async()=> (await record(page)).settings.careSound).toBe(true);expect(await page.evaluate(()=>window.__careAudio.starts)).toBe(0);
   await expect.poll(()=>page.evaluate(()=>window.__careNativeContext?.state),{timeout:10000}).toBe('running');
-  await page.locator('[data-game-care="pet"]').click();await expect(page.locator('.game-care-feedback')).toContainText('ぴっ');
+  await page.locator('[data-game-care="pet"]').press('Enter');await expect(page.locator('.game-care-feedback')).toContainText('ぴっ');
   // No false audible claim: missing browser audio must retain explicit text fallback.
   const unavailable=await page.evaluate(()=>window.__careAudio.unavailable);
   if(unavailable)await expect(page.locator('.game-message')).toContainText('合成音を鳴らせません');
@@ -107,7 +107,7 @@ test('care sound opt-in schedules a short native synthetic chirp or reports unav
 });
 
 for(const cancel of ['selection','route','mute','close'])test(`care pending audio is discarded after ${cancel}`,async({page})=>{
-  await holdAudio(page);await seed(page,fixture({sound:true}));await page.locator('[data-game-care="pet"]').click();await expect.poll(async()=> (await record(page)).birds[0].mood).toBe(64);expect(await page.evaluate(()=>window.__careStarts)).toBe(0);
+  await holdAudio(page);await seed(page,fixture({sound:true}));await page.locator('[data-game-care="pet"]').press('Enter');await expect.poll(async()=> (await record(page)).birds[0].mood).toBe(64);expect(await page.evaluate(()=>window.__careStarts)).toBe(0);
   if(cancel==='selection'){await closeCare(page);await chooseBird(page,'b2');await openCare(page);}if(cancel==='close')await closeCare(page);
   if(cancel==='route'){await closeCare(page);await page.locator('.game-world-exit').click();await expect(page.locator('#article-grid')).toBeVisible();}
   if(cancel==='mute')await sound(page,false);
@@ -142,7 +142,7 @@ for(const width of [320,768,1440])test(`care controls and floor-only tint fit ${
   if(info.project.name==='chrome')await page.locator('.game-room').screenshot({path:info.outputPath(`care-floor-dirty-${width}.png`),animations:'disabled'});
   await closeCare(page);await page.locator('[data-game-care="clean"]').click();await expect(floor).toHaveCSS('opacity','0');
   expect(await page.locator('.game-room-bird').evaluateAll(nodes=>nodes.map(node=>({id:node.dataset.birdId,style:node.getAttribute('style'),src:node.querySelector('img').src,filter:getComputedStyle(node.querySelector('img')).filter})))).toEqual(before);
-  await openCare(page);await page.locator('[data-game-care="pet"]').click();await expect(page.locator('.game-app')).toHaveAttribute('data-care-motion','off');await expect(page.locator('.game-care-feedback').last()).toContainText('ぴっ');
+  await openCare(page);await page.locator('[data-game-care="pet"]').press('Enter');await expect(page.locator('.game-app')).toHaveAttribute('data-care-motion','off');await expect(page.locator('.game-care-feedback').last()).toContainText('ぴっ');
   await page.locator('.game-room img').evaluateAll(async images=>{await Promise.all(images.map(image=>image.decode()));await new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(done)));});
   if(info.project.name==='chrome'){await page.locator('.game-care').screenshot({path:info.outputPath(`care-controls-${width}.png`),animations:'disabled'});await closeCare(page);await page.locator('.game-room').screenshot({path:info.outputPath(`care-floor-clean-${width}.png`),animations:'disabled'});}
 });
@@ -150,7 +150,7 @@ for(const width of [320,768,1440])test(`care controls and floor-only tint fit ${
 test('care Gems share real-window bars and survive reload without reward replay',async({page})=>{
  const w=fixture();w.birds[0].needs.food=80;w.birds[0].needs.energy=60;await seed(page,w);const before=(await record(page)).decor.points;
  await page.locator('[data-game-care="feed"]').click();await expect.poll(async()=>(await record(page)).decor.points).toBe(before+6);await expect(page.locator('.game-gem-reward')).toContainText('+6 Gem');await expect(page.locator('[data-game-care="feed"]')).toBeDisabled();
- await page.locator('[data-game-care="pet"]').click();await expect.poll(async()=>(await record(page)).decor.points).toBe(before+11);await expect(page.locator('[data-game-energy]')).toHaveText('80 / 100');
+ await page.locator('[data-game-care="pet"]').press('Enter');await expect.poll(async()=>(await record(page)).decor.points).toBe(before+11);await expect(page.locator('[data-game-energy]')).toHaveText('80 / 100');
  await page.locator('[data-game-talk="名前を呼ぶ"]').click();await expect.poll(async()=>(await record(page)).decor.points).toBe(before+16);await expect(page.locator('[data-game-talk="名前を呼ぶ"]')).toBeDisabled();await expect(page.locator('[data-game-care="pet"]')).toBeDisabled();
  await page.reload();await expect(page.locator('.game-app')).toBeVisible();expect((await record(page)).decor.points).toBe(before+16);await expect(page.locator('.game-gem-reward')).toHaveCount(0);await openCare(page);await expect(page.locator('[data-next-care]')).toContainText('日本時間');
  const next=Date.UTC(2026,10,3,3);await page.evaluate(time=>{Date.now=()=>time;},next);await expect(page.locator('[data-game-energy]')).toHaveText('60 / 100',{timeout:10000});await expect(page.locator('[data-game-care="pet"]')).toBeEnabled();expect((await record(page)).paused).toBe(true);

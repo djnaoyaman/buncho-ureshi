@@ -3,12 +3,12 @@ import {createWorld} from '../../src/engine.js';
 const NOW=Date.UTC(2026,10,4);
 async function record(page,world){return page.evaluate(world=>new Promise((resolve,reject)=>{const open=indexedDB.open('buncho-ureshi-garden-v1',1);open.onupgradeneeded=()=>open.result.createObjectStore('world');open.onerror=()=>reject(open.error);open.onsuccess=()=>{const db=open.result,tx=db.transaction('world',world?'readwrite':'readonly'),s=tx.objectStore('world'),req=world?s.put(world,'current'):s.get('current');tx.oncomplete=()=>{db.close();resolve(req.result)};tx.onerror=()=>{db.close();reject(tx.error)}}}),world);}
 async function fit(button){
- await expect(button).toBeVisible();
+ await expect(button).toBeVisible();await button.scrollIntoViewIfNeeded();
  const g=await button.evaluate(el=>{const b=el.getBoundingClientRect(),r=document.createRange();r.selectNodeContents(el);return{width:b.width,height:b.height,left:b.left,right:b.right,viewport:innerWidth,lines:[...r.getClientRects()].every(t=>t.left>=b.left&&t.right<=b.right&&t.top>=b.top&&t.bottom<=b.bottom),hit:el.contains(document.elementFromPoint(b.x+b.width/2,b.y+b.height/2))}});
  expect(g.width).toBeGreaterThanOrEqual(44);expect(g.height).toBeGreaterThanOrEqual(44);expect(g.left).toBeGreaterThanOrEqual(0);expect(g.right).toBeLessThanOrEqual(g.viewport);expect(g.lines).toBe(true);expect(g.hit).toBe(true);
 }
 async function controls(page){const toggle=page.locator('.game-scene-controls-toggle');if(await toggle.getAttribute('aria-expanded')!=='true')await toggle.click();}
-for(const size of [{width:320,height:568},{width:390,height:844},{width:844,height:390}])test(`learning and garden books have distinct labels and preserve saves ${size.width}x${size.height}`,async({page},info)=>{
+for(const size of [{width:320,height:240},{width:320,height:568},{width:390,height:844},{width:844,height:390}])test(`learning and garden books have distinct labels and preserve saves ${size.width}x${size.height}`,async({page},info)=>{
  await page.setViewportSize(size);
  await page.addInitScript(now=>{Date.now=()=>now;localStorage.setItem('buncho.music.v1',JSON.stringify({enabled:false}));localStorage.setItem('buncho.care-sound-choice.v1',JSON.stringify({explicit:true,enabled:false}));},NOW);
  await page.route(/youtube|youtu\.be|googlevideo|ytimg/i,r=>r.abort());

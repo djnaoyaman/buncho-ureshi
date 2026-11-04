@@ -137,3 +137,6 @@
 @media(prefers-reduced-motion:reduce){.finch-loading-bird{animation:none}}
 
 .finch-garden-visitor>.finch-media{width:100%;height:100%;position:relative;inset:auto;transform:none}
+
+/* At keyboard-height viewports, keep the complete label clear of the guest. */
+@media(max-height:300px){body[data-world="buncho"] .game-encounter-host .finch-garden>header{justify-content:flex-start}.finch-garden>header>[data-encounter-back]{width:50px;padding:4px;line-height:1.1}.finch-garden>header>[data-encounter-back]>span{display:block}}
