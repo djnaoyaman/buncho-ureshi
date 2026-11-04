@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { Window } from 'happy-dom';
-import { mountGame, careFloorOpacity, gameSpriteGeometry } from '../src/game.js';
+import { mountGame, careFloorOpacity, gameSpriteGeometry, gameCareBirdSvg } from '../src/game.js';
 import { createCareAudio } from '../src/care-audio.js';
 import { careWindow,renameBird,createWorld, advanceTicks, adoptBird, serializeWorld, validateWorld, bumpRevision } from '../src/engine.js';
 import { STORAGE_KEY } from '../src/game-store.js';
@@ -244,10 +244,15 @@ function directRub(f,type,{x=80,y=100,id=1,primary=true,target}={}){
   (target||surface||f.window.document).dispatchEvent(event);return event;
 }
 
-test('direct care renders one large bird below two actions, with accessible keyboard instructions',async t=>{
+test('direct care replaces the upper miniature with exactly one large bird, with accessible keyboard instructions',async t=>{
   const f=await fixture(t);await f.mount();
   assert.equal(f.root.querySelectorAll('.game-care-actions button').length,2);
+  const sheet=f.root.querySelector('.game-bird-sheet');
+  assert.equal(sheet.querySelectorAll('img').length,1,'the whole care sheet shows one bird, not a second miniature');
+  assert.equal(sheet.querySelectorAll('.game-mini-bird').length,0);
   const target=f.root.querySelector('[data-care-rub]');assert(target.querySelector('.game-sprite img'));
+  assert.equal(target.closest('.game-sheet-heading'),sheet.querySelector('.game-sheet-heading'),'the original upper portrait is enlarged');
+  assert.equal(sheet.querySelector('.game-care [data-care-rub]'),null,'no second portrait below care actions');
   assert.equal(target.dataset.careBirdId,'b1');assert.match(target.getAttribute('aria-label'),/なでる/);
   assert.equal(target.getAttribute('aria-describedby'),'game-care-pet-help game-care-pet-keyboard');
   assert.match(f.root.querySelector('#game-care-pet-keyboard').textContent,/Enter.*Space/);
@@ -305,4 +310,22 @@ test('direct care preserves a second slow stroke while the previous feedback tim
   const target=f.root.querySelector('[data-care-rub]');directRub(f,'pointerdown');directRub(f,'pointermove',{x:140});
   await sleep(900);assert.ok(f.root.querySelector('[data-care-rub]')===target,'old feedback must not remove an active gesture target');
   directRub(f,'pointerup',{x:140});await f.settle();assert.equal(f.read().events.filter(e=>e.kind==='user-pet').length,2);
+});
+
+
+test('care illustrations preserve all color and growth variants without changing room atlases',()=>{
+  for(const color of ['white','sakura','silver','cinnamon'])for(const stage of ['adult','juvenile','chick','egg']) {
+    const markup=gameCareBirdSvg(color,stage);
+    assert.equal((markup.match(/<img /g)||[]).length,1);
+    assert.match(markup,new RegExp(`data-color="${color}"`));
+    assert.match(markup,new RegExp(`data-stage="${stage}"`));
+    if(stage==='egg')assert.match(markup,/egg\.svg/);
+    else {
+      assert.match(markup,/data-art-style="finch-illustration"/);
+      assert.match(markup,new RegExp(`care-illustrations/${stage==='chick'?'chick':color+'-'+stage}\\.webp`));
+      assert.doesNotMatch(markup,/-poses\.webp/);
+    }
+  }
+  assert.match(gameCareBirdSvg('not-a-color','not-a-stage'),/care-illustrations\/white-adult\.webp/);
+  assert.equal(gameSpriteGeometry('white','adult','left').asset,'white-poses');
 });

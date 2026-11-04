@@ -343,7 +343,9 @@ test('bird sheet Tab loop excludes closed disclosure descendants and wraps visib
  const key=shiftKey=>f.window.document.activeElement.dispatchEvent(new f.window.KeyboardEvent('keydown',{key:'Tab',shiftKey,bubbles:true,cancelable:true}));
  key(false);assert.equal(f.window.document.activeElement.id,'game-sheet-health');
  key(false);assert.equal(f.window.document.activeElement.id,'game-care-feed');
- close.focus();key(true);assert.equal(f.window.document.activeElement.dataset.gamePanel,'profile');
+ close.focus();key(true);assert.equal(f.window.document.activeElement.id,'game-care-pet');
+ key(true);assert.equal(f.window.document.activeElement.dataset.gamePanel,'profile');
+ key(false);assert.equal(f.window.document.activeElement.id,'game-care-pet');
  key(false);assert.equal(f.window.document.activeElement.id,'game-sheet-close');
  for(let i=0;i<20;i++){key(false);assert.equal(sheet.contains(f.window.document.activeElement),true);assert.notEqual(f.window.document.activeElement.id,'game-words');assert.notEqual(f.window.document.activeElement.dataset.gameTalk,'あそぼう');}
 });
