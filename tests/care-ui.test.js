@@ -335,3 +335,10 @@ test('care illustrations preserve all color and growth variants without changing
   assert.match(gameCareBirdSvg('not-a-color','not-a-stage'),/care-illustrations\/white-adult\.webp/);
   assert.equal(gameSpriteGeometry('white','adult','left').asset,'white-poses');
 });
+
+test('settings heading retains focus after a saved peer update replaces the panel markup',async t=>{
+ const f=await fixture(t);await f.mount();f.closeCare();f.window.document.dispatchEvent(new f.window.CustomEvent('buncho-world-action',{detail:'settings'}));
+ const heading=f.root.querySelector('.game-settings h3');assert.equal(f.window.document.activeElement,heading);
+ const peer=f.read();peer.settings.motion=!peer.settings.motion;bumpRevision(peer);f.write(peer);await f.poll();
+ const next=f.root.querySelector('.game-settings h3');assert.notEqual(next,heading);assert.ok(f.window.document.activeElement===next,'settings heading keeps focus after polling');assert.equal(next.tabIndex,-1);
+});
