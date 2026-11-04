@@ -1,0 +1,44 @@
+name: Rosefinch encounter additions
+on:
+  pull_request:
+    paths:
+      - 'src/data/encounter-catalog.js'
+      - 'public/game-art/finches/**'
+      - 'tests/rosefinch-additions.test.js'
+      - 'tests/browser/rosefinch-additions.spec.js'
+      - 'playwright.rosefinch.config.js'
+      - '.github/workflows/rosefinch-additions.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  rosefinches:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm test
+      - run: npx playwright install --with-deps chromium webkit
+      - run: npx playwright test --config=playwright.rosefinch.config.js
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: rosefinch-browser-evidence-${{ github.sha }}
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: rosefinch-screenshots-${{ github.sha }}
+          path: |
+            test-results/**/*.png
+            test-results/**/error-context.md
+          retention-days: 14
