@@ -112,18 +112,43 @@ test('notebook requests only nearby lightweight cards, then loads more while scr
   const initialCount = held.requests.length;
   expect(initialCount).toBeLessThan(await cards.count());
   const lastImage = cards.last().locator('img');
-  await expect(lastImage).toHaveAttribute('data-media-src', /\.thumb\.webp$/);
+  await expect(lastImage).toHaveAttribute('data-media-src', /(?:\.thumb\.webp|\/sakura\.webp)$/);
   expect(await lastImage.getAttribute('src')).toBeFalsy();
   await expect(cards.first().locator('.finch-media')).toHaveAttribute('data-media-state', 'pending');
-  expect(requests.every(url => thumbnailPattern.test(url))).toBe(true);
+  const expectedSources = await cards.locator('img').evaluateAll(images => images.map(image => new URL(image.dataset.mediaSrc, document.baseURI).href));
+  expect(expectedSources.every(url => /(?:\.thumb\.webp|\/sakura\.webp)$/.test(url))).toBe(true);
+  expect(requests.every(url => expectedSources.includes(url))).toBe(true);
   await screenshot(page, info, 'notebook-pending-nearby-cards');
 
   await catalog.evaluate(element => { element.scrollTop = element.scrollHeight; });
   await expect.poll(() => held.requests.length).toBeGreaterThan(initialCount);
-  await expect.poll(() => lastImage.getAttribute('src')).toMatch(/\.thumb\.webp$/);
+  await expect.poll(() => lastImage.getAttribute('src')).toMatch(/(?:\.thumb\.webp|\/sakura\.webp)$/);
   held.release();
   await expect(cards.last().locator('.finch-media')).toHaveAttribute('data-media-state', 'ready');
   await decodedImages(lastImage);
+
+  const scrolled = await catalog.evaluate(element => element.scrollTop);
+  expect(scrolled).toBeGreaterThan(0);
+  const oldCatalog = await catalog.elementHandle();
+  const retainedImage = await lastImage.elementHandle();
+  // Trigger the real store -> polling -> render path, rather than invoking a
+  // presentation helper that bypasses controller refresh/DOM replacement.
+  await page.evaluate(async () => {
+    const resources = performance.getEntriesByType('resource').map(resource => resource.name);
+    const {openGameStore} = await import(resources.find(url => /\/src\/game-store\.js(?:\?|$)/.test(url)));
+    const {bumpRevision} = await import(resources.find(url => /\/src\/engine\.js(?:\?|$)/.test(url)));
+    const store = await openGameStore();
+    try {
+      const world = await store.transact(world => { bumpRevision(world); return world; });
+      const channel = new BroadcastChannel('buncho-garden-updates');
+      channel.postMessage({revision: world.revision});
+      channel.close();
+    } finally { store.close(); }
+  });
+  await expect.poll(() => oldCatalog.evaluate(element => element.isConnected)).toBe(false);
+  await expect.poll(() => catalog.evaluate(element => element.scrollTop)).toBeCloseTo(scrolled, 0);
+  expect(await retainedImage.evaluate(element => element.isConnected)).toBe(true);
+  await expect(cards.last().locator('.finch-media')).toHaveAttribute('data-media-state', 'ready');
   await screenshot(page, info, 'notebook-last-card-ready');
 });
 
