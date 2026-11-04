@@ -7,15 +7,15 @@ import {createWorld,createBird,advanceTicks,advanceTo,feedBird as feed,petBird a
 import {openGameStore} from '../src/game-store.js';
 const clone=structuredClone;
 const feedBird=(w,id)=>feed(w,id,100),petBird=(w,id)=>pet(w,id,100),talkToBird=(w,id,text)=>talk(w,id,text,100);
-const strip=w=>{const x=clone(w);x.version=3;delete x.gems;delete x.careSchedule;delete x.encounters;delete x.economy;delete x.adoption;delete x.settings.adoptionMode;for(const b of x.birds){delete b.gemCare;delete b.naming;}return x;};
+const strip=w=>{const x=clone(w);x.version=3;delete x.gems;delete x.careSchedule;delete x.encounters;delete x.economy;delete x.lifecycle;delete x.adoption;delete x.settings.adoptionMode;for(const b of x.birds){delete b.gemCare;delete b.naming;}return x;};
 function ready(){const w=createWorld(100);feedBird(w,'b1');advanceTicks(w,2);assert.equal(w.gems.droppings.length,1);return w;}
 test('v3 migration is pure additive and preserves all balances inventory names care histories',()=>{
  const legacy=old.createWorld(100);old.advanceTicks(legacy,300);legacy.paused=true;legacy.birds[0].name='大切なおもち';old.drawDecoration(legacy,'swing');const before=clone(legacy),w=readCompatibleWorld(legacy);
- assert.equal(w.version,7);assert.deepEqual(strip(w),legacy);assert.deepEqual(legacy,before);assert.deepEqual(w.gems,{droppings:[],nextDropId:1});assert.ok(w.birds.every(b=>Object.values(b.gemCare).every(v=>v===null)));
+ assert.equal(w.version,8);assert.deepEqual(strip(w),legacy);assert.deepEqual(legacy,before);assert.deepEqual(w.gems,{droppings:[],nextDropId:1});assert.ok(w.birds.every(b=>Object.values(b.gemCare).every(v=>v===null)));
  for(let i=0;i<4;i++)assert.deepEqual(parseSave(serializeWorld(w)),w);
 });
 test('v1 and v2 migrate without losing legacy state or giving extra welcome Gems',()=>{
- const v1=JSON.parse(readFileSync(new URL('./fixtures/v1-world.json',import.meta.url)));const one=readCompatibleWorld(v1);assert.equal(one.version,7);assert.deepEqual(one.events,v1.events);assert.equal(one.decor.points,20);
+ const v1=JSON.parse(readFileSync(new URL('./fixtures/v1-world.json',import.meta.url)));const one=readCompatibleWorld(v1);assert.equal(one.version,8);assert.deepEqual(one.events,v1.events);assert.equal(one.decor.points,20);
  const v2=old.createWorld(100);v2.version=2;delete v2.field;delete v2.decor;const two=readCompatibleWorld(v2);assert.deepEqual(two.birds.map(b=>{const x=clone(b);delete x.gemCare;delete x.naming;return x;}),v2.birds);assert.equal(two.decor.points,20);
 });
 test('feed pet and meaningful chat earn bounded Gems until their real-window bars are full',()=>{

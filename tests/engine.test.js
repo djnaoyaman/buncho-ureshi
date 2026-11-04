@@ -7,11 +7,11 @@ test('begins with the female white Omochi and an unrelated male visitor', () => 
   advanceTicks(w,1); const v = w.birds[1]; assert.equal(v.sex,'male'); assert.equal(v.home,'visitor'); assert.equal(isRelated(w,'b1',v.id),false);
   adoptBird(w,v.id,'こめ'); assert.equal(v.name,'こめ'); assert.equal(v.home,'resident');
 });
-test('autonomous relationships lead to eggs, hatchlings, adults, and unrelated later generations', () => {
+test('autonomous relationships lead to eggs, hatchlings and unrelated families within six slots', () => {
   const w = createWorld(0); const seen = new Set();
   for(let i=0;i<1500;i++){ advanceTicks(w,1); for(const e of w.events) seen.add(e.kind); validateWorld(w); }
   for(const kind of ['pair','egg','hatch','grow','depart','revisit']) assert.ok(seen.has(kind),kind);
-  assert.ok(Math.max(...w.birds.map(b=>b.generation))>=3);
+  assert.ok(Math.max(...w.birds.map(b=>b.generation))>=1);
   for(const b of w.birds) if(b.partner) assert.equal(isRelated(w,b.id,b.partner),false);
 });
 test('blocks siblings, parent-child, grandparents and first cousins', () => {

@@ -6,6 +6,8 @@ import { SITE_NAME } from "./visuals.js";
 export const PRODUCTION_ORIGIN = "https://djnaoyaman.github.io";
 export const BASE_PATH = "/buncho-ureshi/";
 export const IMAGE_ALT = `${SITE_NAME} — おもちと学ぶ文鳥図鑑。赤いくちばしの白文鳥と深緑の文字を配した採用ロゴ。`;
+export const GAME_IMAGE_ALT = "おもちの文鳥ぐらし。白文鳥と緑の葉をあしらったゲームタイトルと、お世話・模様替えを楽しむブラウザゲームの案内。";
+const GAME_IMAGE = "game-ogp-v1.png";
 export const PAGE_CATALOG = [
   [
     "",
@@ -41,7 +43,7 @@ export const PAGE_CATALOG = [
   ],
   [
     "game/",
-    "性格・関係・記憶から鳥たちが自分で暮らす、家族の生活シミュレーション。",
+    "白文鳥のおもちと暮らす、無料のブラウザゲーム。お世話や模様替えを楽しみながら、文鳥たちの出会いと家族の物語を見守ろう。",
     "おもちの文鳥ぐらし",
   ],
   ["credits/", "文鳥図鑑の参考資料と写真の作者・ライセンス。", "出典と素材"],
@@ -62,11 +64,11 @@ export function stripText(s) {
     .replace(/<rt>.*?<\/rt>/g, "")
     .replace(/<[^>]+>/g, "");
 }
-function structuredData(route, description, title, article, morph) {
+function structuredData(route, description, title, article, morph, imageURL, imageAlt) {
   const canonical = PRODUCTION_ORIGIN + BASE_PATH + route, home = PRODUCTION_ORIGIN + BASE_PATH;
   const graph = [
     { "@type": "WebSite", "@id": home + "#website", name: SITE_NAME, url: home, inLanguage: "ja", description: PAGE_CATALOG[0][1], isAccessibleForFree: true },
-    { "@type": "WebPage", "@id": canonical + "#webpage", name: title, url: canonical, description, inLanguage: "ja", isPartOf: { "@id": home + "#website" }, isAccessibleForFree: true, primaryImageOfPage: { "@type": "ImageObject", url: home + "ogp.png", width: 1200, height: 630, caption: IMAGE_ALT } },
+    { "@type": "WebPage", "@id": canonical + "#webpage", name: title, url: canonical, description, inLanguage: "ja", isPartOf: { "@id": home + "#website" }, isAccessibleForFree: true, primaryImageOfPage: { "@type": "ImageObject", url: imageURL, width: 1200, height: 630, caption: imageAlt } },
   ];
   if (article) {
     graph.push({ "@type": "Article", "@id": canonical + "#article", headline: article.title, description, inLanguage: "ja", articleSection: article.category, dateModified: article.checkedAt, mainEntityOfPage: { "@id": canonical + "#webpage" }, isAccessibleForFree: true, image: article.photos.map(id => photos.find(p => p.id === id)).filter(Boolean).map(p => PRODUCTION_ORIGIN + BASE_PATH + p.src.replace(/^\//, "")), citation: article.sources.filter(s => s.url).map(s => s.url) });
@@ -92,11 +94,14 @@ export function routeMetadata(route = "", { query = null, notFound = false } = {
   const canonicalRoute = isSearch ? "" : route;
   const article = !isSearch && !missing ? entry[3] : undefined;
   const morph = !isSearch && !missing ? entry[4] : undefined;
+  const isGame = !isSearch && !missing && route === "game/";
+  const imageURL = PRODUCTION_ORIGIN + BASE_PATH + (isGame ? GAME_IMAGE : "ogp.png");
+  const imageAlt = isGame ? GAME_IMAGE_ALT : IMAGE_ALT;
   return {
     title, description, canonical: PRODUCTION_ORIGIN + BASE_PATH + canonicalRoute,
     robots: isSearch || missing ? "noindex, follow" : "index, follow, max-image-preview:large",
-    imageAlt: IMAGE_ALT, imageURL: PRODUCTION_ORIGIN + BASE_PATH + "ogp.png",
+    imageAlt, imageURL,
     ogType: article || morph ? "article" : "website",
-    structuredData: structuredData(canonicalRoute, description, title, article, morph),
+    structuredData: structuredData(canonicalRoute, description, title, article, morph, imageURL, imageAlt),
   };
 }

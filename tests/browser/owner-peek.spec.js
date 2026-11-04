@@ -57,6 +57,8 @@ test('deep complexion and selected hair are visible in the smiling view',async({
 });
 
 test('the whole dressed figure turns, and all motion controls stop it',async({page},info)=>{
+ // Keep story refreshes from detaching the manually posed figure during screenshots.
+ await page.addInitScript(()=>{Date.now=()=>Date.parse('2026-11-04T12:00:00Z');});
  await page.setViewportSize({width:390,height:844});await page.goto('game/');await expect(page.locator('.game-logo-intro')).toBeHidden();
  const owner=page.locator('.game-owner-companion'), body=owner.locator('.owner-peek-body');
  const pose=async t=>owner.evaluate((el,t)=>{for(const a of el.getAnimations({subtree:true})){a.pause();a.effect.updateTiming({delay:0});a.currentTime=t;}},t);

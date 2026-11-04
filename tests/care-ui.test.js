@@ -219,6 +219,7 @@ test('owner name and avatar stay optional drafts until explicit save, never muta
 });
 
 
+
 test('care dock keeps its labelled button and bird-coloured line icon through repeated open and close',async t=>{
   const f=await fixture(t);await f.mount();f.closeCare();const before=f.read();
   for(let i=0;i<3;i++){
@@ -234,3 +235,4 @@ test('care dock keeps its labelled button and bird-coloured line icon through re
   }
   await f.settle();assert.deepEqual(f.read(),before,'opening and closing care leaves the saved world unchanged');
 });
+

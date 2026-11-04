@@ -50,3 +50,4 @@ test('care icon follows system colours in high contrast mode',async({page},info)
  await info.attach('care-button-high-contrast',{body:await button.screenshot(),contentType:'image/png'});
  await activate(button,info);await expect(page.locator('.game-bird-sheet')).toBeVisible();await activate(page.locator('[data-game-close-bird]'),info);await expect(page.locator('.game-bird-sheet')).toBeHidden();
 });
+

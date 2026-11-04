@@ -6,3 +6,4 @@ export default defineConfig({
  projects:[{name:'care-chromium-touch',use:{...devices['Pixel 7'],browserName:'chromium'}},{name:'care-webkit-touch',use:{...devices['iPhone 13'],browserName:'webkit'}},{name:'care-desktop-chrome',use:{...devices['Desktop Chrome'],channel:'chrome'}}],
  webServer:process.env.PUBLIC_URL?undefined:{command:'node scripts/serve.mjs',url:'http://127.0.0.1:4173/buncho-ureshi/',reuseExistingServer:false},
 });
+
