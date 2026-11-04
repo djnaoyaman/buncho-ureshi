@@ -140,7 +140,7 @@ body[data-world="buncho"] .game-play-actions button{background:#e7edcb;border:1p
 .furnishing-perch{--furniture-x:44%;left:var(--furniture-x);top:38.4%;--furniture-width:27%;width:var(--furniture-width);transform:translate(-50%,-24.2%)}
 .furnishing-swing{--furniture-x:53%;left:var(--furniture-x);top:11.5%;--furniture-width:14%;width:var(--furniture-width);transform:translate(-50%,0)}
 .furnishing-toy{--furniture-x:65%;left:var(--furniture-x);top:13%;--furniture-width:9%;width:var(--furniture-width);transform:translate(-50%,0)}
-.furnishing-swing:before,.furnishing-toy:before{display:none}
+.furnishing-swing:before,.furnishing-toy:before{display:block;bottom:98%;height:14%;width:2px}
 .furnishing-paper{--furniture-x:50%;left:var(--furniture-x);top:83%;--furniture-width:64%;width:var(--furniture-width);z-index:-1;opacity:.8;transform:translate(-50%,-85%) scaleY(.31);transform-origin:50% 85%}
 @media(max-width:600px){
  .furnishing-perch{--furniture-x:46%;left:var(--furniture-x);top:37.6%;--furniture-width:38%;width:var(--furniture-width)}
@@ -161,7 +161,7 @@ body[data-world="buncho"] .game-main .game-room .furnishing-toy{--roof-visible-t
 body[data-world="buncho"] .game-main .game-room .furnishing-swing{--roof-y:11.5%;--roof-fraction:.115}
 body[data-world="buncho"] .game-main .game-room .furnishing-toy{--roof-y:13%;--roof-fraction:.13}
 body[data-world="buncho"] .game-main .game-room .furnishing-swing:before,
-body[data-world="buncho"] .game-main .game-room .furnishing-toy:before{display:block;bottom:98%;height:max(0px,calc(var(--roof-visible-top) + 8cqh - var(--plane-h)*var(--roof-fraction)));width:2px}
+body[data-world="buncho"] .game-main .game-room .furnishing-toy:before{display:block;bottom:98%;height:calc(14% + max(0px,var(--roof-visible-top) + 8cqh - var(--plane-h)*var(--roof-fraction)));width:2px}
 @media(max-width:600px){body[data-world="buncho"] .game-main .game-room .furnishing-swing{--roof-y:9%;--roof-fraction:.09}}
 @media(max-height:500px){
  body[data-world="buncho"] .game-main .game-room .furnishing-swing{--furniture-width:11%;width:var(--furniture-width)}
