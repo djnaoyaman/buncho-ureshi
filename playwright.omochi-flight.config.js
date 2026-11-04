@@ -1,0 +1,3 @@
+import {defineConfig} from '@playwright/test';
+export default defineConfig({testDir:'./tests/browser',testMatch:'omochi-flight.spec.js',use:{baseURL:'http://127.0.0.1:8899'},webServer:{command:'python3 -m http.server 8899 --bind 127.0.0.1',url:'http://127.0.0.1:8899',reuseExistingServer:false},projects:[{name:'desktop',use:{viewport:{width:1000,height:700}}},{name:'mobile',use:{viewport:{width:390,height:780},isMobile:true,hasTouch:true}}]});
+
