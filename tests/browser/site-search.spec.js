@@ -65,7 +65,10 @@ test('short viewport, menu scrolling, reopen, Enter and search history', async (
   await page.locator('#global-query').fill('保存');
   // This is a resized browser viewport, not a claim of a real iOS keyboard.
   await page.setViewportSize({ width: 390, height: 300 });
-  await assertSearchReachable(page);
+  // Chromium may acknowledge the viewport before dispatching resize. Await the
+  // real event-driven layout, retaining every strict geometry assertion.
+  await expect(() => assertSearchReachable(page)).toPass({ intervals: [16, 32, 50], timeout: 1000 });
+  await testInfo.attach('short-viewport-geometry', { body: JSON.stringify(await bounds(page)), contentType: 'application/json' });
   await testInfo.attach('short-viewport-search', { body: await page.screenshot(), contentType: 'image/png' });
   await page.locator('#global-query').press('Enter');
   await expect(page.locator('#search-query')).toHaveValue('保存');

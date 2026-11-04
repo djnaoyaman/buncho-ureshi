@@ -162,7 +162,7 @@ const articleCoverOverrides = { conservation: "photo-03", beak: "photo-14", eyes
 function articleCard(a) {
   const id = Object.hasOwn(articleCoverOverrides, a.id) ? articleCoverOverrides[a.id] : a.photos?.[0];
   const p = photos.find(p => p.id === id);
-  return `<a class="article-card${p ? '' : ' article-card--text'}" href="${url(`encyclopedia/${a.id}/`)}">${p ? `<div class="article-cover-frame">${image(id)}<small class="article-cover-credit">${esc(p.credit)}</small></div>` : ''}<div><span class="eyebrow">${esc(a.category)}</span><h3>${esc(a.title)}</h3><p>${a.summary}</p></div><span class="card-arrow" aria-hidden="true">↗</span></a>`;
+  return `<a class="article-card${p ? '' : ' article-card--text'}" href="${url(`encyclopedia/${a.id}/`)}">${p ? `<div class="article-cover-frame"><div class="article-cover-window" style="--photo-source-ratio:${p.width}/${p.height}">${image(id)}</div><small class="article-cover-credit">${esc(p.credit)}</small></div>` : ''}<div><span class="eyebrow">${esc(a.category)}</span><h3>${esc(a.title)}</h3><p>${a.summary}</p></div><span class="card-arrow" aria-hidden="true">↗</span></a>`;
 }
 
 const siteSections = [
@@ -690,3 +690,4 @@ render(
     ? location.pathname.slice(BASE.length)
     : "",
 );
+
