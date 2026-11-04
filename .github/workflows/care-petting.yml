@@ -8,6 +8,8 @@ on:
       - 'src/engine.js'
       - 'src/care-schedule.js'
       - 'tests/care-ui.test.js'
+      - 'tests/care-art-assets.test.js'
+      - 'public/game-art/care-illustrations/**'
       - 'tests/browser/care-direct-petting.spec.js'
       - 'playwright.care-petting.config.js'
       - '.github/workflows/care-petting.yml'
