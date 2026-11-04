@@ -1,0 +1,48 @@
+import {test,expect} from '@playwright/test';
+import {createWorld,createBird} from '../../src/engine.js';
+import {arriveGardenRaptor,petGardenRaptor,raptorToken} from '../../src/garden-raptors.js';
+import {arriveGardenCrow} from '../../src/garden-crows.js';
+const NOW=Date.UTC(2026,10,4,9);
+function seed({species='black-kite',friendly=false,active=true,child=false}={}){
+ const w=createWorld(NOW);w.encounters.garden.open=true;w.field.place='park';w.settings.motion=false;w.settings.careSound=false;if(species==='osprey')w.encounters.garden.id='mizukagami';
+ if(child){const father=createBird(w,{sex:'male',home:'resident'});w.tick=10;createBird(w,{sex:'female',color:'sakura',home:'resident',parents:['b1',father.id],generation:1});}
+ if(active){arriveGardenRaptor(w,species,NOW,{...raptorToken(w),gardenId:w.encounters.garden.id});if(friendly)for(let i=0;i<13;i++)petGardenRaptor(w,species,8,raptorToken(w));}
+ return w;
+}
+async function save(page,world){await page.evaluate(world=>new Promise((resolve,reject)=>{const r=indexedDB.open('buncho-ureshi-garden-v1',1);r.onupgradeneeded=()=>r.result.createObjectStore('world');r.onerror=()=>reject(r.error);r.onsuccess=()=>{const db=r.result,tx=db.transaction('world','readwrite');tx.objectStore('world').put(world,'current');tx.oncomplete=()=>{db.close();resolve();};tx.onerror=()=>reject(tx.error);};}),world);}
+async function saved(page){return page.evaluate(()=>new Promise((resolve,reject)=>{const r=indexedDB.open('buncho-ureshi-garden-v1',1);r.onerror=()=>reject(r.error);r.onsuccess=()=>{const db=r.result,tx=db.transaction('world','readonly'),v=tx.objectStore('world').get('current');v.onsuccess=()=>resolve(v.result);tx.oncomplete=()=>db.close();};}));}
+async function finishIntro(page){await expect.poll(()=>page.locator('body').getAttribute('data-game-intro')).toMatch(/shown|done/);if(await page.locator('body').getAttribute('data-game-intro')==='shown')await page.clock.runFor(2000);await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');}
+async function setup(page,options={}){
+ await page.addInitScript(()=>{localStorage.setItem('buncho.music.v1',JSON.stringify({enabled:false}));localStorage.setItem('buncho.care-sound-choice.v1',JSON.stringify({explicit:true,enabled:false}));});
+ await page.goto('');await page.clock.install({time:NOW});await page.clock.pauseAt(NOW+1000);await save(page,seed(options));await page.goto('game/');await finishIntro(page);await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-scene-state','ready');
+}
+for(const [species,size] of [['black-kite',[390,844]],['northern-goshawk',[844,390]],['peregrine-falcon',[320,568]],['ural-owl',[390,844]],['common-kestrel',[320,240]],['japanese-sparrowhawk',[390,844]],['golden-eagle',[320,240]],['brown-hawk-owl',[844,390]],['osprey',[390,844]]])test(`full game warning, measured species art and safe home ${species}`,async({page},info)=>{
+ await page.setViewportSize({width:size[0],height:size[1]});await setup(page,{species});
+ const art=page.locator('.finch-raptor-actor img');await expect(art).toBeVisible();await art.evaluate(i=>i.decode());
+ const banner=page.locator('.game-panel-overlay>[data-raptor-notice]');await expect(banner).toBeVisible();await expect(banner).toHaveAttribute('data-raptor-phase',species==='osprey'?'visiting':'warning');
+ if(species==='osprey'){await expect(banner).not.toContainText('事故死');await expect(page.locator('.finch-raptor-fish')).toBeVisible();}else{await expect(banner).toContainText('60');await expect(banner).toContainText('事故死');}
+ const home=banner.locator('[data-game-raptor-home]'),hb=await home.boundingBox();expect(hb.height).toBeGreaterThanOrEqual(43.99);expect(hb.x).toBeGreaterThanOrEqual(0);expect(hb.x+hb.width).toBeLessThanOrEqual(size[0]);
+ const g=await page.locator('.finch-raptor-scale-scene').evaluate(e=>{const j=e.querySelector('.finch-raptor-java').getBoundingClientRect(),a=e.querySelector('.finch-raptor-actor').getBoundingClientRect(),r=e.getBoundingClientRect(),style=e.style;return {jwidth:j.width,jfoot:j.bottom-j.height*.025,atop:a.top,aheight:a.height,awidth:a.width,aright:a.right,abottom:a.bottom,left:r.left,right:r.right,foot:Number(style.getPropertyValue('--raptor-foot-y')),ratio:Number(e.dataset.lengthRatio),axis:Number(e.dataset.lengthAxis)};});
+ expect(Math.abs(g.jfoot-(g.atop+g.aheight*g.foot))).toBeLessThan(2);expect(g.left).toBeGreaterThanOrEqual(0);expect(g.right).toBeLessThanOrEqual(size[0]+1);expect(g.awidth*g.axis/g.jwidth).toBeCloseTo(g.ratio*1.0606608,1);
+ const dock=await page.locator('.finch-garden-dock').boundingBox();expect(g.abottom).toBeLessThan(dock.y+1);if(size[1]<=340){const b=await banner.boundingBox();expect(g.atop).toBeGreaterThan(b.y+b.height-1);}
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1&&document.documentElement.scrollHeight<=innerHeight+1)).toBe(true);
+ await info.attach(`raptor-${species}`,{body:await page.screenshot({path:info.outputPath(`raptor-${species}.png`)}),contentType:'image/png'});
+ await home.click();await expect(page.locator('[data-raptor-notice]')).toHaveCount(0);await expect(page.locator('.game-room')).toBeVisible();await page.clock.runFor(65000);const w=await saved(page);expect(w.lifecycle.birds.find(b=>b.birdId==='b1').death).toBeNull();expect(w.encounters.raptor.active).toBeNull();
+});
+test('the full minute expires once with an accident grave and saved child succession',async({page})=>{
+ await setup(page,{child:true});await page.clock.runFor(1000);await page.clock.runFor(59000);expect((await saved(page)).lifecycle.birds.find(b=>b.birdId==='b1').death).toBeNull();await page.clock.runFor(1000);await expect(page.locator('.game-panel-overlay')).toContainText('事故死');const w=await saved(page);expect(w.lifecycle.birds.find(b=>b.birdId==='b1').death.cause).toBe('accident');expect(w.protagonist.birdId).toBe('b3');expect(w.encounters.raptor.active).toBeNull();expect(w.events.filter(e=>e.kind==='death')).toHaveLength(1);await page.reload();expect((await saved(page)).protagonist.birdId).toBe('b3');
+});
+test('reload keeps remaining time, and notebook navigation keeps the warning visible',async({page})=>{
+ await setup(page);await page.clock.runFor(11000);const before=(await saved(page)).encounters.raptor.active.remainingMs;expect(before).toBeLessThan(60000);await page.reload();await finishIntro(page);await expect(page.locator('.game-panel-overlay>[data-raptor-notice]')).toBeVisible();expect((await saved(page)).encounters.raptor.active.remainingMs).toBe(before);await page.locator('[data-encounter-back]').click();await expect(page.locator('.finch-notebook')).toBeVisible();await expect(page.locator('.game-panel-overlay>[data-raptor-notice]')).toBeVisible();await page.clock.runFor(5000);expect((await saved(page)).encounters.raptor.active.remainingMs).toBeLessThan(before);
+});
+test('reset modal retains an operable home exit during warning',async({page})=>{
+ await setup(page);await page.evaluate(()=>document.dispatchEvent(new CustomEvent('buncho-world-action',{detail:'settings'})));await page.locator('[data-game-action=reset-state]').click();const modal=page.locator('.game-reset-dialog[open]');await expect(modal.locator('[data-raptor-notice]')).toBeVisible();await modal.locator('[data-game-raptor-home]').click();await expect(modal).toHaveCount(0);await expect(page.locator('[data-raptor-notice]')).toHaveCount(0);expect((await saved(page)).encounters.raptor.active).toBeNull();
+});
+test('friendly species has no danger text and never creates an accident',async({page})=>{
+ await setup(page,{friendly:true});await expect(page.locator('.game-panel-overlay>[data-raptor-notice]')).toContainText('なかよし');await expect(page.locator('.game-panel-overlay>[data-raptor-notice]')).not.toContainText('事故死');await page.clock.runFor(65000);expect((await saved(page)).lifecycle.birds.find(b=>b.birdId==='b1').death).toBeNull();
+});
+test('live full shell draws the rare warning after dwell despite host transaction busy',async({page})=>{
+ await page.goto('');await page.clock.install({time:NOW});await page.clock.pauseAt(NOW+1000);const w=seed({active:false});arriveGardenCrow(w,'large-billed-crow',NOW-60000,{worldId:w.worldId,revision:w.revision,gardenId:w.encounters.garden.id});await save(page,w);
+ const base=new URL('./',page.url()).href;await page.setContent(`<link rel="stylesheet" href="${base}src/style.css"><link rel="stylesheet" href="${base}src/game.css"><link rel="stylesheet" href="${base}src/encounter-ui.css"><link rel="stylesheet" href="${base}src/life-care.css"><main id="game-root"></main>`);await page.evaluate(async base=>{document.body.dataset.world='buncho';const {mountGame}=await import(base+'src/game.js');window.disposeRaptorGame=await mountGame(document.querySelector('#game-root'),{raptorRandom:()=>0});},base);
+ await page.locator('.game-field-nav [data-game-panel=outdoors]').click();await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-scene-state','ready');await page.clock.runFor(1000);await page.clock.runFor(119000);expect((await saved(page)).encounters.raptor.visits).toHaveLength(0);await page.clock.runFor(1000);await expect(page.locator('[data-raptor-phase=warning]')).toBeVisible();expect((await saved(page)).encounters.raptor.visits).toHaveLength(1);
+});

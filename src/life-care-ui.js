@@ -7,7 +7,7 @@ const number=value=>Math.max(0,Math.floor(Number(value)||0)).toLocaleString('ja-
 const now=world=>Number(world.lifecycle?.seenAt)||0;
 const remaining=ms=>{const minutes=Math.max(0,Math.ceil(ms/60000));return minutes>=1440?`${Math.floor(minutes/1440)}日 ${Math.floor(minutes%1440/60)}時間`:minutes>=60?`${Math.floor(minutes/60)}時間 ${minutes%60}分`:`${minutes}分`;};
 const names=(world,ids)=>ids.map(id=>world.birds.find(b=>b.id===id)?.name||'庭の仲間').map(escape).join('・');
-const causeLabel=cause=>({lifespan:'寿命',age:'寿命',neglect:'お世話のない時間が続いたため',starvation:'お世話のない時間が続いたため',illness:'病気',disease:'病気',injury:'けが',untreated:'病気・けが'}[cause]||'病気・けが');
+const causeLabel=cause=>({accident:'事故死',lifespan:'寿命',age:'寿命',neglect:'お世話のない時間が続いたため',starvation:'お世話のない時間が続いたため',illness:'病気',disease:'病気',injury:'けが',untreated:'病気・けが'}[cause]||'病気・けが');
 const warning='<p class="life-care-warning"><strong>ここにある年齢・期限・治療は、すべてゲームのルールです。</strong>実際の文鳥の飼育目安には使えません。現実の体調変化やけがは、待たずに鳥を診られる獣医師へ相談してください。</p>';
 
 export function renderProtagonistSummary(world){

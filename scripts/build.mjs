@@ -18,7 +18,7 @@ const styleVersion = createHash("sha256").update(await readFile(new URL("../src/
 const presentationVersion = createHash("sha256").update((await Promise.all(["home.js", "app.js", "metadata.js", "studio.js", "morph-ui.js", "morph-ui.css"].map(name => readFile(new URL("../src/" + name, import.meta.url))))).map(bytes => bytes.toString()).join("\n")).digest("hex").slice(0, 12);
 const metadataVersion = createHash("sha256").update(await readFile(new URL("../src/metadata.js", import.meta.url))).digest("hex").slice(0, 12);
 const brandVersion = createHash("sha256").update(await readFile(new URL("../src/visuals.js", import.meta.url))).digest("hex").slice(0, 12);
-const gameVersion = createHash("sha256").update((await Promise.all(["protagonist.js", "life-care.js", "life-care-ui.js", "life-care.css", "game.js", "encounters.js", "encounter-controller.js", "encounter-media.js", "garden-bird-motion.js", "garden-social-plan.js", "encounter-ui.js", "encounter-ui.css", "garden-friends.js", "data/encounter-catalog.js", "data/gardens.js", "data/garden-assets.js", "economy.js", "game-chrome.js", "family-layout.js", "relationship-map.js", "relationship-map.css", "engine.js", "care-schedule.js", "bird-names.js", "game-store.js", "field-visuals.js", "furniture-forms.js", "furniture-styles.js", "game.css", "care-audio.js", "game-music.js", "game-music-ui.js", "game-music.css", "owner-profile.js", "owner-profile-data.js", "owner-peek.js", "owner-profile.css"].map(name => readFile(new URL("../src/" + name, import.meta.url))))).map(bytes=>bytes.toString()).join("\n")).digest("hex").slice(0,12);
+const gameVersion = createHash("sha256").update((await Promise.all(["garden-raptors.js", "garden-raptor-controller.js", "garden-raptor-ui.js", "data/raptor-species.js", "data/raptor-art.js", "garden-crows.js", "garden-crow-ui.js", "protagonist.js", "life-care.js", "life-care-ui.js", "life-care.css", "game.js", "encounters.js", "encounter-controller.js", "encounter-media.js", "garden-bird-motion.js", "garden-social-plan.js", "encounter-ui.js", "encounter-ui.css", "garden-friends.js", "data/encounter-catalog.js", "data/gardens.js", "data/garden-assets.js", "economy.js", "game-chrome.js", "family-layout.js", "relationship-map.js", "relationship-map.css", "engine.js", "care-schedule.js", "bird-names.js", "game-store.js", "field-visuals.js", "furniture-forms.js", "furniture-styles.js", "game.css", "care-audio.js", "game-music.js", "game-music-ui.js", "game-music.css", "owner-profile.js", "owner-profile-data.js", "owner-peek.js", "owner-profile.css"].map(name => readFile(new URL("../src/" + name, import.meta.url))))).map(bytes=>bytes.toString()).join("\n")).digest("hex").slice(0,12);
 const securityPolicy = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'";
 const secureLink = (href) => href?.replace(/^http:\/\/creativecommons\.org\//, "https://creativecommons.org/");
 const dest = new URL("../dist/", import.meta.url);
@@ -30,7 +30,7 @@ await cp(new URL("../src/", import.meta.url), new URL("src/", dest), {
 await cp(new URL("../public/", import.meta.url), dest, { recursive: true });
 await optimizeEncounterImages(dest);
 // A new app entry URL alone does not invalidate cached module dependencies.
-for (const name of ["protagonist.js", "life-care-ui.js", "app.js", "studio.js", "metadata.js", "engine.js", "game.js", "game-store.js", "field-visuals.js", "game-music.js", "game-music-ui.js", "encounters.js", "encounter-controller.js", "encounter-media.js", "garden-bird-motion.js", "garden-social-plan.js", "encounter-ui.js", "garden-friends.js", "economy.js", "data/gardens.js", "owner-profile.js", "owner-peek.js"]) {
+for (const name of ["garden-raptors.js", "garden-raptor-controller.js", "garden-raptor-ui.js", "garden-crows.js", "garden-crow-ui.js", "protagonist.js", "life-care-ui.js", "app.js", "studio.js", "metadata.js", "engine.js", "game.js", "game-store.js", "field-visuals.js", "game-music.js", "game-music-ui.js", "encounters.js", "encounter-controller.js", "encounter-media.js", "garden-bird-motion.js", "garden-social-plan.js", "encounter-ui.js", "garden-friends.js", "economy.js", "data/gardens.js", "owner-profile.js", "owner-peek.js"]) {
   const file = new URL("src/" + name, dest);
   const code = (await readFile(file, "utf8"))
     .replaceAll("./morph-ui.js", `./morph-ui.js?v=${presentationVersion}`)
@@ -46,6 +46,13 @@ for (const name of ["protagonist.js", "life-care-ui.js", "app.js", "studio.js", 
     .replaceAll("./game.js", `./game.js?v=${gameVersion}`)
     .replaceAll("../life-care.js", `../life-care.js?v=${gameVersion}`)
     .replaceAll("../protagonist.js", `../protagonist.js?v=${gameVersion}`)
+    .replaceAll("./garden-raptors.js", `./garden-raptors.js?v=${gameVersion}`)
+    .replaceAll("./garden-raptor-controller.js", `./garden-raptor-controller.js?v=${gameVersion}`)
+    .replaceAll("./garden-raptor-ui.js", `./garden-raptor-ui.js?v=${gameVersion}`)
+    .replaceAll("./garden-crows.js", `./garden-crows.js?v=${gameVersion}`)
+    .replaceAll("./garden-crow-ui.js", `./garden-crow-ui.js?v=${gameVersion}`)
+    .replaceAll("./data/raptor-species.js", `./data/raptor-species.js?v=${gameVersion}`)
+    .replaceAll("./data/raptor-art.js", `./data/raptor-art.js?v=${gameVersion}`)
     .replaceAll("./protagonist.js", `./protagonist.js?v=${gameVersion}`)
     .replaceAll("./life-care.js", `./life-care.js?v=${gameVersion}`)
     .replaceAll("./life-care-ui.js", `./life-care-ui.js?v=${gameVersion}`)

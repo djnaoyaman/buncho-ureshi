@@ -1,0 +1,178 @@
+{
+  "checked_at": "2026-11-04",
+  "scope": "日本で見られる成鳥のイラスト用。文章上の事実のみ。全長は資料差があるため概数。",
+  "species": [
+    {
+      "name": "トビ",
+      "scientific_name": "Milvus migrans lineatus（日本のトビ／Black-eared Kite）",
+      "length_cm": "雄約59・雌約69",
+      "marks": "全身茶褐色。淡色の羽縁。尾中央が浅く切れ込む凹尾で、広げると三味線のバチ形。飛翔時は翼下面の初列風切基部に白斑。",
+      "eye": "暗色を推奨。高知市は目の周りが黒いと記載。虹彩の厳密な色は今回一次資料の明文未確認。",
+      "bill": "黒。蝋膜は淡青灰色～緑がかった灰色で、濃黄色を避ける。",
+      "feet": "灰青色～淡い青灰白色（国立リハ原文、国内実写、野外識別論文で補強）",
+      "pitfalls": [
+        "黄色い嘴や鮮黄色の脚にしない。日本のトビを指定。",
+        "白頭・白尾にしない。尾を燕のような深い二股にしない。"
+      ],
+      "sources": [
+        "https://www.cgr.mlit.go.jp/ootagawa/Bio/birds/index348.htm",
+        "https://www.rehab.go.jp/rehanews/japanese/No263/11_story.html",
+        "https://www.city.kochi.kochi.jp/deeps/17/1712/animal/doubutusyoukai/dstobi.htm",
+        "https://hp.brs.nihon-u.ac.jp/~museum/news20250319/",
+        "https://static1.squarespace.com/static/5c1a9e03f407b482a158da87/t/5c40f8ad6d2a73bd95b3f88c/1547761839928/Black-eared-Kite.pdf"
+      ],
+      "additional_verification": {
+        "rehab_context": "見出し「トビ」直下の全長58.5/68.5cm説明に連続して脚の灰青色を記載。別鳥の記述ではない。国機関掲載の解説記事であり、査読論文ではない。",
+        "photo": "日本大学生物資源科学部博物館2025/3/19記事の江の島のトビ実写。拡大された足指を閲覧し、淡い青灰白色で黒爪と視認。写真は転載不可・観察参照のみ。",
+        "paper": "DeCandido et al. (2013), BirdingASIA 20:32–36, p34本文とTable2。lineatus成鳥の足は淡青色、蝋膜は青み。govinda成鳥は黄色。本文はlineatusの足・蝋膜に緑み～淡青色の幅を認める。",
+        "decision": "日本個体の代表図として彩度の低い灰青色脚・蝋膜にする判断が妥当。すべてのBlack Kiteに同色を一般化しない。"
+      }
+    },
+    {
+      "name": "オオタカ",
+      "length_cm": "雄約50・雌約56–58（資料差）",
+      "marks": "成鳥は暗青灰色の上面、白い明瞭な眉斑、濃い過眼線、白い下面に細かい黒褐色横斑。比較的長い尾。",
+      "eye": "黄色～橙黄色。個体差があり眼色のみで雌雄断定しない。",
+      "bill": "黒／灰黒、基部黄色",
+      "feet": "黄色",
+      "pitfalls": [
+        "幼鳥の褐色背・下面縦斑を混ぜない。",
+        "オスを必ず赤眼にする必要はない。"
+      ],
+      "sources": [
+        "https://www.env.go.jp/nature/yasei/manual_idrs/manuals/goshawk.pdf",
+        "https://www.env.go.jp/content/000165705.pdf",
+        "https://www.city.kakegawa.shizuoka.jp/gyosei/docs/7674.html"
+      ]
+    },
+    {
+      "name": "ハヤブサ",
+      "scientific_name": "Falco peregrinus",
+      "length_cm": "雄38–44・雌46–51（環境省）",
+      "marks": "青灰色の背、黒みの強い頭、太く黒い頬ひげ。下面は白～生成り色で腹・脇に細い黒色横斑。尖った長い翼。",
+      "eye": "虹彩は暗褐色、アイリング黄色",
+      "bill": "暗色の鉤嘴、蝋膜は濃い黄色",
+      "feet": "濃い黄色",
+      "pitfalls": [
+        "黄色い虹彩にしない。",
+        "幼鳥の縦斑を成鳥に混ぜない。"
+      ],
+      "sources": [
+        "https://ikilog.biodic.go.jp/rl_rdb/a/905.html",
+        "https://www.cgr.mlit.go.jp/ootagawa/Bio/birds/index354.htm"
+      ]
+    },
+    {
+      "name": "フクロウ",
+      "scientific_name": "Strix uralensis",
+      "length_cm": "約50（青森県48–52）",
+      "marks": "羽角なし、大きな丸い頭、淡色の顔盤。灰褐色～褐色の上面、淡色の下面に褐色縦斑。北の亜種ほど白っぽい。",
+      "eye": "黒く見える暗色",
+      "bill": "淡黄色",
+      "feet": "足先の上部分にも羽毛。裸出部の厳密な色は今回一次資料で明文未確認。",
+      "pitfalls": [
+        "黄色い眼、耳のような羽角を付けない。",
+        "メンフクロウの純白で強いハート型の顔にしない。",
+        "本州の一般的フクロウを描くならエゾフクロウ並みの真っ白さは避ける。"
+      ],
+      "sources": [
+        "https://www.pref.aomori.lg.jp/soshiki/kankyo/shizen/files/RDB2020_zenbu.pdf",
+        "https://www.city.sapporo.jp/zoo/study/nurie/documents/hukurouanswer.pdf",
+        "https://nopporo-vc.com/digital/フクロウ/",
+        "https://www.city.sapporo.jp/zoo/098-k.html"
+      ]
+    },
+    {
+      "name": "チョウゲンボウ",
+      "scientific_name": "Falco tinnunculus",
+      "length_cm": "雄約33・雌約39（愛知県）。中野市資料の38.5は約39に相当。別資料は30/33など差あり。",
+      "marks": "雄成鳥：青灰色の頭と尾、赤茶褐色の背に黒褐色斑。淡い下面に黒斑。細い頬ひげ。長い尾の先近くに太い黒帯。雌は頭・背・尾が褐色。",
+      "eye": "暗褐色の虹彩、黄色いアイリング",
+      "bill": "先黒・基部青灰色、蝋膜黄色",
+      "feet": "黄色、爪黒",
+      "pitfalls": [
+        "雄の青灰色頭＋雌の褐色尾など性差を混ぜない。",
+        "ハヤブサのような幅広い黒いフードや太い髭を過剰にしない。"
+      ],
+      "sources": [
+        "https://www.pref.aichi.jp/shinshiroshitara/nature/wild_bird/data/44-0-401.html",
+        "https://munahaku.jp/2018/06/05/チョウゲンボウ/",
+        "https://www.city.mitaka.lg.jp/c_service/052/052122.html"
+      ]
+    },
+    {
+      "name": "ツミ",
+      "scientific_name": "Accipiter gularis（参照資料表記）",
+      "length_cm": "雄27・雌30",
+      "marks": "雄成鳥：上面暗青灰色。下面白、胸側～脇は黄赤褐色。雌は上面暗石板色、下面に太く粗い横斑。",
+      "eye": "雄暗紅色、雌黄色",
+      "bill": "黒系を推奨。ただし嘴・足色は今回の指定一次資料に明文確認できず。",
+      "feet": "黄色系を推奨、同上。",
+      "pitfalls": [
+        "雄26cmではなく、一次資料が一致する27cmを採用。",
+        "赤眼の雄に雌の強い腹部横斑を全面的に混ぜない。",
+        "オオタカのような太く鮮明な白眉を強調しすぎない。"
+      ],
+      "sources": [
+        "https://www.pref.kyoto.jp/kankyo/rdb/bio/db/bird0017.html",
+        "https://www.city.mitaka.lg.jp/c_service/011/011219.html",
+        "https://www.city.matsuyama.ehime.jp/shisei/hozen/red/group2/20/"
+      ]
+    },
+    {
+      "name": "イヌワシ",
+      "scientific_name": "Aquila chrysaetos japonica",
+      "length_cm": "81–89（環境省）",
+      "marks": "全身暗褐色、後頭～後頸が金茶色。脚は茶色い羽毛に覆われ足指は黄色。",
+      "eye": "成鳥は淡橙色（林野庁掲載資料）",
+      "bill": "灰色、先端黒",
+      "feet": "黄色の足指、脚に茶色い羽毛",
+      "pitfalls": [
+        "白頭・白尾・全黄色嘴のハクトウワシにしない。",
+        "若鳥の大きな白い翼斑・白い尾基部を成鳥に混ぜない。"
+      ],
+      "sources": [
+        "https://www.env.go.jp/nature/kisho/hogozoushoku/inuwashi.html",
+        "https://www.rinya.maff.go.jp/j/kokuyu_rinya/kakusyu_siryo/pdf/00187_5_h14_004.pdf",
+        "https://www.tokyo-zoo.net/zoo/tama/watching_sheet/pdf/g_eagle_K.pdf",
+        "https://www.city.chiba.jp/zoo/school/documents/12eagle-worksheet.pdf"
+      ]
+    },
+    {
+      "name": "アオバズク",
+      "scientific_name": "Ninox japonica（古い資料ではNinox scutulata japonica等）",
+      "length_cm": "29",
+      "marks": "羽角なし。頭・背は茶色みのある黒褐色、白い下面に太い褐色縦斑。",
+      "eye": "黄色",
+      "bill": "黒",
+      "feet": "黄色",
+      "pitfalls": [
+        "フクロウのような淡い大きな顔盤にしない。",
+        "羽角を付けない。名前の青葉を緑の羽色と解釈しない。"
+      ],
+      "sources": [
+        "https://www.pref.niigata.lg.jp/sec/kankyotaisaku/1356908744663.html",
+        "https://www.pref.aomori.lg.jp/soshiki/kankyo/shizen/files/RDB08_tori.pdf"
+      ]
+    },
+    {
+      "name": "ミサゴ",
+      "scientific_name": "Pandion haliaetus",
+      "length_cm": "約54–64（親担当確認値）。山国川資料では雄58・雌60と差あり。",
+      "marks": "白い頭と下面、目を横切り後頸へ続く黒褐色帯。背・翼上面暗褐色。後頭に短いぼさぼさした羽。胸斑は個体差、雌が濃い傾向だが断定不可。",
+      "eye": "黄色",
+      "bill": "黒褐色、蝋膜灰色",
+      "feet": "青灰色",
+      "pitfalls": [
+        "黄色い脚・黄色い蝋膜にしない。",
+        "白頭ワシにせず、眼を貫く黒い帯を残す。",
+        "黒い胸帯を太いベタ塗りの首輪にしすぎない。"
+      ],
+      "sources": [
+        "https://munahaku.jp/2018/06/05/ミサゴ/",
+        "https://db3.bird-research.jp/news/202105-no2/",
+        "https://www.qsr.mlit.go.jp/yamakuni/birds/bird/misago.html"
+      ]
+    }
+  ]
+}

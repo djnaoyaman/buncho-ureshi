@@ -60,6 +60,7 @@ export function crowCoolingDown(world,now=Date.now()){
 export function arriveGardenCrow(world,id,now,expected){
  const g=world.encounters.garden,s=world.encounters.crow,bird=crowTarget(world);
  if(!s||!expected||expected.worldId!==world.worldId||expected.revision!==world.revision||expected.gardenId!==g.id)return {changed:false,reason:'stale'};
+ if(world.encounters.raptor?.active)return {changed:false,reason:'busy'};
  if(!g.open||world.paused||!bird||!crowSpecies(id)||!int(now,0,8640000000000000))return {changed:false,reason:'inactive'};
  if(crowCoolingDown(world,now))return {changed:false,reason:'cooldown'};
  const before=bird.needs.energy,hostile=!crowFriendship(world,id).friendly;if(hostile)bird.needs.energy=Math.max(0,before/2);

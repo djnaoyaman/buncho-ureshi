@@ -1,0 +1,38 @@
+name: Garden raptor encounters
+on:
+  pull_request:
+    paths: ['src/engine.js', 'src/life-care*', 'src/protagonist.js', 'src/game.js', 'src/game.css', 'src/encounter*', 'src/garden-raptor*', 'src/garden-crow*', 'src/garden-bird-motion.js', 'src/data/raptor*', 'public/game-art/raptors/**', 'tests/garden-raptor*', 'tests/browser/garden-raptors.spec.js', 'playwright.garden-raptors.config.js', '.github/workflows/garden-raptors.yml']
+  workflow_dispatch:
+    inputs:
+      public_url:
+        description: Optional deployed URL
+        default: ''
+        required: false
+permissions:
+  contents: read
+jobs:
+  raptor-check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm test
+      - run: npx playwright install --with-deps chromium webkit
+      - run: npx playwright install chrome
+      - run: npx playwright test --config=playwright.garden-raptors.config.js
+        env:
+          PUBLIC_URL: ${{ inputs.public_url }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: garden-raptors-${{ github.sha }}
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14

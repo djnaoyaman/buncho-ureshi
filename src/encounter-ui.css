@@ -183,3 +183,18 @@
  body[data-world="buncho"] .game-app[data-panel=notebook] .finch-garden-stage:has(.finch-crow-scale-scene){--crow-unit:min(9cqw,7cqh,30px)}
  body[data-world="buncho"] .game-app[data-panel=notebook] .finch-crow-scale-scene{bottom:64px}
 }
+/* Rare raptor encounters share one measured centimetre scale with the player. */
+.finch-garden-stage:has(.finch-raptor-scale-scene){--raptor-unit:min(9cqw,8cqh,44px)}
+.finch-raptor-scale-scene{position:absolute;z-index:3;pointer-events:none;left:50%;bottom:23%;width:calc(var(--raptor-unit) * var(--raptor-span));height:calc(var(--raptor-unit) * var(--raptor-height));transform:translateX(-50%)}
+.finch-raptor-java{position:absolute;left:0;bottom:0;width:var(--raptor-unit);height:calc(var(--raptor-unit) * 1000 / 850);transform:translateY(2.5%)}
+.finch-raptor-actor{position:absolute;left:calc(var(--raptor-unit) * 1.5);top:100%;width:calc(var(--raptor-unit) * var(--raptor-canvas-ratio));aspect-ratio:var(--raptor-aspect);margin:0;transform:translateY(calc(var(--raptor-foot-y) * -100%))}
+.finch-raptor-actor img{display:block;width:100%;height:100%;max-width:none;object-fit:contain}
+.finch-raptor-actor figcaption,.finch-raptor-java>span:last-child{position:absolute;top:100%;left:50%;transform:translateX(-50%);white-space:nowrap;background:#fff8e8f0;border-radius:7px;padding:2px 5px;font-size:10px;color:#294533}
+.finch-raptor-fish{position:absolute;width:20%;left:calc(var(--raptor-foot-x) * 100% - 10%);top:calc(var(--raptor-foot-y) * 100% - 6%);transform:rotate(-15deg)}.finch-raptor-fish svg{display:block;width:100%;height:auto}
+.finch-garden-stage:has(.finch-raptor-scale-scene) :is(.finch-garden-friend,.finch-garden-household){--garden-bird-width:var(--raptor-unit);width:var(--raptor-unit);height:calc(var(--raptor-unit) * 1000 / 850);min-width:44px;min-height:44px}
+.finch-raptor-entry [data-encounter-rub]{touch-action:none;cursor:grab;display:block;min-height:44px;outline-offset:4px}.finch-raptor-entry [data-encounter-rub]:focus-visible{outline:3px solid #826436}.finch-raptor-entry [data-encounter-rub] img{display:block;width:auto;height:auto;max-width:100%;max-height:280px;margin:auto;pointer-events:none}.finch-raptor-catalog h4{margin-top:1.3rem}.finch-raptor-catalog p{font-size:13px;line-height:1.8}
+@media(max-height:500px){.finch-raptor-scale-scene{bottom:22%}.finch-garden:has(.finch-raptor-scale-scene)>.finch-garden-selector-wrap{visibility:hidden}}
+@media(max-height:340px){.finch-garden-stage:has(.finch-raptor-scale-scene){--raptor-unit:min(9cqw,6.5cqh,28px)}.finch-raptor-scale-scene{bottom:68px}.finch-raptor-actor figcaption,.finch-raptor-java>span:last-child{position:absolute;inline-size:1px;block-size:1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}.finch-garden:has(.finch-raptor-scale-scene)>header h3{display:none}.finch-garden:has(.finch-raptor-scale-scene)>header{top:54px!important}}
+
+.finch-garden:has(.finch-raptor-scale-scene)>.finch-garden-selector-wrap{visibility:hidden}
+@media(min-height:341px) and (max-height:500px){.finch-garden:has(.finch-raptor-scale-scene)>header h3{display:none}.finch-garden:has(.finch-raptor-scale-scene)>header{top:78px!important}}

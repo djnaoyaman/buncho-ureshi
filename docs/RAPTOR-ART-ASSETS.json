@@ -1,0 +1,522 @@
+{
+  "version": 1,
+  "scaleNote": "Use referenceLengthAxis.lengthPx for the illustration’s projected beak-to-tail span and the same projected-axis metric for the Java sparrow; image width = biological length cm * common pixelsPerCm * width / axis lengthPx. footY = footAnchor.y * height. Standing postures remain approximate illustrations, not standardized specimen measurements. Horizontal artwork-span values are retained for compatibility/reference only.",
+  "encoding": "900 x 900 WebP, quality 91/method 4, generated alpha preserved exactly against the resized original. Original PNG files retained.",
+  "assets": [
+    {
+      "id": "black-kite",
+      "nameJa": "トビ",
+      "file": "black-kite.webp",
+      "bodyLengthCm": 64,
+      "lengthRangeCm": [
+        59,
+        69
+      ],
+      "sexAge": "representative adult",
+      "width": 900,
+      "height": 900,
+      "originalWidth": 1254,
+      "originalHeight": 1254,
+      "sourceFacing": "right",
+      "alphaBbox64": [
+        38,
+        30,
+        854,
+        880
+      ],
+      "billToTailHorizontalPx": 816,
+      "artWidthFraction": 0.9066666666666666,
+      "footBbox64": [
+        463,
+        790,
+        754,
+        851
+      ],
+      "footAnchor": {
+        "x": 0.6761111111111111,
+        "y": 0.9455555555555556
+      },
+      "alphaPreservedExactly": true,
+      "fullyTransparentFraction": 0.6073654320987655,
+      "bytes": 169522,
+      "sha256": "c6d4b733e465e63f96632197b8b5e09cf1d9ba715416ac221ff92739495408e9",
+      "referenceLengthAxis": {
+        "beakTipPx": [
+          845,
+          179
+        ],
+        "tailTipPx": [
+          39,
+          853
+        ],
+        "lengthPx": 1050.67,
+        "fractionOfCanvasWidth": 1.167414,
+        "note": "Manually annotated straight-line projected beak-to-tail span. Pose-dependent illustration geometry, not a literal measured specimen."
+      },
+      "sources": [
+        "https://www.cgr.mlit.go.jp/ootagawa/Bio/birds/index348.htm",
+        "https://www.rehab.go.jp/rehanews/japanese/No263/11_story.html",
+        "https://www.city.kochi.kochi.jp/deeps/17/1712/animal/doubutusyoukai/dstobi.htm",
+        "https://hp.brs.nihon-u.ac.jp/~museum/news20250319/",
+        "https://static1.squarespace.com/static/5c1a9e03f407b482a158da87/t/5c40f8ad6d2a73bd95b3f88c/1547761839928/Black-eared-Kite.pdf"
+      ],
+      "primarySourceLengthNote": "雄約59・雌約69"
+    },
+    {
+      "id": "northern-goshawk",
+      "nameJa": "オオタカ",
+      "file": "northern-goshawk.webp",
+      "bodyLengthCm": 50,
+      "lengthRangeCm": [
+        50,
+        56
+      ],
+      "sexAge": "adult male",
+      "width": 900,
+      "height": 900,
+      "originalWidth": 1254,
+      "originalHeight": 1254,
+      "sourceFacing": "right",
+      "alphaBbox64": [
+        52,
+        15,
+        809,
+        879
+      ],
+      "billToTailHorizontalPx": 757,
+      "artWidthFraction": 0.8411111111111111,
+      "footBbox64": [
+        388,
+        790,
+        748,
+        879
+      ],
+      "footAnchor": {
+        "x": 0.6311111111111111,
+        "y": 0.9766666666666667
+      },
+      "alphaPreservedExactly": true,
+      "fullyTransparentFraction": 0.6111617283950618,
+      "bytes": 205618,
+      "sha256": "b99fee39b9d6aa2dc3cdf0a16f11c4fed9d92d3566043e041265a5bd65434a9b",
+      "referenceLengthAxis": {
+        "beakTipPx": [
+          797,
+          165
+        ],
+        "tailTipPx": [
+          64,
+          872
+        ],
+        "lengthPx": 1018.4,
+        "fractionOfCanvasWidth": 1.131555,
+        "note": "Manually annotated straight-line projected beak-to-tail span. Pose-dependent illustration geometry, not a literal measured specimen."
+      },
+      "sources": [
+        "https://www.env.go.jp/nature/yasei/manual_idrs/manuals/goshawk.pdf",
+        "https://www.env.go.jp/content/000165705.pdf",
+        "https://www.city.kakegawa.shizuoka.jp/gyosei/docs/7674.html"
+      ],
+      "primarySourceLengthNote": "雄約50・雌約56–58（資料差）"
+    },
+    {
+      "id": "peregrine-falcon",
+      "nameJa": "ハヤブサ",
+      "file": "peregrine-falcon.webp",
+      "bodyLengthCm": 42,
+      "lengthRangeCm": [
+        38,
+        51
+      ],
+      "sexAge": "adult male",
+      "width": 900,
+      "height": 900,
+      "originalWidth": 1254,
+      "originalHeight": 1254,
+      "sourceFacing": "right",
+      "alphaBbox64": [
+        40,
+        24,
+        833,
+        878
+      ],
+      "billToTailHorizontalPx": 793,
+      "artWidthFraction": 0.8811111111111111,
+      "footBbox64": [
+        412,
+        790,
+        773,
+        878
+      ],
+      "footAnchor": {
+        "x": 0.6583333333333333,
+        "y": 0.9755555555555555
+      },
+      "alphaPreservedExactly": true,
+      "fullyTransparentFraction": 0.6075962962962963,
+      "bytes": 213472,
+      "sha256": "6381ffbe88088f453da92ad0816cdd4c15e5e63273be97ed0b6b1d8fc7181043",
+      "referenceLengthAxis": {
+        "beakTipPx": [
+          822,
+          166
+        ],
+        "tailTipPx": [
+          65,
+          871
+        ],
+        "lengthPx": 1034.44,
+        "fractionOfCanvasWidth": 1.149382,
+        "note": "Manually annotated straight-line projected beak-to-tail span. Pose-dependent illustration geometry, not a literal measured specimen."
+      },
+      "sources": [
+        "https://ikilog.biodic.go.jp/rl_rdb/a/905.html",
+        "https://www.cgr.mlit.go.jp/ootagawa/Bio/birds/index354.htm"
+      ],
+      "primarySourceLengthNote": "雄38–44・雌46–51（環境省）"
+    },
+    {
+      "id": "ural-owl",
+      "nameJa": "フクロウ",
+      "file": "ural-owl.webp",
+      "bodyLengthCm": 50,
+      "lengthRangeCm": [
+        48,
+        52
+      ],
+      "sexAge": "adult, sexes similar",
+      "width": 900,
+      "height": 900,
+      "originalWidth": 1254,
+      "originalHeight": 1254,
+      "sourceFacing": "right",
+      "alphaBbox64": [
+        51,
+        8,
+        804,
+        887
+      ],
+      "billToTailHorizontalPx": 753,
+      "artWidthFraction": 0.8366666666666667,
+      "footBbox64": [
+        402,
+        790,
+        712,
+        879
+      ],
+      "footAnchor": {
+        "x": 0.6188888888888889,
+        "y": 0.9766666666666667
+      },
+      "alphaPreservedExactly": true,
+      "fullyTransparentFraction": 0.5355925925925926,
+      "bytes": 249500,
+      "sha256": "7eb025f5a81c5140f2ccdc68f7737cb3dd19f59f3118eb5d6f0646ec06151371",
+      "referenceLengthAxis": {
+        "beakTipPx": [
+          681,
+          246
+        ],
+        "tailTipPx": [
+          63,
+          883
+        ],
+        "lengthPx": 887.52,
+        "fractionOfCanvasWidth": 0.986134,
+        "note": "Manually annotated straight-line projected beak-to-tail span. Pose-dependent illustration geometry, not a literal measured specimen."
+      },
+      "sources": [
+        "https://www.pref.aomori.lg.jp/soshiki/kankyo/shizen/files/RDB2020_zenbu.pdf",
+        "https://www.city.sapporo.jp/zoo/study/nurie/documents/hukurouanswer.pdf",
+        "https://nopporo-vc.com/digital/フクロウ/",
+        "https://www.city.sapporo.jp/zoo/098-k.html"
+      ],
+      "primarySourceLengthNote": "約50（青森県48–52）"
+    },
+    {
+      "id": "common-kestrel",
+      "nameJa": "チョウゲンボウ",
+      "file": "common-kestrel.webp",
+      "bodyLengthCm": 33,
+      "lengthRangeCm": [
+        33,
+        38.5
+      ],
+      "sexAge": "adult male",
+      "width": 900,
+      "height": 900,
+      "originalWidth": 1254,
+      "originalHeight": 1254,
+      "sourceFacing": "right",
+      "alphaBbox64": [
+        48,
+        32,
+        832,
+        869
+      ],
+      "billToTailHorizontalPx": 784,
+      "artWidthFraction": 0.8711111111111111,
+      "footBbox64": [
+        473,
+        790,
+        752,
+        841
+      ],
+      "footAnchor": {
+        "x": 0.6805555555555556,
+        "y": 0.9344444444444444
+      },
+      "alphaPreservedExactly": true,
+      "fullyTransparentFraction": 0.6807308641975308,
+      "bytes": 173398,
+      "sha256": "0d896433f0b34084a204ce0650bc77bd87ad1d26c2d2159f669c3da0f62be0c6",
+      "referenceLengthAxis": {
+        "beakTipPx": [
+          823,
+          174
+        ],
+        "tailTipPx": [
+          58,
+          863
+        ],
+        "lengthPx": 1029.54,
+        "fractionOfCanvasWidth": 1.14393,
+        "note": "Manually annotated straight-line projected beak-to-tail span. Pose-dependent illustration geometry, not a literal measured specimen."
+      },
+      "sources": [
+        "https://www.pref.aichi.jp/shinshiroshitara/nature/wild_bird/data/44-0-401.html",
+        "https://munahaku.jp/2018/06/05/チョウゲンボウ/",
+        "https://www.city.mitaka.lg.jp/c_service/052/052122.html"
+      ],
+      "primarySourceLengthNote": "雄約33・雌約39（愛知県）。中野市資料の38.5は約39に相当。別資料は30/33など差あり。"
+    },
+    {
+      "id": "japanese-sparrowhawk",
+      "nameJa": "ツミ",
+      "file": "japanese-sparrowhawk.webp",
+      "bodyLengthCm": 27,
+      "lengthRangeCm": [
+        27,
+        30
+      ],
+      "sexAge": "adult male",
+      "width": 900,
+      "height": 900,
+      "originalWidth": 1254,
+      "originalHeight": 1254,
+      "sourceFacing": "right",
+      "alphaBbox64": [
+        65,
+        52,
+        775,
+        857
+      ],
+      "billToTailHorizontalPx": 710,
+      "artWidthFraction": 0.7888888888888889,
+      "footBbox64": [
+        407,
+        790,
+        677,
+        850
+      ],
+      "footAnchor": {
+        "x": 0.6022222222222222,
+        "y": 0.9444444444444444
+      },
+      "alphaPreservedExactly": true,
+      "fullyTransparentFraction": 0.7040567901234568,
+      "bytes": 149340,
+      "sha256": "ce8e0934052cabaa5d175df7af1d56c091d31fb06084294489cf87a252632042",
+      "referenceLengthAxis": {
+        "beakTipPx": [
+          767,
+          193
+        ],
+        "tailTipPx": [
+          72,
+          853
+        ],
+        "lengthPx": 958.45,
+        "fractionOfCanvasWidth": 1.064944,
+        "note": "Manually annotated straight-line projected beak-to-tail span. Pose-dependent illustration geometry, not a literal measured specimen."
+      },
+      "sources": [
+        "https://www.pref.kyoto.jp/kankyo/rdb/bio/db/bird0017.html",
+        "https://www.city.mitaka.lg.jp/c_service/011/011219.html",
+        "https://www.city.matsuyama.ehime.jp/shisei/hozen/red/group2/20/"
+      ],
+      "primarySourceLengthNote": "雄27・雌30"
+    },
+    {
+      "id": "golden-eagle",
+      "nameJa": "イヌワシ",
+      "file": "golden-eagle.webp",
+      "bodyLengthCm": 85,
+      "lengthRangeCm": [
+        81,
+        89
+      ],
+      "sexAge": "representative adult",
+      "width": 900,
+      "height": 900,
+      "originalWidth": 1254,
+      "originalHeight": 1254,
+      "sourceFacing": "right",
+      "alphaBbox64": [
+        44,
+        10,
+        825,
+        890
+      ],
+      "billToTailHorizontalPx": 781,
+      "artWidthFraction": 0.8677777777777778,
+      "footBbox64": [
+        399,
+        790,
+        740,
+        890
+      ],
+      "footAnchor": {
+        "x": 0.6327777777777778,
+        "y": 0.9888888888888889
+      },
+      "alphaPreservedExactly": true,
+      "fullyTransparentFraction": 0.5707728395061729,
+      "bytes": 209938,
+      "sha256": "23890393a7524c7dd3e9bf94116d7c6e3369e33f56137f39b2062c420ea1a56c",
+      "referenceLengthAxis": {
+        "beakTipPx": [
+          817,
+          130
+        ],
+        "tailTipPx": [
+          50,
+          883
+        ],
+        "lengthPx": 1074.85,
+        "fractionOfCanvasWidth": 1.194275,
+        "note": "Manually annotated straight-line projected beak-to-tail span. Pose-dependent illustration geometry, not a literal measured specimen."
+      },
+      "sources": [
+        "https://www.env.go.jp/nature/kisho/hogozoushoku/inuwashi.html",
+        "https://www.rinya.maff.go.jp/j/kokuyu_rinya/kakusyu_siryo/pdf/00187_5_h14_004.pdf",
+        "https://www.tokyo-zoo.net/zoo/tama/watching_sheet/pdf/g_eagle_K.pdf",
+        "https://www.city.chiba.jp/zoo/school/documents/12eagle-worksheet.pdf"
+      ],
+      "primarySourceLengthNote": "81–89（環境省）"
+    },
+    {
+      "id": "brown-hawk-owl",
+      "nameJa": "アオバズク",
+      "file": "brown-hawk-owl.webp",
+      "bodyLengthCm": 29,
+      "lengthRangeCm": [
+        29,
+        29
+      ],
+      "sexAge": "adult, sexes similar",
+      "width": 900,
+      "height": 900,
+      "originalWidth": 1254,
+      "originalHeight": 1254,
+      "sourceFacing": "right",
+      "alphaBbox64": [
+        60,
+        35,
+        794,
+        873
+      ],
+      "billToTailHorizontalPx": 734,
+      "artWidthFraction": 0.8155555555555556,
+      "footBbox64": [
+        384,
+        790,
+        696,
+        873
+      ],
+      "footAnchor": {
+        "x": 0.6,
+        "y": 0.97
+      },
+      "alphaPreservedExactly": true,
+      "fullyTransparentFraction": 0.633216049382716,
+      "bytes": 198558,
+      "sha256": "3a850e425d4c01a79a4950d1c96a495c278a2d878a7c84d36421fbabd272b065",
+      "referenceLengthAxis": {
+        "beakTipPx": [
+          710,
+          220
+        ],
+        "tailTipPx": [
+          81,
+          861
+        ],
+        "lengthPx": 898.07,
+        "fractionOfCanvasWidth": 0.997851,
+        "note": "Manually annotated straight-line projected beak-to-tail span. Pose-dependent illustration geometry, not a literal measured specimen."
+      },
+      "sources": [
+        "https://www.pref.niigata.lg.jp/sec/kankyotaisaku/1356908744663.html",
+        "https://www.pref.aomori.lg.jp/soshiki/kankyo/shizen/files/RDB08_tori.pdf"
+      ],
+      "primarySourceLengthNote": "29"
+    },
+    {
+      "id": "osprey",
+      "nameJa": "ミサゴ",
+      "file": "osprey.webp",
+      "bodyLengthCm": 59,
+      "lengthRangeCm": [
+        54,
+        64
+      ],
+      "sexAge": "representative adult",
+      "width": 900,
+      "height": 900,
+      "originalWidth": 1254,
+      "originalHeight": 1254,
+      "sourceFacing": "right",
+      "alphaBbox64": [
+        44,
+        39,
+        826,
+        865
+      ],
+      "billToTailHorizontalPx": 782,
+      "artWidthFraction": 0.8688888888888889,
+      "footBbox64": [
+        370,
+        790,
+        707,
+        865
+      ],
+      "footAnchor": {
+        "x": 0.5983333333333334,
+        "y": 0.9611111111111111
+      },
+      "alphaPreservedExactly": true,
+      "fullyTransparentFraction": 0.6229716049382716,
+      "bytes": 195530,
+      "sha256": "f83a86eba0828cd6fcb3da28579031b8f4f73c470647ce5e8b5eef8bedcfbbe2",
+      "referenceLengthAxis": {
+        "beakTipPx": [
+          815,
+          172
+        ],
+        "tailTipPx": [
+          56,
+          843
+        ],
+        "lengthPx": 1013.08,
+        "fractionOfCanvasWidth": 1.125639,
+        "note": "Manually annotated straight-line projected beak-to-tail span. Pose-dependent illustration geometry, not a literal measured specimen."
+      },
+      "sources": [
+        "https://munahaku.jp/2018/06/05/ミサゴ/",
+        "https://db3.bird-research.jp/news/202105-no2/",
+        "https://www.qsr.mlit.go.jp/yamakuni/birds/bird/misago.html"
+      ],
+      "primarySourceLengthNote": "約54–64（親担当確認値）。山国川資料では雄58・雌60と差あり。"
+    }
+  ]
+}

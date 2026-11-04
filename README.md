@@ -125,3 +125,7 @@ PUBLIC_URL=https://djnaoyaman.github.io/buncho-ureshi/ npm run test:browser
 ### 主人公の代替わりと保存 v9
 
 主人公が旅立つと、最年長の存命の子へ物語を引き継ぎます。後世代も同じ規則です。子がいなければ記録を残して待ち、先代の墓や家族・持ち物を初期化しません。本人の星印と庭の主役は保存された主人公IDに付き、改名や選択中の文鳥に左右されません。v8までのセーブを厳格に検証して移行します。詳細は [主人公の代替わり](docs/PROTAGONIST.md)。
+
+### 猛禽類との出会い
+
+まれな猛禽の来訪では、警告から1分以内に帰宅すると安全です。残り時間は保存され、非表示やオフライン中は止まります。各種となかよしになると襲われなくなり、ミサゴは水辺で魚を捕る非攻撃の仲間です。事故死は既存のお墓・代替わりに接続します。詳細と安全上の境界は [GARDEN-RAPTORS.md](docs/GARDEN-RAPTORS.md)。専用実画面確認は `npx playwright test --config=playwright.garden-raptors.config.js`。

@@ -1,5 +1,6 @@
+import {advanceRaptorState} from './garden-raptors.js';
 import {getProtagonistId,initializeProtagonist,syncProtagonist,validateProtagonist} from './protagonist.js';
-import {rebaseLifecycleClock,initializeLifecycle,registerLifeBird,syncLifecycle,validateLifecycle,isAlive,lifeStatus,noteLifeFeeding,noteLifeConflict,treatLifeBird,hireLifeCaretaker,honorLifeBird} from './life-care.js';
+import {accidentLifeBird,rebaseLifecycleClock,initializeLifecycle,registerLifeBird,syncLifecycle,validateLifecycle,isAlive,lifeStatus,noteLifeFeeding,noteLifeConflict,treatLifeBird,hireLifeCaretaker,honorLifeBird} from './life-care.js';
 import {initialEncounterState,validateEncounterState,encounterSystem,upgradeEncounterState,cageVisitorCount,expireEncounterVisitors} from './encounters.js';
 import {initialEconomy,validateEconomy,syncEconomy,reserveAutomaticGems,awardCareGold,ECONOMY_RULES} from './economy.js';
 /** A deterministic, offline story simulation with fictional lifecycle rules. No real husbandry advice. */
@@ -182,11 +183,17 @@ function record(w, kind, ids, condition, result, data = {}) {
   for (const bid of ids) { const b = findBird(w, bid); if (b) remember(w, b, kind, ids.find(i => i !== bid) || null); }
 }
 function lifeEvent(w,event){
- const text=event.kind==='death'?{lifespan:'ゲーム内の10年を生き、静かに旅立った',neglect:'現実の3日間、ごはんが届かなかった',illness:'ゲームの病気を治療しないまま時間が過ぎた',injury:'けんかのけがを治療しないまま時間が過ぎた'}[event.cause]:event.kind==='illness'?'体調の変化に気づいた。病院で診てもらおう':event.kind==='caretaker-treatment'?'飼育員さんが病院へ連れていった':'病院で治療を受けて元気になった';
+ const text=event.kind==='death'?{accident:'ゲーム内の猛禽との遭遇で事故にあい、旅立った',lifespan:'ゲーム内の10年を生き、静かに旅立った',neglect:'現実の3日間、ごはんが届かなかった',illness:'ゲームの病気を治療しないまま時間が過ぎた',injury:'けんかのけがを治療しないまま時間が過ぎた'}[event.cause]:event.kind==='illness'?'体調の変化に気づいた。病院で診てもらおう':event.kind==='caretaker-treatment'?'飼育員さんが病院へ連れていった':'病院で治療を受けて元気になった';
  record(w,event.kind,[event.birdId],text,event.kind==='death'?'名前と家族と思い出は、お墓にずっと残る':text);
 }
 function synchronizeProtagonist(w){const succession=syncProtagonist(w);if(succession){record(w,'succession',[succession.fromId,succession.toId],'先代の子が家族の物語を引き継ぐ',`${birdName(w,succession.toId)}が第${w.protagonist.lineage.length}代の主人公になった`);bumpRevision(w);}return succession;}
 function synchronizeLife(w,now,story=false){const result=syncLifecycle(w,now,{story});for(const event of result.events)lifeEvent(w,event);if(result.changed)bumpRevision(w);synchronizeProtagonist(w);return result;}
+/** Visible raptor countdown, death, diary and succession commit together. */
+export function advanceGardenRaptor(w,elapsed,now,expected){
+ const result=advanceRaptorState(w,elapsed,now,expected);
+ if(result.deathBirdId){const event=accidentLifeBird(w,result.deathBirdId,now);if(event){lifeEvent(w,event);synchronizeProtagonist(w);result.death=true;result.message='事故で旅立ちました。名前と家族と思い出は、お墓に残ります。';}}
+ return result;
+}
 export function treatBird(w,birdId,token,now=Date.now()){
  if(!currentToken(w,token))return staleEconomy();synchronizeLife(w,careTime(now));
  const result=treatLifeBird(w,birdId,economyToken(w),careTime(now));if(result.event)lifeEvent(w,result.event);if(result.changed)bumpRevision(w);return result;
@@ -584,7 +591,7 @@ function validateVersion(input, version) {
   }
   if(version>=5)validateCareSchedule(w.careSchedule);
   const legacyHomeLimits=version<6||w.encounters.version<6;
-  if(version>=6){validateEncounterState(w.encounters,w.tick);upgradeEncounterState(w.encounters);if(w.encounters.crow?.arrivalBirdId&&!ref(w.encounters.crow.arrivalBirdId))fail('カラスと会った文鳥の情報が不正です。');}
+  if(version>=6){validateEncounterState(w.encounters,w.tick);upgradeEncounterState(w.encounters);if(w.encounters.raptor?.active&&!ref(w.encounters.raptor.active.targetBirdId))fail('猛禽と会った文鳥の情報が不正です。');if(w.encounters.crow?.arrivalBirdId&&!ref(w.encounters.crow.arrivalBirdId))fail('カラスと会った文鳥の情報が不正です。');}
   if(version>=7){
    validateEconomy(w.economy);
    if(w.economy.firstMeetingClaimed.some(id=>!w.encounters.discoveries.some(d=>d.id===id)))fail('初出会いの記録が不正です。');
