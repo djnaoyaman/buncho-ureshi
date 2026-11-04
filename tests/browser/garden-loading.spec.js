@@ -110,6 +110,7 @@ test('notebook requests only nearby lightweight cards, then loads more while scr
   await expect(cards).toHaveCount(system.catalog.length);
   await expect.poll(() => held.requests.length).toBeGreaterThan(0);
   const initialCount = held.requests.length;
+  await info.attach('initial-thumbnail-requests', {body: Buffer.from(JSON.stringify({initialRequests: initialCount, totalCards: await cards.count(), urls: held.requests}, null, 2)), contentType: 'application/json'});
   expect(initialCount).toBeLessThan(await cards.count());
   const lastImage = cards.last().locator('img');
   await expect(lastImage).toHaveAttribute('data-media-src', /(?:\.thumb\.webp|\/sakura\.webp)$/);

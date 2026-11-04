@@ -35,8 +35,11 @@ test('failure reveals retry; retry clears error without changing source or creat
   assert.equal(img.getAttribute('src'),'/bird.thumb.webp');load(win,img);await Promise.resolve();assert.equal(root.querySelector('.finch-media').dataset.mediaState,'ready');assert.equal(root.querySelector('button').hidden,true);media.destroy();
 });
 test('garden remains loading until every layer decodes and ignores completion after navigation',async()=>{
-  const {win,root,media}=setup('<div class="finch-garden-stage"><img src="/bg.webp"><img src="/bird.webp"><div class="finch-garden-loading"><span data-media-label></span><button data-media-retry hidden></button></div></div>');media.refresh();const imgs=[...root.querySelectorAll('img')];
+  const {win,root,media}=setup('<div class="finch-garden-stage"><div class="finch-garden-carousel"><img src="/bg.webp"><img src="/bird.webp"></div><div class="finch-garden-loading" role="status"><span data-media-label></span><button data-media-retry hidden></button></div></div>');media.refresh();const imgs=[...root.querySelectorAll('img')];
+  const carousel=root.querySelector('.finch-garden-carousel'),status=root.querySelector('[role=status]');
+  assert.equal(carousel.getAttribute('aria-busy'),'true');assert.equal(root.firstElementChild.hasAttribute('aria-busy'),false);assert.equal(status.closest('[aria-busy=true]'),null);
   load(win,imgs[0]);await Promise.resolve();assert.equal(root.firstElementChild.dataset.sceneState,'loading');load(win,imgs[1]);await Promise.resolve();assert.equal(root.firstElementChild.dataset.sceneState,'ready');assert.equal(root.querySelector('.finch-garden-loading').hidden,true);
+  assert.equal(carousel.getAttribute('aria-busy'),'false');assert.equal(status.closest('[aria-busy=true]'),null);
   media.preserve();root.innerHTML=frame('/another.thumb.webp');media.refresh();imgs[0].dispatchEvent(new win.Event('error'));assert.equal(root.querySelector('.finch-media').dataset.mediaState,'pending');media.destroy();
 });
 test('rendered cards preserve individual silhouettes and use small delivery copies',()=>{

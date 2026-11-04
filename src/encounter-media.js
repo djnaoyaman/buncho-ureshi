@@ -12,7 +12,7 @@ export function mountEncounterMedia(root) {
     const failed = images.some(img => img.dataset.mediaResult === 'error');
     const ready = images.every(img => img.dataset.mediaResult === 'ready');
     scene.dataset.sceneState = failed ? 'error' : ready ? 'ready' : 'loading';
-    scene.setAttribute('aria-busy', String(!failed && !ready));
+    scene.querySelector('.finch-garden-carousel')?.setAttribute('aria-busy', String(!failed && !ready));
     const status = scene.querySelector('.finch-garden-loading');
     if (!status) return;
     status.hidden = ready;
