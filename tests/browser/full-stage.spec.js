@@ -86,9 +86,9 @@ for (const [width, height] of [[320, 568], [390, 844], [844, 390]]) {
     const exit = page.locator('.game-world-exit');
     const wallet = page.locator('.game-field-bar .game-wallet');
     await expect(exit).toBeVisible();
-    await expect(exit).toHaveText('図鑑');
-    await expect(exit).toHaveAttribute('aria-label', '図鑑へ戻る');
-    await expect(exit).toHaveAccessibleName('図鑑へ戻る');
+    await expect(exit).toHaveText('文鳥図鑑');
+    await expect(exit).toHaveAttribute('aria-label', '文鳥図鑑へ戻る');
+    await expect(exit).toHaveAccessibleName('文鳥図鑑へ戻る');
     await expect(exit).toHaveAttribute('href', /\/encyclopedia\/$/);
     await expect(wallet).toBeVisible();
 
