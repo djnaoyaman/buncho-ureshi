@@ -13,9 +13,9 @@ test('fixed photo masks and credits preserve all sources and individual color pr
  assert.deepEqual(Object.keys(editorialPhotoFocus).sort(),profiles.sort());
  for(const p of photos){const file=await readFile(new URL('../public'+p.src,import.meta.url));assert.equal(createHash('sha256').update(file).digest('hex'),p.sha256,p.id);}
  assert(!section.includes('hue-rotate'));assert(!section.includes('sepia'));assert(!section.includes('.article-hero'));assert(!section.includes('.photo-row'));
- assert(section.includes('.article-cover-window{overflow:hidden'));assert(section.includes('aspect-ratio:auto'));
+ assert(section.includes('.article-cover-window{overflow:hidden'));assert(section.includes('aspect-ratio:var(--photo-source-ratio)'));
  assert(!section.includes('.article-cover-frame{transform:translate'));assert(!section.includes('margin-block:60px'));
- const app=await read('src/app.js');assert(app.includes('<div class="article-cover-window">${image(id)}</div><small class="article-cover-credit">'));
+ const app=await read('src/app.js');assert(app.includes('style="--photo-source-ratio:${p.width}/${p.height}">${image(id)}</div><small class="article-cover-credit">'));
  assert(app.includes('元写真・作者・利用条件'));
 });
 test('all photo plans keep the source bird bounds inside the fixed window at both extremes',()=>{

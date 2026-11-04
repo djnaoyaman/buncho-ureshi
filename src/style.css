@@ -2060,7 +2060,7 @@ body[data-world="buncho"] .game-gem-reward{background:#e5f2bb;color:#304631;bord
    Individual framing preserves identifying features; no hue shifts or generated detail. */
 #article-grid .article-cover-frame{padding:0;background:transparent;border-radius:0;overflow:visible}
 #article-grid .article-cover-window{overflow:hidden;isolation:isolate}
-#article-grid .article-cover-frame img{display:block;width:100%;height:auto;aspect-ratio:auto;object-fit:cover!important;object-position:var(--photo-position,50% 50%);border-radius:0;filter:saturate(var(--photo-saturation,1)) brightness(var(--photo-brightness,1)) contrast(.98)}
+#article-grid .article-cover-frame img{display:block;width:100%;height:auto;aspect-ratio:var(--photo-source-ratio);object-fit:cover!important;object-position:var(--photo-position,50% 50%);border-radius:0;filter:saturate(var(--photo-saturation,1)) brightness(var(--photo-brightness,1)) contrast(.98)}
 #article-grid .article-cover-credit{margin:10px 0 16px;font-size:.65rem;line-height:1.7;color:var(--ink);opacity:.8}
 .photo-presentation-note{max-width:64ch;font-size:.75rem;line-height:1.9;margin:18px 0 28px;color:var(--ink)}
 #article-grid img[src$="photo-01.webp"]{--photo-ratio:4/3;--photo-position:50% 55%;--photo-saturation:0.9;--photo-brightness:1.01}
