@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {Window} from 'happy-dom';
 import {mountEncounterMedia} from '../src/encounter-media.js';
-import {renderEncounterNotebook,renderEncounterPage,renderGardenStage} from '../src/encounter-ui.js';
+import {renderEncounterNotebook,renderEncounterPage,renderGardenStage,renderEncounterCageGuest} from '../src/encounter-ui.js';
 import {createWorld} from '../src/engine.js';
 import {encounterSystem} from '../src/encounters.js';
 import {readFile} from 'node:fs/promises';
@@ -48,4 +48,14 @@ test('delivery copies reduce bytes while preserving full-size dimensions; origin
   const total=(list,key)=>list.reduce((sum,x)=>sum+x[key],0);
   assert.equal(gardens.length,9);assert.ok(total(gardens,'screenBytes')<total(gardens,'originalBytes')*.25);
   assert.ok(total(birds,'thumbnailBytes')<total(birds,'originalBytes')*.05);assert.ok(records.every(x=>x.width>0&&x.height>0&&!x.source.includes('/photos/')));
+});
+
+test('cage visitors are visible without an encounter panel loader',()=>{
+ const win=new Window();win.document.body.innerHTML=renderEncounterCageGuest(encounterSystem.catalog[0]);
+ assert.equal(win.document.querySelector('.finch-media'),null);const img=win.document.querySelector('img');assert.match(img.getAttribute('src'),/\.screen\.webp$/);assert.ok(img.alt);
+});
+test('reused bytes adopt the new discovery, alt and pose presentation',async()=>{
+ const {win,root,media}=setup('<span class="finch-media" data-media-state="pending"><img src="/same.webp" data-media-src="/same.webp" class="finch-art is-silhouette" alt="" style="left:-10px"></span>');media.refresh();const old=root.querySelector('img');load(win,old);await Promise.resolve();
+ media.preserve();root.innerHTML='<span class="finch-media" data-media-state="pending"><img src="/same.webp" data-media-src="/same.webp" class="finch-art" alt="コキンチョウ" style="left:-20px"></span>';media.refresh();
+ assert.equal(root.querySelector('img'),old);assert.equal(old.className,'finch-art');assert.equal(old.alt,'コキンチョウ');assert.equal(old.style.left,'-20px');assert.equal(old.dataset.mediaResult,'ready');media.destroy();
 });

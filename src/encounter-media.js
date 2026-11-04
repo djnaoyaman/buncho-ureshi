@@ -66,7 +66,13 @@ export function mountEncounterMedia(root) {
     for (let img of root.querySelectorAll('img[data-media-src], .finch-garden-stage img')) {
       const key = img.dataset.mediaSrc || img.getAttribute('src');
       const old = retained.get(key)?.shift();
-      if (old && old !== img) { img.replaceWith(old); img = old; }
+      if (old && old !== img) {
+        // Reuse the decoded bytes, never the old discovery/pose/accessibility state.
+        const loading = new Set(['src', 'data-media-result', 'data-media-started']);
+        for (const attribute of [...old.attributes]) if (!loading.has(attribute.name)) old.removeAttribute(attribute.name);
+        for (const attribute of [...img.attributes]) if (!loading.has(attribute.name)) old.setAttribute(attribute.name, attribute.value);
+        img.replaceWith(old); img = old;
+      }
       bind(img);
     }
     retained.clear();

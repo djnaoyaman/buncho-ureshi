@@ -9,13 +9,17 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
   let rub=null,petFlight=false,petTimer=null;
   const doc=root.ownerDocument;
   const media=mountEncounterMedia(root);
+  let hostCatalogScroll=null;
+  const rememberCatalog=()=>{const catalog=root.querySelector('.finch-catalog');hostCatalogScroll=catalog?{view:renderedView,top:catalog.scrollTop}:null;};
+  doc.addEventListener('buncho-game-will-render',rememberCatalog);
   const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   function render({focus=false}={}){
     if(!alive)return;const w=getWorld();
     if(w.worldId===worldId&&rub&&rub.generation===generation&&mode==='entry'&&pageId===rub.id){refreshBond();return;}
     if(w.worldId!==worldId){rub=null;clearTimeout(petTimer);}
     const view=`${w.worldId}:${mode}:${pageId}:${showPhoto}`,oldEntryScroll=view===renderedView?root.scrollTop:0;
-    const oldCatalogScroll=view===renderedView?root.querySelector('.finch-catalog')?.scrollTop:0;
+    const oldCatalogScroll=view===renderedView?(hostCatalogScroll?.view===view?hostCatalogScroll.top:root.querySelector('.finch-catalog')?.scrollTop):0;
+    hostCatalogScroll=null;
     renderedView=view;
     const oldGarden=root.querySelector('.finch-garden');
     const oldOpenDetails=new Set(oldGarden?[...oldGarden.querySelectorAll('details[data-garden-details][open]')].map(d=>d.dataset.gardenDetails):[]);
@@ -173,5 +177,5 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
   }
   root.classList.add('finch-overlay-content');root.addEventListener('click',click);root.addEventListener('pointerdown',startRub);root.addEventListener('keydown',keyRub);doc.addEventListener('pointermove',moveRub,{passive:false});doc.addEventListener('pointerup',endRub);doc.addEventListener('pointercancel',endRub);render();
   const motion=mountGardenBirdMotion(root,{enabled:()=>alive&&!getWorld().paused&&getWorld().settings.motion});
-  return {open,garden,entry(id){generation++;rub=null;busy=false;mode='entry';pageId=id;showPhoto=false;notice='';render({focus:true});},notebook(){rub=null;generation++;busy=false;mode='notebook';pageId=null;notice='';render({focus:true});},refresh(){render();},destroy(){media.destroy();motion();alive=false;generation++;rub=null;clearTimeout(petTimer);root.removeEventListener('pointerdown',startRub);root.removeEventListener('keydown',keyRub);doc.removeEventListener('pointermove',moveRub);doc.removeEventListener('pointerup',endRub);doc.removeEventListener('pointercancel',endRub);root.removeEventListener('click',click);root.removeAttribute('aria-busy');root.classList.remove('finch-overlay-content');}};
+  return {open,garden,entry(id){generation++;rub=null;busy=false;mode='entry';pageId=id;showPhoto=false;notice='';render({focus:true});},notebook(){rub=null;generation++;busy=false;mode='notebook';pageId=null;notice='';render({focus:true});},refresh(){render();},destroy(){doc.removeEventListener('buncho-game-will-render',rememberCatalog);media.destroy();motion();alive=false;generation++;rub=null;clearTimeout(petTimer);root.removeEventListener('pointerdown',startRub);root.removeEventListener('keydown',keyRub);doc.removeEventListener('pointermove',moveRub);doc.removeEventListener('pointerup',endRub);doc.removeEventListener('pointercancel',endRub);root.removeEventListener('click',click);root.removeAttribute('aria-busy');root.classList.remove('finch-overlay-content');}};
 }
