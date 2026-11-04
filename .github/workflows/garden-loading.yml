@@ -1,0 +1,50 @@
+name: Garden and notebook loading
+on:
+  pull_request:
+    paths:
+      - 'src/encounter*'
+      - 'src/garden*'
+      - 'src/game.js'
+      - 'src/data/encounter-catalog.js'
+      - 'src/data/garden*'
+      - 'scripts/build.mjs'
+      - 'scripts/*image*'
+      - 'public/game-art/finches/**'
+      - 'public/game-art/gardens/**'
+      - 'package*.json'
+      - 'tests/browser/garden-loading.spec.js'
+      - 'playwright.garden-loading.config.js'
+      - '.github/workflows/garden-loading.yml'
+  workflow_dispatch:
+    inputs:
+      public_url:
+        description: 'Optional deployed site URL to verify'
+        default: ''
+        required: false
+permissions:
+  contents: read
+jobs:
+  loading:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium webkit
+      - name: Check slow and failed media, scroll requests, navigation, original photos and save persistence
+        env:
+          PUBLIC_URL: ${{ inputs.public_url }}
+        run: npx playwright test --config=playwright.garden-loading.config.js
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: garden-loading-${{ github.sha }}
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14
