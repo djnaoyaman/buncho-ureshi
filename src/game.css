@@ -542,12 +542,12 @@ body[data-world="buncho"] .game-bottom-dock [data-home-close] span{font-size:10p
 body[data-world="buncho"] .game-bottom-dock [data-home-close]:disabled{opacity:.65;box-shadow:0 2px 0 #a18857}
 @media(max-height:500px){body[data-world="buncho"] .game-bottom-dock[data-home-dock="true"]{width:min(360px,100%)}body[data-world="buncho"] .game-main .game-room[data-many-guests="true"] .game-room-bird:not(.game-nestling){width:48px;min-width:48px;min-height:48px}.game-app .game-room-bird>.game-home-role{font-size:9px;padding:1px 3px;gap:1px}}
 
-.game-app .finch-cage-guest>span:not(.game-home-role){top:calc(100% + 20px);max-width:90px;overflow:hidden;text-overflow:ellipsis}
-@media(max-height:500px){.game-app .finch-cage-guest>span:not(.game-home-role){top:calc(100% + 17px);font-size:8px;max-width:66px;padding:1px 3px}}
+.game-app .finch-cage-guest>span:not(.game-home-role){top:calc(100% + 20px);max-width:min(90px,16vw);overflow:hidden;text-overflow:ellipsis}
+@media(max-height:500px){.game-app .finch-cage-guest>span:not(.game-home-role){top:calc(100% + 17px);font-size:8px;max-width:min(66px,18vw);padding:1px 3px}}
 
 /* A full home keeps every guest visible while the owner watches from the edge. */
 body[data-world="buncho"] .game-owner-companion[data-home-crowded="true"]{width:clamp(56px,10cqh,120px);bottom:0}
 @media(max-height:500px){body[data-world="buncho"] .game-owner-companion[data-home-crowded="true"]{width:clamp(46px,8.5vw,72px)}body[data-world="buncho"] .game-main:has(.game-room[data-home-crowded="true"])>.game-scene-caption{display:none}}
 
 @media(max-width:600px) and (min-height:501px){body[data-world="buncho"] .game-owner-companion[data-home-crowded="true"]{width:min(72px,10cqh)}}
-body[data-world="buncho"][data-scene-controls="closed"]:has(.game-room[data-home-crowded="true"]) .game-scene-controls-toggle{left:auto;right:72px;top:4px;bottom:auto}
+body[data-world="buncho"][data-scene-controls="closed"]:has(.game-room[data-home-crowded="true"]) .game-scene-controls-toggle{left:auto;right:calc(72px + env(safe-area-inset-right,0px));top:calc(4px + env(safe-area-inset-top,0px));bottom:auto}
