@@ -2,7 +2,7 @@ import {getProtagonistBird} from './protagonist.js';
 /** Crow visits are game fiction. Only visible, continuous garden time qualifies.
  * This clock has no access to the world's PRNG, offline progress or storage. */
 import {isAlive} from './life-care.js';
-export const CROW_RULES=Object.freeze({dwellMs:120000,checkMs:15000,chance:.2,warningMs:6000,cooldownMs:600000,visitMs:18000,retreatMs:45000,maxSampleGapMs:2500,friendPoints:100,maxPetPoints:1000000});
+export const CROW_RULES=Object.freeze({earlyMs:1000,earlyChance:.05,earlyCooldownMs:120000,dwellMs:120000,checkMs:15000,chance:.2,warningMs:6000,cooldownMs:600000,visitMs:18000,retreatMs:45000,maxSampleGapMs:2500,friendPoints:100,maxPetPoints:1000000});
 export const JAVA_LENGTH_CM=14;
 export const CROW_SPECIES=Object.freeze([
  {id:'large-billed-crow',name:'ハシブトガラス',scientific:'Corvus macrorhynchos',lengthCm:56,description:'太く湾曲したくちばしと、額の盛り上がりが特徴。日本でもよく見られます。'},
@@ -70,9 +70,10 @@ export function arriveGardenCrow(world,id,now,expected){
  world.revision=world.revision===Number.MAX_SAFE_INTEGER?0:world.revision+1;
  return {changed:true,id,hostile,energyBefore:before,energyAfter:bird.needs.energy,message:hostile?`${crowSpecies(id).name}が来たよ。友達は安全な場所へ。${bird.name}はびっくりして元気が半分に。おうちでお世話すると回復できるよ。`:`${crowSpecies(id).name}が遊びに来たよ。もうなかよしだから、みんな安心していっしょに過ごせるよ。`};
 }
-export function createGardenCrowClock({random=Math.random}={}){
+export function createGardenCrowClock({random=Math.random,earlyVisit=true}={}){
+ let lastEarlyCheck=null,earlyPending=earlyVisit;
  let key=null,last=null,elapsed=0,nextCheck=CROW_RULES.dwellMs,warning=null,fired=false;
- const reset=()=>{key=null;last=null;elapsed=0;nextCheck=CROW_RULES.dwellMs;warning=null;fired=false;};
+ const reset=()=>{earlyPending=earlyVisit;key=null;last=null;elapsed=0;nextCheck=CROW_RULES.dwellMs;warning=null;fired=false;};
  return {reset,get warning(){return warning?.id||null;},get elapsed(){return elapsed;},sample({key:nextKey,now,eligible,available=true}){
    if(!eligible||!Number.isFinite(now)){reset();return null;}
    if(nextKey!==key||last===null){reset();key=nextKey;last=now;return null;}
@@ -83,9 +84,15 @@ export function createGardenCrowClock({random=Math.random}={}){
    if(fired)return null;
    if(!available){warning=null;nextCheck=Math.max(nextCheck,elapsed+CROW_RULES.checkMs);return null;}
    if(warning){if(elapsed-warning.at>=CROW_RULES.warningMs){const id=warning.id;warning=null;fired=true;return {kind:'arrive',id};}return null;}
-   if(elapsed<nextCheck)return null;
-   nextCheck=elapsed+CROW_RULES.checkMs;
-   if(random()>=CROW_RULES.chance)return null;
+   const early=earlyPending&&elapsed>=CROW_RULES.earlyMs;
+   if(early){
+     earlyPending=false;
+     // Keep entry/overlay toggles from buying repeated early draws.
+     if(lastEarlyCheck!==null&&now-lastEarlyCheck<CROW_RULES.earlyCooldownMs)return null;
+     lastEarlyCheck=now;
+   }else if(elapsed<nextCheck)return null;
+   if(!early)nextCheck=elapsed+CROW_RULES.checkMs;
+   if(random()>=(early?CROW_RULES.earlyChance:CROW_RULES.chance))return null;
    const id=CROW_SPECIES[Math.min(CROW_SPECIES.length-1,Math.max(0,Math.floor(random()*CROW_SPECIES.length)))].id;
    warning={id,at:elapsed};return {kind:'warning',id};
  }};

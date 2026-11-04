@@ -3,7 +3,7 @@ import {RAPTOR_SPECIES} from './data/raptor-species.js';
 import {getProtagonistBird} from './protagonist.js';
 import {isAlive} from './life-care.js';
 export {RAPTOR_SPECIES};
-export const RAPTOR_RULES=Object.freeze({dwellMs:120000,checkMs:60000,chance:.01,warningMs:60000,dailyCooldownMs:86400000,friendPoints:100,maxSampleGapMs:2500,visitMs:18000,maxPetPoints:1000000});
+export const RAPTOR_RULES=Object.freeze({earlyMs:1000,earlyChance:.01,earlyCooldownMs:120000,dwellMs:120000,checkMs:60000,chance:.01,warningMs:60000,dailyCooldownMs:86400000,friendPoints:100,maxSampleGapMs:2500,visitMs:18000,maxPetPoints:1000000});
 const MAX_TIME=253402268399999;
 const int=(n,min=0,max=Number.MAX_SAFE_INTEGER)=>Number.isSafeInteger(n)&&n>=min&&n<=max;
 const shape=(v,keys)=>v&&typeof v==='object'&&!Array.isArray(v)&&Object.keys(v).length===keys.length&&keys.every(k=>Object.hasOwn(v,k));
@@ -63,15 +63,23 @@ export function advanceRaptorState(w,elapsed,now,expected){
  const due=a.remainingMs===0,deathBirdId=due&&a.hostile?a.targetBirdId:null;
  if(due)s.active=null;bump(w);return {changed:true,remainingMs:a.remainingMs,ended:due,deathBirdId};
 }
-export function createGardenRaptorClock({random=Math.random}={}){
+export function createGardenRaptorClock({random=Math.random,earlyVisit=true}={}){
+ let lastEarlyCheck=null,earlyPending=earlyVisit;
  let key=null,last=null,elapsed=0,next=RAPTOR_RULES.dwellMs,fired=false;
- const reset=()=>{key=null;last=null;elapsed=0;next=RAPTOR_RULES.dwellMs;fired=false;};
+ const reset=()=>{earlyPending=earlyVisit;key=null;last=null;elapsed=0;next=RAPTOR_RULES.dwellMs;fired=false;};
  return {reset,get elapsed(){return elapsed;},sample({key:nextKey,now,eligible,available=true,gardenId}){
   if(!eligible||!Number.isFinite(now)){reset();return null;}
   if(key!==nextKey||last===null){reset();key=nextKey;last=now;return null;}
   const delta=now-last;last=now;if(delta<0||delta>RAPTOR_RULES.maxSampleGapMs){reset();key=nextKey;last=now;return null;}
-  elapsed+=delta;if(fired)return null;if(!available){next=Math.max(next,elapsed+RAPTOR_RULES.checkMs);return null;}if(elapsed<next)return null;
-  next=elapsed+RAPTOR_RULES.checkMs;if(random()>=RAPTOR_RULES.chance)return null;
+  elapsed+=delta;if(fired)return null;if(!available){next=Math.max(next,elapsed+RAPTOR_RULES.checkMs);return null;}
+  const early=earlyPending&&elapsed>=RAPTOR_RULES.earlyMs;
+  if(early){
+   earlyPending=false;
+   if(lastEarlyCheck!==null&&now-lastEarlyCheck<RAPTOR_RULES.earlyCooldownMs)return null;
+   lastEarlyCheck=now;
+  }else if(elapsed<next)return null;
+  if(!early)next=elapsed+RAPTOR_RULES.checkMs;
+  if(random()>=(early?RAPTOR_RULES.earlyChance:RAPTOR_RULES.chance))return null;
   const pool=RAPTOR_SPECIES.filter(s=>!s.waterOnly||gardenId==='mizukagami');if(!pool.length)return null;
   const index=Math.min(pool.length-1,Math.max(0,Math.floor(random()*pool.length)));fired=true;return {kind:'arrive',id:pool[index].id};
  }};
