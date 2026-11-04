@@ -9,3 +9,4 @@ export function omochiIdentity(world) {
  if(bird.home!=='resident'||bird.stage!=='adult'||bird.color!=='white'||bird.sex!=='female'||bird.generation!==0||bird.bornTick!==0||!Array.isArray(bird.parents)||bird.parents.length)return null;
  return {worldId:world.worldId,birdId:bird.id};
 }
+

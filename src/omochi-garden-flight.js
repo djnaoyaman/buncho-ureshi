@@ -30,3 +30,4 @@ export function createOmochiFlightMount({ready=false,renderFrame,choosePlan,fram
   return {reservedIds:()=>reserved,destroy(){if(dead)return;dead=true;win.clearInterval(timer);win.removeEventListener('resize',resize);stop()}};
  };
 }
+

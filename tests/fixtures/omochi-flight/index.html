@@ -3,3 +3,4 @@ import {mountGardenFlight} from '/src/omochi-motion-runtime.js';import {planMoti
 const root=document.querySelector('#garden');window.enabled=true;window.frames=[];
 window.dispose=mountGardenFlight({root,birdId:'omochi',plan:planMotion({from:{x:100,y:300},to:{x:300,y:300},mode:'flight',duration:3000,lift:80,bounds:{left:0,right:600,top:0,bottom:500}}),enabled:()=>window.enabled,renderFrame:(sprite,frame)=>{sprite.dataset.frame=frame;window.frames.push(frame)}});window.ready=true;
 </script>
+

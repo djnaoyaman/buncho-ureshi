@@ -135,7 +135,7 @@ export async function openGameStore(platform = globalThis) {
               const beforeWorldId = current.worldId, beforeRevision = current.revision, beforeTime = current.lastUpdated, beforeCareTime=current.careSchedule?.seenAt;
               result = validateWorld(fn(current));
               // Compare against the raw persisted schema, not the already-migrated object.
-              if (!exists || request.result.version !== result.version || result.worldId !== beforeWorldId || result.revision !== beforeRevision || result.lastUpdated !== beforeTime || result.careSchedule?.seenAt !== beforeCareTime) store.put(result, 'current');
+              if (!exists || request.result.version !== result.version || request.result.encounters?.version !== result.encounters?.version || result.worldId !== beforeWorldId || result.revision !== beforeRevision || result.lastUpdated !== beforeTime || result.careSchedule?.seenAt !== beforeCareTime) store.put(result, 'current');
             } catch (error) { failure = error; tx.abort(); }
           };
           request.onerror = () => { failure = request.error; };

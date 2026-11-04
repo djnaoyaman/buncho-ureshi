@@ -33,3 +33,4 @@ export function createActiveClock() {
   let last = null, elapsed = 0, wasActive = false;
   return {get elapsed() {return elapsed;}, tick(now, active) {if (last !== null && active && wasActive && Number.isFinite(now) && now >= last) elapsed += Math.min(now - last, 50); last = Number.isFinite(now) ? now : null; wasActive = !!active; return elapsed;}, reset() {last = null; elapsed = 0; wasActive = false;}};
 }
+

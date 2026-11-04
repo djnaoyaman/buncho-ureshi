@@ -25,3 +25,4 @@ test('flight preparation stays on the initial perch and contact stays on destina
  const p=make('flight');for(const t of [0,50,200,280]){const s=sampleMotion(p,t);assert.equal(s.x,p.from.x);assert.equal(s.y,p.from.y)}
  for(const t of [2160,2250,2399,2400]){const s=sampleMotion(p,t);assert.equal(s.x,p.to.x);assert.ok(Math.abs(s.y-p.to.y)<1e-9)}
 });
+

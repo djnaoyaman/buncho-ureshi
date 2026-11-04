@@ -99,6 +99,8 @@ test('depth and hops use uniform whole-button scale, sprite-only lift and restor
  const sprite=f.a.firstElementChild;f.dispose();for(const prop of ['translate','scale','transform-origin','z-index'])assert.equal(f.a.style.getPropertyValue(prop),'');assert.equal(sprite.style.translate,'');
 });
 
+
+
 test('reserved flight actor is excluded from social transforms and pose refresh',async t=>{
  const f=await fixture(t,390,()=>['b']);const sprite=f.b.firstElementChild;const pose=sprite.dataset.pose;f.b.style.translate='35px -70px';
  for(let i=0;i<12;i++)f.step();

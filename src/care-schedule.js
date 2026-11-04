@@ -123,7 +123,7 @@ export function reconcileImportedCare(incoming, current, now) {
 /** Existing false means OFF (legacy choice/default indistinguishable: favor consent). */
 export function careSoundDefault(value) { return value === false ? false : true; }
 export function visitorCapacity(world) {
-  const count = world.birds.filter(b=>b.home === 'visitor').length;
+  const count = world.birds.filter(b=>b.home === 'visitor').length + (world.encounters?.cageVisitors?.length || 0);
   return {count, available:Math.max(0,2-count), canInvite:count < 2};
 }
 /** Compatibility repair only after full schema validation by the writer. Keep oldest

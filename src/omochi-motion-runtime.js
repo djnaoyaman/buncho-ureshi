@@ -71,3 +71,4 @@ export function flightEnvelopeSafe(rect,plan,clip,obstacles=[]){
  if(r.left<clip.left||r.right>clip.right||r.top<clip.top||r.bottom>clip.bottom)return false;
  return obstacles.every(o=>finite(o)&&!(r.left<o.right+6&&r.right+6>o.left&&r.top<o.bottom+6&&r.bottom+6>o.top));
 }
+

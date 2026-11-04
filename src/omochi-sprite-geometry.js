@@ -19,3 +19,4 @@ export function projectOmochiEnvelope(spriteRect,envelope){
  const w=spriteRect.right-spriteRect.left,h=spriteRect.bottom-spriteRect.top;
  return {left:spriteRect.left+envelope.left*w,right:spriteRect.left+envelope.right*w,top:spriteRect.top+envelope.top*h,bottom:spriteRect.top+envelope.bottom*h};
 }
+

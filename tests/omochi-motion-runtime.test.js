@@ -41,3 +41,4 @@ test('invalid corridor geometry fails closed',()=>{
  const rect={left:50,right:150,top:200,bottom:330};
  for(const invalid of [{...plan,lift:NaN},{...plan,from:{}},{...plan,to:{x:Infinity,y:1}},{...plan,lift:-1}])assert.equal(flightEnvelopeSafe(rect,invalid,clip),false);
 });
+
