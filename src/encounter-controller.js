@@ -74,9 +74,11 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
     // Restore only within the same garden and world; navigation starts fresh.
     const newGarden=root.querySelector('.finch-garden');
     if(oldGarden && newGarden && oldGarden.dataset.gardenWorld===newGarden.dataset.gardenWorld && oldSelected===newGarden.querySelector('[aria-current=page]')?.dataset.gardenSelect){
-      for(const detail of root.querySelectorAll('details[data-garden-details]'))if(oldDetails.has(detail.dataset.gardenDetails)){
-        detail.open=true;detail.scrollTop=oldDetails.get(detail.dataset.gardenDetails);
-      }
+      const details=[...root.querySelectorAll('details[data-garden-details]')];
+      // Open nested memories first so the outer pane has its final height
+      // before the browser clamps its restored scroll position.
+      for(const detail of details)if(oldDetails.has(detail.dataset.gardenDetails))detail.open=true;
+      for(const detail of details)if(oldDetails.has(detail.dataset.gardenDetails))detail.scrollTop=oldDetails.get(detail.dataset.gardenDetails);
     }
     root.scrollTop=oldEntryScroll;
     const catalog=root.querySelector('.finch-catalog');if(catalog)catalog.scrollTop=oldCatalogScroll||0;
