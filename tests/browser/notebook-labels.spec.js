@@ -1,5 +1,8 @@
 import {test,expect} from '@playwright/test';
 import {createWorld} from '../../src/engine.js';
+import {createEncounterSystem} from '../../src/encounters.js';
+import {ENCOUNTER_CATALOG} from '../../src/data/encounter-catalog.js';
+import {inviteFixture} from '../fixtures/garden-invitation.js';
 const NOW=Date.UTC(2026,10,4);
 async function record(page,world){return page.evaluate(world=>new Promise((resolve,reject)=>{const open=indexedDB.open('buncho-ureshi-garden-v1',1);open.onupgradeneeded=()=>open.result.createObjectStore('world');open.onerror=()=>reject(open.error);open.onsuccess=()=>{const db=open.result,tx=db.transaction('world',world?'readwrite':'readonly'),s=tx.objectStore('world'),req=world?s.put(world,'current'):s.get('current');tx.oncomplete=()=>{db.close();resolve(req.result)};tx.onerror=()=>{db.close();reject(tx.error)}}}),world);}
 async function fit(button){
@@ -33,4 +36,21 @@ for(const size of [{width:320,height:240},{width:320,height:568},{width:390,heig
  await page.goBack();await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');await controls(page);await fit(page.getByRole('link',{name:'文鳥図鑑へ戻る',exact:true}));
  const restored=await record(page);expect(restored.birds).toEqual(before.birds);expect(restored.economy).toEqual(before.economy);expect(restored.encounters.discoveries).toEqual(before.encounters.discoveries);
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+});
+
+
+test('embedded garden puts its notebook return in the dialog toolbar, clear of the guest at 320x240',async({page},info)=>{
+ await page.setViewportSize({width:320,height:240});
+ await page.addInitScript(now=>{Date.now=()=>now;localStorage.setItem('buncho.music.v1',JSON.stringify({enabled:false}));localStorage.setItem('buncho.care-sound-choice.v1',JSON.stringify({explicit:true,enabled:false}));},NOW);
+ const world=createWorld(NOW),system=createEncounterSystem(ENCOUNTER_CATALOG),entry=system.catalog[0],token=()=>({worldId:world.worldId,revision:world.revision});world.paused=true;world.settings.motion=false;
+ inviteFixture(system,world,entry.id);system.open(world,entry.id,token());for(const step of entry.steps)system.act(world,world.encounters.active.instanceId,step.action,token());
+ for(let p=10;p<80;p+=Math.min(8,80-p))system.pet(world,entry.id,Math.min(8,80-p),token());world.encounters.garden.open=false;
+ await page.goto('');await record(page,world);await page.goto('game/');await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');await controls(page);
+ await page.locator('#game-nav-open').click();await page.locator('#game-menu-notebook').click();await page.locator(`[data-encounter-page="${entry.id}"]`).click();
+ await expect(page.locator('[data-finch-points]')).toHaveText('80');await page.locator('[data-encounter-invite-garden]').click();
+ const back=page.locator('.finch-garden>header [data-encounter-back]'),guest=page.locator(`.finch-garden-visitor[data-encounter-page="${entry.id}"]`);await fit(back);await expect(guest).toBeVisible();
+ const toolbar=await page.locator('.game-overlay-head').boundingBox(),backBox=await back.boundingBox();expect(backBox.y).toBeGreaterThanOrEqual(toolbar.y);expect(backBox.y+backBox.height).toBeLessThanOrEqual(toolbar.y+toolbar.height);
+ await info.attach('embedded-garden-toolbar-320x240',{body:await page.screenshot(),contentType:'image/png'});
+ await guest.click();await expect(page.locator('[data-finch-visits]')).toHaveText('2');await expect(page.locator('[data-finch-points]')).toHaveText('90');
+ const saved=await record(page);expect(saved.birds).toEqual(world.birds);expect(saved.economy).toEqual(world.economy);
 });

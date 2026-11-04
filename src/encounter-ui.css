@@ -140,3 +140,5 @@
 
 /* At keyboard-height viewports, keep the complete label clear of the guest. */
 @media(max-height:300px){body[data-world="buncho"] .game-encounter-host .finch-garden>header{justify-content:flex-start}.finch-garden>header>[data-encounter-back]{width:50px;padding:4px;line-height:1.1}.finch-garden>header>[data-encounter-back]>span{display:block}}
+/* The notebook's embedded garden has a separate dialog toolbar above the birds. */
+@media(max-height:300px){body[data-world="buncho"] .game-app[data-panel=notebook] .finch-garden>header>[data-encounter-back]{position:fixed;top:calc(16px + env(safe-area-inset-top,0px));right:max(calc(22px + env(safe-area-inset-right,0px)),calc((100vw - 960px)/2 + 14px));z-index:5}}
