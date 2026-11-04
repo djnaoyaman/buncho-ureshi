@@ -6,6 +6,7 @@ on:
       - 'public/game-art/finches/**'
       - 'tests/rosefinch-additions.test.js'
       - 'tests/browser/rosefinch-additions.spec.js'
+      - 'tests/browser/trial-smoke.spec.js'
       - 'playwright.rosefinch.config.js'
       - '.github/workflows/rosefinch-additions.yml'
   workflow_dispatch:
