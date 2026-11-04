@@ -51,6 +51,7 @@ test('embedded garden puts its notebook return in the dialog toolbar, clear of t
  const back=page.locator('.finch-garden>header [data-encounter-back]'),guest=page.locator(`.finch-garden-visitor[data-encounter-page="${entry.id}"]`);await fit(back);await expect(guest).toBeVisible();
  const toolbar=await page.locator('.game-overlay-head').boundingBox(),backBox=await back.boundingBox();expect(backBox.y).toBeGreaterThanOrEqual(toolbar.y);expect(backBox.y+backBox.height).toBeLessThanOrEqual(toolbar.y+toolbar.height);
  await info.attach('embedded-garden-toolbar-320x240',{body:await page.screenshot(),contentType:'image/png'});
- await guest.click();await expect(page.locator('[data-finch-visits]')).toHaveText('2');await expect(page.locator('[data-finch-points]')).toHaveText('90');
+ const invited=await record(page),expected=system.status(invited,entry.id);
+ await guest.click();await expect(page.locator('[data-finch-visits]')).toHaveText(String(expected.visits));await expect(page.locator('[data-finch-points]')).toHaveText(String(expected.points));
  const saved=await record(page);expect(saved.birds).toEqual(world.birds);expect(saved.economy).toEqual(world.economy);
 });
