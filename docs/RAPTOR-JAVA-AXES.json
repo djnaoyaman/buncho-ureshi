@@ -1,0 +1,101 @@
+{
+  "method": "Right-facing atlas pose. Beak tip determined from opaque clipped head extreme; tail tip is opaque clipped lower-left feather farthest from beak. Distances are Euclidean before normalized 850-width box scaling.",
+  "colors": {
+    "white": {
+      "asset": "white-poses.webp",
+      "pose": "right",
+      "crop": [
+        470,
+        47,
+        395,
+        384
+      ],
+      "atlasScale": 2,
+      "beakTipInCropPx": [
+        386,
+        63.4
+      ],
+      "tailTipInCropPx": [
+        8,
+        309
+      ],
+      "lengthInAtlasPx": 450.7808,
+      "lengthIn850BoxPx": 901.5617,
+      "lengthRatio850": 1.0606608,
+      "footY1000": 975,
+      "footX850": 459
+    },
+    "sakura": {
+      "asset": "sakura-poses.webp",
+      "pose": "right",
+      "crop": [
+        474,
+        44,
+        419,
+        395
+      ],
+      "atlasScale": 2,
+      "beakTipInCropPx": [
+        410,
+        66.3
+      ],
+      "tailTipInCropPx": [
+        8,
+        316
+      ],
+      "lengthInAtlasPx": 473.2379,
+      "lengthIn850BoxPx": 946.4758,
+      "lengthRatio850": 1.1135009,
+      "footY1000": 975,
+      "footX850": 459
+    },
+    "silver": {
+      "asset": "silver-poses.webp",
+      "pose": "right",
+      "crop": [
+        478,
+        45,
+        399,
+        391
+      ],
+      "atlasScale": 2,
+      "beakTipInCropPx": [
+        390,
+        60.4
+      ],
+      "tailTipInCropPx": [
+        8,
+        325
+      ],
+      "lengthInAtlasPx": 464.6904,
+      "lengthIn850BoxPx": 929.3808,
+      "lengthRatio850": 1.0933892,
+      "footY1000": 975,
+      "footX850": 459
+    },
+    "cinnamon": {
+      "asset": "cinnamon-poses.webp",
+      "pose": "right",
+      "crop": [
+        481,
+        44,
+        423,
+        400
+      ],
+      "atlasScale": 2,
+      "beakTipInCropPx": [
+        414,
+        66.5
+      ],
+      "tailTipInCropPx": [
+        8,
+        327
+      ],
+      "lengthInAtlasPx": 482.386,
+      "lengthIn850BoxPx": 964.772,
+      "lengthRatio850": 1.1350259,
+      "footY1000": 975,
+      "footX850": 459
+    }
+  }
+}

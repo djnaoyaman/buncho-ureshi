@@ -4,7 +4,7 @@
 const HOUR = 3600000, DAY = HOUR * 24, MAX_TIME = 253402268399999;
 export const LIFE_RULES = Object.freeze({yearTicks:8760,lifespanTicks:87600,neglectMs:3*DAY,treatmentMs:DAY,exposureMs:DAY,caretakerDailyGold:24,hospitalGold:12,memorialCooldownMs:60000,maxContractDays:30});
 const CONDITIONS = Object.freeze({respiratory:'呼吸器の病気',digestive:'おなかの病気',injury:'けんかのけが'});
-const CAUSES = ['lifespan','neglect','illness','injury'];
+const CAUSES = ['lifespan','neglect','illness','injury','accident'];
 const integer = (n, lo=0, hi=Number.MAX_SAFE_INTEGER) => Number.isSafeInteger(n)&&n>=lo&&n<=hi;
 const shape = (v, keys) => v&&typeof v==='object'&&!Array.isArray(v)&&Object.keys(v).length===keys.length&&keys.every(k=>Object.hasOwn(v,k));
 const time = n => {if(!integer(n,0,MAX_TIME))throw new Error('端末の日時を確認してください。');return n;};
@@ -29,6 +29,13 @@ function die(world,bird,s,cause,at){
  if(world.adoption.pending?.birdId===bird.id)world.adoption.pending=null;
  if(world.field.place==='friend'&&world.field.hostId===bird.id)world.field={place:'home',hostId:null,enteredTick:world.tick};
  return {kind:'death',birdId:bird.id,cause};
+}
+/** Fictional accident uses the same memorial and relationship-preserving death path. */
+export function accidentLifeBird(world,birdId,now){
+ time(now);const bird=world.birds.find(b=>b.id===birdId),s=lifeStatus(world,birdId);
+ if(!bird||!s||s.death||bird.home!=='resident')return null;
+ const at=Math.max(now,world.lifecycle.seenAt);world.lifecycle.seenAt=at;
+ return die(world,bird,s,'accident',at);
 }
 function recover(bird,s,at){s.condition=null;s.lastRecoveredAt=at;resetExposure(s);bird.needs.food=Math.max(80,bird.needs.food);bird.needs.energy=Math.max(80,bird.needs.energy);}
 /** Evaluate real absence before story catch-up, and age after each actual story tick.

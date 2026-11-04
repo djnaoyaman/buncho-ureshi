@@ -607,3 +607,24 @@ body[data-world="buncho"][data-scene-controls="closed"]:has(.game-room[data-home
 .game-care-pet-bird>.game-care-illustration>img{position:absolute;inset:0;width:100%;height:100%;max-width:none;object-fit:contain;object-position:center;transform:none}
 .game-care-pet-bird>.game-care-illustration{width:min(100%,var(--care-bird-height))}
 
+/* A saved one-minute warning stays reachable across notebooks and modal panels. */
+.game-raptor-notice{box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border:2px solid #a35434;border-radius:14px;background:#fff1defa;color:#513323;font-family:inherit;font-size:13px;font-weight:600;line-height:1.5;box-shadow:0 3px 12px #46331f28;z-index:30;pointer-events:auto}
+.game-raptor-notice>div{min-width:0;display:flex;flex-wrap:wrap;gap:2px 10px;align-items:center}.game-raptor-notice strong{font-weight:800}.game-raptor-deadline{color:#8b2c1b;white-space:nowrap}.game-raptor-deadline b{font-variant-numeric:tabular-nums;font-size:18px}.game-raptor-instruction{flex:1 0 100%;font-weight:500;font-size:12px}.game-raptor-notice button{flex:0 0 auto;min-height:44px;max-width:110px;border:2px solid #723c25!important;border-radius:10px;background:#fffaf0!important;color:#513323!important;font-family:inherit!important;font-weight:700!important;font-size:12px!important;line-height:1.3!important;padding:7px 10px!important;white-space:nowrap}.game-raptor-notice button:focus-visible{outline:3px solid #275b70;outline-offset:3px}.game-raptor-notice.is-friendly{border-color:#66835b;color:#294533;background:#f0f7e5fa}.game-main>.game-raptor-notice{position:absolute;left:10px;right:10px;top:8px}.game-panel-overlay>.game-raptor-notice{position:absolute;left:12px;right:84px;top:8px}.game-bird-sheet>.game-raptor-notice{position:sticky;top:0;margin:0 0 8px}.game-app:has([data-raptor-notice]) .game-panel-overlay:not([data-scene=true])>.game-panel{padding-top:90px}
+@media(max-height:500px){.game-panel-overlay>.game-raptor-notice{left:8px;right:78px;top:3px;padding:4px 7px;gap:6px;font-size:11px}.game-raptor-instruction{font-size:10px}.game-raptor-deadline b{font-size:15px}.game-raptor-notice button{max-width:86px;font-size:11px!important;padding:5px 7px!important}}
+@media(max-height:340px){.game-raptor-notice{font-size:10px;line-height:1.25;padding:2px 5px!important;gap:4px}.game-raptor-notice>div{gap:2px 5px}.game-raptor-instruction{position:absolute;inline-size:1px;block-size:1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}.game-raptor-notice button{max-width:80px;font-size:10px!important;padding:3px 5px!important}.game-app:has([data-raptor-notice]) .game-panel-overlay:not([data-scene=true])>.game-panel{padding-top:55px}}
+
+body[data-world="buncho"] .game-panel-overlay[data-scene=true]>.game-raptor-notice{left:12px;right:12px;top:60px}
+body[data-world="buncho"] .game-panel-overlay:not([data-scene=true])>.game-raptor-notice{top:62px;left:12px;right:12px}
+body[data-world="buncho"] .game-app:has([data-raptor-notice]) .game-panel-overlay:not([data-scene=true])>.game-panel{padding-top:110px}
+@media(max-height:500px){body[data-world="buncho"] .game-panel-overlay[data-scene=true]>.game-raptor-notice{left:8px;right:78px;top:3px}body[data-world="buncho"] .game-app:has([data-raptor-notice]) .game-panel-overlay:not([data-scene=true])>.game-panel{padding-top:86px}}
+@media(max-height:340px){body[data-world="buncho"] .game-app:has([data-raptor-notice]) .game-panel-overlay:not([data-scene=true])>.game-panel{padding-top:60px}}
+
+:is(.game-reset-dialog,.game-adoption-dialog,.game-draw-result)>.game-raptor-notice{position:sticky;top:0;margin:0 0 12px;width:100%;text-align:left}.game-raptor-notice:only-child{margin:0}
+
+/* Reserve a real row for the warning in menus and nested notebook views.
+   The scrollable content cannot slide a button behind the home escape control. */
+body[data-world="buncho"] .game-panel-overlay[open]:has(>.game-raptor-notice):not(:has(.finch-garden)){display:flex;flex-direction:column}
+body[data-world="buncho"] .game-panel-overlay[open]:has(>.game-raptor-notice):not(:has(.finch-garden))>.game-overlay-head{order:-1;flex:none}
+body[data-world="buncho"] .game-panel-overlay[open]:has(>.game-raptor-notice):not(:has(.finch-garden))>.game-raptor-notice{position:static;flex:none;margin:0 12px 8px;width:auto}
+body[data-world="buncho"] .game-panel-overlay[open]:has(>.game-raptor-notice):not(:has(.finch-garden))>.game-panel{flex:1;min-height:0;height:auto;padding-top:8px!important}
+body[data-world="buncho"] .game-panel-overlay[open][data-scene=true]:has(>.game-raptor-notice):not(:has(.finch-garden)){padding-top:60px;box-sizing:border-box}
