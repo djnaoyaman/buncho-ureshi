@@ -386,6 +386,13 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     const shown=compactLayout?.matches?[current].filter(Boolean):active;
     const cageGuests=world.field.place==='home'?encounterCageActors(world):[],actors=[...shown,...cageGuests];
     const positions=visibleFieldPositions(actors,'wide',world.field.place),mobilePositions=visibleFieldPositions(actors,'tall',world.field.place);
+    // Short screens crop the upper perches. Keep the selected family bird and
+    // its invited guests together on the existing lower, visible floor contacts.
+    if(compactLayout?.matches&&cageGuests.length)for(const [kind,map] of [['wide',positions],['tall',mobilePositions]]){
+      const household=visibleFieldPositions(shown,kind,world.field.place),geometry=roomGeometry(kind),fraction=geometry.width/geometry.planeWidth;
+      for(const b of shown)map.set(b.id,{...household.get(b.id),x:.5});
+      cageGuests.forEach((guest,i)=>{const x=cageGuests.length===1?.72:i===0?.28:.72;map.set(guest.id,{...map.get(guest.id),x:(1-fraction)/2+x*fraction,y:.79});});
+    }
     return `${fieldNavigation()}<div class="game-room" data-compact="${!!compactLayout?.matches}" data-field="${world.field.place}" aria-label="${escape(fieldTitle())}。イラストのゲーム用風景です。">
       <picture class="game-habitat"><source media="(max-width: 600px)" srcset="${GAME_ART}${world.field.place==='park'?'field-park':'field-home'}-tall.webp"><img src="${GAME_ART}${world.field.place==='park'?'field-park':'field-home'}-wide.webp" alt="" aria-hidden="true" width="1600" height="1000" decoding="async"></picture>
       ${world.field.place!=='park'?sceneFurniture():''}${gemCollectibles()}<span class="game-floor-soil" style="--care-soil-opacity:${careFloorOpacity(getCleanliness(world)).toFixed(3)}" aria-hidden="true"></span>
