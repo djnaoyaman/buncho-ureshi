@@ -14,12 +14,13 @@ async function inspect(page){
   expect(item.x,slot).toBeGreaterThanOrEqual(-1);expect(item.right,slot).toBeLessThanOrEqual(viewport.width+1);
   expect(item.y,slot).toBeGreaterThanOrEqual(-1);expect(item.bottom,slot).toBeLessThan(viewport.height);
  }
- for(const slot of ['feed','water','greens','shellgrit']){expect(items[slot].mount).toBe('wall');expect(items[slot].bottom).toBeLessThan(items.bath.bottom-geometry.room.height*.1);}
+ for(const slot of ['feed','water','greens','shellgrit']){expect(items[slot].mount).toBe('wall');expect(items[slot].bottom).toBeLessThan(items.bath.bottom-Math.min(geometry.room.height,viewport.height)*.1);}
+ expect(items.shellgrit.bottom).toBeLessThan(items.bath.y);
  expect(items.perch.y).toBeLessThan(items.feed.bottom);expect(items.swing.y).toBeLessThan(items.perch.y);expect(items.toy.y).toBeLessThan(items.feed.y);
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
  return geometry;
 }
-for(const [width,height] of [[320,568],[390,844],[320,844],[768,1024],[1280,800],[1280,600],[844,390]])test(`physical cage mounts remain visible ${width}x${height}`,async({page},info)=>{
+for(const [width,height] of [[320,568],[390,844],[320,844],[768,1024],[1280,800],[1280,600],[1280,500],[1440,500],[1920,600],[844,390]])test(`physical cage mounts remain visible ${width}x${height}`,async({page},info)=>{
  test.setTimeout(90000);await page.setViewportSize({width,height});await page.addInitScript(n=>{Date.now=()=>n;localStorage.setItem('buncho.music.v1',JSON.stringify({enabled:false}));localStorage.setItem('buncho.care-sound-choice.v1',JSON.stringify({explicit:true,enabled:false}));},now);await page.goto('');
  for(const [i,tier] of DECOR_TIERS.entries()){
   const world=furnished(tier.id,i*3);await record(page,world);await page.goto('game/');const geometry=await inspect(page);
@@ -32,9 +33,10 @@ for(const [width,height] of [[320,568],[390,844],[320,844],[768,1024],[1280,800]
 test('friend rooms and atelier keep mounts through preview cancel equip and reload',async({page},info)=>{
  await page.setViewportSize({width:390,height:844});await page.addInitScript(n=>Date.now=()=>n,now);await page.goto('');
  const world=furnished();const friend=createBird(world,{home:'departed',sex:'male'});travelTo(world,'friend',friend.id);await record(page,world);await page.goto('game/');await inspect(page);await page.screenshot({path:info.outputPath('friend-cage.png')});
- await page.locator('.game-scene-controls-toggle').click();await page.locator('.game-bottom-dock [data-game-panel="decorate"]').click();
+ if(await page.locator('.game-scene-controls-toggle').getAttribute('aria-expanded')==='false')await page.locator('.game-scene-controls-toggle').click();await page.locator('.game-bottom-dock [data-game-panel="decorate"]').click();
  const initial=world.decor.equipped.water,target='water-lavender-cozy';await page.locator('[data-decor-slot="water"]').click();await page.locator(`[data-decor-preview="${target}"]`).click();
  await expect(page.locator(`.game-room-preview [data-equipped-item="${target}"] [data-scene-mount="wall"]`)).toHaveCount(1);
  expect((await record(page)).decor.equipped.water).toBe(initial);await page.locator('[data-decor-cancel]').click();expect((await record(page)).decor.equipped.water).toBe(initial);
- await page.locator(`[data-decor-preview="${target}"]`).click();await page.locator(`[data-decor-equip="${target}"]`).click();await page.reload();expect((await record(page)).decor.equipped.water).toBe(target);await inspect(page);
+ await page.locator(`[data-decor-preview="${target}"]`).click();await page.locator(`[data-decor-equip="${target}"]`).click();await expect(page.locator('.game-overlay-message')).toContainText('飾ったよ');await expect.poll(async()=>(await record(page)).decor.equipped.water).toBe(target);await page.reload();expect((await record(page)).decor.equipped.water).toBe(target);await inspect(page);
+ if(await page.locator('.game-scene-controls-toggle').getAttribute('aria-expanded')==='false')await page.locator('.game-scene-controls-toggle').click();await page.locator('.game-field-nav [data-field-travel=home]').click();await expect(page.locator('.game-room')).toHaveAttribute('data-field','home');await expect(page.locator(`.game-room [data-equipped-item="${target}"] [data-scene-mount="wall"]`)).toHaveCount(1);await inspect(page);
 });

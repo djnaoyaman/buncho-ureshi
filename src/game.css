@@ -134,8 +134,8 @@ body[data-world="buncho"] .game-play-actions button{background:#e7edcb;border:1p
 .game-furnishing svg{width:100%;height:auto;overflow:visible}
 .furnishing-feed{--furniture-x:25%;left:var(--furniture-x);top:50%;--furniture-width:12%;width:var(--furniture-width)}
 .furnishing-water{--furniture-x:75%;left:var(--furniture-x);top:49%;--furniture-width:11%;width:var(--furniture-width)}
-.furnishing-greens{--furniture-x:25%;left:var(--furniture-x);top:65%;--furniture-width:10%;width:var(--furniture-width)}
-.furnishing-shellgrit{--furniture-x:74%;left:var(--furniture-x);top:67%;--furniture-width:9%;width:var(--furniture-width)}
+.furnishing-greens{--furniture-x:25%;left:var(--furniture-x);top:60%;--furniture-width:10%;width:var(--furniture-width)}
+.furnishing-shellgrit{--furniture-x:74%;left:var(--furniture-x);top:58%;--furniture-width:9%;width:var(--furniture-width)}
 .furnishing-bath{--furniture-x:75%;left:var(--furniture-x);top:82%;--furniture-width:17%;width:var(--furniture-width)}
 .furnishing-perch{--furniture-x:44%;left:var(--furniture-x);top:38.4%;--furniture-width:27%;width:var(--furniture-width);transform:translate(-50%,-24.2%)}
 .furnishing-swing{--furniture-x:53%;left:var(--furniture-x);top:11.5%;--furniture-width:14%;width:var(--furniture-width);transform:translate(-50%,0)}
@@ -156,8 +156,9 @@ body[data-world="buncho"] .game-play-actions button{background:#e7edcb;border:1p
 /* Keep fixtures inside the visible portion of a full-bleed cage. The image
    can crop at unusual aspect ratios; collectible furnishings must not vanish. */
 body[data-world="buncho"] .game-main .game-room .game-furnishing:not(.furnishing-paper){left:clamp(calc(max(0px,(100% - 100cqw)/2) + var(--furniture-width)/2 + 2px),var(--furniture-x),calc(100% - max(0px,(100% - 100cqw)/2) - var(--furniture-width)/2 - 2px))}
+body[data-world="buncho"] .game-main .game-room{--roof-visible-top:calc(0px - clamp(calc(100cqh - var(--plane-h)),calc(70cqh - var(--plane-h)*.79),0px))}
 body[data-world="buncho"] .game-main .game-room .furnishing-swing,
-body[data-world="buncho"] .game-main .game-room .furnishing-toy{--roof-visible-top:calc(0px - clamp(calc(100cqh - var(--plane-h)),calc(70cqh - var(--plane-h)*.79),0px));top:max(var(--roof-y),calc(var(--roof-visible-top) + 8cqh))}
+body[data-world="buncho"] .game-main .game-room .furnishing-toy{top:max(var(--roof-y),calc(var(--roof-visible-top) + 8cqh))}
 body[data-world="buncho"] .game-main .game-room .furnishing-swing{--roof-y:11.5%;--roof-fraction:.115}
 body[data-world="buncho"] .game-main .game-room .furnishing-toy{--roof-y:13%;--roof-fraction:.13}
 body[data-world="buncho"] .game-main .game-room .furnishing-swing:before,
@@ -166,6 +167,23 @@ body[data-world="buncho"] .game-main .game-room .furnishing-toy:before{display:b
 @media(max-height:500px){
  body[data-world="buncho"] .game-main .game-room .furnishing-swing{--furniture-width:11%;width:var(--furniture-width)}
  body[data-world="buncho"] .game-main .game-room .furnishing-toy{--furniture-width:7%;width:var(--furniture-width)}
+}
+
+
+/* In wide, shallow windows the illustrated roof is outside the visible crop.
+   Keep a compact, vertically ordered set of fixtures in the visible cage. */
+@media(min-width:601px) and (min-aspect-ratio:2/1){
+ body[data-world="buncho"] .game-main .game-room .game-furnishing:not(.furnishing-paper){top:calc(var(--roof-visible-top) + var(--compact-mount-y));transform:translate(-50%,0)}
+ body[data-world="buncho"] .game-main .game-room .furnishing-perch{--compact-mount-y:22cqh;--furniture-width:40cqh}
+ body[data-world="buncho"] .game-main .game-room .furnishing-feed{--compact-mount-y:34cqh;--furniture-width:16cqh}
+ body[data-world="buncho"] .game-main .game-room .furnishing-water{--compact-mount-y:34cqh;--furniture-width:15cqh}
+ body[data-world="buncho"] .game-main .game-room .furnishing-greens{--compact-mount-y:55cqh;--furniture-width:14cqh}
+ body[data-world="buncho"] .game-main .game-room .furnishing-shellgrit{--compact-mount-y:57cqh;--furniture-width:12cqh}
+ body[data-world="buncho"] .game-main .game-room .furnishing-swing{--compact-mount-y:8cqh;--furniture-width:18cqh}
+ body[data-world="buncho"] .game-main .game-room .furnishing-toy{--compact-mount-y:10cqh;--furniture-width:12cqh}
+ body[data-world="buncho"] .game-main .game-room .game-furnishing.furnishing-bath{--compact-mount-y:90cqh;--furniture-width:24cqh;transform:translate(-50%,-94%)}
+ body[data-world="buncho"] .game-main .game-room .furnishing-swing:before,
+ body[data-world="buncho"] .game-main .game-room .furnishing-toy:before{height:calc(14% + max(0px,var(--roof-visible-top) + var(--compact-mount-y) - var(--plane-h)*var(--roof-fraction)))}
 }
 
 /* Only the game gets this exit and its compact world controls. */
