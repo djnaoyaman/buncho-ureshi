@@ -20,7 +20,7 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
   const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   function render({focus=false}={}){
     if(!alive)return;const w=getWorld();
-    if(mode!=='garden'||w.paused||w.worldId!==worldId)stopCrow();
+    if(mode!=='garden'||w.paused||w.worldId!==worldId||doc.querySelector('.game-bird-sheet[open]'))stopCrow();
     if(w.worldId===worldId&&rub&&rub.generation===generation&&['entry','crows'].includes(mode)&&pageId===rub.id){refreshBond();return;}
     if(w.worldId!==worldId){rub=null;clearTimeout(petTimer);}
     const view=`${w.worldId}:${mode}:${pageId}:${showPhoto}`,oldEntryScroll=view===renderedView?root.scrollTop:0;
@@ -194,22 +194,24 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
     if(event?.kind!=='arrive'&&(phase!==crowPhase||event?.kind==='warning'||priorWarning!==crowClock.warning)){crowPhase=phase;render();}
     if(event?.kind==='arrive'){
       const originalWorld=w.worldId,gardenId=w.encounters.garden.id,token=generation,session=crowEpoch;
-      crowFlight=true;let feedback;
+      crowFlight=true;let feedback,committed=false;
       try{await transact(current=>{
         if(!alive||token!==generation||session!==crowEpoch||!crowEligible()||current.worldId!==originalWorld||current.encounters.garden.id!==gardenId)return current;
         feedback=arriveGardenCrow(current,event.id,Date.now(),{worldId:current.worldId,revision:current.revision,gardenId});return current;
-      });if(alive&&token===generation&&feedback?.changed){notice=feedback.message;crowPhase=crowScene(getWorld())?.phase||null;render();}}
+      });committed=!!feedback?.changed;if(alive&&token===generation&&feedback?.changed){notice='';crowPhase=crowScene(getWorld())?.phase||null;render();}}
       catch{if(alive&&token===generation){notice='カラスの記録を保存できなかったよ。元気と保存はそのままです。';render();}}
-      finally{crowFlight=false;}
+      finally{crowFlight=false;if(!committed)stopCrow();}
     }
     if(alive)crowTimer=win.setTimeout(pollCrow,1000);
   }
   const crowInterrupted=()=>{stopCrow();if(alive&&mode==='garden')render();};
+  const crowModalObserver=win.MutationObserver?new win.MutationObserver(records=>{if(records.some(r=>r.target.matches?.('.game-bird-sheet')))stopCrow();}):null;
+  if(doc.documentElement)crowModalObserver?.observe(doc.documentElement,{subtree:true,attributes:true,attributeFilter:['open']});
   doc.addEventListener('visibilitychange',crowInterrupted);
   win.addEventListener('offline',crowInterrupted);
   win.addEventListener('pagehide',crowInterrupted);
   crowTimer=win.setTimeout(pollCrow,1000);
   root.classList.add('finch-overlay-content');root.addEventListener('click',click);root.addEventListener('pointerdown',startRub);root.addEventListener('keydown',keyRub);doc.addEventListener('pointermove',moveRub,{passive:false});doc.addEventListener('pointerup',endRub);doc.addEventListener('pointercancel',endRub);render();
   const motion=mountGardenBirdMotion(root,{enabled:()=>alive&&!getWorld().paused&&getWorld().settings.motion});
-  return {open,garden,entry(id){generation++;rub=null;busy=false;mode='entry';pageId=id;showPhoto=false;notice='';render({focus:true});},notebook(){rub=null;generation++;busy=false;mode='notebook';pageId=null;notice='';render({focus:true});},refresh(){render();},destroy(){stopCrow();win.clearTimeout(crowTimer);doc.removeEventListener('visibilitychange',crowInterrupted);win.removeEventListener('offline',crowInterrupted);win.removeEventListener('pagehide',crowInterrupted);doc.removeEventListener('buncho-game-will-render',rememberCatalog);media.destroy();motion();alive=false;generation++;rub=null;clearTimeout(petTimer);root.removeEventListener('pointerdown',startRub);root.removeEventListener('keydown',keyRub);doc.removeEventListener('pointermove',moveRub);doc.removeEventListener('pointerup',endRub);doc.removeEventListener('pointercancel',endRub);root.removeEventListener('click',click);root.removeAttribute('aria-busy');root.classList.remove('finch-overlay-content');}};
+  return {open,garden,entry(id){generation++;rub=null;busy=false;mode='entry';pageId=id;showPhoto=false;notice='';render({focus:true});},notebook(){rub=null;generation++;busy=false;mode='notebook';pageId=null;notice='';render({focus:true});},refresh(){render();},destroy(){stopCrow();crowModalObserver?.disconnect();win.clearTimeout(crowTimer);doc.removeEventListener('visibilitychange',crowInterrupted);win.removeEventListener('offline',crowInterrupted);win.removeEventListener('pagehide',crowInterrupted);doc.removeEventListener('buncho-game-will-render',rememberCatalog);media.destroy();motion();alive=false;generation++;rub=null;clearTimeout(petTimer);root.removeEventListener('pointerdown',startRub);root.removeEventListener('keydown',keyRub);doc.removeEventListener('pointermove',moveRub);doc.removeEventListener('pointerup',endRub);doc.removeEventListener('pointercancel',endRub);root.removeEventListener('click',click);root.removeAttribute('aria-busy');root.classList.remove('finch-overlay-content');}};
 }

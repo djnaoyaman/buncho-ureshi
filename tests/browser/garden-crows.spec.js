@@ -27,11 +27,14 @@ for(const [species,size] of [['large-billed-crow',[320,568]],['carrion-crow',[39
  await page.clock.runFor(119000);await expect(page.locator('[data-crow-phase]')).toHaveCount(0);expect(await page.evaluate(()=>crowFixture.world().birds[0].needs.energy)).toBe(80);
  await page.clock.runFor(1000);await expect(page.locator('[data-crow-phase=warning]')).toBeVisible();expect(await page.evaluate(()=>crowFixture.world().birds[0].needs.energy)).toBe(80);
  await page.clock.runFor(6000);await expect(page.locator('[data-crow-phase=visiting]')).toBeVisible();await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-scene-state','ready');
- expect(await page.evaluate(()=>crowFixture.world().birds[0].needs.energy)).toBe(40);await expect(page.locator('[data-garden-friend]')).toHaveCount(0);
+ expect(await page.evaluate(()=>crowFixture.world().birds[0].needs.energy)).toBe(40);await expect(page.locator('.finch-garden-stage [data-garden-friend]')).toHaveCount(0);
  const geometry=await page.locator('.finch-crow-scale-scene').evaluate(e=>{const j=e.querySelector('.finch-crow-java').getBoundingClientRect(),c=e.querySelector('.finch-crow-actor').getBoundingClientRect(),s=e.getBoundingClientRect(),art=e.querySelector('.finch-crow-actor');return {ratio:Number(e.dataset.lengthRatio),java:j.width,crow:c.width,foot:parseFloat(art.style.getPropertyValue('--crow-foot-y')),jbottom:j.bottom-j.height*.025,ctop:c.top,cheight:c.height,left:s.left,right:s.right};});
  expect(Math.abs(geometry.jbottom-(geometry.ctop+geometry.cheight*geometry.foot))).toBeLessThan(2);expect(geometry.left).toBeGreaterThanOrEqual(0);expect(geometry.right).toBeLessThanOrEqual(size[0]+1);
+ await expect(page.locator('.finch-notice')).toBeEmpty();
+ const notice=await page.locator('.finch-crow-notice').boundingBox(),home=await page.locator('.finch-crow-notice [data-finch-go-home]').boundingBox();expect(home.height).toBeGreaterThanOrEqual(44);expect(notice.y+notice.height).toBeLessThanOrEqual(size[1]);
+ if(size[1]<=340)expect(notice.y+notice.height).toBeLessThanOrEqual(54);
  await info.attach(`crow-${species}`,{body:await page.screenshot({path:info.outputPath(`crow-${species}.png`)}),contentType:'image/png'});
- await page.clock.runFor(45000);await expect(page.locator('[data-garden-friend]')).toHaveCount(4);expect(await page.evaluate(()=>crowFixture.world().birds[0].needs.energy)).toBe(40);
+ await page.clock.runFor(45000);await expect(page.locator('.finch-garden-stage [data-garden-friend]')).toHaveCount(4);expect(await page.evaluate(()=>crowFixture.world().birds[0].needs.energy)).toBe(40);
  await page.clock.runFor(180000);expect(await page.evaluate(()=>crowFixture.world().encounters.crow.visits[0].count)).toBe(1);
 });
 test('warning can be escaped and a new garden needs its own continuous two minutes',async({page})=>{
@@ -39,7 +42,7 @@ test('warning can be escaped and a new garden needs its own continuous two minut
  await page.evaluate(()=>crowFixture.panel.garden('mizukagami'));await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-scene-state','ready');await page.clock.runFor(119000);await expect(page.locator('[data-crow-phase]')).toHaveCount(0);
 });
 test('friendly crow keeps friends, never halves energy, and petting survives saved reload',async({page})=>{
- await setup(page,{friendly:true});await visit(page);expect(await page.evaluate(()=>crowFixture.world().birds[0].needs.energy)).toBe(80);await expect(page.locator('[data-garden-friend]')).toHaveCount(4);await expect(page.locator('[data-crow-phase=visiting]')).toContainText('なかよし');
+ await setup(page,{friendly:true});await visit(page);expect(await page.evaluate(()=>crowFixture.world().birds[0].needs.energy)).toBe(80);await expect(page.locator('.finch-garden-stage [data-garden-friend]')).toHaveCount(4);await expect(page.locator('[data-crow-phase=visiting]')).toContainText('なかよし');
  await page.locator('[data-crow-entry=large-billed-crow]').click();const target=page.locator('[data-encounter-rub]');await target.focus();await page.keyboard.press('Enter');await expect(page.locator('[data-crow-points]')).toHaveText('105');await expect(target).toBeFocused();
  const before=await page.evaluate(()=>JSON.stringify(crowFixture.world().birds));await page.evaluate(async()=>{const value=await crowFixture.store.transact(w=>w);window.savedCrowPoints=value.encounters.crow.visits[0].petPoints;});expect(await page.evaluate(()=>savedCrowPoints)).toBe(105);expect(await page.evaluate(()=>JSON.stringify(crowFixture.world().birds))).toBe(before);
 });

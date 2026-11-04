@@ -56,3 +56,21 @@ test('rejected keyboard pet transaction reports failure without granting friends
 test('destroy during queued arrival prevents mutation and never reschedules timer',async()=>{
  const w=fixture();let release;const s=setup(w,{transact:fn=>new Promise(resolve=>{release=()=>resolve(fn(w));})});try{await s.run(126);const {flight}=await s.tick();s.panel.destroy();release();await flight;assert.equal(w.encounters.crow.visits.length,0);assert.equal([...s.timers.values()].filter(v=>v.fn.name==='pollCrow').length,0);}finally{s.close();}
 });
+test('failed save permits a new attempt only after another full continuous garden dwell',async()=>{
+ const w=fixture();let attempts=0;const s=setup(w,{transact:async fn=>{attempts++;if(attempts===1)throw new Error('temporary storage failure');return fn(w);}});try{
+ await s.run(127);assert.equal(attempts,1);assert.equal(w.encounters.crow.visits.length,0);
+ await s.run(120);assert.equal(attempts,1);assert.equal(s.root.querySelector('[data-crow-phase="warning"]'),null);
+ await s.run(1);assert.ok(s.root.querySelector('[data-crow-phase="warning"]'));await s.run(6);assert.equal(attempts,2);assert.equal(w.encounters.crow.visits.length,1);
+ }finally{s.close();}
+});
+test('subsecond household modal open-close cancels a queued crow arrival',async()=>{
+ const w=fixture();let release;const s=setup(w,{transact:fn=>new Promise(resolve=>{release=()=>resolve(fn(w));})});try{
+ const modal=s.win.document.createElement('dialog');modal.className='game-bird-sheet';s.win.document.body.append(modal);await s.run(126);const {flight}=await s.tick();assert.ok(release);
+ modal.setAttribute('open','');modal.removeAttribute('open');await sleep(5);s.ready();release();await flight;assert.equal(w.encounters.crow.visits.length,0);
+ }finally{s.close();}
+});
+test('subsecond household modal resets dwell without needing the one-second poll',async()=>{
+ const w=fixture(),s=setup(w);try{const modal=s.win.document.createElement('dialog');modal.className='game-bird-sheet';s.win.document.body.append(modal);await s.run(120);
+ modal.setAttribute('open','');modal.removeAttribute('open');await sleep(5);await s.run(120);assert.equal(s.root.querySelector('[data-crow-phase="warning"]'),null);await s.run(1);assert.ok(s.root.querySelector('[data-crow-phase="warning"]'));
+ }finally{s.close();}
+});
