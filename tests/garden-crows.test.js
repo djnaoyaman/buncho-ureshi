@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {IDBFactory} from 'fake-indexeddb';
-import {createWorld,createBird,validateWorld,readCompatibleWorld,parseSave,serializeWorld} from '../src/engine.js';
+import {createWorld,createBird,petBird,validateWorld,readCompatibleWorld,parseSave,serializeWorld} from '../src/engine.js';
 import {openGameStore,DB_NAME} from '../src/game-store.js';
 import {GARDEN_IDS} from '../src/data/gardens.js';
 import {CROW_RULES,CROW_SPECIES,initialCrowState,validateCrowState,createGardenCrowClock,arriveGardenCrow,crowCoolingDown,crowScene,petGardenCrow,crowFriendship} from '../src/garden-crows.js';
@@ -122,4 +122,11 @@ test('notebook exposes accessible petting only after discovery and friendly noti
   for(let i=0;i<13;i++)petGardenCrow(w,id,8,token(w));win.document.body.innerHTML=renderCrowFriendship(w,id);assert.match(win.document.body.textContent,/もう襲わない/);
   const notice=renderCrowNotice(w,{now});assert.match(notice,/なかよし/);assert.doesNotMatch(notice,/元気は半分|友達は安全な場所/);
  }finally{win.happyDOM.abort();}
+});
+
+test('crow energy loss recovers immediately in the same care slot even at both reward balance caps',()=>{
+ const w=fixture();w.birds[0].needs.energy=100;w.decor.points=w.decor.lifetimePoints=1000000000;w.economy.gold=w.economy.lifetimeGold=1000000000;
+ const slot=w.careSchedule.windowAt;validateWorld(w);assert.equal(arriveGardenCrow(w,id,now,token(w)).changed,true);assert.equal(w.birds[0].needs.energy,50);
+ for(const energy of [70,90,100]){const r=petBird(w,'b1',now);assert.equal(r.changed,true);assert.equal(r.cooldownTicks,0);assert.equal(r.gemAward,0);assert.equal(r.goldAward,0);assert.equal(w.birds[0].needs.energy,energy);assert.equal(w.careSchedule.windowAt,slot);validateWorld(w);}
+ assert.equal(petBird(w,'b1',now).reason,'full');assert.equal(w.decor.points,1000000000);assert.equal(w.economy.gold,1000000000);
 });
