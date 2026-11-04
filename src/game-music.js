@@ -101,7 +101,12 @@ export function createGameMusic({base='', gardenAssets=GARDEN_ASSETS, Context=gl
   function setGarden(id,nextWorldId=null){
     if(disposed)return Promise.resolve(false);
     const replaced=worldId!==null&&nextWorldId!==null&&worldId!==nextWorldId;
-    if(nextWorldId!==null)worldId=nextWorldId;gardenId=typeof id==='string'?id:null;
+    const nextGardenId=typeof id==='string'?id:null;
+    const arrived=nextGardenId!==null&&(nextGardenId!==gardenId||replaced);
+    if(nextWorldId!==null)worldId=nextWorldId;gardenId=nextGardenId;
+    // An actual garden arrival always selects its theme. Repaints do not
+    // restart music, and explicit OFF is never overridden by navigation.
+    if(arrived&&tracks.some(t=>t.gardenId===gardenId)){mode='auto';save();}
     if(replaced){invalidate();status=enabled?'paused':'off';}
     const target=mode==='auto'?autoTarget():fixedSelected;emit();
     if(!enabled||!unlocked||context?.state!=='running')return Promise.resolve(false);
