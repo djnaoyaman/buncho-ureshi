@@ -96,3 +96,13 @@ test('live game shell keeps the foreground clock through normal world polling an
  expect(after.tick).toBeGreaterThan(0);
  await page.clock.runFor(180000);expect((await saved()).encounters.crow.visits[0].count).toBe(1);
 });
+
+test('all five undiscovered crow shapes are visible as individual silhouettes and unlock one at a time',async({page},info)=>{
+ await page.setViewportSize({width:1000,height:800});await setup(page);await page.evaluate(()=>crowFixture.panel.notebook());await page.locator('[data-crow-notebook]').click();
+ const shadows=page.locator('.finch-crow-unknown img');await expect(shadows).toHaveCount(5);const sources=[];
+ for(const shadow of await shadows.all()){await expect(shadow).toBeVisible();await shadow.evaluate(img=>img.decode());expect(await shadow.evaluate(img=>getComputedStyle(img).filter)).toBe('brightness(0)');sources.push(await shadow.getAttribute('src'));}
+ expect(new Set(sources).size).toBe(5);await expect(page.locator('[data-crow-entry]:disabled')).toHaveCount(5);await expect(page.locator('.finch-crow-notebook')).not.toContainText('ハシブトガラス');
+ await info.attach('five-crow-silhouettes',{body:await page.screenshot({path:info.outputPath('five-crow-silhouettes.png')}),contentType:'image/png'});
+ await page.evaluate(async()=>{const base=new URL('./',location.href).href,{arriveGardenCrow}=await import(base+'src/garden-crows.js');await crowFixture.store.transact(w=>{arriveGardenCrow(w,'large-billed-crow',Date.now(),{worldId:w.worldId,revision:w.revision,gardenId:w.encounters.garden.id});return w;});await crowFixture.refresh();});
+ await expect(page.locator('.finch-crow-unknown img')).toHaveCount(4);const seen=page.locator('[data-crow-entry=large-billed-crow]');await expect(seen).toBeEnabled();await expect(seen).toContainText('ハシブトガラス');expect(await seen.locator('img').evaluate(img=>getComputedStyle(img).filter)).toBe('none');
+});

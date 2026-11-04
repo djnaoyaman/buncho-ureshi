@@ -147,3 +147,11 @@ test('crow target identity is strictly validated and scene never substitutes ano
  for(const value of [null,0,'','someone','b0']){const s=structuredClone(w.encounters.crow);s.arrivalBirdId=value;assert.throws(()=>validateCrowState(s,w.tick,GARDEN_IDS));}
  w.birds[0].home='departed';createBird(w,{home:'resident'});assert.equal(crowScene(w,now),null);
 });
+
+test('undiscovered crow entries use five individual silhouettes and reveal only the encountered species',()=>{
+ const w=fixture(),before=structuredClone(w),win=new Window();try{
+  win.document.body.innerHTML=renderCrowNotebook(w);const shadows=[...win.document.querySelectorAll('.finch-crow-unknown img')];assert.equal(shadows.length,5);assert.equal(new Set(shadows.map(img=>img.getAttribute('src'))).size,5);
+  for(const species of CROW_SPECIES){const card=win.document.querySelector(`[data-crow-entry="${species.id}"]`);assert.equal(card.disabled,true);assert.ok(card.querySelector(`.finch-crow-unknown img[src$="/${species.id}.webp"]`));assert.equal(card.querySelector('img').alt,'');assert.ok(!win.document.body.textContent.includes(species.name));}
+  assert.deepEqual(w,before);arriveGardenCrow(w,id,now,token(w));win.document.body.innerHTML=renderCrowNotebook(w);assert.equal(win.document.querySelectorAll('.finch-crow-unknown').length,4);const seen=win.document.querySelector(`[data-crow-entry="${id}"]`);assert.equal(seen.disabled,false);assert.equal(seen.querySelector('.finch-crow-unknown'),null);assert.equal(seen.querySelector('img').alt,CROW_SPECIES[0].name);
+ }finally{win.happyDOM.abort();}
+});
