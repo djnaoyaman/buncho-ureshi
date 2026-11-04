@@ -12,7 +12,7 @@ async function insideViewport(locator,page){
  expect(box).not.toBeNull();expect(box.x).toBeGreaterThanOrEqual(0);expect(box.y).toBeGreaterThanOrEqual(0);
  expect(box.x+box.width).toBeLessThanOrEqual(size.width);expect(box.y+box.height).toBeLessThanOrEqual(size.height);
 }
-for(const width of [320,390])test(`compact music controls and all 13 choices at ${width}px`,async({page},info)=>{
+for(const width of [320,390])test(`compact music controls and all 16 choices at ${width}px`,async({page},info)=>{
  await page.setViewportSize({width,height:width===320?568:844});
  await page.addInitScript(()=>localStorage.setItem('buncho.music.v1',JSON.stringify({enabled:false})));
  await page.goto('game/');await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');
@@ -21,7 +21,7 @@ for(const width of [320,390])test(`compact music controls and all 13 choices at 
  await expect(list).toBeHidden();await expect(chooser).toHaveAttribute('aria-expanded','false');
  await insideViewport(off,page);await insideViewport(volume,page);
  await info.attach(`music-collapsed-${width}`,{body:await page.screenshot(),contentType:'image/png'});
- await chooser.click();await expect(list).toBeVisible();await expect(list.locator('[data-music]')).toHaveCount(13);
+ await chooser.click();await expect(list).toBeVisible();await expect(list.locator('[data-music]')).toHaveCount(16);
  expect(await list.evaluate(el=>el.scrollHeight>el.clientHeight)).toBe(true);
  await insideViewport(off,page);await insideViewport(volume,page);
  await info.attach(`music-chooser-${width}`,{body:await page.screenshot(),contentType:'image/png'});
