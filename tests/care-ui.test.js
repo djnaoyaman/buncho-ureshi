@@ -236,3 +236,65 @@ test('care dock keeps its labelled button and bird-coloured line icon through re
   await f.settle();assert.deepEqual(f.read(),before,'opening and closing care leaves the saved world unchanged');
 });
 
+
+function directRub(f,type,{x=80,y=100,id=1,primary=true,target}={}){
+  const surface=f.root.querySelector('[data-care-rub]');
+  if(surface){const box=()=>({left:0,top:0,right:280,bottom:330,width:280,height:330});surface.getBoundingClientRect=box;surface.querySelector('.game-sprite').getBoundingClientRect=box;}
+  const event=new f.window.PointerEvent(type,{bubbles:true,cancelable:true,pointerId:id,isPrimary:primary,button:0,clientX:x,clientY:y,pointerType:'touch'});
+  (target||surface||f.window.document).dispatchEvent(event);return event;
+}
+
+test('direct care renders one large bird below two actions, with accessible keyboard instructions',async t=>{
+  const f=await fixture(t);await f.mount();
+  assert.equal(f.root.querySelectorAll('.game-care-actions button').length,2);
+  const target=f.root.querySelector('[data-care-rub]');assert(target.querySelector('.game-sprite img'));
+  assert.equal(target.dataset.careBirdId,'b1');assert.match(target.getAttribute('aria-label'),/なでる/);
+  assert.equal(target.getAttribute('aria-describedby'),'game-care-pet-help game-care-pet-keyboard');
+  assert.match(f.root.querySelector('#game-care-pet-keyboard').textContent,/Enter.*Space/);
+  assert.equal(f.root.querySelector('.game-care-actions [data-game-care=pet]'),null);
+});
+
+test('direct care ignores taps and short movement, then commits exactly one reward at gesture release',async t=>{
+  const f=await fixture(t);await f.mount();const before=f.read();
+  directRub(f,'pointerdown');directRub(f,'pointerup');
+  f.root.querySelector('[data-care-rub]').dispatchEvent(new f.window.MouseEvent('click',{bubbles:true,detail:1}));
+  directRub(f,'pointerdown');directRub(f,'pointermove',{x:95});directRub(f,'pointerup',{x:95});await f.settle();assert.deepEqual(f.read(),before);
+  directRub(f,'pointerdown');directRub(f,'pointermove',{x:145});directRub(f,'pointermove',{x:80});
+  assert.deepEqual(f.read(),before,'movement is not a save');assert.equal(f.root.querySelector('[data-care-rub]').dataset.rubbing,'ready');
+  directRub(f,'pointerup');await f.settle();const after=f.read();
+  assert.equal(after.events.filter(e=>e.kind==='user-pet').length,1);assert.equal(after.birds[0].mood,before.birds[0].mood+4);
+  assert.equal(after.economy.gold,before.economy.gold+4);assert.equal(after.decor.points,before.decor.points+5);
+  assert.deepEqual(after.encounters,before.encounters,'catalog affection is independent');
+  assert.equal(f.root.querySelector('#game-sheet-title').textContent,before.birds[0].name,'rubbing never switches birds');
+  directRub(f,'pointerup');await f.settle();assert.deepEqual(f.read(),after,'duplicate release cannot award twice');
+  f.stop();await f.mount();assert.equal(f.read().economy.gold,after.economy.gold);assert.equal(f.read().birds[0].mood,after.birds[0].mood);
+});
+
+test('direct care cancels on pointercancel, leaving the bird, second touch, close and bird change',async t=>{
+  const f=await fixture(t);await f.mount();
+  for(const kind of ['cancel','outside','second','close','switch']){
+    if(!f.root.querySelector('.game-bird-sheet').open)f.openCare();
+    const before=f.read();directRub(f,'pointerdown');directRub(f,'pointermove',{x:150});
+    if(kind==='cancel')directRub(f,'pointercancel',{x:150});
+    if(kind==='outside')directRub(f,'pointermove',{x:400});
+    if(kind==='second'){directRub(f,'pointerdown',{id:2,primary:false});directRub(f,'pointerup',{id:2,primary:false});}
+    if(kind==='close')f.closeCare();
+    if(kind==='switch')f.root.querySelector('.game-bird-sheet [data-bird-step="1"]').click();
+    directRub(f,'pointerup',{x:150,target:f.window.document});await f.settle();assert.deepEqual(f.read(),before,kind);
+  }
+});
+
+test('direct care keeps the active surface through a poll and supports sparse slow movement',async t=>{
+  const f=await fixture(t);await f.mount();const target=f.root.querySelector('[data-care-rub]');
+  directRub(f,'pointerdown');const next=f.read();next.birds[0].mood=50;bumpRevision(next);f.write(next);await f.poll();
+  assert.equal(f.root.querySelector('[data-care-rub]'),target);
+  await sleep(50);directRub(f,'pointermove',{x:140});directRub(f,'pointerup',{x:140});await f.settle();
+  assert.equal(f.read().birds[0].mood,54);assert.equal(f.read().events.filter(e=>e.kind==='user-pet').length,1);
+});
+
+test('direct care suppresses repeated keyboard activation and handles failed save without reward',async t=>{
+  const f=await fixture(t);await f.mount();const target=f.root.querySelector('[data-care-rub]');
+  for(const key of ['Enter',' ']){const event=new f.window.KeyboardEvent('keydown',{bubbles:true,cancelable:true,key,repeat:true});target.dispatchEvent(event);assert(event.defaultPrevented);}
+  const before=f.read();f.failNext();directRub(f,'pointerdown');directRub(f,'pointermove',{x:160});directRub(f,'pointerup',{x:160});await f.settle();assert.deepEqual(f.read(),before);assert.match(f.root.querySelector('.game-message').textContent,/test save failure/);
+  f.root.querySelector('[data-care-rub]').click();await f.settle();assert.equal(f.read().events.filter(e=>e.kind==='user-pet').length,1,'assistive/keyboard click remains supported');
+});
