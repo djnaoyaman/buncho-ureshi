@@ -14,7 +14,7 @@ for(const s of DECOR_SLOTS){
   for(let t=1;t<=3;t++){
    const a=furnitureSvg(s.id,c.hex,t),b=furnitureSceneSvg(s.id,c.hex,t);
    assert(a.startsWith('<svg'));assert.equal(a,furnitureSvg(s.id,c.hex,t));assert(!/NaN|Infinity|undefined|null/.test(a));
-   assert.equal(a.replace(/viewBox="[^"]+"/,'').replace(/ data-scene-art="true"/,''),b.replace(/viewBox="[^"]+"/,'').replace(/ data-scene-art="true"/,''),'catalog and scene must use identical geometry');
+   assert.equal(a.replace(/viewBox="[^"]+"/,'').replace(/ data-scene-art="true"/,''),b.replace(/viewBox="[^"]+"/,'').replace(/ data-scene-art="true"/,'').replace(/ data-scene-mount="[^"]+"/,'').replace(/<g data-scene-fixture="wall"[\s\S]*?<\/g>/,''),'catalog and scene must use identical geometry');
    assert(a.includes('aria-hidden="true"'));assert(a.includes('focusable="false"'));assert(a.includes('data-item-art="atelier-v3"'));assert(furnitureFormName(s.id,c.hex));
    const geometry=[...a.matchAll(/<(?:path|rect|circle|ellipse)\b[^>]*>/g)].map(x=>x[0].replace(/(?:fill|stroke)="[^"]*"/g,'').replace(/id="[^"]*"/g,'')).join('');tierShapes.push(geometry);count++;
   }

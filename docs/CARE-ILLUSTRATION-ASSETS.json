@@ -1,0 +1,187 @@
+{
+  "version": 1,
+  "style": "Fine colored-pencil and soft watercolor/gouache, matching existing illustrated finch collection",
+  "assets": [
+    {
+      "id": "white-adult",
+      "file": "white-adult.webp",
+      "color": "white",
+      "stage": "adult",
+      "width": 900,
+      "height": 900,
+      "alphaBbox64": [
+        93,
+        50,
+        780,
+        878
+      ],
+      "alphaPreservedExactly": true,
+      "transparentFraction": 0.5798913580246914,
+      "bytes": 146122,
+      "sha256": "2cfd0af5b3abeda370b90c00dd5316996c3344cdb72307f002fa1c65df598f9d",
+      "originalWidth": 1254,
+      "originalHeight": 1254
+    },
+    {
+      "id": "sakura-adult",
+      "file": "sakura-adult.webp",
+      "color": "sakura",
+      "stage": "adult",
+      "width": 900,
+      "height": 900,
+      "alphaBbox64": [
+        116,
+        53,
+        805,
+        884
+      ],
+      "alphaPreservedExactly": true,
+      "transparentFraction": 0.593120987654321,
+      "bytes": 190400,
+      "sha256": "d05f379a808305bd1d295654e2ada6adae22dc915d8bd89b2b952975d6f8d06c",
+      "originalWidth": 1254,
+      "originalHeight": 1254
+    },
+    {
+      "id": "silver-adult",
+      "file": "silver-adult.webp",
+      "color": "silver",
+      "stage": "adult",
+      "width": 900,
+      "height": 900,
+      "alphaBbox64": [
+        99,
+        54,
+        795,
+        885
+      ],
+      "alphaPreservedExactly": true,
+      "transparentFraction": 0.587958024691358,
+      "bytes": 177180,
+      "sha256": "95481455cbbc83efd8b1d0c61758ed526900547743517ff1a3ebdccc4d001733",
+      "originalWidth": 1254,
+      "originalHeight": 1254
+    },
+    {
+      "id": "cinnamon-adult",
+      "file": "cinnamon-adult.webp",
+      "color": "cinnamon",
+      "stage": "adult",
+      "width": 900,
+      "height": 900,
+      "alphaBbox64": [
+        112,
+        41,
+        800,
+        883
+      ],
+      "alphaPreservedExactly": true,
+      "transparentFraction": 0.5489135802469136,
+      "bytes": 222334,
+      "sha256": "8936468f2c0fc5da46fe8dca443a6cbccd7c1f65a04a67f82aebebcf03fa4b9a",
+      "originalWidth": 1254,
+      "originalHeight": 1254
+    },
+    {
+      "id": "white-juvenile",
+      "file": "white-juvenile.webp",
+      "color": "white",
+      "stage": "juvenile",
+      "width": 900,
+      "height": 900,
+      "alphaBbox64": [
+        93,
+        46,
+        763,
+        872
+      ],
+      "alphaPreservedExactly": true,
+      "transparentFraction": 0.6312111111111111,
+      "bytes": 161480,
+      "sha256": "68f97d7066c63a2728644014e7d02170bb0750ca6eb9e74242c9caa37f00211a",
+      "originalWidth": 1254,
+      "originalHeight": 1254
+    },
+    {
+      "id": "sakura-juvenile",
+      "file": "sakura-juvenile.webp",
+      "color": "sakura",
+      "stage": "juvenile",
+      "width": 900,
+      "height": 900,
+      "alphaBbox64": [
+        91,
+        55,
+        778,
+        857
+      ],
+      "alphaPreservedExactly": true,
+      "transparentFraction": 0.6406592592592593,
+      "bytes": 180788,
+      "sha256": "2213bd516ccafafec19a1c9a7bee0dab1fbdb7e0b31e10c1a3cfa4d6f07e769b",
+      "originalWidth": 1254,
+      "originalHeight": 1254
+    },
+    {
+      "id": "silver-juvenile",
+      "file": "silver-juvenile.webp",
+      "color": "silver",
+      "stage": "juvenile",
+      "width": 900,
+      "height": 900,
+      "alphaBbox64": [
+        87,
+        51,
+        783,
+        862
+      ],
+      "alphaPreservedExactly": true,
+      "transparentFraction": 0.6437246913580247,
+      "bytes": 171760,
+      "sha256": "200560d0cb1edfc4f031b92fbc2d4f5690a3717b5fa8228196e67d98ec19c419",
+      "originalWidth": 1254,
+      "originalHeight": 1254
+    },
+    {
+      "id": "cinnamon-juvenile",
+      "file": "cinnamon-juvenile.webp",
+      "color": "cinnamon",
+      "stage": "juvenile",
+      "width": 900,
+      "height": 900,
+      "alphaBbox64": [
+        70,
+        47,
+        822,
+        869
+      ],
+      "alphaPreservedExactly": true,
+      "transparentFraction": 0.616774074074074,
+      "bytes": 179392,
+      "sha256": "a318128dda44b7b87e54bf1f23d92c93895b76ec47d100ea28df6efe68422fd0",
+      "originalWidth": 1254,
+      "originalHeight": 1254
+    },
+    {
+      "id": "chick",
+      "file": "chick.webp",
+      "color": null,
+      "stage": "chick",
+      "width": 900,
+      "height": 900,
+      "alphaBbox64": [
+        65,
+        68,
+        833,
+        845
+      ],
+      "alphaPreservedExactly": true,
+      "transparentFraction": 0.5606938271604939,
+      "bytes": 213144,
+      "sha256": "658aacbeac61d7524d9f7f476e32f45859e05f6cbc08c4cbc633eb2bd10a2528",
+      "originalWidth": 1254,
+      "originalHeight": 1254
+    }
+  ],
+  "encoding": "900 x 900 production WebP from 1254 x 1254 original PNG, Lanczos downsample, quality 90, method 4, exact alpha preserved against resized original."
+}

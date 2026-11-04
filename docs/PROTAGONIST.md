@@ -27,4 +27,4 @@ v1〜v8は検証後に移行します。v8からは主人公の記録を追加�
 
 `tests/protagonist.test.js` は出生順、男女、同時死亡、孫への継承、子なし、孵化、帰宅、定員、旧保存の期限、読み込みの競合、破損保存、復元、9つの庭を検証します。
 
-`playwright.protagonist.config.js` は Chromium touch / WebKit touch / desktop の18ケース。本人印、先代の墓、祈りの保存、操作中の代替わり、3代目、子なし、v8移行、画面の狭幅・広幅と再読込を確認します。既存のhome-visits検査では本人の改名・同名家族・他の鳥の選択も確認します。
+`playwright.protagonist.config.js` は Chromium touch / WebKit touch / desktop の18ケース。本人印、先代の墓、祈りの保存、操作中の代替わり、3代目、子なし、v8移行、画面の狭幅・広幅と再読込を確認します。home-visitsの26検査では本人の改名・同名家族・他の鳥の選択、満員時の病院通知・墓への導線も確認します。
