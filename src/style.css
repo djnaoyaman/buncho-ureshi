@@ -2059,7 +2059,8 @@ body[data-world="buncho"] .game-gem-reward{background:#e5f2bb;color:#304631;bord
 /* Editorial index only. Original image bytes, article plates and credits stay untouched.
    Individual framing preserves identifying features; no hue shifts or generated detail. */
 #article-grid .article-cover-frame{padding:0;background:transparent;border-radius:0;overflow:visible}
-#article-grid .article-cover-frame img{display:block;width:100%;height:auto;aspect-ratio:var(--photo-ratio,4/3);object-fit:cover!important;object-position:var(--photo-position,50% 50%);border-radius:0;filter:saturate(var(--photo-saturation,1)) brightness(var(--photo-brightness,1)) contrast(.98)}
+#article-grid .article-cover-window{overflow:hidden;isolation:isolate}
+#article-grid .article-cover-frame img{display:block;width:100%;height:auto;aspect-ratio:auto;object-fit:cover!important;object-position:var(--photo-position,50% 50%);border-radius:0;filter:saturate(var(--photo-saturation,1)) brightness(var(--photo-brightness,1)) contrast(.98)}
 #article-grid .article-cover-credit{margin:10px 0 16px;font-size:.65rem;line-height:1.7;color:var(--ink);opacity:.8}
 .photo-presentation-note{max-width:64ch;font-size:.75rem;line-height:1.9;margin:18px 0 28px;color:var(--ink)}
 #article-grid img[src$="photo-01.webp"]{--photo-ratio:4/3;--photo-position:50% 55%;--photo-saturation:0.9;--photo-brightness:1.01}
@@ -2096,14 +2097,12 @@ body[data-world="buncho"] .game-gem-reward{background:#e5f2bb;color:#304631;bord
 #article-grid img[src$="photo-41.webp"]{--photo-ratio:3/2;--photo-position:50% 50%;--photo-saturation:0.98;--photo-brightness:1.05}
 #article-grid img[src$="photo-43.webp"]{--photo-ratio:4/3;--photo-position:50% 50%;--photo-saturation:0.98;--photo-brightness:1.01}
 
-/* A clearly separate photo layer. Reserve its entire excursion so captions
-   never overlap headings and original crop edges stay visible. */
-#article-grid .article-cover-frame{margin-block:10px 18px}
-html[data-motion="on"] #article-grid .article-cover-frame{margin-block:60px 68px}
-@media(max-width:600px){html[data-motion="on"] #article-grid .article-cover-frame{margin-block:44px 52px}}
-#article-grid[data-photo-parallax="on"] .article-cover-frame{transform:translate3d(0,var(--photo-drift,0px),0)}
-html[data-motion="off"] #article-grid .article-cover-frame{transform:none!important}
-@media(prefers-reduced-motion:reduce){#article-grid .article-cover-frame{transform:none!important}html[data-motion="on"] #article-grid .article-cover-frame{margin-block:10px 18px}}
+/* Only the photograph moves inside its fixed mask. The credit, card and mask
+   keep their normal document position; no excursion margins are necessary. */
+#article-grid .article-cover-frame{margin-block:10px 18px;transform:none}
+#article-grid[data-photo-parallax="on"] .article-cover-window img{transform:translate3d(var(--photo-shift-x,0px),var(--photo-shift-y,0px),0) scale(var(--photo-scale,1));transform-origin:center}
+html[data-motion="off"] #article-grid .article-cover-window img{transform:none!important}
+@media(prefers-reduced-motion:reduce){#article-grid .article-cover-window img{transform:none!important}}
 /* The educational photo never receives anatomy labels as overlays. */
 .body-diagram { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; aspect-ratio:auto; border-radius:24px; padding:18px; }
 .body-diagram > svg { grid-column:1/-1; width:100%; height:auto; max-height:360px; }
