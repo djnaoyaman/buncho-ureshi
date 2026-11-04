@@ -367,7 +367,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     caption.style.top='';caption.style.bottom='';
     const box=caption.getBoundingClientRect(),frame=main.getBoundingClientRect();
     if(!box.width||!box.height||!frame.height)return;
-    const obstacles=[...root.querySelectorAll('.game-room-bird,.game-scene-toolbar,.game-bottom-dock,.game-field-nav,.game-field-bar,.game-main>.game-heading,.game-auto-gift,.game-adoption-invitation'),document.querySelector('.game-scene-controls-toggle')].filter(Boolean);
+    const obstacles=[...root.querySelectorAll('.game-room-bird,.game-home-role,.finch-cage-guest>span,.game-owner-companion,.game-scene-toolbar,.game-bottom-dock,.game-field-nav,.game-field-bar,.game-main>.game-heading,.game-auto-gift,.game-adoption-invitation'),document.querySelector('.game-scene-controls-toggle')].filter(Boolean);
     let gaps=[[frame.top+8,frame.bottom-8]];
     for(const node of obstacles){
       if(!node.getClientRects().length)continue;
@@ -406,10 +406,10 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
         cageGuests.forEach((guest,i)=>{const x=cageGuests.length===1?.72:i===0?.28:.72;map.set(guest.id,{...map.get(guest.id),x:(1-fraction)/2+x*fraction,y:.79});});
       }else{
         const columns=geometry.width>600?actors.length:4,rows=Math.ceil(actors.length/columns);
-        actors.forEach((actor,i)=>{const row=Math.floor(i/columns),count=Math.min(columns,actors.length-row*columns),x=(i%columns+1)/(count+1),foot=rows===1?geometry.height*.68:geometry.height*.44+row*Math.max(90,geometry.height*.23);map.set(actor.id,{...map.get(actor.id),x:(1-fraction)/2+x*fraction,y:(Math.min(geometry.height-26,foot)-geometry.top)/geometry.planeHeight});});
+        actors.forEach((actor,i)=>{const row=Math.floor(i/columns),count=Math.min(columns,actors.length-row*columns),x=(i%columns+1)/(count+1),foot=rows===1?geometry.height*.68:geometry.height*.46+row*Math.max(90,geometry.height*.23);map.set(actor.id,{...map.get(actor.id),x:(1-fraction)/2+x*fraction,y:(Math.min(geometry.height-26,foot)-geometry.top)/geometry.planeHeight});});
       }
     }
-    return `${fieldNavigation()}<div class="game-room" data-compact="${!!compactLayout?.matches}" data-many-guests="${cageGuests.length>2}" data-field="${world.field.place}" aria-label="${escape(fieldTitle())}。イラストのゲーム用風景です。">
+    return `${fieldNavigation()}<div class="game-room" data-compact="${!!compactLayout?.matches}" data-many-guests="${cageGuests.length>2}" data-home-crowded="${world.field.place==='home'&&(actors.length>8||(compactLayout?.matches&&cageGuests.length>2))}" data-field="${world.field.place}" aria-label="${escape(fieldTitle())}。イラストのゲーム用風景です。">
       <picture class="game-habitat"><source media="(max-width: 600px)" srcset="${GAME_ART}${world.field.place==='park'?'field-park':'field-home'}-tall.webp"><img src="${GAME_ART}${world.field.place==='park'?'field-park':'field-home'}-wide.webp" alt="" aria-hidden="true" width="1600" height="1000" decoding="async"></picture>
       ${world.field.place!=='park'?sceneFurniture():''}${gemCollectibles()}<span class="game-floor-soil" style="--care-soil-opacity:${careFloorOpacity(getCleanliness(world)).toFixed(3)}" aria-hidden="true"></span>
       ${shown.map(b=>{
@@ -422,7 +422,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
       ${cageGuests.map(guest=>{const p=positions.get(guest.id),m=mobilePositions.get(guest.id);return renderEncounterCageGuest(guest.entry,{base:new URL('../',GAME_ART).href,style:`--bird-x:${p.x*100}%;--bird-y:${p.y*100}%;--bird-width:${p.width*100}%;--bird-depth:${Math.round(p.y*100)};--bird-tall-x:${m.x*100}%;--bird-tall-y:${m.y*100}%;--bird-tall-width:${m.width*100}%;--bird-tall-depth:${Math.round(m.y*100)};--foot-x:50%;--foot-y:100%`}).replace('</button>',`${homeBadge('お友達')}</button>`);}).join('')}
 
     </div>
-    <div class="game-scene-toolbar"><div class="game-scene-picker game-bird-carousel" aria-label="スワイプで文鳥を選ぶ">${birdSwitchControls()}<div class="game-bird-carousel-face" data-bird-id="${current?.id||''}">${current?smallBird(current):''}<div><strong>${current?escape(current.name):''}</strong><small>${current?colorName[current.color]+'・'+STAGES[current.stage]:''}</small></div></div></div>${world.field.place==='home'?gardenCare():''}</div>${secondaryMenu()}${world.field.place==='home'?`<div class="game-owner-companion" aria-hidden="true" style="--owner-delay:${ownerAnimationDelay()}ms">${renderOwnerPeek(loadOwnerProfile())}</div>`:''}${bottomDock()}`;
+    <div class="game-scene-toolbar"><div class="game-scene-picker game-bird-carousel" aria-label="スワイプで文鳥を選ぶ">${birdSwitchControls()}<div class="game-bird-carousel-face" data-bird-id="${current?.id||''}">${current?smallBird(current):''}<div><strong>${current?escape(current.name):''}</strong><small>${current?colorName[current.color]+'・'+STAGES[current.stage]:''}</small></div></div></div>${world.field.place==='home'?gardenCare():''}</div>${secondaryMenu()}${world.field.place==='home'?`<div class="game-owner-companion" data-home-crowded="${actors.length>8||(!!compactLayout?.matches&&cageGuests.length>2)}" aria-hidden="true" style="--owner-delay:${ownerAnimationDelay()}ms">${renderOwnerPeek(loadOwnerProfile())}</div>`:''}${bottomDock()}`;
   }
   function profile() {
     const b=chosen(),nameSuggestion=suggestLegacyNumberedNames(world).find(item=>item.birdId===b.id),parentNames=b.parents.map(id=>birdName(world,id)),last=world.events.slice().reverse().find(e=>e.ids.includes(b.id));

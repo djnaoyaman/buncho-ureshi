@@ -544,3 +544,10 @@ body[data-world="buncho"] .game-bottom-dock [data-home-close]:disabled{opacity:.
 
 .game-app .finch-cage-guest>span:not(.game-home-role){top:calc(100% + 20px);max-width:90px;overflow:hidden;text-overflow:ellipsis}
 @media(max-height:500px){.game-app .finch-cage-guest>span:not(.game-home-role){top:calc(100% + 17px);font-size:8px;max-width:66px;padding:1px 3px}}
+
+/* A full home keeps every guest visible while the owner watches from the edge. */
+body[data-world="buncho"] .game-owner-companion[data-home-crowded="true"]{width:clamp(56px,10cqh,120px);bottom:0}
+@media(max-height:500px){body[data-world="buncho"] .game-owner-companion[data-home-crowded="true"]{width:clamp(46px,8.5vw,72px)}body[data-world="buncho"] .game-main:has(.game-room[data-home-crowded="true"])>.game-scene-caption{display:none}}
+
+@media(max-width:600px) and (min-height:501px){body[data-world="buncho"] .game-owner-companion[data-home-crowded="true"]{width:min(72px,10cqh)}}
+body[data-world="buncho"][data-scene-controls="closed"]:has(.game-room[data-home-crowded="true"]) .game-scene-controls-toggle{left:auto;right:72px;top:4px;bottom:auto}
