@@ -628,3 +628,11 @@ body[data-world="buncho"] .game-panel-overlay[open]:has(>.game-raptor-notice):no
 body[data-world="buncho"] .game-panel-overlay[open]:has(>.game-raptor-notice):not(:has(.finch-garden))>.game-raptor-notice{position:static;flex:none;margin:0 12px 8px;width:auto}
 body[data-world="buncho"] .game-panel-overlay[open]:has(>.game-raptor-notice):not(:has(.finch-garden))>.game-panel{flex:1;min-height:0;height:auto;padding-top:8px!important}
 body[data-world="buncho"] .game-panel-overlay[open][data-scene=true]:has(>.game-raptor-notice):not(:has(.finch-garden)){padding-top:60px;box-sizing:border-box}
+
+/* The short game guide is always readable, including ruby on narrow phones. */
+.game-help{line-height:2;overflow-wrap:anywhere}
+.game-help li{margin-block:0 1.2em}
+.game-help ruby{ruby-position:over;ruby-align:center;white-space:nowrap}
+.game-help rt{display:ruby-text!important;visibility:visible!important;font-size:.55em;line-height:1;letter-spacing:0;font-weight:400}
+.game-help details{margin-block:1rem}
+.game-help summary{min-height:44px;cursor:pointer;font-weight:700}

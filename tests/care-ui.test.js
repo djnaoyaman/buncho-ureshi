@@ -47,7 +47,7 @@ test('care UI pet response is silent by default, opt-in produces only one succes
   await f.sound(true);assert.equal(f.read().settings.careSound,true);assert.equal(f.rig.starts,0);f.clickCare('pet');await f.settle();await until(()=>f.rig.starts===2);assert(f.root.querySelector('.game-care-cheer'));
   const after=f.read();f.clickCare('pet');f.clickCare('pet');await f.settle();assert.deepEqual(f.read(),after);assert.equal(f.rig.starts,2);
   f.change(f.soundControl(),false);assert(f.rig.contexts[0].nodes.every(node=>node.stops.includes(undefined)));await f.settle();assert.equal(f.read().settings.careSound,false);assert.equal(f.root.querySelector('.game-care-cheer'),null);
-  f.closeCare();f.root.querySelector('[data-game-panel="help"]').click();const disclosure=f.root.querySelector('[data-game-details="help-care"]');assert(disclosure);disclosure.open=true;assert.match(disclosure.textContent,/本物の文鳥に無理に触らず/);assert.match(disclosure.textContent,/実際のおもちや文鳥の声ではありません/);
+  f.closeCare();f.root.querySelector('[data-game-panel="help"]').click();const disclosure=f.root.querySelector('[data-game-details="help-care"]');assert(disclosure);disclosure.open=true;const copy=disclosure.cloneNode(true);copy.querySelectorAll('rt').forEach(node=>node.remove());assert.match(copy.textContent,/本物の文鳥には、むりにさわらないでね/);assert.match(copy.textContent,/文鳥の声を録音したものではないよ/);
 });
 
 test('care UI delayed transaction keeps immutable bird ID but suppresses old feedback and audio after selection changes',async t=>{
