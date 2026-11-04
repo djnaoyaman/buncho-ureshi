@@ -6,13 +6,14 @@ import {Window} from 'happy-dom';
 // Isolate the pure renderer against its public lifecycle contract. Engine tests
 // separately verify these selectors, migrations, clocks, and transactions.
 const source=await readFile(new URL('../src/life-care-ui.js',import.meta.url),'utf8');
-const stub=`const LIFE_RULES={neglectMs:259200000,hospitalGold:12,caretakerDailyGold:24};
+const stub=`const protagonistStatus=w=>({bird:w.birds[0]??null,generation:1,waiting:null,heir:null});
+const LIFE_RULES={neglectMs:259200000,hospitalGold:12,caretakerDailyGold:24};
 const lifeStatus=(w,b)=>b.life;
 const isAlive=(w,b)=>!b.life.death;
 const caretakerStatus=w=>w.contract;
 const conditionName=k=>({respiratory:'呼吸器の病気',digestive:'おなかの病気',injury:'けが'}[k]||k);
 const ageLabel=(w,b)=>b.age||'ゲーム内1歳';`;
-const {renderLifeCarePanel,renderMemorialPanel,renderLifeSummary}=await import(`data:text/javascript;base64,${Buffer.from(source.replace(/^import[^\n]+\n/,stub)).toString('base64')}`);
+const {renderLifeCarePanel,renderMemorialPanel,renderLifeSummary}=await import(`data:text/javascript;base64,${Buffer.from(stub+source.replace(/^import[^\n]+\n/gm,'')).toString('base64')}`);
 const time=10000000;
 function bird(id='one',patch={}){return{id,name:'おもち',home:'resident',color:'white',parents:[],partner:null,life:{condition:null,death:null,lastCareAt:time,incenseCount:0,prayerCount:0,lastIncenseAt:null,lastPrayerAt:null},...patch};}
 function world(){return{birds:[bird()],economy:{gold:100},lifecycle:{seenAt:time},contract:{active:false,remainingMs:0,until:null}};}

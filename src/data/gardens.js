@@ -22,7 +22,7 @@ export function gardenFriendRoster(world,id){
  const visiting=state.regulars.filter(r=>r.primaryGardenId!==id).slice(GARDEN_IDS.indexOf(id)%7,GARDEN_IDS.indexOf(id)%7+2).map(r=>({friendId:r.id,birdId:null,name:r.name,color:r.appearance.color,kind:'visiting',affinity:r.affinity,memories:r.memories.map(m=>({...m})),personality:r.personality}));
  return [...regulars,...known,...visiting].slice(0,4).map((r,i)=>({...r,spot:garden.spots[i%garden.spots.length]}));
 }
-export function gardenCompanionRoster(world){const state=world.encounters?.gardenFriends;return (state?.companions||[]).flatMap(id=>{const b=world.birds.find(x=>x.id===id);return b&&isAlive(world,b)?[{birdId:b.id,name:b.name,color:b.color,kind:'companion'}]:[];});}
+export function gardenCompanionRoster(world){const state=world.encounters?.gardenFriends;return (state?.companions||[]).flatMap(id=>{const b=world.birds.find(x=>x.id===id);return b&&isAlive(world,b)&&['juvenile','adult'].includes(b.stage)?[{birdId:b.id,name:b.name,color:b.color,kind:'companion'}]:[];});}
 /** Pure request for the existing audio owner. Never enables audio, loads URLs, or changes the four original tracks. */
 export function gardenAudioIntent({gardenId,mode='off',selectedTrackId=null,enabled=false,reducedMotion=false}={}){
  if(!enabled||mode==='off')return {kind:'silence',fadeMs:reducedMotion?0:900};

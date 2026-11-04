@@ -312,6 +312,12 @@ test('direct care preserves a second slow stroke while the previous feedback tim
   directRub(f,'pointerup',{x:140});await f.settle();assert.equal(f.read().events.filter(e=>e.kind==='user-pet').length,2);
 });
 
+test('reset cancel keeps its semantic focus when a new health notice changes the background control order',async t=>{
+ const f=await fixture(t);await f.mount();f.closeCare();f.window.document.dispatchEvent(new f.window.CustomEvent('buncho-world-action',{detail:'settings'}));f.root.querySelector('[data-game-details="management"]').open=true;
+ f.root.querySelector('[data-game-action="reset-state"]').click();f.root.querySelector('[data-reset-kind="all"]').click();f.root.querySelector('[data-game-action="reset-confirm"]').click();f.root.querySelector('.game-reset-dialog').dispatchEvent(new f.window.KeyboardEvent('keydown',{key:'Escape',bubbles:true}));assert.equal(f.window.document.activeElement.dataset.gameAction,'reset-state');
+ const before=f.read(),peer=structuredClone(before);peer.lifecycle.birds[0].condition={kind:'injury',sinceAt:peer.lifecycle.seenAt,deadlineAt:peer.lifecycle.seenAt+86400000};bumpRevision(peer);f.write(peer);await f.poll();
+ assert.equal(f.root.querySelector('.game-reset-dialog').open,false);assert.equal(f.window.document.activeElement.dataset.gameAction,'reset-state');assert.equal(f.read().worldId,before.worldId);assert.deepEqual(f.read().birds,before.birds);assert.deepEqual({...f.read().economy,seenAt:before.economy.seenAt},before.economy);assert(f.read().economy.seenAt>=before.economy.seenAt);
+});
 
 test('care illustrations preserve all color and growth variants without changing room atlases',()=>{
   for(const color of ['white','sakura','silver','cinnamon'])for(const stage of ['adult','juvenile','chick','egg']) {
@@ -328,4 +334,11 @@ test('care illustrations preserve all color and growth variants without changing
   }
   assert.match(gameCareBirdSvg('not-a-color','not-a-stage'),/care-illustrations\/white-adult\.webp/);
   assert.equal(gameSpriteGeometry('white','adult','left').asset,'white-poses');
+});
+
+test('settings heading retains focus after a saved peer update replaces the panel markup',async t=>{
+ const f=await fixture(t);await f.mount();f.closeCare();f.window.document.dispatchEvent(new f.window.CustomEvent('buncho-world-action',{detail:'settings'}));
+ const heading=f.root.querySelector('.game-settings h3');assert.equal(f.window.document.activeElement,heading);
+ const peer=f.read();peer.settings.motion=!peer.settings.motion;bumpRevision(peer);f.write(peer);await f.poll();
+ const next=f.root.querySelector('.game-settings h3');assert.notEqual(next,heading);assert.ok(f.window.document.activeElement===next,'settings heading keeps focus after polling');assert.equal(next.tabIndex,-1);
 });

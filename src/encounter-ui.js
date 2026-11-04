@@ -1,3 +1,4 @@
+import {getProtagonistBird} from './protagonist.js';
 import {renderGardenBirdSprite} from './garden-bird-motion.js';
 /** Render-only notebook / event surfaces. Caller owns atomic actions and focus lifecycle. */
 import { encounterSystem,FRIENDSHIP_RULES,cageVisitorCount } from './encounters.js';
@@ -59,7 +60,7 @@ export function renderGardenStage(w,{system=encounterSystem,base='/buncho-ureshi
  const backdrop=()=>art?`<img class="finch-garden-background" src="${esc(base+bg.src.replace(/\.png$/,'.screen.webp'))}" decoding="async" fetchpriority="high" alt="${esc(place.description)}" width="${bg.width}" height="${bg.height}" draggable="false">`:place.objects.map((name,i)=>`<span class="garden-prop garden-prop-${i}" aria-hidden="true"><span>${esc(name)}</span></span>`).join('');
  const offsets=place.id==='mizukagami'?[[-1.15,-.65],[1.15,-.65],[-1.15,.15],[1.15,.15]]:[[-1.2,-.55],[1.2,-.55],[-1.2,.75],[1.2,.75]];
  const eligible=b=>b.home==='resident'&&['juvenile','adult'].includes(b.stage);
- const lead=w.birds.find(b=>b.id===selectedBirdId&&eligible(b))||w.birds.find(eligible);
+ const protagonist=getProtagonistBird(w),lead=protagonist&&eligible(protagonist)?protagonist:null;
  const householdBirds=[...(lead?[{birdId:lead.id,name:lead.name,color:lead.color}]:[]),...companions].filter((b,i,all)=>all.findIndex(x=>x.birdId===b.birdId)===i);
  const householdIds=new Set(householdBirds.map(b=>b.birdId));
  const friends=gardenFriendRoster(w,place.id).filter(f=>!f.birdId||!householdIds.has(f.birdId));
