@@ -137,3 +137,18 @@
 @media(prefers-reduced-motion:reduce){.finch-loading-bird{animation:none}}
 
 .finch-garden-visitor>.finch-media{width:100%;height:100%;position:relative;inset:auto;transform:none}
+/* A shared physical scale: no independent min/max clamp that enlarges one bird. */
+.finch-crow-notice{position:absolute;z-index:6;left:50%;top:116px;transform:translateX(-50%);width:min(440px,calc(100% - 28px));box-sizing:border-box;background:#fff9eefa;border:2px solid #a69a87;border-radius:16px;padding:10px 14px;box-shadow:0 4px 14px #282c2538;color:#353c35;font-size:13px;line-height:1.6;display:flex;flex-wrap:wrap;gap:5px 8px;align-items:center}
+.finch-crow-notice strong,.finch-crow-notice span{flex:1 0 100%}.finch-crow-notice button{font-size:12px!important;padding:6px 10px!important}
+.finch-crow-shadow{position:absolute;pointer-events:none;z-index:3;inset:0;color:#202a2a;opacity:.25;overflow:hidden}.finch-crow-shadow svg{position:absolute;width:70%;top:28%;left:15%;animation:crow-shadow-pass 6s linear both}
+@keyframes crow-shadow-pass{from{transform:translateX(-120%) scale(.6);opacity:.2}to{transform:translateX(120%) scale(1.1);opacity:.7}}
+.finch-crow-scale-scene{--crow-unit:min(12cqw,11cqh,54px);position:absolute;left:50%;bottom:23%;width:calc(var(--crow-unit) * 6.4);height:calc(var(--crow-unit) * 5);transform:translateX(-50%);pointer-events:none;z-index:3}
+.finch-crow-java{transform:translateY(2.5%);position:absolute;left:0;bottom:0;width:var(--crow-unit);height:calc(var(--crow-unit) * 1000 / 850)}
+.finch-crow-actor{position:absolute;left:calc(var(--crow-unit) * 1.6);top:100%;transform:translateY(calc(var(--crow-foot-y) * -100%));width:calc(var(--crow-unit) * var(--crow-ratio));margin:0;aspect-ratio:1}
+.finch-crow-actor img{display:block;width:100%;height:100%;max-width:none;object-fit:contain}
+.finch-crow-actor figcaption,.finch-crow-java>span:last-child{position:absolute;top:100%;left:50%;transform:translateX(-50%);white-space:nowrap;background:#fff7dfef;border-radius:8px;padding:2px 5px;font-size:10px;color:#2d3e30}
+.finch-crow-entry>figure img{max-width:100%;max-height:260px;width:auto;display:block;margin:auto}.finch-crow-notebook .finch-catalog img{width:100%;height:130px;object-fit:contain}.finch-crow-unknown{display:block;height:130px;color:#353d3b;opacity:.5}.finch-crow-unknown svg{width:100%;height:100%}
+@media(max-height:500px){.finch-crow-notice{top:105px;left:10px;transform:none;width:44%;padding:7px 9px;font-size:11px;gap:3px}.finch-crow-notice button{font-size:11px!important;min-height:36px!important}.finch-crow-scale-scene{left:72%;bottom:20%}}
+@media(prefers-reduced-motion:reduce){.finch-crow-shadow svg{animation:none;transform:none}.finch-crow-shadow{opacity:.3}}
+.finch-garden-stage:has(.finch-crow-scale-scene) :is(.finch-garden-friend,.finch-garden-household){width:min(12cqw,11cqh,54px);height:calc(min(12cqw,11cqh,54px) * 1000 / 850);min-width:0;min-height:0}
+.finch-crow-entry [data-encounter-rub]{touch-action:none;cursor:grab;display:block;min-height:44px;outline-offset:4px}.finch-crow-entry [data-encounter-rub]:focus-visible{outline:3px solid #826436}.finch-crow-entry [data-encounter-rub] img{display:block;width:auto;height:auto;max-width:100%;max-height:260px;margin:auto;pointer-events:none}

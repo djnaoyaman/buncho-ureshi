@@ -1,0 +1,193 @@
+{
+  "version": 1,
+  "generatedAt": "2026-11-04",
+  "method": "Original OpenAI built-in image_gen illustrations; no third-party source image supplied.",
+  "dimensionsNote": "All five PNG and WebP images are 1254 x 1254 with generated alpha transparency. WebP is a format conversion only, quality 93, exact alpha enabled.",
+  "scaleNote": "Use actual horizontal bird width from bill tip to tail tip, excluding transparent margins: rendered image width = bodyLengthCm * pixelsPerCm / artWidthFraction. Use footAnchor to place feet on one common ground line. Both view and real length are approximate illustrative values, not exact morphometric measurements. Raven and hooded crow use explicit representative adult values within the provided ranges.",
+  "bboxNote": "bbox is [left, top, right, bottom] in source pixels with alpha >=64, right/bottom exclusive. It deliberately ignores very faint generated alpha specks. The horizontal extrema correspond to bill and tail tips, not feet. footAnchor is midpoint of foot region at its lowest visible alpha>=64 point; for common raven the tail extends lower than the feet.",
+  "species": [
+    {
+      "id": "large-billed-crow",
+      "nameJa": "ハシブトガラス",
+      "scientificName": "Corvus macrorhynchos",
+      "bodyLengthCm": 56,
+      "lengthRangeCm": [
+        56,
+        56
+      ],
+      "bbox": [
+        38,
+        122,
+        1230,
+        1141
+      ],
+      "feet": [
+        776,
+        1139
+      ],
+      "billDepth": "deep arched black bill",
+      "marks": [
+        "rounded bulging forehead",
+        "black plumage"
+      ],
+      "width": 1254,
+      "height": 1254,
+      "sourceFacing": "right",
+      "billToTailHorizontalPx": 1192,
+      "footAnchor": {
+        "x": 0.6188197767145136,
+        "y": 0.9082934609250398
+      },
+      "artWidthFraction": 0.9505582137161085,
+      "file": "large-billed-crow.webp",
+      "png": "large-billed-crow.png"
+    },
+    {
+      "id": "carrion-crow",
+      "nameJa": "ハシボソガラス",
+      "scientificName": "Corvus corone",
+      "bodyLengthCm": 50,
+      "lengthRangeCm": [
+        50,
+        50
+      ],
+      "bbox": [
+        46,
+        194,
+        1239,
+        1144
+      ],
+      "feet": [
+        751,
+        1144
+      ],
+      "billDepth": "slender straight pointed black bill",
+      "marks": [
+        "sloping forehead",
+        "smooth throat",
+        "rounded tail"
+      ],
+      "width": 1254,
+      "height": 1254,
+      "sourceFacing": "right",
+      "billToTailHorizontalPx": 1193,
+      "footAnchor": {
+        "x": 0.5988835725677831,
+        "y": 0.9122807017543859
+      },
+      "artWidthFraction": 0.9513556618819776,
+      "file": "carrion-crow.webp",
+      "png": "carrion-crow.png"
+    },
+    {
+      "id": "rook",
+      "nameJa": "ミヤマガラス",
+      "scientificName": "Corvus frugilegus",
+      "bodyLengthCm": 47,
+      "lengthRangeCm": [
+        47,
+        47
+      ],
+      "bbox": [
+        49,
+        81,
+        1201,
+        1172
+      ],
+      "feet": [
+        727.5,
+        1172
+      ],
+      "billDepth": "slender pointed charcoal bill",
+      "marks": [
+        "adult pale gray-white bare bill base",
+        "pointed crown",
+        "feathered thighs"
+      ],
+      "width": 1254,
+      "height": 1254,
+      "sourceFacing": "right",
+      "billToTailHorizontalPx": 1152,
+      "footAnchor": {
+        "x": 0.5801435406698564,
+        "y": 0.9346092503987241
+      },
+      "artWidthFraction": 0.9186602870813397,
+      "file": "rook.webp",
+      "png": "rook.png"
+    },
+    {
+      "id": "common-raven",
+      "nameJa": "ワタリガラス",
+      "scientificName": "Corvus corax",
+      "bodyLengthCm": 63,
+      "lengthRangeCm": [
+        56,
+        69
+      ],
+      "bbox": [
+        22,
+        133,
+        1228,
+        1115
+      ],
+      "feet": [
+        795,
+        1099
+      ],
+      "billDepth": "robust black bill",
+      "marks": [
+        "shaggy throat hackles",
+        "long tapered wedge-shaped tail"
+      ],
+      "width": 1254,
+      "height": 1254,
+      "sourceFacing": "right",
+      "billToTailHorizontalPx": 1206,
+      "footAnchor": {
+        "x": 0.6339712918660287,
+        "y": 0.8763955342902712
+      },
+      "artWidthFraction": 0.9617224880382775,
+      "file": "common-raven.webp",
+      "png": "common-raven.png"
+    },
+    {
+      "id": "hooded-crow",
+      "nameJa": "ズキンガラス",
+      "scientificName": "Corvus cornix",
+      "bodyLengthCm": 46,
+      "lengthRangeCm": [
+        45,
+        47
+      ],
+      "bbox": [
+        31,
+        131,
+        1226,
+        1159
+      ],
+      "feet": [
+        811.5,
+        1159
+      ],
+      "billDepth": "medium tapered black bill",
+      "marks": [
+        "gray torso",
+        "black head and bib",
+        "black wings and tail"
+      ],
+      "width": 1254,
+      "height": 1254,
+      "sourceFacing": "right",
+      "billToTailHorizontalPx": 1195,
+      "footAnchor": {
+        "x": 0.6471291866028708,
+        "y": 0.9242424242424242
+      },
+      "artWidthFraction": 0.9529505582137161,
+      "file": "hooded-crow.webp",
+      "png": "hooded-crow.png"
+    }
+  ]
+}

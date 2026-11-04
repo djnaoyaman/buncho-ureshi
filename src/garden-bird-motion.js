@@ -29,6 +29,7 @@ export function renderGardenBirdSprite(color, id, { base = '/buncho-ureshi/', po
 
 function refresh(root, elapsed, overrides = new Map()) {
   for (const sprite of root.querySelectorAll('.garden-bird-sprite[data-garden-bird-id]')) {
+    if(sprite.closest('.finch-crow-scale-scene'))continue; // Measured side profile for the shared length scale.
     const pose = overrides.get(sprite)?.pose ?? gardenBirdPose(sprite.dataset.gardenBirdId, elapsed);
     if (pose === sprite.dataset.pose) continue;
     const frame = sprite.querySelector('.garden-bird-pose-window'), image = frame?.querySelector('img');
