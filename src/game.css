@@ -569,3 +569,10 @@ body[data-world="buncho"][data-scene-controls="closed"]:has(.game-room[data-home
 @media(forced-colors:active){.game-care-pet-bird:focus-visible{outline-color:Highlight}.game-care-rub-note{color:ButtonText}}
 
 .game-care-pet-bird:disabled>.game-sprite{touch-action:pan-y}
+
+/* One enlarged care portrait replaces the old header miniature. */
+.game-sheet-heading .game-care-petting{margin:3.5rem 0 .2rem}
+.game-sheet-heading .game-care-pet-help{font-size:.8rem;line-height:1.6;color:#35482e;margin:0}
+
+.game-care-pet-bird>.game-care-illustration>img{position:absolute;inset:0;width:100%;height:100%;max-width:none;object-fit:contain;object-position:center;transform:none}
+.game-care-pet-bird>.game-care-illustration{width:min(100%,var(--care-bird-height))}
