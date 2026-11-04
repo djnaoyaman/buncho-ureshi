@@ -13,6 +13,8 @@ for (const size of sizes) test(`garden targets remain reachable ${size.width}x${
     await page.locator(`[data-garden-select="${garden}"]`).click();
     const stage=page.locator('.finch-garden-stage:visible');
     await expect(stage).toHaveAttribute('data-garden-id', garden);
+    await expect(page.locator('.finch-garden-dock > button[data-garden-select]')).toHaveCount(0);
+    await expect(page.locator('[data-garden-details=observe] > summary')).toHaveText('観察する');
     await expect(stage.locator('.finch-garden-friend:visible').first()).toBeVisible();
     // Query and measure in one browser task: the live game's periodic refresh
     // can detach an ElementHandle between locator resolution and evaluate.
