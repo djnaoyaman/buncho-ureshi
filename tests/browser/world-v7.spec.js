@@ -5,7 +5,7 @@ for(const size of [{width:320,height:568},{width:390,height:844},{width:844,heig
  await page.setViewportSize(size);await page.goto('game/');await page.waitForFunction(()=>document.body.dataset.gameIntro==='done');
  await expect(page.locator('[data-gold-balance]').first()).toBeVisible();
  await expect.poll(()=>page.evaluate(()=>document.documentElement.scrollHeight<=innerHeight+2)).toBe(true);
- await page.locator('[data-game-panel="outdoors"]').click();await expect(page.locator('[data-garden-select]')).toHaveCount(9);
+ await page.locator('[data-game-panel="outdoors"]').click();await expect(page.locator('[data-garden-select]')).toHaveCount(12);
  // Separate candidate assets gate; no source readiness flag is persisted or published.
  await page.evaluate(async()=>{const source=performance.getEntriesByType('resource').map(e=>e.name).find(url=>/\/data\/gardens\.js(?:\?|$)/.test(url));if(!source)throw Error('Mounted garden module URL missing');const {GARDENS}=await import(source);for(const garden of GARDENS)garden.background.releaseReady=true;});
  for(const id of ['komorebi','mizukagami','onsen']){

@@ -390,9 +390,9 @@ test('automatic gift and Gold purchase use rendered revision and commit once on 
  f.root.querySelector('[data-game-panel="decorate"]').click();f.root.querySelector('[data-decor-preview="perch-rose-cozy"]').click();const buy=f.root.querySelector('[data-gold-buy]');assert(buy);buy.click();buy.click();await until(async()=>(await rawWorld(f.indexedDB)).economy.gold===0,'Gold debit');const w=await rawWorld(f.indexedDB);assert.equal(w.decor.inventory.filter(x=>x.id==='perch-rose-cozy').length,1);assert.equal(w.decor.equipped.perch,'perch-mint-cozy','purchase is not silent equip');assert.equal(w.decor.points,32,'Gold purchase preserves Gems');
 });
 
-test('nine gardens persist distinct selection and close without changing household or owner settings',async t=>{
+test('twelve gardens persist distinct selection and close without changing household or owner settings',async t=>{
  const f=await fixture(t);await f.mount();const before=await rawWorld(f.indexedDB);f.root.querySelector('[data-game-panel="outdoors"]').click();await until(()=>!!f.root.querySelector('[data-garden-select="onsen"]'),'garden menu');await until(async()=>(await rawWorld(f.indexedDB)).encounters.garden.open,'first garden entry');
- f.root.querySelector('[data-garden-select="onsen"]').click();await until(async()=>(await rawWorld(f.indexedDB)).encounters.garden.id==='onsen','onsen selected');assert.match(f.root.querySelector('#finch-garden-title').textContent,/湯気文吾温泉/);assert.equal(f.root.querySelectorAll('[data-garden-select]').length,9);
+ f.root.querySelector('[data-garden-select="onsen"]').click();await until(async()=>(await rawWorld(f.indexedDB)).encounters.garden.id==='onsen','onsen selected');assert.match(f.root.querySelector('#finch-garden-title').textContent,/湯気文吾温泉/);assert.equal(f.root.querySelectorAll('[data-garden-select]').length,12);
  f.root.querySelector('[data-game-close-panel]').click();await until(()=>!f.root.querySelector('.game-panel-overlay').open,'closed');const after=await rawWorld(f.indexedDB);assert.equal(after.encounters.garden.open,false);assert.deepEqual(after.birds,before.birds);assert.deepEqual(after.decor,before.decor);assert.deepEqual(after.settings,before.settings);assert.equal(after.worldId,before.worldId);
 });
 
@@ -402,7 +402,7 @@ test('adoption consultation defaults cancel, later retains friendship, and doubl
  f.root.querySelector('[data-adoption-open]').click();const accept=f.root.querySelector('[data-adoption-decision="accept"]');accept.click();accept.click();await until(async()=>(await rawWorld(f.indexedDB)).birds.find(b=>b.id===id).home==='resident','accepted once');const after=await rawWorld(f.indexedDB);assert.equal(after.birds.filter(b=>b.home==='resident').length,2);assert.equal(after.adoption.pending,null);assert.equal(after.decor.points,before.decor.points,'no unbounded direct auto credit');assert.equal(f.root.querySelector('.game-adoption-dialog').open,false);
 });
 
-test('garden manual social reward is one per real care window across nine gardens; conversation remains available',async t=>{
+test('garden manual social reward is one per real care window across twelve gardens; conversation remains available',async t=>{
  const f=await fixture(t);await f.mount();f.root.querySelector('[data-game-panel="outdoors"]').click();await until(async()=>(await rawWorld(f.indexedDB)).encounters.garden.open,'garden entry');const before=await rawWorld(f.indexedDB);f.root.querySelector('[data-garden-friend]').click();await until(async()=>(await rawWorld(f.indexedDB)).decor.points===before.decor.points+5,'garden reward');
  f.root.querySelector('[data-garden-select="mizukagami"]').click();await until(async()=>(await rawWorld(f.indexedDB)).encounters.garden.id==='mizukagami','new garden');f.root.querySelector('[data-garden-friend]').click();await sleep(30);const after=await rawWorld(f.indexedDB);assert.equal(after.decor.points,before.decor.points+5);assert.equal(after.economy.gold,before.economy.gold);assert(f.root.querySelector('[data-garden-friend]'));
 });

@@ -57,7 +57,7 @@ async function playing(page,selected){
  await expect.poll(()=>page.evaluate(()=>window.__gardenMusicFixture.snapshot().active),{timeout:10000}).toBe(1);
 }
 
-test.describe('nine garden MP3 native playback, test-only readiness preview',()=>{
+test.describe('twelve garden MP3 native playback, test-only readiness preview',()=>{
  test.skip(({browserName})=>browserName==='firefox','This new scope targets native Chrome, Edge and WebKit.');
  test.setTimeout(180000);
  test.afterEach(async({page})=>{await page.evaluate(()=>window.__gardenMusicFixture?.player.dispose());});
