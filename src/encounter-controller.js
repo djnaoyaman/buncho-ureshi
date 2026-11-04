@@ -17,8 +17,19 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
  const syncCrowContext=w=>{const key=`${w.worldId}:${w.encounters.garden.id}:${crowTarget(w)?.id}`;if(key!==crowContext){stopCrow();crowContext=key;}return key;};
   const doc=root.ownerDocument,win=doc.defaultView;
   const media=mountEncounterMedia(root);
-  let hostCatalogScroll=null;
-  const rememberCatalog=()=>{const catalog=root.querySelector('.finch-catalog');hostCatalogScroll=catalog?{view:renderedView,top:catalog.scrollTop}:null;};
+  let hostCatalogScroll=null,hostGardenScroll=null;
+  const rememberCatalog=()=>{
+    const catalog=root.querySelector('.finch-catalog');hostCatalogScroll=catalog?{view:renderedView,top:catalog.scrollTop}:null;
+    // The game replaces its overlay before calling refresh(). Capture the
+    // inner dock while it is still attached; reading after reattachment is
+    // too late in browsers that reset nested scroll offsets on detach.
+    const garden=root.querySelector('.finch-garden');
+    hostGardenScroll=garden?{
+      view:renderedView,world:garden.dataset.gardenWorld,
+      gardenId:garden.querySelector('[aria-current=page]')?.dataset.gardenSelect,
+      details:new Map([...garden.querySelectorAll('details[data-garden-details][open]')].map(d=>[d.dataset.gardenDetails,d.scrollTop])),
+    }:null;
+  };
   doc.addEventListener('buncho-game-will-render',rememberCatalog);
   const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   function render({focus=false}={}){
@@ -31,8 +42,10 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
     hostCatalogScroll=null;
     renderedView=view;
     const oldGarden=root.querySelector('.finch-garden');
-    const oldOpenDetails=new Set(oldGarden?[...oldGarden.querySelectorAll('details[data-garden-details][open]')].map(d=>d.dataset.gardenDetails):[]);
-    const oldDockScroll=root.querySelector('.finch-garden-dock details[name="garden-tools"][open]')?.scrollTop;
+    const savedGarden=hostGardenScroll?.view===view&&hostGardenScroll.world===w.worldId
+      &&hostGardenScroll.gardenId===w.encounters.garden.id?hostGardenScroll:null;
+    hostGardenScroll=null;
+    const oldDetails=savedGarden?.details||new Map(oldGarden?[...oldGarden.querySelectorAll('details[data-garden-details][open]')].map(d=>[d.dataset.gardenDetails,d.scrollTop]):[]);
     const oldSelector=root.querySelector('.finch-garden-selector');
     const oldScroll=oldSelector?.scrollLeft, oldSelected=oldSelector?.querySelector('[aria-current=page]')?.dataset.gardenSelect;
     if(w.worldId!==worldId){worldId=w.worldId;generation++;busy=false;mode='notebook';pageId=null;notice='';}
@@ -61,9 +74,9 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
     // Restore only within the same garden and world; navigation starts fresh.
     const newGarden=root.querySelector('.finch-garden');
     if(oldGarden && newGarden && oldGarden.dataset.gardenWorld===newGarden.dataset.gardenWorld && oldSelected===newGarden.querySelector('[aria-current=page]')?.dataset.gardenSelect){
-      for(const detail of root.querySelectorAll('details[data-garden-details]'))if(oldOpenDetails.has(detail.dataset.gardenDetails))detail.open=true;
-      const openDock=root.querySelector('.finch-garden-dock details[name="garden-tools"][open]');
-      if(openDock && oldDockScroll!=null)openDock.scrollTop=oldDockScroll;
+      for(const detail of root.querySelectorAll('details[data-garden-details]'))if(oldDetails.has(detail.dataset.gardenDetails)){
+        detail.open=true;detail.scrollTop=oldDetails.get(detail.dataset.gardenDetails);
+      }
     }
     root.scrollTop=oldEntryScroll;
     const catalog=root.querySelector('.finch-catalog');if(catalog)catalog.scrollTop=oldCatalogScroll||0;

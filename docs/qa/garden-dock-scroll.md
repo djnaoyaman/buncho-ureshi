@@ -1,0 +1,7 @@
+# Garden dock scroll preservation
+
+The reported iPhone view is the garden friends detail panel. The game redraws its overlay every normal world refresh. The controller previously read dock `scrollTop` only after the overlay had detached and reattached its host; browser layout can reset that nested offset to zero at that point. The catalog already captures its offset before the host redraw, but the garden dock did not.
+
+Capture open garden tools and their scroll offsets on the existing `buncho-game-will-render` event, before the host is detached. Restore only for the same rendered view, world and garden. Consume the snapshot once so later direct refreshes use the current reading position. Navigation to another garden starts with closed tools. No game save, economics, birds, timing, images or unrelated pending changes are modified.
+
+Validation: the new DOM regression fails for all three dock panels before the fix and passes afterward; independent refresh and garden-switch cases also pass. The browser regression scrolls to the bottom, waits across two actual host poll intervals, interacts with the final friend action, and changes tools. Run it in Chrome, Edge and WebKit in the dedicated CI workflow. Local Chromium launch was blocked by the executor socket restriction; the escalation attempt failed in the sandbox wrapper before browser launch. No physical iOS test has been performed.
