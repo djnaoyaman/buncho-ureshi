@@ -32,7 +32,7 @@ for(const [species,size] of [['large-billed-crow',[320,568]],['carrion-crow',[39
  expect(Math.abs(geometry.jbottom-(geometry.ctop+geometry.cheight*geometry.foot))).toBeLessThan(2);expect(geometry.left).toBeGreaterThanOrEqual(0);expect(geometry.right).toBeLessThanOrEqual(size[0]+1);
  await expect(page.locator('.finch-notice')).toBeEmpty();
  const notice=await page.locator('.finch-crow-notice').boundingBox(),home=await page.locator('.finch-crow-notice [data-finch-go-home]').boundingBox();expect(home.height).toBeGreaterThanOrEqual(44);expect(notice.y+notice.height).toBeLessThanOrEqual(size[1]);
- if(size[1]<=340)expect(notice.y+notice.height).toBeLessThanOrEqual(54);
+ if(size[1]<=340){expect(notice.y+notice.height).toBeLessThanOrEqual(54);const dock=await page.locator('.finch-garden-dock').boundingBox();expect(geometry.jbottom).toBeLessThan(dock.y);expect(geometry.ctop+geometry.cheight).toBeLessThan(dock.y);}
  await info.attach(`crow-${species}`,{body:await page.screenshot({path:info.outputPath(`crow-${species}.png`)}),contentType:'image/png'});
  await page.clock.runFor(45000);await expect(page.locator('.finch-garden-stage [data-garden-friend]')).toHaveCount(4);expect(await page.evaluate(()=>crowFixture.world().birds[0].needs.energy)).toBe(40);
  await page.clock.runFor(180000);expect(await page.evaluate(()=>crowFixture.world().encounters.crow.visits[0].count)).toBe(1);
@@ -48,4 +48,24 @@ test('friendly crow keeps friends, never halves energy, and petting survives sav
 });
 test('reduced motion shadow is still visible and locked enemy records disclose no species',async({page})=>{
  await page.emulateMedia({reducedMotion:'reduce'});await setup(page);await page.clock.runFor(120000);await expect(page.locator('.finch-crow-shadow')).toBeVisible();expect(await page.locator('.finch-crow-shadow svg').evaluate(e=>getComputedStyle(e).animationName)).toBe('none');await page.evaluate(()=>crowFixture.panel.notebook());await page.locator('[data-crow-notebook]').click();await expect(page.locator('.finch-crow-notebook')).not.toContainText('ハシブトガラス');await expect(page.locator('.finch-crow-unknown')).toHaveCount(5);
+});
+
+// Validate the same scene inside the shipped game shell and its complete CSS,
+// not only the isolated controller fixture above.
+for(const [species,size] of [['large-billed-crow',[390,844]],['hooded-crow',[320,240]]])test(`real game shell preserves crow art and return-home controls ${species}`,async({page},info)=>{
+ const {createWorld}=await import('../../src/engine.js');
+ const {arriveGardenCrow}=await import('../../src/garden-crows.js');
+ const world=createWorld(NOW);world.encounters.garden.open=true;world.birds[0].needs.energy=80;
+ arriveGardenCrow(world,species,NOW,{worldId:world.worldId,revision:world.revision,gardenId:world.encounters.garden.id});world.paused=true;world.settings.motion=false;world.settings.careSound=false;
+ await page.setViewportSize({width:size[0],height:size[1]});
+ await page.addInitScript(now=>{Date.now=()=>now;localStorage.setItem('buncho.music.v1',JSON.stringify({enabled:false}));localStorage.setItem('buncho.care-sound-choice.v1',JSON.stringify({explicit:true,enabled:false}));},NOW);
+ await page.goto('');
+ await page.evaluate(world=>new Promise((resolve,reject)=>{const r=indexedDB.open('buncho-ureshi-garden-v1',1);r.onupgradeneeded=()=>r.result.createObjectStore('world');r.onerror=()=>reject(r.error);r.onsuccess=()=>{const db=r.result,tx=db.transaction('world','readwrite');tx.objectStore('world').put(world,'current');tx.oncomplete=()=>{db.close();resolve();};tx.onerror=()=>reject(tx.error);};}),world);
+ await page.goto('game/');await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');await page.locator('.game-scene-controls-toggle').click();await page.locator('.game-field-nav [data-game-panel=outdoors]').click();
+ await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-scene-state','ready');await expect(page.locator('.finch-crow-actor img')).toBeVisible();await page.locator('.finch-crow-actor img').evaluate(i=>i.decode());
+ await expect(page.locator('.finch-garden-stage [data-garden-friend]')).toHaveCount(0);
+ const home=page.locator('.finch-crow-notice [data-finch-go-home]');await expect(home).toBeVisible();expect((await home.boundingBox()).height).toBeGreaterThanOrEqual(44);
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1&&document.documentElement.scrollHeight<=innerHeight+1)).toBe(true);
+ await info.attach(`real-game-crow-${species}`,{body:await page.screenshot({path:info.outputPath(`real-game-crow-${species}.png`)}),contentType:'image/png'});
+ await home.click();await expect(page.locator('.finch-crow-scale-scene')).toHaveCount(0);await expect(page.locator('.game-room')).toBeVisible();
 });
