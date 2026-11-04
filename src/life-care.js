@@ -87,7 +87,7 @@ export function noteLifeConflict(world,a,b){
  s.condition={kind:'injury',sinceAt:now,deadlineAt:now+DAY};resetExposure(s);return {kind:'illness',birdId:a.id,condition:'injury'};
 }
 const current=(w,t)=>t&&w.worldId===t.worldId&&w.revision===t.revision;
-const stale=()=>({changed:false,message:'お部屋が変わったよ。もう一度選んでね。'});
+const stale=()=>({changed:false,message:'おうちが変わったよ。もう一度選んでね。'});
 export function treatLifeBird(world,birdId,token,now){
  if(!current(world,token))return stale();time(now);
  const s=lifeStatus(world,birdId),b=world.birds.find(x=>x.id===birdId);

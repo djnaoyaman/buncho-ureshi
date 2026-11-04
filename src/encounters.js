@@ -142,11 +142,11 @@ export function createEncounterSystem(catalog=ENCOUNTER_CATALOG,{knownCatalog=ca
   }
   function inviteCage(w,id,expected){
     if(!guard(w,expected))return stale();validate(w.encounters,w.tick);const s=w.encounters;
-    if(!byId.has(id)||!encounterFriendship(w,id).canVisit)return {changed:false,reason:'friendship',message:'親しみ100ポイントで籠に呼べるよ。'};
-    if(s.cageVisitors?.some(v=>v.id===id))return {changed:false,resumed:true,message:'もう籠に遊びに来ているよ。'};
+    if(!byId.has(id)||!encounterFriendship(w,id).canVisit)return {changed:false,reason:'friendship',message:'親しみ100ポイントでおうちに呼べるよ。'};
+    if(s.cageVisitors?.some(v=>v.id===id))return {changed:false,resumed:true,message:'もうおうちに遊びに来ているよ。'};
     if(s.queue.includes(id)||s.active?.id===id)return {changed:false,reason:'guest',message:'今の出会いを終えてから呼ぼう。'};
-    if(cageVisitorCount(w)>=FRIENDSHIP_RULES.visitors)return {changed:false,reason:'capacity',message:'籠のお客さまは文鳥も合わせて6羽まで。空いたらまた呼ぼう。'};
-    upgradeEncounterState(s);s.cageVisitors.push({id,arrivedTick:w.tick});if(s.garden.lastGuest===id)s.garden.lastGuest=null;bump(w);return {changed:true,message:`${byId.get(id).name}を籠に招いたよ。`};
+    if(cageVisitorCount(w)>=FRIENDSHIP_RULES.visitors)return {changed:false,reason:'capacity',message:'おうちのお客さまは文鳥も合わせて6羽まで。空いたらまた呼ぼう。'};
+    upgradeEncounterState(s);s.cageVisitors.push({id,arrivedTick:w.tick});if(s.garden.lastGuest===id)s.garden.lastGuest=null;bump(w);return {changed:true,message:`${byId.get(id).name}をおうちに招いたよ。`};
   }
   function dismissCage(w,id,expected){
     if(!guard(w,expected))return stale();validate(w.encounters,w.tick);if(!w.encounters.cageVisitors?.some(v=>v.id===id))return {changed:false};

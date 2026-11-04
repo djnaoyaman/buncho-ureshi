@@ -177,7 +177,7 @@ test('paused story reopens real-JST care and shows both bars without a fast-tick
 
 test('queued talk after peer fills energy gives no Gem, no history and no success chirp',async t=>{
  const f=await fixture(t,{sound:true});await f.mount();const gate=f.hold();f.root.querySelector('[data-game-talk="名前を呼ぶ"]').click();const peer=f.read();peer.birds[0].needs.energy=100;bumpRevision(peer);f.write(peer);gate.resolve();await f.settle();
- assert.equal(f.read().decor.points,peer.decor.points);assert.deepEqual(f.read().birds[0].memories,peer.birds[0].memories);assert.equal(f.rig.starts,0);assert.equal(f.root.querySelector('[data-game-talk="名前を呼ぶ"]').disabled,true);assert.match(f.root.querySelector('.game-reply').textContent,/お部屋が変わった/);
+ assert.equal(f.read().decor.points,peer.decor.points);assert.deepEqual(f.read().birds[0].memories,peer.birds[0].memories);assert.equal(f.rig.starts,0);assert.equal(f.root.querySelector('[data-game-talk="名前を呼ぶ"]').disabled,true);assert.match(f.root.querySelector('.game-reply').textContent,/おうちが変わった/);
 });
 
 test('legacy numbered name suggestions stay drafts, cancel safely and never cross birds or stale peer names',async t=>{

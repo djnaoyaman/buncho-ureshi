@@ -52,7 +52,7 @@ function produceDroppings(w){
   }
 }
 export function collectDropping(w,droppingId,expectedRevision){
-  if(expectedRevision!==undefined&&expectedRevision!==w.revision)return {changed:false,gemAward:0,droppingId,message:'お部屋が変わったよ。もう一度見つけてね。'};
+  if(expectedRevision!==undefined&&expectedRevision!==w.revision)return {changed:false,gemAward:0,droppingId,message:'おうちが変わったよ。もう一度見つけてね。'};
   const index=w.gems.droppings.findIndex(d=>d.id===droppingId);
   if(index<0||w.field.place!=='home')return {changed:false,gemAward:0,droppingId,message:index<0?'もうきれいになっているよ。':'おうちで見つけてね。'};
   const [drop]=w.gems.droppings.splice(index,1),gemAward=grantGems(w,GEM_RULES.collect);
@@ -75,18 +75,18 @@ export function fieldBirds(w) {
 export function travelTo(w,place,hostId=null) {
   if(!['home','park','friend'].includes(place))throw new Error('行き先を選んでね。');
   const host=place==='friend'?findBird(w,hostId):null;
-  if(place==='friend'&&(!host||!isAlive(w,host)||host.home==='resident'||host.stage!=='adult'))throw new Error('お友達の成鳥のお部屋を選んでね。');
+  if(place==='friend'&&(!host||!isAlive(w,host)||host.home==='resident'||host.stage!=='adult'))throw new Error('お友達の成鳥のおうちを選んでね。');
   if(w.field.place===place&&w.field.hostId===(host?.id||null))return {changed:false,message:'いまここにいるよ。'};
   w.field={place,hostId:host?.id||null,enteredTick:w.tick};bumpRevision(w);
-  return {changed:true,message:place==='home'?'自分たちの籠に帰ったよ。':place==='park'?'文鳥公園に着いたよ。':`${host.name}のお部屋に遊びに来たよ。`};
+  return {changed:true,message:place==='home'?'自分たちのおうちに帰ったよ。':place==='park'?'文鳥公園に着いたよ。':`${host.name}のおうちに遊びに来たよ。`};
 }
 export function inviteFriend(w,birdId) {
   const b=findBird(w,birdId);
   if(!b||!isAlive(w,b)||b.home==='resident'||b.stage!=='adult')throw new Error('お友達の成鳥を選んでね。');
   if(b.home==='visitor')return {changed:false,message:'もう遊びに来ているよ。'};
   if(cageVisitorCount(w)>=LIMITS.visitors)throw new Error('お客さんは6羽まで。今いる友達と過ごそう。');
-  b.home='visitor';b.arrivedTick=w.tick;setAction(w,b,'visit');record(w,'revisit',[b.id],'お友達を自分たちの籠へ招いた','いっしょに過ごす時間が始まった');bumpRevision(w);
-  return {changed:true,message:`${b.name}を招いたよ。籠に帰って一緒に過ごそう。`};
+  b.home='visitor';b.arrivedTick=w.tick;setAction(w,b,'visit');record(w,'revisit',[b.id],'お友達を自分たちのおうちへ招いた','いっしょに過ごす時間が始まった');bumpRevision(w);
+  return {changed:true,message:`${b.name}を招いたよ。おうちに帰って一緒に過ごそう。`};
 }
 /** Closing the home affects presence only. Friendships, family and belongings stay intact.
  * Automatic arrivals resume at the next Japanese midnight, independently of story ticks.
@@ -135,7 +135,7 @@ function awardEvent(w,kind) { reserveAutomaticGems(w.economy,kind); }
 
 export function economyToken(w){return {worldId:w.worldId,revision:w.revision};}
 function currentToken(w,token){return token&&token.worldId===w.worldId&&token.revision===w.revision;}
-const staleEconomy=()=>({changed:false,gemAward:0,goldAward:0,goldSpent:0,message:'お部屋が変わったよ。もう一度選んでね。'});
+const staleEconomy=()=>({changed:false,gemAward:0,goldAward:0,goldSpent:0,message:'おうちが変わったよ。もう一度選んでね。'});
 export function claimAutomaticGift(w,giftId,expectedToken,now=Date.now()){
  if(!currentToken(w,expectedToken))return staleEconomy();
  const synced=syncEconomy(w.economy,careTime(now)),gift=w.economy.pending;
@@ -460,7 +460,7 @@ export function cleanGarden(w) {
   return {...careResult('clean', null, true, before, 100, CARE_RULES.cleanCooldownTicks, '庭の床をきれいにしたよ。文鳥の羽の色は変わらないよ。', 'success'), gemAward, collectedDroppings:droppingCount};
 }
 export function talkToBird(w, birdId, text, now=w.lifecycle?.seenAt??Date.now(), expectedToken) {
-  if(expectedToken&&!currentToken(w,expectedToken))return {...staleEconomy(),answer:"お部屋が変わったよ。もう一度話しかけてね。",careChanged:false};
+  if(expectedToken&&!currentToken(w,expectedToken))return {...staleEconomy(),answer:"おうちが変わったよ。もう一度話しかけてね。",careChanged:false};
   const b = findBird(w, birdId); if (!b) throw new Error('文鳥を選んでね。');
   synchronizeLife(w,careTime(now));
   if(!isAlive(w,b))return {answer:'思い出の庭で、いっしょに過ごした日々を想おう。',gemAward:0,goldAward:0,careChanged:false};
