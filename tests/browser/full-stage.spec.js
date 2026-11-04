@@ -26,7 +26,7 @@ async function cover(page,image) {
   expect(r.x+r.width).toBeGreaterThanOrEqual(v.width-1);
   expect(r.y+r.height).toBeGreaterThanOrEqual(v.height-1);
 }
-async function reachable(page,bird,top,bottom) {
+async function reachable(page,bird,top,bottom,birdSelector) {
   await expect(bird).toBeVisible();
   let r,t,b;
   // Each locator can resolve during a routine render; retry the measurement, never a failed assertion.
@@ -34,7 +34,8 @@ async function reachable(page,bird,top,bottom) {
   expect(r.width).toBeGreaterThanOrEqual(44); expect(r.height).toBeGreaterThanOrEqual(44);
   expect(r.x).toBeGreaterThanOrEqual(0); expect(r.x+r.width).toBeLessThanOrEqual(page.viewportSize().width);
   expect(r.y).toBeGreaterThanOrEqual(t.y+t.height); expect(r.y+r.height).toBeLessThanOrEqual(b.y);
-  expect(await bird.evaluate(el=>{const r=el.getBoundingClientRect();return el.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));})).toBe(true);
+  // Resolve and measure in one browser task so a heartbeat cannot detach the target between them.
+  expect(await page.evaluate(selector=>{const el=document.querySelector(selector);if(!el)return false;const r=el.getBoundingClientRect();return el.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));},birdSelector)).toBe(true);
   await bird.click({trial:true});
 }
 for(const [width,height] of [[320,568],[390,844],[844,390]]) {
@@ -45,7 +46,7 @@ for(const [width,height] of [[320,568],[390,844],[844,390]]) {
     await cover(page,habitat);
     expect((await measuredBox(page.locator('.game-scene-toolbar .game-bird-carousel'))).height).toBeLessThanOrEqual(60);
     expect(await page.locator('#game-open-bird').evaluate(el=>getComputedStyle(el).borderTopLeftRadius)).not.toBe('6px');
-    await reachable(page,bird,page.locator('.game-field-nav'),page.locator('.game-bottom-dock'));
+    await reachable(page,bird,page.locator('.game-field-nav'),page.locator('.game-bottom-dock'),'.game-room-bird.is-selected');
     await noScroll(page); await page.screenshot({path:testInfo.outputPath(`house-${width}x${height}.png`)});
     await bird.click(); await expect(page.locator('.game-bird-sheet')).toBeVisible();
     await page.locator('[data-game-close-bird]').click(); await noScroll(page);
@@ -64,7 +65,7 @@ for(const [width,height] of [[320,568],[390,844],[844,390]]) {
       await cover(page,page.locator('.finch-garden-slide').first().locator('.finch-garden-background'));
       await noScroll(page);
     }
-    await reachable(page,page.locator('.finch-garden-slide').first().locator('.finch-garden-friend').first(),selector,page.locator('.finch-garden-dock'));
+    await reachable(page,page.locator('.finch-garden-slide').first().locator('.finch-garden-friend').first(),selector,page.locator('.finch-garden-dock'),'.finch-garden-slide .finch-garden-friend');
     await page.screenshot({path:testInfo.outputPath(`garden-${width}x${height}.png`)});
     await page.locator('[data-game-close-panel]').click();
     await expect(page.locator('.game-panel-overlay')).not.toBeVisible();
