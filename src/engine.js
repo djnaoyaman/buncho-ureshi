@@ -584,7 +584,7 @@ function validateVersion(input, version) {
   }
   if(version>=5)validateCareSchedule(w.careSchedule);
   const legacyHomeLimits=version<6||w.encounters.version<6;
-  if(version>=6){validateEncounterState(w.encounters,w.tick);upgradeEncounterState(w.encounters);}
+  if(version>=6){validateEncounterState(w.encounters,w.tick);upgradeEncounterState(w.encounters);if(w.encounters.crow?.arrivalBirdId&&!ref(w.encounters.crow.arrivalBirdId))fail('カラスと会った文鳥の情報が不正です。');}
   if(version>=7){
    validateEconomy(w.economy);
    if(w.economy.firstMeetingClaimed.some(id=>!w.encounters.discoveries.some(d=>d.id===id)))fail('初出会いの記録が不正です。');

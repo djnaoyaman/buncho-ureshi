@@ -1,0 +1,38 @@
+name: Garden crow encounters
+on:
+  pull_request:
+    paths: ['src/engine.js', 'src/life-care.js', 'src/protagonist.js', 'src/game.js', 'src/game.css', 'src/encounter*', 'src/garden-crow*', 'src/garden-bird-motion.js', 'public/game-art/crows/**', 'tests/garden-crow*', 'tests/browser/garden-crows.spec.js', 'playwright.garden-crows.config.js', '.github/workflows/garden-crows.yml']
+  workflow_dispatch:
+    inputs:
+      public_url:
+        description: 'Optional deployed URL'
+        default: ''
+        required: false
+permissions:
+  contents: read
+jobs:
+  crow-check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm test
+      - run: npx playwright install --with-deps chromium webkit
+      - run: npx playwright install chrome
+      - run: npx playwright test --config=playwright.garden-crows.config.js
+        env:
+          PUBLIC_URL: ${{ inputs.public_url }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: garden-crows-${{ github.sha }}
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14
