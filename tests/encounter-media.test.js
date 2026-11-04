@@ -10,6 +10,7 @@ import {readFile} from 'node:fs/promises';
 const frame = src => `<span class="finch-media" data-media-state="pending"><img data-media-src="${src}" data-media-lazy="true" width="384" height="384"><span data-media-label>読み込み中…</span></span>`;
 function setup(html) {
   const win=new Window(),root=win.document.createElement('div');win.document.body.append(root);root.innerHTML=html;
+  for(const img of root.querySelectorAll('img'))Object.defineProperty(img,'complete',{value:false,configurable:true});
   let callback,observed=[];
   win.IntersectionObserver=class{constructor(fn){callback=fn;}observe(el){observed.push(el);}unobserve(){}disconnect(){observed=[];}};
   const media=mountEncounterMedia(root);
@@ -58,4 +59,9 @@ test('reused bytes adopt the new discovery, alt and pose presentation',async()=>
  const {win,root,media}=setup('<span class="finch-media" data-media-state="pending"><img src="/same.webp" data-media-src="/same.webp" class="finch-art is-silhouette" alt="" style="left:-10px"></span>');media.refresh();const old=root.querySelector('img');load(win,old);await Promise.resolve();
  media.preserve();root.innerHTML='<span class="finch-media" data-media-state="pending"><img src="/same.webp" data-media-src="/same.webp" class="finch-art" alt="コキンチョウ" style="left:-20px"></span>';media.refresh();
  assert.equal(root.querySelector('img'),old);assert.equal(old.className,'finch-art');assert.equal(old.alt,'コキンチョウ');assert.equal(old.style.left,'-20px');assert.equal(old.dataset.mediaResult,'ready');media.destroy();
+});
+test('decode deadline survives redraw even after all response bytes arrived',()=>{
+ const {win,root,media}=setup(frame('/slow-decode.webp'));const img=root.querySelector('img');img.src=img.dataset.mediaSrc;Object.defineProperty(img,'naturalWidth',{value:384});Object.defineProperty(img,'complete',{value:true});img.decode=()=>new Promise(()=>{});
+ let deadline;const oldSet=win.setTimeout,oldClear=win.clearTimeout;win.setTimeout=fn=>{deadline=fn;return 1;};win.clearTimeout=()=>{};
+ media.refresh();assert.equal(typeof deadline,'function');media.preserve();root.innerHTML=frame('/slow-decode.webp');deadline=null;media.refresh();assert.equal(typeof deadline,'function');deadline();assert.equal(root.querySelector('.finch-media').dataset.mediaState,'error');media.destroy();win.setTimeout=oldSet;win.clearTimeout=oldClear;
 });

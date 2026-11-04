@@ -46,11 +46,12 @@ export function mountEncounterMedia(root) {
       if (!img.getAttribute('src') && img.dataset.mediaSrc) img.src = img.dataset.mediaSrc;
       if (img.dataset.mediaResult === 'error') return finish('error');
       if (frame && img.dataset.mediaResult !== 'ready') { frame.dataset.mediaState = 'pending'; const label = frame.querySelector('[data-media-label]'); if (label) label.textContent = '読み込み中…'; }
-      if (img.complete && img.naturalWidth) return img.dataset.mediaResult === 'ready' ? finish('ready') : loaded();
+      if (img.complete && img.naturalWidth && img.dataset.mediaResult === 'ready') return finish('ready');
       img.dataset.mediaStarted ||= String(Date.now());
       // Absolute deadline survives polling/redraws; navigation never waits for it.
       timeout = win.setTimeout(() => finish('error'), Math.max(0, 20000 - (Date.now() - Number(img.dataset.mediaStarted))));
       timers.push(timeout);
+      if (img.complete && img.getAttribute('src')) return img.naturalWidth ? loaded() : failed();
     };
     if (img.dataset.mediaLazy === 'true' && !img.getAttribute('src') && win.IntersectionObserver) observer.observe(img);
     else start();
