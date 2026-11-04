@@ -1,11 +1,11 @@
 import {test,expect} from '@playwright/test';
 const NOW=Date.UTC(2026,10,4,9);
-async function setup(page,{species='large-billed-crow',friendly=false,seedVisit=false}={}){
+async function setup(page,{species='large-billed-crow',friendly=false,seedVisit=false,earlyPredatorVisits=false}={}){
  await page.goto('');
  const base=new URL('./',page.url()).href;
  await page.setContent(`<link rel="stylesheet" href="${base}src/encounter-ui.css"><style>body{margin:0;font-family:system-ui;color:#294d3b}#fixture{width:100vw;height:100dvh;position:relative;overflow:auto}.finch-overlay-content{max-height:100dvh}.finch-garden{height:100dvh}.finch-entry{padding:16px;box-sizing:border-box}</style><main id="fixture"></main>`);
  await page.clock.install({time:NOW});
- await page.evaluate(async({base,species,friendly,seedVisit,NOW})=>{
+ await page.evaluate(async({base,species,friendly,seedVisit,earlyPredatorVisits,NOW})=>{
    const {createWorld}=await import(base+'src/engine.js');
    const {openGameStore}=await import(base+'src/game-store.js');
    const {mountEncounterPanel}=await import(base+'src/encounter-controller.js');
@@ -14,9 +14,9 @@ async function setup(page,{species='large-billed-crow',friendly=false,seedVisit=
    if(seedVisit||friendly){arriveGardenCrow(world,species,NOW-600001,{worldId:world.worldId,revision:world.revision,gardenId:world.encounters.garden.id});if(friendly)for(let i=0;i<13;i++)petGardenCrow(world,species,8,{worldId:world.worldId,revision:world.revision});world.birds[0].needs.energy=80;}
    world=await store.transact(()=>world);
    let pick=false;const random=()=>{pick=!pick;return pick?0:(CROW_SPECIES.findIndex(s=>s.id===species)+.1)/CROW_SPECIES.length;};
-   const panel=mountEncounterPanel(document.querySelector('#fixture'),{getWorld:()=>world,initialMode:'garden',base,crowRandom:random,transact:async fn=>{world=await store.transact(fn);return world;},onHome:()=>{panel.notebook();document.body.dataset.home='true';}});
+   const panel=mountEncounterPanel(document.querySelector('#fixture'),{getWorld:()=>world,initialMode:'garden',base,earlyPredatorVisits,crowRandom:random,transact:async fn=>{world=await store.transact(fn);return world;},onHome:()=>{panel.notebook();document.body.dataset.home='true';}});
    window.crowFixture={panel,store,world:()=>world,refresh:async()=>{world=await store.transact(w=>w);panel.refresh();}};
- },{base,species,friendly,seedVisit,NOW});
+ },{base,species,friendly,seedVisit,earlyPredatorVisits,NOW});
  await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-scene-state','ready');
  // Establish the first foreground sample. Every timer runs, unlike fastForward.
  await page.clock.runFor(1000);
@@ -74,7 +74,7 @@ for(const [species,size,mode='outdoors',successor=false] of [['large-billed-crow
  await page.goto('game/');await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');await page.locator('.game-scene-controls-toggle').click();if(mode==='notebook'){await page.locator('[data-game-open-menu]').click();await page.locator('[data-game-panel=notebook]').click();await page.locator('[data-finch-go-garden]').click();}else await page.locator('.game-field-nav [data-game-panel=outdoors]').click();
  await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-scene-state','ready');await expect(page.locator('.finch-crow-actor img')).toBeVisible();await page.locator('.finch-crow-actor img').evaluate(i=>i.decode());
  await expect(page.locator('.finch-garden-stage [data-garden-friend]')).toHaveCount(0);await expect(page.locator('.finch-crow-java>span:last-child')).toContainText(protagonist.name);
- const home=page.locator('.finch-crow-notice [data-finch-go-home]');await expect(home).toBeVisible();expect((await home.boundingBox()).height).toBeGreaterThanOrEqual(44);
+ const home=page.locator('.finch-crow-notice [data-finch-go-home]');await expect(home).toBeVisible();await expect.poll(async()=> (await home.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44);
  if(size[1]<=340){const notice=await page.locator('.finch-crow-notice').boundingBox(),book=await page.locator('.finch-garden>header [data-encounter-back]').boundingBox();expect(notice.x+notice.width).toBeLessThanOrEqual(book.x);const dock=await page.locator('.finch-garden-dock').boundingBox(),crow=await page.locator('.finch-crow-actor').boundingBox();expect(crow.y+crow.height).toBeLessThan(dock.y);if(mode==='notebook'){await expect(page.locator('.finch-garden-selector-wrap')).not.toBeVisible();const java=await page.locator('.finch-crow-java').boundingBox();expect(crow.y).toBeGreaterThan(notice.y+notice.height);expect(java.y).toBeGreaterThan(notice.y+notice.height);}}
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1&&document.documentElement.scrollHeight<=innerHeight+1)).toBe(true);
  await info.attach(`real-game-crow-${species}`,{body:await page.screenshot({path:info.outputPath(`real-game-crow-${species}-${mode}${successor?'-successor':''}.png`)}),contentType:'image/png'});
@@ -89,12 +89,11 @@ test('live game shell keeps the foreground clock through normal world polling an
  await page.evaluate(world=>new Promise((resolve,reject)=>{const r=indexedDB.open('buncho-ureshi-garden-v1',1);r.onupgradeneeded=()=>r.result.createObjectStore('world');r.onerror=()=>reject(r.error);r.onsuccess=()=>{const db=r.result,tx=db.transaction('world','readwrite');tx.objectStore('world').put(world,'current');tx.oncomplete=()=>{db.close();resolve();};tx.onerror=()=>reject(tx.error);};}),world);
  const saved=()=>page.evaluate(()=>new Promise((resolve,reject)=>{const r=indexedDB.open('buncho-ureshi-garden-v1',1);r.onerror=()=>reject(r.error);r.onsuccess=()=>{const db=r.result,tx=db.transaction('world','readonly'),value=tx.objectStore('world').get('current');value.onsuccess=()=>resolve(value.result);tx.oncomplete=()=>db.close();};}));
  await page.goto('game/');await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');await page.clock.pauseAt(await page.evaluate(()=>Date.now())+1000);await page.locator('.game-scene-controls-toggle').click();await page.locator('.game-field-nav [data-game-panel=outdoors]').click();await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-scene-state','ready');
- await page.clock.runFor(1000);await page.clock.runFor(119000);await expect(page.locator('[data-crow-phase]')).toHaveCount(0);expect((await saved()).encounters.crow.visits).toHaveLength(0);
+ await page.clock.runFor(20000);expect((await saved()).encounters.crow.visits).toHaveLength(0);
  await page.clock.runFor(1000);await expect(page.locator('[data-crow-phase=warning]')).toBeVisible();const before=await saved();expect(before.encounters.crow.visits).toHaveLength(0);
  await page.clock.runFor(6000);await expect(page.locator('[data-crow-phase=visiting]')).toBeVisible();await expect.poll(async()=>(await saved()).encounters.crow.visits.length).toBe(1);
  const after=await saved();expect(after.encounters.crow.arrivalBirdId).toBe(after.protagonist.birdId);expect(after.birds[0].needs.energy).toBeLessThan(before.birds[0].needs.energy*.6); // Normal story ticks keep running; exact halving is covered in the atomic fixture.
- expect(after.tick).toBeGreaterThan(0);
- await page.clock.runFor(180000);expect((await saved()).encounters.crow.visits[0].count).toBe(1);
+ await page.clock.runFor(180000);const progressed=await saved();expect(progressed.tick).toBeGreaterThan(after.tick);expect(progressed.encounters.crow.visits[0].count).toBe(1);
 });
 
 test('all five undiscovered crow shapes are visible as individual silhouettes and unlock one at a time',async({page},info)=>{
@@ -105,4 +104,8 @@ test('all five undiscovered crow shapes are visible as individual silhouettes an
  await info.attach('five-crow-silhouettes',{body:await page.screenshot({path:info.outputPath('five-crow-silhouettes.png')}),contentType:'image/png'});
  await page.evaluate(async()=>{const base=new URL('./',location.href).href,{arriveGardenCrow}=await import(base+'src/garden-crows.js');await crowFixture.store.transact(w=>{arriveGardenCrow(w,'large-billed-crow',Date.now(),{worldId:w.worldId,revision:w.revision,gardenId:w.encounters.garden.id});return w;});await crowFixture.refresh();});
  await expect(page.locator('.finch-crow-unknown img')).toHaveCount(4);const seen=page.locator('[data-crow-entry=large-billed-crow]');await expect(seen).toBeEnabled();await expect(seen).toContainText('ハシブトガラス');expect(await seen.locator('img').evaluate(img=>getComputedStyle(img).filter)).toBe('none');
+});
+
+test('rare early crow entry retains the warning and home escape',async({page})=>{
+ await setup(page,{earlyPredatorVisits:true});await page.clock.runFor(19000);await expect(page.locator('[data-crow-phase=warning]')).toHaveCount(0);await page.clock.runFor(1000);await expect(page.locator('[data-crow-phase=warning]')).toBeVisible();expect(await page.evaluate(()=>crowFixture.world().birds[0].needs.energy)).toBe(80);await page.locator('[data-crow-phase=warning] [data-finch-go-home]').click();await page.clock.runFor(6000);expect(await page.evaluate(()=>crowFixture.world().birds[0].needs.energy)).toBe(80);
 });

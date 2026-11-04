@@ -7,11 +7,11 @@ import {mountGardenBirdMotion} from './garden-bird-motion.js';
 import {encounterSystem} from './encounters.js';
 import {renderEncounterNotebook,renderEncounterPage,renderEncounterScene,renderFinchGarden,renderEncounterFriendship} from './encounter-ui.js';
 /** Host injects its single existing transaction store. Never creates a second save/backend. */
-export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()=>null,onHouseholdBird=()=>{},onGarden=async()=>{},onGardenChanged=()=>{},onHome=()=>{},onReward=()=>{},meetFriend=null,completeEncounter=null,system=encounterSystem,initialMode='notebook',base='/buncho-ureshi/',crowRandom=Math.random}={}){
+export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()=>null,onHouseholdBird=()=>{},onGarden=async()=>{},onGardenChanged=()=>{},onHome=()=>{},onReward=()=>{},meetFriend=null,completeEncounter=null,system=encounterSystem,initialMode='notebook',base='/buncho-ureshi/',earlyPredatorVisits=true,crowRandom=Math.random}={}){
   if(typeof getWorld!=='function'||typeof transact!=='function')throw new Error('図鑑の保存先が必要です。');
   let alive=true,busy=false,mode=initialMode==='garden'?'garden':'notebook',pageId=null,showPhoto=false,generation=0,notice='',worldId=getWorld().worldId,revealGardenId=null,renderedView=null;
   let rub=null,petFlight=false,petTimer=null;
- const crowClock=createGardenCrowClock({random:crowRandom});
+ const crowClock=createGardenCrowClock({random:crowRandom,earlyVisit:earlyPredatorVisits});
  let crowFlight=false,crowTimer=null,crowPhase=null,crowEpoch=0,crowContext=null;
  const stopCrow=()=>{crowClock.reset();crowEpoch++;};
  const syncCrowContext=w=>{const key=`${w.worldId}:${w.encounters.garden.id}:${crowTarget(w)?.id}`;if(key!==crowContext){stopCrow();crowContext=key;}return key;};

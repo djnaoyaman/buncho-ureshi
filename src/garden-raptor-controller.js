@@ -3,8 +3,8 @@ import {advanceGardenRaptor} from './engine.js';
 import {crowScene} from './garden-crows.js';
 /** One host-owned foreground clock. A saved warning survives navigation and reload.
  * Transactions consume only a bounded observed interval, never offline wall time. */
-export function mountGardenRaptors(root,{getWorld,transact,onChange=()=>{},isAvailable=()=>true,hasCrowPending=()=>false,random=Math.random}={}){
- const doc=root.ownerDocument,win=doc.defaultView,clock=createGardenRaptorClock({random});
+export function mountGardenRaptors(root,{getWorld,transact,onChange=()=>{},isAvailable=()=>true,hasCrowPending=()=>false,random=Math.random,earlyPredatorVisits=true}={}){
+ const doc=root.ownerDocument,win=doc.defaultView,clock=createGardenRaptorClock({random,earlyVisit:earlyPredatorVisits});
  let alive=true,flight=false,timer=null,last=null,epoch=0,lastWorld=getWorld().worldId,lastPanel=root.querySelector('.game-app')?.dataset.panel,lastGarden=getWorld().encounters.garden.id;
  let renderedScene=sceneKey(getWorld());
  const visible=()=>alive&&root.isConnected&&!['loading','shown'].includes(doc.body.dataset.gameIntro)&&doc.visibilityState!=='hidden'&&win.navigator?.onLine!==false&&!getWorld().paused;

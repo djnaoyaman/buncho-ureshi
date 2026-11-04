@@ -12,7 +12,7 @@ function fixture(active=false){const w=createWorld(NOW);w.field.place='park';w.e
 function setup(w=fixture(),options={}){
  const win=new Window();win.document.body.innerHTML='<main id="root"><div class="finch-garden-stage" data-scene-state="ready"></div></main>';const root=win.document.querySelector('#root');
  let elapsed=0,n=0;const timers=new Map(),originalNow=Date.now;Date.now=()=>NOW+elapsed;win.setTimeout=fn=>{timers.set(++n,fn);return n;};win.clearTimeout=n=>timers.delete(n);Object.defineProperty(win.performance,'now',{value:()=>elapsed,configurable:true});
- const changes=[];const controller=mountGardenRaptors(root,{getWorld:()=>w,random:()=>0,transact:async fn=>fn(w),onChange:x=>changes.push(x),...options});
+ const changes=[];const controller=mountGardenRaptors(root,{getWorld:()=>w,earlyPredatorVisits:false,random:()=>0,transact:async fn=>fn(w),onChange:x=>changes.push(x),...options});
  const tick=async(ms=1000)=>{elapsed+=ms;const [id,fn]=timers.entries().next().value||[];assert.ok(fn);timers.delete(id);const flight=fn();await Promise.resolve();return {flight};};
  const run=async n=>{for(let i=0;i<n;i++)await (await tick()).flight;};
  const close=()=>{controller.destroy();Date.now=originalNow;win.happyDOM.abort();};return {win,root,controller,tick,run,close,timers,changes,world:w};
@@ -66,4 +66,8 @@ test('a crow warning that appears while a raptor draw waits keeps priority',asyn
 
 test('pending crow save retains priority even after its warning DOM is replaced',async()=>{
  const w=fixture();let release,pending=false;const s=setup(w,{hasCrowPending:()=>pending,transact:fn=>new Promise(resolve=>{release=()=>resolve(fn(w));})});try{await s.run(120);const {flight}=await s.tick();pending=true;release();await flight;assert.equal(w.encounters.raptor.active,null);assert.equal(w.encounters.raptor.visits.length,0);}finally{s.close();}
+});
+
+test('early entry still grants the full minute to escape',async()=>{
+ const w=fixture(),s=setup(w,{earlyPredatorVisits:true});try{await s.run(20);assert.equal(w.encounters.raptor.active,null);await s.run(1);assert.equal(w.encounters.raptor.active.remainingMs,60000);await s.run(59);assert.equal(lifeStatus(w,'b1').death,null);escapeGardenRaptor(w,raptorToken(w));await s.run(2);assert.equal(lifeStatus(w,'b1').death,null);}finally{s.close();}
 });

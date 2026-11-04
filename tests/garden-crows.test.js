@@ -14,7 +14,7 @@ function fixture(){const w=createWorld(now,42);w.encounters.garden.open=true;w.f
 function sample(clock,time,options={}){return clock.sample({key:'world:garden',now:time,eligible:true,...options});}
 function run(clock,start,end,options={}){let result;for(let t=start;t<=end;t+=1000){const r=sample(clock,t,options);if(r)result=r;}return result;}
 test('crow clock waits 120 continuous seconds, warns for six seconds, then fires once',()=>{
- let calls=0;const clock=createGardenCrowClock({random:()=>{calls++;return 0;}});
+ let calls=0;const clock=createGardenCrowClock({earlyVisit:false,random:()=>{calls++;return 0;}});
  assert.equal(run(clock,0,119000),undefined);assert.equal(calls,0);
  assert.deepEqual(sample(clock,120000),{kind:'warning',id});assert.equal(clock.warning,id);
  assert.equal(run(clock,121000,125000),undefined);
@@ -22,27 +22,27 @@ test('crow clock waits 120 continuous seconds, warns for six seconds, then fires
  assert.equal(run(clock,127000,180000),undefined);assert.equal(calls,2);
 });
 test('20 percent boundary and fifteen-second retry never consume world RNG',()=>{
- let calls=0;const values=[.2,.199999,.99];const clock=createGardenCrowClock({random:()=>{calls++;return values.shift();}});
+ let calls=0;const values=[.2,.199999,.99];const clock=createGardenCrowClock({earlyVisit:false,random:()=>{calls++;return values.shift();}});
  assert.equal(run(clock,0,120000),undefined);assert.equal(calls,1);
  assert.equal(run(clock,121000,134000),undefined);assert.equal(calls,1);
  assert.deepEqual(sample(clock,135000),{kind:'warning',id:CROW_SPECIES.at(-1).id});assert.equal(calls,3);
 });
 test('ineligible, changed garden/world, suspended or backwards clock resets the full dwell',()=>{
  for(const interrupt of [c=>sample(c,119500,{eligible:false}),c=>sample(c,120000,{key:'other:garden'}),c=>sample(c,122000),c=>sample(c,118000),c=>sample(c,NaN)]){
-  const clock=createGardenCrowClock({random:()=>0});run(clock,0,119000);interrupt(clock);
+  const clock=createGardenCrowClock({earlyVisit:false,random:()=>0});run(clock,0,119000);interrupt(clock);
   sample(clock,123000);const due=123000+CROW_RULES.dwellMs-clock.elapsed;assert.ok(clock.elapsed<=1000);assert.equal(run(clock,124000,due-1000),undefined);
   assert.equal(sample(clock,due)?.kind,'warning');
  }
 });
 test('canceled warning cannot fire, unavailable state suppresses arrivals',()=>{
  for(const interruption of [{eligible:false},{available:false}]){
-  const clock=createGardenCrowClock({random:()=>0});run(clock,0,120000);assert.equal(clock.warning,id);
+  const clock=createGardenCrowClock({earlyVisit:false,random:()=>0});run(clock,0,120000);assert.equal(clock.warning,id);
   sample(clock,121000,interruption);assert.equal(clock.warning,null);
   assert.equal(run(clock,122000,126000),undefined);
  }
 });
 test('long timer gaps cancel warnings rather than completing offline',()=>{
- const clock=createGardenCrowClock({random:()=>0});run(clock,0,120000);
+ const clock=createGardenCrowClock({earlyVisit:false,random:()=>0});run(clock,0,120000);
  assert.equal(sample(clock,120000+CROW_RULES.maxSampleGapMs+1),null);assert.equal(clock.warning,null);assert.equal(clock.elapsed,0);
 });
 test('arrival changes only b1 energy, crow observations and revision',()=>{

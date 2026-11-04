@@ -10,7 +10,7 @@ function setup(w,{entry=false,...options}={}){
  const win=new Window();win.document.body.innerHTML='<div id="root"></div>';const root=win.document.querySelector('#root');
  let elapsed=0,sequence=0;const timers=new Map();win.setTimeout=(fn,delay)=>{const key=++sequence;timers.set(key,{fn,delay});return key;};win.clearTimeout=key=>timers.delete(key);
  Object.defineProperty(win.performance,'now',{value:()=>elapsed,configurable:true});
- const panel=mountEncounterPanel(root,{getWorld:()=>w,transact:async fn=>fn(w),initialMode:entry?'notebook':'garden',crowRandom:()=>0,...options});
+ const panel=mountEncounterPanel(root,{getWorld:()=>w,transact:async fn=>fn(w),initialMode:entry?'notebook':'garden',earlyPredatorVisits:false,crowRandom:()=>0,...options});
  if(entry){root.querySelector('[data-crow-notebook]').click();root.querySelector(`[data-crow-entry="${id}"]`).click();}
  const ready=()=>{const stage=root.querySelector('.finch-garden-stage');if(stage)stage.dataset.sceneState='ready';};
  const tick=async({makeReady=true}={})=>{elapsed+=1000;if(makeReady)ready();const timer=[...timers].find(([,v])=>v.fn.name==='pollCrow');assert.ok(timer,'crow timer scheduled');timers.delete(timer[0]);const flight=timer[1].fn();await Promise.resolve();return {flight};};
@@ -87,4 +87,8 @@ test('a new protagonist must spend their own full continuous two minutes in the 
 
 test('a founder warning clears immediately on succession refresh before the next timer sample',async()=>{
  const {w,child,succeed}=await successorFamily(),s=setup(w);try{await s.run(121);assert.ok(s.root.querySelector('[data-crow-phase=warning]'));succeed();assert.equal(w.protagonist.birdId,child.id);s.panel.refresh();assert.equal(s.root.querySelector('[data-crow-phase]'),null);assert.equal(w.encounters.crow.visits.length,0);await s.run(120);assert.equal(s.root.querySelector('[data-crow-phase]'),null);await s.run(1);assert.ok(s.root.querySelector('[data-crow-phase=warning]'));}finally{s.close();}
+});
+
+test('early entry warns after twenty visible seconds and still allows six seconds to leave',async()=>{
+ const w=fixture(),s=setup(w,{earlyPredatorVisits:true});try{await s.run(20);assert.equal(s.root.querySelector('[data-crow-phase=warning]'),null);await s.run(1);assert.ok(s.root.querySelector('[data-crow-phase=warning]'));assert.equal(w.encounters.crow.visits.length,0);await s.run(5);assert.equal(w.encounters.crow.visits.length,0);await s.run(1);assert.equal(w.encounters.crow.visits.length,1);}finally{s.close();}
 });

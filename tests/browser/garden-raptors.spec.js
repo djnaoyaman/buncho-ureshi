@@ -46,10 +46,16 @@ test('reset modal retains an operable home exit during warning',async({page})=>{
 test('friendly species has no danger text and never creates an accident',async({page})=>{
  await setup(page,{friendly:true});await expect(page.locator('.game-panel-overlay>[data-raptor-notice]')).toContainText('なかよし');await expect(page.locator('.game-panel-overlay>[data-raptor-notice]')).not.toContainText('事故死');await page.clock.runFor(65000);expect((await saved(page)).lifecycle.birds.find(b=>b.birdId==='b1').death).toBeNull();
 });
-test('live full shell draws the rare warning after dwell despite host transaction busy',async({page})=>{
+test('live full shell draws a rare early warning with the full escape minute despite host transaction busy',async({page})=>{
  await page.goto('');await page.clock.install({time:NOW});await page.clock.pauseAt(NOW+1000);const w=seed({active:false});arriveGardenCrow(w,'large-billed-crow',NOW-60000,{worldId:w.worldId,revision:w.revision,gardenId:w.encounters.garden.id});await save(page,w);
  const base=new URL('./',page.url()).href;await page.setContent(`<link rel="stylesheet" href="${base}src/style.css"><link rel="stylesheet" href="${base}src/game.css"><link rel="stylesheet" href="${base}src/encounter-ui.css"><link rel="stylesheet" href="${base}src/life-care.css"><main id="game-root"></main>`);await page.evaluate(async base=>{document.body.dataset.world='buncho';const {mountGame}=await import(base+'src/game.js');window.disposeRaptorGame=await mountGame(document.querySelector('#game-root'),{raptorRandom:()=>0});},base);
- await page.locator('.game-field-nav [data-game-panel=outdoors]').click();await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-scene-state','ready');await page.clock.runFor(1000);await page.clock.runFor(119000);expect((await saved(page)).encounters.raptor.visits).toHaveLength(0);await page.clock.runFor(1000);await expect(page.locator('[data-raptor-phase=warning]')).toBeVisible();expect((await saved(page)).encounters.raptor.visits).toHaveLength(1);
+ await page.locator('.game-field-nav [data-game-panel=outdoors]').click();await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-scene-state','ready');await page.clock.runFor(20000);expect((await saved(page)).encounters.raptor.visits).toHaveLength(0);// A normal host save may own the transaction at the exact 20-second boundary.
+ // Advance one foreground second at a time so IndexedDB can finish, without
+ // spending any of the saved escape minute after the arrival has committed.
+ for(let i=0;i<5&&(await saved(page)).encounters.raptor.visits.length===0;i++){
+  await page.clock.runFor(1000);await saved(page);
+ }
+ await expect(page.locator('[data-raptor-phase=warning]')).toBeVisible();expect((await saved(page)).encounters.raptor.visits).toHaveLength(1);expect((await saved(page)).encounters.raptor.active.remainingMs).toBe(60000);
 });
 
 test('petting in the enemy notebook makes the current warning harmless and saves friendship',async({page})=>{
