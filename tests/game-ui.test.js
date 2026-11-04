@@ -429,3 +429,16 @@ test('new decoration choices clear old equipment feedback and change only the re
  assert.equal(f.root.querySelector('[data-preview-item]').dataset.previewItem,world.decor.equipped.water);
  f.root.querySelector('[data-decor-preview="water-rose-cozy"]').click();assert.deepEqual((await rawWorld(f.indexedDB)).decor.equipped,equipped.decor.equipped,'unowned preview does not equip or affect another category');
 });
+
+test('home closing clears visitors once, keeps family selected and persists after remount',async t=>{
+ const f=await fixture(t),store=await f.otherTab();await store.transact(w=>{w.paused=false;advanceTicks(w,1);w.paused=true;return w;});await f.mount();const before=await store.transact(w=>w),guest=before.birds.find(b=>b.home==='visitor');assert.ok(guest);
+ assert.equal(f.root.querySelectorAll('[data-home-role=family]').length,1);assert.equal(f.root.querySelectorAll('[data-home-role=friend]').length,1);
+ const close=f.root.querySelector('#game-home-close');close.click();close.click();await until(async()=>!(await store.transact(w=>w)).birds.some(b=>b.home==='visitor'),'guests sent home');
+ const saved=await store.transact(w=>w);assert.deepEqual({...saved.birds[0],action:before.birds[0].action},before.birds[0]);assert.equal(saved.birds[0].action.target,null);assert.equal(saved.birds.length,before.birds.length);assert.deepEqual(saved.encounters.discoveries,before.encounters.discoveries);assert.ok(saved.encounters.homeClosedUntil>Date.now());assert.equal(f.root.querySelectorAll('.game-room-bird').length,1);assert.equal(f.root.querySelector('#game-home-close').disabled,true);
+ f.stop();await f.mount();assert.equal(f.root.querySelectorAll('.game-room-bird').length,1);assert.equal(f.root.querySelector('#game-home-close').disabled,true);f.root.querySelector('[data-field-travel=friend]')?.click();
+});
+
+test('new navigation before queued home closing cancels it without affecting visitors',async t=>{
+ const f=await fixture(t),store=await f.otherTab();await store.transact(w=>{w.paused=false;advanceTicks(w,1);w.paused=true;return w;});await f.mount();const before=await store.transact(w=>w);
+ f.root.querySelector('#game-home-close').click();f.profile();await sleep(25);assert.equal(f.root.querySelector('.game-app').dataset.panel,'profile');assert.deepEqual(await store.transact(w=>w),before);assert.ok(f.root.querySelector('.game-panel-overlay[open]'));
+});
