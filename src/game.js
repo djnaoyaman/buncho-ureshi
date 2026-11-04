@@ -298,7 +298,10 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
   function lifeNotice(){
     const sick=world.birds.filter(b=>b.home==='resident'&&lifeStatus(world,b)?.condition),dead=world.lifecycle.birds.filter(s=>s.death);
     if(!sick.length&&!dead.length)return '';
-    return `<div class="life-game-notice" role="status">${sick.length?`<button data-game-panel="health">${sick.length}羽に体調の変化 · 病院へ</button>`:''}${dead.length?`<button data-game-panel="memorial">思い出の庭 · ${dead.length}羽</button>`:''}</div>`;
+    // One compact header shortcut leaves room for the logo and scene controls.
+    // Health takes priority; the memorial remains available from the menu.
+    const urgent=sick.length>0,count=urgent?sick.length:dead.length,target=urgent?'health':'memorial',label=urgent?`${count}羽に体調の変化。病院へ`:`思い出の庭。${count}羽`;
+    return `<div class="life-game-notice" role="status"><button type="button" data-game-panel="${target}" data-life-notice="${target}" aria-label="${label}" title="${label}"><span>${urgent?'病院へ':'思い出'}</span><small>${count}羽</small></button></div>`;
   }
   function welcomeCard(){
     const summary=world.offlineSummary;if(!summary||panel!=='garden')return '';
