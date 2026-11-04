@@ -34,7 +34,7 @@ export function mountGardenRaptors(root,{getWorld,transact,onChange=()=>{},isAva
       // the exact event/progress snapshot to reject another tab's earlier step.
       result=advanceGardenRaptor(current,delta,Date.now(),{...token,revision:current.revision});
      }else{
-      if(doc.querySelector('.game-bird-sheet[open]')||current.encounters.garden.id!==gardenId||raptorTarget(current)?.id!==targetId||!root.querySelector('.finch-garden-stage[data-scene-state=ready]'))return current;
+      if(doc.querySelector('.game-bird-sheet[open]')||root.querySelector('[data-crow-phase=warning]')||crowScene(current)||current.encounters.garden.id!==gardenId||raptorTarget(current)?.id!==targetId||!root.querySelector('.finch-garden-stage[data-scene-state=ready]'))return current;
       result=arriveGardenRaptor(current,event.id,Date.now(),{worldId:current.worldId,revision:current.revision,gardenId});
      }
      return current;
