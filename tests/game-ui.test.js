@@ -214,7 +214,7 @@ test('photo habitat keeps one selected caption, accessible resident picker, and 
   assert.equal(f.root.querySelector('.game-profile h3').textContent,'最初の庭');
   assert.equal(f.root.querySelectorAll('.game-room').length,1,'background scene stays behind the profile overlay');assert.equal(f.root.querySelector('.game-panel-overlay').open,true);
   f.root.querySelector('[data-game-panel="garden"]').click();
-  f.root.querySelector('[data-game-panel="help"]').click();assert.equal(f.root.querySelector('.game-art-disclosure').textContent.includes('実際のおもちの写真'),true);f.root.querySelector('[data-game-panel="garden"]').click();
+  f.root.querySelector('[data-game-panel="help"]').click();const disclosure=f.root.querySelector('.game-art-disclosure').cloneNode(true);disclosure.querySelectorAll('rt').forEach(node=>node.remove());assert.equal(disclosure.textContent.includes('本物のおもちの写真'),true);f.root.querySelector('[data-game-panel="garden"]').click();
   assert.equal(f.root.querySelectorAll('.game-room-bird').length,2);
 });
 
