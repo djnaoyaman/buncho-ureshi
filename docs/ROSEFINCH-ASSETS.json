@@ -1,0 +1,92 @@
+[
+  {
+    "id": "long-tailed-rosefinch",
+    "name": "ベニマシコ",
+    "scientific": "Carpodacus sibiricus",
+    "checkedAt": "2026-11-04",
+    "art": {
+      "path": "public/game-art/finches/long-tailed-rosefinch-male.png",
+      "width": 1254,
+      "height": 1254,
+      "kind": "original generated game illustration",
+      "sha256": "32cb1a18f3b7c52cf5faf51bab248f15aae5a2f0e96424ed9028568e08ad7d2b",
+      "bytes": 1126442,
+      "visualReview": "Full body, both feet and tail visible; actual transparency and species-specific markings checked. Not a real photograph."
+    },
+    "photo": {
+      "path": "public/game-art/finches/photos/long-tailed-rosefinch-alpsdake.jpg",
+      "creator": "Alpsdake",
+      "source": "https://commons.wikimedia.org/wiki/File:Carpodacus_sibiricus_sanguinolentus.JPG",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "width": 1500,
+      "height": 1024,
+      "sha256": "bff33d739a535e6e45f96dd290865ce52ca13cfecdc72666818a875fb470c648",
+      "bytes": 862919,
+      "modifications": "none; original JPEG bytes",
+      "visualReview": true
+    },
+    "sources": [
+      {
+        "title": "ベニマシコ – BIRD FAN（日本野鳥の会）",
+        "url": "https://www.birdfan.net/uragus_sibiricus/",
+        "supports": "学名、分類、15cm、長い尾、翼の2本の白帯、尾両側の白色、夏に強まる雄の赤み、北海道繁殖と秋冬の移動"
+      },
+      {
+        "title": "ベニマシコ – 日本野鳥の会京都支部",
+        "url": "https://wbsj-kyoto.net/yachoulist/ベニマシコ/",
+        "supports": "北海道・青森県下北半島で繁殖、草の種子の採食"
+      },
+      {
+        "title": "ベニマシコ – 我孫子野鳥を守る会",
+        "url": "https://abikoyacho.org/tori/benimashiko.html",
+        "supports": "雌は黄土色の褐色、雄の胸腹の赤色"
+      }
+    ]
+  },
+  {
+    "id": "pallass-rosefinch",
+    "name": "オオマシコ",
+    "scientific": "Carpodacus roseus",
+    "checkedAt": "2026-11-04",
+    "art": {
+      "path": "public/game-art/finches/pallass-rosefinch-male.png",
+      "width": 1254,
+      "height": 1254,
+      "kind": "original generated game illustration",
+      "sha256": "2fef8563c5ba364648d6938cda747b03cb92f8f11ee4b0bd982db0a4ee1bff0b",
+      "bytes": 1893090,
+      "visualReview": "Full body, both feet and tail visible; actual transparency and species-specific markings checked. Not a real photograph."
+    },
+    "photo": {
+      "path": "public/game-art/finches/photos/pallass-rosefinch-nishimura.jpg",
+      "creator": "M.Nishimura",
+      "source": "https://commons.wikimedia.org/wiki/File:Carpodacus_roseus.jpg",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "width": 1200,
+      "height": 900,
+      "sha256": "a7bdab296b9e2e8f903bbacdbde44d5da575dbcd8420f87aae6526ec471e8fd5",
+      "bytes": 214956,
+      "modifications": "none; original JPEG bytes",
+      "visualReview": true
+    },
+    "sources": [
+      {
+        "title": "オオマシコ – BIRD FAN（日本野鳥の会）",
+        "url": "https://www.birdfan.net/carpodacus_roseus/",
+        "supports": "学名、分類、17cm、ベニマシコより大きく太い、尾両側は白くない、日本で冬鳥"
+      },
+      {
+        "title": "山梨県レッドデータブック・鳥類",
+        "url": "https://www.pref.yamanashi.jp/documents/84781/8cyourui.pdf",
+        "supports": "17cm、雄の紅色と銀白色の額・喉、雌の褐色と淡い紅色、小群、ハギ類の種子、シベリア繁殖と越冬渡来"
+      },
+      {
+        "title": "Pallas’s Rosefinch – Cornell BirdNET+ Taxonomy",
+        "url": "https://birdnet.cornell.edu/taxonomy/species/Carpodacus%20roseus",
+        "supports": "和名・英名・学名対応"
+      }
+    ]
+  }
+]

@@ -63,7 +63,7 @@ test('cage visitors are visible without an encounter panel loader',()=>{
 test('all catalog photographs retain exact original URLs, unaltered styles and license credits',()=>{
  const win=new Window(),world=createWorld(1000,42),before=JSON.stringify(world),base='/buncho-ureshi/';
  const visibleSystem={...encounterSystem,status:()=>({discovered:true})};
- assert.equal(encounterSystem.catalog.length,30);
+ assert.equal(encounterSystem.catalog.length,32);
  for(const entry of encounterSystem.catalog){
   win.document.body.innerHTML=renderEncounterPage(world,entry.id,{system:visibleSystem,base,showPhoto:true});
   const figure=win.document.querySelector('.finch-photo'),img=figure.querySelector('img'),caption=figure.querySelector('figcaption'),links=caption.querySelectorAll('a');

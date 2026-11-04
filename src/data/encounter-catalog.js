@@ -2357,11 +2357,184 @@ export const ENCOUNTER_CANDIDATES=Object.freeze([
     "familyEligible": false,
     "breedingEligible": false,
     "homeResident": false
+  },
+  {
+    "id": "long-tailed-rosefinch",
+    "kind": "species",
+    "parentId": null,
+    "name": "ベニマシコ",
+    "english": "Long-tailed Rosefinch",
+    "scientific": "Carpodacus sibiricus",
+    "family": "アトリ科",
+    "aliases": [],
+    "releaseReady": false,
+    "scriptVersion": 1,
+    "hint": "草の穂のかげに、長い尾とふたすじの白。",
+    "eventTitle": "草の穂と、ふたすじの白",
+    "steps": [
+      {
+        "action": "follow-stem",
+        "label": "穂のゆれを見る",
+        "text": "こむぎの庭の草の穂が、そっとゆれた。葉のかげの小さな影を眺めよう。"
+      },
+      {
+        "action": "notice-tail",
+        "label": "長い尾を見つける",
+        "text": "長い尾と、翼に並ぶふたすじの白。近づきすぎず、その姿を見守ろう。"
+      },
+      {
+        "action": "greet-rosefinch",
+        "label": "そっとごあいさつ",
+        "text": "小道の向こうに、赤みを帯びたお客さま。今日の出会いを図鑑に残そう。"
+      }
+    ],
+    "revisit": "草の小道で、長い尾のお客さまにまた会えたね。",
+    "summary": "長い尾と、翼にある2本の白い帯が目印の小鳥です。北海道や青森県で繁殖し、秋冬には本州以南の草地や林縁のやぶで草の種子などを食べます。オスは赤みを帯び、夏にはいっそう鮮やかに。メスは褐色です。",
+    "appearance": "冬のオスを描いたイラストと資料写真です。夏のオスはさらに赤みが強く、メスは褐色で、すべての個体がこの羽色ではありません。以前は Uragus sibiricus の学名で扱われました。",
+    "sources": [
+      {
+        "title": "ベニマシコ – BIRD FAN（日本野鳥の会）",
+        "url": "https://www.birdfan.net/uragus_sibiricus/"
+      },
+      {
+        "title": "ベニマシコ – 日本野鳥の会京都支部",
+        "url": "https://wbsj-kyoto.net/yachoulist/ベニマシコ/"
+      },
+      {
+        "title": "ベニマシコ – 我孫子野鳥を守る会",
+        "url": "https://abikoyacho.org/tori/benimashiko.html"
+      }
+    ],
+    "art": {
+      "src": "game-art/finches/long-tailed-rosefinch-male.png",
+      "width": 1254,
+      "height": 1254,
+      "alt": "ベニマシコのオスの創作イラスト"
+    },
+    "photo": {
+      "src": "game-art/finches/photos/long-tailed-rosefinch-alpsdake.jpg",
+      "width": 1500,
+      "height": 1024,
+      "alt": "草の種子を食べる冬のベニマシコのオス。",
+      "caption": "草の種子を食べる冬のベニマシコのオス。 2013-01-19、愛知県、日本で撮影。ゲームの庭や当日の記録ではありません。",
+      "creator": "Alpsdake",
+      "source": "https://commons.wikimedia.org/wiki/File:Carpodacus_sibiricus_sanguinolentus.JPG",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "modifications": "原版を変更せず収録",
+      "noDerivatives": false,
+      "canCrop": false,
+      "canColorFilter": false,
+      "display": "contain"
+    },
+    "gates": {
+      "identity": true,
+      "facts": true,
+      "photoLicense": true,
+      "photoVisual": true,
+      "illustration": true,
+      "layout": false
+    },
+    "gardenEvent": {
+      "scene": "grass",
+      "invitation": "草の穂のかげに、長い尾とふたすじの白。",
+      "fictional": true,
+      "gardenIds": [
+        "komugi"
+      ]
+    }
+  },
+  {
+    "id": "pallass-rosefinch",
+    "kind": "species",
+    "parentId": null,
+    "name": "オオマシコ",
+    "english": "Pallas’s Rosefinch",
+    "scientific": "Carpodacus roseus",
+    "family": "アトリ科",
+    "aliases": [],
+    "releaseReady": false,
+    "scriptVersion": 1,
+    "hint": "林の枝先に、紅い羽と銀白色のきらめき。",
+    "eventTitle": "林にひとつ、銀のきらめき",
+    "steps": [
+      {
+        "action": "look-branch",
+        "label": "枝先を見上げる",
+        "text": "こもりの杜の枝先で、ふっくらした影がひと休み。落ち葉のそばから眺めよう。"
+      },
+      {
+        "action": "notice-silver",
+        "label": "銀白色を見つける",
+        "text": "紅い羽のあいだに、額とのどの銀白色がきらり。静かにその模様を見てみよう。"
+      },
+      {
+        "action": "remember-rosefinch",
+        "label": "出会いを覚える",
+        "text": "林の小さなお客さまと、ごあいさつ。見つけた特徴を図鑑に残そう。"
+      }
+    ],
+    "revisit": "枝先の紅いお客さま。銀白色の額がまた見えたね。",
+    "summary": "冬に日本へ渡ってくる、ベニマシコよりひと回り大きく、ふっくらした体つきの鳥です。オスの紅色の体には、額とのどの銀白色がよく映えます。山地の明るい林や林縁で小さな群れになり、ハギなどの種子を食べます。",
+    "appearance": "オスを描いたイラストと冬の資料写真です。額とのどの銀白色、紅い体、ふっくらした姿に注目。メスは主に褐色で、すべての個体がこの羽色ではありません。ベニマシコとは別種で、尾の両側は白くありません。",
+    "sources": [
+      {
+        "title": "オオマシコ – BIRD FAN（日本野鳥の会）",
+        "url": "https://www.birdfan.net/carpodacus_roseus/"
+      },
+      {
+        "title": "山梨県レッドデータブック・鳥類",
+        "url": "https://www.pref.yamanashi.jp/documents/84781/8cyourui.pdf"
+      },
+      {
+        "title": "Pallas’s Rosefinch – Cornell BirdNET+ Taxonomy",
+        "url": "https://birdnet.cornell.edu/taxonomy/species/Carpodacus%20roseus"
+      }
+    ],
+    "art": {
+      "src": "game-art/finches/pallass-rosefinch-male.png",
+      "width": 1254,
+      "height": 1254,
+      "alt": "オオマシコのオスの創作イラスト"
+    },
+    "photo": {
+      "src": "game-art/finches/photos/pallass-rosefinch-nishimura.jpg",
+      "width": 1200,
+      "height": 900,
+      "alt": "銀白色の額とのどが目立つ、冬のオオマシコのオス。",
+      "caption": "銀白色の額とのどが目立つ、冬のオオマシコのオス。 2008-02-09、神戸市、日本で撮影。ゲームの庭や当日の記録ではありません。",
+      "creator": "M.Nishimura",
+      "source": "https://commons.wikimedia.org/wiki/File:Carpodacus_roseus.jpg",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "modifications": "原版を変更せず収録",
+      "noDerivatives": false,
+      "canCrop": false,
+      "canColorFilter": false,
+      "display": "contain"
+    },
+    "gates": {
+      "identity": true,
+      "facts": true,
+      "photoLicense": true,
+      "photoVisual": true,
+      "illustration": true,
+      "layout": false
+    },
+    "gardenEvent": {
+      "scene": "branch",
+      "invitation": "林の枝先に、紅い羽と銀白色のきらめき。",
+      "fictional": true,
+      "gardenIds": [
+        "shrine-grove"
+      ]
+    }
   }
 ].map(Object.freeze));
 export const INITIAL_EIGHT=Object.freeze(ENCOUNTER_CANDIDATES.slice(0,8));
 export const NEXT_THIRTEEN=Object.freeze(ENCOUNTER_CANDIDATES.slice(8,21));
 export const FINAL_EIGHT=Object.freeze(ENCOUNTER_CANDIDATES.slice(21,29));
+export const ROSEFINCH_ADDITIONS=Object.freeze(ENCOUNTER_CANDIDATES.filter(entry=>['long-tailed-rosefinch','pallass-rosefinch'].includes(entry.id)));
 export const TREE_SPARROW_CANDIDATE=ENCOUNTER_CANDIDATES.find(entry=>entry.id==='eurasian-tree-sparrow');
 export const JAVA_BASELINE=Object.freeze({
   "id": "java-sparrow",
