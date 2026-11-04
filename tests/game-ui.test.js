@@ -197,7 +197,7 @@ test('photo habitat keeps one selected caption, accessible resident picker, and 
   assert.match(f.root.querySelector('.game-habitat img').getAttribute('src'),/field-home-wide\.webp$/);
   assert.equal(f.root.querySelectorAll('.game-scene-caption').length,1);
   assert.equal(f.root.querySelectorAll('.game-room-bird button').length,0);
-  assert.equal(f.root.querySelectorAll('.game-room-bird svg').length,0);
+  assert.equal(f.root.querySelectorAll('.game-room-bird .game-sprite svg').length,0);assert.equal(f.root.querySelectorAll('[data-home-role=family]').length,2);
   assert.equal(f.root.querySelectorAll('.game-room-bird').length,2);
   assert.equal(f.root.querySelector('.game-bird-carousel .game-bird-switch span').textContent,'1 / 2');assert.equal(f.root.querySelector('#game-scene-resident'),null);
   const bird=f.root.querySelector('[data-game-scene-select][data-bird-id="b2"]');
