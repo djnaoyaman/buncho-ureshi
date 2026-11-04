@@ -81,7 +81,7 @@
 @media(max-height:500px){.finch-garden-selector{top:54px}.finch-garden-dock{bottom:8px}.finch-garden-stage :is(.finch-garden-friend,.finch-garden-household){width:64px;height:75.3px}}
 .finch-garden-stage .finch-garden-visitor{position:absolute;transform:translate(-50%,-100%);width:70px;height:80px;padding:0!important;min-height:44px;border:0!important;background:none!important;box-shadow:none!important;z-index:3}
 .finch-garden-stage .finch-garden-visitor .finch-art{width:100%;height:100%;max-width:none;object-fit:contain;filter:none;margin:0}
-.finch-garden-visitor>span{position:absolute;top:100%;left:50%;transform:translateX(-50%);font-size:10px;white-space:nowrap;background:#fff4c9;padding:2px 6px;border-radius:12px;color:#3e593b;box-shadow:0 2px 5px #243b2329}
+.finch-garden-visitor>span:not(.finch-media){position:absolute;top:100%;left:50%;transform:translateX(-50%);font-size:10px;white-space:nowrap;background:#fff4c9;padding:2px 6px;border-radius:12px;color:#3e593b;box-shadow:0 2px 5px #243b2329}
 
 .finch-garden-stage[data-garden-id=mizukagami] :is(.finch-garden-friend,.finch-garden-household){width:60px;height:70.6px}
 .finch-garden-stage .finch-garden-visitor:active{transform:translate(-50%,-100%)}
@@ -91,7 +91,7 @@
 /* All present birds share the terrain. A staggered compact scene fits up to ten. */
 .finch-garden-stage[data-garden-density=compact]{--garden-row-gap:clamp(60px,8cqh,64px)}
 .finch-garden-stage[data-garden-density=compact] :is(.finch-garden-friend,.finch-garden-household,.finch-garden-visitor){width:44px;height:52px;min-width:44px;min-height:44px}
-.finch-garden-stage[data-garden-density=compact] :is(.finch-friend-name,.finch-garden-visitor>span){font-size:10px;line-height:13px;padding:1px 3px;max-width:58px;overflow:hidden;text-overflow:ellipsis}
+.finch-garden-stage[data-garden-density=compact] :is(.finch-friend-name,.finch-garden-visitor>span:not(.finch-media)){font-size:10px;line-height:13px;padding:1px 3px;max-width:58px;overflow:hidden;text-overflow:ellipsis}
 
 /* Keep horizontal garden choices discoverable and reachable on touch and desktop. */
 .finch-garden-selector-wrap{position:absolute;z-index:4;top:60px;left:10px;right:10px;display:flex;align-items:center;gap:4px;min-width:0}
@@ -114,6 +114,26 @@
 .finch-friendship-actions button{min-height:44px;flex:1 1 120px}
 .game-room-bird.finch-cage-guest{padding:0!important;background:none!important;border:0!important;box-shadow:none!important;display:block;overflow:visible}
 .finch-cage-guest .finch-art{display:block;width:100%;height:auto;max-width:none;margin:0;pointer-events:none}
-.finch-cage-guest>span{display:block;position:absolute;left:50%;top:100%;transform:translateX(-50%);max-width:130px;white-space:nowrap;font-size:10px;line-height:1.3;background:#fff4d9;border-radius:8px;padding:2px 5px;color:#294533}
+.finch-cage-guest>span:not(.finch-media){display:block;position:absolute;left:50%;top:100%;transform:translateX(-50%);max-width:130px;white-space:nowrap;font-size:10px;line-height:1.3;background:#fff4d9;border-radius:8px;padding:2px 5px;color:#294533}
 /* Calling a guest from its notebook page keeps the embedded garden's height. */
 .game-app[data-panel=notebook] [data-encounter-slot]:has(.finch-garden){height:100%;min-height:0}
+
+/* Reserve each illustration's layout before fetching; loading never blocks navigation. */
+.finch-media{display:block;position:relative;width:100%;min-width:0;margin:0;padding:0!important;border:0;border-radius:0;background:none!important;line-height:normal}
+.finch-media-status{position:absolute;inset:0;display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:.35rem;color:#476142;font-size:.75rem!important;background:none!important;padding:.5rem!important;text-align:center;pointer-events:none}
+.finch-media[data-media-state=ready]>.finch-media-status{display:none!important}
+.finch-media:not([data-media-state=ready])>img{visibility:hidden}
+.finch-media[data-media-state=error]{background:#f1e8d4!important;border-radius:.7rem}
+.finch-media[data-media-state=error] .finch-loading-bird{display:none}
+.finch-clues .finch-media{grid-row:1/3}
+.finch-photo .finch-media{min-height:10rem}
+.finch-loading-bird{display:block!important;padding:0!important;background:none!important;font-size:1.5rem!important;animation:finch-loading-hop 1.4s ease-in-out infinite}
+.finch-garden-loading{position:absolute;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:.7rem;padding:1rem;text-align:center;color:#36563e;background:radial-gradient(ellipse at 50% 70%,#d8e3bc 0,transparent 65%),#f8f1dc;font-size:.9rem;line-height:1.7}
+.finch-garden-loading[hidden],.finch-media-retry[hidden],[data-media-retry][hidden]{display:none!important}
+.finch-garden-stage:not([data-scene-state=ready])>.finch-garden-carousel{visibility:hidden}
+.finch-garden-loading button,.finch-media-retry{min-height:44px;padding:.6rem 1rem;border:2px solid #7b936b;border-radius:1rem;background:#fff8e8;color:#294d3b;font:inherit}
+.finch-media-retry{display:block;margin:1rem auto}
+@keyframes finch-loading-hop{0%,65%,100%{transform:translateY(0)}35%{transform:translateY(-.3rem)}}
+@media(prefers-reduced-motion:reduce){.finch-loading-bird{animation:none}}
+
+.finch-garden-visitor>.finch-media{width:100%;height:100%;position:relative;inset:auto;transform:none}
