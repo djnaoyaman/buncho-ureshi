@@ -6,7 +6,7 @@ function furnished(tier='cozy',form=0){const w=createWorld(now);w.paused=true;w.
 async function inspect(page){
  await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');
  await expect(page.locator('.game-room [data-scene-mount="wall"]')).toHaveCount(4);
- const geometry=await page.locator('.game-room').evaluate(room=>{const r=room.getBoundingClientRect(),items={};for(const el of room.querySelectorAll('.game-furnishing')){const box=el.getBoundingClientRect();items[el.dataset.equippedSlot]={x:box.x,y:box.y,right:box.right,bottom:box.bottom,width:box.width,height:box.height,mount:el.querySelector('svg').dataset.sceneMount,pointer:getComputedStyle(el).pointerEvents};}return{items,viewport:{width:innerWidth,height:innerHeight},room:{y:r.y,height:r.height}};});
+ const geometry=await page.evaluate(()=>{const room=document.querySelector('.game-room'),r=room.getBoundingClientRect(),items={};for(const el of room.querySelectorAll('.game-furnishing')){const box=el.getBoundingClientRect();items[el.dataset.equippedSlot]={x:box.x,y:box.y,right:box.right,bottom:box.bottom,width:box.width,height:box.height,mount:el.querySelector('svg').dataset.sceneMount,pointer:getComputedStyle(el).pointerEvents};}return{items,viewport:{width:innerWidth,height:innerHeight},room:{y:r.y,height:r.height}};});
  const {items,viewport}=geometry;
  for(const [slot,item] of Object.entries(items)){
   expect(item.pointer,slot).toBe('none');

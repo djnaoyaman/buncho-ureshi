@@ -154,7 +154,7 @@ for (const [width, height] of [[320, 568], [390, 844]]) {
       await expect(toggle).toHaveText('操作');
       for (const selector of chrome) await expect(page.locator(selector)).toBeHidden();
     }
-    async function target(element) {
+    async function target(element, selector, index=0) {
       await expect(element).toBeVisible();
       const r = await measuredBox(element);
       expect(r.width).toBeGreaterThanOrEqual(44);
@@ -163,16 +163,20 @@ for (const [width, height] of [[320, 568], [390, 844]]) {
       expect(r.y).toBeGreaterThanOrEqual(0);
       expect(r.x + r.width).toBeLessThanOrEqual(width);
       expect(r.y + r.height).toBeLessThanOrEqual(height);
-      expect(await element.evaluate(el => {
+      // Resolve the connected node and hit-test in one synchronous browser task.
+      // A heartbeat can replace a locator's ElementHandle before evaluate runs.
+      expect(await page.evaluate(({selector,index}) => {
+        const el = document.querySelectorAll(selector)[index];
+        if (!el) return false;
         const r = el.getBoundingClientRect();
         return el.contains(document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2));
-      })).toBe(true);
+      }, {selector,index})).toBe(true);
       await element.click({trial: true});
     }
     await expect(toggle).toHaveCount(1);
     await closed();
-    await target(toggle);
-    await target(page.locator('.game-world-exit'));
+    await target(toggle, '.game-scene-controls-toggle');
+    await target(page.locator('.game-world-exit'), '.game-world-exit');
     await cover(page, page.locator('.game-main .game-habitat img'));
     await noScroll(page);
     await page.screenshot({path: info.outputPath(`scenery-home-closed-${width}.png`)});
@@ -189,7 +193,7 @@ for (const [width, height] of [[320, 568], [390, 844]]) {
     await closed();
     await expect(toggle).toBeFocused();
     const bird = page.locator('.game-room-bird.is-selected');
-    await target(bird);
+    await target(bird, '.game-room-bird.is-selected');
     await bird.click();
     await expect(page.locator('.game-bird-sheet')).toBeVisible();
     await page.locator('[data-game-care=feed]').click();
@@ -209,9 +213,9 @@ for (const [width, height] of [[320, 568], [390, 844]]) {
     const gardenBirds = page.locator('.finch-garden-image-plane > button');
     await expect(gardenBirds).toHaveCount(5);
     await page.locator('.finch-garden-stage img').evaluateAll(images => Promise.all(images.map(image => image.decode())));
-    for (let i = 0; i < await gardenBirds.count(); i++) await target(gardenBirds.nth(i));
-    await target(toggle);
-    await target(page.locator('[data-game-close-panel]'));
+    for (let i = 0; i < await gardenBirds.count(); i++) await target(gardenBirds.nth(i), '.finch-garden-image-plane > button', i);
+    await target(toggle, '.game-scene-controls-toggle');
+    await target(page.locator('[data-game-close-panel]'), '[data-game-close-panel]');
     await noScroll(page);
     await page.screenshot({path: info.outputPath(`scenery-garden-closed-${width}.png`)});
     await page.locator('.finch-garden-household').click();
@@ -227,7 +231,7 @@ for (const [width, height] of [[320, 568], [390, 844]]) {
     await page.locator('[data-game-close-panel]').click();
     await expect(page.locator('.game-panel-overlay')).toBeHidden();
     await closed();
-    await target(bird);
+    await target(bird, '.game-room-bird.is-selected');
     await toggle.click();
     await page.locator('.game-field-nav [data-game-panel=outdoors]').click();
     await expect(page.locator('.finch-garden-stage')).toBeVisible();
@@ -245,7 +249,7 @@ for (const [width, height] of [[320, 568], [390, 844]]) {
     await expect(page.locator('body')).toHaveAttribute('data-game-intro', 'done');
     await expect(toggle).toHaveCount(1);
     await closed();
-    await target(toggle);
+    await target(toggle, '.game-scene-controls-toggle');
   });
 }
 
@@ -522,4 +526,5 @@ test('draw result is centered and care opens full screen on a compact viewport',
  await expect(page.locator('#game-sheet-close')).toBeInViewport();await page.screenshot({path:testInfo.outputPath('care-full-screen.png')});
  await page.locator('.game-sheet-talk summary').click();const before=await sheet.evaluate(el=>{el.scrollTop=el.scrollHeight;return el.scrollTop});expect(before).toBeGreaterThan(0);await page.waitForTimeout(16000);expect(Math.abs((await sheet.evaluate(el=>el.scrollTop))-before)).toBeLessThanOrEqual(2);await page.locator('[data-game-close-bird]').click();await noScroll(page);
 });
+
 
