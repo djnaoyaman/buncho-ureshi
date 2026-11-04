@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import legacyWorld from '../fixtures/v1-world.json' with {type:'json'};
-import { createWorld, advanceTicks, adoptBird, validateWorld } from '../../src/engine.js';
+import { createWorld, createBird, feedBird, advanceTicks, adoptBird, validateWorld } from '../../src/engine.js';
 const DB='buncho-ureshi-garden-v1',now=Date.UTC(2026,10,2,12);
 function fixture({stage='adult',home='resident',sound=false}={}){
   const w=createWorld(now,5402);advanceTicks(w,1);adoptBird(w,'b2','こめ');w.paused=true;w.lastUpdated=now;w.care.cleanliness=15;w.settings.careSound=sound;w.birds[0].needs.food=40;w.birds[0].mood=60;w.birds[0].stage=stage;w.birds[0].home=home;return validateWorld(w);
@@ -24,4 +24,13 @@ test('care gauges show accurate values and fit the bird sheet on narrow screens'
     await page.screenshot({path:testInfo.outputPath(`care-gauges-${width}.png`)});
     await sheet.locator('[data-game-care="feed"]').click();await expect(food).toHaveAttribute('value','60');await expect(sheet.locator('[data-game-fullness]')).toHaveText('60 / 100');
   }
+});
+
+
+test('clean clears all home drops once, rewards the collected total and survives reload',async({page})=>{
+ const w=createWorld(now);createBird(w,{home:'resident'});for(const b of w.birds)feedBird(w,b.id,now);advanceTicks(w,2);w.paused=true;w.settings.careSound=false;w.care.cleanliness=100;const count=w.gems.droppings.length,before=w.decor.points;expect(count).toBeGreaterThan(0);
+ await seed(page,validateWorld(w));await page.locator('[data-game-close-bird]').click();await expect(page.locator('[data-gem-collect]')).toHaveCount(count);
+ await page.locator('[data-game-care="clean"]').click();await expect(page.locator('[data-gem-collect]')).toHaveCount(0);await expect(page.locator('.game-gem-reward')).toContainText(`+${count*8} Gem`);
+ const saved=await record(page);expect(saved.decor.points).toBe(before+count*8);expect(saved.care.cleanliness).toBe(100);await page.locator('[data-game-care="clean"]').click();expect((await record(page)).decor.points).toBe(saved.decor.points);
+ await page.reload();await expect(page.locator('.game-app')).toBeVisible();await expect(page.locator('[data-gem-collect]')).toHaveCount(0);expect((await record(page)).decor.points).toBe(saved.decor.points);
 });
