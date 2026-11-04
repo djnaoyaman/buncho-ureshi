@@ -15,6 +15,9 @@ import { morphPhotos, newMorphPhotos } from "./data/morph-photos.js";
 import { prepareMorphAtlas, renderMorphOverview, renderMorphProfile, renderMorphPhoto, buildMorphSearchIndex, bindMorphAtlas } from "./morph-ui.js";
 const BASE = document.querySelector("base").getAttribute("href");
 const url = (route = "") => BASE + route.replace(/^\//, "");
+// WebKit caches install manifests per document. Keep game/site install identities
+// on separate documents, even after a cancelled Home Screen add operation.
+const documentGameInstallation = location.pathname === url("game/");
 const atlasData = prepareMorphAtlas(morphAtlas, morphPhotos);
 const atlasSearch = buildMorphSearchIndex(atlasData, { base: BASE });
 const secureLicenseUrl = value => value?.replace(/^http:\/\/creativecommons\.org\//, "https://creativecommons.org/");
@@ -136,10 +139,14 @@ function mountPageTools() {
   };
 }
 function navigate(route, replace = false) {
+  const target = new URL(url(route), location.origin);
+  if ((target.pathname === url("game/")) !== documentGameInstallation) {
+    location[replace ? "replace" : "assign"](target.href);
+    return;
+  }
   teardown();
   teardown = () => {};
   if ("speechSynthesis" in window) speechSynthesis.cancel();
-  const target = new URL(url(route), location.origin);
   const path = target.pathname + target.search;
   if (location.pathname + location.search !== path)
     (replace ? history.replaceState : history.pushState).call(
@@ -367,7 +374,7 @@ function credits() {
   return `${heading("出典と素材", "小さな発見を支える、たくさんの仕事。", "学びの根拠と、写真を届けてくれた作者へ。")}<div class="prose"><p>このサイトの実写写真は、各作者が示したライセンスに従って使用しています。一般の文鳥を撮ったもので、おもち本人の写真ではありません。アート作品では必要な帰属表示を画像の下部に含めます。</p><p>原著作物の権利は各作者に帰属します。写真の利用・加工・共有は、それぞれのライセンスをご確認ください。図鑑写真は画質調整・縮小のみ。工房での色の変更はアート表現です。</p><p>オリジナルの鳥・植物・ロゴの図形と合成BGM・操作音は、このサイト用の制作物です。合成音を本物の文鳥の鳴き声として使用していません。</p></div><h2>写真 ${photos.length}点</h2><div class="credits-grid">${photos.map((p) => `<figure data-photo-credit="${esc(p.id)}">${image(p.id)}<figcaption><b>${esc(p.alt)}</b><dl class="credit-metadata"><div><dt>作品名</dt><dd>${esc(p.title)}</dd></div><div><dt>作者</dt><dd>${esc(p.author)}</dd></div><div><dt>クレジット</dt><dd>${esc(p.credit)}</dd></div><div><dt>取得・確認日</dt><dd>${esc(p.acquiredAt)}</dd></div><div><dt>サイト用の準備・加工</dt><dd>${esc(p.modifications)}</dd></div></dl><a href="${esc(p.source)}" target="_blank" rel="noopener noreferrer">元の写真と利用条件</a> · <a href="${esc(secureLicenseUrl(p.licenseUrl))}" target="_blank" rel="noopener noreferrer">${esc(p.license)}</a></figcaption></figure>`).join("")}</div><section class="morph-atlas" aria-labelledby="morph-derived-heading"><h2 id="morph-derived-heading">映像から取り出した静止画 ${newMorphPhotos.length}点</h2><p>独立して撮影された写真42点とは別の、映像由来の素材です。工房の素材には含めません。元映像と同じ CC BY-SA 3.0 で提供します。</p>${newMorphPhotos.map(p => renderMorphPhoto(p.id, atlasData, {base: BASE})).join("")}<a href="${url("colors/")}">羽色ずかんの情報源と詳しい解説へ →</a></section><h2>本物の声の映像</h2>${videoBlock()}<h2>記事の情報源</h2><ul class="source-list">${[...new Map(articles.flatMap((a) => a.sources).map((s) => [s.url || s.title, s])).values()].map((s) => `<li>${s.url ? `<a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">${esc(s.title)}</a>` : esc(s.title)}</li>`).join("")}</ul>`;
 }
 function help() {
-  return `${heading("遊び方と設定", "いつでも、戻ってこられる場所。")}<div class="help-layout"><nav class="article-toc"><a href="#help-reading">読む</a><a href="#help-studio">つくる</a><a href="#help-game">暮らす</a><a href="#help-storage">保存</a><a href="#help-access">また来る・共有</a></nav><div class="prose"><section id="help-reading"><h2>写真から、じっくり読むまで</h2><p>図鑑は「まず見る」「基本を知る」「もっと調べる」の三段階。ふりがなはいつも表示されます。「解説をきく」は端末の読み上げ機能を使います。声が入っていない端末でも本文はそのまま読めます。</p><p>♡でつけたお気に入りは図鑑の絞り込みから見つけられます。メニューのサイト内検索は、図鑑の本文だけでなくアート工房・ゲーム・保存の手引きなども調べます。図鑑内の検索では記事を絞り込めます。</p></section><section id="help-studio"><h2>文鳥アート工房</h2><p>まずは見本を選びましょう。写真や鳥、花を加えて、指やマウスで動かせます。動かすボタン・大きさ・回転でも調整できます。重なり順を変え、タイトルを入れたら、正方形か縦長で保存。写真のクレジットも一緒に入ります。</p><p>音は再生ボタンを押したときだけ始まります。BGMも操作音も、サイト用に作った合成音です。本物の文鳥の鳴き声や既存の曲ではありません。共有非対応の端末では画像を保存して共有できます。</p></section><section id="help-game"><h2>おもちの文鳥ぐらし</h2><p>文鳥たちは性格、気分、欲求、相手との関係と記憶から行動を選びます。名前を呼んだり、水浴びに誘ったりして、暮らしを見守ってください。会話は話題と状態に応じたルールで作るもので、何でも理解できるAIではありません。</p><p>おもちの性格・会話・家族・日記はゲームだけの創作です。現実のおもちの観察記録ではありません。成長・つがい・繁殖は簡略化した表現で、現実の飼育手順ではありません。</p><p>閉じている間は動作せず、次に開いたときに経過時間をまとめて計算します。寿命はゲーム内10年。実時間3日ごはんが届かない場合や、病気・けがを発症から実時間24時間治療しない場合は亡くなります。お墓ではお線香やお祈りができ、名前・家族・思い出は残ります。病院は12 Gold、留守中の飼育員は全員で実時間1日24 Goldです。一時停止中も実時間の期限は進みます。これらはゲームのルールで、現実の飼育目安ではありません。詳しい時間と上限はゲームの「設定・遊び方」に表示します。</p></section><section id="help-storage"><h2>端末内の保存について</h2><p>アクセス解析ツール・広告用の追跡コードは未導入です。解析の導入は別途の確認が必要なため、現在は行っていません。</p><p>会員登録やログインは不要。ゲーム、作品、動きの設定、お気に入り、観察ノートはこのブラウザの端末内保存です。端末間の自動同期はなく、閲覧データの消去やプライベートブラウズ終了で失われる場合があります。大切なゲームは設定から定期的に書き出してください。</p><p>読み込むのは、自分が保存したゲーム用JSONファイルだけにしましょう。形式を確認し、不正なデータは現在の世界を置き換えません。複数タブでは一度に一つの更新だけを受け付けます。</p></section><section id="help-access"><h2>また来る・ページを共有する</h2><p>好きなページはブラウザのブックマークに登録できます。パソコンではブラウザのメニューから「ブックマークに追加」などを選びます。スマートフォンでは、次の方法でホーム画面から開きやすくできます。表示名や手順は端末・ブラウザの版によって異なります。</p><ul><li><b>iPhone・iPadのSafari：</b>ブラウザの「共有」メニューから「ホーム画面に追加」を選び、内容を確認して追加します。<a href="https://support.apple.com/ja-jp/guide/iphone/iphea86e5236/ios" target="_blank" rel="noopener noreferrer">Appleの手順</a></li><li><b>AndroidのChrome：</b>ブラウザのメニューから「ホーム画面に追加」を選びます。「ショートカットを作成」などが表示されたら、案内に従って追加してください。<a href="https://support.google.com/chrome/answer/15085120?hl=ja&amp;co=GENIE.Platform%3DAndroid" target="_blank" rel="noopener noreferrer">Chromeの手順</a></li></ul><p><b>このサイトを開くにはインターネット接続が必要です。オフラインでの利用には対応していません。</b>ホーム画面への追加は、ゲームや作品のバックアップ・端末間同期ではありません。ブラウザとは別の保存領域になる場合もあるため、大切なゲームは追加前にJSONを書き出し、作品はPNGで保存してください。</p><p>ページ下の「このページを共有」は端末の共有画面を開きます。「URLをコピー」はページのアドレスだけをコピーします。機能が使えない場合は、表示されたURLを選んで手動でコピーできます。実行や送信先は自分で選び、このサイトが勝手に投稿することはありません。検索語・URLの追加パラメーターや、観察ノート・作品・ゲームの保存データは共有URLには入りません。アート作品の画像共有は、工房内の共有ボタンを使ってください。</p></section><section><h2>読みやすさ</h2><label class="setting-line"><input id="motion-toggle" type="checkbox" ${settings.motion ? "checked" : ""}> 小さな動きを表示する</label><p>動きを減らす端末設定にも対応。どのボタンもキーボードのTabとEnterで操作できます。</p></section><section><h2>鳥との暮らしで困ったら</h2><p>体調や飼育の判断は鳥を診療する獣医師へ。サイトやゲームは診断・治療の代わりにはなりません。いつもとの違いが気になるときは、大人と一緒に相談してください。</p></section></div></div>`;
+  return `${heading("遊び方と設定", "いつでも、戻ってこられる場所。")}<div class="help-layout"><nav class="article-toc"><a href="#help-reading">読む</a><a href="#help-studio">つくる</a><a href="#help-game">暮らす</a><a href="#help-storage">保存</a><a href="#help-access">また来る・共有</a></nav><div class="prose"><section id="help-reading"><h2>写真から、じっくり読むまで</h2><p>図鑑は「まず見る」「基本を知る」「もっと調べる」の三段階。ふりがなはいつも表示されます。「解説をきく」は端末の読み上げ機能を使います。声が入っていない端末でも本文はそのまま読めます。</p><p>♡でつけたお気に入りは図鑑の絞り込みから見つけられます。メニューのサイト内検索は、図鑑の本文だけでなくアート工房・ゲーム・保存の手引きなども調べます。図鑑内の検索では記事を絞り込めます。</p></section><section id="help-studio"><h2>文鳥アート工房</h2><p>まずは見本を選びましょう。写真や鳥、花を加えて、指やマウスで動かせます。動かすボタン・大きさ・回転でも調整できます。重なり順を変え、タイトルを入れたら、正方形か縦長で保存。写真のクレジットも一緒に入ります。</p><p>音は再生ボタンを押したときだけ始まります。BGMも操作音も、サイト用に作った合成音です。本物の文鳥の鳴き声や既存の曲ではありません。共有非対応の端末では画像を保存して共有できます。</p></section><section id="help-game"><h2>おもちの文鳥ぐらし</h2><p>文鳥たちは性格、気分、欲求、相手との関係と記憶から行動を選びます。名前を呼んだり、水浴びに誘ったりして、暮らしを見守ってください。会話は話題と状態に応じたルールで作るもので、何でも理解できるAIではありません。</p><p>おもちの性格・会話・家族・日記はゲームだけの創作です。現実のおもちの観察記録ではありません。成長・つがい・繁殖は簡略化した表現で、現実の飼育手順ではありません。</p><p>閉じている間は動作せず、次に開いたときに経過時間をまとめて計算します。寿命はゲーム内10年。実時間3日ごはんが届かない場合や、病気・けがを発症から実時間24時間治療しない場合は亡くなります。お墓ではお線香やお祈りができ、名前・家族・思い出は残ります。病院は12 Gold、留守中の飼育員は全員で実時間1日24 Goldです。一時停止中も実時間の期限は進みます。これらはゲームのルールで、現実の飼育目安ではありません。詳しい時間と上限はゲームの「設定・遊び方」に表示します。</p></section><section id="help-storage"><h2>端末内の保存について</h2><p>アクセス解析ツール・広告用の追跡コードは未導入です。解析の導入は別途の確認が必要なため、現在は行っていません。</p><p>会員登録やログインは不要。ゲーム、作品、動きの設定、お気に入り、観察ノートはこのブラウザの端末内保存です。端末間の自動同期はなく、閲覧データの消去やプライベートブラウズ終了で失われる場合があります。大切なゲームは設定から定期的に書き出してください。</p><p>読み込むのは、自分が保存したゲーム用JSONファイルだけにしましょう。形式を確認し、不正なデータは現在の世界を置き換えません。複数タブでは一度に一つの更新だけを受け付けます。</p></section><section id="help-access"><h2>また来る・ページを共有する</h2><p>ゲームを直接開くアイコンは、<a href="${url("game/")}">文鳥ぐらしのページ</a>を開いてからホーム画面に追加してください。サイトのトップから追加するとトップを開くアイコンになります。以前追加したアイコンの起動先は自動では切り替わらない場合があります。追加し直す前に、今のゲームの「設定・遊び方」から保存用JSONを書き出して保管してください。新しいアイコンで保存を戻せたと確認するまで、前のアイコンは残しておきましょう。</p><p>好きなページはブラウザのブックマークに登録できます。パソコンではブラウザのメニューから「ブックマークに追加」などを選びます。スマートフォンでは、次の方法でホーム画面から開きやすくできます。表示名や手順は端末・ブラウザの版によって異なります。</p><ul><li><b>iPhone・iPadのSafari：</b>ブラウザの「共有」メニューから「ホーム画面に追加」を選び、内容を確認して追加します。<a href="https://support.apple.com/ja-jp/guide/iphone/iphea86e5236/ios" target="_blank" rel="noopener noreferrer">Appleの手順</a></li><li><b>AndroidのChrome：</b>ブラウザのメニューから「ホーム画面に追加」を選びます。「ショートカットを作成」などが表示されたら、案内に従って追加してください。<a href="https://support.google.com/chrome/answer/15085120?hl=ja&amp;co=GENIE.Platform%3DAndroid" target="_blank" rel="noopener noreferrer">Chromeの手順</a></li></ul><p><b>このサイトを開くにはインターネット接続が必要です。オフラインでの利用には対応していません。</b>ホーム画面への追加は、ゲームや作品のバックアップ・端末間同期ではありません。ブラウザとは別の保存領域になる場合もあるため、大切なゲームは追加前にJSONを書き出し、作品はPNGで保存してください。</p><p>ページ下の「このページを共有」は端末の共有画面を開きます。「URLをコピー」はページのアドレスだけをコピーします。機能が使えない場合は、表示されたURLを選んで手動でコピーできます。実行や送信先は自分で選び、このサイトが勝手に投稿することはありません。検索語・URLの追加パラメーターや、観察ノート・作品・ゲームの保存データは共有URLには入りません。アート作品の画像共有は、工房内の共有ボタンを使ってください。</p></section><section><h2>読みやすさ</h2><label class="setting-line"><input id="motion-toggle" type="checkbox" ${settings.motion ? "checked" : ""}> 小さな動きを表示する</label><p>動きを減らす端末設定にも対応。どのボタンもキーボードのTabとEnterで操作できます。</p></section><section><h2>鳥との暮らしで困ったら</h2><p>体調や飼育の判断は鳥を診療する獣医師へ。サイトやゲームは診断・治療の代わりにはなりません。いつもとの違いが気になるときは、大人と一緒に相談してください。</p></section></div></div>`;
 }
 function render(route) {
   worldChrome?.set(route === "game/" && !new URLSearchParams(location.search).has("q"));
@@ -453,6 +460,13 @@ function render(route) {
   };
   setMeta("name", "description", metadata.description);
   setMeta("name", "robots", metadata.robots);
+  // Keep Home Screen metadata in sync after SPA navigation and Back/Forward.
+  setMeta("name", "application-name", metadata.installName);
+  setMeta("name", "apple-mobile-web-app-title", metadata.installName);
+  const manifestLink = document.querySelector('link[rel="manifest"]');
+  if (manifestLink.getAttribute("href") !== metadata.installManifest) {
+    manifestLink.setAttribute("href", metadata.installManifest);
+  }
   for (const [name, content] of Object.entries({
     "og:title": metadata.title, "og:description": metadata.description,
     "og:url": metadata.canonical, "og:type": metadata.ogType,
@@ -680,6 +694,10 @@ document.addEventListener("keydown", (e) => {
   }
 });
 window.addEventListener("popstate", () => {
+  if ((location.pathname === url("game/")) !== documentGameInstallation) {
+    location.reload();
+    return;
+  }
   teardown();
   teardown = () => {};
   render(location.pathname.slice(BASE.length));
