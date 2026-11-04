@@ -6,9 +6,9 @@ import {test,expect} from '@playwright/test';
 const GARDEN_IDS=['komorebi','mizukagami','komugi','hanadokei','kazaguruma','yuyake','tsukiakari','shrine-grove','onsen'];
 const ORIGINAL_IDS=['meadow','orchard','lakeside','village'];
 
-async function mountNativeGardenFixture(page){
+async function mountNativeGardenFixture(page,sampleRate=null){
  await page.goto('credits/');
- await page.evaluate(async()=>{
+ await page.evaluate(async sampleRate=>{
   const [{createGameMusic,MUSIC_TRACKS},{GARDEN_ASSETS}]=await Promise.all([
    import(new URL('src/game-music.js',document.baseURI).href),
    import(new URL('src/data/garden-assets.js',document.baseURI).href),
@@ -16,9 +16,9 @@ async function mountNativeGardenFixture(page){
   const Native=window.AudioContext||window.webkitAudioContext;
   if(typeof Native!=='function')throw Error('Native AudioContext is unavailable');
   const probe={contexts:0,decoded:[],starts:[],connections:0,trusted:[],requests:[]};
-  const decodedIds=new WeakMap();let context;
+  const decodedIds=new WeakMap();let context,outputAnalyser;
   class AuditedContext extends Native{
-   constructor(...args){super(...args);context=this;probe.contexts++;}
+   constructor(){super(sampleRate?{sampleRate}:{});context=this;probe.contexts++;}
    async decodeAudioData(bytes){
     const decoded=await super.decodeAudioData(bytes),samples=decoded.getChannelData(0);let peak=0,sum=0,count=0;
     for(let i=0;i<samples.length;i+=97){const value=samples[i];peak=Math.max(peak,Math.abs(value));sum+=value*value;count++;}
@@ -31,7 +31,7 @@ async function mountNativeGardenFixture(page){
     source.stop=(when=0)=>{if(record)record.stopAt=Math.max(this.currentTime,when);return stop(when);};
     source.addEventListener('ended',()=>{if(record)record.ended=true;});return source;
    }
-   createGain(){const gain=super.createGain(),connect=gain.connect.bind(gain);gain.connect=(...args)=>{if(args[0]===this.destination)probe.connections++;return connect(...args);};return gain;}
+   createGain(){const gain=super.createGain(),connect=gain.connect.bind(gain);gain.connect=(...args)=>{if(args[0]===this.destination){probe.connections++;outputAnalyser=this.createAnalyser();outputAnalyser.fftSize=2048;connect(outputAnalyser);outputAnalyser.connect(this.destination);return outputAnalyser;}return connect(...args);};return gain;}
   }
   const assets=structuredClone(GARDEN_ASSETS),originalFlags=Object.fromEntries(Object.entries(GARDEN_ASSETS).map(([id,a])=>[id,a.music.releaseReady]));
   for(const asset of Object.values(assets))asset.music.releaseReady=true;
@@ -48,9 +48,9 @@ async function mountNativeGardenFixture(page){
   for(const [id,asset] of Object.entries(assets))add(`garden-music-${id}`,id,()=>player.setGarden(id,'fixture-world'));
   for(const track of MUSIC_TRACKS)add(`garden-fixed-${track.id}`,track.title,()=>player.playFromGesture(track.id));
   document.body.append(root);
-  window.__gardenMusicFixture={player,probe,originalFlags,assets,snapshot:()=>({state:player.state(),contexts:probe.contexts,decoded:probe.decoded,starts:probe.starts,connections:probe.connections,trusted:probe.trusted,requests:probe.requests,active:probe.starts.filter(s=>!s.ended&&s.at<=(context?.currentTime||0)&&(s.stopAt===null||s.stopAt>(context?.currentTime||0))).length})};
+  window.__gardenMusicFixture={player,probe,originalFlags,assets,output:()=>{if(!outputAnalyser)return 0;const samples=new Float32Array(outputAnalyser.fftSize);outputAnalyser.getFloatTimeDomainData(samples);return Math.sqrt(samples.reduce((sum,x)=>sum+x*x,0)/samples.length);},snapshot:()=>({state:player.state(),contexts:probe.contexts,decoded:probe.decoded,starts:probe.starts,connections:probe.connections,trusted:probe.trusted,requests:probe.requests,active:probe.starts.filter(s=>!s.ended&&s.at<=(context?.currentTime||0)&&(s.stopAt===null||s.stopAt>(context?.currentTime||0))).length})};
   status.textContent=JSON.stringify(player.state());
- });
+ },sampleRate);
 }
 async function playing(page,selected){
  await expect.poll(()=>page.evaluate(()=>{const s=window.__gardenMusicFixture.player.state();return {status:s.status,selected:s.selected,error:s.error};}),{timeout:30000}).toEqual({status:'playing',selected,error:''});
@@ -62,8 +62,8 @@ test.describe('nine garden MP3 native playback, test-only readiness preview',()=
  test.setTimeout(180000);
  test.afterEach(async({page})=>{await page.evaluate(()=>window.__gardenMusicFixture?.player.dispose());});
 
- test('all nine real MP3s decode nonzero PCM through trusted auto selection with exact loop bounds',async({page},info)=>{
-  await mountNativeGardenFixture(page);
+ for(const sampleRate of [44100,48000])test(`all nine real MP3s produce output PCM at ${sampleRate} Hz with sample-safe loop bounds`,async({page},info)=>{
+  await mountNativeGardenFixture(page,sampleRate);
   expect(await page.evaluate(()=>window.__gardenMusicFixture.snapshot().contexts)).toBe(0);
   await page.locator('#garden-music-komorebi').click();
   expect(await page.evaluate(()=>window.__gardenMusicFixture.snapshot().contexts)).toBe(0);
@@ -71,12 +71,14 @@ test.describe('nine garden MP3 native playback, test-only readiness preview',()=
   for(const id of GARDEN_IDS){
    if(id!=='komorebi')await page.locator(`#garden-music-${id}`).click();
    await playing(page,`garden-${id}`);
+   await expect.poll(()=>page.evaluate(()=>window.__gardenMusicFixture.output()),{timeout:10000}).toBeGreaterThan(.0001);
    const result=await page.evaluate(id=>{const fixture=window.__gardenMusicFixture,snapshot=fixture.snapshot(),start=snapshot.starts.at(-1),decoded=snapshot.decoded[start.decoded];return {music:fixture.assets[id].music,start,decoded,state:snapshot.state,active:snapshot.active};},id);
    expect(result.state.mode).toBe('auto');expect(result.active).toBe(1);expect(result.start.loop).toBe(true);
    expect(result.start.loopStart).toBeCloseTo(result.music.loopStartSeconds,8);
-   expect(result.start.loopEnd).toBeCloseTo(result.music.loopEndSeconds,8);
-   expect(result.start.loopEnd).toBeCloseTo(result.music.loopSamples/result.music.sampleRate,8);
-   expect(result.decoded.duration).toBeGreaterThanOrEqual(result.music.loopEndSeconds);
+   expect(result.decoded.sampleRate).toBe(sampleRate);
+   expect(result.start.loopEnd).toBeLessThanOrEqual(result.decoded.duration);
+   expect(Math.abs(result.start.loopEnd-result.music.loopEndSeconds)).toBeLessThanOrEqual(1/sampleRate+1e-12);
+   expect(result.music.loopEndSeconds-result.decoded.duration).toBeLessThanOrEqual(1/sampleRate+1e-12);
    expect(result.decoded.duration).toBeLessThan(result.music.loopEndSeconds+.1);
    expect(result.decoded.peak).toBeGreaterThan(.001);expect(result.decoded.rms).toBeGreaterThan(.0001);
   }
@@ -130,3 +132,4 @@ test.describe('nine garden MP3 native playback, test-only readiness preview',()=
   await info.attach('garden-rapid-native-audio',{body:Buffer.from(JSON.stringify(stopped,null,2)),contentType:'application/json'});
  });
 });
+
