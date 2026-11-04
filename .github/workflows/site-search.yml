@@ -6,6 +6,7 @@ on:
       - 'src/style.css'
       - 'scripts/build.mjs'
       - 'tests/browser/site-search.spec.js'
+      - 'tests/site-search-menu.test.js'
       - 'playwright.site-search.config.js'
       - '.github/workflows/site-search.yml'
   push:
@@ -15,17 +16,25 @@ on:
       - 'src/style.css'
       - 'scripts/build.mjs'
       - 'tests/browser/site-search.spec.js'
+      - 'tests/site-search-menu.test.js'
       - 'playwright.site-search.config.js'
       - '.github/workflows/site-search.yml'
+  workflow_run:
+    workflows: ['Verify and publish']
+    types: [completed]
+    branches: [main]
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
   search:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -35,7 +44,9 @@ jobs:
       - run: npm test
       - run: npx playwright install --with-deps chromium webkit
       - run: npx playwright install chrome msedge
-      - run: npx playwright test --config=playwright.site-search.config.js --project=search-iphone --grep "search is visible on opening at 390x664"
+      - run: npx playwright test --config=playwright.site-search.config.js
+        env:
+          PUBLIC_URL: ${{ github.event_name == 'workflow_run' && 'https://djnaoyaman.github.io/buncho-ureshi/' || '' }}
       - uses: actions/upload-artifact@v4
         if: always()
         with:

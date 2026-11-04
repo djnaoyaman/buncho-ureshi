@@ -38,6 +38,8 @@ jobs:
         run: npx playwright test tests/browser/game-sharing.spec.js --project=chrome --project=webkit --retries=0
       - name: Encyclopedia photographs and reduced-motion scroll
         run: npx playwright test --config=playwright.editorial.config.js --output=editorial-test-results
+      - name: Site search on mobile WebKit and Chrome
+        run: npx playwright test --config=playwright.site-search.config.js --project=search-iphone --project=search-android --project=search-chrome --project=search-safari --output=search-test-results
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -46,6 +48,7 @@ jobs:
             playwright-report/
             test-results/
             editorial-test-results/
+            search-test-results/
           retention-days: 14
       - uses: actions/upload-pages-artifact@v3
         if: github.ref == 'refs/heads/main'

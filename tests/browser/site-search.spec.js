@@ -1,4 +1,15 @@
 import { test, expect } from '@playwright/test';
+import { readFileSync } from 'node:fs';
+
+const builtHTML = readFileSync(new URL('../../dist/index.html', import.meta.url), 'utf8');
+const expectedStyle = builtHTML.match(/href="(src\/style\.css\?v=[^"]+)"/)[1];
+const expectedApp = builtHTML.match(/src="(src\/app\.js\?v=[^"]+)"/)[1];
+async function openPage(page, route) {
+  await page.goto(route);
+  await expect(page.locator('link[href*="src/style.css"]')).toHaveAttribute('href', expectedStyle);
+  await expect(page.locator('script[type="module"][src*="src/app.js"]')).toHaveAttribute('src', expectedApp);
+}
+
 
 async function activate(locator, hasTouch) {
   if (hasTouch) await locator.tap();
@@ -25,7 +36,7 @@ async function assertSearchReachable(page) {
 for (const size of [{ width: 320, height: 568 }, { width: 390, height: 664 }, { width: 844, height: 390 }]) {
   test(`search is visible on opening at ${size.width}x${size.height}`, async ({ page, hasTouch }, testInfo) => {
     await page.setViewportSize(size);
-    await page.goto('omochi/');
+    await openPage(page, 'omochi/');
     await activate(page.locator('#menu-toggle'), hasTouch);
     await expect(page.locator('#menu')).toBeVisible();
     await testInfo.attach('opened-menu', { body: await page.screenshot(), contentType: 'image/png' });
@@ -43,7 +54,7 @@ for (const size of [{ width: 320, height: 568 }, { width: 390, height: 664 }, { 
 
 test('short viewport, menu scrolling, reopen, Enter and search history', async ({ page, hasTouch }, testInfo) => {
   await page.setViewportSize({ width: 390, height: 664 });
-  await page.goto('encyclopedia/');
+  await openPage(page, 'encyclopedia/');
   await activate(page.locator('#menu-toggle'), hasTouch);
   await page.locator('#menu').evaluate(el => { el.scrollTop = el.scrollHeight; });
   await expect(page.locator('#menu nav a').last()).toBeInViewport();
@@ -78,7 +89,7 @@ test('short viewport, menu scrolling, reopen, Enter and search history', async (
 
 test('visual viewport-only keyboard resize keeps search controls above obscured area', async ({ page, hasTouch }, testInfo) => {
   await page.setViewportSize({ width: 390, height: 664 });
-  await page.goto('omochi/');
+  await openPage(page, 'omochi/');
   await activate(page.locator('#menu-toggle'), hasTouch);
   await activate(page.locator('#global-query'), hasTouch);
   // Synthetic VisualViewport contract test, separate from actual WebKit touch tests.
