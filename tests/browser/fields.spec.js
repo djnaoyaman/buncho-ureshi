@@ -152,10 +152,10 @@ test('draw repeated clicks and concurrent tabs charge exactly once; preview does
 });
 
 test('v2 import cancellation preserves state; accepted migration keeps birds diary care and exports v7',async({page})=>{
- const old=createWorld(fixedNow);advanceTicks(old,80);old.paused=true;old.birds[0].name='大切なおもち';old.version=2;delete old.encounters;delete old.economy;delete old.adoption;delete old.settings.adoptionMode;delete old.field;delete old.decor;delete old.gems;delete old.careSchedule;for(const b of old.birds){delete b.gemCare;delete b.naming;}
+ const old=createWorld(fixedNow);advanceTicks(old,80);old.paused=true;old.birds[0].name='大切なおもち';old.version=2;delete old.encounters;delete old.economy;delete old.lifecycle;delete old.adoption;delete old.settings.adoptionMode;delete old.field;delete old.decor;delete old.gems;delete old.careSchedule;for(const b of old.birds){delete b.gemCare;delete b.naming;}
  await openGame(page);await tab(page,'settings');const before=await readWorld(page);const file={name:'old-world-v2.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(old))};
  await openManagement(page);page.once('dialog',dialog=>dialog.dismiss());await page.locator('#game-import').setInputFiles(file);await expect.poll(async()=> (await readWorld(page)).worldId).toBe(before.worldId);expect((await readWorld(page)).birds).toEqual(before.birds);
- await openManagement(page);page.once('dialog',dialog=>dialog.accept());await page.locator('#game-import').setInputFiles(file);await expect(page.locator('.game-message')).toContainText('復元しました');const saved=validateWorld(await readWorld(page));expect(saved.version).toBe(7);expect(saved.birds.map(({gemCare,naming,...bird})=>bird)).toEqual(old.birds);expect(saved.events).toEqual(old.events);expect(saved.care).toEqual(old.care);expect(saved.decor.points).toBe(20);
+ await openManagement(page);page.once('dialog',dialog=>dialog.accept());await page.locator('#game-import').setInputFiles(file);await expect(page.locator('.game-message')).toContainText('復元しました');const saved=validateWorld(await readWorld(page));expect(saved.version).toBe(8);expect(saved.birds.map(({gemCare,naming,...bird})=>bird)).toEqual(old.birds);expect(saved.events).toEqual(old.events);expect(saved.care).toEqual(old.care);expect(saved.decor.points).toBe(20);
  await openManagement(page);const download=page.waitForEvent('download');await page.locator('[data-game-action="export"]').click();expect(JSON.parse(await readDownload(await download)).decor).toEqual(saved.decor);
 });
 

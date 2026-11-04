@@ -250,7 +250,7 @@ for (const [width, height] of [[320, 568], [390, 844]]) {
 }
 
 for (const [width, height] of [[320, 568], [390, 844]]) {
-  test(`designed menu fits eight cards and restores keyboard focus ${width}`, async ({page}, info) => {
+  test(`designed menu fits ten cards and restores keyboard focus ${width}`, async ({page}, info) => {
     await page.setViewportSize({width, height});
     await ready(page);
     const opener = page.locator('#game-nav-open');
@@ -258,9 +258,9 @@ for (const [width, height] of [[320, 568], [390, 844]]) {
     await opener.click();
     await expect(menu).toBeVisible();
     const cards = menu.locator('.game-tabs button');
-    await expect(cards).toHaveCount(8);
+    await expect(cards).toHaveCount(10);
     expect(await menu.evaluate(el => el.contains(document.activeElement))).toBe(true);
-    const ids = ['profile', 'relations', 'family', 'diary', 'roster', 'notebook', 'settings', 'help'];
+    const ids = ['health', 'memorial', 'profile', 'relations', 'family', 'diary', 'roster', 'notebook', 'settings', 'help'];
     for (const id of ids) {
       const card = menu.locator(`#game-menu-${id}`);
       await expect(card).toBeVisible();
@@ -522,3 +522,4 @@ test('draw result is centered and care opens full screen on a compact viewport',
  await expect(page.locator('#game-sheet-close')).toBeInViewport();await page.screenshot({path:testInfo.outputPath('care-full-screen.png')});
  await page.locator('.game-sheet-talk summary').click();const before=await sheet.evaluate(el=>{el.scrollTop=el.scrollHeight;return el.scrollTop});expect(before).toBeGreaterThan(0);await page.waitForTimeout(16000);expect(Math.abs((await sheet.evaluate(el=>el.scrollTop))-before)).toBeLessThanOrEqual(2);await page.locator('[data-game-close-bird]').click();await noScroll(page);
 });
+
