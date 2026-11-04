@@ -2,10 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {Window} from 'happy-dom';
 import {mountEncounterMedia} from '../src/encounter-media.js';
+import {mountEncounterPanel} from '../src/encounter-controller.js';
 import {renderEncounterNotebook,renderEncounterPage,renderGardenStage,renderEncounterCageGuest} from '../src/encounter-ui.js';
 import {createWorld} from '../src/engine.js';
 import {encounterSystem} from '../src/encounters.js';
 import {readFile} from 'node:fs/promises';
+import {inviteFixture} from './fixtures/garden-invitation.js';
 
 const frame = src => `<span class="finch-media" data-media-state="pending"><img data-media-src="${src}" data-media-lazy="true" width="384" height="384"><span data-media-label>読み込み中…</span></span>`;
 function setup(html) {
@@ -67,4 +69,25 @@ test('decode deadline survives redraw even after all response bytes arrived',()=
  const {win,root,media}=setup(frame('/slow-decode.webp'));const img=root.querySelector('img');img.src=img.dataset.mediaSrc;Object.defineProperty(img,'naturalWidth',{value:384});Object.defineProperty(img,'complete',{value:true});img.decode=()=>new Promise(()=>{});
  let deadline;const oldSet=win.setTimeout,oldClear=win.clearTimeout;win.setTimeout=fn=>{deadline=fn;return 1;};win.clearTimeout=()=>{};
  media.refresh();assert.equal(typeof deadline,'function');media.preserve();root.innerHTML=frame('/slow-decode.webp');deadline=null;media.refresh();assert.equal(typeof deadline,'function');deadline();assert.equal(root.querySelector('.finch-media').dataset.mediaState,'error');media.destroy();win.setTimeout=oldSet;win.clearTimeout=oldClear;
+});
+
+test('pending original photo keeps its wrapper keyboard control and records one pet',async()=>{
+ const win=new Window(),root=win.document.createElement('div');win.document.body.append(root);
+ const style=win.document.createElement('style');style.textContent=await readFile(new URL('../src/encounter-ui.css',import.meta.url),'utf8');win.document.head.append(style);
+ const world=createWorld(1000,42),entry=encounterSystem.catalog[0],token=()=>({worldId:world.worldId,revision:world.revision});world.paused=true;
+ inviteFixture(encounterSystem,world,entry.id);encounterSystem.open(world,entry.id,token());for(const step of entry.steps)encounterSystem.act(world,world.encounters.active.instanceId,step.action,token());
+ // Keep image responses pending in the DOM fixture while exercising the real keyboard handler.
+ const imagePrototype=win.HTMLImageElement.prototype,complete=Object.getOwnPropertyDescriptor(imagePrototype,'complete');Object.defineProperty(imagePrototype,'complete',{configurable:true,get:()=>false});
+ const controller=mountEncounterPanel(root,{getWorld:()=>world,transact:async operation=>operation(world)});
+ try{
+  controller.entry(entry.id);root.querySelector('[data-encounter-view=photo]').click();
+  const figure=root.querySelector('.finch-photo'),control=figure.querySelector('[data-encounter-rub]'),img=figure.querySelector('img');
+  assert.equal(control.tagName,'SPAN');assert.equal(control.className,'finch-media');assert.equal(control.dataset.mediaState,'pending');assert.equal(control.getAttribute('role'),'button');assert.equal(control.tabIndex,0);
+  assert.equal(img.hasAttribute('data-encounter-rub'),false);assert.equal(img.hasAttribute('tabindex'),false);assert.equal(win.getComputedStyle(img).visibility,'hidden');assert.notEqual(win.getComputedStyle(control).visibility,'hidden');
+  assert.equal(img.getAttribute('src'),'/buncho-ureshi/'+entry.photo.src);assert.equal(img.getAttribute('style'),'object-fit:contain;object-position:center;filter:none;clip-path:none;transform:none;border-radius:0;opacity:1');
+  assert.deepEqual([...figure.children].map(child=>child.tagName),['SPAN','FIGCAPTION']);assert.deepEqual([...control.children].map(child=>child.tagName),['IMG','SPAN']);assert.ok(figure.querySelector('figcaption').textContent.includes(entry.photo.creator));
+  assert.equal(encounterSystem.status(world,entry.id).points,10);control.focus();assert.equal(win.document.activeElement,control);
+  control.dispatchEvent(new win.KeyboardEvent('keydown',{key:'Enter',bubbles:true}));await Promise.resolve();await Promise.resolve();
+  assert.equal(encounterSystem.status(world,entry.id).points,11);assert.equal(root.querySelector('[data-finch-points]').textContent,'11');assert.equal(win.document.activeElement,root.querySelector('.finch-photo [data-encounter-rub]'));
+ }finally{controller.destroy();if(complete)Object.defineProperty(imagePrototype,'complete',complete);else delete imagePrototype.complete;await win.happyDOM.abort();}
 });
