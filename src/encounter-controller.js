@@ -1,3 +1,4 @@
+import {gardenSelectorOffset} from './data/gardens.js';
 import {petGardenRaptor} from './garden-raptors.js';
 import {renderRaptorNotebook,renderRaptorFriendship} from './garden-raptor-ui.js';
 import {createGardenCrowClock,arriveGardenCrow,crowCoolingDown,crowScene,petGardenCrow,crowTarget} from './garden-crows.js';
@@ -147,7 +148,7 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
       if(gardenInvite&&(result?.changed||result?.resumed)){mode='garden';try{onGardenChanged({gardenId:getWorld().encounters.garden.id,worldId:getWorld().worldId,generation:token});}catch{}}
       render({focus:true});return;
     }
-    if(button.hasAttribute('data-garden-scroll')){const selector=root.querySelector('.finch-garden-selector');if(selector)selector.scrollLeft+=(button.dataset.gardenScroll==='next'?1:-1)*selector.clientWidth;return;}
+    if(button.hasAttribute('data-garden-scroll')){const selector=root.querySelector('.finch-garden-selector');if(selector)selector.scrollLeft=gardenSelectorOffset(selector.scrollLeft,selector.clientWidth,selector.scrollWidth,button.dataset.gardenScroll);return;}
     if(button.hasAttribute('data-garden-household')){stopCrow();const id=button.dataset.gardenHousehold,w=getWorld();if(w.birds.some(b=>b.id===id&&b.home==='resident'&&['juvenile','adult'].includes(b.stage)))onHouseholdBird(id);return;}
     if(button.hasAttribute('data-raptor-entry')){generation++;stopCrow();mode='raptors';pageId=button.dataset.raptorEntry;notice='';render({focus:true});return;}
     if(button.hasAttribute('data-crow-notebook')||button.hasAttribute('data-crow-entry')){generation++;stopCrow();mode='crows';pageId=button.dataset.crowEntry||null;notice='';render({focus:true});return;}

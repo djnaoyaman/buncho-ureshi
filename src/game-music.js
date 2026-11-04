@@ -6,7 +6,7 @@ export const MUSIC_TRACKS = Object.freeze([
   {id:'lakeside', title:'湖畔のそよ風', file:'03_lakeside_breeze.wav'},
   {id:'village', title:'村のワルツ', file:'04_village_waltz.wav'},
 ]);
-const GARDEN_TITLES=Object.freeze({komorebi:'こもれびの庭',mizukagami:'みずかがみの庭',komugi:'こむぎの庭',hanadokei:'はなとけいの庭',kazaguruma:'かざぐるまの丘',yuyake:'ゆうやけ果樹園',tsukiakari:'つきあかりの庭','shrine-grove':'こもりの杜',onsen:'湯気文吾温泉'});
+const GARDEN_TITLES=Object.freeze({komorebi:'こもれびの庭',mizukagami:'みずかがみの庭',komugi:'こむぎの庭',hanadokei:'はなとけいの庭',kazaguruma:'かざぐるまの丘',yuyake:'ゆうやけ果樹園',tsukiakari:'つきあかりの庭','shrine-grove':'こもりの杜',onsen:'湯気文吾温泉','java-rice':'ジャワ・いなほの庭','bali-terrace':'バリ・みどりの棚田','paris-unrest':'パリ・ざわめく街の庭'});
 export function gardenMusicTracks(assets=GARDEN_ASSETS){return Object.entries(assets).filter(([,a])=>(a.music?.releaseReady===true||a.music?.trialAvailable===true)).map(([gardenId,{music:m}])=>({id:m.themeId,gardenId,title:GARDEN_TITLES[gardenId]||gardenId,asset:m.asset,loopStartSeconds:m.loopStartSeconds,loopEndSeconds:m.loopEndSeconds}));}
 export function createGameMusic({base='', gardenAssets=GARDEN_ASSETS, Context=globalThis.AudioContext||globalThis.webkitAudioContext,
   fetcher=globalThis.fetch?.bind(globalThis), storage, onChange=()=>{}, activationTimeout=1200, loadTimeout=20000}={}) {

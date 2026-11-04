@@ -52,7 +52,7 @@ test('delivery copies reduce bytes while preserving full-size dimensions; origin
   const records=JSON.parse(await readFile(new URL('../dist/encounter-image-sizes.json',import.meta.url),'utf8'));
   const gardens=records.filter(x=>x.source.includes('/gardens/')),birds=records.filter(x=>x.source.includes('/finches/'));
   const total=(list,key)=>list.reduce((sum,x)=>sum+x[key],0);
-  assert.equal(gardens.length,9);assert.ok(total(gardens,'screenBytes')<total(gardens,'originalBytes')*.25);
+  assert.equal(gardens.length,12);assert.ok(total(gardens,'screenBytes')<total(gardens,'originalBytes')*.25);
   assert.ok(total(birds,'thumbnailBytes')<total(birds,'originalBytes')*.05);assert.ok(records.every(x=>x.width>0&&x.height>0&&!x.source.includes('/photos/')));
 });
 

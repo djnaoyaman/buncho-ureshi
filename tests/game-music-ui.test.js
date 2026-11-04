@@ -59,11 +59,11 @@ test('settings repaint retains open chooser and focused song; exit clears stale 
  f.dispose();f.window.happyDOM.abort();
 });
 
-test('production catalogue retains all thirteen choices in the collapsed chooser',()=>{
+test('production catalogue retains all sixteen choices in the collapsed chooser',()=>{
  const f=setup(GARDEN_ASSETS);f.emit('buncho-game-panel','settings');
- assert.equal(f.document.querySelectorAll('[data-music]').length,13);
+ assert.equal(f.document.querySelectorAll('[data-music]').length,16);
  assert.equal(f.document.querySelector('.game-music-tracks').hidden,true);
- f.trustedShell('[data-music-choose]');assert.equal(f.document.querySelectorAll('[data-music]').length,13);
+ f.trustedShell('[data-music-choose]');assert.equal(f.document.querySelectorAll('[data-music]').length,16);
  f.dispose();f.window.happyDOM.abort();
 });
 

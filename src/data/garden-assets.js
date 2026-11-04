@@ -1,4 +1,4 @@
-/** Original generated garden assets and playback loop metadata. Release gates are explicit. */
+/** Original generated garden art and synthesized music. Review gates remain explicit. */
 export const GARDEN_ASSETS=Object.freeze({
   "komorebi": {
     "background": {
@@ -463,6 +463,159 @@ export const GARDEN_ASSETS=Object.freeze({
       "bpm": 82,
       "key": "G major",
       "fullDecodePassed": true,
+      "browserPlaybackReviewed": false,
+      "trialAvailable": true,
+      "releaseReady": false
+    }
+  },
+  "java-rice": {
+    "background": {
+      "src": "game-art/gardens/java-rice.png",
+      "width": 941,
+      "height": 1672,
+      "sha256": "a9874772ddc2220a9ce9941cd35ec9c410a8c6b4c3389d69eb0541ad00b039d6",
+      "fit": "cover",
+      "position": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "anchorSpace": "source-image-normalized",
+      "friendFeet": [
+        {
+          "x": 0.36,
+          "y": 0.68
+        },
+        {
+          "x": 0.54,
+          "y": 0.7
+        },
+        {
+          "x": 0.72,
+          "y": 0.69
+        }
+      ],
+      "ownerFoot": {
+        "x": 0.25,
+        "y": 0.76
+      },
+      "visualArtReviewed": true,
+      "integratedUiReviewed": false,
+      "trialAvailable": true,
+      "releaseReady": false
+    },
+    "music": {
+      "themeId": "garden-java-rice",
+      "asset": "audio/gardens/java-rice.mp3",
+      "sha256": "cd77fe28bd7caecd64c7898747a57bdf091211ca140d4117d7085065225067e1",
+      "sampleRate": 44100,
+      "loopSamples": 3528000,
+      "loopStartSeconds": 0,
+      "loopEndSeconds": 80.0,
+      "bpm": 72,
+      "fullDecodePassed": true,
+      "requiresExplicitLoopEnd": true,
+      "browserPlaybackReviewed": false,
+      "trialAvailable": true,
+      "releaseReady": false
+    }
+  },
+  "bali-terrace": {
+    "background": {
+      "src": "game-art/gardens/bali-terrace.png",
+      "width": 941,
+      "height": 1672,
+      "sha256": "376461f65b9125b064000a21ee6a13e52588a58a01e4c0f5acf606e4da6bbc5f",
+      "fit": "cover",
+      "position": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "anchorSpace": "source-image-normalized",
+      "friendFeet": [
+        {
+          "x": 0.36,
+          "y": 0.68
+        },
+        {
+          "x": 0.54,
+          "y": 0.7
+        },
+        {
+          "x": 0.72,
+          "y": 0.69
+        }
+      ],
+      "ownerFoot": {
+        "x": 0.25,
+        "y": 0.76
+      },
+      "visualArtReviewed": true,
+      "integratedUiReviewed": false,
+      "trialAvailable": true,
+      "releaseReady": false
+    },
+    "music": {
+      "themeId": "garden-bali-terrace",
+      "asset": "audio/gardens/bali-terrace.mp3",
+      "sha256": "44b2c89449ebf134f343d664f48da730189cf07ae5f19e222e439975d8fb0e7d",
+      "sampleRate": 44100,
+      "loopSamples": 4070769,
+      "loopStartSeconds": 0,
+      "loopEndSeconds": 92.30768707482993,
+      "bpm": 104,
+      "fullDecodePassed": true,
+      "requiresExplicitLoopEnd": true,
+      "browserPlaybackReviewed": false,
+      "trialAvailable": true,
+      "releaseReady": false
+    }
+  },
+  "paris-unrest": {
+    "background": {
+      "src": "game-art/gardens/paris-unrest.png",
+      "width": 1051,
+      "height": 1497,
+      "sha256": "88ec7a4ac29643da329a957135c5ae059199d273c1ad406234a2c82ed3098c15",
+      "fit": "cover",
+      "position": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "anchorSpace": "source-image-normalized",
+      "friendFeet": [
+        {
+          "x": 0.36,
+          "y": 0.68
+        },
+        {
+          "x": 0.54,
+          "y": 0.7
+        },
+        {
+          "x": 0.72,
+          "y": 0.69
+        }
+      ],
+      "ownerFoot": {
+        "x": 0.25,
+        "y": 0.76
+      },
+      "visualArtReviewed": true,
+      "integratedUiReviewed": false,
+      "trialAvailable": true,
+      "releaseReady": false
+    },
+    "music": {
+      "themeId": "garden-paris-unrest",
+      "asset": "audio/gardens/paris-unrest.mp3",
+      "sha256": "e8e00b992c76cc42e87b0efe140473edbcc39685f6ea6e3f993975701733c813",
+      "sampleRate": 44100,
+      "loopSamples": 4032000,
+      "loopStartSeconds": 0,
+      "loopEndSeconds": 91.42857142857143,
+      "bpm": 84,
+      "fullDecodePassed": true,
+      "requiresExplicitLoopEnd": true,
       "browserPlaybackReviewed": false,
       "trialAvailable": true,
       "releaseReady": false

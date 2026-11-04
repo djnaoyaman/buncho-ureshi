@@ -3,7 +3,7 @@ import {test,expect} from '@playwright/test';
 // This fixture enables readiness ONLY in an in-memory copy. It uses the production
 // player, native AudioContext/decodeAudioData and unchanged real MP3/WAV responses.
 // It does not prove subjective listening, physical iOS playback, or release readiness.
-const GARDEN_IDS=['komorebi','mizukagami','komugi','hanadokei','kazaguruma','yuyake','tsukiakari','shrine-grove','onsen'];
+const GARDEN_IDS=['komorebi','mizukagami','komugi','hanadokei','kazaguruma','yuyake','tsukiakari','shrine-grove','onsen','java-rice','bali-terrace','paris-unrest'];
 const ORIGINAL_IDS=['meadow','orchard','lakeside','village'];
 
 async function mountNativeGardenFixture(page,sampleRate=null){
@@ -62,7 +62,7 @@ test.describe('nine garden MP3 native playback, test-only readiness preview',()=
  test.setTimeout(180000);
  test.afterEach(async({page})=>{await page.evaluate(()=>window.__gardenMusicFixture?.player.dispose());});
 
- for(const sampleRate of [44100,48000])test(`all nine real MP3s produce output PCM at ${sampleRate} Hz with sample-safe loop bounds`,async({page},info)=>{
+ for(const sampleRate of [44100,48000])test(`all twelve real MP3s produce output PCM at ${sampleRate} Hz with sample-safe loop bounds`,async({page},info)=>{
   await mountNativeGardenFixture(page,sampleRate);
   expect(await page.evaluate(()=>window.__gardenMusicFixture.snapshot().contexts)).toBe(0);
   await page.locator('#garden-music-komorebi').click();
@@ -83,11 +83,11 @@ test.describe('nine garden MP3 native playback, test-only readiness preview',()=
    expect(result.decoded.peak).toBeGreaterThan(.001);expect(result.decoded.rms).toBeGreaterThan(.0001);
   }
   const report=await page.evaluate(()=>({snapshot:window.__gardenMusicFixture.snapshot(),originalFlags:window.__gardenMusicFixture.originalFlags}));
-  expect(report.snapshot.decoded).toHaveLength(9);expect(report.snapshot.connections).toBe(9);
-  expect(report.snapshot.requests).toHaveLength(9);expect(report.snapshot.requests.every(url=>/audio\/gardens\/[^/]+\.mp3$/.test(url))).toBe(true);
+  expect(report.snapshot.decoded).toHaveLength(12);expect(report.snapshot.connections).toBe(12);
+  expect(report.snapshot.requests).toHaveLength(12);expect(report.snapshot.requests.every(url=>/audio\/gardens\/[^/]+\.mp3$/.test(url))).toBe(true);
   expect(report.snapshot.trusted.every(Boolean)).toBe(true);
-  expect(Object.values(report.originalFlags)).toEqual(Array(9).fill(false));
-  await info.attach('nine-garden-native-audio-measurements',{body:Buffer.from(JSON.stringify(report,null,2)),contentType:'application/json'});
+  expect(Object.values(report.originalFlags)).toEqual(Array(12).fill(false));
+  await info.attach('twelve-garden-native-audio-measurements',{body:Buffer.from(JSON.stringify(report,null,2)),contentType:'application/json'});
  });
 
  test('garden arrival replaces each fixed choice, OFF dominates and home restores chosen original',async({page},info)=>{
