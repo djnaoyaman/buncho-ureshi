@@ -3,7 +3,7 @@ import {advanceGardenRaptor} from './engine.js';
 import {crowScene} from './garden-crows.js';
 /** One host-owned foreground clock. A saved warning survives navigation and reload.
  * Transactions consume only a bounded observed interval, never offline wall time. */
-export function mountGardenRaptors(root,{getWorld,transact,onChange=()=>{},isAvailable=()=>true,random=Math.random}={}){
+export function mountGardenRaptors(root,{getWorld,transact,onChange=()=>{},isAvailable=()=>true,hasCrowPending=()=>false,random=Math.random}={}){
  const doc=root.ownerDocument,win=doc.defaultView,clock=createGardenRaptorClock({random});
  let alive=true,flight=false,timer=null,last=null,epoch=0,lastWorld=getWorld().worldId,lastPanel=root.querySelector('.game-app')?.dataset.panel,lastGarden=getWorld().encounters.garden.id;
  let renderedScene=sceneKey(getWorld());
@@ -21,7 +21,7 @@ export function mountGardenRaptors(root,{getWorld,transact,onChange=()=>{},isAva
   const active=w.encounters.raptor?.active;
   const stage=root.querySelector('.finch-garden-stage');
   const eligible=!!raptorTarget(w)&&w.encounters.garden.open&&!!stage&&stage.dataset.sceneState==='ready'&&!doc.querySelector('.game-bird-sheet[open]');
-  const event=clock.sample({key:`${w.worldId}:${w.encounters.garden.id}:${raptorTarget(w)?.id}`,now,eligible,available:!active&&!raptorCoolingDown(w)&&isAvailable()&&!crowScene(w)&&!root.querySelector('[data-crow-phase=warning]'),gardenId:w.encounters.garden.id});
+  const event=clock.sample({key:`${w.worldId}:${w.encounters.garden.id}:${raptorTarget(w)?.id}`,now,eligible,available:!active&&!raptorCoolingDown(w)&&isAvailable()&&!hasCrowPending()&&!crowScene(w)&&!root.querySelector('[data-crow-phase=warning]'),gardenId:w.encounters.garden.id});
   if(active||event?.kind==='arrive'){
    if(active&&(delta<=0||delta>2500)){schedule();return;}
    const token=raptorToken(w),session=epoch,worldId=w.worldId,targetId=raptorTarget(w)?.id,gardenId=w.encounters.garden.id;
@@ -34,7 +34,7 @@ export function mountGardenRaptors(root,{getWorld,transact,onChange=()=>{},isAva
       // the exact event/progress snapshot to reject another tab's earlier step.
       result=advanceGardenRaptor(current,delta,Date.now(),{...token,revision:current.revision});
      }else{
-      if(doc.querySelector('.game-bird-sheet[open]')||root.querySelector('[data-crow-phase=warning]')||crowScene(current)||current.encounters.garden.id!==gardenId||raptorTarget(current)?.id!==targetId||!root.querySelector('.finch-garden-stage[data-scene-state=ready]'))return current;
+      if(hasCrowPending()||doc.querySelector('.game-bird-sheet[open]')||root.querySelector('[data-crow-phase=warning]')||crowScene(current)||current.encounters.garden.id!==gardenId||raptorTarget(current)?.id!==targetId||!root.querySelector('.finch-garden-stage[data-scene-state=ready]'))return current;
       result=arriveGardenRaptor(current,event.id,Date.now(),{worldId:current.worldId,revision:current.revision,gardenId});
      }
      return current;

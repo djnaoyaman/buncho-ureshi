@@ -63,3 +63,7 @@ test('modal and out-and-back menu navigation invalidate queued arrival without d
 test('a crow warning that appears while a raptor draw waits keeps priority',async()=>{
  const w=fixture();let release;const s=setup(w,{transact:fn=>new Promise(resolve=>{release=()=>resolve(fn(w));})});try{await s.run(120);const {flight}=await s.tick();assert.ok(release);const notice=s.win.document.createElement('div');notice.dataset.crowPhase='warning';s.root.append(notice);release();await flight;assert.equal(w.encounters.raptor.active,null);assert.equal(w.encounters.raptor.visits.length,0);}finally{s.close();}
 });
+
+test('pending crow save retains priority even after its warning DOM is replaced',async()=>{
+ const w=fixture();let release,pending=false;const s=setup(w,{hasCrowPending:()=>pending,transact:fn=>new Promise(resolve=>{release=()=>resolve(fn(w));})});try{await s.run(120);const {flight}=await s.tick();pending=true;release();await flight;assert.equal(w.encounters.raptor.active,null);assert.equal(w.encounters.raptor.visits.length,0);}finally{s.close();}
+});

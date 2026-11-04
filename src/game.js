@@ -305,7 +305,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     const view=++fieldViewRequest,valid=()=>alive&&isCurrent()&&view===fieldViewRequest;
     cancelCareEffects();sheetOpen=false;closeResetDialog(false);closeAdoptionDialog(false);drawResult=null;const draw=root.querySelector('.game-draw-result');if(draw?.open)draw.close();
     const committed=await mutate(w=>{if(w.encounters.raptor?.active)escapeGardenRaptor(w,raptorToken(w));travelTo(w,'home');encounterSystem.leaveGarden(w,{worldId:w.worldId,revision:w.revision});return w;},'おうちに戻ったよ。ここなら安心。',valid,{bump:false,advanceCurrent:false});
-    if(committed&&valid()){panel='garden';render();root.querySelector('[data-game-open-bird]')?.focus({preventScroll:true});}return committed;
+    if(committed&&valid()){panel='garden';render();updateRaptorNotice(root,world);root.querySelector('[data-game-open-bird]')?.focus({preventScroll:true});}return committed;
   }
   async function closePanel(){if(world.encounters.raptor?.active&&panel!=='owner'){await returnRaptorHome();return;}fieldViewRequest++;if(['outdoors','notebook'].includes(panel)&&world.encounters.garden.open){const expected={worldId:world.worldId,revision:world.revision};await mutate(w=>{encounterSystem.leaveGarden(w,expected);},'',()=>alive,{bump:false,advanceCurrent:false});}sheetOpen=false;cancelCareEffects();if(panel==='owner'){panel='settings';render();focusPanel();return;}panel='garden';render();root.querySelector('[data-game-open-menu]')?.focus({preventScroll:true});}
   function focusPanel(){const surface=root.querySelector('.game-panel-overlay[open] .game-panel')||root.querySelector('.game-panel');const heading=surface?.querySelector('h3')||surface;if(heading){heading.tabIndex=-1;heading.focus({preventScroll:true});}}
@@ -861,7 +861,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
   const captionObserver=new document.defaultView.MutationObserver(placeSceneCaption);
   captionObserver.observe(document.body,{attributes:true,attributeFilter:['data-scene-controls']});
   timer=setInterval(poll,3000);render();document.dispatchEvent(new document.defaultView.CustomEvent('buncho-game-ready'));
-  const raptorController=mountGardenRaptors(root,{getWorld:()=>world,random:raptorRandom,isAvailable:()=>!busy,transact:async operation=>{
+  const raptorController=mountGardenRaptors(root,{getWorld:()=>world,random:raptorRandom,isAvailable:()=>!busy,hasCrowPending:()=>encounterController?.hasCrowPending()||false,transact:async operation=>{
     const committed=await mutate(operation,'',()=>alive,{bump:false,advanceCurrent:false,renderAfter:false});if(!committed)throw new Error('保存できませんでした。');return world;
   },onChange:({result,structural,error:raptorError})=>{
     if(raptorError){error='猛禽との記録を保存できませんでした。残り時間と保存を保持しています。おうちへ戻ってもう一度試してください。';render();return;}
