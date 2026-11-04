@@ -124,14 +124,14 @@ export function reconcileImportedCare(incoming, current, now) {
 export function careSoundDefault(value) { return value === false ? false : true; }
 export function visitorCapacity(world) {
   const count = world.birds.filter(b=>b.home === 'visitor').length + (world.encounters?.cageVisitors?.length || 0);
-  return {count, available:Math.max(0,2-count), canInvite:count < 2};
+  return {count, available:Math.max(0,6-count), canInvite:count < 6};
 }
 /** Compatibility repair only after full schema validation by the writer. Keep oldest
- * two invitations; overflow remains known birds, accessible through park/friend views.
+ * six invitations; overflow remains known birds, accessible through park/friend views.
  */
 export function moveOverflowVisitorsToPark(world) {
   const guests = world.birds.filter(b=>b.home === 'visitor').sort((a,b)=>a.arrivedTick-b.arrivedTick || a.id.localeCompare(b.id));
-  const moved = guests.slice(2);
+  const moved = guests.slice(6);
   for (const b of moved) b.home = 'departed';
   return moved.map(b=>b.id);
 }

@@ -532,3 +532,22 @@ body[data-world="buncho"] .game-owner-setting .owner-portrait-art{width:70px;hei
 
 /* The full-window game must override the legacy article-width shell. */
 body[data-world="buncho"] #main.page-content{max-width:none;padding:0}
+
+/* Home roles use a distinct shape and words, never color alone. */
+.game-app .game-room-bird>.game-home-role{display:flex;align-items:center;justify-content:center;gap:2px;position:absolute;left:50%;top:calc(100% + 2px);transform:translateX(-50%);width:max-content;max-width:80px;white-space:nowrap;font-size:10px;line-height:1.3;color:#294533;background:#fff6df;border:1px solid #c6bd94;border-radius:9px;padding:2px 4px;pointer-events:none}
+.game-home-role[data-home-role="family"]{background:#e8efd9!important;border-radius:4px!important}
+.game-home-role svg{flex:none}
+body[data-world="buncho"] .game-bottom-dock[data-home-dock="true"]{grid-template-columns:repeat(5,minmax(0,1fr));width:min(510px,100%);gap:5px;padding-inline:6px}
+body[data-world="buncho"] .game-bottom-dock [data-home-close] span{font-size:10px;line-height:1.2}
+body[data-world="buncho"] .game-bottom-dock [data-home-close]:disabled{opacity:.65;box-shadow:0 2px 0 #a18857}
+@media(max-height:500px){body[data-world="buncho"] .game-bottom-dock[data-home-dock="true"]{width:min(360px,100%)}body[data-world="buncho"] .game-main .game-room[data-many-guests="true"] .game-room-bird:not(.game-nestling){width:48px;min-width:48px;min-height:48px}.game-app .game-room-bird>.game-home-role{font-size:9px;padding:1px 3px;gap:1px}}
+
+.game-app .finch-cage-guest>span:not(.game-home-role){top:calc(100% + 20px);max-width:min(90px,16vw);overflow:hidden;text-overflow:ellipsis}
+@media(max-height:500px){.game-app .finch-cage-guest>span:not(.game-home-role){top:calc(100% + 17px);font-size:8px;max-width:min(66px,18vw);padding:1px 3px}}
+
+/* A full home keeps every guest visible while the owner watches from the edge. */
+body[data-world="buncho"] .game-owner-companion[data-home-crowded="true"]{width:clamp(56px,10cqh,120px);bottom:0}
+@media(max-height:500px){body[data-world="buncho"] .game-owner-companion[data-home-crowded="true"]{width:clamp(46px,8.5vw,72px)}body[data-world="buncho"] .game-main:has(.game-room[data-home-crowded="true"])>.game-scene-caption{display:none}}
+
+@media(max-width:600px) and (min-height:501px){body[data-world="buncho"] .game-owner-companion[data-home-crowded="true"]{width:min(72px,10cqh)}}
+body[data-world="buncho"][data-scene-controls="closed"]:has(.game-room[data-home-crowded="true"]) .game-scene-controls-toggle{left:auto;right:calc(72px + env(safe-area-inset-right,0px));top:calc(4px + env(safe-area-inset-top,0px));bottom:auto}

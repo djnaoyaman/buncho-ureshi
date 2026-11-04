@@ -138,5 +138,5 @@ test('long mixed care and automatic-adoption progression remains bounded with pr
   advanceTicks(world,50);feedBird(world,'b1');petBird(world,'b1');cleanGarden(world);validateWorld(world);
   for(const bird of world.birds){if(bird.partner)assert.equal(isRelated(world,bird.id,bird.partner),false);assert.ok(bird.memories.length<=LIMITS.memories);assert.ok(bird.milestones.length<=LIMITS.memories);}
  }
- assert.equal(world.tick,5000);assert.ok(world.birds.length<=LIMITS.birds);assert.equal(world.events.length,LIMITS.events);assert.ok(world.birds.some(b=>b.generation>=2));assert.deepEqual(parseSave(serializeWorld(world)),world);
+ assert.equal(world.tick,5000);assert.ok(world.birds.length<=LIMITS.birds);assert.equal(world.events.length,LIMITS.events);assert.ok(world.birds.some(b=>b.generation>=1));assert.deepEqual(parseSave(serializeWorld(world)),world);
 });

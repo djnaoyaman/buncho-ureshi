@@ -61,7 +61,12 @@ export function fieldPositions(birds,variant='wide',place='home') {
   const upper=park?(tall?.274:.311):(tall?.371:.379),middle=park?(tall?.451:.501):(tall?.552:.581);
   const lower=tall?[.22,.39,.56,.73]:[.29,.435,.58,.725];
   const anchors=[[.20,upper],[.40,upper],[.60,upper],[.78,upper],...lower.map(x=>[x,middle]),[.21,.79],[.40,park?.76:.79],[.59,park?.76:.79],[.80,.79]];
-  mature.slice(0,12).forEach((b,i)=>{const a=mature.length===1?anchors[9]:anchors[i];positions.set(b.id,{id:`field-contact-${i}`,x:a[0],y:a[1],width:mature.length===1?(tall?.24:.17):(tall?.16:.105),depth:1,zone:b.action.kind,interactive:true});});
+  // Legacy saves may retain ten residents alongside the new six guest slots.
+  const contacts=mature.length>12?Array.from({length:mature.length},(_,i)=>[.15+(i%4)*.23,(tall?.33:.32)+Math.floor(i/4)*.155]):anchors;
+  // Leave room below each bird for its role and visiting species name. Wide
+  // rooms use tighter vertical rows, especially for grandfathered large families.
+  const matureWidth=mature.length===1?(tall?.24:.17):tall?.16:mature.length>12?.06:mature.length>4?.09:.105;
+  mature.forEach((b,i)=>{const a=mature.length===1?contacts[9]:contacts[i];positions.set(b.id,{id:`field-contact-${i}`,x:a[0],y:a[1],width:matureWidth,depth:1,zone:b.action.kind,interactive:true});});
   const nestY=tall?.590:.635,columns=Math.min(4,Math.max(2,young.length)),rows=Math.ceil(young.length/columns)||1;
   const stepX=.14/(columns+1),stepY=.065/rows;
   const youngWidth=Math.min(tall?.038:.03,stepX*.8,stepY*.85/(tall?.75:1.6)*.75);
