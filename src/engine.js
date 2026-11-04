@@ -448,11 +448,16 @@ export function petBird(w, birdId, now=w.lifecycle?.seenAt??Date.now(), expected
 export function cleanGarden(w) {
   const before = w.care.cleanliness;
   const wait = remaining(w.care.lastCleanTick, w.tick, CARE_RULES.cleanCooldownTicks);
-  if (before === 100 || wait) return careResult('clean', null, false, before, before, wait, '庭の床はきれいだよ。のんびり過ごそう。', before === 100 ? 'clean' : 'cooldown');
+  const droppingCount = w.field.place === 'home' ? w.gems.droppings.length : 0;
+  if ((before === 100 && !droppingCount) || wait) return careResult('clean', null, false, before, before, wait, '庭の床はきれいだよ。のんびり過ごそう。', wait ? 'cooldown' : 'clean');
+  // The clean action collects the same home drops as individual taps, once.
+  // Keep the existing per-drop reward and never collect remotely from a park.
+  const gemAward = droppingCount ? grantGems(w, droppingCount * GEM_RULES.collect) : 0;
+  if (droppingCount) w.gems.droppings = [];
   w.care.cleanliness = 100;
   w.care.lastCleanTick = w.tick;
   bumpRevision(w);
-  return careResult('clean', null, true, before, 100, CARE_RULES.cleanCooldownTicks, '庭の床をきれいにしたよ。文鳥の羽の色は変わらないよ。', 'success');
+  return {...careResult('clean', null, true, before, 100, CARE_RULES.cleanCooldownTicks, '庭の床をきれいにしたよ。文鳥の羽の色は変わらないよ。', 'success'), gemAward, collectedDroppings:droppingCount};
 }
 export function talkToBird(w, birdId, text, now=w.lifecycle?.seenAt??Date.now(), expectedToken) {
   if(expectedToken&&!currentToken(w,expectedToken))return {...staleEconomy(),answer:"お部屋が変わったよ。もう一度話しかけてね。",careChanged:false};
