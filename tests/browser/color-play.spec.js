@@ -56,6 +56,7 @@ for(const size of sizes){
    const link=page.locator(`#game-menu-${id}`);await fit(link);await link.click();
    await expect(page.locator('.game-app')).toHaveAttribute('data-panel',id);await expect(page.locator('.game-panel-overlay')).toBeVisible();
    await fit(page.locator('[data-game-close-panel]'));expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+   if(['profile','family'].includes(id))for(const button of await page.locator('.game-profile-actions > button').all()){await fit(button);await expect(button).toHaveCSS('border-top-left-radius','28px');}
    await capture(page,info,id,size);
    await page.locator('[data-game-close-panel]').click();await expect(page.locator('.game-room')).toBeVisible();await openMenu(page);
   }
@@ -181,7 +182,7 @@ for(const size of [[320,240],[390,844],[1280,800]])test(`Color Play groups three
 
 for(const height of [420,568])test(`Color Play short phone keeps gacha filters initially visible at 320x${height}`,async({page},info)=>{
  await setup(page,[320,height]);await page.locator('.game-scene-controls-toggle').click();await page.locator('.game-bottom-dock [data-game-panel=decorate]').click();
- await expect(page.locator('[data-decor-filter=all]')).toBeInViewport();await expect(page.locator('[data-decor-draw=perch]')).toBeInViewport();
+ await expect(page.locator('[data-decor-filter=all]')).toBeInViewport({ratio:1});await expect(page.locator('[data-decor-draw=perch]')).toBeInViewport();
  await info.attach(`gacha-short-320x${height}`,{body:await page.screenshot(),contentType:'image/png'});
  await fit(page.locator('[data-decor-draw=perch]'));await fit(page.locator('[data-game-details=draw-odds] > summary'));
 });

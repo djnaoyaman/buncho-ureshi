@@ -1188,8 +1188,8 @@ body[data-world="buncho"] .game-app .finch-entry > .finch-route-actions > button
 /* Short phones keep the existing shelf filters in the first viewport. Compact
    only the UI illustration and text spacing; no content or controls are hidden. */
 @media(max-width:600px) and (max-height:700px) {
- body[data-world="buncho"] .game-panel-overlay:has(.game-decoration) > .game-overlay-head { height: 48px; padding: 2px 10px; }
- body[data-world="buncho"] .game-panel-overlay:has(.game-decoration) > .game-panel { height: calc(100% - 48px); padding: 6px 8px 16px; }
+ body[data-world="buncho"] .game-app .game-panel-overlay:has(.game-decoration) > .game-overlay-head { height: 48px; padding: 2px 10px; }
+ body[data-world="buncho"] .game-app .game-panel-overlay:has(.game-decoration) > .game-panel { height: calc(100% - 48px); padding: 6px 8px 16px; }
  body[data-world="buncho"] .game-decor-intro { flex-wrap: nowrap; gap: 4px; padding: 4px 6px; }
  body[data-world="buncho"] .game-decor-intro > p { font-size: 13px; white-space: nowrap; }
  body[data-world="buncho"] .game-decor-intro .game-wallet { padding: 3px 5px!important; gap: 4px; }
@@ -1203,4 +1203,12 @@ body[data-world="buncho"] .game-app .finch-entry > .finch-route-actions > button
  body[data-world="buncho"] .game-gacha-cost { padding: 2px 4px; font-size: 10px; }
  body[data-world="buncho"] .game-decor-draw summary { padding: 4px 0; }
 }
+/* Finish the same soft control treatment on profile/family shortcuts and
+   the care sheet's fixed close button, without touching any bird/node art. */
+body[data-world="buncho"] .game-app .game-profile-actions > button { background: var(--play-butter-wash); color: var(--play-ink); border: var(--play-soft-edge); border-radius: 28px; box-shadow: var(--play-soft-shadow); }
+body[data-world="buncho"] .game-app .game-profile-actions > button:nth-child(2) { background: var(--play-peach-wash); }
+body[data-world="buncho"] .game-app .game-family-zoom > button { background: var(--play-paper); color: var(--play-ink); border: var(--play-soft-edge); border-radius: 50%; }
+body[data-world="buncho"] .game-app #game-sheet-close { background: var(--play-paper); color: var(--play-ink); border: var(--play-soft-edge); border-radius: 999px; box-shadow: var(--play-soft-shadow); }
+body[data-world="buncho"] .game-secondary-menu .game-menu-close { background: var(--play-yellow)!important; border-color: #e6cc9c!important; }
+body[data-world="buncho"] .game-decor-draw h4 { text-wrap: balance; }
 /* End COLOR PLAY. */
