@@ -21,8 +21,8 @@ async function setup({random=()=>0,reverse=false}={}){
 for(const reverse of [false,true])test(`shared crow win grants six seconds and never races a raptor, reverse=${reverse}`,async()=>{
  let calls=0;const s=await setup({reverse,random:()=>{calls++;return 0;}});try{await s.run(2);assert.equal(s.panel.hasCrowPending(),false);await s.run(1);assert.equal(s.panel.hasCrowPending(),true);assert.equal(calls,3);await s.run(5);assert.equal(s.w.encounters.crow.visits.length,0);await s.run(1);assert.equal(s.w.encounters.crow.visits.length,1);assert.equal(s.w.encounters.raptor.visits.length,0);}finally{s.close();}
 });
-test('shared raptor win starts its saved warning at a full60 seconds',async()=>{
- const values=[0,.99,0],s=await setup({random:()=>values.shift()??1});try{await s.run(2);assert.equal(s.w.encounters.raptor.active,null);await s.run(1);assert.equal(s.w.encounters.raptor.active.remainingMs,60000);assert.equal(s.panel.hasCrowPending(),false);assert.equal(s.w.encounters.crow.visits.length,0);}finally{s.close();}
+test('shared half-boundary raptor win starts its saved warning at a full60 seconds',async()=>{
+ const values=[0,.5,0],s=await setup({random:()=>values.shift()??1});try{await s.run(2);assert.equal(s.w.encounters.raptor.active,null);await s.run(1);assert.equal(s.w.encounters.raptor.active.remainingMs,60000);assert.equal(s.panel.hasCrowPending(),false);assert.equal(s.w.encounters.crow.visits.length,0);}finally{s.close();}
 });
 test('real panel destruction and remount cannot buy another early lottery',async()=>{
  let calls=0;const s=await setup({random:()=>{calls++;return .25;}});try{await s.run(3);assert.equal(calls,1);await s.remount();await s.run(4);assert.equal(calls,1);await s.remount();await s.run(4);assert.equal(calls,1);}finally{s.close();}

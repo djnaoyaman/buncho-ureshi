@@ -3,7 +3,7 @@ import {RAPTOR_SPECIES} from './garden-raptors.js';
 
 // One foreground entry lottery for both families, owned by the game host rather
 // than the replaceable garden panel. This state never changes a saved world.
-export const PREDATOR_ENTRY_RULES=Object.freeze({dwellMs:3000,chance:.25,crowWeight:5,raptorWeight:1,retryMs:120000,maxSampleGapMs:2500});
+export const PREDATOR_ENTRY_RULES=Object.freeze({dwellMs:3000,chance:.25,crowWeight:5,raptorWeight:5,retryMs:120000,maxSampleGapMs:2500});
 export function createGardenPredatorClock({random=Math.random}={}){
  let key=null,last=null,elapsed=0,attempted=false,lastDraw=null;
  const reset=()=>{key=null;last=null;elapsed=0;attempted=false;};
