@@ -1,5 +1,7 @@
 import {test,expect} from '@playwright/test';
-import {createWorld,validateWorld} from '../../src/engine.js';
+import {createWorld,validateWorld,drawDecoration} from '../../src/engine.js';
+import {lifeStatus} from '../../src/life-care.js';
+import {ENCOUNTER_CATALOG} from '../../src/data/encounter-catalog.js';
 import {COLOR_PLAY_NOW as NOW,colorPlayWorld as seed} from '../fixtures/color-play.js';
 const sizes=[[320,240],[320,568],[390,844],[844,390],[1280,800]];
 async function record(page,world){return page.evaluate(world=>new Promise((resolve,reject)=>{
@@ -39,10 +41,14 @@ for(const size of sizes){
  test(`Color Play preserves menu routes and saved birds at ${size.join('x')}`,async({page},info)=>{
   await setup(page,size);const before=protectedState(await record(page));
   await unchangedArtwork(page);await fit(page.locator('.game-scene-controls-toggle'));await capture(page,info,'home-rest',size);await page.locator('.game-scene-controls-toggle').click();
-  await expect(page.locator('.game-field-nav [aria-pressed=true]')).toHaveCSS('background-color','rgb(244, 119, 105)');
+  await expect(page.locator('.game-field-nav [aria-pressed=true]')).toHaveCSS('background-color','rgb(32, 101, 88)');
   for(const b of await page.locator('.game-bottom-dock > button').all())await fit(b);
   await capture(page,info,'home-controls',size);
+  await expect(page.locator('.game-bottom-dock [data-game-panel=decorate]')).toHaveCSS('background-color','rgb(200, 184, 237)');
+  await expect(page.locator('#game-open-bird')).toHaveCSS('background-color','rgb(244, 119, 105)');
+  await expect(page.locator('.game-bottom-dock [data-game-panel=family]')).toHaveCSS('background-color','rgb(244, 119, 105)');
   await openMenu(page);await capture(page,info,'menu',size);
+  for(const [id,color] of [['health','rgb(190, 229, 205)'],['relations','rgb(244, 119, 105)'],['family','rgb(244, 119, 105)'],['notebook','rgb(255, 220, 100)'],['settings','rgb(32, 101, 88)']])await expect(page.locator(`#game-menu-${id}`)).toHaveCSS('background-color',color);
   for(const id of ['health','memorial','profile','relations','family','diary','roster','notebook','settings','help']){
    const link=page.locator(`#game-menu-${id}`);await fit(link);await link.click();
    await expect(page.locator('.game-app')).toHaveAttribute('data-panel',id);await expect(page.locator('.game-panel-overlay')).toBeVisible();
@@ -108,3 +114,51 @@ for(const width of [320,390])test(`Color Play preserves live garden controls, ta
  }
  await info.attach(`garden-live-${width}x${height}`,{body:await page.screenshot(),contentType:'image/png'});
 });
+
+for(const size of sizes){
+ test(`Color Play health cards keep real hospital and caretaker actions at ${size.join('x')}`,async({page},info)=>{
+  await setup(page,size);const world=seed();world.economy.gold=world.economy.lifetimeGold=200;
+  lifeStatus(world,'b1').condition={kind:'respiratory',sinceAt:NOW,deadlineAt:NOW+86400000};
+  await record(page,validateWorld(world));await page.reload();await page.locator('.game-scene-controls-toggle').click();await openMenu(page);await page.locator('#game-menu-health').click();
+  const before=await record(page);await capture(page,info,'health-unified-top',size);
+  await expect(page.locator('.life-care-warning')).toContainText('すべてゲームのルール');
+  for(const button of await page.locator('.life-hire-options button').all())await fit(button);
+  await page.locator('.life-caretaker').scrollIntoViewIfNeeded();await capture(page,info,'health-caretaker',size);
+  const treat=page.locator('[data-life-treat=b1]');await fit(treat);await capture(page,info,'health-hospital',size);
+  if(info.project.use.hasTouch)await treat.tap();else await treat.click();
+  await expect.poll(async()=>(await record(page)).economy.gold).toBe(188);
+  expect((await record(page)).lifecycle.birds[0].condition).toBeNull();
+  await fit(page.locator('[data-life-hire="3"]'));await page.locator('[data-life-hire="3"]').click();
+  await expect.poll(async()=>(await record(page)).economy.gold).toBe(116);await expect(page.locator('.life-contract')).toContainText('3日');await expect(page.locator('[data-life-hire="7"]')).toBeDisabled();
+  const saved=await record(page);expect(saved.birds).toEqual(before.birds);expect(saved.decor).toEqual(before.decor);
+  await fit(page.locator('.life-risk-help > summary'));await page.locator('.life-risk-help > summary').click();await expect(page.locator('.life-risk-help')).toHaveAttribute('open','');
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+  await page.keyboard.press('Escape');await expect(page.locator('.game-panel-overlay')).not.toBeVisible();await page.reload();
+  const restored=await record(page);expect(restored.lifecycle).toEqual(saved.lifecycle);expect(restored.economy).toEqual(saved.economy);
+ });
+ test(`Color Play gacha keeps one draw, cost and exact result at ${size.join('x')}`,async({page},info)=>{
+  await setup(page,size);await page.locator('.game-scene-controls-toggle').click();
+  const entry=page.locator('.game-bottom-dock [data-game-panel=decorate]');await fit(entry);await expect(entry).toContainText('ガチャ');await entry.click();
+  await expect(page.locator('.game-decor-intro > p')).toHaveText('お飾りガチャ');
+  const draw=page.locator('[data-decor-draw=perch]');await fit(draw);await expect(draw).toContainText('ガチャをまわす');await expect(draw).toContainText('1回 · 20 Gems');
+  await capture(page,info,'gacha-machine',size);const before=await record(page),expected=structuredClone(before);drawDecoration(expected,'perch');
+  if(info.project.use.hasTouch)await draw.tap();else await draw.click();
+  await expect(page.locator('.game-draw-result')).toBeVisible();const saved=await record(page);
+  expect(saved.decor).toEqual(expected.decor);expect(saved.economy).toEqual(before.economy);expect(saved.birds).toEqual(before.birds);
+  await fit(page.locator('[data-draw-result-close]'));await page.locator('[data-draw-result-close]').click();await expect(page.locator('.game-draw-result')).toHaveCount(0);await expect(draw).toBeDisabled();
+  await page.locator('[data-game-details=draw-odds] > summary').click();await expect(page.locator('[data-game-details=draw-odds]')).toContainText('色は8色それぞれ12.5%');await page.locator('[data-game-details=draw-odds] > summary').click();
+  await page.reload();expect((await record(page)).decor).toEqual(saved.decor);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+ });
+ test(`Color Play phone notebook has two readable columns at ${size.join('x')}`,async({page},info)=>{
+  await setup(page,size);const world=seed();world.encounters.discoveries=ENCOUNTER_CATALOG.slice(0,6).map((e,i)=>({id:e.id,firstTick:0,lastTick:0,visits:1,instanceId:i+1}));world.encounters.nextId=7;
+  await record(page,validateWorld(world));await page.reload();await page.locator('.game-scene-controls-toggle').click();await openMenu(page);await page.locator('#game-menu-notebook').click();
+  const before=await record(page),cards=page.locator('.finch-notebook > .finch-catalog > .finch-card');await expect(cards).toHaveCount(32);
+  const boxes=await cards.evaluateAll(es=>es.slice(0,3).map(e=>e.getBoundingClientRect().toJSON()));
+  if(size[0]<=600){expect(Math.abs(boxes[0].top-boxes[1].top)).toBeLessThan(1);expect(boxes[2].top).toBeGreaterThan(boxes[0].bottom);}
+  const first=cards.first();await fit(first);await expect(first.locator('.finch-art')).toHaveCSS('height','85px');
+  await expect(first.locator('.finch-media')).toHaveAttribute('data-media-state','ready');await capture(page,info,'notebook-two-columns',size);
+  await first.click();await expect(page.locator('.finch-entry h3')).toHaveText(ENCOUNTER_CATALOG[0].name);await fit(page.locator('[data-encounter-back]'));await page.locator('[data-encounter-back]').click();
+  expect((await record(page)).encounters.discoveries).toEqual(before.encounters.discoveries);expect((await record(page)).birds).toEqual(before.birds);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+ });
+}
