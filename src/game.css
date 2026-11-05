@@ -651,3 +651,6 @@ body[data-world="buncho"] .game-panel-overlay[open][data-scene=true]:has(>.game-
 /* A notebook opened from the garden is reading content, not a scene.
    Keep the floating scene toggle off its cards and restore it on return. */
 body[data-world="buncho"]:has(.game-panel-overlay[open] .game-encounter-host>:is(.finch-notebook,.finch-entry,.finch-event)) .game-scene-controls-toggle{display:none}
+
+/* Reserve a separate escape row above the scrollable reading surface. */
+body[data-world="buncho"] .game-panel-overlay[open][data-scene=true]:has(.game-encounter-host>:is(.finch-notebook,.finch-entry,.finch-event)){padding-top:calc(60px + env(safe-area-inset-top,0px));box-sizing:border-box;background:#f6edce}

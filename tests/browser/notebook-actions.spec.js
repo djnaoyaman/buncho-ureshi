@@ -51,6 +51,11 @@ async function actions(page){
  if(g.before!==null)expect(g.before).toBeGreaterThanOrEqual(15.9);
  if(g.after!==null)expect(g.after).toBeGreaterThanOrEqual(15.9);
  await expect(page.locator('.game-scene-controls-toggle')).toBeHidden();
+ const overlay=page.locator('.game-panel-overlay[open]');
+ if(await overlay.getAttribute('data-scene')==='true'){
+  const row=await overlay.evaluate(el=>({head:el.querySelector(':scope > .game-overlay-head').getBoundingClientRect().bottom,content:el.querySelector(':scope > .game-panel').getBoundingClientRect().top}));
+  expect(row.content-row.head).toBeGreaterThanOrEqual(4);
+ }
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
 }
 const protectedState=w=>({birds:w.birds,economy:w.economy,discoveries:w.encounters.discoveries,crows:w.encounters.crow.visits,raptors:w.encounters.raptor.visits});
