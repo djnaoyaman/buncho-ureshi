@@ -126,6 +126,8 @@ for(const size of sizes){
   await record(page,validateWorld(world));await page.reload();await page.locator('.game-scene-controls-toggle').click();await openMenu(page);await page.locator('#game-menu-health').click();
   const before=await record(page),expected=structuredClone(before);
   treatBird(expected,'b1',economyToken(expected),NOW);hireCaretaker(expected,3,economyToken(expected),NOW);
+  await expect(page.locator('.life-care-panel > .life-panel-heading')).toHaveCSS('border-top-width','0px');
+  await expect(page.locator('.life-caretaker')).toHaveCSS('background-color','rgba(0, 0, 0, 0)');
   await capture(page,info,'health-unified-top',size);
   await expect(page.locator('.life-care-warning')).toContainText('すべてゲームのルール');
   for(const button of await page.locator('.life-hire-options button').all())await fit(button);
