@@ -1026,11 +1026,14 @@ body[data-world="buncho"][data-scene-controls="open"]:has(.finch-garden) .game-s
  body[data-world="buncho"] .finch-garden-selector { gap: 5px; }
  body[data-world="buncho"] .finch-garden-selector button { font-size: 11px; padding: 6px 4px; }
 }
-@media(max-height:500px) {
- body[data-world="buncho"] .life-game-notice { left: 160px; }
+/* The short life notice has a fixed reserved slot beside the scenic toggle.
+   Trim the title shell, rather than moving the notice into another control. */
+@media(max-width:600px) and (max-height:500px) {
+ body[data-world="buncho"] .game-wordmark { font-size: 16px; }
+ body[data-world="buncho"][data-scene-controls="closed"] .game-world-title { padding-inline: 8px; }
 }
-@media(max-width:600px) and (max-height:340px) {
- body[data-world="buncho"] .life-game-notice { left: 140px; }
+@media(min-width:601px) and (max-height:500px) {
+ body[data-world="buncho"] .game-app .life-game-notice { left: 176px; }
 }
 /* Keep the unchanged desktop bird label above the footer's painted edge. */
 @media(min-width:700px) and (min-height:701px) {

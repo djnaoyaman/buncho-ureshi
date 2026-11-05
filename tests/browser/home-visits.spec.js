@@ -18,7 +18,7 @@ for(const size of [{width:320,height:240},{width:390,height:844}])test(`self rol
  await expect(family.locator('[data-home-role=family]')).toHaveText('家族');await expect(family).toHaveAttribute('aria-label',/^おもち、家族、/);await expect(family).toHaveAttribute('aria-pressed','true');expect((await record(page)).birds).toEqual(original.birds);await page.reload();await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');await expect(self.locator('[data-home-role=self]')).toHaveText('自分＝しらたまもちのすけ');expect((await record(page)).birds).toEqual(original.birds);await info.attach('renamed-self',{body:await page.screenshot(),contentType:'image/png'});
 });
 
-for(const size of [{width:320,height:240},{width:320,height:568}])test(`full home health notice stays clear and both health and memorial remain reachable ${size.width}x${size.height}`,async({page},info)=>{
+for(const size of [{width:320,height:240},{width:320,height:568},{width:844,height:390}])test(`full home health notice stays clear and both health and memorial remain reachable ${size.width}x${size.height}`,async({page},info)=>{
  const original=seed(6,6),departed=createBird(original,{home:'departed'});
  lifeStatus(original,departed).death={cause:'illness',at:now,tick:original.tick};lifeStatus(original,'b1').condition={kind:'injury',sinceAt:now,deadlineAt:now+86400000};validateWorld(original);await start(page,size,original);
  const notice=page.locator('.life-game-notice button');await expect(notice).toHaveCount(1);await expect(notice).toHaveAttribute('data-life-notice','health');await expect(notice).toHaveAttribute('aria-label','1羽に体調の変化。病院へ');await geometry(page,size);
