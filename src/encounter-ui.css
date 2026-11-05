@@ -218,3 +218,12 @@
   padding-top:1rem;
   border-top:1px solid #d9c9a0;
 }
+
+/* Page actions have their own breathing room, including wrapped mobile rows. */
+.finch-page-actions{display:flex;flex-wrap:wrap;align-items:stretch;gap:12px;margin-block:20px;min-width:0}
+.finch-page-actions:last-child{margin-bottom:0}
+.finch-page-actions>button{flex:0 1 auto;min-width:0;max-width:100%;min-height:44px;line-height:1.5}
+.finch-page-actions>p{flex-basis:100%;margin:0}
+:is(.finch-entry,.finch-event)>.finch-page-actions{justify-content:center}
+.finch-view-toggle,.finch-friendship-actions{flex-wrap:wrap;gap:12px}
+@media(max-width:480px){.finch-page-actions>button{flex:1 1 12rem}}

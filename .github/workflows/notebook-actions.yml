@@ -1,0 +1,41 @@
+name: Notebook action spacing
+on:
+  pull_request:
+    paths:
+      - 'src/encounter-ui.js'
+      - 'src/encounter-ui.css'
+      - 'src/garden-crow-ui.js'
+      - 'src/garden-raptor-ui.js'
+      - 'src/game.css'
+      - 'tests/notebook-actions.test.js'
+      - 'tests/browser/notebook-actions.spec.js'
+      - 'tests/browser/predator-catalog-layout.spec.js'
+      - 'playwright.notebook-actions.config.js'
+      - '.github/workflows/notebook-actions.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  notebook-actions:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm test
+      - run: npx playwright install --with-deps chromium webkit
+      - run: npx playwright install chrome
+      - run: npx playwright test --config=playwright.notebook-actions.config.js
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: notebook-actions-${{ github.sha }}
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14
