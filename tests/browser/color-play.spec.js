@@ -18,12 +18,23 @@ async function fit(button){
  expect(m.left).toBeGreaterThanOrEqual(-.5);expect(m.right).toBeLessThanOrEqual(m.viewport+.5);expect(m.w).toBeGreaterThanOrEqual(43.9);expect(m.h).toBeGreaterThanOrEqual(43.9);expect(m.hit).toBe(true);expect(m.text).toBe(true);
 }
 async function capture(page,info,name,size){if([240,844,800].includes(size[1]))await info.attach(`${name}-${size.join('x')}`,{body:await page.screenshot(),contentType:'image/png'});}
-const protectedState=w=>({worldId:w.worldId,birds:w.birds,economy:w.economy,decor:w.decor,lifecycle:w.lifecycle,settings:w.settings,protagonist:w.protagonist});
+const protectedState=w=>{const state=structuredClone(w);delete state.revision;delete state.updatedAt;delete state.encounters.garden;return state;};
+async function unchangedArtwork(page){
+ const result=await page.evaluate(()=>{
+ const measure=()=>[...document.querySelectorAll('.game-room-bird,.game-sprite,.game-care-pet-bird,.game-care-illustration,.game-care-illustration img,.owner-peek-art,.finch-garden-household,.finch-garden-friend,.finch-garden-visitor,.finch-art,.finch-photo img')].map(el=>{const r=el.getBoundingClientRect(),s=getComputedStyle(el);return {tag:el.tagName,classes:el.className?.baseVal??el.className,src:el.getAttribute('src'),x:r.x,y:r.y,w:r.width,h:r.height,transform:s.transform,objectFit:s.objectFit,objectPosition:s.objectPosition,borderRadius:s.borderRadius,filter:s.filter,clipPath:s.clipPath,animationName:s.animationName};});
+ const sheet=[...document.styleSheets].find(s=>s.href&&new URL(s.href).pathname.endsWith('/src/game.css'));
+  const first=[...sheet.cssRules].findIndex(r=>r.style?.getPropertyValue('--play-ink'));if(first<0)throw Error('Color Play stylesheet not loaded');
+  const before=measure(),rules=[...sheet.cssRules].slice(first).map(r=>r.cssText);while(sheet.cssRules.length>first)sheet.deleteRule(first);
+  const baseline=measure();for(const rule of rules)sheet.insertRule(rule,sheet.cssRules.length);
+  return{before,baseline};
+ });
+ expect(result.before).toEqual(result.baseline);
+}
 async function openMenu(page){await page.locator('#game-nav-open').click();await expect(page.locator('.game-secondary-menu')).toHaveAttribute('open','');}
 for(const size of sizes){
  test(`Color Play preserves menu routes and saved birds at ${size.join('x')}`,async({page},info)=>{
   await setup(page,size);const before=protectedState(await record(page));
-  await fit(page.locator('.game-scene-controls-toggle'));await capture(page,info,'home-rest',size);await page.locator('.game-scene-controls-toggle').click();
+  await unchangedArtwork(page);await fit(page.locator('.game-scene-controls-toggle'));await capture(page,info,'home-rest',size);await page.locator('.game-scene-controls-toggle').click();
   await expect(page.locator('.game-field-nav [aria-pressed=true]')).toHaveCSS('background-color','rgb(244, 119, 105)');
   for(const b of await page.locator('.game-bottom-dock > button').all())await fit(b);
   await capture(page,info,'home-controls',size);
@@ -41,12 +52,24 @@ for(const size of sizes){
  test(`Color Play keeps care, decoration and garden flows at ${size.join('x')}`,async({page},info)=>{
   await setup(page,size);const before=protectedState(await record(page));await page.locator('.game-scene-controls-toggle').click();
   await page.locator('#game-open-bird').click();await expect(page.locator('.game-care-pet-bird')).toBeVisible();
-  await capture(page,info,'care',size);await fit(page.locator('[data-game-care=feed]'));await fit(page.locator('[data-game-close-bird]'));await page.locator('[data-game-close-bird]').click();
+  await unchangedArtwork(page);await capture(page,info,'care',size);await fit(page.locator('[data-game-care=feed]'));await fit(page.locator('[data-game-close-bird]'));await page.locator('[data-game-close-bird]').click();
   await page.locator('.game-bottom-dock [data-game-panel=decorate]').click();await expect(page.locator('.game-decoration')).toBeVisible();await capture(page,info,'decorate',size);await fit(page.locator('[data-game-close-panel]'));await page.locator('[data-game-close-panel]').click();
   await page.locator('.game-field-nav [data-game-panel=outdoors]').click();await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-scene-state','ready');
-  await expect(page.locator('.finch-garden-selector [data-garden-select]')).toHaveCount(12);await capture(page,info,'garden',size);
+  await expect(page.locator('.finch-garden-selector [data-garden-select]')).toHaveCount(12);await unchangedArtwork(page);await capture(page,info,'garden',size);
   for(const button of await page.locator('.finch-garden-dock > details > summary').all())await fit(button);
   await fit(page.locator('[data-game-close-panel]'));await page.locator('[data-game-close-panel]').click();
   expect(protectedState(await record(page))).toEqual(before);
  });
 }
+test('Color Play keeps real export, invalid import and reset cancellation safe',async({page},info)=>{
+ await setup(page,[390,844]);await page.locator('.game-scene-controls-toggle').click();await openMenu(page);await page.locator('#game-menu-settings').click();
+ await page.locator('[data-game-details=management] > summary').click();const before=await record(page);
+ const download=page.waitForEvent('download');await page.locator('[data-game-action=export]').click();
+ const stream=await(await download).createReadStream(),chunks=[];for await(const chunk of stream)chunks.push(chunk);
+ const exported=JSON.parse(Buffer.concat(chunks).toString('utf8'));validateWorld(exported);expect(exported).toEqual(before);
+ await page.locator('#game-import').setInputFiles({name:'invalid.json',mimeType:'application/json',buffer:Buffer.from('{not JSON')});
+ await expect(page.locator('.game-overlay-message')).toContainText('今の保存はそのまま');expect(await record(page)).toEqual(before);
+ await page.locator('#game-reset-open').click();await expect(page.locator('.game-reset-dialog')).toBeVisible();
+ await info.attach('reset-cancel-390x844',{body:await page.screenshot(),contentType:'image/png'});
+ await page.keyboard.press('Escape');await expect(page.locator('.game-reset-dialog')).not.toBeVisible();expect(await record(page)).toEqual(before);
+});

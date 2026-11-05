@@ -734,6 +734,8 @@ body[data-world="buncho"] :is(.game-overlay-head button,.game-sheet-heading > bu
 body[data-world="buncho"] .game-panel-overlay[data-scene="true"] > .game-overlay-head button { background: var(--play-mint); color: var(--play-ink); border-color: var(--play-cream); border-radius: 999px; box-shadow: var(--play-shadow); }
 body[data-world="buncho"] .game-main .game-secondary-menu { background: var(--play-cream); border-color: var(--play-cream); border-radius: 28px 32px 24px 28px; box-shadow: 0 -6px 30px #10382f33; }
 body[data-world="buncho"] .game-secondary-menu .game-tabs button { background: var(--play-mint); color: var(--play-ink); border-color: var(--play-mint); border-radius: 24px; box-shadow: none; }
+body[data-world="buncho"] .game-secondary-menu .game-tabs button:nth-child(3n+2),
+body[data-world="buncho"] .game-secondary-menu .game-tabs button:nth-child(3n) { background: var(--play-mint); border-color: var(--play-mint); }
 body[data-world="buncho"] .game-secondary-menu .game-tabs button:nth-child(3n+1) { background: var(--play-yellow); border-color: var(--play-yellow); }
 body[data-world="buncho"] .game-secondary-menu .game-tabs button:nth-child(5n) { background: var(--play-coral); border-color: var(--play-coral); }
 body[data-world="buncho"] :is(.game-menu-heading,.game-section-title,.game-sheet-heading,.life-panel-heading) { color: var(--play-ink); }
@@ -742,18 +744,19 @@ body[data-world="buncho"] :is(.game-settings > button,.game-settings details > b
   background: var(--play-yellow); color: var(--play-ink); border-color: var(--play-yellow); border-radius: 999px; box-shadow: none;
 }
 body[data-world="buncho"] .game-app .game-care-actions button:nth-child(even) { background: var(--play-mint); border-color: var(--play-mint); }
-body[data-world="buncho"] .game-app .game-draw-button { background: var(--play-coral); color: var(--play-ink); border-color: var(--play-coral); box-shadow: none; }
+body[data-world="buncho"] .game-app button.game-draw-button { background: var(--play-coral); color: var(--play-ink); border-color: var(--play-coral); box-shadow: none; }
 body[data-world="buncho"] :is(.game-talk,.game-reply,.game-last-memory,.game-independence,.game-relation-center,.game-family-card,.game-friend-house,.game-empty-home,.game-decor-workbench,.game-wallet-details,.game-owner-setting) {
   background: var(--play-paper); color: var(--play-ink); border-color: var(--play-line); border-radius: 24px; box-shadow: none;
 }
 body[data-world="buncho"] .game-talk { background: var(--play-mint); border-color: var(--play-mint); border-radius: 30px 24px 32px 24px; }
 body[data-world="buncho"] .game-reply { background: var(--play-paper); border-color: var(--play-paper); border-radius: 24px 24px 24px 6px; }
 body[data-world="buncho"] .game-relation-card { border-color: var(--play-mint); }
-body[data-world="buncho"] .game-decor-preview { background: var(--play-mint); border-radius: 46% 42% 24px 24px; }
-body[data-world="buncho"] :is(.game-decor-slots button,.game-decor-filters button,.game-collection-tier > summary) { background: var(--play-paper); color: var(--play-ink); border-color: var(--play-line); border-radius: 18px; box-shadow: none; }
-body[data-world="buncho"] :is(.game-decor-slots button[aria-pressed="true"],.game-decor-filters button[aria-pressed="true"]) { background: var(--play-mint); color: var(--play-ink); border-color: var(--play-green); }
+body[data-world="buncho"] .game-decor-preview { background: var(--play-mint); border-radius: 24px; }
+body[data-world="buncho"] :is(.game-decor-slots button,.game-decor-filter button,.game-decor-tiers button) { background: var(--play-paper); color: var(--play-ink); border-color: var(--play-line); border-radius: 18px; box-shadow: none; }
+body[data-world="buncho"] :is(.game-decor-slots button[aria-pressed="true"],.game-decor-filter button[aria-pressed="true"],.game-decor-tiers button[aria-pressed="true"]) { background: var(--play-mint); color: var(--play-ink); border-color: var(--play-green); }
 body[data-world="buncho"] :is(.game-settings input,.game-settings select,.game-name-form input,.game-input-row input,.game-music input) { accent-color: var(--play-green); border-color: var(--play-line); }
-body[data-world="buncho"] :is(.game-care-meter meter,.game-care-meter meter::-webkit-meter-bar) { background: #e4eadf; }
+body[data-world="buncho"] .game-care-meter meter { background: #e4eadf; }
+body[data-world="buncho"] .game-care-meter meter::-webkit-meter-bar { background: #e4eadf; }
 body[data-world="buncho"] .game-care-meter meter::-webkit-meter-optimum-value { background: var(--play-green); }
 body[data-world="buncho"] .game-care-meter-energy meter::-webkit-meter-optimum-value { background: #b95b43; }
 body[data-world="buncho"] .game-care-meter meter::-moz-meter-bar { background: var(--play-green); }
@@ -782,5 +785,5 @@ body[data-world="buncho"] :is(.life-hire-options button,.life-memorial-actions b
 body[data-world="buncho"] :is(.game-music-panel,.game-music-track-picker) { background: var(--play-paper); color: var(--play-ink); border-color: var(--play-line); border-radius: 24px; box-shadow: var(--play-shadow); }
 body[data-world="buncho"] .game-music button { background: var(--play-mint); color: var(--play-ink); border-color: var(--play-line); border-radius: 999px; box-shadow: none; }
 body[data-world="buncho"] .game-music button[aria-pressed="true"] { background: var(--play-mint)!important; color: var(--play-ink)!important; border-color: var(--play-green); }
-body[data-world="buncho"] :is(button,a,summary,input,select,textarea):focus-visible { outline-color: var(--play-green); }
+body[data-world="buncho"] :is(.game-field-nav button,.game-bottom-dock button,.game-secondary-menu button,.game-scene-controls-toggle,.game-overlay-head button,.game-sheet-footer button,.finch-page-actions button,.finch-garden-selector button,.game-settings input):focus-visible { outline-color: var(--play-green); }
 /* End COLOR PLAY. */

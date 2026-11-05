@@ -15,5 +15,5 @@ Warnings retain their meaning, countdowns and escape rows. Notebook button gaps,
 - `npm run check` and `npm test`.
 - `tests/color-play.test.js` restricts the layer to scoped paint properties and verifies WCAG AA contrast for the palette's text pairs.
 - `npx playwright test --config=playwright.color-play.config.js` tests actual menu routes, saved-state preservation and reload, care, decoration, twelve-garden navigation, hit targets, notebook spacing, direct petting, short controls and warning escape paths in Chromium touch, WebKit touch and desktop Chrome.
-- Screen sizes: 320×240, 320×568, 390×844, 844×390 and 1280×800. The browser artifact includes actual-screen screenshots for visual inspection.
+- Screen sizes: 320×240, 320×568, 390×844, 844×390 and 1280×800. The browser artifact includes actual-screen screenshots for visual inspection. Home, care and garden artwork geometry, transforms, images and animation names are also compared with the paint layer temporarily removed.
 - Existing repository release workflows still run. Report pre-existing broad regression failures separately; a focused pass is not a full-suite pass.
