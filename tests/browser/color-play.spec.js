@@ -62,6 +62,9 @@ for(const size of sizes){
   await expect(page.locator('.finch-garden-selector [data-garden-select]')).toHaveCount(12);await unchangedArtwork(page);await capture(page,info,'garden',size);
   for(const button of await page.locator('.finch-garden-dock > details > summary').all())await fit(button);
   await fit(page.locator('[data-game-close-panel]'));await page.locator('[data-game-close-panel]').click();
+  await openMenu(page);await page.locator('#game-menu-notebook').click();await page.locator('[data-finch-go-garden]').click();
+  await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-scene-state','ready');await unchangedArtwork(page);
+  await page.locator('[data-game-close-panel]').click();
   expect(protectedState(await record(page))).toEqual(before);
  });
 }

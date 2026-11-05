@@ -34,3 +34,24 @@ jobs:
             playwright-report/
             test-results/
           retention-days: 14
+  preview:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Use the official Chrome supplied by the runner
+        run: google-chrome --version || npx playwright install chrome
+      - run: npx playwright test --config=playwright.color-play.config.js --project=color-play-desktop
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: color-play-preview-${{ github.sha }}
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14
