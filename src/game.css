@@ -654,3 +654,133 @@ body[data-world="buncho"]:has(.game-panel-overlay[open] .game-encounter-host>:is
 
 /* Reserve a separate escape row above the scrollable reading surface. */
 body[data-world="buncho"] .game-panel-overlay[open][data-scene=true]:has(.game-encounter-host>:is(.finch-notebook,.finch-entry,.finch-event)){padding-top:calc(60px + env(safe-area-inset-top,0px));box-sizing:border-box;background:#f6edce}
+
+/* COLOR PLAY — presentation only. Keep the established layout, artwork,
+   actor geometry, controls, hit targets, scroll surfaces and saved state.
+   This intentionally changes only paint, not how any part of the game works. */
+body[data-world="buncho"] {
+  --play-ink: #10382f;
+  --play-cream: #fff8ea;
+  --play-paper: #fffdf5;
+  --play-coral: #f47769;
+  --play-yellow: #ffdc64;
+  --play-mint: #bee5cd;
+  --play-green: #206558;
+  --play-line: #b8cdbd;
+  --play-shadow: 0 4px 14px #10382f1a;
+  color: var(--play-ink);
+}
+/* Existing floating tools get the same warm, flat palette as the cards. */
+body[data-world="buncho"] .game-wallet {
+  background: var(--play-cream);
+  border-color: var(--play-cream);
+  border-radius: 999px;
+  color: var(--play-ink);
+  box-shadow: var(--play-shadow);
+}
+body[data-world="buncho"] .game-wallet > span { background: var(--play-yellow); color: var(--play-ink); border-radius: 999px; }
+body[data-world="buncho"] .game-field-nav { background: var(--play-cream); border-radius: 999px; box-shadow: 0 0 0 5px var(--play-cream), var(--play-shadow); }
+body[data-world="buncho"] .game-field-nav button {
+  background: var(--play-cream);
+  color: var(--play-ink);
+  border-color: var(--play-cream);
+  border-radius: 999px;
+  box-shadow: none;
+}
+body[data-world="buncho"] .game-field-nav button[aria-pressed="true"] {
+  background: var(--play-coral); color: var(--play-ink); border-color: var(--play-coral); box-shadow: none;
+}
+body[data-world="buncho"] .game-status button { background: var(--play-yellow); color: var(--play-ink); border-color: var(--play-yellow); box-shadow: var(--play-shadow); }
+body[data-world="buncho"] .site-header .game-world-exit {
+  background: var(--play-cream)!important; color: var(--play-ink)!important; border-color: var(--play-cream)!important; border-radius: 999px!important; box-shadow: var(--play-shadow);
+}
+body[data-world="buncho"] .game-scene-controls-toggle {
+  background: var(--play-coral); color: var(--play-ink); border-color: var(--play-cream); border-radius: 999px; box-shadow: var(--play-shadow);
+}
+body[data-world="buncho"] .game-bottom-dock {
+  background: var(--play-cream); border-radius: 42% 28% 0 0 / 24px 18px 0 0; box-shadow: 0 -5px 18px #10382f14;
+}
+body[data-world="buncho"] .game-bottom-dock button,
+body[data-world="buncho"] .game-app .game-bottom-dock #game-open-bird {
+  background: var(--play-yellow); color: var(--play-ink); border-color: var(--play-yellow); border-radius: 50% 46% 48% 44%; box-shadow: none;
+}
+body[data-world="buncho"] .game-app .game-bottom-dock #game-open-bird { background: var(--play-mint); border-color: var(--play-mint); }
+body[data-world="buncho"] .game-bottom-dock button:nth-child(3) { background: var(--play-yellow); border-color: var(--play-yellow); }
+body[data-world="buncho"] .game-bottom-dock button:last-child { background: var(--play-coral); border-color: var(--play-coral); }
+body[data-world="buncho"] .game-bottom-dock button[aria-pressed="true"] { background: var(--play-green); color: var(--play-paper); border-color: var(--play-green); box-shadow: none; }
+body[data-world="buncho"] .game-bottom-dock svg { filter: none; }
+body[data-world="buncho"] .game-scene-toolbar .game-bird-carousel { background: var(--play-cream); color: var(--play-ink); border-color: var(--play-cream); border-radius: 999px; box-shadow: var(--play-shadow); }
+body[data-world="buncho"] .game-scene-toolbar [data-bird-step] { background: var(--play-mint); color: var(--play-ink); border-color: var(--play-mint); box-shadow: none; }
+body[data-world="buncho"] .game-scene-toolbar .game-garden-care button { background: var(--play-yellow); color: var(--play-ink); border-color: var(--play-yellow); border-radius: 999px; box-shadow: none; }
+body[data-world="buncho"] .game-main > .game-scene-caption { background: var(--play-mint); color: var(--play-ink); border-color: var(--play-mint); border-radius: 28px 36px 24px 34px; box-shadow: var(--play-shadow); }
+/* Reading and care surfaces. No shape or size changes to any living artwork. */
+body[data-world="buncho"] .game-panel-overlay,
+body[data-world="buncho"] .game-app .game-bird-sheet,
+body[data-world="buncho"] .game-app :is(.game-reset-dialog,.game-adoption-dialog,.game-independence-dialog,.game-draw-result,.game-successor-dialog),
+body[data-world="buncho"] .game-main > .game-welcome {
+  background: var(--play-cream); color: var(--play-ink); border-color: var(--play-line); box-shadow: 0 12px 48px #10382f33;
+}
+body[data-world="buncho"] .game-panel-overlay:not([data-scene="true"]),
+body[data-world="buncho"] .game-main > .game-welcome,
+body[data-world="buncho"] .game-app :is(.game-reset-dialog,.game-adoption-dialog,.game-independence-dialog,.game-draw-result,.game-successor-dialog) { border-radius: 28px; }
+body[data-world="buncho"] .game-panel-overlay::backdrop,
+body[data-world="buncho"] .game-app :is(.game-bird-sheet,.game-reset-dialog,.game-adoption-dialog,.game-independence-dialog,.game-draw-result,.game-successor-dialog)::backdrop { background: #10382f70; }
+body[data-world="buncho"] .game-panel-overlay > .game-overlay-head { background: var(--play-mint); border-color: var(--play-mint); color: var(--play-ink); }
+body[data-world="buncho"] .game-panel-overlay[data-scene="true"] > .game-overlay-head { background: none; }
+body[data-world="buncho"] .game-panel-overlay[open][data-scene="true"]:has(.game-encounter-host > :is(.finch-notebook,.finch-entry,.finch-event)) { background: var(--play-cream); }
+body[data-world="buncho"] :is(.game-overlay-head button,.game-sheet-heading > button,.game-sheet-footer button,#game-sheet-health,.game-menu-close) {
+  background: var(--play-mint); color: var(--play-ink); border-color: var(--play-mint); border-radius: 999px; box-shadow: none;
+}
+body[data-world="buncho"] .game-panel-overlay[data-scene="true"] > .game-overlay-head button { background: var(--play-mint); color: var(--play-ink); border-color: var(--play-cream); border-radius: 999px; box-shadow: var(--play-shadow); }
+body[data-world="buncho"] .game-main .game-secondary-menu { background: var(--play-cream); border-color: var(--play-cream); border-radius: 28px 32px 24px 28px; box-shadow: 0 -6px 30px #10382f33; }
+body[data-world="buncho"] .game-secondary-menu .game-tabs button { background: var(--play-mint); color: var(--play-ink); border-color: var(--play-mint); border-radius: 24px; box-shadow: none; }
+body[data-world="buncho"] .game-secondary-menu .game-tabs button:nth-child(3n+1) { background: var(--play-yellow); border-color: var(--play-yellow); }
+body[data-world="buncho"] .game-secondary-menu .game-tabs button:nth-child(5n) { background: var(--play-coral); border-color: var(--play-coral); }
+body[data-world="buncho"] :is(.game-menu-heading,.game-section-title,.game-sheet-heading,.life-panel-heading) { color: var(--play-ink); }
+body[data-world="buncho"] .game-app :is(.game-care-actions button,.game-talk-choices button,.game-friend-house button,.game-draw-button),
+body[data-world="buncho"] :is(.game-settings > button,.game-settings details > button,.game-name-form button,.game-input-row button,.game-welcome button,.game-links button,.game-family-controls button) {
+  background: var(--play-yellow); color: var(--play-ink); border-color: var(--play-yellow); border-radius: 999px; box-shadow: none;
+}
+body[data-world="buncho"] .game-app .game-care-actions button:nth-child(even) { background: var(--play-mint); border-color: var(--play-mint); }
+body[data-world="buncho"] .game-app .game-draw-button { background: var(--play-coral); color: var(--play-ink); border-color: var(--play-coral); box-shadow: none; }
+body[data-world="buncho"] :is(.game-talk,.game-reply,.game-last-memory,.game-independence,.game-relation-center,.game-family-card,.game-friend-house,.game-empty-home,.game-decor-workbench,.game-wallet-details,.game-owner-setting) {
+  background: var(--play-paper); color: var(--play-ink); border-color: var(--play-line); border-radius: 24px; box-shadow: none;
+}
+body[data-world="buncho"] .game-talk { background: var(--play-mint); border-color: var(--play-mint); border-radius: 30px 24px 32px 24px; }
+body[data-world="buncho"] .game-reply { background: var(--play-paper); border-color: var(--play-paper); border-radius: 24px 24px 24px 6px; }
+body[data-world="buncho"] .game-relation-card { border-color: var(--play-mint); }
+body[data-world="buncho"] .game-decor-preview { background: var(--play-mint); border-radius: 46% 42% 24px 24px; }
+body[data-world="buncho"] :is(.game-decor-slots button,.game-decor-filters button,.game-collection-tier > summary) { background: var(--play-paper); color: var(--play-ink); border-color: var(--play-line); border-radius: 18px; box-shadow: none; }
+body[data-world="buncho"] :is(.game-decor-slots button[aria-pressed="true"],.game-decor-filters button[aria-pressed="true"]) { background: var(--play-mint); color: var(--play-ink); border-color: var(--play-green); }
+body[data-world="buncho"] :is(.game-settings input,.game-settings select,.game-name-form input,.game-input-row input,.game-music input) { accent-color: var(--play-green); border-color: var(--play-line); }
+body[data-world="buncho"] :is(.game-care-meter meter,.game-care-meter meter::-webkit-meter-bar) { background: #e4eadf; }
+body[data-world="buncho"] .game-care-meter meter::-webkit-meter-optimum-value { background: var(--play-green); }
+body[data-world="buncho"] .game-care-meter-energy meter::-webkit-meter-optimum-value { background: #b95b43; }
+body[data-world="buncho"] .game-care-meter meter::-moz-meter-bar { background: var(--play-green); }
+body[data-world="buncho"] .game-care-meter-energy meter::-moz-meter-bar { background: #b95b43; }
+/* Garden tools, notebook and story cards share the palette, not the bird art. */
+body[data-world="buncho"] .finch-garden > header h3 { background: var(--play-cream); color: var(--play-ink); border-color: var(--play-cream); border-radius: 999px; box-shadow: var(--play-shadow); }
+body[data-world="buncho"] :is(.finch-garden > header > button,.finch-garden-selector button,.finch-garden-scroll,.finch-garden-dock > details > summary,.finch-garden-dock > details button,.finch-page-actions > button,.finch-view-toggle button,.finch-friendship-actions button,.finch-media-retry,.finch-garden-loading button) {
+  background: var(--play-mint); color: var(--play-ink); border-color: var(--play-mint); border-radius: 999px; box-shadow: none;
+}
+body[data-world="buncho"] .finch-garden-selector button[aria-pressed="true"],
+body[data-world="buncho"] .finch-view-toggle button[aria-pressed="true"] { background: var(--play-green); color: var(--play-paper); border-color: var(--play-green); }
+body[data-world="buncho"] .finch-garden-dock > details:nth-child(odd) > summary { background: var(--play-coral); border-color: var(--play-coral); }
+body[data-world="buncho"] .finch-garden-dock > details[open] { background: var(--play-cream); color: var(--play-ink); border-color: var(--play-line); border-radius: 26px; box-shadow: 0 8px 28px #10382f33; }
+body[data-world="buncho"] .finch-page-actions > button:first-child { background: var(--play-yellow); border-color: var(--play-yellow); }
+body[data-world="buncho"] :is(.finch-notebook,.finch-entry,.finch-event,.finch-crow-notebook,.finch-crow-entry,.finch-raptor-entry) { background: var(--play-cream); color: var(--play-ink); border-color: var(--play-line); }
+body[data-world="buncho"] :is(.finch-notebook-intro,.finch-friendship,.finch-summary) { background: var(--play-mint); color: var(--play-ink); border-color: var(--play-mint); border-radius: 26px 32px 24px 30px; }
+body[data-world="buncho"] .finch-card { background: var(--play-paper); color: var(--play-ink); border-color: var(--play-line); border-radius: 24px; box-shadow: none; }
+body[data-world="buncho"] .finch-number { background: var(--play-yellow); color: var(--play-ink); border-radius: 999px; }
+body[data-world="buncho"] .finch-garden-loading { background: var(--play-cream); color: var(--play-ink); }
+/* Keep warning meaning and reserved escape rows; only repaint their surfaces. */
+body[data-world="buncho"] :is(.game-raptor-notice,.finch-crow-notice,.finch-raptor-notice,.game-warning,.life-care-warning) { background: #fff0d4; color: #653b25; border-color: #b95b43; box-shadow: var(--play-shadow); }
+body[data-world="buncho"] .game-raptor-notice.is-friendly { background: var(--play-mint); color: var(--play-ink); border-color: var(--play-green); }
+body[data-world="buncho"] :is(.life-care-panel,.life-memorial-panel) { --life-ink: var(--play-ink); --life-line: var(--play-line); background: var(--play-cream); color: var(--play-ink); border-color: var(--play-line); box-shadow: none; }
+body[data-world="buncho"] :is(.life-bird-card,.life-caretaker,.life-grave,.life-protagonist) { background: var(--play-paper); color: var(--play-ink); border-color: var(--play-line); border-radius: 24px; }
+body[data-world="buncho"] :is(.life-hire-options button,.life-memorial-actions button,.life-successor-choices button,.life-bird-card button,.life-game-notice button) { background: var(--play-mint); color: var(--play-ink); border-color: var(--play-line); border-radius: 999px; box-shadow: none; }
+body[data-world="buncho"] :is(.game-music-panel,.game-music-track-picker) { background: var(--play-paper); color: var(--play-ink); border-color: var(--play-line); border-radius: 24px; box-shadow: var(--play-shadow); }
+body[data-world="buncho"] .game-music button { background: var(--play-mint); color: var(--play-ink); border-color: var(--play-line); border-radius: 999px; box-shadow: none; }
+body[data-world="buncho"] .game-music button[aria-pressed="true"] { background: var(--play-mint)!important; color: var(--play-ink)!important; border-color: var(--play-green); }
+body[data-world="buncho"] :is(button,a,summary,input,select,textarea):focus-visible { outline-color: var(--play-green); }
+/* End COLOR PLAY. */
