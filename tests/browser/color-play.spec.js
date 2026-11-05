@@ -41,19 +41,22 @@ for(const size of sizes){
  test(`Color Play preserves menu routes and saved birds at ${size.join('x')}`,async({page},info)=>{
   await setup(page,size);const before=protectedState(await record(page));
   await unchangedArtwork(page);await fit(page.locator('.game-scene-controls-toggle'));await capture(page,info,'home-rest',size);await page.locator('.game-scene-controls-toggle').click();
-  await expect(page.locator('.game-field-nav [aria-pressed=true]')).toHaveCSS('background-color','rgb(32, 101, 88)');
+  await expect(page.locator('.game-field-nav [aria-pressed=true]')).toHaveCSS('background-color','rgb(248, 223, 210)');
   for(const b of await page.locator('.game-bottom-dock > button').all())await fit(b);
   await capture(page,info,'home-controls',size);
-  await expect(page.locator('.game-bottom-dock [data-game-panel=decorate]')).toHaveCSS('background-color','rgb(200, 184, 237)');
-  await expect(page.locator('#game-open-bird')).toHaveCSS('background-color','rgb(244, 119, 105)');
-  await expect(page.locator('.game-bottom-dock [data-game-panel=family]')).toHaveCSS('background-color','rgb(244, 119, 105)');
+  await expect(page.locator('.game-bottom-dock [data-game-panel=decorate]')).toHaveCSS('background-color','rgb(247, 227, 177)');
+  await expect(page.locator('#game-open-bird')).toHaveCSS('background-color','rgb(245, 201, 184)');
+  await expect(page.locator('.game-bottom-dock [data-game-panel=family]')).toHaveCSS('background-color','rgb(226, 236, 223)');
   await openMenu(page);await capture(page,info,'menu',size);
-  for(const [id,color] of [['health','rgb(190, 229, 205)'],['memorial','rgb(255, 220, 100)'],['profile','rgb(255, 220, 100)'],['diary','rgb(255, 220, 100)'],['roster','rgb(255, 220, 100)'],['help','rgb(255, 220, 100)'],['relations','rgb(244, 119, 105)'],['family','rgb(244, 119, 105)'],['notebook','rgb(255, 220, 100)'],['settings','rgb(32, 101, 88)']])await expect(page.locator(`#game-menu-${id}`)).toHaveCSS('background-color',color);
+  const menuOrder=['health','profile','relations','family','roster','notebook','diary','memorial','settings','help'];
+  expect(await page.locator('.game-secondary-menu .game-tabs button').evaluateAll(es=>es.map(e=>e.dataset.gamePanel))).toEqual(menuOrder);
+  const colors=['rgb(248, 223, 210)','rgb(251, 239, 211)','rgb(255, 253, 247)','rgb(255, 253, 247)','rgb(251, 239, 211)','rgb(248, 223, 210)','rgb(226, 236, 223)','rgb(251, 239, 211)','rgb(255, 253, 247)','rgb(226, 236, 223)'];
+  for(const [i,id] of menuOrder.entries())await expect(page.locator(`#game-menu-${id}`)).toHaveCSS('background-color',colors[i]);
   for(const id of ['health','memorial','profile','relations','family','diary','roster','notebook','settings','help']){
    const link=page.locator(`#game-menu-${id}`);await fit(link);await link.click();
    await expect(page.locator('.game-app')).toHaveAttribute('data-panel',id);await expect(page.locator('.game-panel-overlay')).toBeVisible();
    await fit(page.locator('[data-game-close-panel]'));expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
-   if(['health','family','notebook','settings'].includes(id))await capture(page,info,id,size);
+   await capture(page,info,id,size);
    await page.locator('[data-game-close-panel]').click();await expect(page.locator('.game-room')).toBeVisible();await openMenu(page);
   }
   await page.locator('[data-game-close-menu]').click();expect(protectedState(await record(page))).toEqual(before);
@@ -174,4 +177,11 @@ for(const size of [[320,240],[390,844],[1280,800]])test(`Color Play groups three
  await page.locator('.finch-garden > header [data-encounter-back]').click();await page.locator('[data-crow-notebook]').click();await page.locator('[data-raptor-entry="black-kite"]').click();
  await page.locator('.finch-route-actions [data-finch-go-home]').click();await expect(page.locator('.game-room')).toBeVisible();await expect(page.locator('.game-panel-overlay')).not.toBeVisible();
  expect(protectedState(await record(page))).toEqual(before);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+});
+
+for(const height of [420,568])test(`Color Play short phone keeps gacha filters initially visible at 320x${height}`,async({page},info)=>{
+ await setup(page,[320,height]);await page.locator('.game-scene-controls-toggle').click();await page.locator('.game-bottom-dock [data-game-panel=decorate]').click();
+ await expect(page.locator('[data-decor-filter=all]')).toBeInViewport();await expect(page.locator('[data-decor-draw=perch]')).toBeInViewport();
+ await info.attach(`gacha-short-320x${height}`,{body:await page.screenshot(),contentType:'image/png'});
+ await fit(page.locator('[data-decor-draw=perch]'));await fit(page.locator('[data-game-details=draw-odds] > summary'));
 });

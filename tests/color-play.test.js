@@ -19,8 +19,8 @@ test('Color Play restyles UI without changing living artwork or its dimensions',
 function luminance(hex){const c=hex.match(/[\da-f]{2}/g).map(x=>parseInt(x,16)/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4);return .2126*c[0]+.7152*c[1]+.0722*c[2];}
 function contrast(a,b){const x=[luminance(a),luminance(b)].sort((a,b)=>b-a);return(x[0]+.05)/(x[1]+.05);}
 test('Color Play text pairs meet WCAG AA for normal-size labels',()=>{
- for(const surface of ['fff8ea','fffdf5','f47769','ffdc64','bee5cd','c8b8ed','e4f0df','fff0b5','eee6fa'])assert(contrast('10382f',surface)>=4.5,surface);
- assert(contrast('206558','fffdf5')>=4.5);
+ for(const surface of ['fff9ef','fffdf7','f5c9b8','f7e3b1','e2ecdf','f8dfd2','fbefd3'])assert(contrast('604b3d',surface)>=4.5,surface);
+ assert(contrast('75614f','fffdf7')>=4.5);
 });
 
 import {colorPlayWorld} from './fixtures/color-play.js';
