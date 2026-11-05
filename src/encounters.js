@@ -14,7 +14,7 @@ export function encounterFriendship(w,id){
 }
 export function cageVisitorCount(w){return w.birds.filter(b=>b.home==='visitor').length+(w.encounters?.cageVisitors?.length||0);}
 /** Called only after the legacy state has passed full schema validation. */
-export function upgradeEncounterState(state){if(state.version===4){state.version=5;state.friendship=[];state.cageVisitors=[];}if(state.version===5){state.version=6;state.homeClosedUntil=0;}if(state.version===6){state.version=7;state.crow=initialCrowState();}if(state.version===7){state.version=8;state.raptor=initialRaptorState();}if(state.version===8){state.version=9;for(const id of GARDEN_IDS)if(!Object.hasOwn(state.garden.visits,id))state.garden.visits[id]=0;}return state;}
+export function upgradeEncounterState(state){if(state.version===4){state.version=5;state.friendship=[];state.cageVisitors=[];}if(state.version===5){state.version=6;state.homeClosedUntil=0;}if(state.version===6){state.version=7;state.crow=initialCrowState();}if(state.version===7){state.version=8;state.raptor=initialRaptorState();}if(state.version===8){state.version=9;for(const id of GARDEN_IDS)if(!Object.hasOwn(state.garden.visits,id))state.garden.visits[id]=0;}if(state.version===9){state.version=10;state.homeGoodbyes=[];}return state;}
 export function expireEncounterVisitors(w){if(w.encounters.cageVisitors)w.encounters.cageVisitors=w.encounters.cageVisitors.filter(v=>w.tick-v.arrivedTick<=FRIENDSHIP_RULES.visitTicks);}
 const ACTIVITIES=['park','talk','decorate','friend','read','garden'];
 export const GARDEN_SCENES=Object.freeze(['grass','water','branch','song','quiet']);
@@ -23,7 +23,7 @@ const own=(x,k)=>Object.prototype.hasOwnProperty.call(x,k);
 const shape=(x,keys)=>x&&typeof x==='object'&&!Array.isArray(x)&&Object.keys(x).length===keys.length&&keys.every(k=>own(x,k));
 const integer=(x,min=0,max=Number.MAX_SAFE_INTEGER)=>Number.isSafeInteger(x)&&x>=min&&x<=max;
 const bump=w=>{w.revision=w.revision===Number.MAX_SAFE_INTEGER?0:w.revision+1;};
-export function initialEncounterState(){return {version:9,raptor:initialRaptorState(),crow:initialCrowState(),homeClosedUntil:0,gardenFriends:initialGardenFriends(),garden:initialGardenState(),nextId:1,cursor:0,activities:Object.fromEntries(ACTIVITIES.map(k=>[k,0])),queue:[],active:null,discoveries:[],friendship:[],cageVisitors:[]};}
+export function initialEncounterState(){return {version:10,homeGoodbyes:[],raptor:initialRaptorState(),crow:initialCrowState(),homeClosedUntil:0,gardenFriends:initialGardenFriends(),garden:initialGardenState(),nextId:1,cursor:0,activities:Object.fromEntries(ACTIVITIES.map(k=>[k,0])),queue:[],active:null,discoveries:[],friendship:[],cageVisitors:[]};}
 export function createEncounterSystem(catalog=ENCOUNTER_CATALOG,{knownCatalog=catalog}={}){
   if(!Array.isArray(catalog)||catalog.length>ENCOUNTER_LIMITS.catalog)throw new Error('出会いの図鑑が不正です。');
   const byId=new Map();
@@ -36,8 +36,9 @@ export function createEncounterSystem(catalog=ENCOUNTER_CATALOG,{knownCatalog=ca
   const stale=()=>({changed:false,reason:'stale',message:'庭が変わったよ。もう一度ひらいてね。'});
   function validate(state,tick){
     const fail=()=>{throw new Error('出会いの記録が不正です。');};
-    if(!integer(tick)||!shape(state,['version','gardenFriends','garden','nextId','cursor','activities','queue','active','discoveries',...(state.version>=5?['friendship','cageVisitors']:[]),...(state.version>=6?['homeClosedUntil']:[]),...(state.version>=7?['crow']:[]),...(state.version>=8?['raptor']:[])])||![4,5,6,7,8,9].includes(state.version)||!integer(state.nextId,1)||!integer(state.cursor,0,ENCOUNTER_LIMITS.catalog)||!shape(state.activities,ACTIVITIES)||ACTIVITIES.some(k=>!integer(state.activities[k],0,ENCOUNTER_LIMITS.activity))||!Array.isArray(state.queue)||state.queue.length>1||new Set(state.queue).size!==state.queue.length||state.queue.some(id=>!knownById.has(id))||!Array.isArray(state.discoveries)||state.discoveries.length>knownCatalog.length)fail();
+    if(!integer(tick)||!shape(state,['version','gardenFriends','garden','nextId','cursor','activities','queue','active','discoveries',...(state.version>=5?['friendship','cageVisitors']:[]),...(state.version>=6?['homeClosedUntil']:[]),...(state.version>=7?['crow']:[]),...(state.version>=8?['raptor']:[]),...(state.version>=10?['homeGoodbyes']:[])])||![4,5,6,7,8,9,10].includes(state.version)||!integer(state.nextId,1)||!integer(state.cursor,0,ENCOUNTER_LIMITS.catalog)||!shape(state.activities,ACTIVITIES)||ACTIVITIES.some(k=>!integer(state.activities[k],0,ENCOUNTER_LIMITS.activity))||!Array.isArray(state.queue)||state.queue.length>1||new Set(state.queue).size!==state.queue.length||state.queue.some(id=>!knownById.has(id))||!Array.isArray(state.discoveries)||state.discoveries.length>knownCatalog.length)fail();
     if(state.version>=6&&!integer(state.homeClosedUntil,0,8640000000000000))fail();
+    if(state.version>=10&&(!Array.isArray(state.homeGoodbyes)||state.homeGoodbyes.length>128||new Set(state.homeGoodbyes.map(g=>g?.birdId)).size!==state.homeGoodbyes.length||state.homeGoodbyes.some(g=>!shape(g,['birdId','until'])||typeof g.birdId!=='string'||!/^b[1-9]\d{0,8}$/.test(g.birdId)||!integer(g.until,1,8640000000000000))))fail();
     if(state.version>=8)validateRaptorState(state.raptor,tick,GARDEN_IDS);
     if(state.version>=7)validateCrowState(state.crow,tick,GARDEN_IDS);
     validateGardenFriends(state.gardenFriends,tick);
@@ -150,7 +151,7 @@ export function createEncounterSystem(catalog=ENCOUNTER_CATALOG,{knownCatalog=ca
   }
   function dismissCage(w,id,expected){
     if(!guard(w,expected))return stale();validate(w.encounters,w.tick);if(!w.encounters.cageVisitors?.some(v=>v.id===id))return {changed:false};
-    w.encounters.cageVisitors=w.encounters.cageVisitors.filter(v=>v.id!==id);bump(w);return {changed:true,message:'また遊ぼうね。いつでも図鑑から呼べるよ。'};
+    w.encounters.cageVisitors=w.encounters.cageVisitors.filter(v=>v.id!==id);bump(w);return {changed:true,message:`${knownById.get(id).name}は自分のおうちに帰ったよ。また図鑑から呼べるよ。`};
   }
   function status(w,id){const discovery=w.encounters.discoveries.find(d=>d.id===id);return {discovered:!!discovery,discovery:discovery?{...discovery}:null,ready:w.encounters.queue.includes(id),active:w.encounters.active?.id===id,...encounterFriendship(w,id)};}
   return Object.freeze({catalog,validate,noteActivity,enterGarden,selectGarden,meetGardenFriend,chooseCompanions,leaveGarden,observeGarden,open,act,status,pet,inviteGarden,inviteCage,dismissCage});
