@@ -1,0 +1,77 @@
+[
+  {
+    "id": "java-rice",
+    "decodes": [
+      {
+        "sampleRate": 44100,
+        "frames": 3528000,
+        "expectedFrames": 3528000,
+        "paddingFrames": 0,
+        "loopJumpFS": 0.00026373923174105585,
+        "peakFS": 0.2871408462524414,
+        "rmsDb": -25.001134872436523,
+        "silent100msWindows": 4
+      },
+      {
+        "sampleRate": 48000,
+        "frames": 3840000,
+        "expectedFrames": 3840000,
+        "paddingFrames": 0,
+        "loopJumpFS": 0.0002649829548317939,
+        "peakFS": 0.28713974356651306,
+        "rmsDb": -25.001174926757812,
+        "silent100msWindows": 4
+      }
+    ]
+  },
+  {
+    "id": "bali-terrace",
+    "decodes": [
+      {
+        "sampleRate": 44100,
+        "frames": 4070769,
+        "expectedFrames": 4070769,
+        "paddingFrames": 0,
+        "loopJumpFS": 0.000588834285736084,
+        "peakFS": 0.26407086849212646,
+        "rmsDb": -25.000497817993164,
+        "silent100msWindows": 0
+      },
+      {
+        "sampleRate": 48000,
+        "frames": 4430769,
+        "expectedFrames": 4430769,
+        "paddingFrames": 0,
+        "loopJumpFS": 0.0002625714987516403,
+        "peakFS": 0.2640511095523834,
+        "rmsDb": -25.000532150268555,
+        "silent100msWindows": 0
+      }
+    ]
+  },
+  {
+    "id": "paris-unrest",
+    "decodes": [
+      {
+        "sampleRate": 44100,
+        "frames": 4032000,
+        "expectedFrames": 4032000,
+        "paddingFrames": 0,
+        "loopJumpFS": 0.0004497875925153494,
+        "peakFS": 0.25374212861061096,
+        "rmsDb": -24.99880599975586,
+        "silent100msWindows": 0
+      },
+      {
+        "sampleRate": 48000,
+        "frames": 4388572,
+        "expectedFrames": 4388571,
+        "paddingFrames": 1,
+        "loopJumpFS": 0.0003257698845118284,
+        "peakFS": 0.2537376582622528,
+        "rmsDb": -24.998851776123047,
+        "silent100msWindows": 0
+      }
+    ]
+  }
+]

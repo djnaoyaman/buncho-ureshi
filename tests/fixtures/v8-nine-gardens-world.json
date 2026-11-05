@@ -1,0 +1,655 @@
+{
+  "version": 9,
+  "revision": 6,
+  "worldId": "garden-1793718000000-842911",
+  "epoch": 1793718000000,
+  "lastUpdated": 1793718000000,
+  "seed": 2357696241,
+  "tick": 0,
+  "nextId": 3,
+  "nextEvent": 2,
+  "paused": false,
+  "settings": {
+    "motion": true,
+    "careSound": true,
+    "adoptionMode": "ask"
+  },
+  "care": {
+    "cleanliness": 100,
+    "lastCleanTick": null
+  },
+  "birds": [
+    {
+      "id": "b1",
+      "name": "おもち",
+      "naming": {
+        "version": 1,
+        "source": "automatic",
+        "assignedName": "おもち"
+      },
+      "sex": "female",
+      "color": "white",
+      "stage": "adult",
+      "bornTick": 0,
+      "stageTick": 0,
+      "arrivedTick": 0,
+      "parents": [],
+      "generation": 0,
+      "partner": null,
+      "pairTick": null,
+      "eggsLaid": 0,
+      "lastEggTick": -1000,
+      "home": "resident",
+      "personality": {
+        "curiosity": 65,
+        "sociability": 75,
+        "caution": 30
+      },
+      "preference": "水浴び",
+      "mood": 70,
+      "needs": {
+        "energy": 80,
+        "food": 80,
+        "play": 60
+      },
+      "care": {
+        "lastFedTick": null,
+        "lastPetTick": null
+      },
+      "gemCare": {
+        "lastChatTick": null,
+        "fullSinceTick": null,
+        "lastDropTick": null
+      },
+      "relations": {},
+      "memories": [
+        {
+          "kind": "welcome",
+          "otherId": null,
+          "tick": 0
+        }
+      ],
+      "milestones": [
+        {
+          "kind": "welcome",
+          "otherId": null,
+          "tick": 0
+        }
+      ],
+      "action": {
+        "kind": "rest",
+        "target": null,
+        "startedTick": 0
+      },
+      "lastSocialTick": -1
+    },
+    {
+      "id": "b2",
+      "name": "こはく",
+      "naming": {
+        "version": 1,
+        "source": "manual",
+        "assignedName": "こはく"
+      },
+      "sex": "female",
+      "color": "sakura",
+      "stage": "adult",
+      "bornTick": 0,
+      "stageTick": 0,
+      "arrivedTick": 0,
+      "parents": [],
+      "generation": 0,
+      "partner": null,
+      "pairTick": null,
+      "eggsLaid": 0,
+      "lastEggTick": -1000,
+      "home": "resident",
+      "personality": {
+        "curiosity": 37,
+        "sociability": 37,
+        "caution": 20
+      },
+      "preference": "探検",
+      "mood": 70,
+      "needs": {
+        "energy": 80,
+        "food": 80,
+        "play": 60
+      },
+      "care": {
+        "lastFedTick": null,
+        "lastPetTick": null
+      },
+      "gemCare": {
+        "lastChatTick": null,
+        "fullSinceTick": null,
+        "lastDropTick": null
+      },
+      "relations": {},
+      "memories": [],
+      "milestones": [],
+      "action": {
+        "kind": "rest",
+        "target": null,
+        "startedTick": 0
+      },
+      "lastSocialTick": -1
+    }
+  ],
+  "events": [
+    {
+      "id": "e1",
+      "kind": "welcome",
+      "ids": [
+        "b1"
+      ],
+      "condition": "新しい庭",
+      "result": "物語が始まった",
+      "data": {},
+      "tick": 0,
+      "at": 1793718000000
+    }
+  ],
+  "offlineSummary": null,
+  "field": {
+    "place": "park",
+    "hostId": null,
+    "enteredTick": 0
+  },
+  "decor": {
+    "points": 20,
+    "lifetimePoints": 20,
+    "inventory": [
+      {
+        "id": "perch-mint-cozy",
+        "slot": "perch",
+        "color": "mint",
+        "tier": "cozy"
+      },
+      {
+        "id": "feed-mint-cozy",
+        "slot": "feed",
+        "color": "mint",
+        "tier": "cozy"
+      },
+      {
+        "id": "water-mint-cozy",
+        "slot": "water",
+        "color": "mint",
+        "tier": "cozy"
+      },
+      {
+        "id": "bath-mint-cozy",
+        "slot": "bath",
+        "color": "mint",
+        "tier": "cozy"
+      },
+      {
+        "id": "greens-mint-cozy",
+        "slot": "greens",
+        "color": "mint",
+        "tier": "cozy"
+      },
+      {
+        "id": "shellgrit-mint-cozy",
+        "slot": "shellgrit",
+        "color": "mint",
+        "tier": "cozy"
+      },
+      {
+        "id": "swing-mint-cozy",
+        "slot": "swing",
+        "color": "mint",
+        "tier": "cozy"
+      },
+      {
+        "id": "toy-mint-cozy",
+        "slot": "toy",
+        "color": "mint",
+        "tier": "cozy"
+      },
+      {
+        "id": "paper-mint-cozy",
+        "slot": "paper",
+        "color": "mint",
+        "tier": "cozy"
+      }
+    ],
+    "equipped": {
+      "perch": "perch-mint-cozy",
+      "feed": "feed-mint-cozy",
+      "water": "water-mint-cozy",
+      "bath": "bath-mint-cozy",
+      "greens": "greens-mint-cozy",
+      "shellgrit": "shellgrit-mint-cozy",
+      "swing": "swing-mint-cozy",
+      "toy": "toy-mint-cozy",
+      "paper": "paper-mint-cozy"
+    },
+    "draws": 0,
+    "lastDrawTick": null
+  },
+  "gems": {
+    "droppings": [],
+    "nextDropId": 1
+  },
+  "encounters": {
+    "version": 8,
+    "raptor": {
+      "lastArrivalAt": null,
+      "active": null,
+      "visits": []
+    },
+    "crow": {
+      "lastArrivalAt": null,
+      "gardenId": null,
+      "speciesId": null,
+      "arrivalBirdId": null,
+      "lastHostile": false,
+      "visits": []
+    },
+    "homeClosedUntil": 0,
+    "gardenFriends": {
+      "version": 1,
+      "regulars": [
+        {
+          "id": "gf-komorebi-1",
+          "name": "しおり",
+          "speciesId": "java-sparrow",
+          "primaryGardenId": "komorebi",
+          "appearance": {
+            "color": "sakura"
+          },
+          "favorite": "watch",
+          "personality": "葉の影を見つけるのが好き",
+          "preferredMemory": "一緒に葉の影を探した",
+          "affinity": 44,
+          "lastInteractionTick": null,
+          "memories": []
+        },
+        {
+          "id": "gf-komorebi-2",
+          "name": "もく",
+          "speciesId": "java-sparrow",
+          "primaryGardenId": "komorebi",
+          "appearance": {
+            "color": "white"
+          },
+          "favorite": "chat",
+          "personality": "木の椅子で話を聞くのが好き",
+          "preferredMemory": "木の椅子でゆっくり話した",
+          "affinity": 0,
+          "lastInteractionTick": null,
+          "memories": []
+        },
+        {
+          "id": "gf-mizukagami-1",
+          "name": "みなも",
+          "speciesId": "java-sparrow",
+          "primaryGardenId": "mizukagami",
+          "appearance": {
+            "color": "silver"
+          },
+          "favorite": "watch",
+          "personality": "水面の形を眺めるのが好き",
+          "preferredMemory": "同じ波紋を眺めた",
+          "affinity": 0,
+          "lastInteractionTick": null,
+          "memories": []
+        },
+        {
+          "id": "gf-mizukagami-2",
+          "name": "しずく",
+          "speciesId": "java-sparrow",
+          "primaryGardenId": "mizukagami",
+          "appearance": {
+            "color": "white"
+          },
+          "favorite": "play",
+          "personality": "飛び石の模様で遊ぶのが好き",
+          "preferredMemory": "飛び石の模様をたどった",
+          "affinity": 0,
+          "lastInteractionTick": null,
+          "memories": []
+        },
+        {
+          "id": "gf-komugi-1",
+          "name": "むぎ",
+          "speciesId": "java-sparrow",
+          "primaryGardenId": "komugi",
+          "appearance": {
+            "color": "cinnamon"
+          },
+          "favorite": "play",
+          "personality": "穂の揺れをまねるのが好き",
+          "preferredMemory": "揺れる穂を一緒にまねた",
+          "affinity": 0,
+          "lastInteractionTick": null,
+          "memories": []
+        },
+        {
+          "id": "gf-komugi-2",
+          "name": "こなつ",
+          "speciesId": "java-sparrow",
+          "primaryGardenId": "komugi",
+          "appearance": {
+            "color": "sakura"
+          },
+          "favorite": "chat",
+          "personality": "木柵で会話するのが好き",
+          "preferredMemory": "木柵で小さな話をした",
+          "affinity": 0,
+          "lastInteractionTick": null,
+          "memories": []
+        },
+        {
+          "id": "gf-hanadokei-1",
+          "name": "すみれ",
+          "speciesId": "java-sparrow",
+          "primaryGardenId": "hanadokei",
+          "appearance": {
+            "color": "silver"
+          },
+          "favorite": "play",
+          "personality": "花の輪をたどるのが好き",
+          "preferredMemory": "花の輪を一緒にたどった",
+          "affinity": 0,
+          "lastInteractionTick": null,
+          "memories": []
+        },
+        {
+          "id": "gf-hanadokei-2",
+          "name": "こはな",
+          "speciesId": "java-sparrow",
+          "primaryGardenId": "hanadokei",
+          "appearance": {
+            "color": "white"
+          },
+          "favorite": "watch",
+          "personality": "花びらの向きを見るのが好き",
+          "preferredMemory": "花びらの向きを見つけた",
+          "affinity": 0,
+          "lastInteractionTick": null,
+          "memories": []
+        },
+        {
+          "id": "gf-kazaguruma-1",
+          "name": "かぜ",
+          "speciesId": "java-sparrow",
+          "primaryGardenId": "kazaguruma",
+          "appearance": {
+            "color": "sakura"
+          },
+          "favorite": "play",
+          "personality": "丘で風のポーズをするのが好き",
+          "preferredMemory": "丘で風のポーズをした",
+          "affinity": 0,
+          "lastInteractionTick": null,
+          "memories": []
+        },
+        {
+          "id": "gf-kazaguruma-2",
+          "name": "そよ",
+          "speciesId": "java-sparrow",
+          "primaryGardenId": "kazaguruma",
+          "appearance": {
+            "color": "silver"
+          },
+          "favorite": "watch",
+          "personality": "風車の回り方を眺めるのが好き",
+          "preferredMemory": "同じ風車を見上げた",
+          "affinity": 0,
+          "lastInteractionTick": null,
+          "memories": []
+        },
+        {
+          "id": "gf-yuyake-1",
+          "name": "あんず",
+          "speciesId": "java-sparrow",
+          "primaryGardenId": "yuyake",
+          "appearance": {
+            "color": "cinnamon"
+          },
+          "favorite": "chat",
+          "personality": "小さな卓のおしゃべりが好き",
+          "preferredMemory": "小さな卓で話した",
+          "affinity": 0,
+          "lastInteractionTick": null,
+          "memories": []
+        },
+        {
+          "id": "gf-yuyake-2",
+          "name": "くるみ",
+          "speciesId": "java-sparrow",
+          "primaryGardenId": "yuyake",
+          "appearance": {
+            "color": "sakura"
+          },
+          "favorite": "play",
+          "personality": "木箱のリズムが好き",
+          "preferredMemory": "木箱でリズムをまねた",
+          "affinity": 0,
+          "lastInteractionTick": null,
+          "memories": []
+        },
+        {
+          "id": "gf-tsukiakari-1",
+          "name": "つき",
+          "speciesId": "java-sparrow",
+          "primaryGardenId": "tsukiakari",
+          "appearance": {
+            "color": "white"
+          },
+          "favorite": "watch",
+          "personality": "白花と月を眺めるのが好き",
+          "preferredMemory": "白花のそばで月を眺めた",
+          "affinity": 0,
+          "lastInteractionTick": null,
+          "memories": []
+        },
+        {
+          "id": "gf-tsukiakari-2",
+          "name": "ほたる",
+          "speciesId": "java-sparrow",
+          "primaryGardenId": "tsukiakari",
+          "appearance": {
+            "color": "silver"
+          },
+          "favorite": "chat",
+          "personality": "灯のそばの小声のおしゃべりが好き",
+          "preferredMemory": "灯のそばで小声で話した",
+          "affinity": 0,
+          "lastInteractionTick": null,
+          "memories": []
+        },
+        {
+          "id": "gf-shrine-grove-1",
+          "name": "こだま",
+          "speciesId": "java-sparrow",
+          "primaryGardenId": "shrine-grove",
+          "appearance": {
+            "color": "sakura"
+          },
+          "favorite": "chat",
+          "personality": "石段のあいさつが好き",
+          "preferredMemory": "石段であいさつした",
+          "affinity": 0,
+          "lastInteractionTick": null,
+          "memories": []
+        },
+        {
+          "id": "gf-shrine-grove-2",
+          "name": "かえで",
+          "speciesId": "java-sparrow",
+          "primaryGardenId": "shrine-grove",
+          "appearance": {
+            "color": "cinnamon"
+          },
+          "favorite": "watch",
+          "personality": "落ち葉の形を見つけるのが好き",
+          "preferredMemory": "同じ落ち葉を見つけた",
+          "affinity": 0,
+          "lastInteractionTick": null,
+          "memories": []
+        },
+        {
+          "id": "gf-onsen-1",
+          "name": "ゆげ",
+          "speciesId": "java-sparrow",
+          "primaryGardenId": "onsen",
+          "appearance": {
+            "color": "white"
+          },
+          "favorite": "chat",
+          "personality": "休憩処で待ち合わせるのが好き",
+          "preferredMemory": "熱いお湯から離れた休憩処で話した",
+          "affinity": 0,
+          "lastInteractionTick": null,
+          "memories": []
+        },
+        {
+          "id": "gf-onsen-2",
+          "name": "こゆ",
+          "speciesId": "java-sparrow",
+          "primaryGardenId": "onsen",
+          "appearance": {
+            "color": "cinnamon"
+          },
+          "favorite": "play",
+          "personality": "止まり木でのんびり遊ぶのが好き",
+          "preferredMemory": "待合の止まり木で一緒に過ごした",
+          "affinity": 0,
+          "lastInteractionTick": null,
+          "memories": []
+        }
+      ],
+      "references": [
+        {
+          "id": "known-b2",
+          "birdId": "b2",
+          "primaryGardenId": "mizukagami",
+          "affinity": 0,
+          "lastInteractionTick": null,
+          "memories": []
+        }
+      ],
+      "companions": [
+        "b1"
+      ]
+    },
+    "garden": {
+      "open": true,
+      "id": "komugi",
+      "scene": "grass",
+      "turn": 1,
+      "nextTurn": 4,
+      "nextTick": 8,
+      "lastGuest": "gouldian-finch",
+      "guestGardenId": "komugi",
+      "visits": {
+        "komorebi": 17,
+        "mizukagami": 0,
+        "komugi": 1,
+        "hanadokei": 0,
+        "kazaguruma": 0,
+        "yuyake": 0,
+        "tsukiakari": 0,
+        "shrine-grove": 0,
+        "onsen": 0
+      },
+      "moments": []
+    },
+    "nextId": 2,
+    "cursor": 1,
+    "activities": {
+      "park": 0,
+      "talk": 0,
+      "decorate": 0,
+      "friend": 0,
+      "read": 0,
+      "garden": 1
+    },
+    "queue": [],
+    "active": null,
+    "discoveries": [
+      {
+        "id": "gouldian-finch",
+        "firstTick": 0,
+        "lastTick": 0,
+        "visits": 1,
+        "instanceId": 1
+      }
+    ],
+    "friendship": [],
+    "cageVisitors": []
+  },
+  "economy": {
+    "version": 1,
+    "gold": 0,
+    "lifetimeGold": 0,
+    "seenAt": 1793718000000,
+    "day": "2026-11-04",
+    "reserved": 0,
+    "pending": null,
+    "nextGift": 1,
+    "gardenWindowAt": null,
+    "firstMeetingClaimed": []
+  },
+  "adoption": {
+    "pending": null,
+    "dismissed": []
+  },
+  "careSchedule": {
+    "seenAt": 1793718000000,
+    "windowAt": 1793703600000
+  },
+  "lifecycle": {
+    "version": 1,
+    "seenAt": 1793718000000,
+    "caretaker": null,
+    "birds": [
+      {
+        "birdId": "b1",
+        "ageOriginTick": 0,
+        "initialAgeTicks": 0,
+        "lastCareAt": 1793718000000,
+        "condition": null,
+        "death": null,
+        "dirtySinceAt": null,
+        "lowSinceAt": null,
+        "lastRecoveredAt": null,
+        "conflicts": 0,
+        "lastConflictAt": null,
+        "incenseCount": 0,
+        "prayerCount": 0,
+        "lastIncenseAt": null,
+        "lastPrayerAt": null
+      },
+      {
+        "birdId": "b2",
+        "ageOriginTick": 0,
+        "initialAgeTicks": 0,
+        "lastCareAt": 1793718000000,
+        "condition": null,
+        "death": null,
+        "dirtySinceAt": null,
+        "lowSinceAt": null,
+        "lastRecoveredAt": null,
+        "conflicts": 0,
+        "lastConflictAt": null,
+        "incenseCount": 0,
+        "prayerCount": 0,
+        "lastIncenseAt": null,
+        "lastPrayerAt": null
+      }
+    ],
+    "migrated": false
+  },
+  "protagonist": {
+    "version": 1,
+    "birdId": "b1",
+    "lineage": [
+      "b1"
+    ]
+  }
+}

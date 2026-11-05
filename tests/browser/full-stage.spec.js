@@ -39,7 +39,7 @@ async function reachable(page,bird,top,bottom,birdSelector) {
   await bird.click({trial:true});
 }
 for(const [width,height] of [[320,568],[390,844],[844,390]]) {
-  test(`full-stage house and nine gardens ${width}x${height}`,async({page},testInfo)=>{
+  test(`full-stage house and twelve gardens ${width}x${height}`,async({page},testInfo)=>{
     test.setTimeout(90000); await page.setViewportSize({width,height}); await ready(page);
     await page.locator('.game-status [data-game-action=pause]').click();
     const bird=page.locator('.game-room-bird.is-selected'),habitat=page.locator('.game-main .game-habitat img');
@@ -53,7 +53,7 @@ for(const [width,height] of [[320,568],[390,844],[844,390]]) {
     await page.locator('.game-field-nav [data-game-panel=outdoors]').click();
     await expect(page.locator('.game-panel-overlay')).toHaveAttribute('data-scene','true');
     const selector=page.locator('.finch-garden-selector');
-    await expect(selector.locator('[data-garden-select]')).toHaveCount(9);
+    await expect(selector.locator('[data-garden-select]')).toHaveCount(12);
     const ids=await selector.locator('[data-garden-select]').evaluateAll(es=>es.map(e=>e.dataset.gardenSelect));
     for(const id of ids){
       await selector.locator(`[data-garden-select="${id}"]`).click();

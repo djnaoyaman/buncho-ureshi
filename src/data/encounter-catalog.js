@@ -293,7 +293,8 @@ export const ENCOUNTER_CANDIDATES=Object.freeze([
       "invitation": "水辺の絵飾りを眺めたら、白い星の模様。",
       "fictional": true,
       "gardenIds": [
-        "mizukagami"
+        "mizukagami",
+        "bali-terrace"
       ]
     }
   },
@@ -521,7 +522,8 @@ export const ENCOUNTER_CANDIDATES=Object.freeze([
       "fictional": true,
       "gardenIds": [
         "mizukagami",
-        "onsen"
+        "onsen",
+        "bali-terrace"
       ]
     }
   },
@@ -1369,7 +1371,8 @@ export const ENCOUNTER_CANDIDATES=Object.freeze([
       "invitation": "草の小道でひと休み、黒い頭と赤茶の羽。",
       "fictional": true,
       "gardenIds": [
-        "komugi"
+        "komugi",
+        "java-rice"
       ]
     }
   },
@@ -1531,7 +1534,8 @@ export const ENCOUNTER_CANDIDATES=Object.freeze([
       "invitation": "草の穂の絵飾りのそばに、うろこ模様のお腹。",
       "fictional": true,
       "gardenIds": [
-        "komugi"
+        "komugi",
+        "java-rice"
       ]
     }
   },
@@ -1932,7 +1936,8 @@ export const ENCOUNTER_CANDIDATES=Object.freeze([
       "invitation": "落ち葉の小道を静かに眺めたら、橙色の羽。",
       "fictional": true,
       "gardenIds": [
-        "shrine-grove"
+        "shrine-grove",
+        "paris-unrest"
       ]
     }
   },
@@ -2350,7 +2355,8 @@ export const ENCOUNTER_CANDIDATES=Object.freeze([
         "yuyake",
         "tsukiakari",
         "shrine-grove",
-        "onsen"
+        "onsen",
+        "paris-unrest"
       ]
     },
     "encounterRole": "familiar-visitor",

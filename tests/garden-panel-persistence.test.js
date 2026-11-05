@@ -28,3 +28,24 @@ test('garden menus stay open through refresh and friend actions, but honor close
  root.querySelector('[data-garden-select="mizukagami"]').click();await settle();
  assert.equal(get('companions').open,false,'new garden starts closed');
 });
+
+test('notebook and species-page round trips retain the visit; real exits begin a new visit',async t=>{
+ const window=new Window(),root=window.document.body,world=createWorld(1000);
+ const {encounterSystem}=await import('../src/encounters.js');
+ const panel=mountEncounterPanel(root,{getWorld:()=>world,transact:async fn=>fn(world),initialMode:'garden'});
+ t.after(()=>{panel.destroy();window.happyDOM.close();});
+ await panel.garden('java-rice');
+ const ids=()=>[...root.querySelectorAll('.finch-garden-stage [data-garden-friend]')].map(x=>x.dataset.gardenFriend);
+ const first=ids(),visits=world.encounters.garden.visits['java-rice'],seed=world.seed;
+ for(const detail of [false,true]){
+  root.querySelector('[data-encounter-back]').click();await settle();
+  assert.ok(root.querySelector('.finch-notebook'));assert.equal(world.encounters.garden.open,true);
+  if(detail){root.querySelector('[data-encounter-page]').click();await settle();root.querySelector('[data-encounter-back]').click();await settle();}
+  root.querySelector('[data-finch-go-garden]').click();await settle();
+  assert.deepEqual(ids(),first);assert.equal(world.encounters.garden.visits['java-rice'],visits);assert.equal(world.seed,seed);
+  panel.refresh();assert.deepEqual(ids(),first);
+ }
+ encounterSystem.leaveGarden(world,{worldId:world.worldId,revision:world.revision});
+ await panel.garden('java-rice');
+ assert.equal(world.encounters.garden.visits['java-rice'],visits+1);assert.notDeepEqual(new Set(ids()),new Set(first));
+});

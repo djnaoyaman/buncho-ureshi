@@ -119,10 +119,10 @@ test('first session shows a home, welcome points and all nine decoration slots',
  await page.locator('[data-game-details="draw-odds"] summary').click();await expect(page.locator('[data-game-details="draw-odds"]')).toContainText('お金・広告・購入はありません');
 });
 
-test('home nine gardens and known friend visits retain family and persist travel',async({page})=>{
+test('home twelve gardens and known friend visits retain family and persist travel',async({page})=>{
  const w=createWorld(fixedNow);advanceTicks(w,1);const host=w.birds[1];host.home='departed';const chick=createBird(w,{home:'resident',stage:'chick'});w.paused=true;
  await seedWorld(page,w);await openGame(page);await expect(page.locator(`.game-room [data-bird-id="${chick.id}"]`)).toHaveCount(1);
- await tab(page,'outdoors');await expect(page.locator('.finch-garden-selector [data-garden-select]')).toHaveCount(9);
+ await tab(page,'outdoors');await expect(page.locator('.finch-garden-selector [data-garden-select]')).toHaveCount(12);
  await page.locator('.finch-garden-selector [data-garden-select="mizukagami"]').click();await expect(page.locator('.finch-garden-scenery')).toHaveAttribute('data-garden-id','mizukagami');
  await expect(page.locator('.finch-companion-walk')).toContainText(w.birds[0].name);await expect(page.locator('.finch-companion-walk')).not.toContainText(chick.name);
  const gardenSave=await readWorld(page);expect(gardenSave.encounters.garden.id).toBe('mizukagami');expect(gardenSave.worldId).toBe(w.worldId);expect(gardenSave.birds).toEqual(w.birds);

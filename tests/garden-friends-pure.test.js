@@ -3,12 +3,51 @@ import {createWorld,createBird,advanceTo,advanceTicks,validateWorld,serializeWor
 import {renderFinchGarden} from '../src/encounter-ui.js';
 const s=createEncounterSystem(ENCOUNTER_CANDIDATES),g=w=>({worldId:w.worldId,revision:w.revision});
 const protectedState=w=>structuredClone({birds:w.birds,seed:w.seed,gems:w.gems,decor:w.decor,care:w.careSchedule,field:w.field});
-test('seed842911 ten-minute world retains unique permanent regulars in every garden',()=>{const now=1000,w=createWorld(now,842911);advanceTo(w,now+600000);assert.equal(GARDEN_REGULARS.length,18);const all=new Set();for(const garden of GARDENS){s.selectGarden(w,garden.id,g(w));const roster=gardenFriendRoster(w,garden.id),regular=roster.filter(r=>r.kind==='regular');assert.equal(regular.length,2);for(const r of regular){assert.ok(!all.has(r.friendId));all.add(r.friendId);assert.ok(r.name&&!/[0-9]/.test(r.name));assert.equal(w.birds.some(b=>b.id===r.friendId),false);}}assert.equal(all.size,18);validateWorld(w);});
-test('all household birds becoming residents cannot erase regulars or recorded acquaintance',()=>{const w=createWorld(1000);createBird(w,{name:'こはく',home:'visitor',stage:'adult'});s.selectGarden(w,'komorebi',g(w));const known=w.encounters.gardenFriends.references[0];assert.ok(known);const previous=structuredClone(known);for(const b of w.birds)b.home='resident';for(const garden of GARDENS)assert.equal(gardenFriendRoster(w,garden.id).filter(r=>r.kind==='regular').length,2);assert.deepEqual(w.encounters.gardenFriends.references.find(r=>r.id===known.id),previous);assert.ok(gardenFriendRoster(w,known.primaryGardenId).some(r=>r.friendId===known.id));});
-test('preferred activity earns real garden-only affinity with per-tick repeat protection and personal memory',()=>{const w=createWorld(1000);s.selectGarden(w,'komorebi',g(w));const regular=w.encounters.gardenFriends.regulars[0],before=protectedState(w);const result=s.meetGardenFriend(w,regular.id,regular.favorite,g(w));assert.equal(result.changed,true);assert.equal(result.affinityDelta,2);assert.equal(regular.affinity,2);assert.match(regular.memories[0].text,/葉の影/);assert.equal(s.meetGardenFriend(w,regular.id,'chat',g(w)).reason,'repeat');assert.equal(regular.affinity,2);assert.deepEqual(protectedState(w),before);advanceTicks(w,1);const afterTick=protectedState(w);assert.equal(s.meetGardenFriend(w,regular.id,'chat',g(w)).affinityDelta,1);assert.equal(regular.affinity,3);assert.deepEqual(protectedState(w),afterTick);validateWorld(w);});
-test('affinity capped and memory bounded, while other gardens and visit currencies stay independent',()=>{const w=createWorld(1000);s.selectGarden(w,'onsen',g(w));const r=w.encounters.gardenFriends.regulars.find(r=>r.primaryGardenId==='onsen');r.affinity=99;assert.equal(s.meetGardenFriend(w,r.id,r.favorite,g(w)).affinityDelta,1);for(let i=0;i<16;i++){advanceTicks(w,1);s.meetGardenFriend(w,r.id,'chat',g(w));}assert.equal(r.affinity,100);assert.equal(r.memories.length,12);assert.ok(w.encounters.gardenFriends.regulars.filter(x=>x.id!==r.id).every(x=>x.affinity===0));});
+test('each garden samples four distinct named friends and preserves their permanent identities',()=>{const now=1000,w=createWorld(now,842911);advanceTo(w,now+600000);assert.equal(GARDEN_REGULARS.length,18);for(const garden of GARDENS){s.selectGarden(w,garden.id,g(w));const roster=gardenFriendRoster(w,garden.id);assert.equal(roster.length,4);assert.equal(new Set(roster.map(r=>r.friendId)).size,4);for(const r of roster){assert.ok(r.name&&!/[0-9]/.test(r.name));assert.ok(w.encounters.gardenFriends.regulars.some(x=>x.id===r.friendId)||w.encounters.gardenFriends.references.some(x=>x.id===r.friendId));}}assert.equal(w.encounters.gardenFriends.regulars.length,18);validateWorld(w);});
+test('all household birds becoming residents cannot erase friends or recorded acquaintance',()=>{const w=createWorld(1000);createBird(w,{name:'こはく',home:'visitor',stage:'adult'});s.selectGarden(w,'komorebi',g(w));const known=w.encounters.gardenFriends.references[0],previous=structuredClone(known);for(const b of w.birds)b.home='resident';for(const garden of GARDENS)assert.equal(gardenFriendRoster(w,garden.id).length,4);assert.deepEqual(w.encounters.gardenFriends.references.find(r=>r.id===known.id),previous);assert.equal(w.encounters.gardenFriends.regulars.length,18);});
+test('preferred activity earns real garden-only affinity with per-tick repeat protection and personal memory',()=>{const w=createWorld(1000);s.selectGarden(w,'komorebi',g(w));const regular=w.encounters.gardenFriends.regulars.find(r=>r.id===gardenFriendRoster(w,'komorebi')[0].friendId),before=protectedState(w);const result=s.meetGardenFriend(w,regular.id,regular.favorite,g(w));assert.equal(result.changed,true);assert.equal(result.affinityDelta,2);assert.equal(regular.affinity,2);assert.ok(regular.memories[0].text.includes(regular.preferredMemory));assert.equal(s.meetGardenFriend(w,regular.id,'chat',g(w)).reason,'repeat');assert.equal(regular.affinity,2);assert.deepEqual(protectedState(w),before);advanceTicks(w,1);const afterTick=protectedState(w);assert.equal(s.meetGardenFriend(w,regular.id,regular.favorite==='chat'?'watch':'chat',g(w)).affinityDelta,1);assert.equal(regular.affinity,3);assert.deepEqual(protectedState(w),afterTick);validateWorld(w);});
+test('affinity capped and memory bounded, while other gardens and visit currencies stay independent',()=>{const w=createWorld(1000);s.selectGarden(w,'onsen',g(w));const r=w.encounters.gardenFriends.regulars.find(r=>r.id===gardenFriendRoster(w,'onsen')[0].friendId);r.affinity=99;assert.equal(s.meetGardenFriend(w,r.id,r.favorite,g(w)).affinityDelta,1);for(let i=0;i<16;i++){advanceTicks(w,1);s.meetGardenFriend(w,r.id,'chat',g(w));}assert.equal(r.affinity,100);assert.equal(r.memories.length,12);assert.ok(w.encounters.gardenFriends.regulars.filter(x=>x.id!==r.id).every(x=>x.affinity===0));});
 test('family companions are separate and never change home, visitors or breeding records',()=>{const w=createWorld(1000);s.selectGarden(w,'komorebi',g(w));const before=protectedState(w);assert.ok(s.chooseCompanions(w,['b1'],g(w)).changed);assert.equal(gardenCompanionRoster(w)[0].birdId,'b1');assert.ok(!gardenFriendRoster(w,'komorebi').some(r=>r.birdId==='b1'));assert.deepEqual(protectedState(w),before);assert.equal(s.chooseCompanions(w,['not-a-bird'],g(w)).changed,false);assert.deepEqual(protectedState(w),before);});
 test('friend state persists, malformed entries fail, full new world resets all bonds and rejects stale actions',()=>{const w=createWorld(1000);s.selectGarden(w,'komorebi',g(w));const r=w.encounters.gardenFriends.regulars[0];s.meetGardenFriend(w,r.id,'watch',g(w));const saved=parseSave(serializeWorld(w));assert.deepEqual(saved.encounters.gardenFriends,w.encounters.gardenFriends);const fresh=createWorld(2000);assert.ok(fresh.encounters.gardenFriends.regulars.every(x=>x.affinity===0&&x.memories.length===0));assert.equal(s.meetGardenFriend(fresh,r.id,'watch',g(w)).reason,'stale');const bad=structuredClone(w);bad.encounters.gardenFriends.regulars[0].affinity=101;assert.throws(()=>validateWorld(bad));});
 test('render shows named regulars, actual garden affinity and separate family group without lookup crashes',()=>{const w=createWorld(1000);for(const garden of GARDENS){s.selectGarden(w,garden.id,g(w));const html=renderFinchGarden(w,{system:s});assert.match(html,/庭のなかよし 0\/100/);assert.match(html,/いっしょに来た家族/);assert.ok(html.includes(gardenFriendRoster(w,garden.id)[0].name));assert.doesNotMatch(html,/undefined/);}});
 
 test('controller module is importable without starting host, sound or network',()=>{assert.equal(typeof mountEncounterPanel,'function');});
+
+test('changing an unselected companion does not reroll unrelated guests in a visit',()=>{
+ const w=createWorld(1000);const bird=createBird(w,{name:'こはく',home:'resident',stage:'adult'});
+ const birdId=typeof bird==='string'?bird:bird.id;
+ let original;
+ for(let i=0;i<20;i++){
+  s.leaveGarden(w,g(w));s.selectGarden(w,'komorebi',g(w));original=gardenFriendRoster(w,'komorebi').map(r=>r.friendId);
+  if(!original.includes(`known-${birdId}`))break;
+ }
+ assert.ok(!original.includes(`known-${birdId}`));const visit=w.encounters.garden.visits.komorebi,seed=w.seed;
+ assert.ok(s.chooseCompanions(w,['b1',birdId],g(w)).changed);
+ assert.deepEqual(gardenFriendRoster(w,'komorebi').map(r=>r.friendId),original);
+ assert.deepEqual(gardenFriendRoster(parseSave(serializeWorld(w)),'komorebi').map(r=>r.friendId),original);
+ assert.equal(w.encounters.garden.visits.komorebi,visit);assert.equal(w.seed,seed);
+});
+
+test('selecting a visible acquaintance as companion replaces only that guest slot',()=>{
+ const w=createWorld(1000);const bird=createBird(w,{name:'こはく',home:'resident',stage:'adult'}),birdId=typeof bird==='string'?bird:bird.id;
+ let original;
+ for(let i=0;i<20;i++){
+  s.leaveGarden(w,g(w));s.selectGarden(w,'komorebi',g(w));original=gardenFriendRoster(w,'komorebi').map(r=>r.friendId);
+  if(original.includes(`known-${birdId}`))break;
+ }
+ const index=original.indexOf(`known-${birdId}`);assert.ok(index>=0);
+ s.chooseCompanions(w,['b1',birdId],g(w));const next=gardenFriendRoster(w,'komorebi').map(r=>r.friendId);
+ assert.equal(next.length,4);assert.equal(new Set(next).size,4);assert.notEqual(next[index],original[index]);
+ original.forEach((id,i)=>{if(i!==index)assert.equal(next[i],id);});
+});
+
+
+test('unavailable acquaintances use fresh visit-keyed replacements rather than the same next tail',()=>{
+ const w=createWorld(1000,69);for(let i=0;i<4;i++)createBird(w,{name:`友達${i}`,home:'resident',stage:'adult'});
+ s.selectGarden(w,'paris-unrest',g(w));s.chooseCompanions(w,['b2','b3','b4','b5'],g(w));
+ for(let i=1;i<8;i++){s.leaveGarden(w,g(w));s.selectGarden(w,'paris-unrest',g(w));}
+ const first=gardenFriendRoster(w,'paris-unrest').map(r=>r.friendId);validateWorld(w);
+ s.leaveGarden(w,g(w));s.selectGarden(w,'paris-unrest',g(w));
+ const next=gardenFriendRoster(w,'paris-unrest').map(r=>r.friendId);
+ assert.notDeepEqual(new Set(next),new Set(first));assert.deepEqual(gardenFriendRoster(parseSave(serializeWorld(w)),'paris-unrest').map(r=>r.friendId),next);
+});
