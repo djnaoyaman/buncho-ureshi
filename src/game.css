@@ -1111,10 +1111,10 @@ body[data-world="buncho"] {
  --play-control-shadow: 3px 4px 0 var(--play-ink);
 }
 body[data-world="buncho"] .game-secondary-menu .game-tabs button { border: var(--play-control-edge); border-radius: 28px 28px 18px 18px; box-shadow: var(--play-control-shadow); color: var(--play-ink); }
-body[data-world="buncho"] .game-secondary-menu .game-tabs [data-game-panel="health"] { background: var(--play-purpose-care); }
-body[data-world="buncho"] .game-secondary-menu .game-tabs :is([data-game-panel="relations"],[data-game-panel="family"]) { background: var(--play-purpose-family); }
-body[data-world="buncho"] .game-secondary-menu .game-tabs :is([data-game-panel="memorial"],[data-game-panel="profile"],[data-game-panel="diary"],[data-game-panel="roster"],[data-game-panel="notebook"],[data-game-panel="help"]) { background: var(--play-purpose-discovery); }
-body[data-world="buncho"] .game-secondary-menu .game-tabs [data-game-panel="settings"] { background: var(--play-purpose-navigation); color: var(--play-paper); }
+body[data-world="buncho"] .game-secondary-menu .game-tabs button[data-game-panel="health"] { background: var(--play-purpose-care); }
+body[data-world="buncho"] .game-secondary-menu .game-tabs button:is([data-game-panel="relations"],[data-game-panel="family"]) { background: var(--play-purpose-family); }
+body[data-world="buncho"] .game-secondary-menu .game-tabs button:is([data-game-panel="memorial"],[data-game-panel="profile"],[data-game-panel="diary"],[data-game-panel="roster"],[data-game-panel="notebook"],[data-game-panel="help"]) { background: var(--play-purpose-discovery); }
+body[data-world="buncho"] .game-secondary-menu .game-tabs button[data-game-panel="settings"] { background: var(--play-purpose-navigation); color: var(--play-paper); }
 body[data-world="buncho"] .game-main .game-secondary-menu[open] { border: var(--play-control-edge); border-radius: 42px 42px 24px 24px; }
 body[data-world="buncho"] .game-menu-heading { border-bottom: var(--play-control-edge); }
 body[data-world="buncho"] .game-bottom-dock > button:nth-child(-n+3),
@@ -1151,7 +1151,7 @@ body[data-world="buncho"] .finch-garden > header h3 { background: var(--play-dis
 body[data-world="buncho"] .game-encounter-host .finch-garden > header > button { background: var(--play-purpose-discovery); border: 2px solid var(--play-ink); box-shadow: 2px 2px 0 var(--play-ink); }
 body[data-world="buncho"] .finch-garden .finch-garden-selector button { background: var(--play-discovery-wash); border: 2px solid var(--play-ink); }
 body[data-world="buncho"] .finch-garden .finch-garden-selector button[aria-current="page"] { text-decoration: underline; text-underline-offset: 4px; background: var(--play-purpose-navigation); color: var(--play-paper); border-color: var(--play-ink); }
-body[data-world="buncho"] .finch-garden-scroll { background: var(--play-purpose-navigation); color: var(--play-paper); border: 2px solid var(--play-ink); }
+body[data-world="buncho"] .game-app .finch-garden-scroll { background: var(--play-purpose-navigation); color: var(--play-paper); border: 2px solid var(--play-ink); }
 body[data-world="buncho"] .finch-garden-dock { background: var(--play-discovery-wash); border-top: 3px solid var(--play-ink); }
 body[data-world="buncho"] .finch-garden-dock > details > summary { border: 2px solid var(--play-ink); box-shadow: 2px 2px 0 var(--play-ink); }
 body[data-world="buncho"] .finch-garden-dock > details[data-garden-details="observe"] > summary,
@@ -1162,7 +1162,7 @@ body[data-world="buncho"] .finch-notebook { border: 0; background: transparent; 
 body[data-world="buncho"] .finch-notebook > header { border: 2px solid var(--play-ink); border-radius: 46px 46px 20px 20px; background-color: var(--play-purpose-discovery); background-image: radial-gradient(circle,var(--play-ink) 1.5px,transparent 2px); background-size: 14px 14px; background-repeat: repeat-y; background-position: right top; }
 body[data-world="buncho"] .finch-notebook-intro { background: var(--play-discovery-wash); }
 body[data-world="buncho"] .finch-notebook > .finch-catalog > .finch-card { background: var(--play-discovery-wash); border: 2px solid var(--play-ink); border-radius: 36px 36px 18px 18px; box-shadow: 2px 3px 0 var(--play-ink); }
-body[data-world="buncho"] .finch-page-actions > button { background: var(--play-purpose-discovery); border: var(--play-control-edge); box-shadow: var(--play-control-shadow); }
+body[data-world="buncho"] .game-app .finch-page-actions > button { background: var(--play-purpose-discovery); border: var(--play-control-edge); box-shadow: var(--play-control-shadow); }
 @media(max-height:700px) {
  body[data-world="buncho"] .game-bottom-dock > button:nth-child(-n+3),
  body[data-world="buncho"] .game-app .game-bottom-dock #game-open-bird { padding: 2px; border-width: 2px; box-shadow: 2px 2px 0 var(--play-ink); }
@@ -1178,4 +1178,11 @@ body[data-world="buncho"] .game-app .life-game-notice button { background: var(-
 body[data-world="buncho"] .game-app .game-care-actions button:disabled,
 body[data-world="buncho"] .game-app .game-decor-draw .game-draw-button:disabled,
 body[data-world="buncho"] .life-care-panel :is([data-life-treat],.life-hire-options button):disabled { box-shadow: none; }
+body[data-world="buncho"] .game-panel-overlay > .game-overlay-head button { background: var(--play-purpose-navigation)!important; color: var(--play-paper)!important; border-color: var(--play-ink)!important; }
+/* Existing destination actions share one reading-page navigation region. */
+body[data-world="buncho"] .finch-entry > .finch-route-actions { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; padding: 16px; border: 2px solid var(--play-ink); border-radius: 28px; background: var(--play-care-wash); }
+body[data-world="buncho"] .game-app .finch-entry > .finch-route-actions > button { background: var(--play-purpose-navigation); color: var(--play-paper); font-size: 14px; min-height: 56px; padding: 10px; }
+@media(max-width:600px) {
+ body[data-world="buncho"] .finch-entry > .finch-route-actions { grid-template-columns: 1fr; }
+}
 /* End COLOR PLAY. */

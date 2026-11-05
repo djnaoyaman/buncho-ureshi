@@ -1,5 +1,5 @@
 import {test,expect} from '@playwright/test';
-import {createWorld,validateWorld,drawDecoration} from '../../src/engine.js';
+import {createWorld,validateWorld,drawDecoration,treatBird,hireCaretaker,economyToken} from '../../src/engine.js';
 import {lifeStatus} from '../../src/life-care.js';
 import {ENCOUNTER_CATALOG} from '../../src/data/encounter-catalog.js';
 import {COLOR_PLAY_NOW as NOW,colorPlayWorld as seed} from '../fixtures/color-play.js';
@@ -48,7 +48,7 @@ for(const size of sizes){
   await expect(page.locator('#game-open-bird')).toHaveCSS('background-color','rgb(244, 119, 105)');
   await expect(page.locator('.game-bottom-dock [data-game-panel=family]')).toHaveCSS('background-color','rgb(244, 119, 105)');
   await openMenu(page);await capture(page,info,'menu',size);
-  for(const [id,color] of [['health','rgb(190, 229, 205)'],['relations','rgb(244, 119, 105)'],['family','rgb(244, 119, 105)'],['notebook','rgb(255, 220, 100)'],['settings','rgb(32, 101, 88)']])await expect(page.locator(`#game-menu-${id}`)).toHaveCSS('background-color',color);
+  for(const [id,color] of [['health','rgb(190, 229, 205)'],['memorial','rgb(255, 220, 100)'],['profile','rgb(255, 220, 100)'],['diary','rgb(255, 220, 100)'],['roster','rgb(255, 220, 100)'],['help','rgb(255, 220, 100)'],['relations','rgb(244, 119, 105)'],['family','rgb(244, 119, 105)'],['notebook','rgb(255, 220, 100)'],['settings','rgb(32, 101, 88)']])await expect(page.locator(`#game-menu-${id}`)).toHaveCSS('background-color',color);
   for(const id of ['health','memorial','profile','relations','family','diary','roster','notebook','settings','help']){
    const link=page.locator(`#game-menu-${id}`);await fit(link);await link.click();
    await expect(page.locator('.game-app')).toHaveAttribute('data-panel',id);await expect(page.locator('.game-panel-overlay')).toBeVisible();
@@ -120,7 +120,9 @@ for(const size of sizes){
   await setup(page,size);const world=seed();world.economy.gold=world.economy.lifetimeGold=200;
   lifeStatus(world,'b1').condition={kind:'respiratory',sinceAt:NOW,deadlineAt:NOW+86400000};
   await record(page,validateWorld(world));await page.reload();await page.locator('.game-scene-controls-toggle').click();await openMenu(page);await page.locator('#game-menu-health').click();
-  const before=await record(page);await capture(page,info,'health-unified-top',size);
+  const before=await record(page),expected=structuredClone(before);
+  treatBird(expected,'b1',economyToken(expected),NOW);hireCaretaker(expected,3,economyToken(expected),NOW);
+  await capture(page,info,'health-unified-top',size);
   await expect(page.locator('.life-care-warning')).toContainText('すべてゲームのルール');
   for(const button of await page.locator('.life-hire-options button').all())await fit(button);
   await page.locator('.life-caretaker').scrollIntoViewIfNeeded();await capture(page,info,'health-caretaker',size);
@@ -130,7 +132,7 @@ for(const size of sizes){
   expect((await record(page)).lifecycle.birds[0].condition).toBeNull();
   await fit(page.locator('[data-life-hire="3"]'));await page.locator('[data-life-hire="3"]').click();
   await expect.poll(async()=>(await record(page)).economy.gold).toBe(116);await expect(page.locator('.life-contract')).toContainText('3日');await expect(page.locator('[data-life-hire="7"]')).toBeDisabled();
-  const saved=await record(page);expect(saved.birds).toEqual(before.birds);expect(saved.decor).toEqual(before.decor);
+  const saved=await record(page);expect(protectedState(saved)).toEqual(protectedState(expected));expect(saved.decor).toEqual(before.decor);
   await fit(page.locator('.life-risk-help > summary'));await page.locator('.life-risk-help > summary').click();await expect(page.locator('.life-risk-help')).toHaveAttribute('open','');
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
   await page.keyboard.press('Escape');await expect(page.locator('.game-panel-overlay')).not.toBeVisible();await page.reload();
@@ -162,3 +164,14 @@ for(const size of sizes){
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
  });
 }
+
+for(const size of [[320,240],[390,844],[1280,800]])test(`Color Play groups three enemy-page destinations at ${size.join('x')}`,async({page},info)=>{
+ await setup(page,size);await page.locator('.game-scene-controls-toggle').click();await openMenu(page);await page.locator('#game-menu-notebook').click();await page.locator('[data-crow-notebook]').click();await page.locator('[data-raptor-entry="black-kite"]').click();
+ const before=protectedState(await record(page)),routes=page.locator('.finch-raptor-entry > .finch-route-actions');await expect(routes.locator('button')).toHaveCount(3);
+ for(const b of await routes.locator('button').all())await fit(b);await capture(page,info,'enemy-three-destinations',size);
+ await routes.locator('[data-crow-notebook]').click();await expect(page.locator('.finch-crow-notebook')).toBeVisible();await page.locator('[data-raptor-entry="black-kite"]').click();
+ await page.locator('.finch-route-actions [data-finch-go-garden]').click();await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-scene-state','ready');
+ await page.locator('.finch-garden > header [data-encounter-back]').click();await page.locator('[data-crow-notebook]').click();await page.locator('[data-raptor-entry="black-kite"]').click();
+ await page.locator('.finch-route-actions [data-finch-go-home]').click();await expect(page.locator('.game-room')).toBeVisible();await expect(page.locator('.game-panel-overlay')).not.toBeVisible();
+ expect(protectedState(await record(page))).toEqual(before);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+});
