@@ -788,9 +788,9 @@ body[data-world="buncho"] .game-music button { background: var(--play-mint); col
 body[data-world="buncho"] .game-music button[aria-pressed="true"] { background: var(--play-mint)!important; color: var(--play-ink)!important; border-color: var(--play-green); }
 body[data-world="buncho"] :is(.game-field-nav button,.game-bottom-dock button,.game-secondary-menu button,.game-scene-controls-toggle,.game-overlay-head button,.game-sheet-footer button,.finch-page-actions button,.finch-garden-selector button,.game-settings input):focus-visible { outline-color: var(--play-green); }
 /* A unified, generously sized interface, rather than scattered tiny tools. */
-body[data-world="buncho"] .game-app { font-family: "Hiragino Maru Gothic ProN", "Noto Sans JP", "Yu Gothic", sans-serif; }
+body[data-world="buncho"] .game-app { font-family: "Hiragino Maru Gothic ProN", "Noto Sans JP", "Noto Sans CJK JP", "Yu Gothic", sans-serif; }
 body[data-world="buncho"] .game-app :is(h2,h3,h4) { font-family: inherit; font-weight: 800; letter-spacing: .02em; }
-body[data-world="buncho"] .game-wordmark { margin: 0; font: 900 clamp(23px,6.4vw,32px)/1.2 "Hiragino Maru Gothic ProN", "Noto Sans JP", sans-serif; letter-spacing: .06em; color: var(--play-ink); }
+body[data-world="buncho"] .game-wordmark { margin: 0; font: 900 clamp(23px,6.4vw,32px)/1.2 "Hiragino Maru Gothic ProN", "Noto Sans JP", "Noto Sans CJK JP", sans-serif; letter-spacing: .06em; color: var(--play-ink); }
 body[data-world="buncho"] .game-world-title { left: 20px; top: calc(21px + env(safe-area-inset-top,0px)); padding: 0; }
 body[data-world="buncho"] .site-header .game-world-exit { top: calc(16px + env(safe-area-inset-top,0px)); right: 16px; background: var(--play-mint)!important; box-shadow: none; }
 body[data-world="buncho"] .game-field-bar { top: calc(68px + env(safe-area-inset-top,0px)); right: 20px; }
@@ -824,6 +824,9 @@ body[data-world="buncho"] .game-app .game-bottom-dock #game-open-bird {
  min-height: 84px; max-width: 100%; padding: 8px; gap: 4px; font-size: 15px; font-weight: 800;
  border: 0; border-radius: 50%; box-shadow: none;
 }
+body[data-world="buncho"] .game-bottom-dock > button:first-child { background: var(--play-coral); border-color: var(--play-coral); }
+body[data-world="buncho"] .game-app .game-bottom-dock #game-open-bird { background: var(--play-green); color: var(--play-paper); border-color: var(--play-green); }
+body[data-world="buncho"] .game-bottom-dock button:hover { filter: brightness(.97); }
 body[data-world="buncho"] .game-bottom-dock > button:nth-child(-n+3) svg { width: 40px; height: 40px; }
 body[data-world="buncho"] .game-bottom-dock #game-home-close,
 body[data-world="buncho"] .game-bottom-dock #game-nav-open { grid-column: span 3; grid-row: 2; width: 100%; min-height: 44px; height: 44px; flex-direction: row; gap: 10px; padding: 4px 10px; border: 0; border-radius: 999px; background: transparent; font-size: 13px; }
@@ -946,7 +949,7 @@ body[data-world="buncho"] .life-panel-heading h3 { font-size: 26px; }
  body[data-world="buncho"] .game-field-bar { top: 8px; right: 140px; }
  body[data-world="buncho"] .game-field-nav { top: 52px; width: 300px; }
  body[data-world="buncho"] .game-main > .game-heading { top: 52px; }
- body[data-world="buncho"] .game-scene-toolbar { left: 12px; transform: none; bottom: 76px; width: 210px; }
+ body[data-world="buncho"] .game-scene-toolbar { left: 112px; transform: none; bottom: 76px; width: 210px; }
 }
 @media(max-height:340px) {
  body[data-world="buncho"] .finch-crow-notice { top: 2px; }

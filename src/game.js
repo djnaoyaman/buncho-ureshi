@@ -504,7 +504,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     caption.style.top='';caption.style.bottom='';
     const box=caption.getBoundingClientRect(),frame=main.getBoundingClientRect();
     if(!box.width||!box.height||!frame.height)return;
-    const obstacles=[...root.querySelectorAll('.game-room-bird,.game-home-role,.finch-cage-guest>span,.game-owner-companion,.game-scene-toolbar,.game-bottom-dock,.game-field-nav,.game-field-bar,.game-main>.game-heading,.game-auto-gift,.game-adoption-invitation'),document.querySelector('.game-scene-controls-toggle')].filter(Boolean);
+    const obstacles=[...root.querySelectorAll('.game-room-bird,.game-home-role,.finch-cage-guest>span,.game-owner-companion,.game-scene-toolbar,.game-bottom-dock,.game-field-nav,.game-field-bar,.game-main>.game-heading,.game-auto-gift,.game-adoption-invitation'),document.querySelector('.game-scene-controls-toggle'),document.querySelector('.game-world-title')].filter(Boolean);
     let gaps=[[frame.top+8,frame.bottom-8]];
     for(const node of obstacles){
       if(!node.getClientRects().length)continue;

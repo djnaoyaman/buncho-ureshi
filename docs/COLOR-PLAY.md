@@ -4,7 +4,7 @@ The accepted A reference is a unified cream interface with broad organic curves,
 
 ## Protected scope
 
-Game features, action handlers, rules, storage/schema, saves and all living artwork files are unchanged. No new actions from the provisional concept are invented. The original game.css remains intact before the appended UI layer. app.js only replaces the decorative game-title image with an accessible text wordmark. The scene coordinate plane, birds' size/shape/crops and animations remain intact. The existing owner illustration is moved upward only while the larger controls are open, preserving its size/shape/animation and avoiding concealment behind the new dock.
+Game features, action handlers, rules, storage/schema, saves and all living artwork files are unchanged. No new actions from the provisional concept are invented. The original game.css remains intact before the appended UI layer. app.js only replaces the decorative game-title image with an accessible text wordmark. game.js only adds that existing title to the caption layout obstacle list, so a caption cannot cover it. No gameplay or persistence code changes. The scene coordinate plane, birds' size/shape/crops and animations remain intact. The existing owner illustration is moved upward only while the larger controls are open, preserving its size/shape/animation and avoiding concealment behind the new dock.
 
 Every existing menu route, bird selection, clean/pause, visitor dismissal, care/conversations, decoration/filter/draw, notebook, twelve gardens, family, warnings, settings, save/export/import and reset cancellation remains reachable. The existing scenic mode is not reset or changed. Short-height screens retain compact controls rather than forcing the tall three-row composition.
 

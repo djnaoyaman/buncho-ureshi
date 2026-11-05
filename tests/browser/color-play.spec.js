@@ -85,7 +85,7 @@ for(const width of [320,390])test(`Color Play preserves live garden controls, ta
  const height=width===320?568:844;
  await setup(page,[width,height]);
  const world=createWorld(NOW,42);world.settings.motion=true;world.settings.careSound=false;world.paused=false;
- world.encounters.crow.lastArrivalAt=NOW;world.encounters.raptor.lastArrivalAt=NOW;
+ validateWorld(world);
  await record(page,world);await page.reload();await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');
  await page.locator('.game-scene-controls-toggle').click();await page.locator('.game-field-nav [data-game-panel=outdoors]').click();
  await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-scene-state','ready');

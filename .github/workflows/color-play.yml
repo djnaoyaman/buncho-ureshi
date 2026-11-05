@@ -45,6 +45,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
+      - name: Install Japanese fonts for faithful previews
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends fonts-noto-cjk
       - name: Use the official Chrome supplied by the runner
         run: google-chrome --version || npx playwright install chrome
       - run: npx playwright test --config=playwright.color-play.config.js --project=color-play-desktop
