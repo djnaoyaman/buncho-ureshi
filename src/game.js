@@ -78,7 +78,7 @@ export function careFloorOpacity(cleanliness) {
   const value = Number.isFinite(cleanliness) ? Math.max(0, Math.min(100, cleanliness)) : 100;
   return Math.min(.22, Math.max(0, (100 - value) / 100 * .22));
 }
-export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () => {}, goArt = () => {}, audioFactory = createCareAudio, raptorRandom = Math.random } = {}) {
+export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () => {}, goArt = () => {}, audioFactory = createCareAudio, raptorRandom = Math.random, predatorRandom = Math.random } = {}) {
   let sheetOpen=false, sheetReturn=null, ownerCleanup=null, ownerEditor=null, welcomeFocusKey=null;
   let adoptionDialogToken=null,adoptionBusy=false;
   let resetPending=false, resetWorldId=null, resetKind=null, resetStage=0, resetBackupAvailable=false;
@@ -870,7 +870,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
   const captionObserver=new document.defaultView.MutationObserver(placeSceneCaption);
   captionObserver.observe(document.body,{attributes:true,attributeFilter:['data-scene-controls']});
   timer=setInterval(poll,3000);render();document.dispatchEvent(new document.defaultView.CustomEvent('buncho-game-ready'));
-  const raptorController=mountGardenRaptors(root,{getWorld:()=>world,random:raptorRandom,isAvailable:()=>!busy,hasCrowPending:()=>encounterController?.hasCrowPending()||false,transact:async operation=>{
+  const raptorController=mountGardenRaptors(root,{getWorld:()=>world,random:raptorRandom,predatorRandom,canStartCrowWarning:()=>encounterController?.canStartCrowWarning()||false,startCrowWarning:id=>encounterController?.startCrowWarning(id)||false,isAvailable:()=>!busy,hasCrowPending:()=>encounterController?.hasCrowPending()||false,transact:async operation=>{
     const committed=await mutate(operation,'',()=>alive,{bump:false,advanceCurrent:false,renderAfter:false});if(!committed)throw new Error('保存できませんでした。');return world;
   },onChange:({result,structural,error:raptorError})=>{
     if(raptorError){error='猛禽との記録を保存できませんでした。残り時間と保存を保持しています。おうちへ戻ってもう一度試してください。';render();return;}

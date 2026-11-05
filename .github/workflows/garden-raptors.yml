@@ -1,7 +1,7 @@
 name: Garden raptor encounters
 on:
   pull_request:
-    paths: ['src/engine.js', 'src/life-care*', 'src/protagonist.js', 'src/game.js', 'src/game.css', 'src/encounter*', 'src/garden-raptor*', 'src/garden-crow*', 'src/garden-bird-motion.js', 'src/data/raptor*', 'public/game-art/raptors/**', 'tests/garden-raptor*', 'tests/browser/garden-raptors.spec.js', 'playwright.garden-raptors.config.js', '.github/workflows/garden-raptors.yml']
+    paths: ['src/engine.js', 'src/life-care*', 'src/protagonist.js', 'src/game.js', 'src/game.css', 'src/encounter*', 'src/garden-raptor*', 'src/garden-crow*', 'src/garden-predator-clock.js', 'tests/predator-early-visits.test.js', 'tests/garden-predator-controller.test.js', 'src/garden-raptor-controller.js', 'src/garden-bird-motion.js', 'src/data/raptor*', 'public/game-art/raptors/**', 'tests/garden-raptor*', 'tests/browser/garden-raptors.spec.js', 'playwright.garden-raptors.config.js', '.github/workflows/garden-raptors.yml']
   workflow_dispatch:
     inputs:
       public_url:

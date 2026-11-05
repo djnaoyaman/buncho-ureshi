@@ -69,5 +69,5 @@ test('pending crow save retains priority even after its warning DOM is replaced'
 });
 
 test('early entry still grants the full minute to escape',async()=>{
- const w=fixture(),s=setup(w,{earlyPredatorVisits:true});try{await s.run(20);assert.equal(w.encounters.raptor.active,null);await s.run(1);assert.equal(w.encounters.raptor.active.remainingMs,60000);await s.run(59);assert.equal(lifeStatus(w,'b1').death,null);escapeGardenRaptor(w,raptorToken(w));await s.run(2);assert.equal(lifeStatus(w,'b1').death,null);}finally{s.close();}
+ const w=fixture(),s=setup(w,{earlyPredatorVisits:true,predatorRandom:()=>0});try{await s.run(2);assert.equal(w.encounters.raptor.active,null);await s.run(1);assert.equal(w.encounters.raptor.active.remainingMs,60000);await s.run(59);assert.equal(lifeStatus(w,'b1').death,null);escapeGardenRaptor(w,raptorToken(w));await s.run(2);assert.equal(lifeStatus(w,'b1').death,null);}finally{s.close();}
 });

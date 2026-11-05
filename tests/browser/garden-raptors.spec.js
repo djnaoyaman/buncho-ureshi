@@ -48,8 +48,8 @@ test('friendly species has no danger text and never creates an accident',async({
 });
 test('live full shell draws a rare early warning with the full escape minute despite host transaction busy',async({page})=>{
  await page.goto('');await page.clock.install({time:NOW});await page.clock.pauseAt(NOW+1000);const w=seed({active:false});arriveGardenCrow(w,'large-billed-crow',NOW-60000,{worldId:w.worldId,revision:w.revision,gardenId:w.encounters.garden.id});await save(page,w);
- const base=new URL('./',page.url()).href;await page.setContent(`<link rel="stylesheet" href="${base}src/style.css"><link rel="stylesheet" href="${base}src/game.css"><link rel="stylesheet" href="${base}src/encounter-ui.css"><link rel="stylesheet" href="${base}src/life-care.css"><main id="game-root"></main>`);await page.evaluate(async base=>{document.body.dataset.world='buncho';const {mountGame}=await import(base+'src/game.js');window.disposeRaptorGame=await mountGame(document.querySelector('#game-root'),{raptorRandom:()=>0});},base);
- await page.locator('.game-field-nav [data-game-panel=outdoors]').click();await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-scene-state','ready');await page.clock.runFor(20000);expect((await saved(page)).encounters.raptor.visits).toHaveLength(0);// A normal host save may own the transaction at the exact 20-second boundary.
+ const base=new URL('./',page.url()).href;await page.setContent(`<link rel="stylesheet" href="${base}src/style.css"><link rel="stylesheet" href="${base}src/game.css"><link rel="stylesheet" href="${base}src/encounter-ui.css"><link rel="stylesheet" href="${base}src/life-care.css"><main id="game-root"></main>`);await page.evaluate(async base=>{document.body.dataset.world='buncho';const {mountGame}=await import(base+'src/game.js');window.disposeRaptorGame=await mountGame(document.querySelector('#game-root'),{raptorRandom:()=>0,predatorRandom:()=>0});},base);
+ await page.locator('.game-field-nav [data-game-panel=outdoors]').click();await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-scene-state','ready');await page.clock.runFor(2000);expect((await saved(page)).encounters.raptor.visits).toHaveLength(0);// A host save can defer the shared three-second entry draw.
  // Advance one foreground second at a time so IndexedDB can finish, without
  // spending any of the saved escape minute after the arrival has committed.
  for(let i=0;i<5&&(await saved(page)).encounters.raptor.visits.length===0;i++){
@@ -62,4 +62,30 @@ test('petting in the enemy notebook makes the current warning harmless and saves
  await setup(page);await page.locator('[data-encounter-back]').click();await page.locator('[data-crow-notebook]').click();await expect(page.locator('.finch-raptor-card .is-silhouette')).toHaveCount(8);await page.locator('[data-raptor-entry=black-kite]').click();
  const target=page.locator('[data-encounter-rub=black-kite]');await target.focus();for(let i=0;i<100;i++){await target.press('Enter');await expect(page.locator('[data-raptor-points]')).toHaveText(String(i+1));}
  await page.clock.runFor(1000);await expect(page.locator('.game-panel-overlay>[data-raptor-notice]')).toContainText('なかよし');await expect(page.locator('.game-panel-overlay>[data-raptor-notice]')).not.toContainText('事故死');expect((await saved(page)).encounters.raptor.visits[0].petPoints).toBe(100);await page.clock.runFor(60000);expect((await saved(page)).lifecycle.birds.find(b=>b.birdId==='b1').death).toBeNull();
+});
+
+async function sharedEntryGame(page,{miss=false}={}){
+ await page.goto('');await page.clock.install({time:NOW});await page.clock.pauseAt(NOW+1000);await save(page,seed({active:false}));
+ const base=new URL('./',page.url()).href;
+ await page.setContent(`<link rel="stylesheet" href="${base}src/style.css"><link rel="stylesheet" href="${base}src/game.css"><link rel="stylesheet" href="${base}src/encounter-ui.css"><link rel="stylesheet" href="${base}src/life-care.css"><main id="game-root"></main>`);
+ await page.evaluate(async({base,miss})=>{document.body.dataset.world='buncho';window.entryDrawCalls=0;const {mountGame}=await import(base+'src/game.js');window.disposeEntryGame=await mountGame(document.querySelector('#game-root'),{raptorRandom:()=>1,predatorRandom:()=>{window.entryDrawCalls++;return miss?.25:0;}});},{base,miss});
+ await page.locator('.game-field-nav [data-game-panel=outdoors]').click();await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-scene-state','ready');
+}
+test('shared3s lottery can choose a crow in the full game and retain a safe exit',async({page})=>{
+ await sharedEntryGame(page);await page.clock.runFor(2000);await expect(page.locator('[data-crow-phase=warning]')).toHaveCount(0);
+ for(let i=0;i<5&&await page.locator('[data-crow-phase=warning]').count()===0;i++){await page.clock.runFor(1000);await saved(page);}
+ await expect(page.locator('[data-crow-phase=warning]')).toBeVisible();expect(await page.evaluate(()=>entryDrawCalls)).toBe(3);
+ const before=(await saved(page)).birds[0].needs.energy;await page.locator('[data-crow-phase=warning] [data-finch-go-home]').click();await page.clock.runFor(10000);
+ const w=await saved(page);expect(w.encounters.crow.visits).toHaveLength(0);expect(w.encounters.raptor.visits).toHaveLength(0);expect(w.birds[0].needs.energy).toBe(before);
+});
+test('full game home and garden remounts do not repeat a missed shared lottery',async({page})=>{
+ await sharedEntryGame(page,{miss:true});
+ for(let i=0;i<7&&await page.evaluate(()=>entryDrawCalls)===0;i++){await page.clock.runFor(1000);await saved(page);}
+ expect(await page.evaluate(()=>entryDrawCalls)).toBe(1);
+ for(let i=0;i<2;i++){
+  await page.locator('.game-overlay-head [data-game-close-panel]').click();await expect(page.locator('.game-room')).toBeVisible();
+  await page.locator('.game-field-nav [data-game-panel=outdoors]').click();await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-scene-state','ready');
+  for(let j=0;j<5;j++){await page.clock.runFor(1000);await saved(page);}
+ }
+ expect(await page.evaluate(()=>entryDrawCalls)).toBe(1);const w=await saved(page);expect(w.encounters.crow.visits).toHaveLength(0);expect(w.encounters.raptor.visits).toHaveLength(0);
 });

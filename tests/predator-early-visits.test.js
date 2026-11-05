@@ -1,24 +1,38 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {createGardenPredatorClock,PREDATOR_ENTRY_RULES} from '../src/garden-predator-clock.js';
 import {createGardenCrowClock,CROW_RULES} from '../src/garden-crows.js';
 import {createGardenRaptorClock,RAPTOR_RULES} from '../src/garden-raptors.js';
-for(const [name,create,rules,kind] of [['crow',createGardenCrowClock,CROW_RULES,'warning'],['raptor',createGardenRaptorClock,RAPTOR_RULES,'arrive']]){
- const sample=(clock,now,extra={})=>clock.sample({key:'one',gardenId:'komorebi',now,eligible:true,...extra});
- test(`${name}: early encounter follows twenty visible seconds, not hidden/loading time`,()=>{
-  const c=create({random:()=>0});assert.equal(sample(c,0),null);for(let t=1000;t<20000;t+=1000)assert.equal(sample(c,t),null);assert.equal(sample(c,20000)?.kind,kind);
-  if(name==='crow'){for(let t=21000;t<26000;t+=1000)assert.equal(sample(c,t),null);assert.equal(sample(c,26000)?.kind,'arrive');}
-  const hidden=create({random:()=>0});sample(hidden,0);assert.equal(sample(hidden,10000),null);assert.equal(sample(hidden,11000,{eligible:false}),null);
- });
- test(`${name}: early draw keeps its small probability and old sustained-stay timing`,()=>{
-  let calls=0;const c=create({random:()=>{calls++;return rules.earlyChance;}});sample(c,0);for(let t=1000;t<120000;t+=1000)sample(c,t);assert.equal(calls,1);
-  sample(c,120000);assert.ok(calls>=2);
- });
- test(`${name}: opening overlays or switching gardens does not repeatedly roll early visits`,()=>{
-  let calls=0;const c=create({random:()=>{calls++;return 1;}});sample(c,0);for(let t=1000;t<=20000;t+=1000)sample(c,t);assert.equal(calls,1);
-  c.reset();sample(c,21000,{key:'two'});for(let t=22000;t<=41000;t+=1000)sample(c,t,{key:'two'});assert.equal(calls,1);
-  c.reset();sample(c,141000);for(let t=142000;t<=161000;t+=1000)sample(c,t);assert.equal(calls,2);
- });
- test(`${name}: occupied scenes suppress the early draw without spending RNG`,()=>{
-  let calls=0;const c=create({random:()=>{calls++;return 0;}});sample(c,0);for(let t=1000;t<=20000;t+=1000)sample(c,t,{available:false});assert.equal(calls,0);assert.equal(sample(c,21000)?.kind,kind);
- });
-}
+const sample=(clock,now,extra={})=>clock.sample({key:'one',gardenId:'komorebi',now,eligible:true,...extra});
+const run=(clock,from,to,extra={})=>{let result;for(let t=from;t<=to;t+=1000)result=sample(clock,t,extra)||result;return result;};
+test('one shared lottery starts after exactly three ready foreground seconds',()=>{
+ const c=createGardenPredatorClock({random:()=>0});sample(c,0);sample(c,1000);sample(c,2000);assert.equal(sample(c,2999),null);assert.deepEqual(sample(c,3000),{kind:'crow',id:'large-billed-crow'});assert.equal(run(c,4000,20000),undefined);
+});
+test('combined probability boundary is25%, never two separate draws',()=>{
+ for(const probability of [0,.249999,.25,.999999]){let calls=0;const c=createGardenPredatorClock({random:()=>++calls===1?probability:0});const result=run(c,0,3000);assert.equal(!!result,probability<.25);assert.equal(calls,probability<.25?3:1);}
+ let total=0,crows=0,raptors=0;
+ for(let i=0;i<1200;i++){const values=[(i+.5)/1200,((i%6)+.5)/6,0],c=createGardenPredatorClock({random:()=>values.shift()}),result=run(c,0,3000);if(result){total++;if(result.kind==='crow')crows++;else raptors++;}}
+ assert.equal(total,300);assert.equal(crows,250);assert.equal(raptors,50);
+});
+test('one cooling family does not suppress the other and unavailable scenes spend no RNG',()=>{
+ for(const [crowAvailable,raptorAvailable,kind] of [[true,false,'crow'],[false,true,'raptor']]){const c=createGardenPredatorClock({random:()=>0});assert.equal(run(c,0,3000,{crowAvailable,raptorAvailable}).kind,kind);}
+ for(const extra of [{available:false},{crowAvailable:false,raptorAvailable:false}]){let calls=0;const c=createGardenPredatorClock({random:()=>{calls++;return 0;}});run(c,0,20000,extra);assert.equal(calls,0);assert.equal(sample(c,21000)?.kind,'crow');}
+});
+test('shared last draw survives garden changes, overlay resets and cancellation',()=>{
+ let calls=0;const c=createGardenPredatorClock({random:()=>{calls++;return 1;}});run(c,0,3000);assert.equal(calls,1);
+ for(let start=4000;start<120000;start+=4000){c.reset();run(c,start,start+3000,{key:`garden${start}`});}assert.equal(calls,1);
+ c.reset();run(c,124000,127000);assert.equal(calls,2);
+});
+test('hidden, loading, backward and suspended time never catch up',()=>{
+ for(const interrupt of [c=>sample(c,2100,{eligible:false}),c=>sample(c,15000),c=>sample(c,100)]){const c=createGardenPredatorClock({random:()=>0});run(c,0,2000);interrupt(c);assert.equal(sample(c,20000),null);assert.equal(sample(c,21000),null);assert.equal(sample(c,22000),null);assert.equal(sample(c,23000)?.kind,'crow');}
+});
+test('ready prime starts the clock without drawing or advancing from loading',()=>{
+ const c=createGardenPredatorClock({random:()=>0});c.prime({key:'one',now:0,eligible:false});c.prime({key:'one',now:5000,eligible:true});assert.equal(sample(c,6000),null);assert.equal(sample(c,7000),null);assert.equal(sample(c,8000)?.kind,'crow');
+});
+test('water-only harmless species remains restricted to its garden',()=>{
+ for(const gardenId of ['komorebi','mizukagami']){const values=[0,.9999],c=createGardenPredatorClock({random:()=>values.shift()??.9999});const event=run(c,0,3000,{crowAvailable:false,gardenId});assert.equal(event.id==='osprey',gardenId==='mizukagami');}
+});
+test('legacy family clocks have no20s draw and preserve the sustained2min rules',()=>{
+ for(const [create,rules,kind] of [[createGardenCrowClock,CROW_RULES,'warning'],[createGardenRaptorClock,RAPTOR_RULES,'arrive']]){let calls=0;const c=create({random:()=>{calls++;return 0;}});assert.equal(run(c,0,119000),undefined);assert.equal(calls,0);assert.equal(sample(c,120000)?.kind,kind);assert.equal(rules.dwellMs,120000);}
+ assert.equal(CROW_RULES.warningMs,6000);assert.equal(RAPTOR_RULES.warningMs,60000);assert.equal(PREDATOR_ENTRY_RULES.retryMs,120000);
+});
