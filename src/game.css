@@ -1003,4 +1003,11 @@ body[data-world="buncho"][data-scene-controls="open"]:has(.finch-garden) .game-s
  body[data-world="buncho"][data-scene-controls="open"] .game-main > .game-scene-caption > span { font-size: 11px; }
  body[data-world="buncho"][data-scene-controls="open"] .game-main > .game-scene-caption::after { bottom: -4px; height: 8px; }
 }
+/* Keep the existing life notice clear of the larger text wordmark. */
+@media(min-height:501px) {
+ body[data-world="buncho"] .life-game-notice { left: 16px; top: calc(72px + env(safe-area-inset-top,0px)); }
+}
+@media(min-width:700px) and (min-height:501px) {
+ body[data-world="buncho"] .life-game-notice { left: 300px; top: calc(22px + env(safe-area-inset-top,0px)); }
+}
 /* End COLOR PLAY. */
