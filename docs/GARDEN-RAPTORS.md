@@ -4,6 +4,7 @@ This is a fictional game mechanic, not a wildlife encounter or husbandry guide.
 
 ## Behavior
 
+- After three continuous foreground seconds in a ready garden, one shared entry lottery has a 25% chance of selecting a crow or raptor. When both families are available, their weights are 5:5, so each has a 12.5% chance in that draw. If only one family is available, it keeps the full 25% chance. This entry lottery draws once per visit, with at least two minutes between draws across garden changes and panel resets in the same game session.
 - After two continuous foreground minutes in a ready garden, a separate random source checks once per minute at 1%. It never consumes the world's deterministic random stream.
 - One saved arrival per rolling 24 hours, shared by all gardens and nine species. Time moving backwards does not unlock the cap. Existing crow visits and warnings cannot overlap a new raptor event.
 - Black Kite, Northern Goshawk, Peregrine Falcon, Ural Owl, Common Kestrel, Japanese Sparrowhawk, Golden Eagle and Brown Hawk-Owl give one full visible minute to return home.
