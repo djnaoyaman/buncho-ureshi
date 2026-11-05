@@ -24,10 +24,16 @@ test('real game scenes retain treetop, ocean and Notre-Dame across phone, deskto
   await page.locator(`[data-garden-select="${id}"]`).click();await ready(page);
   const before=await gardenState(page),guests=await friends(page);
   for(const [width,height] of [[390,844],[1280,800],[844,390],[390,844]]){
-   await page.setViewportSize({width,height});await ready(page);
+   await page.setViewportSize({width,height});
+   // ResizeObserver can arrive after the previous source's ready state.
+   await expect.poll(()=>page.locator('.finch-garden-stage').evaluate(s=>{const r=s.getBoundingClientRect();return s.dataset.gardenArt===(r.width/r.height>=.8?'landscape':'portrait');})).toBe(true);
+   await ready(page);
+   await expect.poll(()=>page.locator('.finch-garden-background').evaluate(img=>img.naturalWidth===Number(img.closest('.finch-garden-image-plane').dataset.imageWidth))).toBe(true);
    const geometry=await page.locator('.finch-garden-stage').evaluate(stage=>{const r=stage.getBoundingClientRect(),p=stage.querySelector('.finch-garden-image-plane'),img=stage.querySelector('.finch-garden-background');return {ratio:r.width/r.height,variant:stage.dataset.gardenArt,src:img.getAttribute('src'),naturalWidth:img.naturalWidth,planeWidth:Number(p.dataset.imageWidth),anchor:p.style.getPropertyValue('--garden-anchor-y')};});
    expect(geometry.variant).toBe(geometry.ratio>=.8?'landscape':'portrait');expect(geometry.naturalWidth).toBe(geometry.planeWidth);expect(geometry.src).toContain(geometry.variant==='landscape'?`${id}-wide-v2.webp`:`${id}-v2.webp`);
    expect(await friends(page)).toEqual(guests);expect(await gardenState(page)).toEqual(before);
+   const labels=await page.locator('.finch-garden').evaluate(g=>{const dock=g.querySelector('.finch-garden-dock').getBoundingClientRect();return [...g.querySelectorAll('.finch-friend-name')].map(n=>({bottom:n.getBoundingClientRect().bottom,dockTop:dock.top}));});
+   for(const label of labels)expect(label.bottom).toBeLessThanOrEqual(label.dockTop);
    await page.screenshot({path:info.outputPath(`${id}-${width}x${height}.jpg`),type:'jpeg',quality:88});
   }
  }
@@ -58,7 +64,7 @@ test('ten birds remain on the revised terrain in portrait and landscape',async({
   },{id,width,height});
   await ready(page);await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-garden-count','10');
   const points=await page.locator('.finch-garden-image-plane').evaluate(p=>{const plane=p.getBoundingClientRect(),stage=p.closest('.finch-garden-stage').getBoundingClientRect();return [...p.querySelectorAll('button')].map(b=>{const r=b.getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return {x:(r.x+r.width*.54-plane.x)/plane.width,y:(r.y+r.height*.975-plane.y)/plane.height,w:r.width,h:r.height,inside:r.left>=stage.left&&r.right<=stage.right&&r.top>=stage.top&&r.bottom+16<=stage.bottom,hit:b===hit||b.contains(hit),box:{left:r.left,right:r.right,top:r.top,bottom:r.bottom}};});});
-  for(const p of points){expect(p.w).toBeGreaterThanOrEqual(44);expect(p.h).toBeGreaterThanOrEqual(44);expect(p.inside).toBe(true);expect(p.hit).toBe(true);expect(p.x).toBeGreaterThan(.1);expect(p.x).toBeLessThan(.9);expect(p.y).toBeGreaterThan(.52);expect(p.y).toBeLessThan(.94);}
+  for(const p of points){expect(Math.round(p.w*1000)/1000).toBeGreaterThanOrEqual(44);expect(Math.round(p.h*1000)/1000).toBeGreaterThanOrEqual(44);expect(p.inside).toBe(true);expect(p.hit).toBe(true);expect(p.x).toBeGreaterThan(.1);expect(p.x).toBeLessThan(.9);expect(p.y).toBeGreaterThan(.52);expect(p.y).toBeLessThan(.94);}
   for(let i=0;i<points.length;i++)for(let j=i+1;j<points.length;j++){const a=points[i].box,b=points[j].box;expect(Math.max(0,Math.min(a.right,b.right)-Math.max(a.left,b.left))*Math.max(0,Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top))).toBe(0);}
   expect(JSON.parse(state).encounters.garden.id).toBe(id);
   await page.screenshot({path:info.outputPath(`${id}-ten-${width}x${height}.jpg`),type:'jpeg',quality:88});

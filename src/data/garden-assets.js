@@ -662,20 +662,20 @@ export const GARDEN_ASSETS=Object.freeze({
         "friendFeet": [
           {
             "x": 0.34,
-            "y": 0.78
+            "y": 0.735
           },
           {
             "x": 0.5,
-            "y": 0.78
+            "y": 0.735
           },
           {
             "x": 0.66,
-            "y": 0.78
+            "y": 0.735
           }
         ],
         "ownerFoot": {
           "x": 0.5,
-          "y": 0.8500000000000001
+          "y": 0.805
         }
       },
       "landscapeMinAspect": 0.8
