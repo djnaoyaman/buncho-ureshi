@@ -655,9 +655,9 @@ body[data-world="buncho"]:has(.game-panel-overlay[open] .game-encounter-host>:is
 /* Reserve a separate escape row above the scrollable reading surface. */
 body[data-world="buncho"] .game-panel-overlay[open][data-scene=true]:has(.game-encounter-host>:is(.finch-notebook,.finch-entry,.finch-event)){padding-top:calc(60px + env(safe-area-inset-top,0px));box-sizing:border-box;background:#f6edce}
 
-/* COLOR PLAY — presentation only. Keep the established layout, artwork,
-   actor geometry, controls, hit targets, scroll surfaces and saved state.
-   This intentionally changes only paint, not how any part of the game works. */
+/* COLOR PLAY — UI presentation only. A unified curved shell, bold color
+   surfaces and a clear primary/secondary control hierarchy. The gameplay,
+   living artwork, actor sizes, saved data and action handlers stay unchanged. */
 body[data-world="buncho"] {
   --play-ink: #10382f;
   --play-cream: #fff8ea;
@@ -697,7 +697,8 @@ body[data-world="buncho"] .site-header .game-world-exit {
 body[data-world="buncho"] .game-scene-controls-toggle {
   background: var(--play-coral); color: var(--play-ink); border-color: var(--play-cream); border-radius: 999px; box-shadow: var(--play-shadow);
 }
-body[data-world="buncho"] .game-bottom-dock {
+body[data-world="buncho"] .game-bottom-dock,
+body[data-world="buncho"] .game-bottom-dock[data-home-dock="true"] {
   background: var(--play-cream); border-radius: 42% 28% 0 0 / 24px 18px 0 0; box-shadow: 0 -5px 18px #10382f14;
 }
 body[data-world="buncho"] .game-bottom-dock button,
@@ -786,4 +787,167 @@ body[data-world="buncho"] :is(.game-music-panel,.game-music-track-picker) { back
 body[data-world="buncho"] .game-music button { background: var(--play-mint); color: var(--play-ink); border-color: var(--play-line); border-radius: 999px; box-shadow: none; }
 body[data-world="buncho"] .game-music button[aria-pressed="true"] { background: var(--play-mint)!important; color: var(--play-ink)!important; border-color: var(--play-green); }
 body[data-world="buncho"] :is(.game-field-nav button,.game-bottom-dock button,.game-secondary-menu button,.game-scene-controls-toggle,.game-overlay-head button,.game-sheet-footer button,.finch-page-actions button,.finch-garden-selector button,.game-settings input):focus-visible { outline-color: var(--play-green); }
+/* A unified, generously sized interface, rather than scattered tiny tools. */
+body[data-world="buncho"] .game-app { font-family: "Hiragino Maru Gothic ProN", "Noto Sans JP", "Yu Gothic", sans-serif; }
+body[data-world="buncho"] .game-app :is(h2,h3,h4) { font-family: inherit; font-weight: 800; letter-spacing: .02em; }
+body[data-world="buncho"] .game-wordmark { margin: 0; font: 900 clamp(23px,6.4vw,32px)/1.2 "Hiragino Maru Gothic ProN", "Noto Sans JP", sans-serif; letter-spacing: .06em; color: var(--play-ink); }
+body[data-world="buncho"] .game-world-title { left: 20px; top: calc(21px + env(safe-area-inset-top,0px)); padding: 0; }
+body[data-world="buncho"] .site-header .game-world-exit { top: calc(16px + env(safe-area-inset-top,0px)); right: 16px; background: var(--play-mint)!important; box-shadow: none; }
+body[data-world="buncho"] .game-field-bar { top: calc(68px + env(safe-area-inset-top,0px)); right: 20px; }
+body[data-world="buncho"] .game-wallet { padding: 6px 12px!important; border: 2px solid #e8e6d6; box-shadow: none; gap: 7px; }
+body[data-world="buncho"] .game-field-bar .game-wallet strong { font-size: 20px; font-weight: 800; }
+body[data-world="buncho"] .game-field-bar .game-wallet small { font-size: 10px; }
+body[data-world="buncho"] .game-field-nav { top: calc(118px + env(safe-area-inset-top,0px)); left: 20px; right: 20px; width: auto; max-width: none; gap: 4px; padding: 3px; border: 2px solid #e8e6d6; background: var(--play-cream); box-shadow: none; }
+body[data-world="buncho"] .game-field-nav::before { content: ""; position: absolute; z-index: -1; pointer-events: none; top: calc(-120px - env(safe-area-inset-top,0px)); left: -22px; right: -22px; height: calc(190px + env(safe-area-inset-top,0px)); background: var(--play-cream); border-radius: 0 0 44% 53% / 0 0 24px 26px; }
+body[data-world="buncho"] .game-field-nav button { min-height: 46px; font-size: 16px; font-weight: 800; padding: 7px 10px; border: 0; }
+body[data-world="buncho"] .game-main > .game-heading { top: calc(195px + env(safe-area-inset-top,0px)); right: 16px; }
+body[data-world="buncho"] .game-status button { width: 48px; min-height: 48px; font-size: 11px; box-shadow: none; }
+body[data-world="buncho"] .game-scene-toolbar { top: calc(195px + env(safe-area-inset-top,0px)); left: 16px; width: min(250px,calc(100% - 150px)); transform: none; }
+body[data-world="buncho"] .game-scene-toolbar .game-bird-carousel { border: 0; background: var(--play-mint); box-shadow: none; border-radius: 999px; }
+body[data-world="buncho"] .game-scene-toolbar .game-garden-care button { min-height: 48px; font-size: 13px; }
+body[data-world="buncho"] .game-scene-toolbar .game-bird-carousel-face strong { font-size: 14px; }
+body[data-world="buncho"] .game-main > .game-scene-caption { padding: 12px 20px; border: 0; border-radius: 45% 36% 40% 34% / 34px 38px 32px 36px; box-shadow: none; font-size: 17px; font-weight: 800; }
+body[data-world="buncho"] .game-main > .game-scene-caption > span { font-size: 14px; }
+body[data-world="buncho"] .game-main > .game-scene-caption::after { content: ""; position: absolute; bottom: -9px; left: 56%; width: 20px; height: 18px; background: var(--play-mint); border-radius: 0 0 0 100%; transform: skewX(24deg); pointer-events: none; }
+
+/* The menu is a real dashboard with readable labels and generous color tiles. */
+body[data-world="buncho"] .game-bottom-dock,
+body[data-world="buncho"] .game-bottom-dock[data-home-dock="true"] {
+ left: 0; right: 0; bottom: env(safe-area-inset-bottom,0px); transform: none;
+ width: 100%; height: 184px; padding: 24px max(18px,calc((100% - 560px)/2)) 12px;
+ grid-template-columns: repeat(6,minmax(0,1fr)); grid-template-rows: 92px 44px; gap: 10px 8px;
+ border-radius: 46% 36% 0 0 / 28px 34px 0 0; background: var(--play-cream); box-shadow: none;
+}
+body[data-world="buncho"] .game-bottom-dock > button:nth-child(-n+3),
+body[data-world="buncho"] .game-app .game-bottom-dock #game-open-bird {
+ grid-column: span 2; grid-row: 1; justify-self: center; width: 92px; height: 92px;
+ min-height: 92px; max-width: 100%; padding: 8px; gap: 4px; font-size: 15px; font-weight: 800;
+ border: 0; border-radius: 50%; box-shadow: none;
+}
+body[data-world="buncho"] .game-bottom-dock > button:nth-child(-n+3) svg { width: 40px; height: 40px; }
+body[data-world="buncho"] .game-bottom-dock #game-home-close,
+body[data-world="buncho"] .game-bottom-dock #game-nav-open { grid-column: span 3; grid-row: 2; width: 100%; min-height: 44px; height: 44px; flex-direction: row; gap: 10px; padding: 4px 10px; border: 0; border-radius: 999px; background: transparent; font-size: 13px; }
+body[data-world="buncho"] .game-bottom-dock #game-nav-open { background: var(--play-coral); }
+body[data-world="buncho"] .game-bottom-dock :is(#game-home-close,#game-nav-open) svg { width: 24px; height: 24px; }
+body[data-world="buncho"] .game-bottom-dock[data-home-dock="false"] #game-nav-open { grid-column: 2/6; }
+body[data-world="buncho"][data-scene-controls="open"] .game-owner-companion { bottom: calc(184px + env(safe-area-inset-bottom,0px)); }
+body[data-world="buncho"][data-scene-controls="open"] .game-scene-controls-toggle { bottom: calc(198px + env(safe-area-inset-bottom,0px)); left: 16px; }
+body[data-world="buncho"][data-scene-controls="closed"] .game-world-title { padding: 10px 16px; background: var(--play-cream); border-radius: 28px 36px 30px 24px; }
+
+/* The garden has the same curved shell and one obvious primary control. */
+body[data-world="buncho"] .game-encounter-host .finch-garden > header { top: 20px; left: 20px; right: 86px; z-index: 5; }
+body[data-world="buncho"] .game-encounter-host .finch-garden > header::before { content: ""; position: absolute; z-index: -1; pointer-events: none; top: -20px; left: -20px; right: -86px; height: 150px; background: var(--play-cream); border-radius: 0 0 46% 35% / 0 0 28px 22px; }
+body[data-world="buncho"] .game-encounter-host .finch-garden > header h3 { padding: 0!important; font-size: 24px!important; line-height: 1.25!important; font-weight: 900; background: none; box-shadow: none; border: 0; border-radius: 0; }
+body[data-world="buncho"] .finch-garden > header > button { min-height: 48px; padding: 8px 12px; font-size: 12px; font-weight: 800; }
+body[data-world="buncho"] .finch-garden-selector-wrap { top: 88px; left: 16px; right: 16px; }
+body[data-world="buncho"] .finch-garden-selector { top: 88px; left: 68px; right: 68px; gap: 8px; }
+body[data-world="buncho"] .finch-garden-selector-wrap .finch-garden-selector { position: static; }
+body[data-world="buncho"] .finch-garden-selector button { min-height: 48px; font-size: 14px; font-weight: 800; padding: 8px 18px; }
+body[data-world="buncho"] .finch-garden .finch-garden-selector button[aria-current="page"] { background: var(--play-coral); color: var(--play-ink); border-color: var(--play-coral); box-shadow: none; }
+body[data-world="buncho"] .finch-garden-scroll { width: 44px; min-height: 48px; font-size: 24px; }
+body[data-world="buncho"] .finch-garden-dock { bottom: env(safe-area-inset-bottom,0px); left: 0; right: 0; padding: 24px 20px 18px; gap: 10px; display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); background: var(--play-cream); border-radius: 48% 38% 0 0 / 26px 32px 0 0; }
+body[data-world="buncho"] .finch-garden-dock > details:first-child { grid-column: 1/-1; }
+body[data-world="buncho"] .finch-garden-dock > details > summary { min-height: 48px; font-size: 14px; font-weight: 800; border: 0; padding: 10px 12px; background: transparent; }
+body[data-world="buncho"] .finch-garden-dock > details:first-child > summary { min-height: 66px; font-size: 22px; background: var(--play-coral); border-radius: 999px; }
+body[data-world="buncho"] .finch-garden-dock > details[open] { bottom: 174px; left: 12px; right: 12px; max-height: min(50dvh,380px); padding: 16px; border: 0; border-radius: 30px; background: var(--play-cream); box-shadow: 0 6px 30px #10382f44; }
+body[data-world="buncho"] .game-panel-overlay[data-scene="true"] > .game-overlay-head { top: 18px; right: 16px; }
+body[data-world="buncho"] .game-panel-overlay[data-scene="true"] > .game-overlay-head button { width: 54px; min-height: 48px; font-size: 12px; border: 0; box-shadow: none; }
+body[data-world="buncho"] .finch-crow-notice { top: 156px; }
+body[data-world="buncho"] .game-panel-overlay[data-scene="true"] > .game-raptor-notice { top: 156px; }
+
+body[data-world="buncho"] .game-main .game-secondary-menu[open] { width: min(640px,calc(100% - 24px)); padding: 22px; border: 0; border-radius: 36px; background: var(--play-cream); box-shadow: 0 0 0 100vmax #10382f66,0 12px 50px #10382f33; z-index: 90; }
+body[data-world="buncho"] .game-menu-heading { font-size: 24px; font-weight: 900; margin: 0 0 18px; padding: 4px 0 14px; border-bottom: 2px solid #e6e5d7; }
+body[data-world="buncho"] .game-secondary-menu .game-tabs { gap: 12px; }
+body[data-world="buncho"] .game-secondary-menu .game-tabs button { min-height: 100px; flex-direction: column; justify-content: center; gap: 10px; padding: 14px 8px; border: 0; border-radius: 32px 40px 34px 38px; font-size: 15px; text-align: center; line-height: 1.5; }
+body[data-world="buncho"] .game-secondary-menu .game-tabs svg { width: 36px; height: 36px; flex-basis: 36px; }
+body[data-world="buncho"]:has(.game-secondary-menu[open]) .game-world-exit { visibility: hidden; }
+
+/* Reading panels use one bold title surface and a calm, unboxed body. */
+body[data-world="buncho"] .game-panel-overlay:not([data-scene="true"]) { border: 0; border-radius: 32px; }
+body[data-world="buncho"] .game-panel-overlay:not([data-scene="true"]) > .game-overlay-head { height: 68px; padding: 10px 20px; border: 0; border-radius: 0 0 50% 12% / 0 0 14px 6px; }
+body[data-world="buncho"] .game-panel-overlay:not([data-scene="true"]) > .game-panel { height: calc(100% - 68px); padding: 22px; }
+body[data-world="buncho"] .game-panel-overlay:not([data-scene="true"]) > .game-overlay-head button { min-height: 44px; padding: 6px 16px; font-size: 15px; font-weight: 800; background: var(--play-paper); }
+body[data-world="buncho"] .game-settings > h3,
+body[data-world="buncho"] .game-help > h3 { font-size: 28px; margin: 0 0 22px; }
+body[data-world="buncho"] .game-owner-setting { padding: 18px; background: var(--play-yellow); border: 0; border-radius: 32px 44px 36px 50px; }
+body[data-world="buncho"] .game-settings :is(summary,label,.game-check) { font-size: 15px; line-height: 1.7; }
+body[data-world="buncho"] .game-settings details { padding: 18px 0; }
+body[data-world="buncho"] .game-music-panel { border: 0; padding: 18px; background: var(--play-mint); }
+body[data-world="buncho"] .game-music button { min-height: 48px; font-size: 14px; font-weight: 700; }
+body[data-world="buncho"] .game-app .game-care-actions button { min-height: 72px; font-size: 18px; border: 0; border-radius: 999px; }
+body[data-world="buncho"] .game-sheet-talk { padding: 14px 0; }
+body[data-world="buncho"] .game-panel-overlay:has(.finch-notebook) > .game-panel { padding: 14px; }
+body[data-world="buncho"] .finch-notebook > header { padding: 22px 18px; margin: 0 0 18px; background: var(--play-yellow); border-radius: 30px 42px 38px 24px; }
+body[data-world="buncho"] .finch-notebook > header h3 { font-size: 28px; font-weight: 900; }
+body[data-world="buncho"] .finch-notebook-intro { padding: 15px 18px; font-size: 15px; line-height: 1.7; border: 0; }
+body[data-world="buncho"] .finch-page-actions > button { min-height: 56px; font-size: 16px; font-weight: 800; border: 0; }
+body[data-world="buncho"] .game-family-heading > h3 { font-size: 24px; }
+body[data-world="buncho"] .life-panel-heading { padding: 20px; background: var(--play-mint); border-radius: 32px 44px 30px 38px; }
+body[data-world="buncho"] .life-panel-heading h3 { font-size: 26px; }
+
+/* Roomy screens can breathe; short screens keep all existing escape paths. */
+@media(min-width:700px) and (min-height:501px) {
+ body[data-world="buncho"] .game-world-title { left: 28px; top: 22px; }
+ body[data-world="buncho"] .game-field-bar { top: 22px; right: 116px; }
+ body[data-world="buncho"] .game-field-nav { left: 28px; right: auto; top: 78px; width: 410px; }
+ body[data-world="buncho"] .game-field-nav::before { top: -80px; left: -30px; right: calc(440px - 100vw); height: 152px; }
+ body[data-world="buncho"] .game-scene-toolbar { top: 166px; left: 28px; width: 250px; }
+ body[data-world="buncho"] .game-main > .game-heading { top: 166px; right: 28px; }
+ body[data-world="buncho"] .game-secondary-menu .game-tabs { grid-template-columns: repeat(3,minmax(0,1fr)); }
+ body[data-world="buncho"] .game-secondary-menu .game-tabs button { min-height: 108px; }
+}
+@media(max-height:500px) {
+ body[data-world="buncho"] .game-bottom-dock,
+ body[data-world="buncho"] .game-bottom-dock[data-home-dock="true"] { height: 68px; width: 100%; padding: 4px 10px 10px; gap: 4px; grid-template-columns: repeat(5,minmax(0,1fr)); grid-template-rows: 54px; border-radius: 28px 32px 0 0; }
+ body[data-world="buncho"] .game-bottom-dock > button:nth-child(-n+3),
+ body[data-world="buncho"] .game-app .game-bottom-dock #game-open-bird,
+ body[data-world="buncho"] .game-bottom-dock #game-home-close,
+ body[data-world="buncho"] .game-bottom-dock #game-nav-open { grid-column: auto; grid-row: 1; width: 100%; height: 54px; min-height: 54px; font-size: 10px; gap: 2px; padding: 2px; flex-direction: column; border-radius: 22px; }
+ body[data-world="buncho"] .game-bottom-dock[data-home-dock="false"] { grid-template-columns: repeat(4,minmax(0,1fr)); }
+ body[data-world="buncho"] .game-bottom-dock[data-home-dock="false"] #game-nav-open { grid-column: auto; }
+ body[data-world="buncho"] .game-bottom-dock > button:nth-child(-n+3) svg { width: 24px; height: 24px; }
+ body[data-world="buncho"][data-scene-controls="open"] .game-owner-companion { bottom: calc(70px + env(safe-area-inset-bottom,0px)); }
+ body[data-world="buncho"][data-scene-controls="open"] .game-scene-controls-toggle { bottom: calc(80px + env(safe-area-inset-bottom,0px)); left: 8px; }
+ body[data-world="buncho"] .game-encounter-host .finch-garden > header { top: 8px; left: 10px; right: 76px; }
+ body[data-world="buncho"] .game-encounter-host .finch-garden > header::before { display: none; }
+ body[data-world="buncho"] .game-encounter-host .finch-garden > header h3 { padding: 7px 10px!important; background: var(--play-cream); border-radius: 999px; font-size: 15px!important; }
+ body[data-world="buncho"] .finch-garden > header > button { min-height: 44px; font-size: 10px; padding: 5px 8px; }
+ body[data-world="buncho"] .finch-garden-selector-wrap { top: 58px; left: 10px; right: 10px; }
+ body[data-world="buncho"] .finch-garden-selector button { min-height: 44px; font-size: 11px; padding: 7px 10px; }
+ body[data-world="buncho"] .finch-garden-scroll { min-height: 44px; }
+ body[data-world="buncho"] .finch-garden-dock { padding: 8px 10px; display: flex; gap: 5px; border-radius: 24px 28px 0 0; }
+ body[data-world="buncho"] .finch-garden-dock > details > summary,
+ body[data-world="buncho"] .finch-garden-dock > details:first-child > summary { min-height: 44px; font-size: 11px; padding: 6px 8px; }
+ body[data-world="buncho"] .finch-garden-dock > details[open] { bottom: 64px; max-height: 48dvh; padding: 10px; }
+ body[data-world="buncho"] .game-panel-overlay[data-scene="true"] > .game-overlay-head { top: 8px; right: 8px; }
+ body[data-world="buncho"] .game-panel-overlay[data-scene="true"] > .game-overlay-head button { width: 56px; min-height: 44px; font-size: 10px; }
+ body[data-world="buncho"] .finch-crow-notice { top: 105px; }
+ body[data-world="buncho"] .game-panel-overlay[data-scene="true"] > .game-raptor-notice { top: 3px; }
+ body[data-world="buncho"] .game-world-title { left: 12px; top: 8px; }
+ body[data-world="buncho"] .game-wordmark { font-size: 20px; }
+ body[data-world="buncho"] .game-field-bar { top: 54px; right: 14px; }
+ body[data-world="buncho"] .game-field-bar .game-wallet strong { font-size: 16px; }
+ body[data-world="buncho"] .game-field-nav { left: 12px; right: 72px; top: 102px; width: auto; max-width: 320px; padding: 0; }
+ body[data-world="buncho"] .game-field-nav::before { display: none; }
+ body[data-world="buncho"] .game-field-nav button { font-size: 12px; min-height: 44px; padding: 5px; }
+ body[data-world="buncho"] .game-main > .game-heading { top: 102px; right: 10px; }
+ body[data-world="buncho"] .game-scene-toolbar { top: auto; bottom: 70px; left: 50%; transform: translateX(-50%); width: min(210px,65%); }
+ body[data-world="buncho"] .game-main > .game-scene-caption { padding: 5px 10px; font-size: 12px; }
+ body[data-world="buncho"] .game-main > .game-scene-caption > span { font-size: 11px; }
+ body[data-world="buncho"] .game-main .game-secondary-menu[open] { padding: 14px; border-radius: 24px; }
+ body[data-world="buncho"] .game-menu-heading { font-size: 18px; margin-bottom: 10px; padding: 0; border: 0; }
+ body[data-world="buncho"] .game-secondary-menu .game-tabs button { min-height: 64px; flex-direction: row; justify-content: flex-start; font-size: 12px; padding: 10px; gap: 8px; border-radius: 24px; }
+ body[data-world="buncho"] .game-secondary-menu .game-tabs svg { width: 28px; height: 28px; flex-basis: 28px; }
+ body[data-world="buncho"] .game-panel-overlay:not([data-scene="true"]) > .game-overlay-head { height: 56px; padding: 6px 12px; }
+ body[data-world="buncho"] .game-panel-overlay:not([data-scene="true"]) > .game-panel { height: calc(100% - 56px); padding: 14px; }
+}
+@media(max-height:500px) and (min-width:601px) {
+ body[data-world="buncho"] .game-field-bar { top: 8px; right: 116px; }
+ body[data-world="buncho"] .game-field-nav { top: 52px; width: 300px; }
+ body[data-world="buncho"] .game-main > .game-heading { top: 52px; }
+ body[data-world="buncho"] .game-scene-toolbar { left: 12px; transform: none; bottom: 8px; width: 210px; }
+}
+@media(max-height:340px) {
+ body[data-world="buncho"] .finch-crow-notice { top: 2px; }
+}
 /* End COLOR PLAY. */

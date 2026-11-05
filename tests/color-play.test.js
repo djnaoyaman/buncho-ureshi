@@ -4,16 +4,15 @@ import {readFileSync} from 'node:fs';
 import {Window} from 'happy-dom';
 const css=readFileSync(new URL('../src/game.css',import.meta.url),'utf8');
 const theme=css.slice(css.indexOf('/* COLOR PLAY —'));
-const allowed=new Set(['background','color','border-color','border-radius','box-shadow','outline-color','accent-color','filter']);
-test('Color Play remains a scoped paint-only layer without layout, artwork or interaction rules',()=>{
+test('Color Play restyles UI without changing living artwork or its dimensions',()=>{
  const window=new Window(),style=window.document.createElement('style');style.textContent=theme;window.document.head.append(style);
  assert(theme.includes('/* End COLOR PLAY. */'));
- assert(style.sheet.cssRules.length>65);
- for(const rule of style.sheet.cssRules){
+ const walk=rules=>{for(const rule of rules){
+  if(rule.cssRules){walk(rule.cssRules);continue;}
   assert(rule.selectorText?.startsWith('body[data-world="buncho"]'),rule.selectorText);
-  for(let i=0;i<rule.style.length;i++){const prop=rule.style[i];assert(prop.startsWith('--play-')||prop.startsWith('--life-')||allowed.has(prop)||/^border-(top|right|bottom|left)-(color|left-radius|right-radius)$/.test(prop)||prop.startsWith('background-'),`${rule.selectorText}: ${prop}`);}
   assert(!/\.game-room-bird|\.game-sprite|\.game-care-pet-bird|\.finch-garden-(friend|household|visitor|image-plane)|\.finch-(crow|raptor)-(actor|java)|\.owner-peek|\.game-family-node/.test(rule.selectorText),rule.selectorText);
- }
+  if(rule.selectorText.includes('.game-owner-companion'))for(let i=0;i<rule.style.length;i++)assert.equal(rule.style[i],'bottom','Only the owner position can adapt to the larger UI, never art or size');
+ }};walk(style.sheet.cssRules);
  assert(!theme.includes('url('));
  window.happyDOM.abort();
 });
