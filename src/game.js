@@ -477,7 +477,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
       if(cageGuests.length<=2){
         const household=visibleFieldPositions(shown,kind,world.field.place);
         for(const b of shown)map.set(b.id,{...household.get(b.id),x:.5});
-        cageGuests.forEach((guest,i)=>{const x=cageGuests.length===1?.72:i===0?.28:.72;map.set(guest.id,{...map.get(guest.id),x:(1-fraction)/2+x*fraction,y:.79});});
+        cageGuests.forEach((guest,i)=>{const x=cageGuests.length===1?.75:i===0?.25:.75;map.set(guest.id,{...map.get(guest.id),x:(1-fraction)/2+x*fraction,y:.79});});
       }else{
         const columns=geometry.width>600?actors.length:4,rows=Math.ceil(actors.length/columns);
         actors.forEach((actor,i)=>{const row=Math.floor(i/columns),count=Math.min(columns,actors.length-row*columns),x=(i%columns+1)/(count+1),foot=rows===1?geometry.height*(geometry.width<=600&&geometry.height<=280 ? .57 : .68):geometry.height*.46+row*Math.max(90,geometry.height*.23);map.set(actor.id,{...map.get(actor.id),x:(1-fraction)/2+x*fraction,y:(Math.min(geometry.height-26,foot)-geometry.top)/geometry.planeHeight});});
