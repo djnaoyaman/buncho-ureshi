@@ -1,5 +1,5 @@
 import {test,expect} from '@playwright/test';
-import {createWorld} from '../../src/engine.js';
+import {createWorld,validateWorld} from '../../src/engine.js';
 import {createEncounterSystem} from '../../src/encounters.js';
 import {ENCOUNTER_CATALOG} from '../../src/data/encounter-catalog.js';
 import {inviteFixture} from '../fixtures/garden-invitation.js';
@@ -10,10 +10,12 @@ function seed(event=false){
  const w=createWorld(NOW,42),token=()=>({worldId:w.worldId,revision:w.revision});
  inviteFixture(system,w,known.id);system.open(w,known.id,token());
  if(!event)for(const step of known.steps)system.act(w,w.encounters.active.instanceId,step.action,token());
+ Object.assign(w.encounters.crow,{lastArrivalAt:NOW-86400000,gardenId:'komorebi',speciesId:'large-billed-crow',arrivalBirdId:w.birds[0].id});
+ w.encounters.raptor.lastArrivalAt=NOW-86400000;
  w.encounters.crow.visits.push({id:'large-billed-crow',firstTick:0,lastTick:0,count:1,petPoints:0});
  w.encounters.raptor.visits.push({id:'black-kite',firstTick:0,lastTick:0,count:1,petPoints:0});
  w.encounters.garden.open=false;w.paused=true;w.settings.motion=false;w.settings.careSound=false;
- return w;
+ validateWorld(w);return w;
 }
 async function record(page,world){return page.evaluate(world=>new Promise((resolve,reject)=>{
  const r=indexedDB.open('buncho-ureshi-garden-v1',1);r.onupgradeneeded=()=>r.result.createObjectStore('world');r.onerror=()=>reject(r.error);

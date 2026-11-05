@@ -1,7 +1,7 @@
 import {defineConfig,devices} from '@playwright/test';
 export default defineConfig({
  testDir:'./tests/browser',testMatch:['notebook-actions.spec.js','predator-catalog-layout.spec.js'],
- timeout:90000,expect:{timeout:10000},workers:2,retries:0,
+ timeout:90000,expect:{timeout:10000},workers:2,retries:0,maxFailures:1,
  reporter:[['list'],['html',{open:'never'}]],
  use:{baseURL:process.env.PUBLIC_URL||'http://127.0.0.1:4173/buncho-ureshi/',trace:'retain-on-failure',screenshot:'only-on-failure'},
  projects:[
