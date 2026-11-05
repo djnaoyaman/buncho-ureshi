@@ -25,6 +25,8 @@ test('real game scenes retain treetop, ocean and Notre-Dame across phone, deskto
   const before=await gardenState(page),guests=await friends(page);
   for(const [width,height] of [[390,844],[1280,800],[844,390],[390,844]]){
    await page.setViewportSize({width,height});
+   // The outer visualViewport height and then the art ResizeObserver settle separately.
+   await expect.poll(()=>page.locator('.finch-garden-stage').evaluate((s,{width,height})=>{const r=s.getBoundingClientRect();return Math.abs(r.width-width)<1&&Math.abs(r.height-height)<1;},{width,height})).toBe(true);
    // ResizeObserver can arrive after the previous source's ready state.
    await expect.poll(()=>page.locator('.finch-garden-stage').evaluate(s=>{const r=s.getBoundingClientRect();return s.dataset.gardenArt===(r.width/r.height>=.8?'landscape':'portrait');})).toBe(true);
    await ready(page);
@@ -32,8 +34,8 @@ test('real game scenes retain treetop, ocean and Notre-Dame across phone, deskto
    const geometry=await page.locator('.finch-garden-stage').evaluate(stage=>{const r=stage.getBoundingClientRect(),p=stage.querySelector('.finch-garden-image-plane'),img=stage.querySelector('.finch-garden-background');return {ratio:r.width/r.height,variant:stage.dataset.gardenArt,src:img.getAttribute('src'),naturalWidth:img.naturalWidth,planeWidth:Number(p.dataset.imageWidth),anchor:p.style.getPropertyValue('--garden-anchor-y')};});
    expect(geometry.variant).toBe(geometry.ratio>=.8?'landscape':'portrait');expect(geometry.naturalWidth).toBe(geometry.planeWidth);expect(geometry.src).toContain(geometry.variant==='landscape'?`${id}-wide-v2.webp`:`${id}-v2.webp`);
    expect(await friends(page)).toEqual(guests);expect(await gardenState(page)).toEqual(before);
-   const labels=await page.locator('.finch-garden').evaluate(g=>{const dock=g.querySelector('.finch-garden-dock').getBoundingClientRect();return [...g.querySelectorAll('.finch-friend-name')].map(n=>({bottom:n.getBoundingClientRect().bottom,dockTop:dock.top}));});
-   for(const label of labels)expect(label.bottom).toBeLessThanOrEqual(label.dockTop);
+   const labels=await page.locator('.finch-garden').evaluate(g=>{const dock=g.querySelector('.finch-garden-dock').getBoundingClientRect();return [...g.querySelectorAll('.finch-friend-name')].map(n=>({top:n.getBoundingClientRect().top,bottom:n.getBoundingClientRect().bottom,dockTop:dock.top,dockBottom:dock.bottom}));});
+   for(const label of labels){expect(label.top).toBeGreaterThanOrEqual(0);expect(label.bottom).toBeLessThanOrEqual(label.dockTop);expect(label.dockBottom).toBeLessThanOrEqual(height+1);}
    await page.screenshot({path:info.outputPath(`${id}-${width}x${height}.jpg`),type:'jpeg',quality:88});
   }
  }
