@@ -3,7 +3,7 @@ import {rememberGardenAcquaintances} from '../src/garden-friends.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {IDBFactory} from 'fake-indexeddb';
-import {resolveAdoption,createWorld,createBird,validateWorld,readCompatibleWorld,serializeWorld,parseSave,advanceTo,stepWorld,feedBird,adoptBird,economyToken,hireCaretaker,treatBird,honorBird,inviteFriend,travelTo,fieldBirds,prepareWorldReplacement} from '../src/engine.js';
+import {talkToBird,resolveAdoption,createWorld,createBird,validateWorld,readCompatibleWorld,serializeWorld,parseSave,advanceTo,stepWorld,feedBird,adoptBird,economyToken,hireCaretaker,treatBird,honorBird,inviteFriend,travelTo,fieldBirds,prepareWorldReplacement} from '../src/engine.js';
 import {LIFE_RULES,lifeStatus,isAlive,syncLifecycle,noteLifeConflict,ageTicks,caretakerStatus} from '../src/life-care.js';
 import {renderLifeCarePanel,renderMemorialPanel} from '../src/life-care-ui.js';
 import {openGameStore,DB_NAME} from '../src/game-store.js';
@@ -43,3 +43,16 @@ test('migration is durably persisted once through concurrent IndexedDB writers',
 
 test('default adoption dialogue starts responsibility now, never at a visitors old arrival',()=>{const w=pause(world()),b=createBird(w,{home:'visitor'});advanceTo(w,NOW+4*DAY);w.adoption.pending={birdId:b.id,arrivedTick:b.arrivedTick};const result=resolveAdoption(w,b.id,'accept',economyToken(w),NOW+4*DAY);assert.equal(result.changed,true);assert.equal(lifeStatus(w,b).lastCareAt,NOW+4*DAY);advanceTo(w,NOW+4*DAY+1);assert.ok(isAlive(w,b));validateWorld(w);});
 test('deceased companions and known friends never appear in any of the nine gardens',()=>{const w=pause(world()),b=createBird(w,{home:'resident'});rememberGardenAcquaintances(w);w.encounters.gardenFriends.companions=['b1'];advanceTo(w,NOW+3*DAY);assert.deepEqual(gardenCompanionRoster(w),[]);for(const id of GARDEN_IDS)assert.ok(!gardenFriendRoster(w,id).some(f=>f.birdId==='b1'||f.birdId===b.id));assert.ok(w.encounters.gardenFriends.references.some(r=>r.birdId===b.id));validateWorld(w);});
+
+
+test('late-discovered illness exposes the earlier food deadline without changing either rule',()=>{
+ const HOUR=3600000,w=pause(world());wallet(w);w.care.cleanliness=0;advanceTo(w,NOW);advanceTo(w,NOW+71*HOUR);validateWorld(w);
+ const s=status(w),before=structuredClone(w);assert.equal(s.condition.deadlineAt,NOW+95*HOUR);assert.equal(s.lastCareAt+LIFE_RULES.neglectMs,NOW+72*HOUR);
+ const html=renderLifeCarePanel(w);assert.match(html,/先に必要：ごはんの期限まで：<strong>実時間 1時間 0分/);assert.match(html,/通院の期限まで：<strong>実時間 1日 0時間/);assert.ok(html.indexOf('data-life-deadline="feed"')<html.indexOf('data-life-deadline="treatment"'));assert.deepEqual(w,before);
+ const untreated=structuredClone(w);advanceTo(untreated,NOW+72*HOUR);assert.equal(status(untreated).death.cause,'neglect');
+ const treated=structuredClone(w);treatBird(treated,'b1',economyToken(treated),NOW+71*HOUR);assert.equal(status(treated).condition,null);assert.equal(status(treated).lastCareAt,s.lastCareAt);assert.match(renderLifeCarePanel(treated),/ごはんの期限まで：実時間 1時間 0分/);advanceTo(treated,NOW+72*HOUR);assert.equal(status(treated).death.cause,'neglect');
+ const fed=structuredClone(w);assert.equal(feedBird(fed,'b1',NOW+71*HOUR,economyToken(fed)).changed,true);assert.equal(status(fed).lastCareAt,NOW+71*HOUR);assert.deepEqual(status(fed).condition,s.condition);const fedHtml=renderLifeCarePanel(fed);assert.ok(fedHtml.indexOf('data-life-deadline="treatment"')<fedHtml.indexOf('data-life-deadline="feed"'));advanceTo(fed,NOW+95*HOUR);assert.equal(status(fed).death.cause,'illness');validateWorld(fed);
+});
+test('food conversation explains that talk and eating animation do not reset feeding time',()=>{
+ const w=pause(world());w.birds[0].needs.energy=40;const last=status(w).lastCareAt,result=talkToBird(w,'b1','ごはん',NOW+3600000,economyToken(w));assert.equal(result.topic,'food');assert.match(result.answer,/ごはんのボタンでお世話してね/);assert.match(result.answer,/食べるしぐさやおしゃべりだけでは、ごはんの期限は延びない/);assert.doesNotMatch(result.answer,/自分でも食べられる/);assert.equal(status(w).lastCareAt,last);validateWorld(w);
+});

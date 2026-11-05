@@ -17,6 +17,14 @@ export function renderProtagonistSummary(world){
  return `<section class="life-protagonist" aria-label="主人公の代替わり"><h4>第${generation}代の主人公 · ${escape(bird.name)}</h4><p>${escape(explanation)}</p><p class="life-small">主人公が旅立つと、存命の子のうち、先に生まれた長男か長女へ引き継ぎます。卵のときは、かえるまで待ちます。</p></section>`;
 }
 
+/** The illness deadline never replaces the independent feeding deadline. */
+function renderCareDeadlines(world,state,care){
+  if(!state.condition)return `<p class="life-small">${care.active?'飼育員がお世話をしています。':`ごはんの期限まで：実時間 ${remaining(state.lastCareAt+LIFE_RULES.neglectMs-now(world))}`}</p>`;
+  const deadlines=[{kind:'feed',label:'ごはん',at:state.lastCareAt+LIFE_RULES.neglectMs},{kind:'treatment',label:'通院',at:state.condition.deadlineAt}].sort((a,b)=>a.at-b.at);
+  const tied=deadlines[0].at===deadlines[1].at;
+  return deadlines.map((d,i)=>`<p class="life-deadline" data-life-deadline="${d.kind}">${tied?'同じ時刻：':i===0?'先に必要：':''}${d.label}の期限まで：<strong>実時間 ${remaining(d.at-now(world))}</strong></p>`).join('')+'<p class="life-small">ごはんと通院は、それぞれ必要です。片方だけでは、もう片方の期限は延びません。</p>';
+}
+
 /** Render-only: never changes lifecycle, money, or the wall clock. */
 export function renderLifeSummary(world,bird){
   const state=lifeStatus(world,bird);
@@ -31,8 +39,7 @@ export function renderLifeCarePanel(world){
   const cost=LIFE_RULES.hospitalGold;
   const birds=residents.map(b=>{
     const state=lifeStatus(world,b),condition=state.condition;
-    const deadline=condition?Number(condition.deadlineAt):Number(state.lastCareAt)+LIFE_RULES.neglectMs;
-    return `<article class="life-bird-card${condition?' is-unwell':''}"><div class="life-bird-title"><h4>${escape(b.name)}</h4><span class="life-badge">${condition?'通院が必要':'見守り中'}</span></div>${renderLifeSummary(world,b)}${condition?`<p>${escape(conditionName(condition.kind))}のため、病院で手当てしましょう。</p><p class="life-deadline">ゲームの通院期限まで：<strong>実時間 ${remaining(deadline-now(world))}</strong></p><button type="button" data-life-treat="${escape(b.id)}" ${gold<cost?'disabled':''}>病院へ連れていく · ${number(cost)} Gold</button>${gold<cost?'<p class="life-small">Goldが足りません。</p>':''}`:`<p class="life-small">${care.active?'飼育員がお世話をしています。':`お世話の期限まで：実時間 ${remaining(deadline-now(world))}`}</p>`}</article>`;
+    return `<article class="life-bird-card${condition?' is-unwell':''}"><div class="life-bird-title"><h4>${escape(b.name)}</h4><span class="life-badge">${condition?'通院が必要':'見守り中'}</span></div>${renderLifeSummary(world,b)}${renderCareDeadlines(world,state,care)}${condition?`<p>${escape(conditionName(condition.kind))}のため、病院で手当てしましょう。</p><button type="button" data-life-treat="${escape(b.id)}" ${gold<cost?'disabled':''}>病院へ連れていく · ${number(cost)} Gold</button>${gold<cost?'<p class="life-small">Goldが足りません。</p>':''}`:''}</article>`;
   }).join('');
   return `<section class="life-care-panel" aria-label="健康とお留守番"><header class="life-panel-heading"><p class="game-eyebrow">LITTLE LIFE, EVERY DAY</p><h3>健やかな日も、留守の日も。</h3><p>一羽ずつの時間を、大切に。</p></header>${warning}${renderProtagonistSummary(world)}<div class="life-care-rules"><span>寿命 <strong>ゲーム内10年</strong></span><span>お世話なし <strong>実時間3日</strong></span><span>通院期限 <strong>発症から実時間24時間</strong></span></div><section class="life-caretaker" aria-label="飼育員を雇う"><div class="life-bird-title"><h4>お留守番の飼育員</h4><span class="life-badge">${care.active?'契約中':'前払い'}</span></div><p>実時間1日につき <strong>${number(LIFE_RULES.caretakerDailyGold)} Gold</strong>。この庭で暮らす全員のごはん・掃除・自動通院（追加料金なし）をお任せできます。</p><p class="life-small">Gold・Gemsは増えません。寿命は延びません。契約は残り合計30日までです。</p>${care.active?`<p class="life-contract">契約の残り：<strong>実時間 ${remaining(care.remainingMs)}</strong><br><small>延長分は現在の契約の後に追加されます。</small></p>`:''}<div class="life-hire-options">${[1,3,7].map(days=>{const price=days*LIFE_RULES.caretakerDailyGold;return `<button type="button" data-life-hire="${days}" ${gold<price||!residents.length||care.remainingMs+days*86400000>30*86400000?'disabled':''}><span>${days}日${care.active?'延長':'お願いする'}</span><strong>${number(price)} Gold</strong></button>`;}).join('')}</div><p class="life-small">所持金：${number(gold)} Gold${gold<LIFE_RULES.caretakerDailyGold?' · 契約に必要なGoldが足りません。':''}</p></section><details class="life-risk-help"><summary>ゲーム内で体調が変わるきっかけ</summary><p>きれいさ20以下が実時間1日続くと呼吸器の病気、おなかと元気がともに40以下で実時間1日続くとおなかの病気が起こります。6羽以上のおうちで、相性の低い相手に繰り返し近づくと、けんかのけがが起こることもあります。</p><p>期限を更新するのはごはんです。なでる・話す・そうじだけでは給餌期限は変わりません。古い保存には導入時の猶予があります。</p></details><h4 class="life-list-heading">みんなの健康 <span>${residents.length}羽</span></h4><div class="life-bird-grid">${birds||'<p class="life-empty">この庭で暮らしている文鳥はいません。</p>'}</div></section>`;
 }
