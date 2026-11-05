@@ -455,3 +455,17 @@ test('home self role follows stable original identity and renamed label, not a d
  await store.transact(w=>{renameBird(w,'b1','もちのすけ');bumpRevision(w);return w;});await [...f.timers.values()][0]();assert.equal(self().querySelector('[data-home-role=self]').textContent,'自分＝もちのすけ');assert.match(self().getAttribute('aria-label'),/^もちのすけ、自分、/);
  f.stop();await f.mount();assert.equal(self().querySelector('[data-home-role=self]').textContent,'自分＝もちのすけ');assert.equal(f.root.querySelectorAll('[data-home-role=self]').length,1);
 });
+
+test('individual goodbye removes only the selected guest, restores home focus and persists',async t=>{
+ const f=await fixture(t),store=await f.otherTab();await store.transact(w=>{w.paused=false;advanceTicks(w,1);w.paused=true;return w;});await f.mount();const before=await store.transact(w=>w),guest=before.birds.find(b=>b.home==='visitor');
+ f.root.querySelector(`[data-game-scene-select][data-bird-id="${guest.id}"]`).click();const button=f.root.querySelector('[data-home-goodbye]');assert.equal(button.textContent,'お別れする');assert.match(button.getAttribute('aria-label'),new RegExp(guest.name));button.click();button.click();
+ await until(async()=>(await store.transact(w=>w)).birds.find(b=>b.id===guest.id).home==='departed','one guest goes home');await until(()=>!f.root.querySelector('.game-bird-sheet[open]'),'sheet closes');
+ const after=await store.transact(w=>w);assert.equal(after.birds.length,before.birds.length);assert.deepEqual(after.birds.find(b=>b.id===guest.id).relations,guest.relations);assert.deepEqual(after.birds.find(b=>b.id===guest.id).memories,guest.memories);assert.equal(after.encounters.homeClosedUntil,0);assert.equal(after.encounters.homeGoodbyes.length,1);assert.equal(after.revision,before.revision+1);assert.equal(f.root.querySelector('[data-home-goodbye]'),null);
+ assert.equal(f.window.document.activeElement.dataset.birdId,'b1');f.stop();await f.mount();assert.equal(f.root.querySelectorAll('.game-room-bird').length,1);f.openBird();assert.equal(f.root.querySelector('[data-home-goodbye]'),null);
+});
+
+test('individual goodbye cancels on newer navigation and refuses a stale re-invited visitor',async t=>{
+ const f=await fixture(t),store=await f.otherTab();await store.transact(w=>{w.paused=false;advanceTicks(w,1);w.paused=true;return w;});await f.mount();const before=await store.transact(w=>w),guest=before.birds.find(b=>b.home==='visitor');
+ f.root.querySelector(`[data-game-scene-select][data-bird-id="${guest.id}"]`).click();f.root.querySelector('[data-home-goodbye]').click();f.closeBird();await sleep(25);assert.deepEqual(await store.transact(w=>w),before);
+ f.root.querySelector(`[data-game-scene-select][data-bird-id="${guest.id}"]`).click();await store.transact(w=>{bumpRevision(w);return w;});const updated=await store.transact(w=>w);f.root.querySelector('[data-home-goodbye]').click();await sleep(25);assert.deepEqual(await store.transact(w=>w),updated);assert.ok(f.root.querySelector('.game-bird-sheet[open]'));
+});

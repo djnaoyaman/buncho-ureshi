@@ -140,7 +140,7 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
     if(rub){rub=null;clearTimeout(petTimer);generation++;}
     if(button.hasAttribute('data-finch-go-home')){const token=++generation,originalWorld=getWorld().worldId,isCurrent=()=>alive&&token===generation&&getWorld().worldId===originalWorld;busy=true;render();try{await onHome(isCurrent);}catch{if(isCurrent())notice='おうちをひらけなかったよ。もう一度試してね。';}finally{if(isCurrent()){busy=false;render();}}return;}
     if(button.hasAttribute('data-encounter-invite-garden')||button.hasAttribute('data-encounter-invite-cage')||button.hasAttribute('data-encounter-dismiss-cage')){
-      const token=++generation,w=getWorld(),expected={worldId:w.worldId,revision:w.revision};
+      const token=++generation,w=getWorld(),expected=button.hasAttribute('data-encounter-dismiss-cage')?{worldId:button.dataset.goodbyeWorld,revision:Number(button.dataset.goodbyeRevision)}:{worldId:w.worldId,revision:w.revision};
       const gardenInvite=button.hasAttribute('data-encounter-invite-garden'),cageInvite=button.hasAttribute('data-encounter-invite-cage');
       const id=gardenInvite?button.dataset.encounterInviteGarden:cageInvite?button.dataset.encounterInviteCage:button.dataset.encounterDismissCage;
       const result=await mutate(current=>(gardenInvite?system.inviteGarden:cageInvite?system.inviteCage:system.dismissCage)(current,id,expected),token);

@@ -88,6 +88,27 @@ export function inviteFriend(w,birdId) {
   b.home='visitor';b.arrivedTick=w.tick;setAction(w,b,'visit');record(w,'revisit',[b.id],'お友達を自分たちのおうちへ招いた','いっしょに過ごす時間が始まった');bumpRevision(w);
   return {changed:true,message:`${b.name}を招いたよ。おうちに帰って一緒に過ごそう。`};
 }
+/** Send only this visiting friend home, without changing its identity or history.
+ * Its automatic return waits until Japanese midnight; an explicit invite still works.
+ */
+export function dismissHomeFriend(w,birdId,expectedToken,now=Date.now()) {
+  if(!currentToken(w,expectedToken))return {...staleEconomy(),reason:'stale'};
+  if(w.field.place!=='home')return {changed:false,reason:'location',message:'おうちでお友達を見送ろう。'};
+  const bird=findBird(w,birdId);
+  if(!bird||bird.home!=='visitor'||bird.id===getProtagonistId(w)||!isAlive(w,bird))return {changed:false,reason:'unavailable',message:'今おうちに遊びに来ているお友達を選んでね。'};
+  if(!Number.isSafeInteger(now)||now<0||now>MAX_DATE_MS)throw new Error('端末の日時を確認してください。');
+  const at=Math.max(now,w.lastUpdated,w.careSchedule.seenAt,w.economy.seenAt),day=86400000,offset=9*3600000;
+  const until=Math.min(MAX_DATE_MS,(Math.floor((at+offset)/day)+1)*day-offset);
+  upgradeEncounterState(w.encounters);
+  const goodbye=w.encounters.homeGoodbyes.find(g=>g.birdId===bird.id);
+  if(goodbye)goodbye.until=Math.max(goodbye.until,until);
+  else w.encounters.homeGoodbyes.push({birdId:bird.id,until});
+  bird.home='departed';setAction(w,bird,'rest');
+  for(const other of w.birds)if(other.action.target===bird.id)setAction(w,other,'rest');
+  if(w.adoption.pending?.birdId===bird.id)w.adoption.pending=null;
+  bumpRevision(w);
+  return {changed:true,birdId:bird.id,message:`${bird.name}は自分のおうちに帰ったよ。また「友達」から招けるよ。`};
+}
 /** Closing the home affects presence only. Friendships, family and belongings stay intact.
  * Automatic arrivals resume at the next Japanese midnight, independently of story ticks.
  * Explicit invitations remain available, including while automatic visits are closed.
@@ -314,7 +335,8 @@ function visits(w, now=Date.now()) {
       setAction(w, v, 'visit'); record(w, 'visit', [v.id], '庭の外からやって来た', '新しい出会い');
     }
     if (w.tick % 84 === 0) {
-      const away = w.birds.filter(b => b.home === 'departed' && b.stage === 'adult' && isAlive(w,b));
+      const at=Math.max(now,w.lastUpdated,w.careSchedule.seenAt,w.economy.seenAt);
+      const away = w.birds.filter(b => b.home === 'departed' && b.stage === 'adult' && isAlive(w,b) && !w.encounters.homeGoodbyes?.some(g=>g.birdId===b.id&&g.until>at));
       if (away.length && cageVisitorCount(w) < LIMITS.visitors) {
         const v = pick(w, away); v.home = 'visitor'; v.arrivedTick = w.tick; setAction(w, v, 'visit'); record(w, 'revisit', [v.id], '昔の庭のことを覚えていた', 'また遊びに来た');
       }
@@ -596,7 +618,7 @@ function validateVersion(input, version) {
   }
   if(version>=5)validateCareSchedule(w.careSchedule);
   const legacyHomeLimits=version<6||w.encounters.version<6;
-  if(version>=6){validateEncounterState(w.encounters,w.tick);upgradeEncounterState(w.encounters);if(w.encounters.raptor?.active&&!ref(w.encounters.raptor.active.targetBirdId))fail('猛禽と会った文鳥の情報が不正です。');if(w.encounters.crow?.arrivalBirdId&&!ref(w.encounters.crow.arrivalBirdId))fail('カラスと会った文鳥の情報が不正です。');}
+  if(version>=6){validateEncounterState(w.encounters,w.tick);upgradeEncounterState(w.encounters);if(w.encounters.homeGoodbyes.some(g=>!ref(g.birdId)))fail('お友達のお見送り情報が不正です。');if(w.encounters.raptor?.active&&!ref(w.encounters.raptor.active.targetBirdId))fail('猛禽と会った文鳥の情報が不正です。');if(w.encounters.crow?.arrivalBirdId&&!ref(w.encounters.crow.arrivalBirdId))fail('カラスと会った文鳥の情報が不正です。');}
   if(version>=7){
    validateEconomy(w.economy);
    if(w.economy.firstMeetingClaimed.some(id=>!w.encounters.discoveries.some(d=>d.id===id)))fail('初出会いの記録が不正です。');
