@@ -470,10 +470,10 @@ export const GARDEN_ASSETS=Object.freeze({
   },
   "java-rice": {
     "background": {
-      "src": "game-art/gardens/java-rice.png",
+      "src": "game-art/gardens/java-rice-v2.webp",
       "width": 941,
       "height": 1672,
-      "sha256": "a9874772ddc2220a9ce9941cd35ec9c410a8c6b4c3389d69eb0541ad00b039d6",
+      "sha256": "015adedafcc56fbe9d866bc5d6857862cc7435efcb30561aaa1966d911ecbc91",
       "fit": "cover",
       "position": {
         "x": 0.5,
@@ -482,26 +482,51 @@ export const GARDEN_ASSETS=Object.freeze({
       "anchorSpace": "source-image-normalized",
       "friendFeet": [
         {
-          "x": 0.36,
+          "x": 0.34,
           "y": 0.68
         },
         {
-          "x": 0.54,
-          "y": 0.7
+          "x": 0.5,
+          "y": 0.68
         },
         {
-          "x": 0.72,
-          "y": 0.69
+          "x": 0.66,
+          "y": 0.68
         }
       ],
       "ownerFoot": {
-        "x": 0.25,
-        "y": 0.76
+        "x": 0.5,
+        "y": 0.75
       },
       "visualArtReviewed": true,
       "integratedUiReviewed": false,
       "trialAvailable": true,
-      "releaseReady": false
+      "releaseReady": false,
+      "landscape": {
+        "width": 1672,
+        "height": 941,
+        "sha256": "df0cd34012984ad210bdac549f6a0fc40c7e632801a2e5c864c7487f923be9ad",
+        "src": "game-art/gardens/java-rice-wide-v2.webp",
+        "friendFeet": [
+          {
+            "x": 0.34,
+            "y": 0.73
+          },
+          {
+            "x": 0.5,
+            "y": 0.73
+          },
+          {
+            "x": 0.66,
+            "y": 0.73
+          }
+        ],
+        "ownerFoot": {
+          "x": 0.5,
+          "y": 0.8
+        }
+      },
+      "landscapeMinAspect": 0.8
     },
     "music": {
       "themeId": "garden-java-rice",
@@ -521,10 +546,10 @@ export const GARDEN_ASSETS=Object.freeze({
   },
   "bali-terrace": {
     "background": {
-      "src": "game-art/gardens/bali-terrace.png",
+      "src": "game-art/gardens/bali-terrace-v2.webp",
       "width": 941,
       "height": 1672,
-      "sha256": "376461f65b9125b064000a21ee6a13e52588a58a01e4c0f5acf606e4da6bbc5f",
+      "sha256": "0fc8273f877e5e71330edd58db01e810a854ac2b65105e6f6af616fd459752fb",
       "fit": "cover",
       "position": {
         "x": 0.5,
@@ -533,26 +558,51 @@ export const GARDEN_ASSETS=Object.freeze({
       "anchorSpace": "source-image-normalized",
       "friendFeet": [
         {
-          "x": 0.36,
-          "y": 0.68
-        },
-        {
-          "x": 0.54,
+          "x": 0.34,
           "y": 0.7
         },
         {
-          "x": 0.72,
-          "y": 0.69
+          "x": 0.5,
+          "y": 0.7
+        },
+        {
+          "x": 0.66,
+          "y": 0.7
         }
       ],
       "ownerFoot": {
-        "x": 0.25,
-        "y": 0.76
+        "x": 0.5,
+        "y": 0.77
       },
       "visualArtReviewed": true,
       "integratedUiReviewed": false,
       "trialAvailable": true,
-      "releaseReady": false
+      "releaseReady": false,
+      "landscape": {
+        "width": 1672,
+        "height": 941,
+        "sha256": "8a022fd234a7370bcf4ea8408300bcbcb2d83743bc4f10df8ef8ac98745d4571",
+        "src": "game-art/gardens/bali-terrace-wide-v2.webp",
+        "friendFeet": [
+          {
+            "x": 0.34,
+            "y": 0.73
+          },
+          {
+            "x": 0.5,
+            "y": 0.73
+          },
+          {
+            "x": 0.66,
+            "y": 0.73
+          }
+        ],
+        "ownerFoot": {
+          "x": 0.5,
+          "y": 0.8
+        }
+      },
+      "landscapeMinAspect": 0.8
     },
     "music": {
       "themeId": "garden-bali-terrace",
@@ -572,10 +622,10 @@ export const GARDEN_ASSETS=Object.freeze({
   },
   "paris-unrest": {
     "background": {
-      "src": "game-art/gardens/paris-unrest.png",
+      "src": "game-art/gardens/paris-unrest-v2.webp",
       "width": 1051,
       "height": 1497,
-      "sha256": "88ec7a4ac29643da329a957135c5ae059199d273c1ad406234a2c82ed3098c15",
+      "sha256": "ad3a1f1a4ca7d3954533986e4a62deaf44eedfbfbf424bf0c2d8a4d22ab74abe",
       "fit": "cover",
       "position": {
         "x": 0.5,
@@ -584,26 +634,51 @@ export const GARDEN_ASSETS=Object.freeze({
       "anchorSpace": "source-image-normalized",
       "friendFeet": [
         {
-          "x": 0.36,
-          "y": 0.68
-        },
-        {
-          "x": 0.54,
+          "x": 0.34,
           "y": 0.7
         },
         {
-          "x": 0.72,
-          "y": 0.69
+          "x": 0.5,
+          "y": 0.7
+        },
+        {
+          "x": 0.66,
+          "y": 0.7
         }
       ],
       "ownerFoot": {
-        "x": 0.25,
-        "y": 0.76
+        "x": 0.5,
+        "y": 0.77
       },
       "visualArtReviewed": true,
       "integratedUiReviewed": false,
       "trialAvailable": true,
-      "releaseReady": false
+      "releaseReady": false,
+      "landscape": {
+        "width": 1672,
+        "height": 941,
+        "sha256": "17fd6c25792a65d23cfcaa56675b67c4df859db91adf592a2ff537eb7d3ffce1",
+        "src": "game-art/gardens/paris-unrest-wide-v2.webp",
+        "friendFeet": [
+          {
+            "x": 0.34,
+            "y": 0.78
+          },
+          {
+            "x": 0.5,
+            "y": 0.78
+          },
+          {
+            "x": 0.66,
+            "y": 0.78
+          }
+        ],
+        "ownerFoot": {
+          "x": 0.5,
+          "y": 0.8500000000000001
+        }
+      },
+      "landscapeMinAspect": 0.8
     },
     "music": {
       "themeId": "garden-paris-unrest",

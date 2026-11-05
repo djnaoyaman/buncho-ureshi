@@ -1,5 +1,6 @@
 import {test,expect} from '@playwright/test';
 test('twelve gardens load new backgrounds and selector wraps without rerolling a visit',async({page},info)=>{
+ await page.route(/\/src\/game\.js(?:\?.*)?$/,async route=>{const response=await route.fetch(),source=await response.text(),target='predatorRandom = Math.random';expect(source.split(target)).toHaveLength(2);await route.fulfill({response,body:source.replace(target,'predatorRandom = () => 1')});});
  await page.addInitScript(()=>{localStorage.setItem('buncho.music.v1',JSON.stringify({enabled:false}));});
  await page.goto('game/');await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');
  const toggle=page.locator('.game-scene-controls-toggle');if(await toggle.getAttribute('aria-expanded')!=='true')await toggle.click();
@@ -7,7 +8,7 @@ test('twelve gardens load new backgrounds and selector wraps without rerolling a
  await expect(page.locator('.finch-garden-stage')).toBeVisible();await expect(page.locator('[data-garden-select]')).toHaveCount(12);
  for(const id of ['java-rice','bali-terrace','paris-unrest']){
   await page.locator(`[data-garden-select="${id}"]`).click();
-  const image=page.locator('.finch-garden-background');await expect(image).toHaveAttribute('src',new RegExp(`${id}.screen.webp`));
+  const image=page.locator('.finch-garden-background');await expect(image).toHaveAttribute('src',new RegExp(`${id}(?:-wide)?-v2.webp`));
   await expect.poll(()=>image.evaluate(x=>x.complete&&x.naturalWidth>0)).toBe(true);
   await expect(page.locator('.finch-garden-stage .garden-bird-sprite').first()).toBeVisible();
   await info.attach(id,{body:await page.screenshot(),contentType:'image/png'});

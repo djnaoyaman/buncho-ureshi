@@ -9,10 +9,10 @@ for(const [width,height] of [[900,440],[660,160],[390,600],[320,420],[390,690]])
  await page.goto('garden-foot-qa/');
  for(const id of GARDEN_IDS){
   await page.evaluate(async({id,width,height})=>{
-   const [{createWorld},{renderGardenStage},{gardenStageGeometry}]=await Promise.all(['engine.js','encounter-ui.js','data/gardens.js'].map(p=>import('/buncho-ureshi/src/'+p)));
+   const [{createWorld},{renderGardenStage},{gardenStageGeometry},{syncGardenArtwork}]=await Promise.all(['engine.js','encounter-ui.js','data/gardens.js','encounter-media.js'].map(p=>import('/buncho-ureshi/src/'+p)));
    const w=createWorld(1000);w.encounters.garden.id=id;
    document.querySelector('#fixture').innerHTML=renderGardenStage(w,{previewBackgrounds:true});
-   const stage=document.querySelector('.finch-garden-stage');stage.style.width=width+'px';stage.style.height=height+'px';
+   const stage=document.querySelector('.finch-garden-stage');stage.style.width=width+'px';stage.style.height=height+'px';syncGardenArtwork(stage);
    await Promise.all([...stage.querySelectorAll('img')].map(image=>image.decode()));
    // The media controller owns this transition in the live app; this fixture is rendering-only.
    stage.dataset.sceneState='ready';

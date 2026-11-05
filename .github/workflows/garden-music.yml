@@ -1,7 +1,7 @@
 name: Garden music transitions
 on:
   pull_request:
-    paths: ['src/game-music.js', 'src/game-music-ui.js', 'tests/game-music.test.js', 'tests/game-music-ui.test.js', 'tests/browser/garden-music.spec.js', '.github/workflows/garden-music.yml', 'src/data/gardens.js', 'src/data/garden-assets.js', 'public/audio/gardens/**', 'tests/browser/twelve-gardens.spec.js', 'playwright.twelve-gardens.config.js']
+    paths: ['src/game-music.js', 'src/game-music-ui.js', 'tests/game-music.test.js', 'tests/game-music-ui.test.js', 'tests/browser/garden-music.spec.js', '.github/workflows/garden-music.yml', 'src/data/gardens.js', 'src/data/garden-assets.js', 'public/audio/gardens/**', 'tests/browser/twelve-gardens.spec.js', 'playwright.twelve-gardens.config.js', 'tests/browser/garden-art-direction.spec.js', 'public/game-art/gardens/**']
 permissions:
   contents: read
 jobs:
