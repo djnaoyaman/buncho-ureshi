@@ -44,6 +44,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: npm run build
       - name: Use the official Chrome supplied by the runner
         run: google-chrome --version || npx playwright install chrome
       - run: npx playwright test --config=playwright.color-play.config.js --project=color-play-desktop
