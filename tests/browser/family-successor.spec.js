@@ -42,13 +42,21 @@ async function reachable(control,size,{scroll=true}={}){
  const box=await control.boundingBox();expect(box.width).toBeGreaterThanOrEqual(44);expect(box.height).toBeGreaterThanOrEqual(44);
  expect(await control.evaluate(el=>{const box=el.getBoundingClientRect(),hit=document.elementFromPoint(box.x+box.width/2,box.y+box.height/2);return hit===el||el.contains(hit);})).toBe(true);
 }
-async function screenshot(page,info,name){await info.attach(name,{body:await page.screenshot({path:info.outputPath(`${name}.png`)}),contentType:'image/png'});}
+async function screenshot(page,info,name){await info.attach(name,{body:await page.screenshot({path:info.outputPath(`${name}.png`),scale:'css'}),contentType:'image/png'});}
+async function ordinaryVisitor(page,bird){
+ expect((await record(page)).birds.find(b=>b.id===bird.id).home).toBe('visitor');
+ const button=page.locator(`.game-room-bird[data-game-scene-select][data-bird-id="${bird.id}"]`),compact=await page.locator('.game-room').getAttribute('data-compact')==='true';
+ // Short screens intentionally show only the selected bird; use its normal picker.
+ if(compact){await controls(page);await page.locator('.game-scene-toolbar [data-bird-step="1"]').click();}
+ await expect(button).toHaveAccessibleName(new RegExp(`^${bird.name}、お友達、`));
+ if(compact)await page.locator('.game-scene-toolbar [data-bird-step="-1"]').click();
+}
 const identities=w=>w.birds.map(({id,name,naming,parents,partner,generation})=>({id,name,naming,parents,partner,generation}));
 
 for(const [index,size] of SIZES.entries())test(`family choice preserves the story, safe consent and garden identity ${size.width}x${size.height}`,async({page},info)=>{
  const {w,resident,returning,visitor}=seed(),candidate=index===2?returning:resident,entry=['health','family','memorial'][index],errors=[];
  page.on('pageerror',e=>errors.push(e.message));await start(page,w,{size});await expect(page.locator('[data-home-role=self]')).toHaveCount(0);
- await expect(page.locator(`[data-bird-id="${visitor.id}"] [data-home-role=friend]`)).toHaveCount(1);
+ await ordinaryVisitor(page,visitor);
  await panel(page,entry);const before=await record(page),ask=page.locator(`[data-successor-open="${candidate.id}"]`);
  await expect(page.locator(`[data-successor-open="${resident.id}"]`)).toBeEnabled();await expect(page.locator(`[data-successor-open="${returning.id}"]`)).toBeEnabled();await expect(page.locator(`[data-successor-open="${visitor.id}"]`)).toHaveCount(0);
  await reachable(ask,size);await noOverflow(page);await screenshot(page,info,'family-successor-choices');
@@ -97,7 +105,7 @@ test('an empty family keeps memorial, settings, navigation and ordinary visitors
  await reachable(page.locator('[data-game-close-panel]'),SIZES[0]);await page.locator('[data-game-close-panel]').click();await expect(page.locator('.game-panel-overlay')).not.toBeVisible();
  await panel(page,'settings');await expect(page.locator('#game-settings-title')).toBeVisible();await page.keyboard.press('Escape');await expect(page.locator('.game-panel-overlay')).not.toBeVisible();
  await panel(page,'family');await expect(page.locator('[data-successor-open]')).toHaveCount(0);await page.locator('[data-game-close-panel]').click();await controls(page);await page.locator('.game-field-nav [data-game-panel=friends]').click();await expect(page.locator('.game-panel-overlay')).toBeVisible();await page.locator('[data-game-close-panel]').click();
- await page.locator(`[data-bird-id="${visitor.id}"]`).click();await expect(page.locator('#game-sheet-title')).toHaveText(visitor.name);await page.locator('[data-game-close-bird]').click();await page.reload();await expect(page.locator('[data-home-role=self]')).toHaveCount(0);
+ await page.locator(`.game-room-bird[data-game-scene-select][data-bird-id="${visitor.id}"]`).click();await expect(page.locator('#game-sheet-title')).toHaveText(visitor.name);await page.locator('[data-game-close-bird]').click();await page.reload();await expect(page.locator('[data-home-role=self]')).toHaveCount(0);
  const saved=await record(page);expect(saved.worldId).toBe(before.worldId);expect(saved.protagonist).toEqual(before.protagonist);expect(saved.birds).toEqual(before.birds);expect(saved.events).toEqual(before.events);expect(saved.economy).toEqual(before.economy);expect(saved.decor).toEqual(before.decor);expect(saved.seed).toBe(before.seed);expect(saved.events.filter(e=>e.kind==='succession')).toHaveLength(0);
 });
 

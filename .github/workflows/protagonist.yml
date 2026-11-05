@@ -46,3 +46,11 @@ jobs:
             test-results/**/*.png
             test-results/**/error-context.md
           retention-days: 14
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: family-successor-review-${{ github.sha }}
+          path: |
+            test-results/family-successor-*/family-successor-*.png
+            test-results/family-successor-*/error-context.md
+          retention-days: 14
