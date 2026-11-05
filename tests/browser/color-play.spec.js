@@ -83,6 +83,9 @@ test('Color Play keeps real export, invalid import and reset cancellation safe',
 
 for(const width of [320,390])test(`Color Play preserves live garden controls, taps and motion at ${width}`,async({page},info)=>{
  const height=width===320?568:844;
+ // This motion test excludes random predator arrivals, as garden-interaction does.
+ // Dedicated crow/raptor suites cover their intentionally hidden selector state.
+ await page.addInitScript(()=>{Math.random=()=>.99;});
  await setup(page,[width,height]);
  const world=createWorld(NOW,42);world.settings.motion=true;world.settings.careSound=false;world.paused=false;
  validateWorld(world);
