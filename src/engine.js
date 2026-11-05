@@ -296,7 +296,7 @@ function interact(w, a, b) {
   record(w, recentRefusal ? 'reconcile' : kind, [a.id, b.id], recentRefusal ? '前は休んだけれど、今日は元気だった' : `${bath ? '水浴びの好み' : '遊びたい気分'}と相性が合った`, '親しさと信頼が少し育った');
   for (const visitor of [a, b].filter(x => x.home === 'visitor')) {
     const vr = visitor.relations[visitor.id === a.id ? b.id : a.id];
-    if ((!visitor.partner || findBird(w, visitor.partner)?.home === 'resident') && vr.affection >= 32 && vr.meetings >= 4 && w.birds.filter(x => x.home === 'resident').length < LIMITS.residents) {
+    if (!w.adoption.dismissed.includes(visitor.id) && (!visitor.partner || findBird(w, visitor.partner)?.home === 'resident') && vr.affection >= 32 && vr.meetings >= 4 && w.birds.filter(x => x.home === 'resident').length < LIMITS.residents) {
       if(w.settings.adoptionMode==='auto'){visitor.home = 'resident'; const life=lifeStatus(w,visitor);if(life)life.lastCareAt=w.lifecycle.seenAt; record(w, 'movein', [visitor.id], '何度も会って親しくなった', '庭の仲間になった');}
       else if(!w.adoption.pending&&!w.adoption.dismissed.includes(visitor.id))w.adoption.pending={birdId:visitor.id,arrivedTick:visitor.arrivedTick};
     }
@@ -342,15 +342,7 @@ function visits(w, now=Date.now()) {
       }
     }
   }
-  // Once adults have lived together for a while, pairs or independent adults can start a new garden.
-  if (w.birds.filter(b => b.home === 'resident').length >= 8) {
-    const candidates = w.birds.filter(b => b.home === 'resident' && b.id !== getProtagonistId(w) && b.partner !== getProtagonistId(w) && b.stage === 'adult' && w.tick - b.stageTick > 100 && !w.birds.some(c => c.parents.includes(b.id) && c.stage !== 'adult'));
-    const b = candidates.find(x => x.partner && (x.eggsLaid >= 1 || w.tick - x.arrivedTick > 300)) || candidates.find(x => !x.partner && w.tick - x.arrivedTick > 160);
-    if (b) {
-      const pair = b.partner ? findBird(w, b.partner) : null;
-      if (!pair || pair.id !== getProtagonistId(w)) { const leaving = [b, ...(pair && pair.home === 'resident' ? [pair] : [])]; for (const x of leaving) x.home = 'departed'; record(w, 'depart', leaving.map(x => x.id), '成鳥が新しい庭へ出発する時期になった', '名簿と家系図にはずっと残る'); }
-    }
-  }
+  // Resident independence is always a separate, explicitly accepted consultation.
   for (const b of w.birds.filter(b => b.home === 'visitor' && w.tick - b.arrivedTick > 96)) { b.home = 'departed'; record(w, 'depart', [b.id], '外の庭にも暮らしがある', 'また会う約束をした'); }
 }
 export function stepWorld(w, now=w.lifecycle?.seenAt??Date.now()) {
@@ -399,6 +391,43 @@ export function renameBird(w, birdId, name) {
   const b = findBird(w, birdId); const clean = typeof name === 'string' ? name.trim().slice(0, 16) : '';
   if (!b || !clean || /[\u0000-\u001f\u007f]/.test(clean)) throw new Error('名前を1〜16文字で入力してね。');
   b.name = clean; b.naming=manualNaming(clean); bumpRevision(w); return b;
+}
+/** Read-only proposals. Household capacity never authorizes an automatic move. */
+export function independenceCandidates(w){
+  if(w.birds.filter(b=>b.home==='resident').length<LIMITS.residents||w.field.place!=='home'||w.encounters.garden.open||w.encounters.raptor?.active)return [];
+  const protagonist=findBird(w,getProtagonistId(w));
+  const safe=b=>!!b&&b.home==='resident'&&b.stage==='adult'&&isAlive(w,b)&&!lifeStatus(w,b)?.condition&&b.id!==protagonist?.id&&b.id!==protagonist?.partner&&!w.birds.some(child=>child.parents.includes(b.id)&&isAlive(w,child)&&child.stage!=='adult');
+  const seen=new Set(),groups=[];
+  for(const bird of w.birds){
+    if(!safe(bird)||seen.has(bird.id))continue;
+    const partner=bird.partner&&findBird(w,bird.partner),together=partner&&isAlive(w,partner);
+    if(together&&!safe(partner))continue;
+    const members=together?[bird,partner]:[bird];
+    members.forEach(b=>seen.add(b.id));groups.push({ids:members.map(b=>b.id),names:members.map(b=>b.name)});
+  }
+  return groups;
+}
+/** Apply the exact approved group in one fresh-state transaction; never erase a bird. */
+export function acceptIndependence(w,ids,expectedToken,now=Date.now()){
+  if(!currentToken(w,expectedToken))return {...staleEconomy(),reason:'stale'};
+  const same=g=>Array.isArray(ids)&&ids.length===g.ids.length&&new Set(ids).size===ids.length&&g.ids.every(id=>ids.includes(id));
+  const unavailable=()=>({changed:false,reason:'unavailable',message:'今は独立の相談をお休みするよ。おうちで家族の様子を見てね。'});
+  if(!independenceCandidates(w).some(same))return unavailable();
+  if(!Number.isSafeInteger(now)||now<0||now>MAX_DATE_MS)throw new Error('端末の日時を確認してください。');
+  // A long-open confirmation cannot bypass real care deadlines or succession.
+  synchronizeLife(w,careTime(now));
+  const group=independenceCandidates(w).find(same);if(!group)return unavailable();
+  const leaving=new Set(group.ids);
+  for(const bird of w.birds){
+    if(leaving.has(bird.id)){
+      bird.home='departed';setAction(w,bird,'rest');
+      if(!w.adoption.dismissed.includes(bird.id))w.adoption.dismissed.push(bird.id);
+    }else if(leaving.has(bird.action.target))setAction(w,bird,'rest');
+  }
+  w.encounters.gardenFriends.companions=w.encounters.gardenFriends.companions.filter(id=>!leaving.has(id));
+  record(w,'depart',group.ids,'成鳥の独立の相談を利用者が承諾した','名前・家系・思い出を残して別のおうちで暮らし始めた');
+  bumpRevision(w);
+  return {changed:true,ids:group.ids,message:`${group.names.join('と')}が新しいおうちへ独立したよ。家系図と名簿に残り、友達としてまた招けるよ。`};
 }
 export function adoptBird(w, birdId, name) {
   const b = findBird(w, birdId); if (!b || b.home !== 'visitor') throw new Error('今来ている文鳥を選んでね。');

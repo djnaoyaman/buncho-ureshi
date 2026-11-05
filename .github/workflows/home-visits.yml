@@ -9,6 +9,8 @@ on:
       - 'src/care-schedule.js'
       - 'src/field-visuals.js'
       - 'tests/browser/home-visits.spec.js'
+      - 'tests/browser/family-independence.spec.js'
+      - 'tests/family-independence*.test.js'
       - 'playwright.home-visits.config.js'
       - '.github/workflows/home-visits.yml'
   workflow_dispatch:
