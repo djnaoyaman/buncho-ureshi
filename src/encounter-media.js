@@ -1,8 +1,32 @@
+/** Select one decoded art source and its terrain coordinates together. No world changes. */
+export function syncGardenArtwork(scene) {
+  const image = scene?.querySelector('.finch-garden-background[data-garden-landscape]');
+  const plane = image?.closest('.finch-garden-image-plane');
+  if (!image || !plane) return false;
+  const {width, height} = scene.getBoundingClientRect();
+  if (!(width > 0 && height > 0)) return false;
+  const format = width / height >= Number(image.dataset.gardenMinAspect) ? 'landscape' : 'portrait';
+  const art = JSON.parse(image.dataset[format === 'landscape' ? 'gardenLandscape' : 'gardenPortrait']);
+  plane.style.setProperty('--garden-image-ratio', art.width / art.height);
+  plane.style.setProperty('--garden-anchor-x', art.anchor.x);
+  plane.style.setProperty('--garden-anchor-y', art.anchor.y);
+  plane.dataset.imageWidth = image.width = art.width;
+  plane.dataset.imageHeight = image.height = art.height;
+  scene.dataset.gardenArt = format;
+  if (image.getAttribute('src') === art.src) return false;
+  // The predator clock must never see a newly selected, still-loading scene as ready.
+  scene.dataset.sceneState = 'loading';
+  delete image.dataset.mediaResult;
+  delete image.dataset.mediaStarted;
+  image.src = art.src;
+  return true;
+}
+
 /** Presentation-only image loading. No world, storage, random or reward changes. */
 export function mountEncounterMedia(root) {
   const win = root.ownerDocument.defaultView;
-  let alive = true, observer = null, retained = new Map(), cleanups = [], timers = [];
-  const clear = () => { observer?.disconnect(); observer = null; cleanups.splice(0).forEach(fn => fn()); timers.splice(0).forEach(id => win.clearTimeout(id)); };
+  let alive = true, observer = null, artObserver = null, retained = new Map(), cleanups = [], timers = [];
+  const clear = () => { observer?.disconnect(); observer = null; artObserver?.disconnect(); artObserver = null; cleanups.splice(0).forEach(fn => fn()); timers.splice(0).forEach(id => win.clearTimeout(id)); };
   function sceneState() {
     const retryButton = root.querySelector(':scope > .finch-media-retry');
     if (retryButton) retryButton.hidden = !root.querySelector('.finch-media[data-media-state=error]');
@@ -61,6 +85,9 @@ export function mountEncounterMedia(root) {
   function refresh() {
     clear();
     if (!alive) return;
+    const stage = root.querySelector('.finch-garden-stage');
+    // Choose before retained-node lookup so ordinary world redraws reuse wide art too.
+    syncGardenArtwork(stage);
     if (win.IntersectionObserver) observer = new win.IntersectionObserver(entries => {
       for (const entry of entries) if (entry.isIntersecting) { observer.unobserve(entry.target); entry.target._startEncounterMedia?.(); }
     }, { root: root.querySelector('.finch-catalog') || root, rootMargin: '120px' });
@@ -78,6 +105,12 @@ export function mountEncounterMedia(root) {
     }
     retained.clear();
     sceneState();
+    if (stage?.querySelector('[data-garden-landscape]') && win.ResizeObserver) {
+      artObserver = new win.ResizeObserver(() => {
+        if (alive && root.contains(stage) && syncGardenArtwork(stage)) refresh();
+      });
+      artObserver.observe(stage);
+    }
   }
   const retry = event => {
     const button = event.target.closest('[data-media-retry]');
