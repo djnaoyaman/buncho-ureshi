@@ -6,7 +6,10 @@ on:
       - 'src/engine.js'
       - 'src/game.js'
       - 'tests/protagonist.test.js'
+      - 'tests/family-successor.test.js'
+      - 'tests/family-successor-ui.test.js'
       - 'tests/browser/protagonist.spec.js'
+      - 'tests/browser/family-successor.spec.js'
       - 'playwright.protagonist.config.js'
       - '.github/workflows/protagonist.yml'
   workflow_dispatch:
@@ -24,7 +27,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
-      - run: node --test tests/protagonist.test.js
+      - run: node --test tests/protagonist.test.js tests/family-successor.test.js tests/family-successor-ui.test.js
       - run: npx playwright install --with-deps chromium webkit
       - run: npx playwright test --config=playwright.protagonist.config.js
       - uses: actions/upload-artifact@v4
@@ -42,4 +45,12 @@ jobs:
           path: |
             test-results/**/*.png
             test-results/**/error-context.md
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: family-successor-review-${{ github.sha }}
+          path: |
+            test-results/family-successor-*/family-successor-*.png
+            test-results/family-successor-*/error-context.md
           retention-days: 14

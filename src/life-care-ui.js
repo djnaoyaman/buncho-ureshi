@@ -1,4 +1,4 @@
-import {protagonistStatus} from './protagonist.js';
+import {protagonistStatus,familySuccessorCandidates} from './protagonist.js';
 import {LIFE_RULES,isAlive,lifeStatus,caretakerStatus,conditionName,ageLabel} from './life-care.js';
 
 const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -13,8 +13,10 @@ const warning='<p class="life-care-warning"><strong>ここにある年齢・期�
 export function renderProtagonistSummary(world){
  const {bird,generation,waiting,heir}=protagonistStatus(world);
  if(!bird)return '';
- const explanation=waiting==='no-child'?'引き継げる存命の子がいないため、代替わりを待っています。家族・お墓・持ち物はそのまま残ります。':waiting==='hatch'?'子の卵がかえるのを待っています。かえった子へ、物語を引き継ぎます。':waiting==='room'?`${heir.name}が帰ってくるため、おうちに空きができるのを待っています。家族を消すことはありません。`:waiting?'代替わりを準備しています。':'名前や選んでいる文鳥が変わっても、主人公は同じです。';
- return `<section class="life-protagonist" aria-label="主人公の代替わり"><h4>第${generation}代の主人公 · ${escape(bird.name)}</h4><p>${escape(explanation)}</p><p class="life-small">主人公が旅立つと、存命の子のうち、先に生まれた長男か長女へ引き継ぎます。卵のときは、かえるまで待ちます。</p></section>`;
+ const candidates=waiting==='no-child'?familySuccessorCandidates(world):[];
+ const explanation=waiting==='no-child'?(candidates.length?'引き継げる存命の子がいないため、残っている家族から次の主人公を選べます。確認するまで代替わりしません。':'引き継げる存命の子も、選べる家族もいません。次の主人公は決まりませんが、家系・思い出・お墓・持ち物は残ります。メニューの操作はそのまま使えます。'):waiting==='hatch'?'子の卵がかえるのを待っています。かえった子へ、物語を引き継ぎます。':waiting==='room'?`${heir.name}が帰ってくるため、おうちに空きができるのを待っています。家族を消すことはありません。`:waiting?'代替わりを準備しています。':'名前や選んでいる文鳥が変わっても、主人公は同じです。';
+ const choices=candidates.length?`<div class="life-successor-choices">${candidates.map(({bird:b,reason})=>`<div><button type="button" data-successor-open="${escape(b.id)}" ${reason?'disabled':''}>${escape(b.name)}を次の主人公に選ぶ</button>${reason?`<p class="life-small">${reason==='hatch'?'卵がかえってから選べます。自動では交代しません。':reason==='clock'?'保存された日時が上限に近いため、帰宅後の通院時間を確保できません。':'帰宅には家族の空きが必要です。誰かを追い出すことはありません。'}</p>`:b.home!=='resident'?'<p class="life-small">同じ文鳥が帰宅して引き継ぎます。</p>':''}</div>`).join('')}</div><p class="life-small">名前・血縁・つがい・記録は変わりません。新しい文鳥は作りません。</p>${candidates.some(c=>c.reason==='room')?'<button type="button" data-game-panel="family">家族の様子と独立相談を見る</button>':''}`:'';
+ return `<section class="life-protagonist" aria-label="主人公の代替わり"><h4>第${generation}代の主人公 · ${escape(bird.name)}</h4><p>${escape(explanation)}</p>${choices}<p class="life-small">主人公が旅立つと、存命の子のうち、先に生まれた長男か長女へ引き継ぎます。卵のときは、かえるまで待ちます。存命の子がいないときだけ、家族から選べます。</p></section>`;
 }
 
 /** The illness deadline never replaces the independent feeding deadline. */

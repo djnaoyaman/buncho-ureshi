@@ -1,12 +1,12 @@
 import {advanceRaptorState} from './garden-raptors.js';
-import {getProtagonistId,initializeProtagonist,syncProtagonist,validateProtagonist} from './protagonist.js';
+import {getProtagonistId,initializeProtagonist,syncProtagonist,validateProtagonist,protagonistStatus,familySuccessorCandidates,selectFamilyProtagonist,recordedFamilySuccession} from './protagonist.js';
 import {accidentLifeBird,rebaseLifecycleClock,initializeLifecycle,registerLifeBird,syncLifecycle,validateLifecycle,isAlive,lifeStatus,noteLifeFeeding,noteLifeConflict,treatLifeBird,hireLifeCaretaker,honorLifeBird} from './life-care.js';
 import {initialEncounterState,validateEncounterState,encounterSystem,upgradeEncounterState,cageVisitorCount,expireEncounterVisitors} from './encounters.js';
 import {initialEconomy,validateEconomy,syncEconomy,reserveAutomaticGems,awardCareGold,ECONOMY_RULES} from './economy.js';
 /** A deterministic, offline story simulation with fictional lifecycle rules. No real husbandry advice. */
 import { initializeCareSchedule, validateCareSchedule, syncCareSchedule, applyScheduledCare, reconcileImportedCare, careWindow } from './care-schedule.js';
 import { defaultNameFields, automaticNaming, manualNaming, legacyNaming, isValidNaming } from './bird-names.js';
-export const SAVE_VERSION = 9;
+export const SAVE_VERSION = 10;
 const careTime = now => Math.max(0, Math.min(253402268399999, now));
 export { reconcileImportedCare, careWindow };
 export const TICK_MS = 15000;
@@ -209,6 +209,18 @@ function lifeEvent(w,event){
 }
 function synchronizeProtagonist(w){const succession=syncProtagonist(w);if(succession){record(w,'succession',[succession.fromId,succession.toId],'先代の子が家族の物語を引き継ぐ',`${birdName(w,succession.toId)}が第${w.protagonist.lineage.length}代の主人公になった`);bumpRevision(w);}return succession;}
 function synchronizeLife(w,now,story=false){const result=syncLifecycle(w,now,{story});for(const event of result.events)lifeEvent(w,event);if(result.changed)bumpRevision(w);synchronizeProtagonist(w);return result;}
+/** Explicit family choice: lifecycle and ordinary child priority are resolved first. */
+export function chooseFamilyProtagonist(w,birdId,token,now=Date.now()){
+ if(!currentToken(w,token)||token.fromId!==getProtagonistId(w))return {...staleEconomy(),reason:'stale'};
+ const unavailable=()=>({changed:false,reason:'unavailable',message:'今はこの家族を選べません。家族の様子を確認して、もう一度選んでね。'});
+ if(!familySuccessorCandidates(w).some(c=>c.bird.id===birdId&&!c.reason))return unavailable();
+ if(!Number.isSafeInteger(now)||now<0||now>MAX_DATE_MS)throw new Error('端末の日時を確認してください。');
+ synchronizeLife(w,careTime(now));
+ if(token.fromId!==getProtagonistId(w)||protagonistStatus(w).waiting!=='no-child')return unavailable();
+ const succession=selectFamilyProtagonist(w,birdId);if(!succession)return unavailable();
+ record(w,'succession',[succession.fromId,succession.toId],'利用者が残っている家族から次の主人公を選んだ',`${birdName(w,succession.toId)}が第${w.protagonist.lineage.length}代の主人公になった`);
+ bumpRevision(w);return {changed:true,birdId,message:`${birdName(w,birdId)}が次の主人公になったよ。家系と思い出はそのまま残るよ。`};
+}
 /** Visible raptor countdown, death, diary and succession commit together. */
 export function advanceGardenRaptor(w,elapsed,now,expected){
  const result=advanceRaptorState(w,elapsed,now,expected);
@@ -615,7 +627,7 @@ function validateVersion(input, version) {
     if (!shape(e, ['id','kind','ids','condition','result','data','tick','at']) || !/^e[1-9]\d*$/.test(e.id) || !Number.isSafeInteger(Number(e.id.slice(1))) || Number(e.id.slice(1)) <= previousId || Number(e.id.slice(1)) >= w.nextEvent || eventIds.has(e.id) || !validEvents.includes(e.kind) || !Array.isArray(e.ids) || !e.ids.length || e.ids.length > 3 || new Set(e.ids).size !== e.ids.length || e.ids.some(x => !ref(x)) || !str(e.condition, 120) || !str(e.result, 120) || !integer(e.tick, previousTick, w.tick) || !integer(e.at, 0, MAX_DATE_MS) || e.at !== w.epoch + e.tick * TICK_MS || e.ids.some(id => findBird(w,id).bornTick > e.tick)) fail('日記が不正です。');
     const expectedIds = ['pair','declined','play','bath','reconcile','succession'].includes(e.kind) ? 2 : e.kind === 'egg' ? 3 : ['grow','hatch'].includes(e.kind) ? 1 + findBird(w,e.ids[0]).parents.length : e.kind === 'depart' ? e.ids.length : 1;
     if (e.ids.length !== expectedIds || e.kind === 'depart' && e.ids.length > 2) fail('日記の文鳥の組み合わせが不正です。');
-    if(e.kind==='succession'&&!findBird(w,e.ids[1]).parents.includes(e.ids[0]))fail('代替わりの家族が不正です。');
+    if(e.kind==='succession'&&!findBird(w,e.ids[1]).parents.includes(e.ids[0])&&!recordedFamilySuccession(w,e.ids[0],e.ids[1],e.tick))fail('代替わりの家族が不正です。');
     if (['egg','hatch','grow'].includes(e.kind) && e.ids.slice(1).join() !== findBird(w,e.ids[0]).parents.join()) fail('日記の家族が不正です。');
     if (['hatch','grow'].includes(e.kind)) {
       if (!shape(e.data, ['stage']) || !(e.kind === 'hatch' ? ['chick'] : ['juvenile','adult']).includes(e.data.stage)) fail('日記の成長段階が不正です。');
@@ -695,7 +707,10 @@ export function migrateV7ToV8(input,now=Date.now()){
  const world=validateVersion(input,7);world.version=8;initializeLifecycle(world,careTime(Math.max(now,world.careSchedule.seenAt,world.economy.seenAt)),true);return migrateV8ToV9(world,now);
 }
 export function migrateV8ToV9(input,now=Date.now()){
- const world=validateVersion(input,8);world.version=9;initializeProtagonist(world);return validateWorld(world);
+ const world=validateVersion(input,8);world.version=9;initializeProtagonist(world);return migrateV9ToV10(world,now);
+}
+export function migrateV9ToV10(input,now=Date.now()){
+ const world=validateVersion(input,9);world.version=10;world.protagonist.version=2;world.protagonist.familySelections=[];return validateWorld(world);
 }
 export function readCompatibleWorld(input, now=Date.now()) {
   // Do not execute an accessor even to discover the version of an untrusted object.
@@ -709,6 +724,7 @@ export function readCompatibleWorld(input, now=Date.now()) {
   if (descriptor.value === 6) return migrateV6ToV7(input,now);
   if (descriptor.value === 7) return migrateV7ToV8(input,now);
   if (descriptor.value === 8) return migrateV8ToV9(input,now);
+  if (descriptor.value === 9) return migrateV9ToV10(input,now);
   if (descriptor.value === SAVE_VERSION) return validateWorld(input);
   throw new Error('保存データを読み込めません：対応していない版です。元の保存はそのままです。');
 }

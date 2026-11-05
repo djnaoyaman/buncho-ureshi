@@ -3,8 +3,8 @@ import { createFeedbackTimer } from './game-feedback.js';
 import {mountGardenRaptors} from './garden-raptor-controller.js';
 import {renderRaptorNotice,updateRaptorNotice} from './garden-raptor-ui.js';
 import {escapeGardenRaptor,raptorToken} from './garden-raptors.js';
-import {getProtagonistId,getProtagonistBird} from './protagonist.js';
-import {renderLifeCarePanel,renderMemorialPanel,renderLifeSummary} from './life-care-ui.js';
+import {getProtagonistId,getProtagonistBird,protagonistStatus,familySuccessorCandidates} from './protagonist.js';
+import {renderLifeCarePanel,renderMemorialPanel,renderLifeSummary,renderProtagonistSummary} from './life-care-ui.js';
 import {isAlive,lifeStatus} from './life-care.js';
 import {encounterCageActors,renderEncounterCageGuest} from './encounter-ui.js';
 import {mountEncounterPanel} from './encounter-controller.js';
@@ -14,7 +14,7 @@ import {renderOwnerPeek,renderOwnerPortrait,ownerAnimationDelay} from './owner-p
 import { renderRelationshipMap, navigateRelationships, bindRelationshipNavigation } from './relationship-map.js';
 import { suggestLegacyNumberedNames } from './bird-names.js';
 import { familyLayout } from './family-layout.js';
-import { independenceCandidates, acceptIndependence, treatBird, hireCaretaker, honorBird, dismissHomeFriend, endHomeVisits, homeVisitsClosed, completeEncounterReward, meetGardenFriendReward, setAdoptionMode, resolveAdoption, economyToken, claimAutomaticGift, buyOrdinaryFurniture, ordinaryFurnitureCatalog, SAVE_VERSION, createWorld, resetTemporaryState, resetFurniturePlacement, bumpRevision, advanceTo, advanceTicks, findBird, birdName, adoptBird, renameBird, talkToBird, relationshipLabel, eventText, parseSave, serializeWorld, validateWorld, ACTIONS, STAGES, LIMITS, TICK_MS, MAX_SAVE_BYTES, DECOR_SLOTS, DECOR_COLORS, DECOR_TIERS, DECOR_DRAW_COST, decorLevel, decorOdds, drawDecoration, equipDecoration, travelTo, fieldBirds, inviteFriend, feedBird, petBird, cleanGarden, getFullness, getCleanliness, collectDropping, careWindow, reconcileImportedCare } from './engine.js';
+import { chooseFamilyProtagonist, independenceCandidates, acceptIndependence, treatBird, hireCaretaker, honorBird, dismissHomeFriend, endHomeVisits, homeVisitsClosed, completeEncounterReward, meetGardenFriendReward, setAdoptionMode, resolveAdoption, economyToken, claimAutomaticGift, buyOrdinaryFurniture, ordinaryFurnitureCatalog, SAVE_VERSION, createWorld, resetTemporaryState, resetFurniturePlacement, bumpRevision, advanceTo, advanceTicks, findBird, birdName, adoptBird, renameBird, talkToBird, relationshipLabel, eventText, parseSave, serializeWorld, validateWorld, ACTIONS, STAGES, LIMITS, TICK_MS, MAX_SAVE_BYTES, DECOR_SLOTS, DECOR_COLORS, DECOR_TIERS, DECOR_DRAW_COST, decorLevel, decorOdds, drawDecoration, equipDecoration, travelTo, fieldBirds, inviteFriend, feedBird, petBird, cleanGarden, getFullness, getCleanliness, collectDropping, careWindow, reconcileImportedCare } from './engine.js';
 
 import { createCareAudio } from './care-audio.js';
 import { openGameStore } from './game-store.js';
@@ -82,6 +82,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
   let sheetOpen=false, sheetReturn=null, ownerCleanup=null, ownerEditor=null, welcomeFocusKey=null;
   let adoptionDialogToken=null,adoptionBusy=false;
   let independenceDialogToken=null,independenceBusy=false;
+  let successorDialogToken=null,successorBusy=false;
   let resetPending=false, resetWorldId=null, resetKind=null, resetStage=0, resetBackupAvailable=false;
   let decorFilter='all', decorTier='cozy';
   let decorSlot='perch', previewItem=null, drawResult=null, fieldPending=false, fieldViewRequest=0;
@@ -196,6 +197,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     if(changedProtagonist||replacedWorld){cancelCareEffects();selected=getProtagonistId(world);sheetOpen=false;sheetReturn=null;lastReply='';replyBird=null;}
     if(adoptionDialogToken&&(adoptionDialogToken.worldId!==w.worldId||w.adoption.pending?.birdId!==adoptionDialogToken.birdId))closeAdoptionDialog(false);
     if(independenceDialogToken&&(independenceDialogToken.worldId!==w.worldId||independenceDialogToken.revision!==w.revision))closeIndependenceDialog(false);
+    if(successorDialogToken&&(successorDialogToken.worldId!==w.worldId||successorDialogToken.revision!==w.revision))closeSuccessorDialog(false);
     if(!findBird(world,selected)){cancelCareEffects();selected=getProtagonistId(world);}
     audio.setEnabled(careSoundEnabled());
   };
@@ -302,6 +304,34 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
       else if(dialog.open)dialog.querySelector('[data-independence-notice]').textContent=error;
     }finally{independenceBusy=false;dialog.querySelectorAll('button').forEach(b=>b.disabled=false);}
   }
+  function focusSuccessor(id){
+    const target=root.querySelector(`[data-successor-open="${id}"]`);
+    if(target&&!target.disabled)target.focus();else focusPanel();
+  }
+  function closeSuccessorDialog(restore=true){
+    const token=successorDialogToken,dialog=root.querySelector('.game-successor-dialog');
+    if(dialog?.open)dialog.close();successorDialogToken=null;
+    if(restore&&alive){focusSuccessor(token?.birdId);void poll();}
+  }
+  function openSuccessorDialog(id){
+    if(busy||pollFlight||successorBusy||!['health','memorial','family'].includes(panel))return;
+    const candidate=familySuccessorCandidates(world).find(c=>c.bird.id===id&&!c.reason);if(!candidate)return;
+    let dialog=root.querySelector('.game-successor-dialog');
+    if(!dialog){dialog=document.createElement('dialog');dialog.className='game-successor-dialog';dialog.setAttribute('aria-labelledby','game-successor-title');root.querySelector('.game-app').append(dialog);}
+    successorDialogToken={...economyToken(world),fromId:getProtagonistId(world),birdId:id,panel};
+    dialog.innerHTML=`<h2 id="game-successor-title">${escape(candidate.bird.name)}に物語を引き継ぐ？</h2><p>この家族を次の主人公にします。${candidate.bird.home!=='resident'?'同じ文鳥が、おうちに帰ってきます。':''}</p><p>先代のお墓、名前・血縁・つがい・日記・持ち物は残ります。GoldやGemsは使いません。確認後は、この文鳥が旅立つまで主人公になります。</p><button type="button" data-successor-cancel autofocus>今は選ばない</button><button type="button" data-successor-accept>${escape(candidate.bird.name)}に引き継ぐ</button><p data-successor-notice role="status"></p>`;
+    dialog.showModal();dialog.querySelector('[autofocus]').focus();
+  }
+  async function successorDecision(button){
+    if(successorBusy||!successorDialogToken||button.disabled)return;
+    const token={...successorDialogToken},dialog=root.querySelector('.game-successor-dialog');successorBusy=true;
+    dialog.querySelectorAll('button').forEach(b=>b.disabled=true);let result;
+    try{
+      const committed=await mutate(w=>{result=chooseFamilyProtagonist(w,token.birdId,token);},'',()=>alive,{bump:false,advanceCurrent:false});
+      if(committed){setMessage(result?.message||'');closeSuccessorDialog(false);render();focusPanel();}
+      else if(dialog.open)dialog.querySelector('[data-successor-notice]').textContent=error;
+    }finally{successorBusy=false;dialog.querySelectorAll('button').forEach(b=>b.disabled=false);}
+  }
   function chosen(){return findBird(world,selected)||world.birds[0];}
   const smallBird = b => `<span class="game-mini-bird">${birdSvg(b.color,b.stage,birdPose(b,{worldId:world.worldId,elapsed:0}))}</span>`;
   function birdButton(b, extra=''){return `<button class="game-bird-link" data-game-select="${b.id}">${smallBird(b)}<span>${escape(b.name)}<small>${colorName[b.color]} · ${STAGES[b.stage]} · ${isAlive(world,b)?homeName[b.home]:'思い出の庭の仲間'}</small></span>${extra}</button>`;}
@@ -345,7 +375,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
       focusBack();root.ownerDocument.defaultView.requestAnimationFrame(()=>focusBack(true));
     }
   }
-  function sheetCancel(ev){if(ev.target.matches('.game-independence-dialog')){ev.preventDefault();if(!independenceBusy)closeIndependenceDialog();return;}if(ev.target.matches('.game-draw-result')){ev.preventDefault();dismissDrawResult();return;}if(ev.target.matches('.game-adoption-dialog')){ev.preventDefault();if(!adoptionBusy)closeAdoptionDialog();return;}if(ev.target.matches('.game-panel-overlay')){ev.preventDefault();closePanel();return;}if(ev.target.matches('.game-reset-dialog')){ev.preventDefault();if(!resetPending)closeResetDialog();return;}if(ev.target.matches('.game-bird-sheet')){ev.preventDefault();closeBirdSheet();}}
+  function sheetCancel(ev){if(ev.target.matches('.game-successor-dialog')){ev.preventDefault();if(!successorBusy)closeSuccessorDialog();return;}if(ev.target.matches('.game-independence-dialog')){ev.preventDefault();if(!independenceBusy)closeIndependenceDialog();return;}if(ev.target.matches('.game-draw-result')){ev.preventDefault();dismissDrawResult();return;}if(ev.target.matches('.game-adoption-dialog')){ev.preventDefault();if(!adoptionBusy)closeAdoptionDialog();return;}if(ev.target.matches('.game-panel-overlay')){ev.preventDefault();closePanel();return;}if(ev.target.matches('.game-reset-dialog')){ev.preventDefault();if(!resetPending)closeResetDialog();return;}if(ev.target.matches('.game-bird-sheet')){ev.preventDefault();closeBirdSheet();}}
   async function returnRaptorHome(isCurrent=()=>true){
     if(!alive||!isCurrent())return false;
     const view=++fieldViewRequest,valid=()=>alive&&isCurrent()&&view===fieldViewRequest;
@@ -353,7 +383,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     const committed=await mutate(w=>{if(w.encounters.raptor?.active)escapeGardenRaptor(w,raptorToken(w));travelTo(w,'home');encounterSystem.leaveGarden(w,{worldId:w.worldId,revision:w.revision});return w;},'おうちに戻ったよ。ここなら安心。',valid,{bump:false,advanceCurrent:false});
     if(committed&&valid()){panel='garden';render();updateRaptorNotice(root,world);root.querySelector('[data-game-open-bird]')?.focus({preventScroll:true});}return committed;
   }
-  async function closePanel(){if(independenceBusy)return;closeIndependenceDialog(false);if(world.encounters.raptor?.active&&panel!=='owner'){await returnRaptorHome();return;}fieldViewRequest++;if(['outdoors','notebook'].includes(panel)&&world.encounters.garden.open){const expected={worldId:world.worldId,revision:world.revision};await mutate(w=>{encounterSystem.leaveGarden(w,expected);},'',()=>alive,{bump:false,advanceCurrent:false});}sheetOpen=false;cancelCareEffects();if(panel==='owner'){panel='settings';render();focusPanel();return;}panel='garden';render();root.querySelector('[data-game-open-menu]')?.focus({preventScroll:true});}
+  async function closePanel(){if(independenceBusy||successorBusy)return;closeIndependenceDialog(false);closeSuccessorDialog(false);if(world.encounters.raptor?.active&&panel!=='owner'){await returnRaptorHome();return;}fieldViewRequest++;if(['outdoors','notebook'].includes(panel)&&world.encounters.garden.open){const expected={worldId:world.worldId,revision:world.revision};await mutate(w=>{encounterSystem.leaveGarden(w,expected);},'',()=>alive,{bump:false,advanceCurrent:false});}sheetOpen=false;cancelCareEffects();if(panel==='owner'){panel='settings';render();focusPanel();return;}panel='garden';render();root.querySelector('[data-game-open-menu]')?.focus({preventScroll:true});}
   function focusPanel(){const surface=root.querySelector('.game-panel-overlay[open] .game-panel')||root.querySelector('.game-panel');const heading=surface?.querySelector('h3')||surface;if(heading){heading.tabIndex=-1;heading.focus({preventScroll:true});}}
   const itemColor=item=>DECOR_COLORS.find(c=>c.id===item?.color)||DECOR_COLORS[0];
   const itemTier=item=>DECOR_TIERS.find(t=>t.id===item?.tier)||DECOR_TIERS[0];
@@ -541,7 +571,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
   }
   function family() {
     const graph=familyLayout(world,selected),focus=findBird(world,graph.focusId);if(!familyZoomManual&&root.clientWidth)familyZoom=Math.max(.9,Math.min(1,Math.round(root.clientWidth/Math.max(300,Math.min(graph.children.length,4)*140+40)*10)/10));
-    return `<section class="game-family-tree">${independenceConsultations()}<div class="game-family-heading"><h3>${escape(focus.name)}の家系図</h3><div class="game-family-zoom" aria-label="家系図の大きさ"><button data-family-zoom="-1" aria-label="家系図を縮小" ${familyZoom<=.7?'disabled':''}>−</button><output>${Math.round(familyZoom*100)}%</output><button data-family-zoom="1" aria-label="家系図を拡大" ${familyZoom>=1.2?'disabled':''}>＋</button></div></div><p class="game-family-legend"><span>━━ 親子</span><span>┄┄ つがい</span><small>左右に動かして、家族を見よう</small></p><div class="game-family-pan" tabindex="0" aria-label="家族の図。左右にスクロールできます"><div class="game-family-stage" style="width:${graph.width*familyZoom}px;height:${graph.height*familyZoom}px"><div class="game-family-canvas" style="width:${graph.width}px;height:${graph.height}px;transform:scale(${familyZoom})"><svg class="game-family-lines" width="${graph.width}" height="${graph.height}" viewBox="0 0 ${graph.width} ${graph.height}" aria-hidden="true">${graph.edges.map(e=>`<path class="family-edge-${e.kind}" d="${e.path}"/>`).join('')}</svg>${graph.nodes.map(n=>{const b=findBird(world,n.id);return `<button class="game-family-node ${n.role==='focus'?'is-focus':''}" data-family-focus="${b.id}" style="left:${n.x-graph.cardW/2}px;top:${n.y}px" aria-label="${escape(b.name)}、${STAGES[b.stage]}。この文鳥の家族を見る">${smallBird(b)}<strong>${escape(b.name)}</strong><small>${colorName[b.color]}・${STAGES[b.stage]}</small></button>`;}).join('')}</div></div></div><div class="game-profile-actions"><button data-game-panel="profile">${escape(focus.name)}の紹介</button><button data-game-art="${focus.id}">家族の記念カード</button></div><details data-game-details="family-text"><summary>家族をことばで読む・みんなの名簿</summary><ul>${world.birds.map(b=>`<li><button data-family-focus="${b.id}">${escape(b.name)}</button>：${b.parents.length?'親 '+b.parents.map(id=>escape(birdName(world,id))).join(' と '):'庭の外から来た文鳥'}${b.partner?'／つがい '+escape(birdName(world,b.partner)):''}</li>`).join('')}</ul><p class="game-small">実線は血縁、点線はつがい。近い親せき同士はつがいになりません。</p></details></section>`;
+    return `<section class="game-family-tree">${protagonistStatus(world).waiting==='no-child'?renderProtagonistSummary(world):''}${independenceConsultations()}<div class="game-family-heading"><h3>${escape(focus.name)}の家系図</h3><div class="game-family-zoom" aria-label="家系図の大きさ"><button data-family-zoom="-1" aria-label="家系図を縮小" ${familyZoom<=.7?'disabled':''}>−</button><output>${Math.round(familyZoom*100)}%</output><button data-family-zoom="1" aria-label="家系図を拡大" ${familyZoom>=1.2?'disabled':''}>＋</button></div></div><p class="game-family-legend"><span>━━ 親子</span><span>┄┄ つがい</span><small>左右に動かして、家族を見よう</small></p><div class="game-family-pan" tabindex="0" aria-label="家族の図。左右にスクロールできます"><div class="game-family-stage" style="width:${graph.width*familyZoom}px;height:${graph.height*familyZoom}px"><div class="game-family-canvas" style="width:${graph.width}px;height:${graph.height}px;transform:scale(${familyZoom})"><svg class="game-family-lines" width="${graph.width}" height="${graph.height}" viewBox="0 0 ${graph.width} ${graph.height}" aria-hidden="true">${graph.edges.map(e=>`<path class="family-edge-${e.kind}" d="${e.path}"/>`).join('')}</svg>${graph.nodes.map(n=>{const b=findBird(world,n.id);return `<button class="game-family-node ${n.role==='focus'?'is-focus':''}" data-family-focus="${b.id}" style="left:${n.x-graph.cardW/2}px;top:${n.y}px" aria-label="${escape(b.name)}、${STAGES[b.stage]}。この文鳥の家族を見る">${smallBird(b)}<strong>${escape(b.name)}</strong><small>${colorName[b.color]}・${STAGES[b.stage]}</small></button>`;}).join('')}</div></div></div><div class="game-profile-actions"><button data-game-panel="profile">${escape(focus.name)}の紹介</button><button data-game-art="${focus.id}">家族の記念カード</button></div><details data-game-details="family-text"><summary>家族をことばで読む・みんなの名簿</summary><ul>${world.birds.map(b=>`<li><button data-family-focus="${b.id}">${escape(b.name)}</button>：${b.parents.length?'親 '+b.parents.map(id=>escape(birdName(world,id))).join(' と '):'庭の外から来た文鳥'}${b.partner?'／つがい '+escape(birdName(world,b.partner)):''}</li>`).join('')}</ul><p class="game-small">実線は血縁、点線はつがい。近い親せき同士はつがいになりません。</p></details></section>`;
   }
   function resizeFamily(){if(panel==='family'){render();centerFamily();}else if(panel==='garden'&&!interactionActive())render();}
   function centerFamily(){const pan=root.querySelector('.game-family-pan'),canvas=root.querySelector('.game-family-canvas');if(pan&&canvas)pan.scrollLeft=Math.max(0,parseFloat(canvas.style.width)*familyZoom/2-pan.clientWidth/2);}
@@ -556,6 +586,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
   function help() {return renderGameHelp({holidayCoverageKnown:!careWindow(world.careSchedule.seenAt).coverageMessage});}
   function render() {
     if(panel!=='family'&&independenceDialogToken)closeIndependenceDialog(false);
+    if(successorDialogToken&&panel!==successorDialogToken.panel)closeSuccessorDialog(false);
     // Keep an in-flight stroke attached when an earlier reply/audio timer or
     // unrelated refresh finishes. Navigation cancels the gesture first.
     if(careRub&&careRubCurrent(careRub)){refreshPending=true;return;}
@@ -738,10 +769,11 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
   function menuKeydown(ev){
     if(ev.key==='Escape'&&ev.target.closest('.game-welcome')){ev.preventDefault();dismissWelcome();return;}
     if(ev.key==='Escape'&&panel==='outdoors'&&!sheetOpen){ev.preventDefault();closePanel();return;}
+    if(ev.key==='Escape'&&root.querySelector('.game-successor-dialog[open]')){ev.preventDefault();if(!successorBusy)closeSuccessorDialog();return;}
     if(ev.key==='Escape'&&root.querySelector('.game-independence-dialog[open]')){ev.preventDefault();if(!independenceBusy)closeIndependenceDialog();return;}
     if(ev.key==='Escape'&&root.querySelector('.game-adoption-dialog[open]')){ev.preventDefault();if(!adoptionBusy)closeAdoptionDialog();return;}
     if(ev.key==='Escape'&&root.querySelector('.game-reset-dialog[open]')){ev.preventDefault();if(!resetPending)closeResetDialog();return;}
-    const sheet=root.querySelector('.game-reset-dialog[open],.game-adoption-dialog[open],.game-independence-dialog[open],.game-bird-sheet[open]');
+    const sheet=root.querySelector('.game-reset-dialog[open],.game-adoption-dialog[open],.game-independence-dialog[open],.game-successor-dialog[open],.game-bird-sheet[open]');
     if(sheet&&ev.key==='Tab'){
       const controls=[...sheet.querySelectorAll('button,input,select,textarea,a[href],summary,[tabindex]')].filter(el=>{
         if(el.disabled||el.tabIndex<0||!el.getClientRects().length||el.closest('[hidden],[inert]'))return false;
@@ -749,7 +781,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
         return true;
       });
       const index=controls.indexOf(document.activeElement);
-      if(controls.length){ev.preventDefault();const next=index<0?(ev.shiftKey?controls.length-1:0):(index+(ev.shiftKey?-1:1)+controls.length)%controls.length;controls[next].focus({preventScroll:!sheet.matches('.game-independence-dialog')});}
+      if(controls.length){ev.preventDefault();const next=index<0?(ev.shiftKey?controls.length-1:0):(index+(ev.shiftKey?-1:1)+controls.length)%controls.length;controls[next].focus({preventScroll:!sheet.matches('.game-independence-dialog,.game-successor-dialog')});}
       return;
     }
     if(ev.key==='Escape'&&ev.target.closest('.game-secondary-menu[open]')){ev.preventDefault();closeGameMenu();}
@@ -807,6 +839,9 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     }
     if(button.matches('[data-life-treat],[data-life-hire],[data-life-incense],[data-life-pray]')){await lifeAction(button);return;}
     if(button.hasAttribute('data-draw-result-close')){dismissDrawResult();return;}
+    if(button.dataset.successorOpen){openSuccessorDialog(button.dataset.successorOpen);return;}
+    if(button.hasAttribute('data-successor-cancel')){if(!successorBusy)closeSuccessorDialog();return;}
+    if(button.hasAttribute('data-successor-accept')){await successorDecision(button);return;}
     if(button.dataset.independenceOpen){openIndependenceDialog(button.dataset.independenceOpen);return;}
     if(button.hasAttribute('data-independence-cancel')){if(!independenceBusy)closeIndependenceDialog();return;}
     if(button.hasAttribute('data-independence-accept')){await independenceDecision(button);return;}
@@ -912,11 +947,11 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     busy++;const flight={before:null,after:null,promise:null};pollFlight=flight;
     flight.promise=(async()=>{
       try{
-        const next=await store.transact(w=>{flight.before=economyToken(w);return independenceDialogToken?w:advanceTo(w);});
+        const next=await store.transact(w=>{flight.before=economyToken(w);return independenceDialogToken||successorDialogToken?w:advanceTo(w);});
         flight.after=economyToken(next);
         const replaced=next.worldId!==world.worldId,changed=replaced||next.revision!==world.revision||next.paused!==world.paused||refreshPending;
-        if(!alive)return;const consentId=independenceDialogToken?.ids[0];latest(next);
-        if(changed){if(!replaced&&interactionActive())refreshPending=true;else{render();if(consentId&&!independenceDialogToken)focusIndependence(consentId);}}
+        if(!alive)return;const consentId=independenceDialogToken?.ids[0],successorId=successorDialogToken?.birdId;latest(next);
+        if(changed){if(!replaced&&interactionActive())refreshPending=true;else{render();if(consentId&&!independenceDialogToken)focusIndependence(consentId);if(successorId&&!successorDialogToken)focusSuccessor(successorId);}}
       }catch(e){if(alive){error=e.message;render();}}
       finally{busy--;if(pollFlight===flight)pollFlight=null;}
     })();
@@ -934,6 +969,6 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
   const poseTimer=setInterval(updatePoses,600);
   root.ownerDocument.defaultView.addEventListener('resize',resizeFamily);
   document.addEventListener('visibilitychange',holdPoses);reducedMotion?.addEventListener?.('change',holdPoses);poseLayout?.addEventListener?.('change',reframePoses);compactLayout?.addEventListener?.('change',reframeCompact);
-  return ()=>{feedbackTimer.destroy();raptorController.destroy();captionObserver.disconnect();const resultDialog=root.querySelector('.game-draw-result');if(resultDialog?.open)resultDialog.close();resultDialog?.remove();closeAdoptionDialog(false);closeIndependenceDialog(false);encounterController?.destroy();encounterController=null;encounterRoot=null;document.dispatchEvent(new document.defaultView.CustomEvent('buncho-game-garden',{detail:{gardenId:null,worldId:world.worldId}}));ownerCleanup?.dispose();ownerCleanup=null;ownerEditor=null;closeResetDialog(false);document.removeEventListener('buncho-world-action',worldAction);disposeRelations();root.ownerDocument.defaultView.removeEventListener('storage',syncCarePreference);document.removeEventListener('click',unlockCareCapture,true);root.ownerDocument.defaultView.removeEventListener('pagehide',cancelCareEffects);alive=false;importRequest++;soundRequest++;cancelCareEffects();audio.close();clearInterval(timer);clearInterval(poseTimer);root.ownerDocument.defaultView.removeEventListener('resize',resizeFamily);document.removeEventListener('visibilitychange',holdPoses);reducedMotion?.removeEventListener?.('change',holdPoses);poseLayout?.removeEventListener?.('change',reframePoses);compactLayout?.removeEventListener?.('change',reframeCompact);channel?.close();store.close();root.querySelector('.game-bird-sheet')?.close();root.removeEventListener('cancel',sheetCancel,true);root.removeEventListener('keydown',menuKeydown);root.removeEventListener('click',click);root.removeEventListener('submit',submit);root.removeEventListener('change',change);root.removeEventListener('input',rememberDraft);root.removeEventListener('pointerdown',pointerStart);root.removeEventListener('keydown',careRubKey);root.removeEventListener('lostpointercapture',lostCareRub);root.ownerDocument.defaultView.removeEventListener('blur',blurCareRub);document.removeEventListener('pointermove',moveCareRub);document.removeEventListener('pointerup',pointerEnd);document.removeEventListener('pointercancel',pointerEnd);clearTimeout(releaseTimer);pressedPointers.clear();drafts.clear();};
+  return ()=>{feedbackTimer.destroy();raptorController.destroy();captionObserver.disconnect();const resultDialog=root.querySelector('.game-draw-result');if(resultDialog?.open)resultDialog.close();resultDialog?.remove();closeAdoptionDialog(false);closeIndependenceDialog(false);closeSuccessorDialog(false);encounterController?.destroy();encounterController=null;encounterRoot=null;document.dispatchEvent(new document.defaultView.CustomEvent('buncho-game-garden',{detail:{gardenId:null,worldId:world.worldId}}));ownerCleanup?.dispose();ownerCleanup=null;ownerEditor=null;closeResetDialog(false);document.removeEventListener('buncho-world-action',worldAction);disposeRelations();root.ownerDocument.defaultView.removeEventListener('storage',syncCarePreference);document.removeEventListener('click',unlockCareCapture,true);root.ownerDocument.defaultView.removeEventListener('pagehide',cancelCareEffects);alive=false;importRequest++;soundRequest++;cancelCareEffects();audio.close();clearInterval(timer);clearInterval(poseTimer);root.ownerDocument.defaultView.removeEventListener('resize',resizeFamily);document.removeEventListener('visibilitychange',holdPoses);reducedMotion?.removeEventListener?.('change',holdPoses);poseLayout?.removeEventListener?.('change',reframePoses);compactLayout?.removeEventListener?.('change',reframeCompact);channel?.close();store.close();root.querySelector('.game-bird-sheet')?.close();root.removeEventListener('cancel',sheetCancel,true);root.removeEventListener('keydown',menuKeydown);root.removeEventListener('click',click);root.removeEventListener('submit',submit);root.removeEventListener('change',change);root.removeEventListener('input',rememberDraft);root.removeEventListener('pointerdown',pointerStart);root.removeEventListener('keydown',careRubKey);root.removeEventListener('lostpointercapture',lostCareRub);root.ownerDocument.defaultView.removeEventListener('blur',blurCareRub);document.removeEventListener('pointermove',moveCareRub);document.removeEventListener('pointerup',pointerEnd);document.removeEventListener('pointercancel',pointerEnd);clearTimeout(releaseTimer);pressedPointers.clear();drafts.clear();};
 }
 
