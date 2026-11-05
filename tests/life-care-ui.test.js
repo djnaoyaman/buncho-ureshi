@@ -56,3 +56,15 @@ test('empty memorial and missing residents remain usable',()=>{
  const w=world();assert.match(renderMemorialPanel(w),/まだお墓はありません/);w.birds=[];
  const doc=documentFor(renderLifeCarePanel(w));assert.match(doc.body.textContent,/暮らしている文鳥はいません/);assert.ok([...doc.querySelectorAll('[data-life-hire]')].every(b=>b.disabled));
 });
+
+test('illness shows both independent deadlines in earliest-first order, including ties',()=>{
+ for(const [foodHours,treatmentHours,first] of [[1,24,'feed'],[72,1,'treatment'],[24,24,'feed']]){
+  const w=world();w.birds[0].life.lastCareAt=time+(foodHours-72)*3600000;w.birds[0].life.condition={kind:'injury',deadlineAt:time+treatmentHours*3600000};const before=JSON.stringify(w),doc=documentFor(renderLifeCarePanel(w));
+  const deadlines=[...doc.querySelectorAll('[data-life-deadline]')];assert.equal(deadlines.length,2);assert.equal(deadlines[0].dataset.lifeDeadline,first);assert.match(deadlines.find(e=>e.dataset.lifeDeadline==='feed').textContent,/ごはんの期限まで/);assert.match(deadlines.find(e=>e.dataset.lifeDeadline==='treatment').textContent,/通院の期限まで/);
+  if(foodHours===treatmentHours)assert.ok(deadlines.every(e=>e.textContent.startsWith('同じ時刻：')));else{assert.ok(deadlines[0].textContent.startsWith('先に必要：'));assert.ok(!deadlines[1].textContent.startsWith('先に必要：'));}
+  assert.match(doc.querySelector('.life-bird-card').textContent,/片方だけでは、もう片方の期限は延びません/);assert.equal(JSON.stringify(w),before);
+ }
+});
+test('healthy feeding deadline stays explicit while caretaker coverage stays clear',()=>{
+ const w=world();assert.match(documentFor(renderLifeCarePanel(w)).querySelector('.life-bird-card').textContent,/ごはんの期限まで：実時間 3日 0時間/);w.contract={active:true,remainingMs:7*86400000};const card=documentFor(renderLifeCarePanel(w)).querySelector('.life-bird-card');assert.match(card.textContent,/飼育員がお世話をしています/);assert.doesNotMatch(card.textContent,/ごはんの期限まで/);
+});
