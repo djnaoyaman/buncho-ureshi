@@ -1,5 +1,5 @@
 import {test,expect} from '@playwright/test';
-import {validateWorld} from '../../src/engine.js';
+import {createWorld,validateWorld} from '../../src/engine.js';
 import {COLOR_PLAY_NOW as NOW,colorPlayWorld as seed} from '../fixtures/color-play.js';
 const sizes=[[320,240],[320,568],[390,844],[844,390],[1280,800]];
 async function record(page,world){return page.evaluate(world=>new Promise((resolve,reject)=>{
@@ -79,4 +79,29 @@ test('Color Play keeps real export, invalid import and reset cancellation safe',
  await page.locator('#game-reset-open').click();await expect(page.locator('.game-reset-dialog')).toBeVisible();
  await info.attach('reset-cancel-390x844',{body:await page.screenshot(),contentType:'image/png'});
  await page.keyboard.press('Escape');await expect(page.locator('.game-reset-dialog')).not.toBeVisible();expect(await record(page)).toEqual(before);
+});
+
+for(const width of [320,390])test(`Color Play preserves live garden controls, taps and motion at ${width}`,async({page},info)=>{
+ const height=width===320?568:844;
+ await setup(page,[width,height]);
+ const world=createWorld(NOW,42);world.settings.motion=true;world.settings.careSound=false;world.paused=false;
+ world.encounters.crow.lastArrivalAt=NOW;world.encounters.raptor.lastArrivalAt=NOW;
+ await record(page,world);await page.reload();await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');
+ await page.locator('.game-scene-controls-toggle').click();await page.locator('.game-field-nav [data-game-panel=outdoors]').click();
+ await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-scene-state','ready');
+ await fit(page.locator('.finch-garden-selector [aria-current=page]'));
+ const actors=page.locator('.finch-garden-image-plane > .finch-garden-friend,.finch-garden-image-plane > .finch-garden-household');
+ await page.mouse.move(1,200);
+ await info.attach(`live-garden-diagnostics-${width}`,{body:JSON.stringify(await page.evaluate(()=>({
+  focus:document.activeElement?.outerHTML,openDetails:[...document.querySelectorAll('.game-encounter-host details[open]')].map(x=>x.outerHTML),
+  hovered:[...document.querySelectorAll(':hover')].map(x=>x.className),motion:document.documentElement.dataset.motion,reduced:matchMedia('(prefers-reduced-motion:reduce)').matches,
+  font:getComputedStyle(document.querySelector('.finch-garden h3')).fontFamily,
+  boxes:[...document.querySelectorAll('.finch-garden-dock,.finch-garden-selector,.finch-garden-image-plane > button')].map(x=>({class:x.className,rect:x.getBoundingClientRect().toJSON()}))
+ }))),contentType:'application/json'});
+ await expect.poll(()=>actors.evaluateAll(es=>Math.max(...es.map(e=>Math.abs(parseFloat(e.style.translate)||0)))),{timeout:14000}).toBeGreaterThan(1);
+ for(const actor of await actors.all()){
+  const box=await actor.boundingBox();expect(box.width).toBeGreaterThanOrEqual(44);expect(box.height).toBeGreaterThanOrEqual(44);
+  expect(await actor.evaluate(el=>{const r=el.getBoundingClientRect();return el.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));})).toBe(true);
+ }
+ await info.attach(`garden-live-${width}x${height}`,{body:await page.screenshot(),contentType:'image/png'});
 });

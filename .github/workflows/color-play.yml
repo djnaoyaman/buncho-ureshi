@@ -56,3 +56,14 @@ jobs:
             playwright-report/
             test-results/
           retention-days: 14
+      - name: Verify scene access, captions and live garden behavior
+        if: always()
+        run: npx playwright test tests/browser/full-stage.spec.js tests/browser/garden-interaction.spec.js tests/browser/garden-protagonist.spec.js tests/browser/garden-social.spec.js --project=chrome --retries=0
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: color-play-layout-${{ github.sha }}
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14
