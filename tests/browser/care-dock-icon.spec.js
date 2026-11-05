@@ -26,10 +26,12 @@ for(const size of [{width:390,height:844},{width:320,height:240},{width:1440,hei
  expect(geometry.inside).toBe(true);expect(geometry.icon.width).toBeGreaterThanOrEqual(23);expect(geometry.icon.width).toBe(geometry.icon.height);
  expect(geometry.button.width).toBeGreaterThanOrEqual(44);expect(geometry.button.height).toBeGreaterThanOrEqual(44);
  expect(geometry.shape.left).toBeGreaterThan(0);expect(geometry.shape.top).toBeGreaterThan(0);expect(geometry.shape.right).toBeLessThan(32);expect(geometry.shape.bottom).toBeLessThan(32);
- const colors=await button.evaluate(el=>{const style=getComputedStyle(el),svgStyle=getComputedStyle(el.querySelector('svg'));return{foreground:style.color,stroke:svgStyle.stroke,background:style.backgroundImage};});
+ const colors=await button.evaluate(el=>{const style=getComputedStyle(el),svgStyle=getComputedStyle(el.querySelector('svg'));return{foreground:style.color,stroke:svgStyle.stroke,background:style.backgroundImage,backgroundColor:style.backgroundColor};});
  expect(colors.stroke).toBe(colors.foreground);
  const foreground=colors.foreground.match(/[\d.]+/g).slice(0,3).map(Number),stops=[...colors.background.matchAll(/rgb\(([^)]+)\)/g)].map(match=>match[1].split(',').map(Number));
- expect(stops.length).toBeGreaterThanOrEqual(2);for(const stop of stops)expect(contrast(foreground,stop)).toBeGreaterThanOrEqual(3);
+ // A flat Color Play surface and a legacy gradient have the same contrast contract.
+ if(colors.background==='none'){const rgba=colors.backgroundColor.match(/[\d.]+/g).map(Number);expect(rgba[3]??1).toBe(1);stops.push(rgba.slice(0,3));}else expect(stops.length).toBeGreaterThanOrEqual(2);
+ expect(stops.length).toBeGreaterThan(0);for(const stop of stops)expect(contrast(foreground,stop)).toBeGreaterThanOrEqual(3);
  await info.attach(`care-button-${size.width}x${size.height}`,{body:await button.screenshot(),contentType:'image/png'});await info.attach(`care-dock-${size.width}x${size.height}`,{body:await page.screenshot(),contentType:'image/png'});
  for(let n=0;n<2;n++){
   await activate(svg,info);await expect(page.locator('.game-bird-sheet')).toBeVisible();await expect(page.locator('#game-sheet-title')).toHaveText(before.birds[0].name);
