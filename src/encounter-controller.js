@@ -153,7 +153,8 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
     if(button.hasAttribute('data-raptor-entry')){generation++;stopCrow();mode='raptors';pageId=button.dataset.raptorEntry;notice='';render({focus:true});return;}
     if(button.hasAttribute('data-crow-notebook')||button.hasAttribute('data-crow-entry')){generation++;stopCrow();mode='crows';pageId=button.dataset.crowEntry||null;notice='';render({focus:true});return;}
     if(button.hasAttribute('data-encounter-page')){pageId=button.dataset.encounterPage;mode='entry';showPhoto=false;notice='';render({focus:true});return;}
-    if(button.hasAttribute('data-encounter-back')||button.hasAttribute('data-encounter-close')){const token=++generation,w=getWorld(),expected={worldId:w.worldId,revision:w.revision};await mutate(current=>system.leaveGarden(current,expected),token);if(!alive||token!==generation)return;mode='notebook';notice='';render({focus:true});return;}
+    // Reading the notebook is still the same visit. The host closes the session on actual home/overlay exits.
+    if(button.hasAttribute('data-encounter-back')||button.hasAttribute('data-encounter-close')){generation++;stopCrow();mode='notebook';pageId=null;showPhoto=false;notice='';render({focus:true});return;}
     if(button.hasAttribute('data-encounter-view')){showPhoto=button.dataset.encounterView==='photo';render();root.querySelector(`[data-encounter-view="${showPhoto?'photo':'art'}"]`)?.focus({preventScroll:true});return;}
     if(button.hasAttribute('data-finch-go-garden')){await garden();return;}
     if(button.hasAttribute('data-garden-select')){await garden(button.dataset.gardenSelect);return;}

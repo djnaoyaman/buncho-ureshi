@@ -22,11 +22,16 @@ export const gardenById=id=>GARDENS.find(g=>g.id===id)||null;
 export function gardenFriendRoster(world,id){
  const garden=gardenById(id),state=world.encounters?.gardenFriends;if(!garden||!state)return [];
  const regulars=state.regulars.map(r=>({friendId:r.id,birdId:null,name:r.name,color:r.appearance.color,kind:r.primaryGardenId===id?'regular':'visiting',affinity:r.affinity,memories:r.memories.map(m=>({...m})),personality:r.personality}));
- const known=state.references.filter(r=>!state.companions.includes(r.birdId)).flatMap(r=>{const b=world.birds.find(x=>x.id===r.birdId);return b&&isAlive(world,b)?[{friendId:r.id,birdId:b.id,name:b.name,color:b.color,kind:'known',affinity:r.affinity,memories:r.memories.map(m=>({...m})),personality:'前から知っている文鳥の友達'}]:[];});
+ // Keep every persistent acquaintance in the bag. Availability is resolved after
+ // choosing this visit, so a companion change or death cannot reshuffle other guests.
+ const known=state.references.map(r=>{const b=world.birds.find(x=>x.id===r.birdId);return {friendId:r.id,birdId:r.birdId,name:b?.name,color:b?.color,kind:'known',affinity:r.affinity,memories:r.memories.map(m=>({...m})),personality:'前から知っている文鳥の友達'};});
  const pool=[...regulars,...known],visit=world.encounters.garden.visits[id]||0;
- // Shuffle bag: each visit draws the next four; no immediate identical group.
+ const available=r=>!r.birdId||(!state.companions.includes(r.birdId)&&world.birds.some(b=>b.id===r.birdId&&isAlive(world,b)));
+ // Shuffle bag: each visit draws the next four, with visit-keyed fallback guests.
  const bag=shuffleGardenPool(pool,`${world.worldId}:${id}`),count=Math.min(4,bag.length),offset=(visit*count)%Math.max(1,bag.length);
- const chosen=shuffleGardenPool(Array.from({length:count},(_,i)=>bag[(offset+i)%bag.length]),`${world.worldId}:${id}:${visit}`);
+ const rotated=Array.from({length:bag.length},(_,i)=>bag[(offset+i)%bag.length]);
+ const replacements=shuffleGardenPool(rotated.slice(count).filter(available),`${world.worldId}:${id}:${visit}:replacements`);
+ const chosen=shuffleGardenPool(rotated.slice(0,count),`${world.worldId}:${id}:${visit}`).map(r=>available(r)?r:replacements.shift()).filter(Boolean);
  return chosen.map((r,i)=>({...r,spot:garden.spots[i%garden.spots.length]}));
 }
 export function gardenCompanionRoster(world){const state=world.encounters?.gardenFriends;return (state?.companions||[]).flatMap(id=>{const b=world.birds.find(x=>x.id===id);return b&&isAlive(world,b)&&['juvenile','adult'].includes(b.stage)?[{birdId:b.id,name:b.name,color:b.color,kind:'companion'}]:[];});}

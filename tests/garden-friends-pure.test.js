@@ -12,3 +12,42 @@ test('friend state persists, malformed entries fail, full new world resets all b
 test('render shows named regulars, actual garden affinity and separate family group without lookup crashes',()=>{const w=createWorld(1000);for(const garden of GARDENS){s.selectGarden(w,garden.id,g(w));const html=renderFinchGarden(w,{system:s});assert.match(html,/庭のなかよし 0\/100/);assert.match(html,/いっしょに来た家族/);assert.ok(html.includes(gardenFriendRoster(w,garden.id)[0].name));assert.doesNotMatch(html,/undefined/);}});
 
 test('controller module is importable without starting host, sound or network',()=>{assert.equal(typeof mountEncounterPanel,'function');});
+
+test('changing an unselected companion does not reroll unrelated guests in a visit',()=>{
+ const w=createWorld(1000);const bird=createBird(w,{name:'こはく',home:'resident',stage:'adult'});
+ const birdId=typeof bird==='string'?bird:bird.id;
+ let original;
+ for(let i=0;i<20;i++){
+  s.leaveGarden(w,g(w));s.selectGarden(w,'komorebi',g(w));original=gardenFriendRoster(w,'komorebi').map(r=>r.friendId);
+  if(!original.includes(`known-${birdId}`))break;
+ }
+ assert.ok(!original.includes(`known-${birdId}`));const visit=w.encounters.garden.visits.komorebi,seed=w.seed;
+ assert.ok(s.chooseCompanions(w,['b1',birdId],g(w)).changed);
+ assert.deepEqual(gardenFriendRoster(w,'komorebi').map(r=>r.friendId),original);
+ assert.deepEqual(gardenFriendRoster(parseSave(serializeWorld(w)),'komorebi').map(r=>r.friendId),original);
+ assert.equal(w.encounters.garden.visits.komorebi,visit);assert.equal(w.seed,seed);
+});
+
+test('selecting a visible acquaintance as companion replaces only that guest slot',()=>{
+ const w=createWorld(1000);const bird=createBird(w,{name:'こはく',home:'resident',stage:'adult'}),birdId=typeof bird==='string'?bird:bird.id;
+ let original;
+ for(let i=0;i<20;i++){
+  s.leaveGarden(w,g(w));s.selectGarden(w,'komorebi',g(w));original=gardenFriendRoster(w,'komorebi').map(r=>r.friendId);
+  if(original.includes(`known-${birdId}`))break;
+ }
+ const index=original.indexOf(`known-${birdId}`);assert.ok(index>=0);
+ s.chooseCompanions(w,['b1',birdId],g(w));const next=gardenFriendRoster(w,'komorebi').map(r=>r.friendId);
+ assert.equal(next.length,4);assert.equal(new Set(next).size,4);assert.notEqual(next[index],original[index]);
+ original.forEach((id,i)=>{if(i!==index)assert.equal(next[i],id);});
+});
+
+
+test('unavailable acquaintances use fresh visit-keyed replacements rather than the same next tail',()=>{
+ const w=createWorld(1000,69);for(let i=0;i<4;i++)createBird(w,{name:`友達${i}`,home:'resident',stage:'adult'});
+ s.selectGarden(w,'paris-unrest',g(w));s.chooseCompanions(w,['b2','b3','b4','b5'],g(w));
+ for(let i=1;i<8;i++){s.leaveGarden(w,g(w));s.selectGarden(w,'paris-unrest',g(w));}
+ const first=gardenFriendRoster(w,'paris-unrest').map(r=>r.friendId);validateWorld(w);
+ s.leaveGarden(w,g(w));s.selectGarden(w,'paris-unrest',g(w));
+ const next=gardenFriendRoster(w,'paris-unrest').map(r=>r.friendId);
+ assert.notDeepEqual(new Set(next),new Set(first));assert.deepEqual(gardenFriendRoster(parseSave(serializeWorld(w)),'paris-unrest').map(r=>r.friendId),next);
+});

@@ -12,6 +12,12 @@ test('twelve gardens load new backgrounds and selector wraps without rerolling a
   await expect(page.locator('.finch-garden-stage .garden-bird-sprite').first()).toBeVisible();
   await info.attach(id,{body:await page.screenshot(),contentType:'image/png'});
  }
+ const visitorIds=()=>page.locator('.finch-garden-stage [data-garden-friend]').evaluateAll(nodes=>nodes.map(node=>node.dataset.gardenFriend));
+ const first=await visitorIds();
+ await page.locator('[data-encounter-back]').click();await expect(page.locator('.finch-notebook')).toBeVisible();
+ await page.locator('[data-finch-go-garden]').click();await expect(page.locator('.finch-garden-stage[data-garden-id="paris-unrest"]')).toBeVisible();
+ expect(await visitorIds()).toEqual(first);
+ await page.locator('[data-garden-select="paris-unrest"]').click();expect(await visitorIds()).toEqual(first);
  const selector=page.locator('.finch-garden-selector');await selector.evaluate(x=>x.scrollLeft=x.scrollWidth);
  await page.locator('[data-garden-scroll="next"]').click();await expect.poll(()=>selector.evaluate(x=>x.scrollLeft)).toBe(0);
  await expect(page.locator('[data-garden-select="paris-unrest"]')).toHaveAttribute('aria-current','page');
