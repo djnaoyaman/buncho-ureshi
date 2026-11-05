@@ -77,7 +77,17 @@ for(const [species,size,mode='outdoors',successor=false] of [['large-billed-crow
  await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-scene-state','ready');await expect(page.locator('.finch-crow-actor img')).toBeVisible();await page.locator('.finch-crow-actor img').evaluate(i=>i.decode());
  await expect(page.locator('.finch-garden-stage [data-garden-friend]')).toHaveCount(0);await expect(page.locator('.finch-crow-java>span:last-child')).toContainText(protagonist.name);
  const home=page.locator('.finch-crow-notice [data-finch-go-home]');await expect(home).toBeVisible();await expect.poll(async()=> (await home.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44);
- if(size[1]<=340){const notice=await page.locator('.finch-crow-notice').boundingBox(),book=await page.locator('.finch-garden>header [data-encounter-back]').boundingBox();expect(notice.x+notice.width).toBeLessThanOrEqual(book.x);const dock=await page.locator('.finch-garden-dock').boundingBox(),crow=await page.locator('.finch-crow-actor').boundingBox();expect(crow.y+crow.height).toBeLessThan(dock.y);if(mode==='notebook'){await expect(page.locator('.finch-garden-selector-wrap')).not.toBeVisible();const java=await page.locator('.finch-crow-java').boundingBox();expect(crow.y).toBeGreaterThan(notice.y+notice.height);expect(java.y).toBeGreaterThan(notice.y+notice.height);}}
+ if(size[1]<=340){
+  // The host can replace the scene between separate locator measurements.
+  // Resolve all current elements and their geometry in one browser task.
+  let boxes;await expect.poll(async()=>{boxes=await page.evaluate(()=>{
+   const selectors={notice:'.finch-crow-notice',book:'.finch-garden>header [data-encounter-back]',dock:'.finch-garden-dock',crow:'.finch-crow-actor',java:'.finch-crow-java'},result={};
+   if(document.querySelector('.finch-garden-stage')?.dataset.sceneState!=='ready')return null;
+   for(const [key,selector]of Object.entries(selectors)){const e=document.querySelector(selector);if(!e)return null;const r=e.getBoundingClientRect();if(!r.width||!r.height)return null;result[key]={x:r.x,y:r.y,width:r.width,height:r.height};}return result;
+  });return !!boxes;}).toBe(true);
+  const {notice,book,dock,crow,java}=boxes;expect(notice.x+notice.width).toBeLessThanOrEqual(book.x);expect(crow.y+crow.height).toBeLessThan(dock.y);
+  if(mode==='notebook'){await expect(page.locator('.finch-garden-selector-wrap')).not.toBeVisible();expect(crow.y).toBeGreaterThan(notice.y+notice.height);expect(java.y).toBeGreaterThan(notice.y+notice.height);}
+ }
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1&&document.documentElement.scrollHeight<=innerHeight+1)).toBe(true);
  await info.attach(`real-game-crow-${species}`,{body:await page.screenshot({path:info.outputPath(`real-game-crow-${species}-${mode}${successor?'-successor':''}.png`)}),contentType:'image/png'});
  await home.click();await expect(page.locator('.finch-crow-scale-scene')).toHaveCount(0);await expect(page.locator('.game-room')).toBeVisible();
