@@ -74,6 +74,10 @@ async function reachableGoodbye(button,size){
  expect(box.x+box.width).toBeLessThanOrEqual(size.width+1);expect(box.y+box.height).toBeLessThanOrEqual(size.height+1);
  expect(await button.evaluate(e=>{const r=e.getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return hit===e||e.contains(hit);})).toBe(true);
 }
+async function activateGoodbye(page,button,size){
+ if(size.width===1440){await button.focus();await expect(button).toBeFocused();await page.keyboard.press('Enter');}
+ else await button.click();
+}
 function expectHistoryIntact(saved,before){
  expect(saved.birds.map(({home,action,...identity})=>identity)).toEqual(before.birds.map(({home,action,...identity})=>identity));
  for(const key of ['worldId','seed','tick','nextId','events','nextEvent','economy','decor','gems','field','care','careSchedule','lifecycle','protagonist'])expect(saved[key],key).toEqual(before[key]);
@@ -109,7 +113,7 @@ for(const size of goodbyeSizes)test(`individual native goodbye preserves duplica
  const original=goodbyeSeed(),friend=original.birds.find(b=>b.home==='visitor'),errors=[];page.on('pageerror',e=>errors.push(e.message));
  await start(page,size,original);const sheet=await openHomeBird(page,friend.id),goodbye=sheet.locator(`[data-home-goodbye="${friend.id}"]`);
  await expect(sheet.locator('[data-home-goodbye]')).toHaveCount(1);await reachableGoodbye(goodbye,size);
- await info.attach('native-goodbye-before',{body:await page.screenshot(),contentType:'image/png'});await goodbye.click();
+ await info.attach('native-goodbye-before',{body:await page.screenshot(),contentType:'image/png'});await activateGoodbye(page,goodbye,size);
  await expectNativeDismissed(page,friend.id);const saved=await record(page);expectOnlyNativeGone(saved,original,friend.id);
  await geometry(page,size);await expect(page.locator('[data-cage-guest]')).toHaveCount(3);
  await info.attach('native-goodbye-after',{body:await page.screenshot(),contentType:'image/png'});
@@ -127,7 +131,7 @@ for(const size of goodbyeSizes)test(`individual other-species goodbye preserves 
  const original=goodbyeSeed(),id=original.encounters.cageVisitors[0].id,errors=[];page.on('pageerror',e=>errors.push(e.message));
  await start(page,size,original);const guest=page.locator(`[data-cage-guest="${id}"]`);await expect(guest).toBeVisible();await guest.click();
  const goodbye=page.locator(`[data-encounter-dismiss-cage="${id}"]`);await reachableGoodbye(goodbye,size);
- await info.attach('other-species-goodbye-before',{body:await page.screenshot(),contentType:'image/png'});await goodbye.click();
+ await info.attach('other-species-goodbye-before',{body:await page.screenshot(),contentType:'image/png'});await activateGoodbye(page,goodbye,size);
  await expect(goodbye).toHaveCount(0);await expect(page.locator(`[data-encounter-invite-cage="${id}"]`)).toBeEnabled();
  const saved=await record(page);expectHistoryIntact(saved,original);expect(saved.birds).toEqual(original.birds);
  expect(saved.encounters.cageVisitors).toEqual(original.encounters.cageVisitors.filter(v=>v.id!==id));expect(saved.encounters.homeGoodbyes).toEqual(original.encounters.homeGoodbyes);
@@ -140,6 +144,21 @@ for(const size of goodbyeSizes)test(`individual other-species goodbye preserves 
  expect(reinvited.encounters.cageVisitors.filter(v=>v.id===id)).toHaveLength(1);expect(reinvited.encounters.cageVisitors).toHaveLength(original.encounters.cageVisitors.length);
  expectHistoryIntact(reinvited,original);expect(reinvited.birds).toEqual(original.birds);await page.locator('[data-finch-go-home]').click();
  await expect(guest).toBeVisible();await closeRemainingVisitors(page);expect(errors).toEqual([]);
+});
+test('compact home stays clear as other-species guests leave one by one from three to zero 320x240',async({page})=>{
+ const size={width:320,height:240},original=goodbyeSeed(),ids=original.encounters.cageVisitors.map(v=>v.id),errors=[];
+ page.on('pageerror',e=>errors.push(e.message));await start(page,size,original);await expect(page.locator('[data-cage-guest]')).toHaveCount(3);await geometry(page,size);
+ for(const [index,id] of ids.entries()){
+  const before=await record(page),guest=page.locator(`[data-cage-guest="${id}"]`);await expect(guest).toBeVisible();await guest.click();
+  const goodbye=page.locator(`[data-encounter-dismiss-cage="${id}"]`);await reachableGoodbye(goodbye,size);await goodbye.click();await expect(goodbye).toHaveCount(0);
+  const saved=await record(page);expect(saved.revision).toBe(before.revision+1);
+  expect({...saved,revision:before.revision}).toEqual({...before,encounters:{...before.encounters,cageVisitors:before.encounters.cageVisitors.filter(v=>v.id!==id)}});
+  await page.locator('[data-game-close-panel]').click();await sceneControls(page,false);await expect(guest).toHaveCount(0);
+  await expect(page.locator('[data-cage-guest]')).toHaveCount(ids.length-index-1);await geometry(page,size);
+  await reloadHome(page,saved);await expect(page.locator('[data-cage-guest]')).toHaveCount(ids.length-index-1);await geometry(page,size);
+ }
+ const saved=await record(page);expect(saved.encounters.cageVisitors).toEqual([]);expect(saved.birds).toEqual(original.birds);
+ expect(saved.birds.filter(b=>b.home==='visitor')).toHaveLength(3);expect(errors).toEqual([]);
 });
 for(const size of [{width:320,height:240},{width:390,height:844}])test(`goodbye is absent for self and family but available from the visitor profile ${size.width}x${size.height}`,async({page})=>{
  const original=goodbyeSeed(),friend=original.birds.find(b=>b.home==='visitor'),errors=[];page.on('pageerror',e=>errors.push(e.message));await start(page,size,original);
