@@ -31,7 +31,7 @@ test('every notebook and encounter page groups its actions without changing the 
   check(()=>renderRaptorNotebook(w),['[data-crow-notebook]','[data-finch-go-garden]']);
   w.encounters.crow.visits.push({id:'large-billed-crow',firstTick:0,lastTick:0,count:1,petPoints:0});
   w.encounters.raptor.visits.push({id:'black-kite',firstTick:0,lastTick:0,count:1,petPoints:0});
-  check(()=>renderCrowNotebook(w,{id:'large-billed-crow'}),['[data-crow-notebook]','[data-finch-go-garden]']);
-  check(()=>renderRaptorNotebook(w,{id:'black-kite'}),['[data-crow-notebook]','[data-finch-go-garden]']);
+  check(()=>renderCrowNotebook(w,{id:'large-billed-crow'}),['[data-finch-go-garden]','[data-finch-go-home]','[data-crow-notebook]']);
+  check(()=>renderRaptorNotebook(w,{id:'black-kite'}),['[data-finch-go-garden]','[data-finch-go-home]','[data-crow-notebook]']);
  }finally{await win.happyDOM.close();}
 });
