@@ -13,9 +13,13 @@ async function setup(page,size){
  await page.goto('');await record(page,seed());await page.goto('game/');await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');
 }
 async function fit(button){
+ // Garden artwork can finish loading and replace its dock between locator
+ // actions. Re-resolve and measure the settled element; keep every threshold.
+ await expect(async()=>{
  await button.scrollIntoViewIfNeeded();await expect(button).toBeVisible();
  const m=await button.evaluate(el=>{const b=el.getBoundingClientRect(),range=document.createRange();range.selectNodeContents(el);return{left:b.left,right:b.right,w:b.width,h:b.height,viewport:innerWidth,hit:el.contains(document.elementFromPoint(b.x+b.width/2,b.y+b.height/2)),text:[...range.getClientRects()].every(r=>r.left>=b.left-.5&&r.right<=b.right+.5&&r.top>=b.top-.5&&r.bottom<=b.bottom+.5)};});
  expect(m.left).toBeGreaterThanOrEqual(-.5);expect(m.right).toBeLessThanOrEqual(m.viewport+.5);expect(m.w).toBeGreaterThanOrEqual(43.9);expect(m.h).toBeGreaterThanOrEqual(43.9);expect(m.hit).toBe(true);expect(m.text).toBe(true);
+ }).toPass({timeout:10000,intervals:[100,250,500]});
 }
 async function capture(page,info,name,size){if([240,844,800].includes(size[1]))await info.attach(`${name}-${size.join('x')}`,{body:await page.screenshot(),contentType:'image/png'});}
 const protectedState=w=>{const state=structuredClone(w);delete state.revision;delete state.updatedAt;delete state.encounters.garden;return state;};
