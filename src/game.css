@@ -1010,4 +1010,32 @@ body[data-world="buncho"][data-scene-controls="open"]:has(.finch-garden) .game-s
 @media(min-width:700px) and (min-height:501px) {
  body[data-world="buncho"] .life-game-notice { left: 300px; top: calc(22px + env(safe-area-inset-top,0px)); }
 }
+/* Narrow tabs retain both complete garden names. */
+@media(max-width:360px) {
+ body[data-world="buncho"] .finch-garden-selector button { font-size: 12px; padding-inline: 4px; }
+}
+@media(min-height:501px) and (max-height:700px) {
+ body[data-world="buncho"][data-scene-controls="open"]:has(.finch-garden) .game-scene-controls-toggle { top: 80px; bottom: auto; left: 16px; }
+}
+/* The smallest garden retains its original compact geometry and stacking. */
+@media(max-height:300px) {
+ body[data-world="buncho"] .game-encounter-host .finch-garden > header { z-index: 4; }
+ body[data-world="buncho"] .game-encounter-host .finch-garden > header h3 { font-size: 14px!important; line-height: 1.3!important; padding: 5px 9px!important; }
+ body[data-world="buncho"] .finch-garden > header > [data-encounter-back] { padding: 4px; line-height: 1.1; }
+ body[data-world="buncho"] .finch-garden-selector-wrap { top: 54px; z-index: 4; }
+ body[data-world="buncho"] .finch-garden-selector { gap: 5px; }
+ body[data-world="buncho"] .finch-garden-selector button { font-size: 11px; padding: 6px 4px; }
+}
+@media(max-height:500px) {
+ body[data-world="buncho"] .life-game-notice { left: 160px; }
+}
+@media(max-width:600px) and (max-height:340px) {
+ body[data-world="buncho"] .life-game-notice { left: 140px; }
+}
+/* Keep the unchanged desktop bird label above the footer's painted edge. */
+@media(min-width:700px) and (min-height:701px) {
+ body[data-world="buncho"] .game-bottom-dock,
+ body[data-world="buncho"] .game-bottom-dock[data-home-dock="true"] { background: transparent; }
+ body[data-world="buncho"] .game-bottom-dock::before { content: ""; position: absolute; inset: 12px 0 0; z-index: -1; border-radius: inherit; background: var(--play-cream); pointer-events: none; }
+}
 /* End COLOR PLAY. */
