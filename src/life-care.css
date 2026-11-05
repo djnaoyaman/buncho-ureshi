@@ -7,3 +7,5 @@
 @media(max-height:500px){body[data-world="buncho"] .life-game-notice{left:119px}}
 
 .life-protagonist{margin:1rem 0;padding:.85rem 1rem;border:1px solid #c5c8ad;border-radius:.85rem;background:#f2f1df}.life-protagonist h4{margin:0}.life-protagonist p{margin:.4rem 0}
+
+.life-successor-choices{display:grid;gap:.7rem;margin:.8rem 0}.life-successor-choices>div{padding:.5rem;border:1px solid #c5c8ad;border-radius:.7rem}.life-successor-choices button{width:100%;min-height:44px;white-space:normal;font:inherit}.life-successor-choices .life-small{margin:.3rem 0 0}

@@ -32,7 +32,7 @@ test('time alone never moves residents, including preserved legacy households of
 
 test('current protagonist and mate remain protected after succession and roster reordering',()=>{
  const w=family(),first=w.birds[0],next=w.birds[2],mate=w.birds[3];next.parents=[first.id,'b2'];next.generation=1;pair(w,next,mate);
- lifeStatus(w,first).death={cause:'accident',at:NOW,tick:0};first.home='departed';w.protagonist={version:1,birdId:next.id,lineage:['b1',next.id]};createBird(w,{home:'resident'});w.birds.reverse();validateWorld(w);
+ lifeStatus(w,first).death={cause:'accident',at:NOW,tick:0};first.home='departed';w.protagonist={version:2,birdId:next.id,lineage:['b1',next.id],familySelections:[]};createBird(w,{home:'resident'});w.birds.reverse();validateWorld(w);
  const ids=independenceCandidates(w).flatMap(g=>g.ids);assert.ok(!ids.includes(next.id));assert.ok(!ids.includes(mate.id));assert.ok(!ids.includes(first.id));assert.ok(ids.length);
 });
 

@@ -192,9 +192,9 @@ body[data-world="buncho"] .world-game-controls{display:grid;grid-template-column
 body[data-world="buncho"] .world-game-controls button{min-height:44px;padding:.6rem .9rem;border:1px solid #ac996e;border-radius:48% 45% 36% 42%;background:#f0dbab;color:#514432;font:inherit}
 body[data-world="buncho"] .game-world-exit:focus-visible,body[data-world="buncho"] .world-game-controls button:focus-visible{outline:3px solid #486b50;outline-offset:3px}
 
-:is(.game-reset-dialog,.game-adoption-dialog,.game-independence-dialog){max-width:min(90vw,28rem);border:2px solid #8e7958;border-radius:1.8rem;padding:1.4rem;background:#fff9e9;color:#344d3b}:is(.game-reset-dialog,.game-adoption-dialog,.game-independence-dialog)::backdrop{background:#19372a88}:is(.game-reset-dialog,.game-adoption-dialog,.game-independence-dialog) button{margin:.3rem;min-height:44px}:is(.game-reset-dialog,.game-adoption-dialog,.game-independence-dialog) h3{font-size:1.2rem}
+:is(.game-reset-dialog,.game-adoption-dialog,.game-independence-dialog,.game-successor-dialog){max-width:min(90vw,28rem);border:2px solid #8e7958;border-radius:1.8rem;padding:1.4rem;background:#fff9e9;color:#344d3b}:is(.game-reset-dialog,.game-adoption-dialog,.game-independence-dialog,.game-successor-dialog)::backdrop{background:#19372a88}:is(.game-reset-dialog,.game-adoption-dialog,.game-independence-dialog,.game-successor-dialog) button{margin:.3rem;min-height:44px}:is(.game-reset-dialog,.game-adoption-dialog,.game-independence-dialog,.game-successor-dialog) h3{font-size:1.2rem}
 
-.game-reset-options{display:grid;gap:.5rem}:is(.game-reset-dialog,.game-adoption-dialog,.game-independence-dialog) .game-reset-danger{margin-top:1rem;border:2px solid #a05f50;background:#fff0e6}
+.game-reset-options{display:grid;gap:.5rem}:is(.game-reset-dialog,.game-adoption-dialog,.game-independence-dialog,.game-successor-dialog) .game-reset-danger{margin-top:1rem;border:2px solid #a05f50;background:#fff0e6}
 /* The game owns one viewport; site routes keep their original document flow. */
 body[data-world="buncho"]{height:100vh;height:100dvh;overflow:hidden;overscroll-behavior:none}
 body[data-world="buncho"] #main{position:fixed;inset:0;margin:0;padding:0;max-width:none;height:100vh;height:100dvh;overflow:hidden;background:#e8eddc}
@@ -238,7 +238,7 @@ body[data-world="buncho"] [data-settings-music] .game-music>summary{display:none
 body[data-world="buncho"] [data-settings-music] .game-music-panel{position:static;width:auto;box-shadow:none}
 body[data-world="buncho"] .game-settings>form[data-game-form=owner]{display:grid;gap:8px}
 body[data-world="buncho"] .game-settings>[data-game-action=reset-state]{margin-top:32px;border-color:#b58069}
-body[data-world="buncho"] .game-bird-sheet,body[data-world="buncho"] :is(.game-reset-dialog,.game-adoption-dialog,.game-independence-dialog){max-height:calc(100dvh - 20px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));overflow:auto;overscroll-behavior:contain}
+body[data-world="buncho"] .game-bird-sheet,body[data-world="buncho"] :is(.game-reset-dialog,.game-adoption-dialog,.game-independence-dialog,.game-successor-dialog){max-height:calc(100dvh - 20px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));overflow:auto;overscroll-behavior:contain}
 @media(max-width:600px){body[data-world="buncho"] .game-room{aspect-ratio:3/4}}
 @media(max-height:500px) and (min-width:601px){body[data-world="buncho"] .game-room{top:38px;bottom:65px;height:calc(100% - 103px)}body[data-world="buncho"] .game-field-nav{top:0;right:auto;width:245px}body[data-world="buncho"] .game-field-bar{left:auto;right:5px}body[data-world="buncho"] .game-field-bar>div:first-child{display:none}body[data-world="buncho"] .game-scene-toolbar{bottom:0;left:20%;right:20%}body[data-world="buncho"] .game-secondary-menu{left:4px;right:auto;width:19%}body[data-world="buncho"] .game-play-actions{bottom:4px;right:4px}.game-scene-toolbar .game-garden-care{display:none}}
 body[data-world="buncho"] .game-bottom-dock{position:absolute;bottom:0;left:0;right:0;display:grid;grid-template-columns:repeat(4,1fr);gap:4px;height:64px;z-index:35;padding:4px 8px;background:#fffbeded;border-top:1px solid #d4cba9;border-radius:20px 20px 0 0}
@@ -293,7 +293,7 @@ body[data-world="buncho"] .game-collection .game-owned-items svg{width:42px;heig
 body[data-world="buncho"]{height:var(--game-viewport-height,100dvh)}
 body[data-world="buncho"] #main{top:var(--game-viewport-top,0px);bottom:auto;height:var(--game-viewport-height,100dvh)}
 body[data-world="buncho"] .game-panel-overlay{height:calc(var(--game-viewport-height,100dvh) - 16px);max-height:calc(var(--game-viewport-height,100dvh) - 16px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))}
-body[data-world="buncho"] .game-bird-sheet,body[data-world="buncho"] :is(.game-reset-dialog,.game-adoption-dialog,.game-independence-dialog){max-height:calc(var(--game-viewport-height,100dvh) - 20px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))}
+body[data-world="buncho"] .game-bird-sheet,body[data-world="buncho"] :is(.game-reset-dialog,.game-adoption-dialog,.game-independence-dialog,.game-successor-dialog){max-height:calc(var(--game-viewport-height,100dvh) - 20px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))}
 body[data-world="buncho"] .game-owner-setting{display:flex;align-items:center;justify-content:center;gap:14px;width:100%;padding:6px;border-radius:20px}.game-owner-setting .buncho-owner-avatar{width:70px;height:90px}.game-owner-setting small{display:block;font-size:12px}
 body[data-world="buncho"] .game-panel-overlay:has([data-owner-editor-slot])>.game-panel{padding:0;overflow:hidden}
 body[data-world="buncho"] [data-owner-editor-slot],body[data-world="buncho"] .game-owner-editor{height:100%;min-height:0}
@@ -497,7 +497,7 @@ body[data-world="buncho"][data-scene-controls="closed"] .game-main>.game-scene-c
 
 /* Keep separate game windows centered and reachable on small screens. */
 body[data-world="buncho"] .game-app .game-bird-sheet,
-body[data-world="buncho"] .game-app :is(.game-reset-dialog,.game-adoption-dialog,.game-independence-dialog,.game-draw-result){
+body[data-world="buncho"] .game-app :is(.game-reset-dialog,.game-adoption-dialog,.game-independence-dialog,.game-draw-result,.game-successor-dialog){
   position:fixed;inset:0;margin:auto;width:min(480px,calc(100% - 32px));max-width:calc(100% - 32px);
   max-height:calc(var(--game-viewport-height,100dvh) - 32px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));
   overflow:auto;overscroll-behavior:contain;border-radius:12px;
@@ -619,7 +619,7 @@ body[data-world="buncho"] .game-app:has([data-raptor-notice]) .game-panel-overla
 @media(max-height:500px){body[data-world="buncho"] .game-panel-overlay[data-scene=true]>.game-raptor-notice{left:8px;right:78px;top:3px}body[data-world="buncho"] .game-app:has([data-raptor-notice]) .game-panel-overlay:not([data-scene=true])>.game-panel{padding-top:86px}}
 @media(max-height:340px){body[data-world="buncho"] .game-app:has([data-raptor-notice]) .game-panel-overlay:not([data-scene=true])>.game-panel{padding-top:60px}}
 
-:is(.game-reset-dialog,.game-adoption-dialog,.game-independence-dialog,.game-draw-result)>.game-raptor-notice{position:sticky;top:0;margin:0 0 12px;width:100%;text-align:left}.game-raptor-notice:only-child{margin:0}
+:is(.game-reset-dialog,.game-adoption-dialog,.game-independence-dialog,.game-draw-result,.game-successor-dialog)>.game-raptor-notice{position:sticky;top:0;margin:0 0 12px;width:100%;text-align:left}.game-raptor-notice:only-child{margin:0}
 
 /* Reserve a real row for the warning in menus and nested notebook views.
    The scrollable content cannot slide a button behind the home escape control. */
@@ -645,3 +645,5 @@ body[data-world="buncho"] .game-panel-overlay[open][data-scene=true]:has(>.game-
 .game-independence-dialog button{display:block;width:calc(100% - .6rem);min-height:44px;white-space:normal}.game-independence-dialog [data-independence-accept]{background:#e9f1de;border-color:#94a879}
 
 .game-independence>summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-weight:700}.game-independence[open]>summary{margin-bottom:.5rem}
+
+.game-successor-dialog h2{font-size:1.2rem;overflow-wrap:anywhere}.game-successor-dialog p{line-height:1.7;overflow-wrap:anywhere}.game-successor-dialog button{display:block;width:calc(100% - .6rem);min-height:44px;white-space:normal}.game-successor-dialog [data-successor-accept]{background:#e9f1de;border-color:#94a879}

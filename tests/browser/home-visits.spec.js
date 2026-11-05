@@ -174,7 +174,7 @@ for(const size of [{width:320,height:240},{width:390,height:844}])test(`goodbye 
 test('a visitor-shaped successor is protected by ID and receives focus after another friend leaves',async({page})=>{
  const size={width:320,height:240},w=createWorld(now);w.paused=true;w.settings.motion=false;w.settings.careSound=false;
  const parent=createBird(w,{home:'resident',sex:'male'}),heir=createBird(w,{home:'visitor',parents:['b1',parent.id],generation:1,name:'おもち'}),friend=createBird(w,{home:'visitor',name:'おもち'});
- w.birds[0].home='departed';lifeStatus(w,'b1').death={cause:'illness',at:now,tick:0};w.protagonist={version:1,birdId:heir.id,lineage:['b1',heir.id]};w.encounters.gardenFriends.companions=[];
+ w.birds[0].home='departed';lifeStatus(w,'b1').death={cause:'illness',at:now,tick:0};w.protagonist={version:2,birdId:heir.id,lineage:['b1',heir.id],familySelections:[]};w.encounters.gardenFriends.companions=[];
  const original=validateWorld(w),errors=[];page.on('pageerror',e=>errors.push(e.message));await start(page,size,original);
  let sheet=await openHomeBird(page,heir.id);await expect(sheet.locator('[data-home-goodbye]')).toHaveCount(0);await sheet.locator('[data-game-panel="profile"]').click();
  await expect(page.locator('.game-profile [data-home-goodbye]')).toHaveCount(0);await page.locator('[data-game-close-panel]').click();

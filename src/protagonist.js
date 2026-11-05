@@ -5,7 +5,7 @@ export const getProtagonistId = world => world?.protagonist?.birdId ?? 'b1';
 export const getProtagonistBird = world => world?.birds?.find(b=>b.id===getProtagonistId(world)) ?? null;
 export function initializeProtagonist(world){
  if(world.protagonist)return false;
- world.protagonist={version:1,birdId:'b1',lineage:['b1']};return true;
+ world.protagonist=world.version>=10?{version:2,birdId:'b1',lineage:['b1'],familySelections:[]}:{version:1,birdId:'b1',lineage:['b1']};return true;
 }
 export function protagonistStatus(world){
  const bird=getProtagonistBird(world),generation=world.protagonist?.lineage.length??1;
@@ -19,6 +19,27 @@ export function syncProtagonist(world){
  initializeProtagonist(world);
  const {bird,heir,waiting}=protagonistStatus(world);
  if(waiting!=='ready')return null;
+ return transitionProtagonist(world,bird,heir);
+}
+/** Family membership is checked at choice time, never reconstructed from later deaths. */
+export function familySuccessorCandidates(world){
+ if(protagonistStatus(world).waiting!=='no-child')return [];
+ const count=world.birds.filter(b=>b.home==='resident').length,now=world.lifecycle.seenAt;
+ return world.birds.filter(b=>isAlive(world,b)&&!world.protagonist.lineage.includes(b.id)&&(b.home==='resident'||b.parents.length===2||b.milestones.some(m=>['welcome','adopt','movein'].includes(m.kind))))
+  .map(b=>{const condition=lifeStatus(world,b).condition;return {bird:b,reason:b.stage==='egg'?'hatch':b.home!=='resident'&&count>=6?'room':b.home!=='resident'&&condition&&condition.deadlineAt<=now&&now>253402268399999-LIFE_RULES.treatmentMs?'clock':null};});
+}
+/** Only called after the engine checks the exact choice against fresh lifecycle state. */
+export function selectFamilyProtagonist(world,birdId){
+ const candidate=familySuccessorCandidates(world).find(c=>c.bird.id===birdId&&!c.reason);
+ if(!candidate)return null;
+ const from=getProtagonistBird(world),result=transitionProtagonist(world,from,candidate.bird);
+ world.protagonist.familySelections.push({...result,tick:world.tick,at:world.lifecycle.seenAt});
+ return result;
+}
+export function recordedFamilySuccession(world,fromId,toId,tick){
+ return world.version>=10&&Array.isArray(world.protagonist?.familySelections)&&world.protagonist.familySelections.some(s=>s.fromId===fromId&&s.toId===toId&&s.tick===tick);
+}
+function transitionProtagonist(world,bird,heir){
  const fromId=bird.id,now=world.lifecycle.seenAt;
  if(heir.home!=='resident'){
   heir.home='resident';heir.arrivedTick=world.tick;
@@ -36,10 +57,24 @@ export function syncProtagonist(world){
 }
 export function validateProtagonist(world){
  const p=world.protagonist,fail=()=>{throw new Error('保存データを読み込めません：主人公の代替わり情報が不正です。');};
- if(!p||typeof p!=='object'||Array.isArray(p)||Object.keys(p).length!==3||p.version!==1||!Array.isArray(p.lineage)||!p.lineage.length||p.lineage.length>world.birds.length||p.lineage[0]!=='b1'||p.birdId!==p.lineage.at(-1)||new Set(p.lineage).size!==p.lineage.length)fail();
+ const current=world.version>=10,keys=current?['version','birdId','lineage','familySelections']:['version','birdId','lineage'];
+ if(!p||typeof p!=='object'||Array.isArray(p)||Object.keys(p).length!==keys.length||keys.some(k=>!Object.hasOwn(p,k))||p.version!==(current?2:1)||!Array.isArray(p.lineage)||!p.lineage.length||p.lineage.length>world.birds.length||p.lineage[0]!=='b1'||p.birdId!==p.lineage.at(-1)||new Set(p.lineage).size!==p.lineage.length)fail();
+ const selections=current?p.familySelections:[];
+ if(!Array.isArray(selections)||selections.length>=p.lineage.length)fail();
+ let priorIndex=0,priorTick=0,priorAt=0;
+ for(const row of selections){
+  if(!row||typeof row!=='object'||Array.isArray(row)||Object.keys(row).length!==4||!['fromId','toId','tick','at'].every(k=>Object.hasOwn(row,k)))fail();
+  const index=p.lineage.indexOf(row.toId),from=world.birds.find(b=>b.id===row.fromId),to=world.birds.find(b=>b.id===row.toId);
+  if(index<=priorIndex||p.lineage[index-1]!==row.fromId||!from||!to||to.parents.includes(from.id))fail();
+  const death=lifeStatus(world,from).death,laterDeath=lifeStatus(world,to).death;
+  if(!death||!Number.isSafeInteger(row.tick)||row.tick<Math.max(priorTick,death.tick,to.bornTick)||row.tick>world.tick||!Number.isSafeInteger(row.at)||row.at<Math.max(priorAt,death.at)||row.at>world.lifecycle.seenAt||laterDeath&&(laterDeath.tick<row.tick||laterDeath.at<row.at))fail();
+  const retained=world.events.filter(e=>e.kind==='succession'&&e.ids[1]===row.toId);
+  if(retained.length>1||retained.some(e=>e.ids[0]!==row.fromId||e.tick!==row.tick))fail();
+  priorIndex=index;priorTick=row.tick;priorAt=row.at;
+ }
  for(let i=0;i<p.lineage.length;i++){
   const bird=world.birds.find(b=>b.id===p.lineage[i]);
-  if(!bird||i&&(!bird.parents.includes(p.lineage[i-1])||bird.stage==='egg')||i<p.lineage.length-1&&isAlive(world,bird))fail();
+  if(!bird||i&&(!bird.parents.includes(p.lineage[i-1])&&!selections.some(s=>s.fromId===p.lineage[i-1]&&s.toId===bird.id)||bird.stage==='egg')||i<p.lineage.length-1&&isAlive(world,bird))fail();
  }
  return p;
 }

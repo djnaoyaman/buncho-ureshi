@@ -6,9 +6,9 @@ const clone=structuredClone;
 function v2(w){const x=clone(w);x.version=2;delete x.field;delete x.decor;delete x.gems;delete x.careSchedule;delete x.encounters;delete x.economy;delete x.lifecycle;delete x.protagonist;delete x.adoption;delete x.settings.adoptionMode;for(const b of x.birds){delete b.gemCare;delete b.naming;}return x;}
 test('v1 and v2 migrate purely preserving every old field, with one welcome gift',()=>{
  const old=v2(createWorld(100));advanceTicks(old,0);const before=JSON.stringify(old),m=readCompatibleWorld(old);
- assert.equal(m.version,9);assert.deepEqual(v2(m),old);assert.equal(JSON.stringify(old),before);assert.equal(m.decor.points,20);assert.equal(m.decor.inventory.length,9);
+ assert.equal(m.version,10);assert.deepEqual(v2(m),old);assert.equal(JSON.stringify(old),before);assert.equal(m.decor.points,20);assert.equal(m.decor.inventory.length,9);
  for(let i=0;i<4;i++)assert.deepEqual(parseSave(serializeWorld(m)),m);
- const legacy=JSON.parse(readFileSync(new URL('./fixtures/v1-world.json',import.meta.url)));const upgraded=readCompatibleWorld(legacy);assert.equal(upgraded.version,9);assert.deepEqual(upgraded.events,legacy.events);assert.deepEqual(upgraded.birds.map(b=>b.name),legacy.birds.map(b=>b.name));
+ const legacy=JSON.parse(readFileSync(new URL('./fixtures/v1-world.json',import.meta.url)));const upgraded=readCompatibleWorld(legacy);assert.equal(upgraded.version,10);assert.deepEqual(upgraded.events,legacy.events);assert.deepEqual(upgraded.birds.map(b=>b.name),legacy.birds.map(b=>b.name));
 });
 test('travel is real co-presence, roundtrip is idempotent, and young stay home',()=>{
  const w=createWorld(100);advanceTicks(w,1);const friend=w.birds[1];const egg=createBird(w,{stage:'egg',home:'resident'});
