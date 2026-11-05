@@ -23,3 +23,7 @@ test('Color Play text pairs meet WCAG AA for normal-size labels',()=>{
  for(const surface of ['fff8ea','fffdf5','f47769','ffdc64','bee5cd'])assert(contrast('10382f',surface)>=4.5,surface);
  assert(contrast('206558','fffdf5')>=4.5);
 });
+
+import {colorPlayWorld} from './fixtures/color-play.js';
+import {validateWorld} from '../src/engine.js';
+test('Color Play browser fixture is a valid paused save with consistent predator history',()=>{const world=colorPlayWorld();assert.equal(world.paused,true);assert.equal(world.encounters.crow.visits.length,1);assert.equal(world.encounters.raptor.visits.length,1);assert.doesNotThrow(()=>validateWorld(JSON.parse(JSON.stringify(world))));});

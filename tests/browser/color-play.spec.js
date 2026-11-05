@@ -1,7 +1,7 @@
 import {test,expect} from '@playwright/test';
-import {createWorld,validateWorld} from '../../src/engine.js';
-const NOW=Date.UTC(2026,10,5,9), sizes=[[320,240],[320,568],[390,844],[844,390],[1280,800]];
-function seed(){const w=createWorld(NOW,42);w.paused=true;w.settings.motion=false;w.settings.careSound=false;w.encounters.crow.lastArrivalAt=NOW;w.encounters.raptor.lastArrivalAt=NOW;validateWorld(w);return w;}
+import {validateWorld} from '../../src/engine.js';
+import {COLOR_PLAY_NOW as NOW,colorPlayWorld as seed} from '../fixtures/color-play.js';
+const sizes=[[320,240],[320,568],[390,844],[844,390],[1280,800]];
 async function record(page,world){return page.evaluate(world=>new Promise((resolve,reject)=>{
  const request=indexedDB.open('buncho-ureshi-garden-v1',1);request.onupgradeneeded=()=>request.result.createObjectStore('world');request.onerror=()=>reject(request.error);
  request.onsuccess=()=>{const db=request.result,tx=db.transaction('world',world?'readwrite':'readonly'),store=tx.objectStore('world'),q=world?store.put(world,'current'):store.get('current');tx.oncomplete=()=>{db.close();resolve(q.result)};tx.onerror=()=>reject(tx.error)};
