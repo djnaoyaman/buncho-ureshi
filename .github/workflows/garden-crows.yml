@@ -1,7 +1,7 @@
 name: Garden crow encounters
 on:
   pull_request:
-    paths: ['src/engine.js', 'src/life-care.js', 'src/protagonist.js', 'src/game.js', 'src/game.css', 'src/encounter*', 'src/garden-crow*', 'src/garden-bird-motion.js', 'public/game-art/crows/**', 'tests/garden-crow*', 'tests/browser/garden-crows.spec.js', 'playwright.garden-crows.config.js', '.github/workflows/garden-crows.yml']
+    paths: ['src/engine.js', 'src/life-care.js', 'src/protagonist.js', 'src/game.js', 'src/game.css', 'src/encounter*', 'src/garden-crow*', 'src/garden-predator-clock.js', 'tests/predator-early-visits.test.js', 'tests/garden-predator-controller.test.js', 'src/garden-raptor-controller.js', 'src/garden-bird-motion.js', 'public/game-art/crows/**', 'tests/garden-crow*', 'tests/browser/garden-crows.spec.js', 'playwright.garden-crows.config.js', '.github/workflows/garden-crows.yml']
   workflow_dispatch:
     inputs:
       public_url:
