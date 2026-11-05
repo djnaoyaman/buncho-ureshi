@@ -647,3 +647,10 @@ body[data-world="buncho"] .game-panel-overlay[open][data-scene=true]:has(>.game-
 .game-independence>summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-weight:700}.game-independence[open]>summary{margin-bottom:.5rem}
 
 .game-successor-dialog h2{font-size:1.2rem;overflow-wrap:anywhere}.game-successor-dialog p{line-height:1.7;overflow-wrap:anywhere}.game-successor-dialog button{display:block;width:calc(100% - .6rem);min-height:44px;white-space:normal}.game-successor-dialog [data-successor-accept]{background:#e9f1de;border-color:#94a879}
+
+/* A notebook opened from the garden is reading content, not a scene.
+   Keep the floating scene toggle off its cards and restore it on return. */
+body[data-world="buncho"]:has(.game-panel-overlay[open] .game-encounter-host>:is(.finch-notebook,.finch-entry,.finch-event)) .game-scene-controls-toggle{display:none}
+
+/* Reserve a separate escape row above the scrollable reading surface. */
+body[data-world="buncho"] .game-panel-overlay[open][data-scene=true]:has(.game-encounter-host>:is(.finch-notebook,.finch-entry,.finch-event)){padding-top:calc(60px + env(safe-area-inset-top,0px));box-sizing:border-box;background:#f6edce}
