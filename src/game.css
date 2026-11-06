@@ -1375,3 +1375,29 @@ body[data-world="buncho"] .game-panel-overlay[data-scene="true"] .finch-garden-s
  body[data-world="buncho"] .game-panel-overlay[data-scene="true"] .finch-garden-dock > details:first-child > summary { min-height: 44px; }
 }
 /* End COLOR PLAY. */
+
+/* Approved family A: real saved relatives, selected portrait and readable bond lines. */
+body[data-world="buncho"] .game-family-tree.game-family-cards-a{background:#fffcf5;padding:clamp(12px,3vw,24px);border:1px solid #b8b49f;border-radius:24px;color:#304f45}
+body[data-world="buncho"] .game-family-cards-a .game-family-heading{display:block}
+body[data-world="buncho"] .game-family-cards-a .game-family-heading h3{font-family:var(--game-font,inherit);font-size:clamp(1.45rem,5vw,2rem);line-height:1.4;margin:0 0 12px}
+body[data-world="buncho"] .game-family-cards-a .game-family-legend{font-size:.85rem;line-height:1.6;gap:8px 14px;color:#6f7b6c;margin-bottom:20px}
+body[data-world="buncho"] .game-family-cards-a .game-family-legend span:nth-child(2){color:#304f45}
+body[data-world="buncho"] .game-family-cards-a .game-family-pan{background:transparent;border:0;border-radius:0;margin-block:12px}
+body[data-world="buncho"] .game-family-cards-a .game-family-lines path{stroke:#304f45;stroke-width:2}
+body[data-world="buncho"] .game-family-cards-a .game-family-lines .family-edge-pair{stroke:#304f45;stroke-dasharray:5 4}
+body[data-world="buncho"] .game-family-cards-a .game-family-node{background:#f8efdb;border:1px solid #b8b49f;border-radius:18px;box-shadow:none;padding:6px;gap:2px;color:#304f45}
+body[data-world="buncho"] .game-family-cards-a .game-family-node[data-family-role=child]{background:#dfe7d2}
+body[data-world="buncho"] .game-family-cards-a .game-family-node.is-focus{background:#f7dc8d;border:2px solid #304f45}
+body[data-world="buncho"] .game-family-cards-a .game-family-node strong{font-size:.75rem;line-height:1.25}
+body[data-world="buncho"] .game-family-cards-a .game-family-node small{font-size:.64rem;color:#657464;line-height:1.35}
+body[data-world="buncho"] .game-family-cards-a .game-family-selected{position:absolute;right:3px;top:3px;display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:#304f45;color:#fffdf6;font-weight:700;line-height:1;z-index:1}
+body[data-world="buncho"] .game-family-cards-a .game-family-zoom{display:flex;justify-content:space-between;gap:16px;margin:20px 0}
+body[data-world="buncho"] .game-family-cards-a .game-family-zoom button{min-width:64px;background:#f8efdb;border:0;border-radius:999px;box-shadow:none;font-size:1.4rem}
+body[data-world="buncho"] .game-family-cards-a .game-family-zoom output{font-size:1rem;color:#304f45}
+body[data-world="buncho"] .game-family-cards-a .game-profile-actions{display:flex;flex-direction:column;gap:12px}
+body[data-world="buncho"] .game-family-cards-a .game-profile-actions button{border:1px solid #627765;border-radius:999px;box-shadow:none;background:#fffcf5;color:#304f45}
+body[data-world="buncho"] .game-family-cards-a .game-profile-actions button:first-child{background:#f7dc8d;min-height:48px;font-weight:700}
+body[data-world="buncho"] .game-family-cards-a>details{margin-top:12px;border:0;background:transparent;padding:0}
+body[data-world="buncho"] .game-family-cards-a>details>summary{min-height:44px;display:flex;align-items:center;font-weight:700;line-height:1.5}
+
+body[data-world="buncho"] .game-family-cards-a .game-family-node .game-mini-bird{width:50px;height:56px;flex:0 0 56px;object-fit:contain}
