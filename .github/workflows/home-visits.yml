@@ -19,6 +19,10 @@ permissions:
 jobs:
   verify-home:
     runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    container:
+      image: mcr.microsoft.com/playwright:v1.64.1-noble
+      options: --user 1001
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -26,8 +30,28 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+        timeout-minutes: 5
       - run: npm run build
-      - run: npx playwright install --with-deps chromium webkit
+      - name: Verify preinstalled Playwright browsers
+        timeout-minutes: 2
+        run: |
+          node --input-type=module <<'NODE'
+          import { createRequire } from 'node:module';
+          import { chromium, webkit } from 'playwright';
+          const require = createRequire(import.meta.url);
+          const actual = require('@playwright/test/package.json').version;
+          if (actual !== '1.64.1') {
+            throw new Error(`Playwright ${actual} must match the pinned CI image 1.64.1`);
+          }
+          for (const [name, browser] of Object.entries({ chromium, webkit })) {
+            const instance = await browser.launch();
+            try {
+              console.log(`${name}: ${instance.version()}`);
+            } finally {
+              await instance.close();
+            }
+          }
+          NODE
       - run: npx playwright test --config=playwright.home-visits.config.js
       - uses: actions/upload-artifact@v4
         if: always()
@@ -37,3 +61,4 @@ jobs:
             playwright-report/
             test-results/
           retention-days: 14
+
