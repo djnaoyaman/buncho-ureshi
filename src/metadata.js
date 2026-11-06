@@ -6,6 +6,7 @@ import { SITE_NAME } from "./visuals.js";
 export const PRODUCTION_ORIGIN = "https://djnaoyaman.github.io";
 export const BASE_PATH = "/buncho-ureshi/";
 export const IMAGE_ALT = `${SITE_NAME} — おもちと学ぶ文鳥図鑑。赤いくちばしの白文鳥と深緑の文字を配した採用ロゴ。`;
+export const GAME_INSTALL_ICON = "game-icons/apple-touch-icon-v1.png";
 export const GAME_IMAGE_ALT = "おもちの文鳥ぐらし。白文鳥と緑の葉をあしらったゲームタイトルと、お世話・模様替えを楽しむブラウザゲームの案内。";
 const GAME_IMAGE = "game-ogp-v1.png";
 export const PAGE_CATALOG = [
@@ -103,6 +104,7 @@ export function routeMetadata(route = "", { query = null, notFound = false } = {
     imageAlt, imageURL,
     installManifest: route === "game/" && !missing ? "game.webmanifest" : "manifest.webmanifest",
     installName: route === "game/" && !missing ? "文鳥ぐらし" : SITE_NAME,
+    installIcon: route === "game/" && !missing ? GAME_INSTALL_ICON : "apple-touch-icon.png",
     ogType: article || morph ? "article" : "website",
     structuredData: structuredData(canonicalRoute, description, title, article, morph, imageURL, imageAlt),
   };

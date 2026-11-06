@@ -7,6 +7,15 @@ async function checkInstall(page, request, game) {
   const filename = game ? 'game.webmanifest' : 'manifest.webmanifest';
   await expect(page.locator('link[rel="manifest"]')).toHaveAttribute('href', filename);
   const name = game ? '文鳥ぐらし' : SITE_NAME;
+  const iconPath = game ? 'game-icons/apple-touch-icon-v1.png' : 'apple-touch-icon.png';
+  await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveAttribute('href', iconPath);
+  const iconURL = await page.locator('link[rel="apple-touch-icon"]').evaluate(link => link.href);
+  const iconResponse = await request.get(iconURL);
+  expect(iconResponse.status()).toBe(200);
+  const bytes = await iconResponse.body();
+  expect(bytes.subarray(1, 4).toString()).toBe('PNG');
+  expect(bytes.readUInt32BE(16)).toBe(180);
+  expect(bytes.readUInt32BE(20)).toBe(180);
   for (const tag of ['application-name', 'apple-mobile-web-app-title']) {
     await expect(page.locator(`meta[name="${tag}"]`)).toHaveAttribute('content', name);
   }
