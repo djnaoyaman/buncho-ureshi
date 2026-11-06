@@ -1,3 +1,4 @@
+import {useLegacyGardenFriends} from './fixtures/legacy-garden-friends.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {IDBFactory} from 'fake-indexeddb';
@@ -20,7 +21,7 @@ function arrive(w,garden='komugi',scene='grass'){
 }
 function start(w,id){assert.equal(system.open(w,id,economyToken(w)).changed,true);return clone(w.encounters.active);}
 function finish(w){let result;while(w.encounters.active){const a=w.encounters.active,entry=system.catalog.find(e=>e.id===a.id);result=completeEncounterReward(w,a.instanceId,entry.steps[a.step].action,economyToken(w),NOW);}return result;}
-function legacy(w){const old=clone(w);old.encounters.version=10;delete old.encounters.gardenSessions;return old;}
+function legacy(w){const old=clone(w);old.encounters.version=10;useLegacyGardenFriends(old);delete old.encounters.gardenSessions;return old;}
 function parked(w,id='komugi'){return w.encounters.gardenSessions.find(s=>s.gardenId===id);}
 async function raw(indexedDB,value){
   const db=await new Promise((resolve,reject)=>{const r=indexedDB.open(DB_NAME,1);r.onupgradeneeded=()=>r.result.createObjectStore('world');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});
@@ -59,10 +60,11 @@ for(const kind of ['queue','active','completed'])test(`legacy switched-away ${ki
   const w=fresh(),a=arrive(w);if(kind!=='queue')start(w,a);if(kind==='active')system.act(w,w.encounters.active.instanceId,system.catalog.find(e=>e.id===a).steps[0].action,economyToken(w));if(kind==='completed')finish(w);
   const old=legacy(w);old.encounters.garden.id='mizukagami';old.encounters.garden.scene='water';old.encounters.garden.visits.mizukagami=1;const before=clone(old),pending=clone(old.encounters.active);
   const next=readCompatibleWorld(old,NOW);assert.deepEqual(old,before);assert.equal(next.version,old.version);assert.equal(next.revision,old.revision);assert.equal(next.seed,old.seed);
-  assert.equal(next.encounters.version,11);assert.equal(next.encounters.garden.id,'mizukagami');assert.equal(next.encounters.garden.scene,'water');assert.equal(next.encounters.garden.nextTick,0);assert.deepEqual(next.encounters.queue,[]);
+  assert.equal(next.encounters.version,12);assert.equal(next.encounters.garden.id,'mizukagami');assert.equal(next.encounters.garden.scene,'water');assert.equal(next.encounters.garden.nextTick,0);assert.deepEqual(next.encounters.queue,[]);
   assert.deepEqual(parked(next).active,pending);assert.deepEqual(parked(next).queue,old.encounters.queue);assert.equal(parked(next).lastGuest,old.encounters.garden.lastGuest);
   for(const key of ['birds','events','decor','economy','careSchedule','protagonist','adoption'])assert.deepEqual(next[key],old[key]);
-  for(const key of ['discoveries','friendship','cageVisitors','homeClosedUntil','homeGoodbyes','gardenFriends'])assert.deepEqual(next.encounters[key],old.encounters[key]);
+  for(const key of ['discoveries','friendship','cageVisitors','homeClosedUntil','homeGoodbyes'])assert.deepEqual(next.encounters[key],old.encounters[key]);
+  assert.deepEqual(next.encounters.gardenFriends,{...old.encounters.gardenFriends,version:2,accompany:false,attendees:[],visits:[]});
   assert.deepEqual(parseSave(serializeWorld(next)),next);assert.equal(arrive(next,'mizukagami','water').length>0,true);select(next,'komugi');
   if(kind==='active')assert.deepEqual(next.encounters.active,pending);else if(kind==='queue')assert.equal(next.encounters.queue[0],a);else assert.equal(next.encounters.garden.lastGuest,a);
   validateWorld(next);
@@ -139,7 +141,7 @@ test('locked local save upgrades and persists the same per-garden state',async()
   const w=fresh();arrive(w);const old=legacy(w);old.encounters.garden.id='mizukagami';old.encounters.garden.scene='water';
   const memory=new Map([[STORAGE_KEY,JSON.stringify(old)]]),localStorage={getItem:key=>memory.has(key)?memory.get(key):null,setItem:(key,value)=>memory.set(key,value),removeItem:key=>memory.delete(key)};
   const store=await openGameStore({localStorage,navigator:{locks:{request:async(name,operation)=>operation()}}});
-  try{const result=await store.transact(x=>x);assert.equal(result.encounters.version,11);assert.equal(parked(result).queue.length,1);const raw=JSON.parse(memory.get(STORAGE_KEY));assert.deepEqual(raw.encounters,result.encounters);}finally{store.close();}
+  try{const result=await store.transact(x=>x);assert.equal(result.encounters.version,12);assert.equal(parked(result).queue.length,1);const raw=JSON.parse(memory.get(STORAGE_KEY));assert.deepEqual(raw.encounters,result.encounters);}finally{store.close();}
 });
 
 test('different-garden UI enables observation, names waiting locations and resumes the exact stored event',async()=>{

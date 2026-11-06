@@ -5,7 +5,7 @@ import {createWorld,validateWorld} from '../src/engine.js';
 import {mountEncounterPanel} from '../src/encounter-controller.js';
 import {arriveGardenCrow,CROW_SPECIES,crowFriendship} from '../src/garden-crows.js';
 const id=CROW_SPECIES[0].id,now=Date.UTC(2026,10,4,9),sleep=ms=>new Promise(r=>setTimeout(r,ms));
-function fixture(discovered=false){const w=createWorld(now);w.encounters.garden.open=true;w.field.place='park';if(discovered)arriveGardenCrow(w,id,now,{worldId:w.worldId,revision:w.revision,gardenId:w.encounters.garden.id});return w;}
+function fixture(discovered=false){const w=createWorld(now);w.encounters.garden.open=true;w.encounters.gardenFriends.attendees=['b1'];w.field.place='park';if(discovered)arriveGardenCrow(w,id,now,{worldId:w.worldId,revision:w.revision,gardenId:w.encounters.garden.id});return w;}
 function setup(w,{entry=false,...options}={}){
  const win=new Window();win.document.body.innerHTML='<div id="root"></div>';const root=win.document.querySelector('#root');
  let elapsed=0,sequence=0;const timers=new Map();win.setTimeout=(fn,delay)=>{const key=++sequence;timers.set(key,{fn,delay});return key;};win.clearTimeout=key=>timers.delete(key);
@@ -77,7 +77,7 @@ test('subsecond household modal resets dwell without needing the one-second poll
 test('absent or young protagonist never accumulates a warning while no eligible bird is in the garden',async()=>{
  for(const field of ['departed','chick','egg']){const w=fixture();if(field==='departed')w.birds[0].home=field;else w.birds[0].stage=field;const s=setup(w);try{await s.run(200);assert.equal(s.root.querySelector('[data-crow-phase]'),null);assert.equal(w.encounters.crow.visits.length,0);w.birds[0].home='resident';w.birds[0].stage='adult';await s.run(120);assert.equal(s.root.querySelector('[data-crow-phase]'),null);await s.run(1);assert.ok(s.root.querySelector('[data-crow-phase=warning]'));}finally{s.close();}}
 });
-async function successorFamily(){const {createBird,advanceTo}=await import('../src/engine.js');const {lifeStatus}=await import('../src/life-care.js');const w=fixture();w.paused=false;const father=createBird(w,{sex:'male',home:'resident'});w.tick=10;const child=createBird(w,{sex:'female',home:'resident',parents:['b1',father.id],generation:1});lifeStatus(w,'b1').condition={kind:'injury',sinceAt:now,deadlineAt:now+86400000};return {w,child,succeed:()=>{w.paused=true;advanceTo(w,now+86400000);w.paused=false;}};}
+async function successorFamily(){const {createBird,advanceTo}=await import('../src/engine.js');const {lifeStatus}=await import('../src/life-care.js');const w=fixture();w.paused=false;const father=createBird(w,{sex:'male',home:'resident'});w.tick=10;const child=createBird(w,{sex:'female',home:'resident',parents:['b1',father.id],generation:1});w.encounters.gardenFriends.attendees=['b1',child.id];lifeStatus(w,'b1').condition={kind:'injury',sinceAt:now,deadlineAt:now+86400000};return {w,child,succeed:()=>{w.paused=true;advanceTo(w,now+86400000);w.paused=false;}};}
 test('a queued old-protagonist arrival cannot hit the successor after real lifecycle inheritance',async()=>{
  const {w,child,succeed}=await successorFamily();let release;const s=setup(w,{transact:fn=>new Promise(resolve=>{release=()=>resolve(fn(w));})});try{await s.run(126);const {flight}=await s.tick();succeed();const energy=child.needs.energy;assert.equal(w.protagonist.birdId,child.id);release();await flight;assert.equal(child.needs.energy,energy);assert.equal(w.encounters.crow.visits.length,0);validateWorld(w);}finally{s.close();}
 });

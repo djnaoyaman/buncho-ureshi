@@ -1,3 +1,4 @@
+const legacyFriends=w=>{const f=w.encounters.gardenFriends;w.encounters.gardenFriends={version:1,regulars:f.regulars,references:f.references,companions:f.companions};};
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {IDBFactory} from 'fake-indexeddb';
@@ -10,7 +11,7 @@ import {Window} from 'happy-dom';
 import {syncLifecycle,lifeStatus,LIFE_RULES} from '../src/life-care.js';
 const now=Date.UTC(2026,10,4,9),id=CROW_SPECIES[0].id;
 const token=w=>({worldId:w.worldId,revision:w.revision,gardenId:w.encounters.garden.id});
-function fixture(){const w=createWorld(now,42);w.encounters.garden.open=true;w.field.place='park';return w;}
+function fixture(){const w=createWorld(now,42);w.encounters.garden.open=true;w.encounters.gardenFriends.attendees=['b1'];w.field.place='park';return w;}
 function sample(clock,time,options={}){return clock.sample({key:'world:garden',now:time,eligible:true,...options});}
 function run(clock,start,end,options={}){let result;for(let t=start;t<=end;t+=1000){const r=sample(clock,t,options);if(r)result=r;}return result;}
 test('crow clock waits 120 continuous seconds, warns for six seconds, then fires once',()=>{
@@ -77,19 +78,20 @@ test('five crow species use bounded, strict, independent observation records',()
  assert.throws(()=>validateCrowState({...initialCrowState(),speciesId:id},0,GARDEN_IDS));
 });
 test('v6 migrates purely to encounter v8 while world remains v9',()=>{
- const old=fixture();old.encounters.version=6;delete old.encounters.gardenSessions;delete old.encounters.homeGoodbyes;for(const id of ["java-rice","bali-terrace","paris-unrest"])delete old.encounters.garden.visits[id];delete old.encounters.crow;delete old.encounters.raptor;const before=structuredClone(old),next=readCompatibleWorld(old,now);
- assert.deepEqual(old,before);assert.equal(next.version,10);assert.equal(next.encounters.version,11);assert.deepEqual(next.encounters.crow,initialCrowState());
- const projected=structuredClone(next);projected.encounters.version=6;delete projected.encounters.gardenSessions;delete projected.encounters.homeGoodbyes;for(const id of ["java-rice","bali-terrace","paris-unrest"])delete projected.encounters.garden.visits[id];delete projected.encounters.crow;delete projected.encounters.raptor;assert.deepEqual(projected,before);
- const future=structuredClone(next);future.encounters.version=12;assert.throws(()=>validateWorld(future));
+ const old=fixture();old.encounters.version=6;legacyFriends(old);delete old.encounters.gardenSessions;delete old.encounters.homeGoodbyes;for(const id of ["java-rice","bali-terrace","paris-unrest"])delete old.encounters.garden.visits[id];delete old.encounters.crow;delete old.encounters.raptor;const before=structuredClone(old),next=readCompatibleWorld(old,now);
+ assert.deepEqual(old,before);assert.equal(next.version,10);assert.equal(next.encounters.version,12);assert.deepEqual(next.encounters.crow,initialCrowState());
+ const projected=structuredClone(next);projected.encounters.version=6;legacyFriends(projected);delete projected.encounters.gardenSessions;delete projected.encounters.homeGoodbyes;for(const id of ["java-rice","bali-terrace","paris-unrest"])delete projected.encounters.garden.visits[id];delete projected.encounters.crow;delete projected.encounters.raptor;assert.deepEqual(projected,before);
+ const future=structuredClone(next);future.encounters.version=13;assert.throws(()=>validateWorld(future));
 });
 async function seed(indexedDB,w){const db=await new Promise((resolve,reject)=>{const r=indexedDB.open(DB_NAME,1);r.onupgradeneeded=()=>r.result.createObjectStore('world');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});try{await new Promise((resolve,reject)=>{const tx=db.transaction('world','readwrite');tx.objectStore('world').put(w,'current');tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});}finally{db.close();}}
 test('two stores migrate once and atomically allow only one arrival despite fresh guards',async()=>{
- const indexedDB=new IDBFactory(),old=fixture();old.encounters.version=6;delete old.encounters.gardenSessions;delete old.encounters.homeGoodbyes;for(const id of ["java-rice","bali-terrace","paris-unrest"])delete old.encounters.garden.visits[id];delete old.encounters.crow;delete old.encounters.raptor;await seed(indexedDB,old);
+ const indexedDB=new IDBFactory(),old=fixture();old.encounters.version=6;legacyFriends(old);delete old.encounters.gardenSessions;delete old.encounters.homeGoodbyes;for(const id of ["java-rice","bali-terrace","paris-unrest"])delete old.encounters.garden.visits[id];delete old.encounters.crow;delete old.encounters.raptor;await seed(indexedDB,old);
  const a=await openGameStore({indexedDB}),b=await openGameStore({indexedDB});try{
-  const migrated=await a.transact(w=>w);assert.equal(migrated.encounters.version,11);assert.equal(migrated.revision,old.revision);
+  const migrated=await a.transact(w=>w);assert.equal(migrated.encounters.version,12);assert.equal(migrated.revision,old.revision);
+  await a.transact(w=>{w.encounters.gardenFriends.attendees=['b1'];w.revision++;return w;});
   const results=[];await Promise.all([a,b].map(store=>store.transact(w=>{results.push(arriveGardenCrow(w,id,now,token(w)));return w;})));
   assert.equal(results.filter(r=>r.changed).length,1);assert.equal(results.filter(r=>r.reason==='cooldown').length,1);
-  const persisted=await b.transact(w=>w);assert.equal(persisted.birds[0].needs.energy,old.birds[0].needs.energy/2);assert.equal(persisted.encounters.crow.visits[0].count,1);assert.equal(persisted.revision,old.revision+1);
+  const persisted=await b.transact(w=>w);assert.equal(persisted.birds[0].needs.energy,old.birds[0].needs.energy/2);assert.equal(persisted.encounters.crow.visits[0].count,1);assert.equal(persisted.revision,old.revision+2);
  }finally{a.close();b.close();}
 });
 

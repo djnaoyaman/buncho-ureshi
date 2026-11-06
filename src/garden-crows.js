@@ -1,3 +1,4 @@
+import {gardenCompanionRoster} from './data/gardens.js';
 import {getProtagonistBird} from './protagonist.js';
 /** Crow visits are game fiction. Only visible, continuous garden time qualifies.
  * This clock has no access to the world's PRNG, offline progress or storage. */
@@ -13,7 +14,7 @@ export const CROW_SPECIES=Object.freeze([
 ].map(s=>Object.freeze(s)));
 export function crowTarget(world){
  const bird=getProtagonistBird(world);
- return bird&&bird.home==='resident'&&['juvenile','adult'].includes(bird.stage)&&isAlive(world,bird)?bird:null;
+ return bird&&bird.home==='resident'&&['juvenile','adult'].includes(bird.stage)&&isAlive(world,bird)&&gardenCompanionRoster(world).some(b=>b.birdId===bird.id)?bird:null;
 }
 export const crowSpecies=id=>CROW_SPECIES.find(s=>s.id===id)||null;
 export const initialCrowState=()=>({lastArrivalAt:null,gardenId:null,speciesId:null,arrivalBirdId:null,lastHostile:false,visits:[]});

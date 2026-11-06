@@ -8,7 +8,7 @@ import {lifeStatus} from '../src/life-care.js';
 import {renderRaptorNotice,renderRaptorCatalog,renderRaptorNotebook} from '../src/garden-raptor-ui.js';
 import {mountEncounterPanel} from '../src/encounter-controller.js';
 const NOW=Date.UTC(2026,10,4,9),sleep=ms=>new Promise(r=>setTimeout(r,ms));
-function fixture(active=false){const w=createWorld(NOW);w.field.place='park';w.encounters.garden.open=true;if(active)arriveGardenRaptor(w,'black-kite',NOW,{...raptorToken(w),gardenId:w.encounters.garden.id});return w;}
+function fixture(active=false){const w=createWorld(NOW);w.field.place='park';w.encounters.garden.open=true;w.encounters.gardenFriends.attendees=['b1'];if(active)arriveGardenRaptor(w,'black-kite',NOW,{...raptorToken(w),gardenId:w.encounters.garden.id});return w;}
 function setup(w=fixture(),options={}){
  const win=new Window();win.document.body.innerHTML='<main id="root"><div class="finch-garden-stage" data-scene-state="ready"></div></main>';const root=win.document.querySelector('#root');
  let elapsed=0,n=0;const timers=new Map(),originalNow=Date.now;Date.now=()=>NOW+elapsed;win.setTimeout=fn=>{timers.set(++n,fn);return n;};win.clearTimeout=n=>timers.delete(n);Object.defineProperty(win.performance,'now',{value:()=>elapsed,configurable:true});

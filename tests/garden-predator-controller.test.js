@@ -6,7 +6,7 @@ import {mountEncounterPanel} from '../src/encounter-controller.js';
 import {mountGardenRaptors} from '../src/garden-raptor-controller.js';
 const NOW=Date.UTC(2026,10,5),sleep=()=>new Promise(r=>setTimeout(r,1));
 async function setup({random=()=>0,reverse=false}={}){
- const w=createWorld(NOW);w.encounters.garden.open=true;w.field.place='park';
+ const w=createWorld(NOW);w.encounters.garden.open=true;w.encounters.gardenFriends.attendees=['b1'];w.field.place='park';
  const win=new Window();win.document.body.innerHTML='<main id="root"><div class="game-app" data-panel="outdoors"><div id="panel"></div></div></main>';
  const root=win.document.querySelector('#root');let panel,elapsed=0,n=0;const timers=new Map(),originalNow=Date.now;Date.now=()=>NOW+elapsed;
  Object.defineProperty(win.performance,'now',{value:()=>elapsed,configurable:true});win.setTimeout=(fn,delay)=>{timers.set(++n,{fn,delay});return n;};win.clearTimeout=id=>timers.delete(id);

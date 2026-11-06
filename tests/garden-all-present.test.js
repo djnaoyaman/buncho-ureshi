@@ -9,19 +9,19 @@ import {renderGardenStage} from '../src/encounter-ui.js';
 
 function fixture(t){
  const window=new Window();t.after(()=>window.happyDOM.close());
- const world=createWorld(1000);
+ const world=createWorld(1000);world.encounters.gardenFriends.attendees=['b1'];
  for(let i=1;i<=4;i++)world.birds.push({...structuredClone(world.birds[0]),id:`present-${i}`,name:`家族${i}`,color:'silver'});
  return {root:window.document.body,world};
 }
 
-test('every garden renders every actual companion once in the same animated scene, up to ten birds',t=>{
+test('every garden renders every actual companion once in the same animated scene, without inventing the protagonist',t=>{
  const {root,world}=fixture(t);
  for(const garden of GARDENS)for(let number=0;number<=4;number++)for(const selectedIsCompanion of [false,true]){
   world.encounters.garden.id=world.encounters.garden.guestGardenId=garden.id;
   world.encounters.queue=[encounterSystem.catalog[0].id];
-  world.encounters.gardenFriends.companions=world.birds.slice(1,number+1).map(b=>b.id);
+  world.encounters.gardenFriends.attendees=world.birds.slice(1,number+1).map(b=>b.id);
   const selected=selectedIsCompanion&&number?world.birds[1]:world.birds[0];
-  const expected=new Set([world.birds[0].id,...world.encounters.gardenFriends.companions]);
+  const expected=new Set(world.encounters.gardenFriends.attendees);
   const before=structuredClone(world);
   root.innerHTML=renderGardenStage(world,{selectedBirdId:selected.id});
   const plane=root.querySelector('.finch-garden-image-plane');
@@ -64,11 +64,11 @@ test('absent guests and unselected non-companions are not invented; duplicate co
  const {root,world}=fixture(t);
  world.encounters.garden.guestGardenId='mizukagami';
  world.encounters.queue=[encounterSystem.catalog[0].id];
- world.encounters.gardenFriends.companions=[world.birds[1].id,world.birds[1].id];
+ world.encounters.gardenFriends.attendees=[world.birds[1].id,world.birds[1].id];
  const before=structuredClone(world);
  root.innerHTML=renderGardenStage(world,{selectedBirdId:'missing-selected-id'});
- assert.deepEqual([...root.querySelectorAll('[data-garden-household]')].map(b=>b.dataset.gardenHousehold),[world.birds[0].id,world.birds[1].id]);
+ assert.deepEqual([...root.querySelectorAll('[data-garden-household]')].map(b=>b.dataset.gardenHousehold),[world.birds[1].id]);
  assert.equal(root.querySelector('.finch-garden-visitor'),null);
- assert.equal(root.querySelector('.finch-garden-stage').dataset.gardenCount,'6');
+ assert.equal(root.querySelector('.finch-garden-stage').dataset.gardenCount,'5');
  assert.deepEqual(world,before);
 });

@@ -119,5 +119,5 @@ test('human remains settings-only across edits, redraws and remounts without alt
   f.root.querySelector('[data-game-panel="outdoors"]').click();
   await until(() => f.root.querySelector('.finch-garden-stage'), 'outdoor garden');
   absent();
-  assert.ok(f.root.querySelector('[data-garden-household]'), 'bird protagonist still visits the garden');
+  assert.equal(f.root.querySelector('[data-garden-household]'),null,'family remains at home by default');assert.ok(f.root.querySelector('.finch-garden-friend'),'garden still contains bird friends');
 });

@@ -13,8 +13,8 @@ function fixture(t) {
   return window.document.body;
 }
 
-test('every garden visibly renders the original household bird without changing the save', t => {
-  const root = fixture(t), world = createWorld(1000);
+test('every garden visibly renders the explicitly accompanying original household bird without changing the save', t => {
+  const root = fixture(t), world = createWorld(1000);world.encounters.gardenFriends.attendees=['b1'];
   for (const garden of GARDENS) {
     world.encounters.garden.id = garden.id;
     const before = structuredClone(world);
@@ -30,12 +30,12 @@ test('every garden visibly renders the original household bird without changing 
 });
 
 test('saved protagonist identity and its renamed label are independent of inspection selection', t => {
-  const root = fixture(t), world = createWorld(1000);
+  const root = fixture(t), world = createWorld(1000);world.encounters.gardenFriends.attendees=['b1'];
   renameBird(world, world.birds[0].id, 'しろまる');
   const second = structuredClone(world.birds[0]);
   Object.assign(second, { id: 'saved-resident-42', name: 'あずき<&>', color: 'cinnamon' });
   world.birds.push(second);
-  world.protagonist.birdId=second.id;
+  world.protagonist.birdId=second.id;world.encounters.gardenFriends.attendees=[second.id];
   const before = structuredClone(world);
   for (const render of [renderGardenStage, renderFinchGarden]) {
     root.innerHTML = render(world, { selectedBirdId: world.birds[0].id });
@@ -50,7 +50,7 @@ test('saved protagonist identity and its renamed label are independent of inspec
 });
 
 test('invalid, departed and nest-only selections fall back to an eligible resident', t => {
-  const root = fixture(t), world = createWorld(1000);
+  const root = fixture(t), world = createWorld(1000);world.encounters.gardenFriends.attendees=['b1'];
   for (const excluded of [{id:'missing'}, {id:'away',home:'departed',stage:'adult'}, {id:'egg',home:'resident',stage:'egg'}, {id:'chick',home:'resident',stage:'chick'}, {id:'visitor',home:'visitor',stage:'adult'}]) {
     if (excluded.home) world.birds.push({...structuredClone(world.birds[0]), ...excluded});
     root.innerHTML = renderGardenStage(world, {selectedBirdId:excluded.id});
@@ -62,7 +62,7 @@ test('invalid, departed and nest-only selections fall back to an eligible reside
 });
 
 test('guest and protagonist coexist and tapping the protagonist only calls the host', t => {
-  const root = fixture(t), world = createWorld(1000), calls = [];
+  const root = fixture(t), world = createWorld(1000), calls = [];world.encounters.gardenFriends.attendees=['b1'];
   world.paused = true;
   const guest = encounterSystem.catalog.find(e => e.gardenEvent.gardenIds.includes('komorebi'));
   assert.ok(guest);
@@ -84,11 +84,11 @@ test('guest and protagonist coexist and tapping the protagonist only calls the h
 });
 
 test('selected family member stays a companion while the saved protagonist remains the lead', t => {
-  const root = fixture(t), world = createWorld(1000), calls = [];
+  const root = fixture(t), world = createWorld(1000), calls = [];world.encounters.gardenFriends.attendees=['b1'];
   world.paused = true;
   const second = {...structuredClone(world.birds[0]), id:'family-second', name:'こまめ', color:'silver'};
   world.birds.push(second);
-  world.encounters.gardenFriends.companions = [world.birds[0].id, second.id];
+  world.encounters.gardenFriends.attendees = [world.birds[0].id, second.id];
   const before = structuredClone(world);
   let selected = second.id;
   const panel = mountEncounterPanel(root, {

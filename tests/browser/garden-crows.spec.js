@@ -11,7 +11,7 @@ async function setup(page,{species='large-billed-crow',friendly=false,seedVisit=
    const {mountEncounterPanel}=await import(base+'src/encounter-controller.js');
    const {mountGardenRaptors}=await import(base+'src/garden-raptor-controller.js');
    const {arriveGardenCrow,petGardenCrow,CROW_SPECIES}=await import(base+'src/garden-crows.js');
-   const store=await openGameStore();let world=createWorld(NOW);world.settings.motion=false;world.encounters.garden.open=true;world.birds[0].needs.energy=80;
+   const store=await openGameStore();let world=createWorld(NOW);world.settings.motion=false;world.encounters.garden.open=true;world.encounters.gardenFriends.companions=[world.protagonist.birdId];world.encounters.gardenFriends.accompany=true;world.encounters.gardenFriends.attendees=[world.protagonist.birdId];world.birds[0].needs.energy=80;
    if(seedVisit||friendly){arriveGardenCrow(world,species,NOW-600001,{worldId:world.worldId,revision:world.revision,gardenId:world.encounters.garden.id});if(friendly)for(let i=0;i<13;i++)petGardenCrow(world,species,8,{worldId:world.worldId,revision:world.revision});world.birds[0].needs.energy=80;}
    world=await store.transact(()=>world);
    let pick=false;const random=()=>{pick=!pick;return pick?0:(CROW_SPECIES.findIndex(s=>s.id===species)+.1)/CROW_SPECIES.length;};
@@ -67,7 +67,7 @@ for(const [species,size,mode='outdoors',successor=false] of [['large-billed-crow
  const {arriveGardenCrow}=await import('../../src/garden-crows.js');
  const world=createWorld(successor?NOW-86400000:NOW);
  if(successor){const {lifeStatus}=await import('../../src/life-care.js');world.paused=true;const father=createBird(world,{sex:'male',home:'resident'});world.tick=10;createBird(world,{sex:'female',color:'sakura',home:'resident',parents:['b1',father.id],generation:1});lifeStatus(world,'b1').condition={kind:'injury',sinceAt:NOW-86400000,deadlineAt:NOW};advanceTo(world,NOW);world.paused=false;}
- const protagonist=world.birds.find(b=>b.id===world.protagonist.birdId);world.encounters.garden.open=true;protagonist.needs.energy=80;
+ const protagonist=world.birds.find(b=>b.id===world.protagonist.birdId);world.encounters.garden.open=true;world.encounters.gardenFriends.companions=[world.protagonist.birdId];world.encounters.gardenFriends.accompany=true;world.encounters.gardenFriends.attendees=[world.protagonist.birdId];protagonist.needs.energy=80;
  arriveGardenCrow(world,species,NOW,{worldId:world.worldId,revision:world.revision,gardenId:world.encounters.garden.id});world.paused=true;world.settings.motion=false;world.settings.careSound=false;
  await page.setViewportSize({width:size[0],height:size[1]});
  await page.addInitScript(now=>{Date.now=()=>now;localStorage.setItem('buncho.music.v1',JSON.stringify({enabled:false}));localStorage.setItem('buncho.care-sound-choice.v1',JSON.stringify({explicit:true,enabled:false}));},NOW);
@@ -95,7 +95,7 @@ for(const [species,size,mode='outdoors',successor=false] of [['large-billed-crow
 
 test('live game shell keeps the foreground clock through normal world polling and commits one visit',async({page})=>{
  const {createWorld}=await import('../../src/engine.js');
- const world=createWorld(NOW);world.settings.motion=false;world.settings.careSound=false;world.birds[0].needs.energy=80;
+ const world=createWorld(NOW);world.settings.motion=false;world.settings.careSound=false;world.birds[0].needs.energy=80;world.encounters.gardenFriends.companions=['b1'];world.encounters.gardenFriends.accompany=true;
  await page.goto('');await page.clock.install({time:NOW});
  await page.addInitScript(()=>{Math.random=()=>0;localStorage.setItem('buncho.music.v1',JSON.stringify({enabled:false}));localStorage.setItem('buncho.care-sound-choice.v1',JSON.stringify({explicit:true,enabled:false}));});
  await page.evaluate(world=>new Promise((resolve,reject)=>{const r=indexedDB.open('buncho-ureshi-garden-v1',1);r.onupgradeneeded=()=>r.result.createObjectStore('world');r.onerror=()=>reject(r.error);r.onsuccess=()=>{const db=r.result,tx=db.transaction('world','readwrite');tx.objectStore('world').put(world,'current');tx.oncomplete=()=>{db.close();resolve();};tx.onerror=()=>reject(tx.error);};}),world);

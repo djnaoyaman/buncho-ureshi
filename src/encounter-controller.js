@@ -158,10 +158,15 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
     if(button.hasAttribute('data-encounter-view')){showPhoto=button.dataset.encounterView==='photo';render();root.querySelector(`[data-encounter-view="${showPhoto?'photo':'art'}"]`)?.focus({preventScroll:true});return;}
     if(button.hasAttribute('data-finch-go-garden')){await garden();return;}
     if(button.hasAttribute('data-garden-select')){await garden(button.dataset.gardenSelect);return;}
+    if(button.hasAttribute('data-garden-accompany')){
+      const scene=button.closest('[data-garden-world]'),token=++generation,expected={worldId:scene.dataset.gardenWorld,revision:Number(scene.dataset.gardenRevision)};
+      const result=await mutate(w=>system.chooseAccompaniment(w,!w.encounters.gardenFriends.accompany,expected),token);
+      if(alive&&token===generation){notice=result?.changed?'次のおでかけの同行を変えたよ。今の同行や警告は変わらないよ。':'';render();}return;
+    }
     if(button.hasAttribute('data-garden-companion')){
       const scene=button.closest('[data-garden-world]'),token=++generation,expected={worldId:scene.dataset.gardenWorld,revision:Number(scene.dataset.gardenRevision)},id=button.dataset.gardenCompanion;
       const result=await mutate(w=>{const ids=w.encounters.gardenFriends.companions;return system.chooseCompanions(w,ids.includes(id)?ids.filter(x=>x!==id):[...ids,id],expected);},token);
-      if(alive&&token===generation){notice=result?.changed?'同行する家族を選んだよ。':'同行は4羽まで選べるよ。';render();}return;
+      if(alive&&token===generation){notice=result?.changed?'次のおでかけで同行する家族を選んだよ。':'同行は4羽まで選べるよ。';render();}return;
     }
     if(button.hasAttribute('data-garden-friend')){
       const scene=button.closest('[data-garden-world]'),token=++generation,expected={worldId:scene.dataset.gardenWorld,revision:Number(scene.dataset.gardenRevision)};
