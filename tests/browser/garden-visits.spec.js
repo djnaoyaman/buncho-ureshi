@@ -21,7 +21,18 @@ async function outdoors(page){await expect(page.locator('body')).toHaveAttribute
 async function start(page,size,w){await page.setViewportSize(size);await page.addInitScript(now=>{Date.now=()=>now;localStorage.setItem('buncho.music.v1',JSON.stringify({enabled:false}));localStorage.setItem('buncho.care-sound-choice.v1',JSON.stringify({explicit:true,enabled:false}));},NOW);await page.goto('');await record(page,w);await page.goto('game/');await outdoors(page);}
 async function garden(page,id){await page.locator(`[data-garden-select="${id}"]`).click();await ready(page);await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-garden-id',id);}
 async function observe(page,scene){await page.locator('[data-garden-details=observe]>summary').click();await expect(page.locator(`[data-garden-observe="${scene}"]`)).toBeEnabled();await page.locator(`[data-garden-observe="${scene}"]`).click();await ready(page);await page.locator('[data-garden-details=observe]>summary').click();}
-async function finish(page){for(let i=0;i<6&&await page.locator('[data-encounter-act]').count();i++){await page.locator('[data-encounter-act]').click();await ready(page);}await expect(page.locator('.finch-summary')).toBeVisible();}
+async function finish(page){
+ // A click starts an asynchronous store transaction. A zero immediate count
+ // before the event mounts is not evidence that its conversation is complete.
+ await expect(page.locator('.finch-event')).toBeVisible();await ready(page);
+ const active=(await record(page)).encounters.active;expect(active).not.toBeNull();
+ const entry=system.catalog.find(e=>e.id===active.id);expect(entry).toBeTruthy();
+ for(let step=active.step;step<entry.steps.length;step++){
+  const action=page.locator('[data-encounter-act]');await expect(action).toHaveAttribute('data-encounter-act',entry.steps[step].action);await action.click();
+  if(step<entry.steps.length-1)await expect(page.locator('[data-encounter-act]')).toHaveAttribute('data-encounter-act',entry.steps[step+1].action);
+ }
+ await expect(page.locator('.finch-summary')).toBeVisible();
+}
 for(const size of [{width:320,height:568},{width:390,height:844},{width:844,height:390}])test(`independent garden visits, reload and notebook resume ${size.width}x${size.height}`,async({page})=>{
  const {w,id:a}=seed('active'),original=structuredClone(w.encounters.active);await start(page,size,w);
  await garden(page,'mizukagami');await observe(page,'water');const queued=await record(page),b=queued.encounters.queue[0];expect(b).toBeTruthy();expect(b).not.toBe(a);expect(queued.encounters.gardenSessions.find(s=>s.gardenId==='komugi').active).toEqual(original);
