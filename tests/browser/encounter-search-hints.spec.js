@@ -23,6 +23,7 @@ for(const size of [{width:320,height:568},{width:390,height:844},{width:844,heig
  expect(cards).toEqual(ENCOUNTER_CATALOG.map(entry=>({id:entry.id,hint:encounterSearchHint(entry,{compact:true}),name:'？？？',alt:''})));
  for(const id of ['gouldian-finch','society-finch','eurasian-tree-sparrow']){
   await page.locator(`[data-encounter-page="${id}"]`).click();
+  await expect(page.locator('.finch-mystery-postcard')).toHaveCSS('background-color','rgb(255, 252, 245)');const landscape=page.locator('.finch-mystery-landscape');await landscape.evaluate(img=>img.decode());await expect(landscape).toHaveAttribute('alt','');await expect(page.locator('.finch-mystery-stamp .finch-art')).toHaveAttribute('alt','');await expect(page.locator('.finch-mystery-stamp .finch-art')).toHaveCSS('filter','brightness(0)');
   const hint=page.locator('[data-encounter-search-hint]');await expect(hint).toHaveText(encounterSearchHint(ENCOUNTER_CATALOG.find(e=>e.id===id)));await hint.scrollIntoViewIfNeeded();
   const fits=await hint.evaluate(el=>{const b=el.getBoundingClientRect(),r=document.createRange();r.selectNodeContents(el);return b.left>=0&&b.right<=innerWidth+1&&[...r.getClientRects()].every(t=>t.left>=b.left-1&&t.right<=b.right+1);});expect(fits).toBe(true);
   if(id==='eurasian-tree-sparrow')await info.attach(`all-gardens-hint-${size.width}`,{body:await page.screenshot(),contentType:'image/png'});

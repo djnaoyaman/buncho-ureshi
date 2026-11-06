@@ -32,7 +32,7 @@ test('photo keeps its original credit, unaltered rendering and matching selected
 });
 test('unknown entries stay hidden and baseline species does not gain fictional friendship',()=>{
  const w=createWorld(now),unknown=dom(renderEncounterPage(w,entry.id,{system}));
- assert.equal(unknown.querySelector('h3').textContent,'まだ出会っていない鳥');
+ assert.equal(unknown.querySelector('h3').textContent,'庭からの小さな便り');assert.match(unknown.body.textContent,/まだ出会っていない鳥/);
  assert.equal(unknown.querySelector('[data-finch-friendship]'),null);
  const baseline=dom(renderJavaBaselinePage(w));assert.ok(baseline.querySelector('.finch-record-card'));
  assert.equal(baseline.querySelector('[data-encounter-rub]'),null);assert.equal(baseline.querySelector('.finch-friendship-rules'),null);
