@@ -64,10 +64,13 @@ for(const [width,height] of [[320,568],[390,844],[844,390]]) {
       const link = links.getByRole('button', { name, exact: true });
       await expect(link).toBeVisible();
       await link.click({ trial: true });
-      expect(await link.evaluate(el => {
+      // Resolve and measure in one browser turn: normal game renders replace these nodes.
+      await expect.poll(() => page.evaluate(label => {
+        const el = [...document.querySelectorAll('.game-field-nav button')].find(button => button.getAttribute('aria-label') === label);
+        if (!el) return { connected: false };
         const r = el.getBoundingClientRect();
-        return r.width >= 44 && r.height >= 44 && r.left >= 0 && r.right <= innerWidth && el.scrollWidth <= el.clientWidth;
-      })).toBe(true);
+        return { connected: el.isConnected, widthAtLeast44: r.width >= 44, heightAtLeast44: r.height >= 44, leftInside: r.left >= 0, rightInside: r.right <= innerWidth, textFits: el.scrollWidth <= el.clientWidth };
+      }, name), { message: `Attached top link keeps its touch target and text bounds: ${name}` }).toEqual({ connected: true, widthAtLeast44: true, heightAtLeast44: true, leftInside: true, rightInside: true, textFits: true });
     }
     await links.getByRole('button', { name: '友だちのおうちへ', exact: true }).click();
     await expect(page.locator('.game-friends')).toBeVisible();
