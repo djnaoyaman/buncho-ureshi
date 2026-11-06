@@ -255,9 +255,11 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
     const w=getWorld(),now=Date.now(),phase=crowScene(w,now)?.phase||null,priorWarning=crowClock.warning;
     // Rendering the shared warning can briefly reload its stage before the
     // crow timer runs in the same turn. Keep the warning, but spend no warning
-    // time until the scene is ready again. Real navigation still resets it.
+    // time until the scene is ready and an in-flight save has settled. A slow
+    // settings save must not turn available=false into cancellation of a warning.
+    // Real navigation still resets it.
     syncCrowContext(w);
-    if(crowClock.warning&&crowEligible(false)&&!crowEligible()){
+    if(crowClock.warning&&crowEligible(false)&&(!crowEligible()||busy)){
       crowClock.holdWarning(win.performance.now());
       if(alive)crowTimer=win.setTimeout(pollCrow,1000);return;
     }

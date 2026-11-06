@@ -86,3 +86,38 @@ test('queued saves cannot mutate a replacement world, a destroyed controller or 
 test('active crow warning survives draft edits and preference saving',async t=>{
  const f=fixture(t,{seed:w=>{w.paused=false;system.chooseOutingPreferences(w,{accompany:true,companions:['b1']},guard(w));system.leaveGarden(w,guard(w));system.enterGarden(w,guard(w));}});f.q('.finch-garden-stage').dataset.sceneState='ready';assert.equal(f.panel.startCrowWarning('large-billed-crow'),true);f.open();const before=withoutPreferences(f.w);await f.click('[data-garden-accompany="false"]');await f.click('[data-garden-companions-save]');assert.equal(f.panel.hasCrowPending(),true);assert.ok(f.q('[data-crow-phase=warning]'));assert.deepEqual(withoutPreferences(f.w),before);
 });
+
+test('remembering different companions cannot cancel or retarget an active raptor warning',async()=>{
+ const {arriveGardenRaptor,raptorToken}=await import('../src/garden-raptors.js');const w=createWorld(NOW);const other=createBird(w,{name:'ゆず',home:'resident',stage:'adult'});
+ system.chooseOutingPreferences(w,{accompany:true,companions:['b1']},guard(w));system.enterGarden(w,guard(w));assert.equal(arriveGardenRaptor(w,'black-kite',NOW,{...raptorToken(w),gardenId:w.encounters.garden.id}).changed,true);
+ const active=clone(w.encounters.raptor),current=clone(w.encounters.gardenFriends.attendees),before=withoutPreferences(w);
+ assert.equal(system.chooseOutingPreferences(w,{accompany:false,companions:[other.id]},guard(w),companionPreferences(w)).changed,true);
+ assert.deepEqual(w.encounters.raptor,active);assert.deepEqual(w.encounters.gardenFriends.attendees,current);assert.deepEqual(withoutPreferences(w),before);validateWorld(w);
+});
+test('real IndexedDB transaction persists both fields together and reopens without changing current attendance',async()=>{
+ const {IDBFactory}=await import('fake-indexeddb'),{openGameStore}=await import('../src/game-store.js');const indexedDB=new IDBFactory();const store=await openGameStore({indexedDB});
+ try{await store.transact(()=>createWorld(NOW));await store.transact(w=>{system.enterGarden(w,guard(w));return w;});await store.transact(w=>{assert.equal(system.chooseOutingPreferences(w,{accompany:true,companions:['b1']},guard(w),companionPreferences(w)).changed,true);return w;});const saved=await store.transact(w=>w);assert.deepEqual(companionPreferences(saved),{accompany:true,companions:['b1']});assert.deepEqual(saved.encounters.gardenFriends.attendees,[]);}finally{store.close();}
+ const reopened=await openGameStore({indexedDB});try{const saved=await reopened.transact(w=>w);assert.deepEqual(companionPreferences(saved),{accompany:true,companions:['b1']});assert.deepEqual(saved.encounters.gardenFriends.attendees,[]);}finally{reopened.close();}
+});
+
+for(const failed of [false,true])test(`slow ${failed?'failed':'successful'} preference save retains the crow warning and its remaining time`,async t=>{
+ const w=createWorld(NOW),win=new Window();win.document.body.innerHTML='<main></main>';const root=win.document.querySelector('main');
+ system.chooseOutingPreferences(w,{accompany:true,companions:['b1']},guard(w));system.enterGarden(w,guard(w));
+ let elapsed=0,sequence=0,pending=false,release;const timers=new Map();win.setTimeout=(fn,delay)=>{const id=++sequence;timers.set(id,{fn,delay});return id;};win.clearTimeout=id=>timers.delete(id);Object.defineProperty(win.performance,'now',{configurable:true,value:()=>elapsed});
+ const panel=mountEncounterPanel(root,{getWorld:()=>w,initialMode:'garden',crowRandom:()=>1,transact:fn=>pending?new Promise((resolve,reject)=>{release=()=>failed?reject(Error('write failed')):resolve(fn(w));}):Promise.resolve(fn(w))});
+ t.after(()=>{panel.destroy();win.happyDOM.abort();});
+ const ready=()=>root.querySelector('.finch-garden-stage').dataset.sceneState='ready';const tick=async()=>{ready();elapsed+=1000;const entry=[...timers].find(([,v])=>v.fn.name==='pollCrow');assert.ok(entry);timers.delete(entry[0]);await entry[1].fn();};
+ ready();assert.equal(panel.startCrowWarning('large-billed-crow'),true);await tick();await tick(); // Two of six visible seconds have elapsed.
+ root.querySelector('[data-garden-details=companions]').open=true;root.querySelector('[data-garden-accompany="false"]').click();const before=clone(w);pending=true;root.querySelector('[data-garden-companions-save]').click();
+ for(let i=0;i<3;i++){await tick();assert.equal(panel.hasCrowPending(),true);assert.ok(root.querySelector('[data-crow-phase=warning]'));assert.deepEqual(w,before);}
+ pending=false;release();await next();assert.equal(panel.hasCrowPending(),true);assert.equal(w.encounters.gardenFriends.accompany,failed);assert.deepEqual(w.encounters.gardenFriends.attendees,['b1']);
+ const energy=w.birds[0].needs.energy;for(let i=0;i<3;i++){await tick();assert.equal(w.encounters.crow.visits.length,0);assert.equal(panel.hasCrowPending(),true);}
+ await tick();assert.equal(w.encounters.crow.visits.length,1);assert.equal(w.encounters.crow.visits[0].id,'large-billed-crow');assert.equal(w.birds[0].needs.energy,energy/2);assert.equal(panel.hasCrowPending(),false);validateWorld(w);
+});
+
+test('companion rendering module participates in hash, dependency rewriting and versioned imports',async()=>{
+ const {readFile}=await import('node:fs/promises');const build=await readFile(new URL('../scripts/build.mjs',import.meta.url),'utf8');
+ const hashList=build.match(/const gameVersion =[^\n]+/)[0],rewriteList=build.match(/for \(const name of \[[^\n]+/)[0];
+ assert.ok(hashList.includes('"garden-companion-ui.js"'));assert.ok(rewriteList.includes('"garden-companion-ui.js"'));assert.ok(build.includes('.replaceAll("./garden-companion-ui.js", `./garden-companion-ui.js?v=${gameVersion}`)'));
+ const w=createWorld(NOW);w.encounters.gardenFriends.companions=['b1'];assert.match(renderCompanionSettings(w),/おもち。次のおでかけ用に覚えている子。いまは家族がお留守番/);
+});

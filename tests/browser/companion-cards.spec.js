@@ -10,6 +10,7 @@ async function world(page){return page.evaluate(async()=>{
 });}
 async function prepare(page,size){
  await page.setViewportSize(size);await page.addInitScript(()=>{Date.now=()=>1793923200000;Math.random=()=>.99;localStorage.setItem('buncho.music.v1',JSON.stringify({enabled:false}));localStorage.setItem('buncho.care-sound-choice.v1',JSON.stringify({explicit:true,enabled:false}));});await enter(page);
+ const versions=await page.evaluate(()=>{const urls=performance.getEntriesByType('resource').map(e=>new URL(e.name));return ['encounter-controller.js','garden-companion-ui.js'].map(name=>urls.find(u=>u.pathname.endsWith('/src/'+name))?.searchParams.get('v'));});expect(versions[0]).toBeTruthy();expect(versions[1]).toBe(versions[0]);
  await page.evaluate(async()=>{
   const urls=performance.getEntriesByType('resource').map(e=>e.name),find=n=>urls.find(u=>u.includes('/src/'+n+'.js'));
   const engine=await import(find('engine')),{openGameStore}=await import(find('game-store'));const store=await openGameStore();try{await store.transact(w=>{
