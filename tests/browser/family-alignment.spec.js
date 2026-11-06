@@ -34,8 +34,10 @@ for(const kind of ['single','pair-children','generations'])test(`${kind}: compac
  await page.addInitScript(n=>{Date.now=()=>n;localStorage.setItem('buncho.music.v1',JSON.stringify({enabled:false}));localStorage.setItem('buncho.care-sound-choice.v1',JSON.stringify({explicit:true,enabled:false}));},now);
  await page.setViewportSize({width:320,height:568});await page.goto('');const original=fixture(kind);await record(page,original);await page.goto('game/');await openFamily(page);const baseline=await record(page);
  const graph=familyLayout(original,'b1');
+ await expect(page.locator('.game-family-node[aria-pressed="true"]')).toHaveCount(1);await expect(page.locator('.game-family-node[aria-pressed="true"]')).toHaveCSS('background-color','rgb(247, 220, 141)');await expect(page.locator('.game-family-selected')).toHaveText('✓');
+ expect(await page.locator('.game-family-cards-a').evaluate(el=>el.querySelector('.game-family-zoom').getBoundingClientRect().top>=el.querySelector('.game-family-pan').getBoundingClientRect().bottom)).toBe(true);
  for(const size of [{width:320,height:568},{width:390,height:680},{width:844,height:390},{width:768,height:1024},{width:1440,height:900}]){
-  await page.setViewportSize(size);await page.evaluate(()=>new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(done))));await zoom(page,100);const g=await balanced(page,graph.height);expect(g.firstVisible).toBe(true);
+  await page.setViewportSize(size);await page.evaluate(()=>new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(done))));await zoom(page,100);await page.locator('.game-family-heading').scrollIntoViewIfNeeded();const g=await balanced(page,graph.height);expect(g.firstVisible).toBe(true);
   await info.attach(`${kind}-${size.width}x${size.height}-100`,{body:await page.screenshot(),contentType:'image/png'});
   for(const z of [70,120,100]){await zoom(page,z);await balanced(page,graph.height);}
  }
