@@ -151,7 +151,7 @@ for (const [width, height] of [[320, 568], [390, 844]]) {
     async function closed() {
       await expect(page.locator('body')).toHaveAttribute('data-scene-controls', 'closed');
       await expect(toggle).toHaveAttribute('aria-expanded', 'false');
-      await expect(toggle).toHaveText('操作');
+      await expect(toggle).toHaveText('Touch the Birds');
       for (const selector of chrome) await expect(page.locator(selector)).toBeHidden();
     }
     async function target(element, selector, index=0) {
@@ -185,7 +185,7 @@ for (const [width, height] of [[320, 568], [390, 844]]) {
     await page.keyboard.press('Enter');
     await expect(toggle).toBeFocused();
     await expect(toggle).toHaveAttribute('aria-expanded', 'true');
-    await expect(toggle).toHaveText('景色を見る');
+    await expect(toggle).toHaveText('Watch the Birds');
     await expect(page.locator('body')).toHaveAttribute('data-scene-controls', 'open');
     await expect(page.locator('.game-field-nav')).toBeVisible();
     await expect(page.locator('.game-bottom-dock')).toBeVisible();
@@ -271,19 +271,24 @@ for (const [width, height] of [[320, 568], [390, 844]]) {
       await expect(card.locator('svg')).toHaveCount(1);
       await card.click({trial: true});
     }
-    const bounds = await cards.evaluateAll(elements => elements.map(el => {
-      const r = el.getBoundingClientRect();
-      return {x:r.x,y:r.y,w:r.width,h:r.height};
-    }));
-    expect(new Set(bounds.map(r => Math.round(r.x))).size).toBe(2);
-    for (const r of bounds) {
-      expect(r.w).toBeGreaterThanOrEqual(44);
-      expect(r.h).toBeGreaterThanOrEqual(44);
-      expect(r.x).toBeGreaterThanOrEqual(0);
-      expect(r.y).toBeGreaterThanOrEqual(0);
-      expect(r.x + r.w).toBeLessThanOrEqual(width);
-      expect(r.y + r.h).toBeLessThanOrEqual(height);
-    }
+    // World polling can replace this disclosure between the query and the
+    // geometry task. Re-resolve the live cards; retain every layout threshold.
+    await expect(async () => {
+      await expect(cards).toHaveCount(10);
+      const bounds = await cards.evaluateAll(elements => elements.map(el => {
+        const r = el.getBoundingClientRect();
+        return {x:r.x,y:r.y,w:r.width,h:r.height};
+      }));
+      expect(new Set(bounds.map(r => Math.round(r.x))).size).toBe(2);
+      for (const r of bounds) {
+        expect(r.w).toBeGreaterThanOrEqual(44);
+        expect(r.h).toBeGreaterThanOrEqual(44);
+        expect(r.x).toBeGreaterThanOrEqual(0);
+        expect(r.y).toBeGreaterThanOrEqual(0);
+        expect(r.x + r.w).toBeLessThanOrEqual(width);
+        expect(r.y + r.h).toBeLessThanOrEqual(height);
+      }
+    }).toPass({timeout:10000,intervals:[100,250,500]});
     expect(await menu.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
     const close = menu.locator('[data-game-close-menu]');
     const closeBounds = await measuredBox(close);
