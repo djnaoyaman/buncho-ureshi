@@ -9,7 +9,7 @@ function fixture({lowLevel=false,complete=false}={}){
  return w;
 }
 async function open(page){await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');await page.locator('.game-scene-controls-toggle').click();await page.locator('.game-bottom-dock [data-game-panel=decorate]').click();await expect(page.locator('[data-decor-draw=perch]')).toBeVisible();}
-async function start(page,w){await page.setViewportSize({width:390,height:844});await page.addInitScript(now=>{Date.now=()=>now;localStorage.setItem('buncho.music.v1',JSON.stringify({enabled:false}));localStorage.setItem('buncho.care-sound-choice.v1',JSON.stringify({explicit:true,enabled:false}));},NOW);await page.goto('');await record(page,w);await page.goto('game/');await open(page);}
+async function start(page,w,size={width:390,height:844}){await page.setViewportSize(size);await page.addInitScript(now=>{Date.now=()=>now;localStorage.setItem('buncho.music.v1',JSON.stringify({enabled:false}));localStorage.setItem('buncho.care-sound-choice.v1',JSON.stringify({explicit:true,enabled:false}));},NOW);await page.goto('');await record(page,w);await page.goto('game/');await open(page);}
 const status=page=>page.locator('[data-decor-guarantee]');
 const draw=page=>page.locator('[data-decor-draw=perch]');
 
@@ -20,7 +20,7 @@ test('duplicate progress survives category, close and reload; one guaranteed dra
  await page.locator('[data-game-close-panel]').click();await page.locator('.game-bottom-dock [data-game-panel=decorate]').click();await expect(status(page)).toHaveAttribute('data-decor-guarantee','ready');
  // Advance only this synthetic save's cooldown, leaving progression and inventory intact.
  saved=await record(page);saved.tick++;saved.revision++;await record(page,saved);await page.reload();await open(page);await expect(status(page)).toHaveAttribute('data-decor-guarantee','ready');await expect(draw(page)).toBeEnabled();
- await page.locator('[data-game-details=draw-odds]>summary').click();await expect(page.locator('[data-game-details=draw-odds]')).toContainText('きらめき 100%');
+ await page.locator('[data-game-details=draw-odds]>summary').click();await expect(page.locator('[data-game-details=draw-odds]')).toContainText('きらめき 100%');await page.locator('[data-game-details=draw-odds]>summary').click();
  const before=await record(page);await draw(page).evaluate(el=>{el.click();el.click();});await expect(status(page)).toHaveAttribute('data-decor-guarantee','complete');await expect(draw(page)).toBeDisabled();await expect(draw(page)).toContainText('Gems消費なし');
  const after=await record(page);expect(after.decor.points).toBe(before.decor.points-20);expect(after.decor.draws).toBe(before.decor.draws+1);expect(after.decor.duplicateStreaks.perch).toBe(0);expect(after.decor.inventory.filter(i=>i.id==='perch-aqua-special')).toHaveLength(1);for(const key of ['birds','economy','lifecycle','protagonist','encounters'])expect(after[key],key).toEqual(before[key]);
  await page.reload();await open(page);await expect(status(page)).toHaveAttribute('data-decor-guarantee','complete');expect((await record(page)).decor).toEqual(after.decor);
@@ -35,4 +35,8 @@ test('all unlocked items stop spending and the next level keeps saved protection
 test('a deployed root10 save migrates without losing the current garden or collection',async({page})=>{
  const old=JSON.parse(readFileSync(new URL('../fixtures/v10-gacha-world.json',import.meta.url),'utf8'));await start(page,old);await expect(status(page)).toHaveAttribute('data-decor-guarantee','0');const saved=await record(page);expect(saved.version).toBe(11);expect(saved.encounters.version).toBe(12);expect(saved.decor.inventory).toEqual(old.decor.inventory);expect(saved.decor.points).toBe(old.decor.points);expect(saved.encounters).toEqual(old.encounters);expect(saved.birds).toEqual(old.birds);expect(Object.values(saved.decor.duplicateStreaks)).toEqual(Array(9).fill(0));
  await page.reload();await open(page);expect((await record(page)).decor).toEqual(saved.decor);
+});
+
+for(const streak of [0,1,2])test(`short-phone guarantee status ${streak} keeps the shelf filter in the first viewport`,async({page})=>{
+ const w=fixture();w.decor.duplicateStreaks.perch=streak;await start(page,w,{width:320,height:420});await expect(status(page)).toHaveAttribute('data-decor-guarantee',streak===2?'ready':String(streak));await expect(page.locator('[data-decor-filter=all]')).toBeInViewport();await expect(draw(page)).toBeInViewport();
 });
