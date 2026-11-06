@@ -197,3 +197,50 @@ test('repeated saves normalize visible Unicode names and preserve the complete s
  a.root.querySelector('[data-owner-save]').click();assert.equal(input.value,'🐤'.repeat(24));
  a.root.querySelector('[data-owner-save]').click();assert.equal(saves,2);assert.deepEqual(loadOwnerProfile(a.storage),a.editor.getDraft());assert(!a.root.querySelector('[data-owner-save]').disabled);a.close();
 });
+
+
+test('character settings puts hair, eyes and outfit first with named accessible tabs',()=>{
+ const a=setup();
+ assert.equal(a.root.querySelector('h3').textContent,'キャラクター設定');
+ assert.equal(a.root.querySelector('[data-owner-save]').textContent,'保存する');
+ assert.equal(a.root.querySelector('[data-owner-cancel]').textContent,'保存せずに戻る');
+ const tabs=[...a.root.querySelectorAll('[data-owner-category]')];
+ assert.deepEqual(tabs.slice(0,3).map(tab=>tab.dataset.ownerCategory),['hair','eyes','outfit']);
+ assert.equal(tabs.length,Object.keys(OWNER_CHOICES).length);
+ for(const tab of tabs){
+  tab.click();const shelf=a.root.querySelector('[data-owner-shelf]');
+  assert.equal(tab.getAttribute('aria-controls'),shelf.id);
+  assert.equal(shelf.getAttribute('aria-labelledby'),tab.id);
+  assert.equal(a.root.querySelectorAll('[role=tab][tabindex="0"]').length,1);
+  assert.match(a.root.querySelector('[data-owner-selection]').textContent,/選択中/);
+ }
+ const other=renderOwnerProfileEditor(DEFAULT_OWNER);const second=a.win.document.createElement('div');second.innerHTML=other;
+ const ids=[...a.root.querySelectorAll('[id]'),...second.querySelectorAll('[id]')].map(el=>el.id);
+ assert.equal(new Set(ids).size,ids.length,'editor instances have distinct accessible IDs');a.close();
+});
+
+test('draft badge follows choices and names, clears on save or cancel, and retains failed changes',()=>{
+ const a=setup(),state=()=>a.root.querySelector('[data-owner-draft-state]');
+ const unsaved=value=>assert.equal(state().dataset.unsaved,String(value));
+ unsaved(false);assert.equal(state().textContent,'現在の設定');
+ a.root.querySelector('[data-owner-choice="dress"]').click();unsaved(true);
+ assert.match(a.root.querySelector('[data-owner-selection]').textContent,/こもれびワンピース/);
+ a.root.querySelector('[data-owner-choice="apron"]').click();unsaved(false);
+ const name=a.root.querySelector('[data-owner-name]');name.value='新しい名前';name.dispatchEvent(new a.win.Event('input',{bubbles:true}));unsaved(true);
+ a.root.querySelector('[data-owner-save]').click();unsaved(false);assert.equal(state().textContent,'保存済みの設定');
+ assert.match(a.root.querySelector('[data-owner-status]').textContent,/保存しました/);
+ a.root.querySelector('[data-owner-choice="dress"]').click();unsaved(true);
+ const setItem=a.storage.setItem;a.storage.setItem=()=>{throw Error('quota');};
+ a.root.querySelector('[data-owner-save]').click();unsaved(true);assert.match(a.root.querySelector('[data-owner-status]').textContent,/保存できません/);
+ a.storage.setItem=setItem;a.root.querySelector('[data-owner-cancel]').click();unsaved(false);
+ assert.equal(name.value,'新しい名前');assert.equal(a.editor.getDraft().outfit,'apron');a.close();
+});
+
+
+test('typing in an already dirty name does not repeat the same live announcement',()=>{
+ const a=setup(),state=a.root.querySelector('[data-owner-draft-state]'),name=a.root.querySelector('[data-owner-name]');
+ name.value='あ';name.dispatchEvent(new a.win.Event('input',{bubbles:true}));
+ const observer=new a.win.MutationObserver(()=>{});observer.observe(state,{childList:true,characterData:true,subtree:true});
+ for(const value of ['あい','あいう','あいうえ']){name.value=value;name.dispatchEvent(new a.win.Event('input',{bubbles:true}));}
+ assert.equal(observer.takeRecords().length,0);assert.equal(state.textContent,'未保存の変更があります');observer.disconnect();a.close();
+});

@@ -47,10 +47,12 @@ export function renderOwnerAvatar(value,{pose='idle',label='飼い主の試着�
  const accessory={none:'',birdpin:birdMark(148,174,.48),leafbag:`<path d="M96 152l53 78" stroke="#927958" stroke-width="5" fill="none"/><path d="M143 217q25-5 25 13q0 24-24 24q-16-18-1-37" fill="#7d9672"/><path d="M149 224l8 22m-6-14 10-2" stroke="#c3d1ac" stroke-width="2" fill="none"/>`,beret:`<path d="M75 53q-1-28 52-28q46 0 49 26q-52 24-101 2" fill="${trim}"/><path d="M120 26q-4-12 6-14" stroke="${trim}" stroke-width="6" fill="none" stroke-linecap="round"/><path d="M77 54q46 15 96-3" stroke="${cloth}" stroke-width="6"/>`,scarf:`<path d="M105 141q19 9 39 0l6 15q-24 15-48-1Z" fill="${trim}"/><path d="M136 151l20 39-16 7-14-40" fill="${trim}"/><path d="M143 184l9-4" stroke="${cloth}" stroke-width="4"/>`}[p.accessory];
  return `<svg class="buncho-owner-avatar" viewBox="0 0 248 330" xmlns="http://www.w3.org/2000/svg" ${decorative?'aria-hidden="true"':`role="img" aria-label="${esc(label)}"`} focusable="false" data-owner-pose="${active}"><defs><linearGradient id="${id}-light" x2=".7" y2="1"><stop stop-color="#fff9ed" stop-opacity=".34"/><stop offset=".6" stop-color="#fff9ed" stop-opacity="0"/><stop offset="1" stop-color="#6c5340" stop-opacity=".12"/></linearGradient></defs><ellipse cx="126" cy="308" rx="55" ry="10" fill="#8c8d71" opacity=".14"/><g stroke-linejoin="round"><path d="${back}" fill="${hair}"/>${p.hair==='bun'?`<circle cx="159" cy="34" r="23" fill="${hair}"/><path d="M142 29q18-15 31 2" fill="none" stroke="#fff5dc" opacity=".17" stroke-width="3"/>`:''}${legs}${shoes}${left}${right}${bodies}<path d="M110 132v20q14 13 28 0v-21" fill="${skin}"/><ellipse cx="76" cy="106" rx="8" ry="11" fill="${skin}"/><ellipse cx="171" cy="106" rx="8" ry="11" fill="${skin}"/><path d="${face}" fill="${skin}"/><ellipse cx="93" cy="118" rx="10" ry="6" fill="#d7857b" opacity=".25"/><ellipse cx="152" cy="118" rx="10" ry="6" fill="#d7857b" opacity=".25"/>${eyes}<path d="M119 124q6 5 12 0" fill="none" stroke="#a56559" stroke-width="2.4" stroke-linecap="round"/><path d="${fronts}" fill="${hair}"/><path d="M88 62q23-18 45-12" fill="none" stroke="#fff4d9" opacity=".14" stroke-width="4" stroke-linecap="round"/>${accessory}<path d="${face}" fill="url(#${id}-light)" pointer-events="none"/></g></svg>`;
 }
-const categories=[['outfit','洋服'],['palette','羽色コーデ'],['hair','髪型'],['hairColor','髪の色'],['skin','肌の色'],['eyes','目'],['face','顔のかたち'],['accessory','小物']];
+const categories=[['hair','髪型'],['eyes','目'],['outfit','洋服'],['palette','羽色コーデ'],['hairColor','髪の色'],['skin','肌の色'],['face','顔のかたち'],['accessory','小物']];
+const selectionText=(profile,category)=>`${categories.find(([id])=>id===category)[1]}：${choice(category,profile[category])[1]}（選択中）`;
+let editorId=0;
 export function renderOwnerProfileEditor(profile,{category='outfit'}={}){
- const p=normalizeOwnerProfile(profile),active=categories.some(([id])=>id===category)?category:'outfit';
- return `<section class="buncho-owner-editor" aria-label="飼い主のプロフィール"><div class="owner-fitting"><div class="owner-fitting-label">あなたと、文鳥の暮らし</div><div class="owner-preview" data-owner-preview>${renderOwnerPortrait(p,{label:'飼い主の試着プレビュー'})}</div><label class="owner-name-label">呼ばれたい名前<input data-owner-name maxlength="48" value="${esc(p.name)}" autocomplete="nickname" aria-describedby="owner-name-hint"></label><small id="owner-name-hint">24文字まで。あとから変えられます。</small></div><div class="owner-wardrobe"><div class="owner-tabs" role="tablist" aria-label="着替えるところ">${categories.map(([id,label])=>`<button type="button" role="tab" aria-selected="${id===active}" tabindex="${id===active?0:-1}" data-owner-category="${id}">${label}</button>`).join('')}</div><div class="owner-shelf" role="tabpanel" aria-label="${categories.find(([id])=>id===active)[1]}" data-owner-shelf>${renderShelf(p,active)}</div></div><p class="owner-save-status" role="status" aria-live="polite" data-owner-status>選んで、試着してみよう。</p><div class="owner-actions"><button type="button" data-owner-cancel>やめる</button><button type="button" class="owner-confirm" data-owner-save>これにする</button></div></section>`;
+ const p=normalizeOwnerProfile(profile),active=categories.some(([id])=>id===category)?category:'outfit',id=`owner-editor-${++editorId}`;
+ return `<section class="buncho-owner-editor" aria-labelledby="${id}-title"><div class="owner-fitting"><h3 class="owner-editor-title" id="${id}-title" tabindex="-1">キャラクター設定</h3><p class="owner-draft-state" data-owner-draft-state role="status" aria-live="polite">現在の設定</p><div class="owner-preview" data-owner-preview>${renderOwnerPortrait(p,{label:'飼い主の試着プレビュー'})}</div><label class="owner-name-label">呼ばれたい名前<input data-owner-name maxlength="48" value="${esc(p.name)}" autocomplete="nickname" aria-describedby="${id}-name-hint"></label><small id="${id}-name-hint">24文字まで。あとから変えられます。</small></div><div class="owner-wardrobe"><div class="owner-tabs" role="tablist" aria-label="見た目を選ぶ">${categories.map(([key,label])=>`<button type="button" role="tab" id="${id}-tab-${key}" aria-controls="${id}-choices" aria-selected="${key===active}" tabindex="${key===active?0:-1}" data-owner-category="${key}">${label}</button>`).join('')}</div><p class="owner-selection" data-owner-selection>${esc(selectionText(p,active))}</p><div class="owner-shelf" id="${id}-choices" role="tabpanel" aria-labelledby="${id}-tab-${active}" data-owner-shelf>${renderShelf(p,active)}</div></div><p class="owner-save-status" role="status" aria-live="polite" data-owner-status>変更は「保存する」で確定します。</p><div class="owner-actions"><button type="button" data-owner-cancel>保存せずに戻る</button><button type="button" class="owner-confirm" data-owner-save>保存する</button></div></section>`;
 }
 function renderShelf(p,category){return OWNER_CHOICES[category].map(([id,label,color])=>{
  const visual=['skin','hairColor','palette'].includes(category)?`<span class="owner-swatch" style="--swatch:${color}" aria-hidden="true"></span>`:renderOwnerPortrait({...p,[category]:id},{decorative:true});
@@ -67,6 +69,14 @@ export function mountOwnerProfile(root,{storage=getStorage(),onSave=()=>{},onCan
  const conflictText='ほかの画面で変更されました。閉じてから、もう一度開いてください。';
  const message=text=>{if(!disposed){revision++;status.textContent=text;}};
  const updateDisabled=()=>{save.disabled=disposed||conflict||saving;};
+ const updateDraftState=()=>{
+  const dirty=Object.keys(savedProfile).some(key=>draft[key]!==savedProfile[key]);
+  const state=root.querySelector('[data-owner-draft-state]');
+  if(state.dataset.unsaved!==String(dirty))state.dataset.unsaved=String(dirty);
+  const text=dirty?'未保存の変更があります':expectedRaw!==null&&!initial.error?'保存済みの設定':'現在の設定';
+  if(state.textContent!==text)state.textContent=text;
+  root.querySelector('[data-owner-selection]').textContent=selectionText(draft,category);
+ };
  const invoke=(callback,value,failure)=>{
   if(typeof callback!=='function')return;
   const currentRevision=revision;
@@ -74,10 +84,10 @@ export function mountOwnerProfile(root,{storage=getStorage(),onSave=()=>{},onCan
   try{const result=callback(value);if(result&&typeof result.then==='function')Promise.resolve(result).catch(failed);}catch{failed();}
  };
  if(conflict)message('保存を読み取れませんでした。閉じてから、もう一度開いてください。');
- updateDisabled();
- const update=()=>{root.querySelector('[data-owner-preview]').innerHTML=renderOwnerPortrait(draft,{label:'飼い主の試着プレビュー'});root.querySelector('[data-owner-shelf]').innerHTML=renderShelf(draft,category);};
- const selectCategory=(value,focus=false)=>{category=value;for(const b of root.querySelectorAll('[data-owner-category]')){const yes=b.dataset.ownerCategory===category;b.setAttribute('aria-selected',String(yes));b.tabIndex=yes?0:-1;if(yes&&focus)b.focus({preventScroll:true});}const shelf=root.querySelector('[data-owner-shelf]');shelf.setAttribute('aria-label',categories.find(([id])=>id===category)[1]);shelf.innerHTML=renderShelf(draft,category);};
- const input=e=>{if(!disposed&&e.target===name){revision++;draft.name=e.target.value;}};
+ updateDisabled();updateDraftState();
+ const update=()=>{root.querySelector('[data-owner-preview]').innerHTML=renderOwnerPortrait(draft,{label:'飼い主の試着プレビュー'});root.querySelector('[data-owner-shelf]').innerHTML=renderShelf(draft,category);updateDraftState();};
+ const selectCategory=(value,focus=false)=>{category=value;for(const b of root.querySelectorAll('[data-owner-category]')){const yes=b.dataset.ownerCategory===category;b.setAttribute('aria-selected',String(yes));b.tabIndex=yes?0:-1;if(yes&&focus)b.focus({preventScroll:true});}const shelf=root.querySelector('[data-owner-shelf]');shelf.setAttribute('aria-labelledby',root.querySelector(`[data-owner-category="${category}"]`).id);shelf.innerHTML=renderShelf(draft,category);updateDraftState();};
+ const input=e=>{if(!disposed&&e.target===name){revision++;draft.name=e.target.value;updateDraftState();}};
  const click=e=>{
   if(disposed)return;
   const button=e.target.closest('button');if(!button||!root.contains(button)||button.disabled)return;
@@ -94,7 +104,7 @@ export function mountOwnerProfile(root,{storage=getStorage(),onSave=()=>{},onCan
    try{
     const result=saveOwnerProfile(draft,{storage,expectedRaw,expectedLegacyNameRaw});
     expectedRaw=result.raw;expectedLegacyNameRaw=null;draft={...result.profile};savedProfile={...result.profile};name.value=draft.name;
-    message('この姿で、会いにいこう。');committed=true;
+    updateDraftState();message('キャラクター設定を保存しました。');committed=true;
    }catch(error){
     if(error.message==='owner-profile-changed'){conflict=true;message(conflictText);}
     else message('保存できませんでした。今までのプロフィールは残っています。');
