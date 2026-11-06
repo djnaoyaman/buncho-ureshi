@@ -3,7 +3,7 @@ import {createWorld,createBird,validateWorld,renameBird} from '../../src/engine.
 import {lifeStatus} from '../../src/life-care.js';
 const NOW=Date.UTC(2026,10,4),DAY=86400000;
 function seed({children=true,grandchild=false,old=false}={}){
- const w=createWorld(NOW,42);w.paused=true;w.settings.motion=false;w.settings.careSound=false;w.economy.gold=w.economy.lifetimeGold=100;
+ const w=createWorld(NOW,42);w.paused=true;w.encounters.gardenFriends.companions=['b1'];w.encounters.gardenFriends.accompany=true;w.settings.motion=false;w.settings.careSound=false;w.economy.gold=w.economy.lifetimeGold=100;
  const father=createBird(w,{home:'resident',sex:'male'});let eldest=null,youngest=null,next=null;
  if(children){w.tick=10;eldest=createBird(w,{home:'resident',sex:'female',parents:['b1',father.id],generation:1});renameBird(w,eldest.id,'つむぎ');w.tick=20;youngest=createBird(w,{home:'resident',sex:'male',parents:['b1',father.id],generation:1});renameBird(w,youngest.id,'こむぎ');}
  if(grandchild){const partner=createBird(w,{home:'departed',sex:'male'});w.tick=30;next=createBird(w,{home:'resident',sex:'male',parents:[eldest.id,partner.id],generation:2});renameBird(w,next.id,'ひなた');}

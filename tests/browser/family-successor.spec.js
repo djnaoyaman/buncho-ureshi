@@ -6,7 +6,7 @@ const NOW=Date.UTC(2026,10,4),DAY=86400000;
 const SIZES=[{width:320,height:568},{width:844,height:390},{width:1440,height:900}];
 
 function seed({empty=false}={}){
- const w=createWorld(NOW,84);w.paused=true;w.settings.motion=false;w.settings.careSound=false;w.economy.gold=w.economy.lifetimeGold=100;
+ const w=createWorld(NOW,84);w.paused=true;w.encounters.gardenFriends.companions=['b1'];w.encounters.gardenFriends.accompany=true;w.settings.motion=false;w.settings.careSound=false;w.economy.gold=w.economy.lifetimeGold=100;
  const resident=empty?null:createBird(w,{home:'resident',name:'つむぎ',sex:'male'});
  const returning=empty?null:createBird(w,{home:'departed',name:'ひなた',sex:'female'});
  if(returning)returning.milestones.push({kind:'adopt',otherId:null,tick:w.tick});

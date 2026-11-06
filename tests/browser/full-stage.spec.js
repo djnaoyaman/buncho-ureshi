@@ -205,6 +205,13 @@ for (const [width, height] of [[320, 568], [390, 844]]) {
     await toggle.click();
     await page.locator('.game-field-nav [data-game-panel=outdoors]').click();
     await expect(page.locator('.game-encounter-host')).toHaveAttribute('aria-busy', 'false');
+    // This case tests care-sheet focus for an explicitly chosen companion.
+    await page.locator('[data-garden-details=companions]>summary').click();
+    await page.locator('[data-garden-companion=b1]').click();await expect(page.locator('[data-garden-companion=b1]')).toHaveAttribute('aria-pressed','true');
+    await page.locator('[data-garden-accompany]').click();await expect(page.locator('[data-garden-accompany]')).toHaveAttribute('aria-pressed','true');
+    await page.locator('[data-garden-details=companions]>summary').click();
+    await page.locator('[data-game-close-panel]').click();await expect(page.locator('.game-panel-overlay')).not.toBeVisible();
+    await page.locator('.game-field-nav [data-game-panel=outdoors]').click();await expect(page.locator('.finch-garden-household')).toBeVisible();
     await toggle.click();
     await closed();
     for (const selector of ['.finch-garden > header', '.finch-garden-selector', '.finch-garden-dock']) {

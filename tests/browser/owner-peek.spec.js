@@ -52,7 +52,7 @@ test('wardrobe saves the chosen look only to settings and survives reload',async
  await page.locator('[data-game-close-panel]').click();
  await page.locator('.game-field-nav [data-game-panel=outdoors]').click();
  await expect(page.locator('.finch-garden-stage')).toBeVisible();await expect(human(page)).toHaveCount(0);
- await expect(page.locator('[data-garden-household]').first()).toBeVisible();
+ await expect(page.locator('[data-garden-household]')).toHaveCount(0);await expect(page.locator('.finch-garden-friend').first()).toBeVisible();
 });
 
 test('deep complexion and selected hair remain visible in settings',async({page},info)=>{

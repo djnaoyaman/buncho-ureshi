@@ -53,7 +53,7 @@ test('failed rotated art remains unavailable until retry and never changes a vis
  await page.locator('[data-finch-go-garden]').click();await ready(page);expect(await friends(page)).toEqual(guests);expect(await gardenState(page)).toEqual(before);
 });
 
-test('ten birds remain on the revised terrain in portrait and landscape',async({page},info)=>{
+test('nine birds remain on the revised terrain in portrait and landscape',async({page},info)=>{
  await page.route('**/buncho-ureshi/garden-art-qa/',r=>r.fulfill({contentType:'text/html',body:'<!doctype html><html><meta name="viewport" content="width=device-width"><link rel="stylesheet" href="../src/encounter-ui.css"><style>html,body{margin:0;width:100%;height:100%}.finch-garden{position:relative}</style><body><main id="fixture"></main></body></html>'}));
  await page.goto('garden-art-qa/');
  for(const [width,height] of [[390,690],[900,600]])for(const id of ids){
@@ -61,14 +61,14 @@ test('ten birds remain on the revised terrain in portrait and landscape',async({
   const state=await page.evaluate(async({id,width,height})=>{
    const [{createWorld},{renderFinchGarden},{mountEncounterMedia},{encounterSystem}]=await Promise.all(['engine.js','encounter-ui.js','encounter-media.js','encounters.js'].map(x=>import('/buncho-ureshi/src/'+x)));
    window.artMedia?.destroy();const w=createWorld(1000);w.encounters.garden.id=w.encounters.garden.guestGardenId=id;w.encounters.queue=[encounterSystem.catalog[0].id];
-   for(let i=2;i<=5;i++)w.birds.push({...structuredClone(w.birds[0]),id:`b${i}`,name:`同行${i}`,color:'silver'});w.encounters.gardenFriends.companions=['b2','b3','b4','b5'];
+   for(let i=2;i<=5;i++)w.birds.push({...structuredClone(w.birds[0]),id:`b${i}`,name:`同行${i}`,color:'silver'});w.encounters.gardenFriends.attendees=['b2','b3','b4','b5'];
    const root=document.querySelector('#fixture');root.style.width=width+'px';root.style.height=height+'px';root.innerHTML=renderFinchGarden(w);window.artMedia=mountEncounterMedia(root);window.artMedia.refresh();return JSON.stringify(w);
   },{id,width,height});
-  await ready(page);await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-garden-count','10');
+  await ready(page);await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-garden-count','9');
   const points=await page.locator('.finch-garden-image-plane').evaluate(p=>{const plane=p.getBoundingClientRect(),stage=p.closest('.finch-garden-stage').getBoundingClientRect();return [...p.querySelectorAll('button')].map(b=>{const r=b.getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return {x:(r.x+r.width*.54-plane.x)/plane.width,y:(r.y+r.height*.975-plane.y)/plane.height,w:r.width,h:r.height,inside:r.left>=stage.left&&r.right<=stage.right&&r.top>=stage.top&&r.bottom+16<=stage.bottom,hit:b===hit||b.contains(hit),box:{left:r.left,right:r.right,top:r.top,bottom:r.bottom}};});});
   for(const p of points){expect(Math.round(p.w*1000)/1000).toBeGreaterThanOrEqual(44);expect(Math.round(p.h*1000)/1000).toBeGreaterThanOrEqual(44);expect(p.inside).toBe(true);expect(p.hit).toBe(true);expect(p.x).toBeGreaterThan(.1);expect(p.x).toBeLessThan(.9);expect(p.y).toBeGreaterThan(.52);expect(p.y).toBeLessThan(.94);}
   for(let i=0;i<points.length;i++)for(let j=i+1;j<points.length;j++){const a=points[i].box,b=points[j].box;expect(Math.max(0,Math.min(a.right,b.right)-Math.max(a.left,b.left))*Math.max(0,Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top))).toBe(0);}
   expect(JSON.parse(state).encounters.garden.id).toBe(id);
-  await page.screenshot({path:info.outputPath(`${id}-ten-${width}x${height}.jpg`),type:'jpeg',quality:88});
+  await page.screenshot({path:info.outputPath(`${id}-nine-${width}x${height}.jpg`),type:'jpeg',quality:88});
  }
 });
