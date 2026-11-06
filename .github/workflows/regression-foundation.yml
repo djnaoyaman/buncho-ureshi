@@ -1,0 +1,65 @@
+name: Restore current UI regression coverage
+on:
+  pull_request:
+    paths:
+      - 'tests/browser/game.spec.js'
+      - 'tests/browser/fields.spec.js'
+      - 'tests/browser/care.spec.js'
+      - 'tests/browser/brand.spec.js'
+      - 'tests/browser/world-v7.spec.js'
+      - 'tests/browser/helpers/current-game-ui.js'
+      - '.github/workflows/public-regression.yml'
+      - '.github/workflows/regression-foundation.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  regression:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chrome, edge, webkit]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium webkit
+      - run: npx playwright install chrome msedge
+      - name: Native output device
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y pulseaudio pulseaudio-utils
+          pulseaudio --start --exit-idle-time=-1
+          pactl load-module module-null-sink sink_name=ci_audio sink_properties=device.description=CI_Audio
+          pactl set-default-sink ci_audio
+      - name: Complete affected suites without an early failure limit
+        run: npx playwright test tests/browser/brand.spec.js tests/browser/care.spec.js tests/browser/fields.spec.js tests/browser/game.spec.js tests/browser/world-v7.spec.js --project=${{ matrix.browser }} --retries=0 --max-failures=0
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: regression-foundation-${{ matrix.browser }}-${{ github.sha }}
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14
+  public-collection:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Collect the complete public suite after generating required metadata
+        run: npm run test:browser -- --list
+        env:
+          PUBLIC_URL: https://djnaoyaman.github.io/buncho-ureshi/
