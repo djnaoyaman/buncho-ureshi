@@ -8,17 +8,21 @@ export { OWNER_CHOICES, DEFAULT_OWNER, normalizeOwnerProfile } from './owner-pro
 const valid=(key,value)=>OWNER_CHOICES[key].some(row=>row[0]===value);
 const getStorage=()=>{try{return globalThis.localStorage;}catch{return null;}};
 export function readOwnerProfile(storage=getStorage()){
+ let raw=null,legacyNameRaw=null;
  try{
-  const raw=storage?.getItem(OWNER_PROFILE_KEY)??null;
-  if(raw!==null){const parsed=JSON.parse(raw);if(parsed?.version!==1)throw Error('profile-version');return {profile:normalizeOwnerProfile(parsed),raw,error:null};}
-  return {profile:normalizeOwnerProfile({name:storage?.getItem(LEGACY_OWNER_NAME_KEY)||DEFAULT_OWNER.name}),raw:null,error:storage?null:'unavailable'};
- }catch{return {profile:{...DEFAULT_OWNER},raw:null,error:'unreadable'};}
+  raw=storage?.getItem(OWNER_PROFILE_KEY)??null;
+  if(raw!==null){const parsed=JSON.parse(raw);if(parsed?.version!==1)throw Error('profile-version');return {profile:normalizeOwnerProfile(parsed),raw,legacyNameRaw,error:null};}
+  legacyNameRaw=storage?.getItem(LEGACY_OWNER_NAME_KEY)??null;
+  return {profile:normalizeOwnerProfile({name:legacyNameRaw||DEFAULT_OWNER.name}),raw,legacyNameRaw,error:storage?null:'unavailable'};
+ }catch{return {profile:{...DEFAULT_OWNER},raw,legacyNameRaw,error:'unreadable'};}
 }
 export function loadOwnerProfile(storage=getStorage()){return readOwnerProfile(storage).profile;}
-export function saveOwnerProfile(profile,{storage=getStorage(),expectedRaw}={}){
+export function saveOwnerProfile(profile,{storage=getStorage(),expectedRaw,expectedLegacyNameRaw}={}){
  if(!storage)throw Error('owner-storage-unavailable');
  const current=storage.getItem(OWNER_PROFILE_KEY);
  if(expectedRaw!==undefined&&current!==expectedRaw)throw Error('owner-profile-changed');
+ // Before the first profile save, the imported legacy name is also a source.
+ if(current===null&&expectedLegacyNameRaw!==undefined&&storage.getItem(LEGACY_OWNER_NAME_KEY)!==expectedLegacyNameRaw)throw Error('owner-profile-changed');
  if(current!==null){let record;try{record=JSON.parse(current);}catch{throw Error('owner-profile-unreadable');}if(record?.version!==1)throw Error('owner-profile-version');}
  const normalized=normalizeOwnerProfile(profile),raw=JSON.stringify(normalized);
  storage.setItem(OWNER_PROFILE_KEY,raw); // A single key; no world data or legacy key is deleted.
@@ -52,24 +56,61 @@ function renderShelf(p,category){return OWNER_CHOICES[category].map(([id,label,c
  const visual=['skin','hairColor','palette'].includes(category)?`<span class="owner-swatch" style="--swatch:${color}" aria-hidden="true"></span>`:renderOwnerPortrait({...p,[category]:id},{decorative:true});
  return `<button type="button" class="owner-choice" data-owner-choice="${id}" aria-pressed="${p[category]===id}" aria-label="${esc(label)}">${visual}<span>${esc(label)}</span></button>`;
 }).join('');}
+const ownerProfileMounts=new WeakMap();
 export function mountOwnerProfile(root,{storage=getStorage(),onSave=()=>{},onCancel=()=>{}}={}){
- const initial=readOwnerProfile(storage);let draft={...initial.profile},expectedRaw=initial.raw,category='outfit',disposed=false,conflict=!!initial.error;
- root.innerHTML=renderOwnerProfileEditor(draft);const status=root.querySelector('[data-owner-status]'),save=root.querySelector('[data-owner-save]');
- const message=text=>{status.textContent=text;};
- if(conflict){save.disabled=true;message('保存を読み取れませんでした。閉じてから、もう一度開いてください。');}
+ ownerProfileMounts.get(root)?.dispose();
+ const initial=readOwnerProfile(storage);
+ let savedProfile={...initial.profile},draft={...initial.profile},expectedRaw=initial.raw,expectedLegacyNameRaw=initial.legacyNameRaw;
+ let category='outfit',disposed=false,conflict=!!initial.error,saving=false,revision=0;
+ root.innerHTML=renderOwnerProfileEditor(draft);
+ const status=root.querySelector('[data-owner-status]'),save=root.querySelector('[data-owner-save]'),name=root.querySelector('[data-owner-name]');
+ const conflictText='ほかの画面で変更されました。閉じてから、もう一度開いてください。';
+ const message=text=>{if(!disposed){revision++;status.textContent=text;}};
+ const updateDisabled=()=>{save.disabled=disposed||conflict||saving;};
+ const invoke=(callback,value,failure)=>{
+  if(typeof callback!=='function')return;
+  const currentRevision=revision;
+  const failed=()=>{if(!disposed&&revision===currentRevision)message(failure);};
+  try{const result=callback(value);if(result&&typeof result.then==='function')Promise.resolve(result).catch(failed);}catch{failed();}
+ };
+ if(conflict)message('保存を読み取れませんでした。閉じてから、もう一度開いてください。');
+ updateDisabled();
  const update=()=>{root.querySelector('[data-owner-preview]').innerHTML=renderOwnerPortrait(draft,{label:'飼い主の試着プレビュー'});root.querySelector('[data-owner-shelf]').innerHTML=renderShelf(draft,category);};
  const selectCategory=(value,focus=false)=>{category=value;for(const b of root.querySelectorAll('[data-owner-category]')){const yes=b.dataset.ownerCategory===category;b.setAttribute('aria-selected',String(yes));b.tabIndex=yes?0:-1;if(yes&&focus)b.focus({preventScroll:true});}const shelf=root.querySelector('[data-owner-shelf]');shelf.setAttribute('aria-label',categories.find(([id])=>id===category)[1]);shelf.innerHTML=renderShelf(draft,category);};
- const input=e=>{if(e.target.matches('[data-owner-name]'))draft.name=e.target.value;};
+ const input=e=>{if(!disposed&&e.target===name){revision++;draft.name=e.target.value;}};
  const click=e=>{
+  if(disposed)return;
   const button=e.target.closest('button');if(!button||!root.contains(button)||button.disabled)return;
+  revision++;
   if(button.hasAttribute('data-owner-category')){selectCategory(button.dataset.ownerCategory);return;}
   if(button.hasAttribute('data-owner-choice')){const id=button.dataset.ownerChoice;if(valid(category,id)){draft[category]=id;update();root.querySelector(`[data-owner-choice="${id}"]`)?.focus({preventScroll:true});}return;}
-  if(button.hasAttribute('data-owner-cancel')){onCancel();return;}
-  if(button.hasAttribute('data-owner-save')&&!conflict){save.disabled=true;let committed=false;try{const result=saveOwnerProfile(draft,{storage,expectedRaw});expectedRaw=result.raw;draft=result.profile;root.querySelector('[data-owner-name]').value=draft.name;message('この姿で、会いにいこう。');committed=true;}catch(error){if(error.message==='owner-profile-changed'){conflict=true;message('ほかの画面で変更されました。閉じてから、もう一度開いてください。');}else message('保存できませんでした。今までのプロフィールは残っています。');}finally{save.disabled=conflict;}if(committed){try{onSave({...draft});}catch{message('プロフィールは保存しました。画面を閉じて、もう一度開いてください。');}}}
+  if(button.hasAttribute('data-owner-cancel')){
+   draft={...savedProfile};name.value=draft.name;update();
+   message(conflict?initial.error?'保存を読み取れませんでした。閉じてから、もう一度開いてください。':conflictText:'未保存の変更を取り消しました。');
+   invoke(onCancel,undefined,'未保存の変更を取り消しました。画面を閉じる処理は完了できませんでした。');return;
+  }
+  if(button.hasAttribute('data-owner-save')&&!conflict&&!saving){
+   saving=true;updateDisabled();let committed=false;
+   try{
+    const result=saveOwnerProfile(draft,{storage,expectedRaw,expectedLegacyNameRaw});
+    expectedRaw=result.raw;expectedLegacyNameRaw=null;draft={...result.profile};savedProfile={...result.profile};name.value=draft.name;
+    message('この姿で、会いにいこう。');committed=true;
+   }catch(error){
+    if(error.message==='owner-profile-changed'){conflict=true;message(conflictText);}
+    else message('保存できませんでした。今までのプロフィールは残っています。');
+   }finally{saving=false;updateDisabled();}
+   if(committed)invoke(onSave,{...draft},'プロフィールは保存しました。画面を閉じて、もう一度開いてください。');
+  }
  };
- const key=e=>{if(!e.target.matches('[data-owner-category]')||!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;e.preventDefault();const at=categories.findIndex(([id])=>id===category);selectCategory(categories[e.key==='Home'?0:e.key==='End'?categories.length-1:(at+(e.key==='ArrowLeft'?-1:1)+categories.length)%categories.length][0],true);};
- const sync=e=>{if(e.key!==OWNER_PROFILE_KEY&&e.key!==null)return;try{if((storage?.getItem(OWNER_PROFILE_KEY)??null)===expectedRaw)return;}catch{}conflict=true;save.disabled=true;message('ほかの画面で変更されました。閉じてから、もう一度開いてください。');};
+ const key=e=>{if(disposed||!e.target.matches('[data-owner-category]')||!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;e.preventDefault();revision++;const at=categories.findIndex(([id])=>id===category);selectCategory(categories[e.key==='Home'?0:e.key==='End'?categories.length-1:(at+(e.key==='ArrowLeft'?-1:1)+categories.length)%categories.length][0],true);};
+ const sync=e=>{
+  if(disposed||![OWNER_PROFILE_KEY,LEGACY_OWNER_NAME_KEY,null].includes(e.key))return;
+  if(e.storageArea&&e.storageArea!==storage)return;
+  const current=readOwnerProfile(storage);
+  if(!current.error&&current.raw===expectedRaw&&(expectedRaw!==null||current.legacyNameRaw===expectedLegacyNameRaw))return;
+  conflict=true;updateDisabled();message(conflictText);
+ };
  root.addEventListener('input',input);root.addEventListener('click',click);root.addEventListener('keydown',key);const win=root.ownerDocument.defaultView;win?.addEventListener('storage',sync);
- return {getDraft:()=>normalizeOwnerProfile(draft),dispose(){if(disposed)return;disposed=true;root.removeEventListener('input',input);root.removeEventListener('click',click);root.removeEventListener('keydown',key);win?.removeEventListener('storage',sync);}};
+ const api={getDraft:()=>normalizeOwnerProfile(draft),dispose(){if(disposed)return;disposed=true;revision++;updateDisabled();root.removeEventListener('input',input);root.removeEventListener('click',click);root.removeEventListener('keydown',key);win?.removeEventListener('storage',sync);if(ownerProfileMounts.get(root)===api)ownerProfileMounts.delete(root);}};
+ ownerProfileMounts.set(root,api);return api;
 }
-
