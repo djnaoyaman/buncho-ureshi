@@ -18,8 +18,14 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
  const syncCrowContext=w=>{const key=`${w.worldId}:${w.encounters.garden.id}:${crowTarget(w)?.id}`;if(key!==crowContext){stopCrow();crowContext=key;}return key;};
   const doc=root.ownerDocument,win=doc.defaultView;
   const media=mountEncounterMedia(root);
-  let hostCatalogScroll=null,hostGardenScroll=null;
+  let hostCatalogScroll=null,hostGardenScroll=null,hostEntryReading=null,renderedReadingKey=null;
+  const entryReading=()=>{
+    const card=root.querySelector('.finch-record-card');if(!card||!renderedReadingKey)return null;
+    const active=doc.activeElement,focused=active?.matches('summary')?active.parentElement.dataset.notebookReading:null;
+    return {key:renderedReadingKey,open:[...card.querySelectorAll('details[data-notebook-reading][open]')].map(d=>d.dataset.notebookReading),focused,scroll:root.scrollTop};
+  };
   const rememberCatalog=()=>{
+    hostEntryReading=entryReading();
     const catalog=root.querySelector('.finch-catalog');hostCatalogScroll=catalog?{view:renderedView,top:catalog.scrollTop}:null;
     // The game replaces its overlay before calling refresh(). Capture the
     // inner dock while it is still attached; reading after reattachment is
@@ -50,6 +56,8 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
     const oldSelector=root.querySelector('.finch-garden-selector');
     const oldScroll=oldSelector?.scrollLeft, oldSelected=oldSelector?.querySelector('[aria-current=page]')?.dataset.gardenSelect;
     if(w.worldId!==worldId){worldId=w.worldId;generation++;busy=false;mode='notebook';pageId=null;notice='';}
+    const nextReadingKey=mode==='entry'?`${w.worldId}:${pageId}`:null,priorReading=hostEntryReading||entryReading();
+    const savedReading=priorReading?.key===nextReadingKey?priorReading:null;hostEntryReading=null;renderedReadingKey=nextReadingKey;
     media.preserve();
     root.innerHTML=(mode==='raptors'?renderRaptorNotebook(w,{base,id:pageId}):mode==='crows'?renderCrowNotebook(w,{base,id:pageId}):mode==='event'?renderEncounterScene(w,{system,base}):mode==='garden'?renderFinchGarden(w,{system,base,selectedBirdId:getSelectedBirdId(),crowWarning:crowClock.warning}):mode==='entry'?renderEncounterPage(w,pageId,{system,base,showPhoto}):renderEncounterNotebook(w,{system,base}))+`<p class="finch-notice" role="status">${escape(notice)}</p><button type="button" class="finch-media-retry" data-media-retry hidden>絵をもう一度読み込む</button>`;
     const selector=root.querySelector('.finch-garden-selector');
@@ -81,7 +89,8 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
       for(const detail of details)if(oldDetails.has(detail.dataset.gardenDetails))detail.open=true;
       for(const detail of details)if(oldDetails.has(detail.dataset.gardenDetails))detail.scrollTop=oldDetails.get(detail.dataset.gardenDetails);
     }
-    root.scrollTop=oldEntryScroll;
+    if(savedReading){for(const detail of root.querySelectorAll('details[data-notebook-reading]'))detail.open=savedReading.open.includes(detail.dataset.notebookReading);if(!focus&&savedReading.focused)for(const detail of root.querySelectorAll('details[data-notebook-reading]'))if(detail.dataset.notebookReading===savedReading.focused)detail.querySelector('summary')?.focus({preventScroll:true});}
+    root.scrollTop=savedReading?.scroll??oldEntryScroll;
     const catalog=root.querySelector('.finch-catalog');if(catalog)catalog.scrollTop=oldCatalogScroll||0;
     media.refresh();
     root.setAttribute('aria-busy',String(busy));

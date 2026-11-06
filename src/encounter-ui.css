@@ -227,3 +227,31 @@
 :is(.finch-entry,.finch-event)>.finch-page-actions{justify-content:center}
 .finch-view-toggle,.finch-friendship-actions{flex-wrap:wrap;gap:12px}
 @media(max-width:480px){.finch-page-actions>button{flex:1 1 12rem}}
+
+/* Approved notebook A: a quiet portrait card, followed by the live relationship. */
+body[data-world="buncho"] .finch-entry.finch-record-card{max-width:42rem;background:#fffcf5;border:1px solid #b8b49f;border-radius:1.5rem;box-shadow:0 5px 0 #dad5c7;color:#304f45;text-align:left;padding:clamp(16px,4vw,28px)}
+body[data-world="buncho"] .finch-entry.finch-record-card>h3{font-family:var(--game-font,inherit);font-size:clamp(1.5rem,5vw,2.1rem);line-height:1.4;margin:0 0 .5rem}
+body[data-world="buncho"] .finch-entry.finch-record-card>h3+p{margin:0 0 1.2rem;color:#6f7b6c;line-height:1.5}
+body[data-world="buncho"] .finch-entry.finch-record-card .finch-record-portrait{padding:12px;background:#f8efdb;border-radius:24px;margin:0 0 18px;text-align:center}
+body[data-world="buncho"] .finch-entry.finch-record-card .finch-record-portrait .finch-art{height:clamp(12rem,34dvh,22rem)}
+body[data-world="buncho"] .finch-entry.finch-record-card .finch-record-portrait figcaption{margin-top:8px;color:#657464}
+body[data-world="buncho"] .finch-entry.finch-record-card .finch-view-toggle{margin:0 0 20px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+body[data-world="buncho"] .finch-entry.finch-record-card button{border:1px solid #627765;border-radius:999px;box-shadow:none;background:#fffcf5;letter-spacing:0;line-height:1.5;min-width:0;max-width:100%}
+body[data-world="buncho"] .finch-entry.finch-record-card .finch-view-toggle [aria-pressed=true]{background:#f7dc8d;color:#304f45}
+body[data-world="buncho"] .finch-entry.finch-record-card .finch-friendship{background:#f4c9b7;border:0;border-radius:24px;padding:18px;margin:0 0 18px;text-align:left;color:#304f45}
+body[data-world="buncho"] .finch-entry.finch-record-card .finch-bond-heading>strong{font-size:1.2rem}
+body[data-world="buncho"] .finch-entry.finch-record-card .finch-bond-heading>span{font-size:.85rem}
+body[data-world="buncho"] .finch-entry.finch-record-card .finch-friendship meter{height:18px;accent-color:#304f45}
+body[data-world="buncho"] .finch-entry.finch-record-card .finch-friendship meter::-webkit-meter-bar{background:#b8b49f;border:0;border-radius:8px}
+body[data-world="buncho"] .finch-entry.finch-record-card .finch-friendship meter::-webkit-meter-optimum-value{background:#304f45;border-radius:8px}
+body[data-world="buncho"] .finch-entry.finch-record-card .finch-friendship meter::-moz-meter-bar{background:#304f45;border-radius:8px}
+body[data-world="buncho"] .finch-entry.finch-record-card .finch-friendship-actions{gap:12px;margin-top:12px}
+body[data-world="buncho"] .finch-entry.finch-record-card>details{padding:4px 0;border:0}
+body[data-world="buncho"] .finch-entry.finch-record-card>details>summary{font-weight:700;gap:8px}
+body[data-world="buncho"] .finch-entry.finch-record-card>details>summary:after{content:'›';margin-left:auto}
+body[data-world="buncho"] .finch-entry.finch-record-card>details[open]>summary:after{content:'⌄'}
+body[data-world="buncho"] .finch-entry.finch-record-card>details>p,body[data-world="buncho"] .finch-entry.finch-record-card>details>ul{margin-block:.5rem 1rem}
+body[data-world="buncho"] .finch-entry.finch-record-card>.finch-page-actions{justify-content:flex-start}
+@media(max-width:359px){body[data-world="buncho"] .finch-entry.finch-record-card .finch-view-toggle{gap:8px}body[data-world="buncho"] .finch-entry.finch-record-card .finch-view-toggle button{font-size:.85rem;padding:.65rem .4rem}body[data-world="buncho"] .finch-entry.finch-record-card .finch-friendship{padding:14px}}
+
+body[data-world="buncho"] .finch-entry.finch-record-card .finch-summary{background:transparent;border:0;border-radius:0;text-align:left;margin-top:20px;padding:0}
