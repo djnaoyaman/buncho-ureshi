@@ -1,0 +1,14 @@
+import {test,expect} from '@playwright/test';
+for(const size of [[320,568],[390,844],[844,390]])test(`C garden bookmark keeps five readable rows and the scene ${size.join('x')}`,async({page},info)=>{
+ await page.setViewportSize({width:size[0],height:size[1]});await page.goto('game/');const base=new URL('../',page.url()).href;
+ await page.setContent(`<link rel="stylesheet" href="${base}src/style.css"><link rel="stylesheet" href="${base}src/game.css"><link rel="stylesheet" href="${base}src/encounter-ui.css"><style>body{margin:0}#fixture{height:100dvh;width:100%;position:relative}</style><body data-world="buncho"><div id="fixture"></div></body>`);
+ await page.evaluate(async base=>{const [{createWorld},{createEncounterSystem},{mountEncounterPanel}]=await Promise.all([import(base+'src/engine.js'),import(base+'src/encounters.js'),import(base+'src/encounter-controller.js')]);const w=createWorld(Date.now());w.paused=true;w.encounters.garden.open=true;window.__bookmarkFixture={w,before:JSON.stringify(w.birds)};window.__bookmarkFixture.panel=mountEncounterPanel(document.querySelector('#fixture'),{base,system:createEncounterSystem([]),getWorld:()=>w,transact:async fn=>fn(w),initialMode:'garden'});},base);
+ const menu=page.locator('.finch-observe-menu');await menu.locator(':scope>summary').click();await expect(menu.locator('.finch-bookmark-title')).toHaveText('庭のしおり');
+ for(const id of ['grass','water','branch','song','quiet']){
+  const button=menu.locator(`[data-garden-observe=${id}]`);await button.scrollIntoViewIfNeeded();await button.click();await expect(button).toHaveAttribute('aria-pressed','true');await expect(button.locator('.finch-bookmark-check')).toHaveText('✓');await expect(button).toHaveCSS('background-color','rgb(247, 220, 141)');
+  expect(await button.evaluate(el=>{const b=el.getBoundingClientRect(),r=document.createRange();r.selectNodeContents(el);return b.height>=44&&b.width>=44&&[...r.getClientRects()].every(t=>t.left>=b.left-1&&t.right<=b.right+1);})).toBe(true);
+ }
+ const boxes=await menu.locator('[data-garden-observe]').evaluateAll(es=>es.map(el=>{const r=el.getBoundingClientRect();return {x:r.x,bottom:r.bottom,top:r.top};}));for(let i=1;i<boxes.length;i++){expect(boxes[i].x).toBe(boxes[0].x);expect(boxes[i].top-boxes[i-1].bottom).toBeGreaterThanOrEqual(7.9);}
+ await info.attach(`garden-bookmark-${size[0]}`,{body:await page.screenshot(),contentType:'image/png'});await menu.locator(':scope>summary').click();await expect(menu).not.toHaveAttribute('open','');await expect(page.locator('.finch-garden-stage')).toBeVisible();
+ expect(await page.evaluate(()=>JSON.stringify(window.__bookmarkFixture.w.birds)===window.__bookmarkFixture.before)).toBe(true);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+});
