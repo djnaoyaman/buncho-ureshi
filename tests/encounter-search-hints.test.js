@@ -17,10 +17,11 @@ test('all 32 hidden birds have source-derived gardens, real observation actions 
  for(const entry of ENCOUNTER_CANDIDATES){
   assert.ok(entry.searchClue,entry.id);
   const hint=encounterSearchHint(entry),names=entry.gardenEvent.gardenIds.map(id=>gardenById(id).name);
-  for(const garden of GARDENS)assert.equal(hint.includes(`「${garden.name}」`),names.includes(garden.name),`${entry.id}: ${garden.id}`);
+  for(const garden of GARDENS)assert.equal(hint.includes(garden.name),names.includes(garden.name),`${entry.id}: ${garden.id}`);
   assert.ok(hint.includes(actions[entry.gardenEvent.scene]),entry.id);
   assert.ok(hint.includes(entry.searchClue),entry.id);
-  assert.match(hint,/見えるかも。$/);
+  assert.match(hint,/^庭の友達より「/);
+  assert.match(hint,/を見かけたよ」$/);
   assert.doesNotMatch(hint,/必ず|絵本を|ページを|ノートを|しおりを/);
   for(const name of [entry.name,entry.english,entry.scientific].filter(Boolean))assert.ok(!hint.includes(name),entry.id);
  }
@@ -57,6 +58,8 @@ test('cards keep long garden lists compact and detail shows every exact garden w
   assert.ok(!card.getAttribute('aria-label').includes(entry.name));
   assert.ok(!page.textContent.includes(entry.name));
   assert.match(page.textContent,/庭の「観察する」/);
+  assert.match(page.textContent,/ゲームの庭に伝わる目撃ばなし/);
+  assert.match(page.textContent,/いつもいるとはかぎらない/);
   assert.equal(page.querySelector('.finch-photo'),null);
   for(const img of [...card.querySelectorAll('img'),...page.querySelectorAll('img')])assert.equal(img.alt,'');
   if(entry.gardenEvent.gardenIds.length>2)assert.match(card.querySelector('small').textContent,/などで/);

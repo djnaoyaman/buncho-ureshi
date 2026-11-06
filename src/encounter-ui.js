@@ -18,14 +18,14 @@ const plainPicture=(entry,base)=>`<img src="${asset(base,delivery(entry.art.src)
 const picture=(entry,base,hidden=false,thumbnail=false)=>`<span class="finch-media" data-media-state="pending"><img ${thumbnail?'':'src="'+asset(base,delivery(entry.art.src))+'"'} data-media-src="${asset(base,delivery(entry.art.src,thumbnail))}" ${thumbnail?'data-media-lazy="true"':''} width="${entry.art.width}" height="${entry.art.height}" alt="${hidden?'':esc(entry.art.alt)}" draggable="false" decoding="async" class="finch-art${hidden?' is-silhouette':''}">${mediaStatus}</span>`;
 /** Search text follows the actual first-meeting conditions, not arrival story text. */
 const observationHints=Object.freeze({
- grass:'草をそっと観察してみよう',water:'水辺をそっと観察してみよう',
- branch:'枝を見上げてみよう',song:'歌を聴いてみよう',quiet:'ひとやすみしてみよう'
+ grass:'草をそっと観察していたら',water:'水辺をそっと観察していたら',
+ branch:'枝を見上げていたら',song:'歌を聴いていたら',quiet:'ひとやすみしていたら'
 });
 export function encounterSearchHint(entry,{compact=false}={}){
  const event=entry.gardenEvent,names=[...new Set(event?.gardenIds||[])].map(id=>gardenById(id)?.name).filter(Boolean),action=observationHints[event?.scene];
  if(!names.length||!action)return entry.hint||'庭をそっとのぞいてみよう。';
- const shown=compact?names.slice(0,2):names,places=shown.map(name=>`「${name}」`).join('・')+(shown.length<names.length?'など':'');
- return `${places}で、${action}。${entry.searchClue||'小さなお客さまの姿'}が見えるかも。`;
+ const shown=compact?names.slice(0,2):names,places=shown.join('・')+(shown.length<names.length?'など':'');
+ return `庭の友達より「${places}で、${action}、${entry.searchClue||'小さなお客さまの姿'}を見かけたよ」`;
 }
 export function renderEncounterFriendship(w,id,{system=encounterSystem}={}){
  const s=system.status(w,id);if(!s.discovery)return '';
@@ -52,7 +52,7 @@ export function renderEncounterPage(w,id,{system=encounterSystem,base='/buncho-u
   const entry=system.catalog.find(e=>e.id===id);if(!entry)return '<p role="status">このページはまだ準備中です。</p>';
   const state=system.status(w,id);
   const resume=state.ready||state.active?`<button type="button" data-encounter-open="${esc(id)}">${esc(gardenById(state.gardenId)?.name||'庭')}で${state.active?'つづきを見る':'会う'}</button>`:'';
-  if(!state.discovered)return `<section class="finch-entry"><h3 tabindex="-1">まだ出会っていない鳥</h3>${picture(entry,base,true)}<p data-encounter-search-hint>${esc(encounterSearchHint(entry))}</p><p>庭の「観察する」から試してみてね。すぐに会えないときは、少し待ってまた観察してみよう。</p><div class="finch-page-actions">${resume||'<button type="button" data-finch-go-garden>庭へ行く</button>'}<button type="button" data-encounter-back>庭の鳥図鑑へ戻る</button></div></section>`;
+  if(!state.discovered)return `<section class="finch-entry"><h3 tabindex="-1">まだ出会っていない鳥</h3>${picture(entry,base,true)}<p data-encounter-search-hint>${esc(encounterSearchHint(entry))}</p><p>ゲームの庭に伝わる目撃ばなしだよ。いつもいるとはかぎらないけれど、庭の「観察する」から試してみてね。すぐに会えないときは、少し待ってまた観察してみよう。</p><div class="finch-page-actions">${resume||'<button type="button" data-finch-go-garden>庭へ行く</button>'}<button type="button" data-encounter-back>庭の鳥図鑑へ戻る</button></div></section>`;
   const p=entry.photo;
   const petAttrs=state.discovery?`data-encounter-rub="${esc(id)}" tabindex="0" role="button" aria-label="${esc(entry.name)}の画像をなでる。指やマウスでこする、またはEnterキー"`:'';
   const visual=showPhoto?`<figure class="finch-photo" data-photo-unaltered="${p.noDerivatives===true}"><span class="finch-media" data-media-state="pending" ${petAttrs}><img src="${asset(base,p.src)}" data-media-src="${asset(base,p.src)}" decoding="async" width="${p.width}" height="${p.height}" alt="${esc(p.alt)}" draggable="false" loading="lazy" style="object-fit:contain;object-position:center;filter:none;clip-path:none;transform:none;border-radius:0;opacity:1">${mediaStatus}</span><figcaption>${p.caption?`<p>${esc(p.caption)}</p>`:''}${esc(p.creator)} / <a href="${link(p.source)}" target="_blank" rel="noopener noreferrer">写真の原典</a> / <a href="${link(p.licenseUrl)}" target="_blank" rel="noopener noreferrer">${esc(p.license)}</a><small>${esc(p.modifications)}</small></figcaption></figure>`:`<figure><div ${petAttrs}>${picture(entry,base)}</div><figcaption>ゲームのために描いたイラスト${state.discovery?' · 画像をこすってなでよう':''}</figcaption></figure>`;

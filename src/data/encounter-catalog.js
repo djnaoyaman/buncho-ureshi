@@ -12,7 +12,7 @@ export const ENCOUNTER_CANDIDATES=Object.freeze([
     "releaseReady": false,
     "scriptVersion": 1,
     "hint": "草の穂を眺めたら、葉の向こうに色の気配。",
-    "searchClue": "葉の向こうに、色あざやかな小さな姿",
+    "searchClue": "葉の向こうに色あざやかな小さな姿",
     "eventTitle": "草の穂の色あそび",
     "steps": [
       {
@@ -86,7 +86,7 @@ export const ENCOUNTER_CANDIDATES=Object.freeze([
     "releaseReady": false,
     "scriptVersion": 1,
     "hint": "木陰でひと息つくと、白い顔と二本の輪。",
-    "searchClue": "白い顔をかこむ、二本の黒い輪",
+    "searchClue": "白い顔をかこむ二本の黒い輪",
     "eventTitle": "点々の小さな地図",
     "steps": [
       {
@@ -161,7 +161,7 @@ export const ENCOUNTER_CANDIDATES=Object.freeze([
     "releaseReady": false,
     "scriptVersion": 1,
     "hint": "庭の草の絵飾りのそばに、一本の草を持つ影。",
-    "searchClue": "一本の草をくわえた、小さな姿",
+    "searchClue": "一本の草をくわえた小さな姿",
     "eventTitle": "一本の草のおくりもの",
     "steps": [
       {
@@ -235,7 +235,7 @@ export const ENCOUNTER_CANDIDATES=Object.freeze([
     "releaseReady": false,
     "scriptVersion": 1,
     "hint": "水辺の絵飾りを眺めたら、白い星の模様。",
-    "searchClue": "羽に散らばる、白い星のような模様",
+    "searchClue": "羽に散らばる白い星のような模様",
     "eventTitle": "池のふちの星",
     "steps": [
       {
@@ -314,7 +314,7 @@ export const ENCOUNTER_CANDIDATES=Object.freeze([
     "releaseReady": false,
     "scriptVersion": 1,
     "hint": "草の小道に、白い頭のお客さま。",
-    "searchClue": "草の小道に、白い頭の小鳥",
+    "searchClue": "草の小道に白い頭の小鳥",
     "eventTitle": "白いぼうしの散歩道",
     "steps": [
       {
@@ -396,7 +396,7 @@ export const ENCOUNTER_CANDIDATES=Object.freeze([
     "releaseReady": false,
     "scriptVersion": 1,
     "hint": "草の穂の小道で、しま模様を見つける。",
-    "searchClue": "草の穂の間に、小さなしま模様",
+    "searchClue": "草の穂の間に小さなしま模様",
     "eventTitle": "草の道を、とことこ",
     "steps": [
       {
@@ -470,7 +470,7 @@ export const ENCOUNTER_CANDIDATES=Object.freeze([
     "releaseReady": false,
     "scriptVersion": 1,
     "hint": "葦を描いた水辺のそばに、茶色い羽と白い点。",
-    "searchClue": "茶色い羽に、ちいさな白い点",
+    "searchClue": "茶色い羽にちいさな白い点",
     "eventTitle": "葦のあいだの小さな手紙",
     "steps": [
       {
@@ -546,7 +546,7 @@ export const ENCOUNTER_CANDIDATES=Object.freeze([
     "releaseReady": false,
     "scriptVersion": 1,
     "hint": "枝の絵飾りに、緑がかった小さな影。",
-    "searchClue": "葉っぱにまぎれる、緑がかった小さな姿",
+    "searchClue": "葉っぱにまぎれる緑がかった小さな姿",
     "eventTitle": "島から届いた枝の便り",
     "steps": [
       {
@@ -620,7 +620,7 @@ export const ENCOUNTER_CANDIDATES=Object.freeze([
     "releaseReady": false,
     "scriptVersion": 1,
     "hint": "球果の絵を見たあと、交差するくちばしに出会う。",
-    "searchClue": "先が交差する、ふしぎなくちばし",
+    "searchClue": "先が交差するふしぎなくちばし",
     "eventTitle": "球果の小さな鍵",
     "steps": [
       {
@@ -698,7 +698,7 @@ export const ENCOUNTER_CANDIDATES=Object.freeze([
     "releaseReady": false,
     "scriptVersion": 1,
     "hint": "木の芽のページを開くと、太いくちばしのお客さま。",
-    "searchClue": "木の葉の向こうに、太いくちばし",
+    "searchClue": "木の葉の向こうに太いくちばし",
     "eventTitle": "季節の枝のたより",
     "steps": [
       {
@@ -776,7 +776,7 @@ export const ENCOUNTER_CANDIDATES=Object.freeze([
     "releaseReady": false,
     "scriptVersion": 1,
     "hint": "ハンノキの絵飾りのそばで、細い縦じまを探す。",
-    "searchClue": "小さな体に、細い縦じま",
+    "searchClue": "小さな体に細い縦じま",
     "eventTitle": "ハンノキの種だより",
     "steps": [
       {
@@ -854,7 +854,7 @@ export const ENCOUNTER_CANDIDATES=Object.freeze([
     "releaseReady": false,
     "scriptVersion": 1,
     "hint": "種や芽の絵を眺めると、ふっくらした姿。",
-    "searchClue": "枝の上に、ふっくらした小鳥の姿",
+    "searchClue": "枝の上にふっくらした小鳥の姿",
     "eventTitle": "ふっくら枝の客",
     "steps": [
       {
@@ -932,7 +932,7 @@ export const ENCOUNTER_CANDIDATES=Object.freeze([
     "releaseReady": false,
     "scriptVersion": 1,
     "hint": "静かな庭を見渡すと、額の赤いしるし。",
-    "searchClue": "ひたいに、ちいさな赤いしるし",
+    "searchClue": "ひたいにちいさな赤いしるし",
     "eventTitle": "額の小さなしるし",
     "steps": [
       {
@@ -1010,7 +1010,7 @@ export const ENCOUNTER_CANDIDATES=Object.freeze([
     "releaseReady": false,
     "scriptVersion": 1,
     "hint": "歌の絵本を開いた庭へ、丸い冠羽のお客さま。",
-    "searchClue": "丸いぼうしのような、頭の羽",
+    "searchClue": "丸いぼうしのような頭の羽",
     "eventTitle": "まるい冠の訪問者",
     "steps": [
       {
@@ -1088,7 +1088,7 @@ export const ENCOUNTER_CANDIDATES=Object.freeze([
     "releaseReady": false,
     "scriptVersion": 1,
     "hint": "草の種の絵を眺めたら、翼に黄色の便り。",
-    "searchClue": "羽ばたく翼に、ちらりと黄色",
+    "searchClue": "羽ばたく翼にちらりと黄色",
     "eventTitle": "翼の黄色い便り",
     "steps": [
       {
@@ -1166,7 +1166,7 @@ export const ENCOUNTER_CANDIDATES=Object.freeze([
     "releaseReady": false,
     "scriptVersion": 1,
     "hint": "歌のノートを開くと、お友達から訪問の便り。",
-    "searchClue": "歌声のするほうに、なかよしの小鳥たち",
+    "searchClue": "歌声のするほうになかよしの小鳥たち",
     "eventTitle": "歌の記憶のページ",
     "steps": [
       {
@@ -1245,7 +1245,7 @@ export const ENCOUNTER_CANDIDATES=Object.freeze([
     "releaseReady": false,
     "scriptVersion": 1,
     "hint": "口笛のしおりを読むと、丸い頭のお客さま。",
-    "searchClue": "口笛のような声の先に、丸い頭",
+    "searchClue": "口笛のような声の先に丸い頭",
     "eventTitle": "口笛のしおり",
     "steps": [
       {
@@ -1323,7 +1323,7 @@ export const ENCOUNTER_CANDIDATES=Object.freeze([
     "releaseReady": false,
     "scriptVersion": 1,
     "hint": "草の小道でひと休み、黒い頭と赤茶の羽。",
-    "searchClue": "黒い頭と、赤茶色の羽",
+    "searchClue": "黒い頭と赤茶色の羽",
     "eventTitle": "黒い頭と栗色の羽",
     "steps": [
       {
@@ -1406,7 +1406,7 @@ export const ENCOUNTER_CANDIDATES=Object.freeze([
     "releaseReady": false,
     "scriptVersion": 1,
     "hint": "穀物の絵のページを開いた、小さな庭の午後。",
-    "searchClue": "黒と茶色の羽に、白いお腹",
+    "searchClue": "黒と茶色の羽に白いお腹",
     "eventTitle": "草の穂の食卓",
     "steps": [
       {
@@ -1488,7 +1488,7 @@ export const ENCOUNTER_CANDIDATES=Object.freeze([
     "releaseReady": false,
     "scriptVersion": 1,
     "hint": "草の穂の絵飾りのそばに、うろこ模様のお腹。",
-    "searchClue": "お腹に並ぶ、うろこのような模様",
+    "searchClue": "お腹に並ぶうろこのような模様",
     "eventTitle": "うろこ模様の小道",
     "steps": [
       {
@@ -1571,7 +1571,7 @@ export const ENCOUNTER_CANDIDATES=Object.freeze([
     "releaseReady": false,
     "scriptVersion": 1,
     "hint": "水辺の草模様を眺めたら、細かな横じま。",
-    "searchClue": "羽に並ぶ、細かな横じま",
+    "searchClue": "羽に並ぶ細かな横じま",
     "eventTitle": "横しまの水辺だより",
     "steps": [
       {
@@ -1649,7 +1649,7 @@ export const ENCOUNTER_CANDIDATES=Object.freeze([
     "releaseReady": false,
     "scriptVersion": 1,
     "hint": "草原の絵のそばへ、長い尾の訪問者。",
-    "searchClue": "草の向こうに、すらりと長い尾",
+    "searchClue": "草の向こうにすらりと長い尾",
     "eventTitle": "草原の長い尾",
     "steps": [
       {
@@ -1731,7 +1731,7 @@ export const ENCOUNTER_CANDIDATES=Object.freeze([
     "releaseReady": false,
     "scriptVersion": 1,
     "hint": "硬い種の絵を眺めると、力強いくちばし。",
-    "searchClue": "枝の上に、がっしりしたくちばし",
+    "searchClue": "枝の上にがっしりしたくちばし",
     "eventTitle": "硬い種の小さな鍵",
     "steps": [
       {
@@ -1813,7 +1813,7 @@ export const ENCOUNTER_CANDIDATES=Object.freeze([
     "releaseReady": false,
     "scriptVersion": 1,
     "hint": "歌のしおりを読んだ庭で、黄色いくちばし。",
-    "searchClue": "歌声のするほうに、黄色いくちばし",
+    "searchClue": "歌声のするほうに黄色いくちばし",
     "eventTitle": "林の歌のしおり",
     "steps": [
       {
@@ -1895,7 +1895,7 @@ export const ENCOUNTER_CANDIDATES=Object.freeze([
     "releaseReady": false,
     "scriptVersion": 1,
     "hint": "落ち葉の小道を静かに眺めたら、橙色の羽。",
-    "searchClue": "落ち葉の色にまじる、あたたかな橙色の羽",
+    "searchClue": "落ち葉の色にまじるあたたかな橙色の羽",
     "eventTitle": "橙色の冬だより",
     "steps": [
       {
@@ -1978,7 +1978,7 @@ export const ENCOUNTER_CANDIDATES=Object.freeze([
     "releaseReady": false,
     "scriptVersion": 1,
     "hint": "鳥を守る絵本を読むと、赤と黒の小さな影。",
-    "searchClue": "木かげに、赤と黒の小さな姿",
+    "searchClue": "木かげに赤と黒の小さな姿",
     "eventTitle": "赤い羽を守る便り",
     "steps": [
       {
@@ -2064,7 +2064,7 @@ export const ENCOUNTER_CANDIDATES=Object.freeze([
     "releaseReady": false,
     "scriptVersion": 1,
     "hint": "木の実の絵を眺めると、淡い頭のお客さま。",
-    "searchClue": "枝先に、淡い色の頭の小鳥",
+    "searchClue": "枝先に淡い色の頭の小鳥",
     "eventTitle": "明るい林の木の実",
     "steps": [
       {
@@ -2150,7 +2150,7 @@ export const ENCOUNTER_CANDIDATES=Object.freeze([
     "releaseReady": false,
     "scriptVersion": 1,
     "hint": "季節の羽の絵本を開くと、とても長い尾。",
-    "searchClue": "静かな庭に、とても長い尾の影",
+    "searchClue": "静かな庭にとても長い尾の影",
     "eventTitle": "季節で変わる長い尾",
     "steps": [
       {
@@ -2228,7 +2228,7 @@ export const ENCOUNTER_CANDIDATES=Object.freeze([
     "releaseReady": false,
     "scriptVersion": 1,
     "hint": "針葉樹の絵飾りのそばに、翼の白い帯。",
-    "searchClue": "翼にくっきり、白い帯の模様",
+    "searchClue": "翼にくっきり白い帯の模様",
     "eventTitle": "交差するくちばしと白い帯",
     "steps": [
       {
@@ -2310,7 +2310,7 @@ export const ENCOUNTER_CANDIDATES=Object.freeze([
     "releaseReady": false,
     "scriptVersion": 1,
     "hint": "庭の小道に、栗色の頭と黒いほっぺ。",
-    "searchClue": "栗色の頭に、黒いほっぺ",
+    "searchClue": "栗色の頭に黒いほっぺ",
     "eventTitle": "いつもの、ちゅん",
     "steps": [
       {
@@ -2406,7 +2406,7 @@ export const ENCOUNTER_CANDIDATES=Object.freeze([
     "releaseReady": false,
     "scriptVersion": 1,
     "hint": "草の穂のかげに、長い尾とふたすじの白。",
-    "searchClue": "草のかげに、長い尾とふたすじの白",
+    "searchClue": "草のかげに長い尾とふたすじの白",
     "eventTitle": "草の穂と、ふたすじの白",
     "steps": [
       {
@@ -2493,7 +2493,7 @@ export const ENCOUNTER_CANDIDATES=Object.freeze([
     "releaseReady": false,
     "scriptVersion": 1,
     "hint": "林の枝先に、紅い羽と銀白色のきらめき。",
-    "searchClue": "枝先に、紅い羽と銀白色のきらめき",
+    "searchClue": "枝先に紅い羽と銀白色のきらめき",
     "eventTitle": "林にひとつ、銀のきらめき",
     "steps": [
       {
