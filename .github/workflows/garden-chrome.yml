@@ -1,0 +1,30 @@
+name: Garden chrome readability
+on:
+  pull_request:
+    paths: ['src/game.css', 'src/game-chrome.js', 'src/app.js', 'tests/browser/garden-chrome.spec.js', 'playwright.garden-chrome.config.js', '.github/workflows/garden-chrome.yml']
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm test
+      - run: npx playwright install --with-deps webkit
+      - run: google-chrome --version || npx playwright install chrome
+      - run: npx playwright test --config=playwright.garden-chrome.config.js
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: garden-chrome-${{ github.sha }}
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14

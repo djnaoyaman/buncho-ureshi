@@ -1239,4 +1239,110 @@ body[data-world="buncho"] .game-decor-intro { background: transparent; border: 0
  body[data-world="buncho"] .game-gacha-icon { width: 30px; height: 32px; }
  body[data-world="buncho"] .game-decor-draw { gap: 2px; }
 }
+/* Garden chrome floats above the scene instead of covering it with a banner.
+   Keep the title and every destination readable inside its own touch target. */
+body[data-world="buncho"] .game-encounter-host .finch-garden > header {
+ top: calc(8px + env(safe-area-inset-top,0px)); left: max(10px,env(safe-area-inset-left,0px)); right: calc(76px + env(safe-area-inset-right,0px)); gap: 8px;
+}
+body[data-world="buncho"] .game-encounter-host .finch-garden > header::before { content: none; }
+body[data-world="buncho"] .game-encounter-host .finch-garden > header h3 {
+ flex: 1 1 auto; min-width: 0; max-width: none; margin: 0; padding: 6px 9px!important;
+ font-size: 14px!important; line-height: 1.35!important; font-weight: 800; overflow-wrap: anywhere;
+ background: #fff9f0ed!important; border-radius: 14px; box-shadow: 0 2px 8px #604b3d1a;
+}
+body[data-world="buncho"] .game-encounter-host .finch-garden > header > button {
+ min-width: 50px; min-height: 44px; padding: 5px 8px; font-size: 11px; line-height: 1.25;
+}
+body[data-world="buncho"] .game-encounter-host .finch-garden > header > button > span { display: block; }
+body[data-world="buncho"] .finch-garden-selector-wrap {
+ top: calc(62px + env(safe-area-inset-top,0px)); left: max(10px,env(safe-area-inset-left,0px)); right: max(10px,env(safe-area-inset-right,0px));
+}
+body[data-world="buncho"] .finch-garden-selector-wrap .finch-garden-selector { gap: 6px; padding: 2px 0 6px; }
+body[data-world="buncho"] .finch-garden-selector-wrap .finch-garden-selector button {
+ flex-basis: calc((100% - 6px)/2); min-width: 0; min-height: 44px; padding: 6px 8px;
+ font-size: 12px; line-height: 1.35; white-space: normal; overflow-wrap: anywhere; border-radius: 20px;
+}
+body[data-world="buncho"] .finch-garden-selector-wrap .finch-garden-scroll { min-height: 44px; }
+body[data-world="buncho"] .game-panel-overlay[data-scene="true"]:has(.finch-garden) > .game-overlay-head {
+ top: calc(8px + env(safe-area-inset-top,0px)); right: max(10px,env(safe-area-inset-right,0px));
+}
+body[data-world="buncho"] .game-panel-overlay[data-scene="true"]:has(.finch-garden) > .game-overlay-head button { width: 56px; min-height: 44px; }
+@media(min-width:600px) {
+ body[data-world="buncho"] .finch-garden-selector-wrap .finch-garden-selector button { flex-basis: calc((100% - 12px)/3); }
+}
+@media(min-height:701px) {
+ body[data-world="buncho"][data-scene-controls]:has(.finch-garden) .game-scene-controls-toggle { top: auto; bottom: calc(164px + env(safe-area-inset-bottom,0px)); left: max(10px,env(safe-area-inset-left,0px)); }
+}
+@media(min-height:301px) and (max-height:700px) {
+ body[data-world="buncho"][data-scene-controls]:has(.finch-garden) .game-scene-controls-toggle { top: auto; bottom: calc(70px + env(safe-area-inset-bottom,0px)); left: max(10px,env(safe-area-inset-left,0px)); }
+}
+@media(max-height:300px) {
+ body[data-world="buncho"] .finch-garden-selector-wrap { top: calc(54px + env(safe-area-inset-top,0px)); }
+}
+/* Reading copy has a text column, while invitations remain visible buttons. */
+body[data-world="buncho"] .finch-entry > .finch-summary {
+ background: transparent; border: 0; border-radius: 0; margin: 20px 0; padding: 0;
+ text-align: left; line-height: 1.8; overflow-wrap: anywhere;
+}
+body[data-world="buncho"] .finch-entry > .finch-view-toggle { margin-block: 16px 0; }
+body[data-world="buncho"] .finch-entry .finch-friendship {
+ padding: 16px; border-radius: 20px; text-align: left;
+}
+body[data-world="buncho"] .finch-entry .finch-friendship-actions { margin-block: 12px; }
+body[data-world="buncho"] .finch-entry .finch-friendship-actions button {
+ min-width: 0; white-space: normal; overflow-wrap: anywhere; background: var(--play-paper);
+ border: var(--play-soft-edge); box-shadow: var(--play-soft-shadow); border-radius: 20px;
+}
+/* Use the approved, unaltered logo rather than a second text-only wordmark. */
+body[data-world="buncho"] .game-world-title,
+body[data-world="buncho"][data-scene-controls="closed"] .game-world-title {
+ left: max(10px,env(safe-area-inset-left,0px)); top: calc(8px + env(safe-area-inset-top,0px)); padding: 0;
+ background: transparent; border-radius: 0; box-shadow: none;
+}
+body[data-world="buncho"] .game-wordmark { margin: 0; line-height: 0; }
+body[data-world="buncho"] .game-world-title img.game-brand-logo {
+ display: block; width: clamp(110px,30vw,160px); height: auto; max-height: none; object-fit: contain;
+}
+@media(max-height:500px) {
+ body[data-world="buncho"] .game-world-title img.game-brand-logo { width: 90px; }
+}
+body[data-world="buncho"][data-scene-controls]:has(.finch-garden) .game-scene-controls-toggle { min-width: 88px; }
+@media(max-height:300px) {
+ body[data-world="buncho"][data-scene-controls]:has(.finch-garden) .game-scene-controls-toggle { top: auto; bottom: calc(80px + env(safe-area-inset-bottom,0px)); left: max(10px,env(safe-area-inset-left,0px)); }
+}
+/* Familiar route pictograms supplement the existing accessible link names. */
+body[data-world="buncho"] .site-header .game-world-exit,
+body[data-world="buncho"] .game-app[data-panel="outdoors"] .game-overlay-head [data-game-close-panel] {
+ display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+ min-width: 52px; min-height: 48px; padding: 4px 6px!important; font-size: 10px!important; line-height: 1.1; white-space: nowrap;
+}
+body[data-world="buncho"] .site-header .game-world-exit::before,
+body[data-world="buncho"] .game-app[data-panel="outdoors"] .game-overlay-head [data-game-close-panel]::before {
+ content: ""; display: block; flex: 0 0 24px; width: 24px; height: 24px; background: currentColor;
+ mask: var(--game-route-icon) center / contain no-repeat; -webkit-mask: var(--game-route-icon) center / contain no-repeat;
+}
+body[data-world="buncho"] .site-header .game-world-exit {
+ height: auto!important; width: 60px!important;
+ --game-route-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' fill='none' stroke='black' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M16 7C12 4 7 4 3 5v21c4-1 9-1 13 2 4-3 9-3 13-2V5c-4-1-9-1-13 2Zm0 0v21M7 10h5M7 15h5M20 10h5M20 15h5'/%3E%3C/svg%3E");
+}
+body[data-world="buncho"] .game-app[data-panel="outdoors"] .game-overlay-head [data-game-close-panel] {
+ --game-route-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' fill='none' stroke='black' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m3 14 13-11 13 11M6 12v16h20V12M12 28V18h8v10'/%3E%3C/svg%3E");
+}
+/* One quiet, stationary handle for watching and interacting. */
+body[data-world="buncho"][data-scene-controls] .game-scene-controls-toggle {
+ box-sizing: border-box; width: 152px; min-width: 152px; min-height: 46px; padding: 9px 14px;
+ background: #fff9f0ed; color: var(--play-ink); border: 1px solid #cbbda7; border-radius: 999px;
+ box-shadow: 0 2px 8px #604b3d1f; font-family: Georgia,"Times New Roman",serif; font-size: 14px;
+ font-weight: 600; letter-spacing: .02em; line-height: 1.3; white-space: nowrap;
+}
+body[data-world="buncho"][data-scene-controls]:not(:has(.finch-garden)) .game-scene-controls-toggle[data-game-world-control] {
+ top: auto; right: auto; left: max(10px,env(safe-area-inset-left,0px)); bottom: calc(178px + env(safe-area-inset-bottom,0px));
+}
+@media(max-height:700px) {
+ body[data-world="buncho"][data-scene-controls]:not(:has(.finch-garden)) .game-scene-controls-toggle[data-game-world-control] { bottom: calc(86px + env(safe-area-inset-bottom,0px)); }
+}
+@media(max-height:340px) {
+ body[data-world="buncho"][data-scene-controls] .game-scene-controls-toggle { width: 60px; min-width: 60px; padding: 4px; font-size: 11px; white-space: normal; }
+ body[data-world="buncho"][data-scene-controls]:not(:has(.finch-garden)) .game-scene-controls-toggle[data-game-world-control] { top: 58px; bottom: auto; left: 8px; }
+}
 /* End COLOR PLAY. */

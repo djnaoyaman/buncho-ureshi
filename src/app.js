@@ -432,7 +432,7 @@ function render(route) {
       ) + '<div id="studio-root"></div>';
   } else if (route === "game/") {
     title = "おもちの文鳥ぐらし";
-    view = `<header class="game-world-title" data-game-title-slot><h1 class="game-wordmark" aria-label="おもちの文鳥ぐらし">文鳥ぐらし</h1></header><div id="game-root"></div>`;
+    view = `<header class="game-world-title" data-game-title-slot><h1 class="game-wordmark">${logoSvg('game-brand-logo')}</h1></header><div id="game-root"></div>`;
   } else if (route === "credits/") {
     title = "出典と素材";
     view = credits();
