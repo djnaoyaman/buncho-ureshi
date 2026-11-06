@@ -4,6 +4,7 @@ import { Window } from 'happy-dom';
 import { IDBFactory } from 'fake-indexeddb';
 import { mountGame } from '../src/game.js';
 import { openGameStore, DB_NAME } from '../src/game-store.js';
+import { arriveGardenRaptor, raptorToken } from '../src/garden-raptors.js';
 import { SAVE_VERSION, createWorld, renameBird, serializeWorld, bumpRevision, adoptBird, advanceTicks } from '../src/engine.js';
 
 // Real engine/store code in a DOM emulator, not browser or visual acceptance.
@@ -133,6 +134,90 @@ test('top links keep child-friendly names, destinations and save-neutral friend 
   assert.deepEqual(await rawWorld(f.indexedDB), before, 'opening and closing friends leaves the complete saved world untouched');
   f.stop(); await f.mount();
   assert.deepEqual(labels(), ['おうち', 'おにわ', '友だち']);
+});
+
+test('dismiss-only surfaces consistently say とじる and preserve the saved world', async t => {
+  const f = await fixture(t); await f.mount();
+  const before = await rawWorld(f.indexedDB);
+  for (let i = 0; i < 2; i++) {
+    f.openBird();
+    const closeBird = f.root.querySelector('[data-game-close-bird]');
+    assert.equal(closeBird.textContent, 'とじる');
+    assert.equal(closeBird.getAttribute('aria-label'), '文鳥の操作をとじる');
+    closeBird.click();
+    assert.equal(f.root.querySelector('.game-bird-sheet').open, false);
+    assert.equal(f.window.document.activeElement.dataset.birdId, 'b1');
+    const menu = f.root.querySelector('.game-secondary-menu'); menu.open = true;
+    const closeMenu = menu.querySelector('[data-game-close-menu]');
+    assert.equal(closeMenu.textContent, 'とじる');
+    assert.equal(closeMenu.getAttribute('aria-label'), 'メニューをとじる');
+    closeMenu.click();
+    assert.equal(menu.open, false);
+    assert.equal(f.window.document.activeElement.id, 'game-nav-open');
+    for (const panel of ['friends', 'settings', 'profile', 'notebook']) {
+      f.root.querySelector(`[data-game-panel="${panel}"]`).click();
+      const close = f.root.querySelector('[data-game-close-panel]');
+      assert.equal(close.textContent, 'とじる', panel);
+      close.click();
+      assert.equal(f.root.querySelector('.game-panel-overlay').open, false, panel);
+    }
+  }
+  assert.deepEqual(await rawWorld(f.indexedDB), before);
+});
+
+test('welcome dismissal uses とじる and clears only its acknowledgement state', async t => {
+  const f = await fixture(t), world = await rawWorld(f.indexedDB);
+  world.offlineSummary = { ticks:0, newBirds:0, skipped:0, fromTick:world.tick, toTick:world.tick };
+  await rawWorld(f.indexedDB, world); await f.mount();
+  const before = await rawWorld(f.indexedDB), close = f.root.querySelector('#game-welcome-close');
+  assert.equal(close.textContent, 'とじる');
+  assert.equal(close.getAttribute('aria-label'), 'おかえりメッセージをとじる');
+  close.click();
+  await until(() => !f.root.querySelector('.game-welcome'), 'welcome dismissed');
+  const after = await rawWorld(f.indexedDB);
+  assert.equal(after.offlineSummary, null);
+  for (const key of ['birds', 'decor', 'economy', 'settings', 'encounters']) assert.deepEqual(after[key], before[key]);
+  assert.equal(f.window.document.activeElement.dataset.birdId, 'b1');
+  f.stop(); await f.mount();
+  assert.equal(f.root.querySelector('.game-welcome'), null);
+});
+
+test('close labels distinguish garden return and unsaved owner navigation from dismissal', async t => {
+  const f = await fixture(t); await f.mount();
+  f.root.querySelector('[data-game-panel="outdoors"]').click();
+  await until(async () => (await rawWorld(f.indexedDB)).encounters.garden.open, 'garden opened');
+  assert.equal(f.root.querySelector('[data-game-close-panel]').textContent, 'おうちへ');
+  f.root.querySelector('[data-game-panel="notebook"]').click();
+  assert.equal(f.root.querySelector('[data-game-close-panel]').textContent, 'おうちへ');
+  const before = await rawWorld(f.indexedDB);
+  f.root.querySelector('[data-game-close-panel]').click();
+  await until(() => !f.root.querySelector('.game-panel-overlay').open, 'returned from notebook');
+  const after = await rawWorld(f.indexedDB);
+  assert.equal(after.encounters.garden.open, false);
+  for (const key of ['birds', 'decor', 'economy', 'settings']) assert.deepEqual(after[key], before[key]);
+});
+
+test('an active raptor names the real home exit but owner cancel still returns without ending the warning', async t => {
+  const f = await fixture(t), world = await rawWorld(f.indexedDB);
+  world.paused = false; world.field.place = 'park'; world.encounters.garden.open = true;
+  world.encounters.gardenFriends.attendees = ['b1'];
+  assert.equal(arriveGardenRaptor(world, 'black-kite', Date.now(), { ...raptorToken(world), gardenId: world.encounters.garden.id }).changed, true);
+  world.paused = true; await rawWorld(f.indexedDB, world); await f.mount();
+  f.settings();
+  assert.equal(f.root.querySelector('[data-game-close-panel]').textContent, 'おうちへ');
+  const before = await rawWorld(f.indexedDB);
+  f.root.querySelector('.game-settings [data-game-panel="owner"]').click();
+  assert.equal(f.root.querySelector('[data-game-close-panel]').textContent, '保存せずに設定へ');
+  f.root.querySelector('[data-game-close-panel]').click();
+  assert.equal(f.root.querySelector('.game-app').dataset.panel, 'settings');
+  assert.deepEqual((await rawWorld(f.indexedDB)).encounters.raptor.active, before.encounters.raptor.active);
+  assert.equal(f.root.querySelector('[data-game-close-panel]').textContent, 'おうちへ');
+  f.root.querySelector('[data-game-close-panel]').click();
+  await until(async () => !(await rawWorld(f.indexedDB)).encounters.raptor.active, 'safe return ends warning');
+  const after = await rawWorld(f.indexedDB);
+  assert.equal(after.field.place, 'home'); assert.equal(after.encounters.garden.open, false);
+  assert.deepEqual(after.decor, before.decor); assert.deepEqual(after.economy, before.economy);
+  assert.deepEqual(after.lifecycle, before.lifecycle);
 });
 
 test('mountGame delayed file reads: the latest requested import wins, not the last read to finish', async t => {
@@ -326,7 +411,10 @@ test('draw result opens a dismissible modal and does not reopen on refresh',asyn
  const f=await fixture(t);await f.mount();f.root.querySelector('[data-game-panel="decorate"]').click();
  f.root.querySelector('[data-decor-draw]').click();await until(()=>f.root.querySelector('.game-draw-result')?.open,'draw modal opened');
  const dialog=f.root.querySelector('.game-draw-result');assert.equal(dialog.getAttribute('aria-labelledby'),'game-draw-result-title');
+ const before=await rawWorld(f.indexedDB);assert.equal(dialog.querySelector('[data-draw-result-close]').textContent,'とじる');
  dialog.querySelector('[data-draw-result-close]').click();assert.equal(f.root.querySelector('.game-draw-result'),null);
+ assert.equal(f.window.document.activeElement,f.root.querySelector('[data-decor-draw]:not(:disabled)')||f.root.querySelector('[data-decor-slot][aria-pressed=true]'));
+ assert.deepEqual(await rawWorld(f.indexedDB),before,'closing the result never redraws, charges or changes the inventory');
  await [...f.timers.values()][0]();assert.equal(f.root.querySelector('.game-draw-result'),null);
 });
 test('route teardown closes the draw result modal',async t=>{

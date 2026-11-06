@@ -41,6 +41,23 @@ async function reachable(page,bird,top,bottom,birdSelector) {
 for(const [width,height] of [[320,568],[390,844],[844,390]]) {
   test(`full-stage house and twelve gardens ${width}x${height}`,async({page},testInfo)=>{
     test.setTimeout(90000); await page.setViewportSize({width,height}); await ready(page);
+    for (let i = 0; i < 2; i++) {
+      const opener = page.locator('.game-bottom-dock [data-game-open-menu]');
+      await opener.click();
+      const close = page.locator('[data-game-close-menu]');
+      await expect(close).toHaveText('とじる');
+      await expect(close).toHaveAccessibleName('メニューをとじる');
+      await close.click({ trial: true });
+      expect(await close.evaluate(el => {
+        const box = el.getBoundingClientRect(), range = document.createRange(); range.selectNodeContents(el);
+        const text = range.getBoundingClientRect();
+        return box.width >= 44 && box.height >= 44 && box.left >= 0 && box.right <= innerWidth && box.top >= 0 && box.bottom <= innerHeight && el.scrollWidth <= el.clientWidth && text.left >= box.left && text.right <= box.right && text.top >= box.top && text.bottom <= box.bottom;
+      })).toBe(true);
+      if (i === 0) await page.screenshot({ path: testInfo.outputPath(`menu-close-${width}x${height}.png`) });
+      await close.click();
+      await expect(page.locator('.game-secondary-menu')).not.toHaveAttribute('open', '');
+      await expect(opener).toBeFocused();
+    }
     const links = page.locator('.game-field-nav');
     await expect(links.locator('button')).toHaveText(['おうち', 'おにわ', '友だち']);
     for (const name of ['おうちへ', 'おにわへ遊びに行く', '友だちのおうちへ']) {
@@ -54,6 +71,7 @@ for(const [width,height] of [[320,568],[390,844],[844,390]]) {
     }
     await links.getByRole('button', { name: '友だちのおうちへ', exact: true }).click();
     await expect(page.locator('.game-friends')).toBeVisible();
+    await expect(page.locator('[data-game-close-panel]')).toHaveText('とじる');
     await page.locator('[data-game-close-panel]').click();
     await expect(page.locator('.game-panel-overlay')).not.toBeVisible();
     await expect(links.locator('button')).toHaveText(['おうち', 'おにわ', '友だち']);
@@ -65,9 +83,12 @@ for(const [width,height] of [[320,568],[390,844],[844,390]]) {
     await reachable(page,bird,page.locator('.game-field-nav'),page.locator('.game-bottom-dock'),'.game-room-bird.is-selected');
     await noScroll(page); await page.screenshot({path:testInfo.outputPath(`house-${width}x${height}.png`)});
     await bird.click(); await expect(page.locator('.game-bird-sheet')).toBeVisible();
+    await expect(page.locator('[data-game-close-bird]')).toHaveText('とじる');
+    await expect(page.locator('[data-game-close-bird]')).toHaveAccessibleName('文鳥の操作をとじる');
     await page.locator('[data-game-close-bird]').click(); await noScroll(page);
     await page.locator('.game-field-nav [data-game-panel=outdoors]').click();
     await expect(page.locator('.game-panel-overlay')).toHaveAttribute('data-scene','true');
+    await expect(page.locator('[data-game-close-panel]')).toHaveText('おうちへ');
     const selector=page.locator('.finch-garden-selector');
     await expect(selector.locator('[data-garden-select]')).toHaveCount(12);
     const ids=await selector.locator('[data-garden-select]').evaluateAll(es=>es.map(e=>e.dataset.gardenSelect));
@@ -360,6 +381,8 @@ for (const [width, height] of [[320, 568], [390, 844]]) {
     await expect(page.locator('body')).toHaveAttribute('data-game-intro', 'done');
     const welcome = page.locator('.game-welcome');
     const close = page.locator('#game-welcome-close');
+    await expect(close).toHaveText('とじる');
+    await expect(close).toHaveAccessibleName('おかえりメッセージをとじる');
     await expect(welcome).toBeVisible();
     await expect(welcome).toHaveAttribute('role', 'dialog');
     await expect(welcome).toHaveAttribute('aria-modal', 'false');
