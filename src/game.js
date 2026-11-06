@@ -9,8 +9,8 @@ import {isAlive,lifeStatus} from './life-care.js';
 import {encounterCageActors,renderEncounterCageGuest} from './encounter-ui.js';
 import {mountEncounterPanel} from './encounter-controller.js';
 import {encounterSystem,cageVisitorCount} from './encounters.js';
-import {loadOwnerProfile,renderOwnerAvatar,mountOwnerProfile} from './owner-profile.js';
-import {renderOwnerPeek,renderOwnerPortrait,ownerAnimationDelay} from './owner-peek.js';
+import {loadOwnerProfile,mountOwnerProfile} from './owner-profile.js';
+import {renderOwnerPortrait} from './owner-peek.js';
 import { renderRelationshipMap, navigateRelationships, bindRelationshipNavigation } from './relationship-map.js';
 import { suggestLegacyNumberedNames } from './bird-names.js';
 import { familyLayout } from './family-layout.js';
@@ -504,7 +504,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     caption.style.top='';caption.style.bottom='';
     const box=caption.getBoundingClientRect(),frame=main.getBoundingClientRect();
     if(!box.width||!box.height||!frame.height)return;
-    const obstacles=[...root.querySelectorAll('.game-room-bird,.game-home-role,.finch-cage-guest>span,.game-owner-companion,.game-scene-toolbar,.game-bottom-dock,.game-field-nav,.game-field-bar,.game-main>.game-heading,.game-auto-gift,.game-adoption-invitation'),document.querySelector('.game-scene-controls-toggle'),document.querySelector('.game-world-title')].filter(Boolean);
+    const obstacles=[...root.querySelectorAll('.game-room-bird,.game-home-role,.finch-cage-guest>span,.game-scene-toolbar,.game-bottom-dock,.game-field-nav,.game-field-bar,.game-main>.game-heading,.game-auto-gift,.game-adoption-invitation'),document.querySelector('.game-scene-controls-toggle'),document.querySelector('.game-world-title')].filter(Boolean);
     let gaps=[[frame.top+8,frame.bottom-8]];
     for(const node of obstacles){
       if(!node.getClientRects().length)continue;
@@ -559,7 +559,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
       ${cageGuests.map(guest=>{const p=positions.get(guest.id),m=mobilePositions.get(guest.id);return renderEncounterCageGuest(guest.entry,{base:new URL('../',GAME_ART).href,style:`--bird-x:${p.x*100}%;--bird-y:${p.y*100}%;--bird-width:${p.width*100}%;--bird-depth:${Math.round(p.y*100)};--bird-tall-x:${m.x*100}%;--bird-tall-y:${m.y*100}%;--bird-tall-width:${m.width*100}%;--bird-tall-depth:${Math.round(m.y*100)};--foot-x:50%;--foot-y:100%`}).replace('</button>',`${homeBadge('お友達')}</button>`);}).join('')}
 
     </div>
-    <div class="game-scene-toolbar"><div class="game-scene-picker game-bird-carousel" aria-label="スワイプで文鳥を選ぶ">${birdSwitchControls()}<div class="game-bird-carousel-face" data-bird-id="${current?.id||''}">${current?smallBird(current):''}<div><strong>${current?escape(current.name):''}</strong><small>${current?colorName[current.color]+'・'+STAGES[current.stage]:''}</small></div></div></div>${world.field.place==='home'?gardenCare():''}</div>${secondaryMenu()}${world.field.place==='home'?`<div class="game-owner-companion" data-home-crowded="${actors.length>8||(!!compactLayout?.matches&&cageGuests.length>0)}" aria-hidden="true" style="--owner-delay:${ownerAnimationDelay()}ms">${renderOwnerPeek(loadOwnerProfile())}</div>`:''}${bottomDock()}`;
+    <div class="game-scene-toolbar"><div class="game-scene-picker game-bird-carousel" aria-label="スワイプで文鳥を選ぶ">${birdSwitchControls()}<div class="game-bird-carousel-face" data-bird-id="${current?.id||''}">${current?smallBird(current):''}<div><strong>${current?escape(current.name):''}</strong><small>${current?colorName[current.color]+'・'+STAGES[current.stage]:''}</small></div></div></div>${world.field.place==='home'?gardenCare():''}</div>${secondaryMenu()}${bottomDock()}`;
   }
   function profile() {
     const b=chosen(),nameSuggestion=suggestLegacyNumberedNames(world).find(item=>item.birdId===b.id),parentNames=b.parents.map(id=>birdName(world,id)),last=world.events.slice().reverse().find(e=>e.ids.includes(b.id));
