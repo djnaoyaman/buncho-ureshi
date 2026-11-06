@@ -1,6 +1,6 @@
 import {test, expect} from '@playwright/test';
 
-async function ready(page, width) {
+async function ready(page, width, elect=true) {
   await page.setViewportSize({width, height: width === 320 ? 568 : 844});
   await page.addInitScript(() => {
     // Freeze only wall time: paused-world heartbeat metadata must not invalidate the save identity assertion.
@@ -12,7 +12,23 @@ async function ready(page, width) {
   await expect(page.locator('body')).toHaveAttribute('data-game-intro', 'done');await page.locator('.game-scene-controls-toggle').click();await expect(page.locator('.game-scene-controls-toggle')).toHaveAttribute('aria-expanded','true');
   await page.locator('.game-field-nav [data-game-panel=outdoors]').click();
   await expect(page.locator('.game-encounter-host')).toHaveAttribute('aria-busy', 'false');
+  if(elect)await optIn(page);
 }
+
+async function optIn(page){
+ await page.locator('[data-garden-details="companions"]>summary').click();
+ await page.locator('[data-garden-companion="b1"]').click();
+ await expect(page.locator('[data-garden-companion="b1"]')).toHaveAttribute('aria-pressed','true');
+ await page.locator('[data-garden-accompany]').click();
+ await expect(page.locator('[data-garden-accompany]')).toHaveAttribute('aria-pressed','true');
+ await page.locator('[data-garden-details="companions"]>summary').click();
+ await page.locator('[data-game-close-panel]').click();
+ await expect(page.locator('.game-panel-overlay')).not.toBeVisible();
+ await page.locator('[data-game-panel=outdoors]').click();
+ await expect(page.locator('.game-encounter-host')).toHaveAttribute('aria-busy','false');
+ await expect(page.locator('[data-garden-household="b1"]')).toBeVisible();
+}
+
 
 async function verifyTargets(page, width) {
   const birds = page.locator('.finch-garden-stage .finch-garden-friend, .finch-garden-stage [data-garden-household], .finch-garden-stage .finch-garden-visitor');
@@ -36,7 +52,7 @@ async function verifyTargets(page, width) {
   }
 }
 
-for (const width of [320,390]) test(`Omochi joins the garden and returns from care without overlapping friends ${width}`, async ({page}, info) => {
+for (const width of [320,390]) test(`Omochi optionally joins the garden and returns from care without overlapping friends ${width}`, async ({page}, info) => {
   await ready(page,width);
   for (const garden of ['komorebi','mizukagami']) {
     await page.locator(`[data-garden-select="${garden}"]`).click();
@@ -105,4 +121,18 @@ for (const width of [320,390]) for (const garden of ['komorebi','mizukagami']) t
   expect(await snapshot()).toEqual(before);
   await page.locator('.finch-garden-visitor').click();
   await expect(page.locator('.finch-event')).toBeVisible();
+});
+
+for(const width of [320,390])test(`family attendance is optional and changes only on the next outing ${width}`,async({page})=>{
+ await ready(page,width,false);await expect(page.locator('[data-garden-household]')).toHaveCount(0);
+ await page.locator('[data-garden-details="companions"]>summary').click();
+ await page.locator('[data-garden-companion="b1"]').click();await expect(page.locator('[data-garden-companion="b1"]')).toHaveAttribute('aria-pressed','true');
+ await page.locator('[data-garden-accompany]').click();await expect(page.locator('[data-garden-accompany]')).toHaveAttribute('aria-pressed','true');
+ await expect(page.locator('[data-garden-household]')).toHaveCount(0);
+ await page.locator('[data-garden-details="companions"]>summary').click();await page.locator('[data-game-close-panel]').click();await expect(page.locator('.game-panel-overlay')).not.toBeVisible();await page.locator('[data-game-panel=outdoors]').click();await expect(page.locator('[data-garden-household="b1"]')).toBeVisible();
+ await page.locator('[data-garden-details="companions"]>summary').click();await page.locator('[data-garden-accompany]').click();await expect(page.locator('[data-garden-accompany]')).toHaveAttribute('aria-pressed','false');
+ await expect(page.locator('[data-garden-household="b1"]')).toBeVisible();
+ await page.locator('[data-garden-details="companions"]>summary').click();await page.locator('[data-garden-select="mizukagami"]').click();await expect(page.locator('[data-garden-household="b1"]')).toBeVisible();
+ await page.locator('[data-game-close-panel]').click();await expect(page.locator('.game-panel-overlay')).not.toBeVisible();await page.locator('[data-game-panel=outdoors]').click();await expect(page.locator('[data-garden-household]')).toHaveCount(0);
+ await page.reload();await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');await page.locator('.game-scene-controls-toggle').click();await page.locator('[data-game-panel=outdoors]').click();await expect(page.locator('[data-garden-household]')).toHaveCount(0);
 });

@@ -10,7 +10,7 @@ for(const [width,height] of [[900,440],[660,160],[390,600],[320,420],[390,690]])
  for(const id of GARDEN_IDS){
   await page.evaluate(async({id,width,height})=>{
    const [{createWorld},{renderGardenStage},{gardenStageGeometry},{mountEncounterMedia}]=await Promise.all(['engine.js','encounter-ui.js','data/gardens.js','encounter-media.js'].map(p=>import('/buncho-ureshi/src/'+p)));
-   const w=createWorld(1000);w.encounters.garden.id=id;
+   const w=createWorld(1000);w.encounters.gardenFriends.attendees=['b1'];w.encounters.garden.id=id;
    window.gardenFootMedia?.destroy();const fixture=document.querySelector('#fixture');fixture.style.width=width+'px';fixture.style.height=height+'px';fixture.innerHTML=renderGardenStage(w,{previewBackgrounds:true});
    const stage=document.querySelector('.finch-garden-stage');stage.style.width=width+'px';stage.style.height=height+'px';window.gardenFootMedia=mountEncounterMedia(fixture);window.gardenFootMedia.refresh();
    window.stageQA={id,width,height,expected:gardenStageGeometry(id,width,height)};

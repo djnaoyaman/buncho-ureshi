@@ -2,6 +2,7 @@ import {test,expect} from '@playwright/test';
 import {createWorld,validateWorld,drawDecoration,treatBird,hireCaretaker,economyToken} from '../../src/engine.js';
 import {lifeStatus} from '../../src/life-care.js';
 import {ENCOUNTER_CATALOG} from '../../src/data/encounter-catalog.js';
+import {drawGardenFriendIds} from '../../src/data/gardens.js';
 import {COLOR_PLAY_NOW as NOW,colorPlayWorld as seed} from '../fixtures/color-play.js';
 const sizes=[[320,240],[320,568],[390,844],[844,390],[1280,800]];
 async function record(page,world){return page.evaluate(world=>new Promise((resolve,reject)=>{
@@ -25,9 +26,25 @@ async function fit(button){
 }
 async function capture(page,info,name,size){if([240,844,800].includes(size[1]))await info.attach(`${name}-${size.join('x')}`,{body:await page.screenshot(),contentType:'image/png'});}
 const protectedState=w=>{const state=structuredClone(w);delete state.revision;delete state.updatedAt;delete state.encounters.garden;return state;};
+async function expectNewGardenVisit(page,expected){
+ // Entering the garden records one visit; it must not change bonds or any other
+ // protected save data. Keep these snapshots in protectedState for every test.
+ const garden=expected.encounters.garden,gardenId=garden.id,visit=++garden.visits[gardenId];
+ const friendIds=drawGardenFriendIds(expected,gardenId);expect(friendIds).toHaveLength(4);expect(new Set(friendIds).size).toBe(4);
+ expected.encounters.gardenFriends.visits=[{gardenId,visit,friendIds,returningIds:[]}];
+ const saved=await record(page);validateWorld(saved);
+ expect(saved.encounters.garden.open).toBe(true);expect(saved.encounters.garden.id).toBe(gardenId);expect(saved.encounters.garden.visits).toEqual(garden.visits);
+ expect(saved.encounters.gardenFriends).toEqual(expected.encounters.gardenFriends);
+ expect(saved.encounters.gardenFriends.accompany).toBe(false);expect(saved.encounters.gardenFriends.attendees).toEqual([]);
+ expect(protectedState(saved)).toEqual(protectedState(expected));
+ await expect(page.locator('.finch-garden-image-plane > .finch-garden-household')).toHaveCount(0);
+ expect(await page.locator('.finch-garden-image-plane > .finch-garden-friend').evaluateAll(es=>es.map(e=>e.dataset.gardenFriend))).toEqual(friendIds);
+}
 async function unchangedArtwork(page){
  const result=await page.evaluate(()=>{
- const measure=()=>[...document.querySelectorAll('.game-room-bird,.game-sprite,.game-care-pet-bird,.game-care-illustration,.game-care-illustration img,.owner-peek-art,.finch-garden-household,.finch-garden-friend,.finch-garden-visitor,.finch-art,.finch-photo img')].map(el=>{const r=el.getBoundingClientRect(),s=getComputedStyle(el);return {tag:el.tagName,classes:el.className?.baseVal??el.className,src:el.getAttribute('src'),w:r.width,h:r.height,transform:s.transform,objectFit:s.objectFit,objectPosition:s.objectPosition,borderRadius:s.borderRadius,filter:s.filter,clipPath:s.clipPath,animationName:s.animationName};});
+ // Compare exact layout sizes, not viewport-coordinate subtraction: moving an
+ // unchanged box can introduce floating-point noise in WebKit's DOMRect size.
+ const measure=()=>[...document.querySelectorAll('.game-room-bird,.game-sprite,.game-care-pet-bird,.game-care-illustration,.game-care-illustration img,.owner-peek-art,.finch-garden-household,.finch-garden-friend,.finch-garden-visitor,.finch-art,.finch-photo img')].map(el=>{const s=getComputedStyle(el);return {tag:el.tagName,classes:el.className?.baseVal??el.className,src:el.getAttribute('src'),w:s.width,h:s.height,offsetWidth:el.offsetWidth,offsetHeight:el.offsetHeight,transform:s.transform,scale:s.scale,rotate:s.rotate,translate:s.translate,objectFit:s.objectFit,objectPosition:s.objectPosition,borderRadius:s.borderRadius,filter:s.filter,clipPath:s.clipPath,animationName:s.animationName};});
  const sheet=[...document.styleSheets].find(s=>s.href&&new URL(s.href).pathname.endsWith('/src/game.css'));
   const first=[...sheet.cssRules].findIndex(r=>r.style?.getPropertyValue('--play-ink'));if(first<0)throw Error('Color Play stylesheet not loaded');
   const before=measure(),rules=[...sheet.cssRules].slice(first).map(r=>r.cssText);while(sheet.cssRules.length>first)sheet.deleteRule(first);
@@ -69,18 +86,19 @@ for(const size of sizes){
   await page.reload();await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');expect(protectedState(await record(page))).toEqual(before);
  });
  test(`Color Play keeps care, decoration and garden flows at ${size.join('x')}`,async({page},info)=>{
-  await setup(page,size);const before=protectedState(await record(page));await page.locator('.game-scene-controls-toggle').click();
+  await setup(page,size);const expected=await record(page);expect(expected.encounters.gardenFriends.visits).toEqual([]);await page.locator('.game-scene-controls-toggle').click();
   await page.locator('#game-open-bird').click();await expect(page.locator('.game-care-pet-bird')).toBeVisible();
   await unchangedArtwork(page);await capture(page,info,'care',size);await fit(page.locator('[data-game-care=feed]'));await fit(page.locator('[data-game-close-bird]'));await page.locator('[data-game-close-bird]').click();
   await page.locator('.game-bottom-dock [data-game-panel=decorate]').click();await expect(page.locator('.game-decoration')).toBeVisible();await capture(page,info,'decorate',size);await fit(page.locator('[data-game-close-panel]'));await page.locator('[data-game-close-panel]').click();
   await page.locator('.game-field-nav [data-game-panel=outdoors]').click();await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-scene-state','ready');
+  await expectNewGardenVisit(page,expected);
   await expect(page.locator('.finch-garden-selector [data-garden-select]')).toHaveCount(12);await unchangedArtwork(page);await capture(page,info,'garden',size);
   for(const button of await page.locator('.finch-garden-dock > details > summary').all())await fit(button);
   await fit(page.locator('[data-game-close-panel]'));await page.locator('[data-game-close-panel]').click();
   await openMenu(page);await page.locator('#game-menu-notebook').click();await page.locator('[data-finch-go-garden]').click();
-  await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-scene-state','ready');await unchangedArtwork(page);
+  await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-scene-state','ready');await expectNewGardenVisit(page,expected);await unchangedArtwork(page);
   await page.locator('[data-game-close-panel]').click();
-  expect(protectedState(await record(page))).toEqual(before);
+  expect(protectedState(await record(page))).toEqual(protectedState(expected));
  });
 }
 test('Color Play keeps real export, invalid import and reset cancellation safe',async({page},info)=>{
@@ -103,12 +121,16 @@ for(const width of [320,390])test(`Color Play preserves live garden controls, ta
  await page.addInitScript(()=>{Math.random=()=>.99;});
  await setup(page,[width,height]);
  const world=createWorld(NOW,42);world.settings.motion=true;world.settings.careSound=false;world.paused=false;
+ // Pair-approach coverage deliberately elects a family companion for this outing.
+ world.encounters.gardenFriends.companions=['b1'];world.encounters.gardenFriends.accompany=true;
  validateWorld(world);
  await record(page,world);await page.reload();await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');
  await page.locator('.game-scene-controls-toggle').click();await page.locator('.game-field-nav [data-game-panel=outdoors]').click();
  await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-scene-state','ready');
  await fit(page.locator('.finch-garden-selector [aria-current=page]'));
  const actors=page.locator('.finch-garden-image-plane > .finch-garden-friend,.finch-garden-image-plane > .finch-garden-household');
+ await expect(actors).toHaveCount(5);await expect(page.locator('.finch-garden-image-plane > [data-garden-household="b1"]')).toBeVisible();
+ expect((await record(page)).encounters.gardenFriends.attendees).toEqual(['b1']);
  await page.mouse.move(1,200);
  await info.attach(`live-garden-diagnostics-${width}`,{body:JSON.stringify(await page.evaluate(()=>({
   focus:document.activeElement?.outerHTML,openDetails:[...document.querySelectorAll('.game-encounter-host details[open]')].map(x=>x.outerHTML),
@@ -178,13 +200,13 @@ for(const size of sizes){
 
 for(const size of [[320,240],[390,844],[1280,800]])test(`Color Play groups three enemy-page destinations at ${size.join('x')}`,async({page},info)=>{
  await setup(page,size);await page.locator('.game-scene-controls-toggle').click();await openMenu(page);await page.locator('#game-menu-notebook').click();await page.locator('[data-crow-notebook]').click();await page.locator('[data-raptor-entry="black-kite"]').click();
- const before=protectedState(await record(page)),routes=page.locator('.finch-raptor-entry > .finch-route-actions');await expect(routes.locator('button')).toHaveCount(3);
+ const expected=await record(page),routes=page.locator('.finch-raptor-entry > .finch-route-actions');expect(expected.encounters.gardenFriends.visits).toEqual([]);await expect(routes.locator('button')).toHaveCount(3);
  for(const b of await routes.locator('button').all())await fit(b);await capture(page,info,'enemy-three-destinations',size);
  await routes.locator('[data-crow-notebook]').click();await expect(page.locator('.finch-crow-notebook')).toBeVisible();await page.locator('[data-raptor-entry="black-kite"]').click();
- await page.locator('.finch-route-actions [data-finch-go-garden]').click();await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-scene-state','ready');
+ await page.locator('.finch-route-actions [data-finch-go-garden]').click();await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-scene-state','ready');await expectNewGardenVisit(page,expected);
  await page.locator('.finch-garden > header [data-encounter-back]').click();await page.locator('[data-crow-notebook]').click();await page.locator('[data-raptor-entry="black-kite"]').click();
  await page.locator('.finch-route-actions [data-finch-go-home]').click();await expect(page.locator('.game-room')).toBeVisible();await expect(page.locator('.game-panel-overlay')).not.toBeVisible();
- expect(protectedState(await record(page))).toEqual(before);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+ expect(protectedState(await record(page))).toEqual(protectedState(expected));expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
 });
 
 for(const height of [420,568])test(`Color Play short phone keeps gacha filters initially visible at 320x${height}`,async({page},info)=>{

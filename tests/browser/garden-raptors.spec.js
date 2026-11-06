@@ -4,7 +4,7 @@ import {arriveGardenRaptor,petGardenRaptor,raptorToken} from '../../src/garden-r
 import {arriveGardenCrow} from '../../src/garden-crows.js';
 const NOW=Date.UTC(2026,10,4,9);
 function seed({species='black-kite',friendly=false,active=true,child=false}={}){
- const w=createWorld(NOW);w.encounters.garden.open=true;w.field.place='park';w.settings.motion=false;w.settings.careSound=false;if(species==='osprey')w.encounters.garden.id='mizukagami';
+ const w=createWorld(NOW);w.encounters.garden.open=true;w.encounters.gardenFriends.companions=['b1'];w.encounters.gardenFriends.accompany=true;w.encounters.gardenFriends.attendees=['b1'];w.field.place='park';w.settings.motion=false;w.settings.careSound=false;if(species==='osprey')w.encounters.garden.id='mizukagami';
  if(child){const father=createBird(w,{sex:'male',home:'resident'});w.tick=10;createBird(w,{sex:'female',color:'sakura',home:'resident',parents:['b1',father.id],generation:1});}
  if(active){arriveGardenRaptor(w,species,NOW,{...raptorToken(w),gardenId:w.encounters.garden.id});if(friendly)for(let i=0;i<13;i++)petGardenRaptor(w,species,8,raptorToken(w));}
  return w;

@@ -1,3 +1,4 @@
+import {gardenCompanionRoster} from './data/gardens.js';
 import {crowScene} from './garden-crows.js';
 import {RAPTOR_SPECIES} from './data/raptor-species.js';
 import {getProtagonistBird} from './protagonist.js';
@@ -11,7 +12,13 @@ const bump=w=>{w.revision=w.revision===Number.MAX_SAFE_INTEGER?0:w.revision+1;};
 const current=(w,t)=>t&&t.worldId===w.worldId&&t.revision===w.revision;
 export const raptorSpecies=id=>RAPTOR_SPECIES.find(s=>s.id===id)||null;
 export const initialRaptorState=()=>({lastArrivalAt:null,active:null,visits:[]});
-export function raptorTarget(w){const b=getProtagonistBird(w);return b&&b.home==='resident'&&['juvenile','adult'].includes(b.stage)&&isAlive(w,b)?b:null;}
+/** Existing warnings keep their recorded target. New arrivals need actual attendance. */
+export function raptorTarget(w){
+ const b=getProtagonistBird(w),active=w.encounters?.raptor?.active;
+ if(!b||b.home!=='resident'||!['juvenile','adult'].includes(b.stage)||!isAlive(w,b))return null;
+ if(active)return active.targetBirdId===b.id?b:null;
+ return gardenCompanionRoster(w).some(row=>row.birdId===b.id)?b:null;
+}
 export function raptorFriendship(w,id){const v=w.encounters?.raptor?.visits.find(v=>v.id===id),points=v?.petPoints||0;return {discovered:!!v,points,friendly:!!v&&points>=RAPTOR_RULES.friendPoints};}
 export function raptorCoolingDown(w,now=Date.now()){const at=w.encounters?.raptor?.lastArrivalAt;return at!=null&&now-at<RAPTOR_RULES.dailyCooldownMs;}
 export function raptorToken(w){const a=w.encounters?.raptor?.active;return {worldId:w.worldId,revision:w.revision,eventId:a?.eventId??null,remainingMs:a?.remainingMs??null,lastProgressAt:a?.lastProgressAt??null};}
@@ -41,7 +48,7 @@ export function arriveGardenRaptor(w,id,now,expected){
 export function raptorScene(w){const a=w.encounters?.raptor?.active;if(!a||raptorTarget(w)?.id!==a.targetBirdId||(!a.hostile&&a.gardenId!==w.encounters.garden.id))return null;return {...a,species:raptorSpecies(a.speciesId),phase:a.hostile?'warning':'visiting'};}
 export function escapeGardenRaptor(w,expected){
  if(!activeCurrent(w,expected))return {changed:false,reason:'stale'};
- w.encounters.raptor.active=null;w.encounters.garden.open=false;w.field={place:'home',hostId:null,enteredTick:w.tick};bump(w);return {changed:true,escaped:true,message:'おうちに帰って、安全に過ごせるよ。'};
+ w.encounters.raptor.active=null;w.encounters.garden.open=false;w.encounters.gardenFriends.attendees=[];w.field={place:'home',hostId:null,enteredTick:w.tick};bump(w);return {changed:true,escaped:true,message:'おうちに帰って、安全に過ごせるよ。'};
 }
 export function petGardenRaptor(w,id,amount,expected){
  if(!current(w,expected))return {changed:false,reason:'stale'};

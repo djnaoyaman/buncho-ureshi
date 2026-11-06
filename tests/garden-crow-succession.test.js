@@ -7,7 +7,7 @@ import {arriveGardenCrow,crowTarget,crowScene,crowFriendship,petGardenCrow} from
 import {renderCrowScene,renderCrowNotice} from '../src/garden-crow-ui.js';
 const NOW=Date.UTC(2026,10,4,9),DAY=86400000,id='large-billed-crow';
 const token=w=>({worldId:w.worldId,revision:w.revision,gardenId:w.encounters.garden.id});
-function family(){const w=createWorld(NOW,42);w.paused=true;w.settings.motion=false;const father=createBird(w,{sex:'male',home:'resident'});w.tick=10;const elder=createBird(w,{sex:'female',home:'resident',parents:['b1',father.id],generation:1});w.tick=20;const younger=createBird(w,{sex:'male',home:'resident',parents:['b1',father.id],generation:1});w.encounters.garden.open=true;lifeStatus(w,'b1').condition={kind:'injury',sinceAt:NOW,deadlineAt:NOW+DAY};return {w,father,elder,younger};}
+function family(){const w=createWorld(NOW,42);w.paused=true;w.settings.motion=false;const father=createBird(w,{sex:'male',home:'resident'});w.tick=10;const elder=createBird(w,{sex:'female',home:'resident',parents:['b1',father.id],generation:1});w.tick=20;const younger=createBird(w,{sex:'male',home:'resident',parents:['b1',father.id],generation:1});w.encounters.garden.open=true;w.encounters.gardenFriends.attendees=['b1',elder.id,younger.id];lifeStatus(w,'b1').condition={kind:'injury',sinceAt:NOW,deadlineAt:NOW+DAY};return {w,father,elder,younger};}
 function nearDeath(w){advanceTo(w,NOW+DAY-1000);w.paused=false;return NOW+DAY-1000;}
 function die(w){w.paused=true;advanceTo(w,NOW+DAY);w.paused=false;validateWorld(w);}
 test('a just-arrived crow closes with the deceased founder and never transfers damage or identity to an heir',()=>{

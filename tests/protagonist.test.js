@@ -26,7 +26,7 @@ test('new v9 identity is b1 and name or inspection selection cannot change it',(
 });
 for(const sex of ['male','female'])test(`oldest living ${sex} child inherits, without changing identity, assets or the grave`,()=>{
  const {w,elder}=family({sex});w.economy.gold=w.economy.lifetimeGold=80;const decor=clone(w.decor),ids=w.birds.map(b=>b.id),name=elder.name;die(w);
- assert.equal(getProtagonistId(w),elder.id);assert.deepEqual(w.protagonist.lineage,['b1',elder.id]);assert.equal(getProtagonistBird(w).name,name);assert.equal(w.economy.gold,80);assert.deepEqual(w.decor,decor);assert.deepEqual(w.birds.map(b=>b.id),ids);assert.ok(lifeStatus(w,'b1').death);assert.equal(w.events.filter(e=>e.kind==='succession').length,1);assert.equal(w.events.at(-1).ids.join(),`b1,${elder.id}`);assert.match(renderMemorialPanel(w),/第2代の主人公/);assert.deepEqual(gardenCompanionRoster(w).map(b=>b.birdId),[elder.id]);
+ assert.equal(getProtagonistId(w),elder.id);assert.deepEqual(w.protagonist.lineage,['b1',elder.id]);assert.equal(getProtagonistBird(w).name,name);assert.equal(w.economy.gold,80);assert.deepEqual(w.decor,decor);assert.deepEqual(w.birds.map(b=>b.id),ids);assert.ok(lifeStatus(w,'b1').death);assert.equal(w.events.filter(e=>e.kind==='succession').length,1);assert.equal(w.events.at(-1).ids.join(),`b1,${elder.id}`);assert.match(renderMemorialPanel(w),/第2代の主人公/);assert.deepEqual(gardenCompanionRoster(w).map(b=>b.birdId),[]);
  const again=clone(w);advanceTo(w,NOW+DAY);assert.deepEqual(w,again);
 });
 test('all same-batch deaths are resolved before choosing an heir',()=>{
@@ -68,7 +68,7 @@ test('explicit full save restore preserves the successor and lineage with its ow
  const {w,elder}=family();die(w);w.economy.gold=w.economy.lifetimeGold=31;const restored=prepareWorldReplacement(createWorld(NOW+2*DAY),w,NOW+3*DAY,'restored-family');assert.equal(getProtagonistId(restored),elder.id);assert.deepEqual(restored.protagonist,w.protagonist);assert.equal(restored.economy.gold,31);assert.deepEqual(lifeStatus(restored,'b1').death,lifeStatus(w,'b1').death);validateWorld(restored);
 });
 test('all nine gardens use the saved successor, independently of inspected sibling',()=>{
- const {w,elder,younger}=family();die(w);for(const id of GARDEN_IDS){w.encounters.garden.id=id;const html=renderGardenStage(w,{selectedBirdId:younger.id});assert.ok(html.includes(`data-garden-household="${elder.id}"`),id);assert.ok(!html.includes('data-garden-household="b1"'),id);assert.ok(!html.includes(`data-garden-household="${younger.id}"`),id);}validateWorld(w);
+ const {w,elder,younger}=family();die(w);w.encounters.gardenFriends.attendees=[elder.id];for(const id of GARDEN_IDS){w.encounters.garden.id=id;const html=renderGardenStage(w,{selectedBirdId:younger.id});assert.ok(html.includes(`data-garden-household="${elder.id}"`),id);assert.ok(!html.includes('data-garden-household="b1"'),id);assert.ok(!html.includes(`data-garden-household="${younger.id}"`),id);}validateWorld(w);
 });
 
 test('v8 migration does not crown a child whose treatment deadline expires before first render',()=>{
