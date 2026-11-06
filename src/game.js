@@ -257,7 +257,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     dialog=document.createElement('dialog');
     dialog.className='game-draw-result';
     dialog.setAttribute('aria-labelledby','game-draw-result-title');
-    dialog.innerHTML=`<strong id="game-draw-result-title">${drawResult.duplicate?'もう持っている色でした':'新しいお飾り！'}</strong><p>${escape(itemName(drawResult.item))}</p><p>${escape(drawResult.message)}</p><button type="button" data-draw-result-close autofocus>閉じる</button>`;
+    dialog.innerHTML=`<strong id="game-draw-result-title">${drawResult.duplicate?'もう持っている色でした':'新しいお飾り！'}</strong><p>${escape(itemName(drawResult.item))}</p><p>${escape(drawResult.message)}</p><button type="button" data-draw-result-close autofocus>とじる</button>`;
     root.querySelector('.game-app').append(dialog);
     dialog.showModal();updateRaptorNotice(root,world);
     dialog.querySelector('button').focus({preventScroll:true});
@@ -364,7 +364,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
   }
   function birdSheet(){
     const b=chosen();
-    return `<header class="game-sheet-heading"><div>${carePortrait(b)}<div><h2 id="game-sheet-title">${escape(b.name)}</h2><p>${STAGES[b.stage]} · ${ACTIONS[b.action.kind]}</p></div></div><button id="game-sheet-close" type="button" data-game-close-bird aria-label="文鳥の操作を閉じる">閉じる</button></header>${birdSwitchControls()}${careGesture?.birdId===b.id?`<span class="game-sheet-cheer" aria-hidden="true">${careGesture.kind==='feed'?'もぐもぐ':'♪'}</span>`:''}${renderLifeSummary(world,b)}<button id="game-sheet-health" type="button" data-game-panel="${isAlive(world,b)?'health':'memorial'}">${isAlive(world,b)?'健康・病院・お留守番':'思い出の庭へ'}</button>${careControls(b)}${friendGoodbye(b)}${lastReply&&replyBird===b.id?`<p class="game-reply" role="status">${escape(lastReply)}</p>`:''}<details class="game-sheet-talk" data-game-details="sheet-talk"><summary>もっと話す</summary>${talkControls(b)}</details><footer class="game-sheet-footer"><button data-game-panel="settings">音・暮らしの設定</button><button type="button" data-game-panel="profile">${b.home==='visitor'?'名前・お迎え':'紹介・名前'}</button></footer>${error?`<p class="game-warning" role="alert">${escape(error)}</p>`:message?`<p class="game-sheet-message" role="status">${escape(message)}</p>`:''}`;
+    return `<header class="game-sheet-heading"><div>${carePortrait(b)}<div><h2 id="game-sheet-title">${escape(b.name)}</h2><p>${STAGES[b.stage]} · ${ACTIONS[b.action.kind]}</p></div></div><button id="game-sheet-close" type="button" data-game-close-bird aria-label="文鳥の操作をとじる">とじる</button></header>${birdSwitchControls()}${careGesture?.birdId===b.id?`<span class="game-sheet-cheer" aria-hidden="true">${careGesture.kind==='feed'?'もぐもぐ':'♪'}</span>`:''}${renderLifeSummary(world,b)}<button id="game-sheet-health" type="button" data-game-panel="${isAlive(world,b)?'health':'memorial'}">${isAlive(world,b)?'健康・病院・お留守番':'思い出の庭へ'}</button>${careControls(b)}${friendGoodbye(b)}${lastReply&&replyBird===b.id?`<p class="game-reply" role="status">${escape(lastReply)}</p>`:''}<details class="game-sheet-talk" data-game-details="sheet-talk"><summary>もっと話す</summary>${talkControls(b)}</details><footer class="game-sheet-footer"><button data-game-panel="settings">音・暮らしの設定</button><button type="button" data-game-panel="profile">${b.home==='visitor'?'名前・お迎え':'紹介・名前'}</button></footer>${error?`<p class="game-warning" role="alert">${escape(error)}</p>`:message?`<p class="game-sheet-message" role="status">${escape(message)}</p>`:''}`;
   }
   function openBirdSheet(birdId){fieldViewRequest++;cancelCareEffects();selected=birdId;sheetOpen=true;sheetReturn={birdId,worldId:world.worldId};lastReply='';setMessage('');render();}
   function closeBirdSheet(restore=true){
@@ -384,6 +384,12 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     if(committed&&valid()){panel='garden';render();updateRaptorNotice(root,world);root.querySelector('[data-game-open-bird]')?.focus({preventScroll:true});}return committed;
   }
   async function closePanel(){if(independenceBusy||successorBusy)return;closeIndependenceDialog(false);closeSuccessorDialog(false);if(world.encounters.raptor?.active&&panel!=='owner'){await returnRaptorHome();return;}fieldViewRequest++;if(['outdoors','notebook'].includes(panel)&&world.encounters.garden.open){const expected={worldId:world.worldId,revision:world.revision};await mutate(w=>{encounterSystem.leaveGarden(w,expected);},'',()=>alive,{bump:false,advanceCurrent:false});}sheetOpen=false;cancelCareEffects();if(panel==='owner'){finishOwnerEdit();return;}panel='garden';render();root.querySelector('[data-game-open-menu]')?.focus({preventScroll:true});}
+  // Match the existing close handler: dismiss an overlay or name its actual destination.
+  function panelCloseText(){
+    if(panel==='owner')return ownerReturn==='settings'?'保存せずに設定へ':'保存せずにメニューへ';
+    if(world.encounters.raptor?.active||panel==='outdoors'||panel==='notebook'&&world.encounters.garden.open)return 'おうちへ';
+    return 'とじる';
+  }
   function finishOwnerEdit(saved=false){
     if(panel!=='owner')return;
     panel=ownerReturn==='settings'?'settings':'garden';
@@ -401,7 +407,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
   function fieldControls(){return `<nav class="game-field-nav" aria-label="文鳥のおでかけ"><button data-field-travel="home" data-game-panel="garden" aria-label="おうちへ" aria-pressed="${panel==='garden'&&world.field.place==='home'}">おうち</button><button data-game-panel="outdoors" aria-label="おにわへ遊びに行く" aria-pressed="${panel==='outdoors'}">おにわ</button><button data-game-panel="friends" aria-label="友だちのおうちへ" aria-pressed="${panel==='friends'||panel==='garden'&&world.field.place==='friend'}">友だち</button></nav><div class="game-play-actions"><button data-game-panel="decorate" aria-label="おうちを飾る" aria-pressed="${panel==='decorate'}"><span aria-hidden="true">✧</span> お飾りガチャ</button></div>`;}
   function secondaryMenu(){
     const items=[["health","健康・お留守番","M16 27S3 18 3 10a7 7 0 0 1 13-3 7 7 0 0 1 13 3c0 8-13 17-13 17M10 15h12M16 9v12"],["profile","文鳥の紹介","M7 20c-4-10 9-16 15-9l5 2-5 3c0 10-11 12-15 4zM6 19l-4 5 7-2"],["relations","関係図","M8 10a4 4 0 1 0 0 .1M24 10a4 4 0 1 0 0 .1M8 24a4 4 0 1 0 0 .1M12 10h8M8 14v6M12 24l9-11"],["family","家系図","M8 7h16v7H8zM16 14v7M6 21h20M6 21v7M16 21v7M26 21v7"],["roster","名簿","M8 8a4 4 0 1 0 0 .1M3 25v-4c0-6 10-6 10 0v4M19 8h10M19 15h10M19 22h10"],["notebook","庭の鳥図鑑","M16 8C10 3 4 5 3 6v21c4-2 9-2 13 1 4-3 9-3 13-1V6c-5-2-9-1-13 2v20"],["diary","日記","M7 4h20v24H7zM7 8H4M7 16H4M7 24H4M12 10h10M12 16h10M12 22h7"],["memorial","思い出の庭","M7 28V13a9 9 0 0 1 18 0v15M4 28h24M12 15h8M16 11v8"],["owner","キャラクター設定","M16 17a6 6 0 1 0 0-12 6 6 0 0 0 0 12M5 28v-3c0-10 22-10 22 0v3"],["settings","保存・設定","M5 8h22M5 16h22M5 24h22M11 4v8M22 12v8M14 20v8"],["help","あそびかた","M16 29a13 13 0 1 0 0-26 13 13 0 0 0 0 26M12 11c0-6 10-6 10 0 0 4-6 4-6 8M16 23v1"]];
-    return `<details class="game-secondary-menu" data-game-details="navigation"><summary id="game-nav-summary">文鳥のこと・家族・記録</summary><div class="game-menu-heading"><strong>暮らしのメニュー</strong><button class="game-menu-close" data-game-close-menu aria-label="メニューを閉じる">×</button></div><nav class="game-tabs" aria-label="文鳥ぐらしのメニュー">${items.map(([id,label,path])=>`<button id="game-menu-${id}" data-game-panel="${id}" aria-pressed="${panel===id}"><svg viewBox="0 0 32 32" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="${path}"/></svg><span>${label}</span></button>`).join('')}</nav></details>`;
+    return `<details class="game-secondary-menu" data-game-details="navigation"><summary id="game-nav-summary">文鳥のこと・家族・記録</summary><div class="game-menu-heading"><strong>暮らしのメニュー</strong><button class="game-menu-close" data-game-close-menu aria-label="メニューをとじる">とじる</button></div><nav class="game-tabs" aria-label="文鳥ぐらしのメニュー">${items.map(([id,label,path])=>`<button id="game-menu-${id}" data-game-panel="${id}" aria-pressed="${panel===id}"><svg viewBox="0 0 32 32" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="${path}"/></svg><span>${label}</span></button>`).join('')}</nav></details>`;
   }
   function lifeNotice(){
     const sick=world.birds.filter(b=>b.home==='resident'&&lifeStatus(world,b)?.condition),dead=world.lifecycle.birds.filter(s=>s.death);
@@ -414,7 +420,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
   function welcomeCard(){
     const summary=world.offlineSummary;if(!summary||panel!=='garden')return '';
     const elapsed=summary.ticks<24?`${summary.ticks}時間`:`${Math.floor(summary.ticks/24)}日${summary.ticks%24?`と${summary.ticks%24}時間`:''}`;
-    return `<section class="game-welcome" role="dialog" aria-modal="false" aria-labelledby="game-welcome-title"><strong id="game-welcome-title">おかえりなさい</strong><p>${summary.ticks?`留守のあいだに、庭の時間が${elapsed}進んだよ。`:'文鳥たちの様子を見てみよう。'}</p>${summary.newBirds?`<p>${summary.newBirds}羽との出会いがあったよ。</p>`:''}${summary.skipped?'<p>長いお休みのぶんは、ゆっくり待っていたよ。</p>':''}<button id="game-welcome-close" data-game-action="dismiss-welcome" aria-label="おかえりメッセージを閉じる">閉じる</button></section>`;
+    return `<section class="game-welcome" role="dialog" aria-modal="false" aria-labelledby="game-welcome-title"><strong id="game-welcome-title">おかえりなさい</strong><p>${summary.ticks?`留守のあいだに、庭の時間が${elapsed}進んだよ。`:'文鳥たちの様子を見てみよう。'}</p>${summary.newBirds?`<p>${summary.newBirds}羽との出会いがあったよ。</p>`:''}${summary.skipped?'<p>長いお休みのぶんは、ゆっくり待っていたよ。</p>':''}<button id="game-welcome-close" data-game-action="dismiss-welcome" aria-label="おかえりメッセージをとじる">とじる</button></section>`;
   }
   async function dismissWelcome(){const expected=world.worldId;const committed=await mutate(w=>{w.offlineSummary=null;},'',()=>world.worldId===expected);if(committed&&alive&&world.worldId===expected)(root.querySelector('button.game-room-bird.is-selected')||document.querySelector('.game-scene-controls-toggle'))?.focus({preventScroll:true});}
 
@@ -637,7 +643,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     const encounterScroll=encounterRoot?.scrollTop;
     const gardenSelectorScroll=encounterRoot?.querySelector('.finch-garden-selector')?.scrollLeft;
     if(panel!=='garden'){
-      overlay.innerHTML=`${renderRaptorNotice(world)}<div class="game-overlay-head"><button data-game-close-panel>${panel==='owner'?(ownerReturn==='settings'?'保存せずに設定へ':'保存せずにメニューへ'):panel==='outdoors'?'おうちへ':'もどる'}</button></div><div class="game-panel">${error||message?`<p class="game-overlay-message" role="status">${escape(error||message)}</p>`:''}${panels[panel]()}</div>`;
+      overlay.innerHTML=`${renderRaptorNotice(world)}<div class="game-overlay-head"><button data-game-close-panel>${panelCloseText()}</button></div><div class="game-panel">${error||message?`<p class="game-overlay-message" role="status">${escape(error||message)}</p>`:''}${panels[panel]()}</div>`;
       const fullScene=panel==='outdoors';if(overlay.open&&overlay.dataset.scene!==String(fullScene))overlay.close();overlay.dataset.scene=String(fullScene);if(!overlay.open){if(fullScene)overlay.show();else overlay.showModal();}
     }else{if(overlay.open)overlay.close();overlay.innerHTML='';}
     if(['outdoors','notebook'].includes(panel)){

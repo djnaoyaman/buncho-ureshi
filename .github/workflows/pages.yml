@@ -35,7 +35,7 @@ jobs:
       - name: Cage fixture placement and saved furnishings
         run: npx playwright test tests/browser/cage-placement.spec.js --project=chrome --project=webkit --retries=0 --output=cage-test-results
       - name: Trial startup, actions and save integrity (actual Chrome)
-        run: npx playwright test tests/browser/trial-smoke.spec.js tests/browser/care-gauges.spec.js tests/browser/owner-peek.spec.js tests/browser/full-stage.spec.js tests/browser/garden-social.spec.js tests/browser/garden-protagonist.spec.js tests/browser/garden-interaction.spec.js tests/browser/garden-selector-scroll.spec.js tests/browser/compact-music-settings.spec.js tests/browser/game-music.spec.js --project=chrome --retries=0
+        run: npx playwright test tests/browser/trial-smoke.spec.js tests/browser/care-gauges.spec.js tests/browser/owner-peek.spec.js tests/browser/full-stage.spec.js tests/browser/garden-social.spec.js tests/browser/garden-protagonist.spec.js tests/browser/garden-interaction.spec.js tests/browser/garden-selector-scroll.spec.js tests/browser/compact-music-settings.spec.js tests/browser/game-music.spec.js --project=chrome --retries=0 --output=trial-test-results
       - name: Independent garden visits, legacy saves and notebook resume
         run: npx playwright test tests/browser/garden-visits.spec.js --project=chrome --project=webkit --retries=0
       - name: Decoration guarantee, completion and save migration
@@ -58,6 +58,7 @@ jobs:
             playwright-report/
             test-results/
             cage-test-results/
+            trial-test-results/
             editorial-test-results/
             search-test-results/
           retention-days: 14

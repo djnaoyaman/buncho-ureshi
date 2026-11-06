@@ -16,7 +16,8 @@ const draw=page=>page.locator('[data-decor-draw=perch]');
 test('duplicate progress survives category, close and reload; one guaranteed draw completes the category',async({page})=>{
  const w=fixture();w.decor.duplicateStreaks.perch=1;await start(page,w);await expect(status(page)).toHaveAttribute('data-decor-guarantee','1');await draw(page).click();
  await expect(status(page)).toHaveAttribute('data-decor-guarantee','ready');await expect(draw(page)).toBeDisabled();let saved=await record(page);expect(saved.decor.points).toBe(988);expect(saved.decor.draws).toBe(1);expect(saved.decor.duplicateStreaks.perch).toBe(2);
- await page.locator('[data-draw-result-close]').click();await expect(page.locator('.game-draw-result')).toHaveCount(0);
+ await expect(page.locator('[data-draw-result-close]')).toHaveText('とじる');await expect(page.locator('[data-draw-result-close]')).toHaveAccessibleName('とじる');
+ await page.locator('[data-draw-result-close]').click();await expect(page.locator('.game-draw-result')).toHaveCount(0);expect((await record(page)).decor).toEqual(saved.decor);
  await page.locator('[data-decor-slot=toy]').click();await expect(status(page)).toHaveAttribute('data-decor-guarantee','0');await page.locator('[data-decor-slot=perch]').click();await expect(status(page)).toHaveAttribute('data-decor-guarantee','ready');
  await page.locator('[data-game-close-panel]').click();await page.locator('.game-bottom-dock [data-game-panel=decorate]').click();await expect(status(page)).toHaveAttribute('data-decor-guarantee','ready');
  // Advance only this synthetic save's cooldown, leaving progression and inventory intact.
