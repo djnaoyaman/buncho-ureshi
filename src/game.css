@@ -1359,4 +1359,9 @@ body[data-world="buncho"] .game-panel-overlay[data-scene="true"] .finch-garden-d
  left: max(10px,env(safe-area-inset-left,0px)); right: max(10px,env(safe-area-inset-right,0px));
  max-height: min(50dvh,380px); padding: 12px;
 }
+@media(max-height:340px) {
+ body[data-world="buncho"][data-scene-controls]:has(.finch-garden) .game-scene-controls-toggle { height: 44px; min-height: 44px; font-size: 10px; }
+ body[data-world="buncho"] .game-panel-overlay[data-scene="true"] .finch-garden-dock > details > summary,
+ body[data-world="buncho"] .game-panel-overlay[data-scene="true"] .finch-garden-dock > details:first-child > summary { min-height: 44px; }
+}
 /* End COLOR PLAY. */
