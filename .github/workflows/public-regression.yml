@@ -19,6 +19,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: npm run build
       - run: npx playwright install --with-deps chromium webkit
       - run: npx playwright install chrome msedge
       - name: Provide native CI audio output device
