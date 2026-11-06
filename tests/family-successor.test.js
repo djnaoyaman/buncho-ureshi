@@ -26,7 +26,7 @@ function formerFamily(w,options={}){
 }
 function choiceFixture(){const w=world(),chosen=resident(w);die(w);return {w,chosen};}
 function choose(w,birdId,now=w.lifecycle.seenAt){return chooseFamilyProtagonist(w,birdId,token(w),now);}
-function oldV9(w){const old=clone(w);old.version=9;old.protagonist.version=1;delete old.protagonist.familySelections;return old;}
+function oldV9(w){const old=clone(w);old.version=9;delete old.decor?.duplicateStreaks;old.protagonist.version=1;delete old.protagonist.familySelections;return old;}
 function fillHome(w){while(w.birds.filter(bird=>bird.home==='resident').length<6)resident(w);}
 function pruneSuccession(w){
  w.events=w.events.filter(event=>event.kind!=='succession');
@@ -47,7 +47,7 @@ async function raw(indexedDB,value){
 }
 
 test('new saves have an empty v2 family selection ledger and round trip exactly',()=>{
- const w=world();assert.equal(w.version,10);
+ const w=world();assert.equal(w.version,11);
  assert.deepEqual(w.protagonist,{version:2,birdId:'b1',lineage:['b1'],familySelections:[]});
  assert.deepEqual(parseSave(serializeWorld(w)),w);
 });
@@ -340,7 +340,7 @@ test('later children inherit automatically, then another childless generation ca
 for(const dead of [false,true])test(`v9 ${dead?'dead childless':'living'} protagonist migration only adds the new schema and empty ledger`,()=>{
  const w=world();resident(w);if(dead)die(w);const old=oldV9(w),before=clone(old);
  const migrated=readCompatibleWorld(old,NOW+100*DAY),expected=clone(before);
- expected.version=10;expected.protagonist.version=2;expected.protagonist.familySelections=[];
+ expected.version=11;expected.decor.duplicateStreaks=Object.fromEntries(Object.keys(expected.decor.equipped).map(id=>[id,0]));expected.protagonist.version=2;expected.protagonist.familySelections=[];
  assert.deepEqual(migrated,expected);assert.deepEqual(old,before);assert.equal(getProtagonistId(migrated),'b1');
  assert.deepEqual(migrated.lifecycle,before.lifecycle);assert.deepEqual(migrated.events,before.events);validateWorld(migrated);
 });
@@ -367,7 +367,7 @@ test('concurrent readers durably migrate a v9 save without selecting an unrelate
  const a=await openGameStore({indexedDB}),b=await openGameStore({indexedDB});
  try{
   const [x,y]=await Promise.all([a.transact(fresh=>fresh),b.transact(fresh=>fresh)]);
-  assert.deepEqual(x,y);assert.equal(x.version,10);assert.equal(getProtagonistId(x),'b1');
+  assert.deepEqual(x,y);assert.equal(x.version,11);assert.equal(getProtagonistId(x),'b1');
   assert.deepEqual(x.protagonist.familySelections,[]);assert.deepEqual(await raw(indexedDB),x);assert.deepEqual(old,before);
  }finally{a.close();b.close();}
 });

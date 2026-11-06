@@ -7,6 +7,8 @@ async function ready(page){
  await page.addInitScript(now=>{Date.now=()=>now;localStorage.setItem('buncho.music.v1',JSON.stringify({enabled:false}));localStorage.setItem('buncho.care-sound-choice.v1',JSON.stringify({explicit:true,enabled:false}));},now);
  const world=createWorld(now);world.paused=true;world.decor.points=world.decor.lifetimePoints=1000;
  world.decor.inventory=DECOR_SLOTS.flatMap(s=>DECOR_COLORS.flatMap(c=>DECOR_TIERS.map(t=>({id:`${s.id}-${c.id}-${t.id}`,slot:s.id,color:c.id,tier:t.id}))));
+ // Keep the final category's guaranteed draw reachable; completed categories now stop spending.
+ world.decor.inventory=world.decor.inventory.filter(i=>i.id!=='paper-aqua-special');world.decor.duplicateStreaks.paper=2;
  validateWorld(world);await page.goto('');
  await page.evaluate(({dbName,world})=>new Promise((resolve,reject)=>{const open=indexedDB.open(dbName,1);open.onupgradeneeded=()=>open.result.createObjectStore('world');open.onerror=()=>reject(open.error);open.onsuccess=()=>{const db=open.result,tx=db.transaction('world','readwrite');tx.objectStore('world').put(world,'current');tx.oncomplete=()=>{db.close();resolve();};tx.onerror=()=>reject(tx.error);};}),{dbName,world});
  await page.goto('game/');await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');await page.locator('.game-scene-controls-toggle').tap();await page.locator('.game-bottom-dock [data-game-panel="decorate"]').tap();
