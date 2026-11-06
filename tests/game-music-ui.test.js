@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {Window} from 'happy-dom';
 import {mountGameMusic} from '../src/game-music-ui.js';
 import {GARDEN_ASSETS} from '../src/data/garden-assets.js';
-function setup(gardenAssets={komorebi:{music:{themeId:'garden-komorebi',asset:'audio/gardens/komorebi.mp3',releaseReady:true,loopEndSeconds:11,loopStartSeconds:0}}}){
+function setup(gardenAssets={komorebi:{music:{themeId:'garden-komorebi',asset:'audio/gardens/komorebi.mp3',releaseReady:true,loopEndSeconds:11,loopStartSeconds:0}}},extraOptions={}){
  const window=new Window({url:'https://example.test/buncho-ureshi/game/'}),document=window.document;
  document.body.innerHTML='<div data-game-title-slot></div><div id="game-root"><button id="care">ふれあう</button><div data-settings-music></div></div>';
  const docListeners=new Map(),shellListeners=new Map(),requests=[],started=[];let contexts=0,context;
@@ -12,7 +12,7 @@ function setup(gardenAssets={komorebi:{music:{themeId:'garden-komorebi',asset:'a
  document.removeEventListener=(type,fn,...args)=>{docListeners.get(type)?.delete(fn);return originalRemove(type,fn,...args);};
  const create=document.createElement.bind(document);document.createElement=(name,...args)=>{const element=create(name,...args);if(name==='details'){const add=element.addEventListener.bind(element);element.addEventListener=(type,fn,...rest)=>{shellListeners.set(type,fn);return add(type,fn,...rest);};}return element;};
  class Context{constructor(){contexts++;context=this;this.state='suspended';this.currentTime=0;this.destination={};}resume(){this.state='running';return Promise.resolve();}suspend(){this.state='suspended';return Promise.resolve();}close(){this.state='closed';return Promise.resolve();}decodeAudioData(){return Promise.resolve({duration:12});}createGain(){return{gain:{value:.18,cancelScheduledValues(){},setValueAtTime(){},linearRampToValueAtTime(){},setTargetAtTime(){}},connect(){},disconnect(){}};}createBufferSource(){const s={connect(){},disconnect(){},start(){started.push(s);s.live=true;},stop(){s.live=false;s.onended?.();}};return s;}}
- const dispose=mountGameMusic(document.querySelector('[data-game-title-slot]'),{window,document,Context,fetcher:async url=>{requests.push(url);return{ok:true,arrayBuffer:async()=>new ArrayBuffer(1)};},gardenAssets});
+ const dispose=mountGameMusic(document.querySelector('[data-game-title-slot]'),{window,document,Context,fetcher:async url=>{requests.push(url);return{ok:true,arrayBuffer:async()=>new ArrayBuffer(1)};},gardenAssets,...extraOptions});
  const trustedShell=selector=>shellListeners.get('click')({isTrusted:true,target:document.querySelector(selector)});
  const trustedField=()=>{for(const fn of docListeners.get('click')||[])fn({isTrusted:true,target:document.querySelector('#care')});};
  const emit=(name,detail)=>document.dispatchEvent(new window.CustomEvent(name,{detail}));
@@ -72,4 +72,16 @@ test('trusted game tap resumes an externally interrupted context',async()=>{
  assert.equal(f.started.length,1);f.context().state='interrupted';f.trustedField();await tick();
  assert.equal(f.context().state,'running');assert.equal(f.started.length,2);assert.equal(f.started.filter(x=>x.live).length,1);
  f.dispose();f.window.happyDOM.abort();
+});
+
+test('music A shows saved mode, current track and native 0 to 60 volume without a new shell',async()=>{
+ const f=setup(),d=f.document;f.emit('buncho-game-panel','settings');const shell=d.querySelector('.game-music'),range=d.querySelector('input');
+ assert.equal(d.querySelector('.game-music-heading h4').textContent,'庭の音楽');assert.equal(d.querySelector('.game-music-enabled').textContent,'音楽オン');assert.match(d.querySelector('.game-music-status').textContent,/庭にふれると/);assert.equal(range.min,'0');assert.equal(range.max,'60');assert.equal(d.querySelector('output').getAttribute('for'),range.id);
+ for(const value of ['0','60','30']){range.value=value;range.dispatchEvent(new f.window.Event('input',{bubbles:true}));assert.equal(d.querySelector('.game-music-volume-value').textContent,value+'%');assert.equal(JSON.parse(f.window.localStorage.getItem('buncho.music.v1')).volume,Number(value)/100);}
+ f.trustedShell('[data-music=village]');await tick();assert.match(d.querySelector('.game-music-current').textContent,/村のワルツ/);assert.equal(d.querySelector('.game-music-saved-track').hidden,true);f.trustedShell('[data-music-off]');assert.equal(d.querySelector('.game-music-enabled').textContent,'音楽オフ');assert.equal(d.querySelector('.game-music-saved-track').hidden,false);assert.match(d.querySelector('.game-music-saved-track').textContent,/曲を固定 · 村のワルツ/);
+ range.focus();f.emit('buncho-game-will-render');f.emit('buncho-game-panel','settings');assert.equal(d.querySelector('.game-music'),shell);assert.equal(d.activeElement,range);assert.equal(d.querySelector('.game-music-volume-value').textContent,'30%');assert.equal(d.querySelector('.game-music-enabled').textContent,'音楽オフ');
+ f.trustedShell('[data-music-auto]');await tick();assert.equal(d.querySelector('.game-music-auto-check').textContent,'✓');assert.equal(d.querySelector('.game-music-enabled').textContent,'音楽オン');f.dispose();f.window.happyDOM.abort();
+});
+test('music A never hides loading and failure behind the on state',async()=>{
+ let reject;const held=new Promise((_,no)=>{reject=no;});const f=setup(undefined,{fetcher:()=>held}),d=f.document;f.emit('buncho-game-panel','settings');f.trustedShell('[data-music-auto]');await tick();assert.equal(d.querySelector('.game-music').dataset.status,'loading');assert.match(d.querySelector('.game-music-status').textContent,/準備しています/);reject(new Error('offline'));await tick();await tick();assert.equal(d.querySelector('.game-music').dataset.status,'error');assert.ok(d.querySelector('.game-music-status').textContent.length>0);assert.equal(d.querySelector('.game-music-enabled').textContent,'音楽オン');f.trustedShell('[data-music-off]');assert.equal(d.querySelector('.game-music').dataset.status,'off');assert.equal(d.querySelector('.game-music-status').textContent,'');f.dispose();f.window.happyDOM.abort();
 });
