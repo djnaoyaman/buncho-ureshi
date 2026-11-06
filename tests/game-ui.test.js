@@ -176,7 +176,10 @@ test('welcome dismissal uses とじる and clears only its acknowledgement state
   await until(() => !f.root.querySelector('.game-welcome'), 'welcome dismissed');
   const after = await rawWorld(f.indexedDB);
   assert.equal(after.offlineSummary, null);
-  for (const key of ['birds', 'decor', 'economy', 'settings', 'encounters']) assert.deepEqual(after[key], before[key]);
+  for (const key of ['birds', 'decor', 'settings', 'encounters']) assert.deepEqual(after[key], before[key]);
+  // Acknowledgement uses the existing transaction, which also samples its clock.
+  assert.ok(after.economy.seenAt >= before.economy.seenAt && after.economy.seenAt <= Date.now());
+  assert.deepEqual(after.economy, { ...before.economy, seenAt: after.economy.seenAt });
   assert.equal(f.window.document.activeElement.dataset.birdId, 'b1');
   f.stop(); await f.mount();
   assert.equal(f.root.querySelector('.game-welcome'), null);
