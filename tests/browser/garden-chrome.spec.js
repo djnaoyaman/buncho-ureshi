@@ -27,8 +27,9 @@ async function fits(locator,{hit=true}={}){
 const protectedState=w=>({birds:w.birds,decor:w.decor,economy:w.economy,lifecycle:w.lifecycle,friendship:w.encounters.friendship,discoveries:w.encounters.discoveries});
 for(const size of sizes)test(`compact garden and stable controls ${size.join('x')}`,async({page},info)=>{
  await setup(page,size);const before=protectedState(await record(page)),toggle=page.locator('.game-scene-controls-toggle');
- const logo=page.locator('.game-world-title img');await expect(logo).toHaveAttribute('src','brand/wordmark-04-transparent.webp');await logo.evaluate(img=>img.decode());
- expect(await logo.evaluate(img=>Math.abs(img.width/img.height-1120/645))).toBeLessThan(.03);
+ const logo=page.locator('.game-world-title img');await expect(logo).toHaveAttribute('src','/buncho-ureshi/game-art/game-title.png');await expect(logo).toHaveAttribute('alt','おもちの文鳥ぐらし');await logo.evaluate(img=>img.decode());
+ expect(await logo.evaluate(img=>[img.naturalWidth,img.naturalHeight])).toEqual([2172,724]);
+ expect(await logo.evaluate(img=>Math.abs(img.width/img.height-2172/724))).toBeLessThan(.03);
  await fits(page.locator('.game-world-exit'));await expect(page.locator('.game-world-exit')).toHaveAccessibleName('文鳥図鑑へ戻る');
  await expect(toggle).toHaveText('Touch the Birds');await fits(toggle);await toggle.click();await expect(toggle).toHaveText('Watch the Birds');
  await fits(toggle);
