@@ -201,7 +201,8 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
     mode='garden';render({focus:true});try{Promise.resolve(onGardenChanged({gardenId,worldId:getWorld().worldId,generation:token})).catch(()=>{});}catch{}return true;
   }
   async function open(id){
-    if(!await garden())return;const token=++generation;
+    const destination=system.status(getWorld(),id).gardenId||getWorld().encounters.garden.id;
+    if(!await garden(destination))return;const token=++generation;
     const w=getWorld(),expected={worldId:w.worldId,revision:w.revision};
     const feedback=await mutate(current=>system.open(current,id,expected),token);if(!alive||token!==generation)return;
     if(feedback?.changed||feedback?.resumed)mode='event';else notice=feedback?.message||'今は会えないみたい。また庭で探してみよう。';render({focus:true});

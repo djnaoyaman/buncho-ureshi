@@ -1,3 +1,4 @@
+import {initializeGardenVisitSessions,switchGardenVisitSession,pendingGardenGuestLocation,clearCompletedGardenGuest,gardenVisitSessionFields} from './garden-visit-sessions.js';
 import {initialRaptorState,validateRaptorState} from './garden-raptors.js';
 import {initialCrowState,validateCrowState} from './garden-crows.js';
 import {initialGardenFriends,validateGardenFriends,rememberGardenAcquaintances,setGardenCompanions,bondGardenFriend} from './garden-friends.js';
@@ -14,7 +15,7 @@ export function encounterFriendship(w,id){
 }
 export function cageVisitorCount(w){return w.birds.filter(b=>b.home==='visitor').length+(w.encounters?.cageVisitors?.length||0);}
 /** Called only after the legacy state has passed full schema validation. */
-export function upgradeEncounterState(state){if(state.version===4){state.version=5;state.friendship=[];state.cageVisitors=[];}if(state.version===5){state.version=6;state.homeClosedUntil=0;}if(state.version===6){state.version=7;state.crow=initialCrowState();}if(state.version===7){state.version=8;state.raptor=initialRaptorState();}if(state.version===8){state.version=9;for(const id of GARDEN_IDS)if(!Object.hasOwn(state.garden.visits,id))state.garden.visits[id]=0;}if(state.version===9){state.version=10;state.homeGoodbyes=[];}return state;}
+export function upgradeEncounterState(state){if(state.version===4){state.version=5;state.friendship=[];state.cageVisitors=[];}if(state.version===5){state.version=6;state.homeClosedUntil=0;}if(state.version===6){state.version=7;state.crow=initialCrowState();}if(state.version===7){state.version=8;state.raptor=initialRaptorState();}if(state.version===8){state.version=9;for(const id of GARDEN_IDS)if(!Object.hasOwn(state.garden.visits,id))state.garden.visits[id]=0;}if(state.version===9){state.version=10;state.homeGoodbyes=[];}if(state.version===10){initializeGardenVisitSessions(state);state.version=11;}return state;}
 export function expireEncounterVisitors(w){if(w.encounters.cageVisitors)w.encounters.cageVisitors=w.encounters.cageVisitors.filter(v=>w.tick-v.arrivedTick<=FRIENDSHIP_RULES.visitTicks);}
 const ACTIVITIES=['park','talk','decorate','friend','read','garden'];
 export const GARDEN_SCENES=Object.freeze(['grass','water','branch','song','quiet']);
@@ -23,7 +24,7 @@ const own=(x,k)=>Object.prototype.hasOwnProperty.call(x,k);
 const shape=(x,keys)=>x&&typeof x==='object'&&!Array.isArray(x)&&Object.keys(x).length===keys.length&&keys.every(k=>own(x,k));
 const integer=(x,min=0,max=Number.MAX_SAFE_INTEGER)=>Number.isSafeInteger(x)&&x>=min&&x<=max;
 const bump=w=>{w.revision=w.revision===Number.MAX_SAFE_INTEGER?0:w.revision+1;};
-export function initialEncounterState(){return {version:10,homeGoodbyes:[],raptor:initialRaptorState(),crow:initialCrowState(),homeClosedUntil:0,gardenFriends:initialGardenFriends(),garden:initialGardenState(),nextId:1,cursor:0,activities:Object.fromEntries(ACTIVITIES.map(k=>[k,0])),queue:[],active:null,discoveries:[],friendship:[],cageVisitors:[]};}
+export function initialEncounterState(){return {version:11,gardenSessions:[],homeGoodbyes:[],raptor:initialRaptorState(),crow:initialCrowState(),homeClosedUntil:0,gardenFriends:initialGardenFriends(),garden:initialGardenState(),nextId:1,cursor:0,activities:Object.fromEntries(ACTIVITIES.map(k=>[k,0])),queue:[],active:null,discoveries:[],friendship:[],cageVisitors:[]};}
 export function createEncounterSystem(catalog=ENCOUNTER_CATALOG,{knownCatalog=catalog}={}){
   if(!Array.isArray(catalog)||catalog.length>ENCOUNTER_LIMITS.catalog)throw new Error('出会いの図鑑が不正です。');
   const byId=new Map();
@@ -36,7 +37,7 @@ export function createEncounterSystem(catalog=ENCOUNTER_CATALOG,{knownCatalog=ca
   const stale=()=>({changed:false,reason:'stale',message:'庭が変わったよ。もう一度ひらいてね。'});
   function validate(state,tick){
     const fail=()=>{throw new Error('出会いの記録が不正です。');};
-    if(!integer(tick)||!shape(state,['version','gardenFriends','garden','nextId','cursor','activities','queue','active','discoveries',...(state.version>=5?['friendship','cageVisitors']:[]),...(state.version>=6?['homeClosedUntil']:[]),...(state.version>=7?['crow']:[]),...(state.version>=8?['raptor']:[]),...(state.version>=10?['homeGoodbyes']:[])])||![4,5,6,7,8,9,10].includes(state.version)||!integer(state.nextId,1)||!integer(state.cursor,0,ENCOUNTER_LIMITS.catalog)||!shape(state.activities,ACTIVITIES)||ACTIVITIES.some(k=>!integer(state.activities[k],0,ENCOUNTER_LIMITS.activity))||!Array.isArray(state.queue)||state.queue.length>1||new Set(state.queue).size!==state.queue.length||state.queue.some(id=>!knownById.has(id))||!Array.isArray(state.discoveries)||state.discoveries.length>knownCatalog.length)fail();
+    if(!integer(tick)||!shape(state,['version','gardenFriends','garden','nextId','cursor','activities','queue','active','discoveries',...(state.version>=5?['friendship','cageVisitors']:[]),...(state.version>=6?['homeClosedUntil']:[]),...(state.version>=7?['crow']:[]),...(state.version>=8?['raptor']:[]),...(state.version>=10?['homeGoodbyes']:[]),...(state.version>=11?['gardenSessions']:[])])||![4,5,6,7,8,9,10,11].includes(state.version)||!integer(state.nextId,1)||!integer(state.cursor,0,ENCOUNTER_LIMITS.catalog)||!shape(state.activities,ACTIVITIES)||ACTIVITIES.some(k=>!integer(state.activities[k],0,ENCOUNTER_LIMITS.activity))||!Array.isArray(state.queue)||state.queue.length>1||new Set(state.queue).size!==state.queue.length||state.queue.some(id=>!knownById.has(id))||!Array.isArray(state.discoveries)||state.discoveries.length>knownCatalog.length)fail();
     if(state.version>=6&&!integer(state.homeClosedUntil,0,8640000000000000))fail();
     if(state.version>=10&&(!Array.isArray(state.homeGoodbyes)||state.homeGoodbyes.length>128||new Set(state.homeGoodbyes.map(g=>g?.birdId)).size!==state.homeGoodbyes.length||state.homeGoodbyes.some(g=>!shape(g,['birdId','until'])||typeof g.birdId!=='string'||!/^b[1-9]\d{0,8}$/.test(g.birdId)||!integer(g.until,1,8640000000000000))))fail();
     if(state.version>=8)validateRaptorState(state.raptor,tick,GARDEN_IDS);
@@ -45,23 +46,40 @@ export function createEncounterSystem(catalog=ENCOUNTER_CATALOG,{knownCatalog=ca
     const allowedGardens=state.version>=9?GARDEN_IDS:LEGACY_GARDEN_IDS;const g=state.garden;if(!shape(g,['open','id','scene','turn','nextTurn','nextTick','lastGuest','guestGardenId','visits','moments'])||!(g.guestGardenId===null||GARDEN_IDS.includes(g.guestGardenId))||((state.queue.length||state.active)&&g.guestGardenId===null)||typeof g.open!=='boolean'||!allowedGardens.includes(g.id)||!shape(g.visits,allowedGardens)||allowedGardens.some(id=>!integer(g.visits[id],0,ENCOUNTER_LIMITS.visits))||!Array.isArray(g.moments)||g.moments.length>64||g.moments.some(m=>!shape(m,['gardenId','birdId','kind','tick'])||!GARDEN_IDS.includes(m.gardenId)||!/^b[1-9][0-9]*$/.test(m.birdId)||!['chat','watch','play'].includes(m.kind)||!integer(m.tick,0,tick))||!GARDEN_SCENES.includes(g.scene)||!integer(g.turn,0,ENCOUNTER_LIMITS.activity)||!integer(g.nextTurn,1,ENCOUNTER_LIMITS.activity)||!integer(g.nextTick)||!(g.lastGuest===null||knownById.has(g.lastGuest))||(state.active&&state.queue.length))fail();
     const seen=new Set(), instances=new Set();
     for(const d of state.discoveries){if(!shape(d,['id','firstTick','lastTick','visits','instanceId'])||!knownById.has(d.id)||seen.has(d.id)||instances.has(d.instanceId)||!integer(d.firstTick,0,tick)||!integer(d.lastTick,d.firstTick,tick)||!integer(d.visits,1,ENCOUNTER_LIMITS.visits)||!integer(d.instanceId,1,state.nextId-1))fail();seen.add(d.id);instances.add(d.instanceId);}
-    // Returning acquaintances are permitted, but only one invitation can exist.
-    if(state.active!==null){const a=state.active,e=knownById.get(a.id);if(!shape(a,['id','instanceId','scriptVersion','step','createdTick'])||!e||!integer(a.instanceId,1,state.nextId-1)||instances.has(a.instanceId)||a.scriptVersion!==e.scriptVersion||!integer(a.step,0,e.steps.length-1)||!integer(a.createdTick,0,tick)||state.queue.includes(a.id))fail();}
+    // Invitations and script instance IDs are unique across every garden.
+    const pending=new Set(),locations=new Map();
+    function validateVisit(visit,queue,active,gardenId){
+      if(!Array.isArray(queue)||queue.length>ENCOUNTER_LIMITS.queue||queue.some(id=>!knownById.has(id))||(active&&queue.length))fail();
+      if(state.version>=11&&visit.guestGardenId!==null&&visit.guestGardenId!==gardenId)fail();
+      if((queue.length||active)&&visit.guestGardenId!==gardenId&&state.version>=11)fail();
+      if(state.version>=11)for(const id of new Set([...queue,...(active?[active.id]:[]),...(visit.lastGuest?[visit.lastGuest]:[])])){if(locations.has(id)&&locations.get(id)!==gardenId)fail();locations.set(id,gardenId);}
+      for(const id of queue){if(pending.has(id))fail();pending.add(id);}
+      if(active!==null){const a=active,e=knownById.get(a?.id);if(!shape(a,['id','instanceId','scriptVersion','step','createdTick'])||!e||!integer(a.instanceId,1,state.nextId-1)||instances.has(a.instanceId)||a.scriptVersion!==e.scriptVersion||!integer(a.step,0,e.steps.length-1)||!integer(a.createdTick,0,tick)||pending.has(a.id))fail();instances.add(a.instanceId);pending.add(a.id);}
+    }
+    validateVisit(g,state.queue,state.active,g.id);
+    if(state.version>=11){
+      if(!Array.isArray(state.gardenSessions)||state.gardenSessions.length>GARDEN_IDS.length-1)fail();
+      const gardens=new Set([g.id]);
+      for(const visit of state.gardenSessions){
+        if(!shape(visit,gardenVisitSessionFields())||!GARDEN_IDS.includes(visit.gardenId)||gardens.has(visit.gardenId)||!GARDEN_SCENES.includes(visit.scene)||!integer(visit.turn,0,ENCOUNTER_LIMITS.activity)||!integer(visit.nextTurn,1,ENCOUNTER_LIMITS.activity)||!integer(visit.nextTick)||!(visit.lastGuest===null||knownById.has(visit.lastGuest)))fail();
+        gardens.add(visit.gardenId);validateVisit(visit,visit.queue,visit.active,visit.gardenId);
+      }
+    }
     if(state.version>=5){
       if(!Array.isArray(state.friendship)||state.friendship.length>knownCatalog.length||new Set(state.friendship.map(f=>f?.id)).size!==state.friendship.length||state.friendship.some(f=>!shape(f,['id','petPoints'])||!seen.has(f.id)||!integer(f.petPoints,0,FRIENDSHIP_RULES.petPoints)))fail();
-      if(!Array.isArray(state.cageVisitors)||state.cageVisitors.length>FRIENDSHIP_RULES.visitors||new Set(state.cageVisitors.map(v=>v?.id)).size!==state.cageVisitors.length||state.cageVisitors.some(v=>!shape(v,['id','arrivedTick'])||!seen.has(v.id)||!integer(v.arrivedTick,0,tick)||encounterFriendship({encounters:state},v.id).points<FRIENDSHIP_RULES.cagePoints||state.queue.includes(v.id)||state.active?.id===v.id||state.garden.lastGuest===v.id))fail();
+      if(!Array.isArray(state.cageVisitors)||state.cageVisitors.length>FRIENDSHIP_RULES.visitors||new Set(state.cageVisitors.map(v=>v?.id)).size!==state.cageVisitors.length||state.cageVisitors.some(v=>!shape(v,['id','arrivedTick'])||!seen.has(v.id)||!integer(v.arrivedTick,0,tick)||encounterFriendship({encounters:state},v.id).points<FRIENDSHIP_RULES.cagePoints||pending.has(v.id)||state.garden.lastGuest===v.id||state.gardenSessions?.some(visit=>visit.lastGuest===v.id)))fail();
     }
     return state;
   }
   function fillQueue(w){
     const s=w.encounters,g=s.garden;
     if(!g.open||!catalog.length||s.active||s.queue.length||g.turn<g.nextTurn||w.tick<g.nextTick)return;
-    const eligible=catalog.filter(e=>!s.cageVisitors?.some(v=>v.id===e.id)&&(e.gardenEvent?.gardenIds||[]).includes(g.id)&&(e.gardenEvent?.scene||'grass')===g.scene);
+    const eligible=catalog.filter(e=>!pendingGardenGuestLocation(s,e.id)&&!s.cageVisitors?.some(v=>v.id===e.id)&&(e.gardenEvent?.gardenIds||[]).includes(g.id)&&(e.gardenEvent?.scene||'grass')===g.scene);
     // Unmet guests first; one stable returning acquaintance only once all in this scene are known.
     const unseen=eligible.filter(e=>!s.discoveries.some(d=>d.id===e.id));
     const pool=unseen.length?unseen:eligible.filter(e=>e.id!==g.lastGuest);
     const entry=shuffleGardenPool(pool,`${w.worldId}:${g.id}:${g.visits[g.id]}:${g.turn}`)[0]||(!unseen.length?eligible[0]:null);
-    if(entry){s.queue.push(entry.id);g.guestGardenId=g.id;}
+    if(entry){clearCompletedGardenGuest(s,entry.id);s.queue.push(entry.id);g.guestGardenId=g.id;}
   }
   function enterGarden(w,expected){
     if(!guard(w,expected))return stale();validate(w.encounters,w.tick);
@@ -72,7 +90,7 @@ export function createEncounterSystem(catalog=ENCOUNTER_CATALOG,{knownCatalog=ca
     if(!guard(w,expected))return stale();validate(w.encounters,w.tick);const entry=gardenById(id),g=w.encounters.garden;
     if(!entry)return {changed:false,reason:'garden'};
     if(g.open&&g.id===id)return {changed:false,resumed:true};
-    rememberGardenAcquaintances(w);g.id=id;g.scene=entry.scene;g.open=true;g.visits[id]=Math.min(ENCOUNTER_LIMITS.visits,g.visits[id]+1);bump(w);return {changed:true,gardenId:id};
+    rememberGardenAcquaintances(w);upgradeEncounterState(w.encounters);switchGardenVisitSession(w.encounters,id);g.open=true;g.visits[id]=Math.min(ENCOUNTER_LIMITS.visits,g.visits[id]+1);bump(w);return {changed:true,gardenId:id};
   }
   function meetGardenFriend(w,friendId,kind,expected){
     if(!guard(w,expected))return stale();validate(w.encounters,w.tick);const g=w.encounters.garden;
@@ -136,24 +154,24 @@ export function createEncounterSystem(catalog=ENCOUNTER_CATALOG,{knownCatalog=ca
   function inviteGarden(w,id,expected){
     if(!guard(w,expected))return stale();validate(w.encounters,w.tick);const s=w.encounters,d=s.discoveries.find(d=>d.id===id),g=s.garden;
     if(!byId.has(id)||!d)return {changed:false,reason:'locked'};
-    if(s.active||s.queue.length)return {changed:false,reason:'guest',message:'今のお客さまとの出会いを終えてから呼ぼう。'};
+    if(pendingGardenGuestLocation(s,id)||s.active||s.queue.length)return {changed:false,reason:'guest',message:'今のお客さまとの出会いを終えてから呼ぼう。'};
     if(g.lastGuest===id&&g.guestGardenId===g.id){if(!g.open){g.open=true;bump(w);return {changed:true,resumed:true};}return {changed:false,resumed:true,message:'もう庭で待っているよ。'};}
-    upgradeEncounterState(s);s.cageVisitors=s.cageVisitors.filter(v=>v.id!==id);g.open=true;g.lastGuest=id;g.guestGardenId=g.id;
+    upgradeEncounterState(s);clearCompletedGardenGuest(s,id);s.cageVisitors=s.cageVisitors.filter(v=>v.id!==id);g.open=true;g.lastGuest=id;g.guestGardenId=g.id;
     d.visits=Math.min(ENCOUNTER_LIMITS.visits,d.visits+1);d.lastTick=w.tick;bump(w);return {changed:true,message:`${byId.get(id).name}が庭に来てくれたよ。`};
   }
   function inviteCage(w,id,expected){
     if(!guard(w,expected))return stale();validate(w.encounters,w.tick);const s=w.encounters;
     if(!byId.has(id)||!encounterFriendship(w,id).canVisit)return {changed:false,reason:'friendship',message:'親しみ100ポイントでおうちに呼べるよ。'};
     if(s.cageVisitors?.some(v=>v.id===id))return {changed:false,resumed:true,message:'もうおうちに遊びに来ているよ。'};
-    if(s.queue.includes(id)||s.active?.id===id)return {changed:false,reason:'guest',message:'今の出会いを終えてから呼ぼう。'};
+    if(pendingGardenGuestLocation(s,id))return {changed:false,reason:'guest',message:'今の出会いを終えてから呼ぼう。'};
     if(cageVisitorCount(w)>=FRIENDSHIP_RULES.visitors)return {changed:false,reason:'capacity',message:'おうちのお客さまは文鳥も合わせて6羽まで。空いたらまた呼ぼう。'};
-    upgradeEncounterState(s);s.cageVisitors.push({id,arrivedTick:w.tick});if(s.garden.lastGuest===id)s.garden.lastGuest=null;bump(w);return {changed:true,message:`${byId.get(id).name}をおうちに招いたよ。`};
+    upgradeEncounterState(s);s.cageVisitors.push({id,arrivedTick:w.tick});clearCompletedGardenGuest(s,id);bump(w);return {changed:true,message:`${byId.get(id).name}をおうちに招いたよ。`};
   }
   function dismissCage(w,id,expected){
     if(!guard(w,expected))return stale();validate(w.encounters,w.tick);if(!w.encounters.cageVisitors?.some(v=>v.id===id))return {changed:false};
     w.encounters.cageVisitors=w.encounters.cageVisitors.filter(v=>v.id!==id);bump(w);return {changed:true,message:`${knownById.get(id).name}は自分のおうちに帰ったよ。また図鑑から呼べるよ。`};
   }
-  function status(w,id){const discovery=w.encounters.discoveries.find(d=>d.id===id);return {discovered:!!discovery,discovery:discovery?{...discovery}:null,ready:w.encounters.queue.includes(id),active:w.encounters.active?.id===id,...encounterFriendship(w,id)};}
+  function status(w,id){const s=w.encounters,discovery=s.discoveries.find(d=>d.id===id),gardenId=pendingGardenGuestLocation(s,id),visit=gardenId===s.garden.id?s:s.gardenSessions?.find(visit=>visit.gardenId===gardenId);return {discovered:!!discovery,discovery:discovery?{...discovery}:null,ready:!!visit?.queue.includes(id),active:visit?.active?.id===id,gardenId,...encounterFriendship(w,id)};}
   return Object.freeze({catalog,validate,noteActivity,enterGarden,selectGarden,meetGardenFriend,chooseCompanions,leaveGarden,observeGarden,open,act,status,pet,inviteGarden,inviteCage,dismissCage});
 }
 export const encounterSystem=createEncounterSystem(ENCOUNTER_CATALOG,{knownCatalog:ENCOUNTER_CANDIDATES});
