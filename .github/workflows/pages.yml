@@ -42,6 +42,8 @@ jobs:
         run: npx playwright test tests/browser/encounter-search-hints.spec.js --project=chrome --project=webkit --retries=0
       - name: Notebook card A, original photos and persistent friendship
         run: npx playwright test tests/browser/notebook-card.spec.js --project=chrome --project=webkit --retries=0 --output=notebook-card-test-results
+      - name: Garden bookmark C, selection rows and scene visibility
+        run: npx playwright test tests/browser/garden-bookmarks.spec.js --project=chrome --project=webkit --retries=0 --output=garden-bookmark-test-results
       - name: Decoration guarantee, completion and save migration
         run: npx playwright test tests/browser/decor-guarantee.spec.js --project=chrome --project=webkit --retries=0
       - name: Child-friendly game help, ruby and disclosure panels
@@ -66,6 +68,7 @@ jobs:
             editorial-test-results/
             search-test-results/
             notebook-card-test-results/
+            garden-bookmark-test-results/
           retention-days: 14
       - uses: actions/upload-pages-artifact@v3
         if: github.ref == 'refs/heads/main'
