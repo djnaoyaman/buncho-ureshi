@@ -33,7 +33,7 @@ for(const size of sizes)test(`compact garden and stable controls ${size.join('x'
  await expect(toggle).toHaveText('Touch the Birds');await fits(toggle);await toggle.click();await expect(toggle).toHaveText('Watch the Birds');
  await fits(toggle);
  await page.locator('.game-field-nav [data-game-panel=outdoors]').click();await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-scene-state','ready');
- const header=page.locator('.finch-garden > header');expect(await header.evaluate(el=>getComputedStyle(el,'::before').content)).toBe('none');
+ const header=page.locator('.finch-garden > header');await expect(async()=>{expect(await header.evaluate(el=>el.isConnected?getComputedStyle(el,'::before').content:null)).toBe('none');}).toPass({timeout:10000,intervals:[100,250,500]});
  for(const id of ['java-rice','bali-terrace','mizukagami']){
   const button=page.locator(`[data-garden-select="${id}"]`);await fits(button);await button.click();await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-garden-id',id);
   await expect(page.locator('#finch-garden-title')).toHaveText(GARDENS.find(g=>g.id===id).name);await fits(page.locator(`[data-garden-select="${id}"]`));
@@ -58,7 +58,14 @@ for(const size of sizes)test(`compact garden and stable controls ${size.join('x'
 for(const inCage of [false,true])for(const size of [[320,568],[390,844],[768,1024]])test(`notebook copy and invitations ${inCage?'visiting':'ready'} ${size.join('x')}`,async({page},info)=>{
  const world=colorPlayWorld(),system=createEncounterSystem(ENCOUNTER_CATALOG),id='eurasian-tree-sparrow',token=()=>({worldId:world.worldId,revision:world.revision});
  inviteFixture(system,world,id);system.open(world,id,token());for(const step of system.catalog.find(e=>e.id===id).steps)system.act(world,world.encounters.active.instanceId,step.action,token());for(let p=10;p<110;p+=Math.min(8,110-p))system.pet(world,id,Math.min(8,110-p),token());if(inCage)expect(system.inviteCage(world,id,token()).changed).toBe(true);world.encounters.garden.open=false;
- await setup(page,size,validateWorld(world));await page.locator('.game-scene-controls-toggle').click();await page.locator('#game-nav-open').click();await page.locator('#game-menu-notebook').click();await page.locator(`[data-encounter-page="${id}"]`).click();
+ await setup(page,size,validateWorld(world));await page.locator('.game-scene-controls-toggle').click();await page.locator('#game-nav-open').click();await page.locator('#game-menu-notebook').click();
+ // Prepare the visual fixture with ordinary clicks. A catalog polling redraw
+ // can replace the target between pointer down/up; retry only while still in
+ // the catalog, then require the intended entry before measuring anything.
+ await expect(async()=>{
+  if(await page.locator('.finch-notebook').isVisible())await page.locator(`[data-encounter-page="${id}"]`).click();
+  await expect(page.locator('.finch-entry > h3')).toHaveText(system.catalog.find(e=>e.id===id).name,{timeout:800});
+ }).toPass({timeout:10000,intervals:[100,250,500]});
  const summary=page.locator('.finch-summary');await expect(summary).toHaveCSS('background-color','rgba(0, 0, 0, 0)');await expect(summary).toHaveCSS('text-align','left');await expect(async()=>{await summary.scrollIntoViewIfNeeded();await expect(summary).toBeVisible();}).toPass({timeout:10000});
  const spacing=await summary.evaluate(el=>el.getBoundingClientRect().top-el.previousElementSibling.getBoundingClientRect().bottom);expect(spacing).toBeGreaterThanOrEqual(19);
  for(const button of await page.locator('.finch-friendship-actions button,.finch-view-toggle button').all())await fits(button);
