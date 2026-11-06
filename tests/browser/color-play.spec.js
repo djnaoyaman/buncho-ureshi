@@ -70,14 +70,11 @@ for(const size of sizes){
   await expect(page.locator('#game-open-bird')).toHaveCSS('background-color','rgb(245, 201, 184)');
   await expect(page.locator('.game-bottom-dock [data-game-panel=family]')).toHaveCSS('background-color','rgb(226, 236, 223)');
   await openMenu(page);await capture(page,info,'menu',size);
-  const menuOrder=['health','profile','relations','family','roster','notebook','diary','memorial','owner','settings','help'];
+  const menuOrder=['health','profile','relations','family','roster','notebook','diary','memorial','settings','help'];
   expect(await page.locator('.game-secondary-menu .game-tabs button').evaluateAll(es=>es.map(e=>e.dataset.gamePanel))).toEqual(menuOrder);
-  const colors=['rgb(248, 223, 210)','rgb(251, 239, 211)','rgb(255, 253, 247)','rgb(255, 253, 247)','rgb(251, 239, 211)','rgb(248, 223, 210)','rgb(226, 236, 223)','rgb(251, 239, 211)','rgb(255, 253, 247)','rgb(226, 236, 223)','rgb(255, 253, 247)'];
+  const colors=['rgb(248, 223, 210)','rgb(251, 239, 211)','rgb(255, 253, 247)','rgb(255, 253, 247)','rgb(251, 239, 211)','rgb(248, 223, 210)','rgb(226, 236, 223)','rgb(251, 239, 211)','rgb(255, 253, 247)','rgb(226, 236, 223)'];
   for(const [i,id] of menuOrder.entries())await expect(page.locator(`#game-menu-${id}`)).toHaveCSS('background-color',colors[i]);
-  const owner=page.locator('#game-menu-owner');await expect(owner).toHaveText('キャラクター設定');await fit(owner);await owner.click();
-  await expect(page.locator('.game-app')).toHaveAttribute('data-panel','owner');await expect(page.locator('.game-panel-overlay')).toBeVisible();
-  await fit(page.locator('[data-game-close-panel]'));await page.locator('[data-game-close-panel]').click();
-  await expect(page.locator('.game-secondary-menu')).toBeVisible();await expect(owner).toBeFocused();
+  await expect(page.locator('#game-menu-owner')).toHaveCount(0);
   for(const id of ['health','memorial','profile','relations','family','diary','roster','notebook','settings','help']){
    const link=page.locator(`#game-menu-${id}`);await fit(link);await link.click();
    await expect(page.locator('.game-app')).toHaveAttribute('data-panel',id);await expect(page.locator('.game-panel-overlay')).toBeVisible();
