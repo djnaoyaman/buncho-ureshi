@@ -151,7 +151,7 @@ for (const [width, height] of [[320, 568], [390, 844]]) {
     async function closed() {
       await expect(page.locator('body')).toHaveAttribute('data-scene-controls', 'closed');
       await expect(toggle).toHaveAttribute('aria-expanded', 'false');
-      await expect(toggle).toHaveText('操作');
+      await expect(toggle).toHaveText('Touch the Birds');
       for (const selector of chrome) await expect(page.locator(selector)).toBeHidden();
     }
     async function target(element, selector, index=0) {
@@ -185,7 +185,7 @@ for (const [width, height] of [[320, 568], [390, 844]]) {
     await page.keyboard.press('Enter');
     await expect(toggle).toBeFocused();
     await expect(toggle).toHaveAttribute('aria-expanded', 'true');
-    await expect(toggle).toHaveText('景色を見る');
+    await expect(toggle).toHaveText('Watch the Birds');
     await expect(page.locator('body')).toHaveAttribute('data-scene-controls', 'open');
     await expect(page.locator('.game-field-nav')).toBeVisible();
     await expect(page.locator('.game-bottom-dock')).toBeVisible();
