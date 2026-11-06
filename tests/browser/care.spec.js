@@ -78,6 +78,10 @@ test('care feed increases displayed fullness and free cleaning resets the floor 
   await page.locator('[data-game-care="feed"]').click();await expect(page.locator('[data-game-fullness]')).toHaveText('60 / 100');const fed=await record(page);
   await page.locator('[data-game-care="feed"]').click();await expect(page.locator('[data-game-fullness]')).toHaveText('80 / 100');await page.locator('[data-game-care="feed"]').click();await expect(page.locator('[data-game-fullness]')).toHaveText('100 / 100');await expect(page.locator('[data-game-care="feed"]')).toBeDisabled();
   await closeCare(page);await page.locator('[data-game-care="clean"]').click();await expect(page.locator('[data-game-cleanliness-value]')).toHaveText('100 / 100');await expect(page.locator('.game-floor-soil')).toHaveCSS('opacity','0');
+  // The paused world still synchronizes health exposure on its regular poll.
+  // Wait for the completed clean state, then require the entire second result
+  // (including health and revision) to remain exactly unchanged.
+  await expect.poll(async()=>(await record(page)).lifecycle.birds.map(b=>b.dirtySinceAt)).toEqual([null,null]);
   const clean=await record(page);await closeCare(page);await page.locator('[data-game-care="clean"]').click();expect(await record(page)).toEqual(clean);expect(clean.birds[0].color).toBe('white');
   await page.reload();await expect(page.locator('.game-app')).toBeVisible();await openCare(page);await expect(page.locator('[data-game-fullness]')).toHaveText('100 / 100');await expect(page.locator('[data-game-cleanliness-value]')).toHaveText('100 / 100');
 });

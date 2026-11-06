@@ -149,11 +149,13 @@ test('game starts with Omochi, then names and welcomes the unrelated male visito
   await expect(page.locator('.game-roster [data-game-select="b2"]')).toContainText('こめ');
 });
 
-test('verification control produces autonomous generations, bounded roster, and a family tree', async ({ page }, testInfo) => {
+test('verification control advances the current rules exactly, bounds the roster, and preserves family history', async ({ page }, testInfo) => {
   test.setTimeout(60000);
   await openGame(page, '?qa=1');
   await tab(page, 'settings');
   await page.locator('[data-adoption-mode="auto"]').click();await expect(page.locator('[data-adoption-mode="auto"]')).toHaveAttribute('aria-pressed','true');
+  const initial=await readWorld(page);const originalResidents=initial.birds.filter(b=>b.home==='resident').map(b=>b.id);
+  const expected=structuredClone(initial);advanceTicks(expected,10000,fixedNow);
   await page.locator('summary').filter({ hasText: '検証用' }).click();
   // Only the explicitly gated QA UI advances time. Each step still runs the actual engine.
   for (let i = 0; i < 10; i++) {
@@ -166,7 +168,12 @@ test('verification control produces autonomous generations, bounded roster, and 
   }
   const world = validateWorld(await readWorld(page));
   expect(world.birds.length).toBe(LIMITS.birds);
-  expect(Math.max(...world.birds.map(b => b.generation))).toBeGreaterThanOrEqual(3);
+  // The current rules do not move residents out without an explicit choice.
+  // Verify the QA control's exact engine result, not an obsolete promise that
+  // every seed automatically reaches three generations in a full home.
+  expect(world.birds).toEqual(expected.birds);expect(world.events).toEqual(expected.events);
+  expect(world.birds.some(b=>b.parents.length===2&&b.generation===1&&b.stage==='adult')).toBe(true);
+  for(const id of originalResidents)expect(world.birds.find(b=>b.id===id).home).toBe('resident');
   expect(world.birds.filter(b => b.home === 'resident').length).toBeLessThanOrEqual(LIMITS.residents);
   expect(world.birds.filter(b => b.home === 'visitor').length).toBeLessThanOrEqual(LIMITS.visitors);
   expect(world.events.length).toBeLessThanOrEqual(LIMITS.events);
@@ -191,6 +198,24 @@ test('verification control produces autonomous generations, bounded roster, and 
   await page.goto('game/');
   await tab(page, 'settings');
   await expect(page.locator('[data-game-action="qa-step"]')).toHaveCount(0);
+});
+
+test('three-generation family history stays navigable through real parent cards',async({page})=>{
+  const w=createWorld(fixedNow);w.paused=true;const lineage=[w.birds[0]];
+  for(let generation=1;generation<=3;generation++){
+    const parent=lineage.at(-1),mate=createBird(w,{sex:parent.sex==='female'?'male':'female',home:'departed'});w.tick++;
+    lineage.push(createBird(w,{sex:'female',home:'departed',parents:[parent.id,mate.id],generation}));
+  }
+  validateWorld(w);await seedWorld(page,w);await openGame(page);await tab(page,'family');
+  await page.locator('[data-game-details="family-text"] > summary').click();
+  await page.locator(`[data-game-details="family-text"] [data-family-focus="${lineage.at(-1).id}"]`).click();
+  for(let generation=3;generation>=0;generation--){
+    const bird=lineage[generation];await expect(page.locator('.game-family-node.is-focus')).toHaveAttribute('data-family-focus',bird.id);
+    await expect(page.locator('.game-family-node.is-focus')).toContainText(bird.name);
+    for(const parentId of bird.parents)await expect(page.locator(`.game-family-node[data-family-focus="${parentId}"]`)).toHaveCount(1);
+    if(generation)await page.locator(`.game-family-node[data-family-focus="${lineage[generation-1].id}"]`).click();
+  }
+  expect((await readWorld(page)).birds).toEqual(w.birds);
 });
 
 test('rename persists and conversations use needs, personality and memory', async ({ page }) => {
@@ -423,7 +448,9 @@ test('rapid navigation and Back clean up a pending async game mount without orph
     await page.locator('.desktop-nav [data-nav="game/"]').click();
     // Real browser Back immediately abandons the game route, including a mount
     // that may still be awaiting IndexedDB; no hidden background link is forced.
-    await page.goBack();
+    await page.goBack({waitUntil:'commit'});
+    await expect(page).toHaveURL(/\/encyclopedia\/$/);
+    await expect(page.locator('#article-grid')).toBeVisible();
     await expect(page.locator('#game-root')).toHaveCount(0);
     await expect.poll(async () => page.evaluate(() => [...window.__gameTestIntervals.values()].filter(delay => delay === 3000).length)).toBe(0);
   }
@@ -465,7 +492,9 @@ for (const residents of [1, 10]) test(`${residents === 1 ? 'initial one-bird' : 
   await expect(page.locator('.game-scene-caption')).toHaveCount(1);
   await expect(page.locator('#game-scene-resident')).toHaveCount(0);
   for(const b of seeded.birds){await chooseBird(page,b.id);await expect(page.locator('.game-bird-carousel-face')).toContainText(b.name);await expect(page.locator('.game-bird-carousel-face')).toContainText(`${{white:'白文鳥',sakura:'桜文鳥',silver:'シルバー',cinnamon:'シナモン'}[b.color]}・成鳥`);}
-  await expect(page.locator('.game-room-bird .game-bubble, .game-room-bird .game-bird-label, .game-room-bird svg')).toHaveCount(0);
+  // Role badges are UI, not replacement bird artwork. Keep the bird-body ban.
+  await expect(page.locator('.game-room-bird .game-bubble, .game-room-bird .game-bird-label, .game-room-bird svg:not(.game-home-role svg)')).toHaveCount(0);
+  await expect(page.locator('.game-room-bird .game-home-role svg')).toHaveCount(residents);
   await expect(page.locator('.game-furnishing')).toHaveCount(9);
   for (const width of [320, 375, 390, 768, 1440]) for (const orientation of ['portrait', 'landscape']) {
     const height = orientation === 'portrait' ? Math.max(800, Math.round(width * 1.25)) : Math.max(240, Math.round(width * .65));

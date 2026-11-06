@@ -213,7 +213,8 @@ for(const size of [{width:320,height:568},{width:390,height:844},{width:1440,hei
  await expect(page.locator('.game-panel .game-profile')).toHaveCount(0);
  const bird=page.locator('[data-game-scene-select][data-bird-id="b1"]');await bird.scrollIntoViewIfNeeded();const before=await page.evaluate(()=>scrollY);
  await bird.click();const sheet=page.locator('.game-bird-sheet');await expect(sheet).toBeVisible();await expect(sheet).toHaveAttribute('open','');await expect(page.locator('#game-sheet-close')).toBeFocused();
- const primary=sheet.locator('.game-care-actions button');await expect(primary).toHaveCount(3);
+ // Petting is now the original bird's own button, alongside feed and call.
+ const primary=sheet.locator('[data-game-care="feed"], [data-game-talk="名前を呼ぶ"], #game-care-pet');await expect(primary).toHaveCount(3);
  expect(await primary.evaluateAll(buttons=>buttons.every(b=>{const r=b.getBoundingClientRect();return r.width>=44&&r.height>=44&&r.top>=0&&r.bottom<=innerHeight;}))).toBe(true);
  await page.locator('[data-game-care="feed"]').click();await expect(page.locator('[data-game-fullness]')).toHaveText('60 / 100');await expect(page.locator('.game-care-feedback')).toBeVisible();
  expect(Math.abs(await page.evaluate(()=>scrollY)-before)).toBeLessThan(4);
@@ -266,17 +267,17 @@ test('two tabs collecting the same dropping get exactly one Gem reward',async({p
  await expect.poll(async()=>(await readWorld(page)).decor.points).toBe(before+8);const saved=validateWorld(await readWorld(page));expect(saved.gems.droppings.some(d=>d.id===drop.id)).toBe(false);await second.close();
 });
 
-test('all nine slots show 24 future items without granting locked or unowned equipment',async({page})=>{
- test.setTimeout(120000); // 9 categories × every tier and two previews use real browser actions.
+// Keep every category independently executable and bounded. A slow earlier
+// category must not consume later categories' timeout or leave them untested.
+for(const slot of DECOR_SLOTS)test(`${slot.id}: 24 future items do not grant locked or unowned equipment`,async({page})=>{
+ test.setTimeout(60000);
  const w=createWorld(fixedNow);w.paused=true;await seedWorld(page,w);await openGame(page);await tab(page,'decorate');
- for(const slot of DECOR_SLOTS){
   await page.locator(`[data-decor-slot="${slot.id}"]`).click();await expect(page.locator('[data-decor-preview]')).toHaveCount(24);
   for(const tier of DECOR_TIERS){await page.locator(`[data-decor-tier="${tier.id}"]`).click();await expect(page.locator('.game-collection-tier:not([hidden]) [data-decor-preview]')).toHaveCount(8);await expect(page.locator('.game-collection-tier:not([hidden])')).toBeVisible();}
   await expect(page.locator('[data-decor-preview][data-owned="true"]')).toHaveCount(1);await expect(page.locator('[data-decor-preview][data-owned="false"]')).toHaveCount(23);await expect(page.locator('[data-decor-preview][data-locked="true"]')).toHaveCount(16);
   const locked=`${slot.id}-rose-special`;await previewDecoration(page,locked);await expect(page.locator('[data-preview-item]')).toHaveAttribute('data-preview-item',locked);await expect(page.locator('[data-decor-equip]')).toHaveCount(0);await expect(page.locator('.game-decor-preview')).toContainText('Lv.6');
   const future=`${slot.id}-rose-cozy`;await previewDecoration(page,future);await expect(page.locator('[data-preview-item]')).toHaveAttribute('data-preview-item',future);await expect(page.locator('[data-decor-equip]')).toHaveCount(0);
   expect((await readWorld(page)).decor).toEqual(w.decor);
- }
 });
 
 for(const width of [320,390,1440])test(`immersive Gem world, complete collection and centered bird pixels at ${width}px`,async({page},info)=>{
@@ -303,7 +304,7 @@ test('horizontal bird gestures and keyboard arrows preserve drafts while vertica
  await gesture(face,4,-80);await expect(face).toHaveAttribute('data-bird-id','b2');
  const prev=page.locator('.game-bird-carousel [data-bird-step="-1"]');await prev.focus();await page.keyboard.press('Enter');await expect(face).toHaveAttribute('data-bird-id','b1');
  await tab(page,'profile');await page.locator('#game-name').fill('まだ保存しない名前');await gesture(page.locator('.game-profile-heading .game-mini-bird'),-80,2);await expect(page.locator('.game-profile-heading h3')).toHaveText('こめ');await page.locator('.game-profile [data-bird-step="-1"]').click();await expect(page.locator('#game-name')).toHaveValue('まだ保存しない名前');
- await page.locator('.game-profile [data-game-open-bird]').click();await page.locator('[data-game-details="sheet-talk"] > summary').click();await page.locator('#game-words').fill('まだ送らないことば');await gesture(page.locator('.game-sheet-heading .game-mini-bird'),-80,2);await expect(page.locator('#game-sheet-title')).toHaveText('こめ');await page.locator('.game-bird-sheet [data-bird-step="-1"]').click();await expect(page.locator('#game-words')).toHaveValue('まだ送らないことば');
+ await page.locator('.game-profile [data-game-open-bird]').click();await page.locator('[data-game-details="sheet-talk"] > summary').click();await page.locator('#game-words').fill('まだ送らないことば');await gesture(page.locator('.game-sheet-heading #game-sheet-title'),-80,2);await expect(page.locator('#game-sheet-title')).toHaveText('こめ');await page.locator('.game-bird-sheet [data-bird-step="-1"]').click();await expect(page.locator('#game-words')).toHaveValue('まだ送らないことば');
  expect((await readWorld(page)).birds.map(b=>b.name)).toEqual(w.birds.map(b=>b.name));await page.keyboard.press('Escape');await expect(page.locator('.game-bird-sheet')).not.toBeVisible();
 });
 
