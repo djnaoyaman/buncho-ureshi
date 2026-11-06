@@ -7,13 +7,19 @@ const theme=css.slice(css.indexOf('/* COLOR PLAY —'));
 test('Color Play restyles UI without changing living artwork or its dimensions',()=>{
  const window=new Window(),style=window.document.createElement('style');style.textContent=theme;window.document.head.append(style);
  assert(theme.includes('/* End COLOR PLAY. */'));
+ let routeIcons=0;
  const walk=rules=>{for(const rule of rules){
   if(rule.cssRules){walk(rule.cssRules);continue;}
   assert(rule.selectorText?.startsWith('body[data-world="buncho"]'),rule.selectorText);
   assert(!/\.game-room-bird|\.game-sprite|\.game-care-pet-bird|\.finch-garden-(friend|household|visitor|image-plane)|\.finch-(crow|raptor)-(actor|java)|\.owner-peek|\.game-family-node/.test(rule.selectorText),rule.selectorText);
   if(rule.selectorText.includes('.game-owner-companion'))for(let i=0;i<rule.style.length;i++)assert.equal(rule.style[i],'bottom','Only the owner position can adapt to the larger UI, never art or size');
  }};walk(style.sheet.cssRules);
- assert(!theme.includes('url('));
+ for(const [,selector,block] of theme.matchAll(/([^{}]+)\{([^{}]*)\}/g))if(block.includes('url(')){
+  assert(/\.game-world-exit|\[data-game-close-panel\]/.test(selector),'Only the two route controls may define a pictogram');
+  assert(/--game-route-icon:\s*url\("data:image\/svg\+xml,/.test(block));
+  assert.equal((block.match(/url\(/g)||[]).length,1);routeIcons++;
+ }
+ assert.equal(routeIcons,2);assert.equal((theme.match(/url\(/g)||[]).length,2,'No background or living artwork URL may be replaced');
  window.happyDOM.abort();
 });
 function luminance(hex){const c=hex.match(/[\da-f]{2}/g).map(x=>parseInt(x,16)/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4);return .2126*c[0]+.7152*c[1]+.0722*c[2];}
