@@ -110,6 +110,31 @@ async function fixture(t, { corrupt = false } = {}) {
   };
 }
 
+test('top links keep child-friendly names, destinations and save-neutral friend navigation', async t => {
+  const f = await fixture(t); await f.mount();
+  const nav = () => f.root.querySelector('.game-field-nav');
+  const labels = () => [...nav().querySelectorAll('button')].map(button => button.textContent);
+  assert.deepEqual(labels(), ['おうち', 'おにわ', '友だち']);
+  assert.deepEqual([...nav().querySelectorAll('button')].map(button => [button.dataset.gamePanel, button.getAttribute('aria-label')]), [
+    ['garden', 'おうちへ'], ['outdoors', 'おにわへ遊びに行く'], ['friends', '友だちのおうちへ'],
+  ]);
+  assert.equal(nav().querySelector('[data-game-panel="garden"]').dataset.fieldTravel, 'home');
+  const before = await rawWorld(f.indexedDB);
+  for (let i = 0; i < 3; i++) {
+    nav().querySelector('[data-game-panel="friends"]').click();
+    assert.equal(f.root.querySelector('.game-app').dataset.panel, 'friends');
+    assert.ok(f.root.querySelector('.game-friends'));
+    assert.equal(nav().querySelector('[data-game-panel="friends"]').getAttribute('aria-pressed'), 'true');
+    f.root.querySelector('[data-game-close-panel]').click();
+    assert.equal(f.root.querySelector('.game-app').dataset.panel, 'garden');
+    assert.equal(nav().querySelector('[data-game-panel="garden"]').getAttribute('aria-pressed'), 'true');
+    assert.deepEqual(labels(), ['おうち', 'おにわ', '友だち']);
+  }
+  assert.deepEqual(await rawWorld(f.indexedDB), before, 'opening and closing friends leaves the complete saved world untouched');
+  f.stop(); await f.mount();
+  assert.deepEqual(labels(), ['おうち', 'おにわ', '友だち']);
+});
+
 test('mountGame delayed file reads: the latest requested import wins, not the last read to finish', async t => {
   const f = await fixture(t); await f.mount(); f.settings();
   const store = await f.otherTab(), older = deferred(), newer = deferred();

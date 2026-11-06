@@ -41,6 +41,22 @@ async function reachable(page,bird,top,bottom,birdSelector) {
 for(const [width,height] of [[320,568],[390,844],[844,390]]) {
   test(`full-stage house and twelve gardens ${width}x${height}`,async({page},testInfo)=>{
     test.setTimeout(90000); await page.setViewportSize({width,height}); await ready(page);
+    const links = page.locator('.game-field-nav');
+    await expect(links.locator('button')).toHaveText(['おうち', 'おにわ', '友だち']);
+    for (const name of ['おうちへ', 'おにわへ遊びに行く', '友だちのおうちへ']) {
+      const link = links.getByRole('button', { name, exact: true });
+      await expect(link).toBeVisible();
+      await link.click({ trial: true });
+      expect(await link.evaluate(el => {
+        const r = el.getBoundingClientRect();
+        return r.width >= 44 && r.height >= 44 && r.left >= 0 && r.right <= innerWidth && el.scrollWidth <= el.clientWidth;
+      })).toBe(true);
+    }
+    await links.getByRole('button', { name: '友だちのおうちへ', exact: true }).click();
+    await expect(page.locator('.game-friends')).toBeVisible();
+    await page.locator('[data-game-close-panel]').click();
+    await expect(page.locator('.game-panel-overlay')).not.toBeVisible();
+    await expect(links.locator('button')).toHaveText(['おうち', 'おにわ', '友だち']);
     await page.locator('.game-status [data-game-action=pause]').click();
     const bird=page.locator('.game-room-bird.is-selected'),habitat=page.locator('.game-main .game-habitat img');
     await cover(page,habitat);
