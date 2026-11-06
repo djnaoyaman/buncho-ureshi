@@ -42,6 +42,11 @@ for(const size of sizes){
   await setup(page,size);const before=protectedState(await record(page));
   await unchangedArtwork(page);await fit(page.locator('.game-scene-controls-toggle'));await capture(page,info,'home-rest',size);await page.locator('.game-scene-controls-toggle').click();
   await expect(page.locator('.game-field-nav [aria-pressed=true]')).toHaveCSS('background-color','rgb(248, 223, 210)');
+  const navigation=page.locator('.game-field-nav');await expect(navigation).toHaveCSS('background-color','rgba(0, 0, 0, 0)');
+  await expect(async()=>{expect(await navigation.evaluate(el=>el.isConnected?getComputedStyle(el,'::before').content:null)).toBe('none');}).toPass({timeout:10000});
+  for(const button of await navigation.locator('button').all())await fit(button);
+  for(const button of await navigation.locator('[aria-pressed=false]').all())await expect(button).toHaveCSS('background-color','rgb(255, 253, 247)');
+  if(size[1]>500){await expect(navigation.locator('button').first()).toHaveCSS('font-size','14px');await expect(page.locator('.game-field-bar .game-wallet strong').first()).toHaveCSS('font-size','17px');}
   for(const b of await page.locator('.game-bottom-dock > button').all())await fit(b);
   await capture(page,info,'home-controls',size);
   await expect(page.locator('.game-bottom-dock [data-game-panel=decorate]')).toHaveCSS('background-color','rgb(247, 227, 177)');
