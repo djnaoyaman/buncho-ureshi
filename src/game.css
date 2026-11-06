@@ -1247,7 +1247,7 @@ body[data-world="buncho"] .game-encounter-host .finch-garden > header {
 body[data-world="buncho"] .game-encounter-host .finch-garden > header::before { content: none; }
 body[data-world="buncho"] .game-encounter-host .finch-garden > header h3 {
  flex: 1 1 auto; min-width: 0; max-width: none; margin: 0; padding: 6px 9px!important;
- font-size: 14px!important; line-height: 1.35!important; font-weight: 800; overflow-wrap: anywhere;
+ font-size: 14px!important; line-height: 1.35!important; font-weight: 800; overflow-wrap: anywhere; text-wrap: balance;
  background: #fff9f0ed!important; border-radius: 14px; box-shadow: 0 2px 8px #604b3d1a;
 }
 body[data-world="buncho"] .game-encounter-host .finch-garden > header > button {
@@ -1260,7 +1260,7 @@ body[data-world="buncho"] .finch-garden-selector-wrap {
 body[data-world="buncho"] .finch-garden-selector-wrap .finch-garden-selector { gap: 6px; padding: 2px 0 6px; }
 body[data-world="buncho"] .finch-garden-selector-wrap .finch-garden-selector button {
  flex-basis: calc((100% - 6px)/2); min-width: 0; min-height: 44px; padding: 6px 8px;
- font-size: 12px; line-height: 1.35; white-space: normal; overflow-wrap: anywhere; border-radius: 20px;
+ font-size: 12px; line-height: 1.35; white-space: normal; overflow-wrap: anywhere; text-wrap: balance; border-radius: 20px;
 }
 body[data-world="buncho"] .finch-garden-selector-wrap .finch-garden-scroll { min-height: 44px; }
 body[data-world="buncho"] .game-panel-overlay[data-scene="true"]:has(.finch-garden) > .game-overlay-head {
@@ -1284,7 +1284,7 @@ body[data-world="buncho"] .finch-entry .finch-friendship {
 }
 body[data-world="buncho"] .finch-entry .finch-friendship-actions { margin-block: 12px; }
 body[data-world="buncho"] .finch-entry .finch-friendship-actions button {
- min-width: 0; white-space: normal; overflow-wrap: anywhere; background: var(--play-paper);
+ min-width: 0; white-space: normal; overflow-wrap: anywhere; text-wrap: balance; background: var(--play-paper);
  border: var(--play-soft-edge); box-shadow: var(--play-soft-shadow); border-radius: 20px;
 }
 /* Use the approved, unaltered logo rather than a second text-only wordmark. */
@@ -1342,19 +1342,19 @@ body[data-world="buncho"][data-scene-controls]:has(.finch-garden) .game-scene-co
  width: var(--garden-toggle-width); min-width: 44px; height: 52px; min-height: 52px; padding: 4px;
  font-size: clamp(11px,2.5vw,14px); line-height: 1.2; white-space: normal; border-radius: 20px;
 }
-body[data-world="buncho"] .finch-garden-dock,
-body[data-world="buncho"] .finch-garden-dock:has(> [data-garden-details="friends"]) {
+body[data-world="buncho"] .game-panel-overlay[data-scene="true"] .finch-garden-dock,
+body[data-world="buncho"] .game-panel-overlay[data-scene="true"] .finch-garden-dock:has(> [data-garden-details="friends"]) {
  left: calc(max(10px,env(safe-area-inset-left,0px)) + var(--garden-toggle-width) + 6px);
  right: max(10px,env(safe-area-inset-right,0px)); bottom: env(safe-area-inset-bottom,0px);
  display: grid; grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(0,1fr); gap: 5px;
  padding: 8px 0; background: transparent; border: 0; border-radius: 0;
 }
-body[data-world="buncho"] .finch-garden-dock > details:first-child { grid-column: auto; }
-body[data-world="buncho"] .finch-garden-dock > details > summary,
-body[data-world="buncho"] .finch-garden-dock > details:first-child > summary {
+body[data-world="buncho"] .game-panel-overlay[data-scene="true"] .finch-garden-dock > details:first-child { grid-column: auto; }
+body[data-world="buncho"] .game-panel-overlay[data-scene="true"] .finch-garden-dock > details > summary,
+body[data-world="buncho"] .game-panel-overlay[data-scene="true"] .finch-garden-dock > details:first-child > summary {
  min-height: 52px; padding: 4px; font-size: 11px; line-height: 1.25; white-space: normal; border-radius: 20px;
 }
-body[data-world="buncho"] .finch-garden-dock > details[open] {
+body[data-world="buncho"] .game-panel-overlay[data-scene="true"] .finch-garden-dock > details[open] {
  position: fixed; bottom: calc(72px + env(safe-area-inset-bottom,0px));
  left: max(10px,env(safe-area-inset-left,0px)); right: max(10px,env(safe-area-inset-right,0px));
  max-height: min(50dvh,380px); padding: 12px;
