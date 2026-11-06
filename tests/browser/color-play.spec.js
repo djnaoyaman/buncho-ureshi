@@ -42,7 +42,9 @@ async function expectNewGardenVisit(page,expected){
 }
 async function unchangedArtwork(page){
  const result=await page.evaluate(()=>{
- const measure=()=>[...document.querySelectorAll('.game-room-bird,.game-sprite,.game-care-pet-bird,.game-care-illustration,.game-care-illustration img,.owner-peek-art,.finch-garden-household,.finch-garden-friend,.finch-garden-visitor,.finch-art,.finch-photo img')].map(el=>{const r=el.getBoundingClientRect(),s=getComputedStyle(el);return {tag:el.tagName,classes:el.className?.baseVal??el.className,src:el.getAttribute('src'),w:r.width,h:r.height,transform:s.transform,objectFit:s.objectFit,objectPosition:s.objectPosition,borderRadius:s.borderRadius,filter:s.filter,clipPath:s.clipPath,animationName:s.animationName};});
+ // Compare exact layout sizes, not viewport-coordinate subtraction: moving an
+ // unchanged box can introduce floating-point noise in WebKit's DOMRect size.
+ const measure=()=>[...document.querySelectorAll('.game-room-bird,.game-sprite,.game-care-pet-bird,.game-care-illustration,.game-care-illustration img,.owner-peek-art,.finch-garden-household,.finch-garden-friend,.finch-garden-visitor,.finch-art,.finch-photo img')].map(el=>{const s=getComputedStyle(el);return {tag:el.tagName,classes:el.className?.baseVal??el.className,src:el.getAttribute('src'),w:s.width,h:s.height,offsetWidth:el.offsetWidth,offsetHeight:el.offsetHeight,transform:s.transform,scale:s.scale,rotate:s.rotate,translate:s.translate,objectFit:s.objectFit,objectPosition:s.objectPosition,borderRadius:s.borderRadius,filter:s.filter,clipPath:s.clipPath,animationName:s.animationName};});
  const sheet=[...document.styleSheets].find(s=>s.href&&new URL(s.href).pathname.endsWith('/src/game.css'));
   const first=[...sheet.cssRules].findIndex(r=>r.style?.getPropertyValue('--play-ink'));if(first<0)throw Error('Color Play stylesheet not loaded');
   const before=measure(),rules=[...sheet.cssRules].slice(first).map(r=>r.cssText);while(sheet.cssRules.length>first)sheet.deleteRule(first);
