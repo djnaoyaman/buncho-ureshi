@@ -1358,7 +1358,25 @@ body[data-world="buncho"] .game-panel-overlay[data-scene="true"] .finch-garden-d
  left: max(10px,env(safe-area-inset-left,0px)); right: max(10px,env(safe-area-inset-right,0px));
  max-height: min(50dvh,380px); padding: 12px;
 }
+/* Cover can bottom-clamp a wide garden's anchor below 65cqh. Reserve the real
+   dock row for ordinary actors, moving the whole group only by the deficit.
+   Layout margins leave the foot transform and motion-owned translate intact. */
+body[data-world="buncho"] .game-panel-overlay[data-scene="true"] .finch-garden-stage {
+ --garden-dock-reserve: 68px;
+ --garden-lower-row: .75;
+}
+body[data-world="buncho"] .game-panel-overlay[data-scene="true"] .finch-garden-stage[data-garden-id="mizukagami"] { --garden-lower-row: .15; }
+body[data-world="buncho"] .game-panel-overlay[data-scene="true"] .finch-garden-stage[data-garden-density="regular"]:not(:has(.finch-crow-scale-scene,.finch-raptor-scale-scene)) .finch-garden-image-plane {
+ --garden-plane-top: clamp(calc(100cqh - var(--draw-h)),calc(65cqh - var(--garden-anchor-y) * var(--draw-h)),0px);
+ --garden-lowest-foot: calc(var(--garden-plane-top) + var(--garden-anchor-y) * var(--draw-h) + var(--garden-lower-row) * min(17cqh,110px));
+ /* 18px label + at most 3px below the sprite foot, then 6px breathing room. */
+ --garden-controls-rise: max(0px,calc(var(--garden-lowest-foot) + 27px + var(--garden-dock-reserve) + env(safe-area-inset-bottom,0px) - 100cqh));
+}
+body[data-world="buncho"] .game-panel-overlay[data-scene="true"] .finch-garden-stage[data-garden-density="regular"]:not(:has(.finch-crow-scale-scene,.finch-raptor-scale-scene)) .finch-garden-image-plane > :is(.finch-garden-friend,.finch-garden-household,.finch-garden-visitor) {
+ margin-block-start: calc(0px - var(--garden-controls-rise));
+}
 @media(max-height:340px) {
+ body[data-world="buncho"] .game-panel-overlay[data-scene="true"] .finch-garden-stage { --garden-dock-reserve: 60px; }
  body[data-world="buncho"][data-scene-controls]:has(.finch-garden) .game-scene-controls-toggle { height: 44px; min-height: 44px; font-size: 10px; }
  body[data-world="buncho"] .game-panel-overlay[data-scene="true"] .finch-garden-dock > details > summary,
  body[data-world="buncho"] .game-panel-overlay[data-scene="true"] .finch-garden-dock > details:first-child > summary { min-height: 44px; }

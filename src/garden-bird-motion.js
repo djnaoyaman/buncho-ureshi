@@ -161,7 +161,9 @@ export function mountGardenBirdMotion(root, { enabled = () => true, maxTravel = 
   for (const type of ['pointerout', 'focusout']) root.addEventListener(type, unlock);
   for (const type of ['pointerup', 'pointercancel']) document.addEventListener(type, unlock);
   window.addEventListener('resize', resize);
-  const observer = window.ResizeObserver ? new window.ResizeObserver(resize) : null;
+  // Stage replacement emits removal and initial-observation notifications even
+  // at the same dimensions. Rebuild geometry without discarding active time.
+  const observer = window.ResizeObserver ? new window.ResizeObserver(() => { invalid = true; }) : null;
   observedStage = root.querySelector('.finch-garden-stage'); if (observedStage) observer?.observe(observedStage);
   if (motion?.addEventListener) motion.addEventListener('change', sync); else motion?.addListener?.(sync);
   sync();

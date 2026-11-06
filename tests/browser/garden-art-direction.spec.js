@@ -23,7 +23,7 @@ test('real game scenes retain treetop, ocean and Notre-Dame across phone, deskto
  for(const id of ids){
   await page.locator(`[data-garden-select="${id}"]`).click();await ready(page);
   const before=await gardenState(page),guests=await friends(page);
-  for(const [width,height] of [[390,844],[1280,800],[844,390],[390,844]]){
+  for(const [width,height] of [[390,844],[1280,800],[844,390],[667,375],[844,320],[390,844]]){
    await page.setViewportSize({width,height});
    // The outer visualViewport height and then the art ResizeObserver settle separately.
    await expect.poll(()=>page.locator('.finch-garden-stage').evaluate((s,{width,height})=>{const r=s.getBoundingClientRect();return Math.abs(r.width-width)<1&&Math.abs(r.height-height)<1;},{width,height})).toBe(true);
