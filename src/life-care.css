@@ -9,3 +9,58 @@
 .life-protagonist{margin:1rem 0;padding:.85rem 1rem;border:1px solid #c5c8ad;border-radius:.85rem;background:#f2f1df}.life-protagonist h4{margin:0}.life-protagonist p{margin:.4rem 0}
 
 .life-successor-choices{display:grid;gap:.7rem;margin:.8rem 0}.life-successor-choices>div{padding:.5rem;border:1px solid #c5c8ad;border-radius:.7rem}.life-successor-choices button{width:100%;min-height:44px;white-space:normal;font:inherit}.life-successor-choices .life-small{margin:.3rem 0 0}
+
+/* Approved A: each bird keeps its own portrait, state and independent clocks. */
+body[data-world="buncho"] .life-care-panel.life-health-notebook { --health-ink:#304b42; --health-paper:#fffcf5; --health-butter:#f4da91; --health-peach:#f3c8b5; --health-mint:#dfe6d3; --health-cream:#f8efdb; color:var(--health-ink); max-width:900px; margin-inline:auto; }
+body[data-world="buncho"] .life-health-notebook > .life-panel-heading { padding:0; margin:0 0 20px; background:transparent; border:0; border-radius:0; }
+body[data-world="buncho"] .life-health-notebook .life-health-title { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px 12px; }
+body[data-world="buncho"] .life-health-notebook .life-health-title h3 { font-size:clamp(24px,5vw,28px); margin:0; line-height:1.4; }
+body[data-world="buncho"] .life-health-notebook .life-panel-heading p { margin:8px 0 0; font-size:15px; color:#6d776a; }
+body[data-world="buncho"] .life-health-notebook .life-bird-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr)); align-items:start; gap:18px; }
+body[data-world="buncho"] .life-care-panel.life-health-notebook .life-bird-card { min-width:0; padding:18px; border:1px solid #b9bba6; border-radius:26px; background:var(--health-mint); box-shadow:none; }
+body[data-world="buncho"] .life-care-panel.life-health-notebook .life-bird-card.is-unwell { border:2px solid var(--health-ink); background:var(--health-cream); }
+body[data-world="buncho"] .life-health-notebook .life-card-state { display:flex; justify-content:flex-end; margin-bottom:12px; }
+body[data-world="buncho"] .life-health-notebook .life-badge { background:var(--health-paper); color:var(--health-ink); font-size:13px; border-radius:20px; padding:5px 12px; }
+body[data-world="buncho"] .life-health-notebook .life-health-title .life-badge { background:var(--health-mint); }
+body[data-world="buncho"] .life-health-notebook .is-unwell .life-card-state { justify-content:flex-start; margin:-18px -18px 16px; padding:9px 18px; border-radius:24px 24px 18px 18px; background:var(--health-peach); }
+body[data-world="buncho"] .life-health-notebook .is-unwell .life-card-state .life-badge { padding:0; background:transparent; font-size:16px; }
+body[data-world="buncho"] .life-health-notebook .life-bird-identity { display:grid; grid-template-columns:minmax(64px,96px) minmax(0,1fr); align-items:center; gap:12px; }
+body[data-world="buncho"] .life-health-notebook .life-bird-identity h4 { margin:0 0 6px; font-size:22px; line-height:1.5; overflow-wrap:anywhere; }
+body[data-world="buncho"] .life-health-notebook .life-bird-identity > div { min-width:0; }
+body[data-world="buncho"] .life-health-notebook .life-bird-portrait { display:block; width:100%; min-width:0; max-width:110px; }
+body[data-world="buncho"] .life-health-notebook .life-bird-portrait .game-sprite { display:block; width:100%; height:auto; aspect-ratio:850/1000; }
+body[data-world="buncho"] .life-health-notebook .life-summary { color:var(--health-ink); font-size:14px; margin:0; }
+body[data-world="buncho"] .life-health-notebook .life-bird-kind { margin:6px 0 0; color:#596753; }
+body[data-world="buncho"] .life-health-notebook .life-deadline-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin-top:16px; }
+body[data-world="buncho"] .life-care-panel.life-health-notebook .life-deadline { margin:0; padding:12px; border-radius:18px; background:var(--health-paper); color:var(--health-ink); font-size:13px; line-height:1.7; overflow-wrap:anywhere; }
+body[data-world="buncho"] .life-health-notebook .life-deadline strong { margin-top:4px; font-size:17px; line-height:1.6; }
+body[data-world="buncho"] .life-health-notebook .life-small { font-size:14px; line-height:1.7; }
+body[data-world="buncho"] .life-health-notebook .life-deadline-note { font-size:12px; color:#596753; margin:12px 0; }
+body[data-world="buncho"] .life-health-notebook .life-treatment-hint { font-size:14px; margin:12px 0; }
+body[data-world="buncho"] .life-care-panel.life-health-notebook [data-life-treat] { width:100%; min-height:54px; margin:0; padding:12px; border:1.5px solid var(--health-ink); border-radius:28px; background:var(--health-butter); color:var(--health-ink); box-shadow:0 3px 0 #d6c9a9; font-size:16px; line-height:1.6; white-space:normal; }
+body[data-world="buncho"] .life-care-panel.life-health-notebook [data-life-treat]:not(:disabled):hover { background:var(--health-peach); }
+body[data-world="buncho"] .life-health-notebook .life-caretaker-fold { margin:24px 0 18px; }
+body[data-world="buncho"] .life-health-notebook .life-caretaker-fold > summary { display:flex; justify-content:space-between; align-items:center; gap:12px; min-height:56px; padding:14px 18px; border-radius:28px; background:var(--health-peach); font-size:17px; font-weight:700; line-height:1.6; cursor:pointer; list-style:none; }
+body[data-world="buncho"] .life-health-notebook .life-caretaker-fold > summary::after { content:'＋'; flex-shrink:0; }
+body[data-world="buncho"] .life-health-notebook .life-caretaker-fold[open] > summary::after { content:'−'; }
+body[data-world="buncho"] .life-health-notebook .life-caretaker-fold > summary::-webkit-details-marker { display:none; }
+body[data-world="buncho"] .life-health-notebook .life-caretaker-fold .life-badge { margin-left:auto; }
+body[data-world="buncho"] .life-health-notebook .life-caretaker-fold .life-caretaker { padding-top:18px; }
+body[data-world="buncho"] .life-care-panel.life-health-notebook .life-care-warning { margin:18px 0; padding:0; border:0; border-radius:0; background:transparent; color:#6d776a; font-size:13px; line-height:1.8; }
+body[data-world="buncho"] .life-health-notebook .life-health-wallet { margin:12px 0 0; color:#6d776a; font-size:14px; }
+body[data-world="buncho"] .life-health-notebook .life-health-rules > summary { min-height:44px; padding:12px 0; font-size:15px; font-weight:700; cursor:pointer; }
+body[data-world="buncho"] .life-health-notebook :is(summary,button):focus-visible { outline:3px solid var(--health-ink); outline-offset:4px; }
+@media(max-width:360px) {
+ body[data-world="buncho"] .life-health-notebook .life-bird-identity { grid-template-columns:72px minmax(0,1fr); gap:10px; }
+ body[data-world="buncho"] .life-health-notebook .life-bird-identity h4 { font-size:20px; }
+ body[data-world="buncho"] .life-health-notebook .life-deadline-grid { gap:10px; }
+ body[data-world="buncho"] .life-care-panel.life-health-notebook .life-deadline { padding:9px; font-size:12px; }
+ body[data-world="buncho"] .life-health-notebook .life-deadline strong { font-size:15px; }
+ body[data-world="buncho"] .life-health-notebook .life-caretaker-fold > summary { padding:12px; gap:8px; font-size:16px; }
+}
+body[data-world="buncho"] .life-health-notebook .life-bird-card:not(.is-unwell) { display:grid; grid-template-columns:76px minmax(0,1fr); gap:8px 12px; }
+body[data-world="buncho"] .life-health-notebook .life-bird-card:not(.is-unwell) .life-bird-identity { display:contents; }
+body[data-world="buncho"] .life-health-notebook .life-bird-card:not(.is-unwell) .life-bird-portrait { grid-column:1; grid-row:1 / span 3; align-self:center; }
+body[data-world="buncho"] .life-health-notebook .life-bird-card:not(.is-unwell) .life-card-state { grid-column:2; grid-row:1; justify-content:flex-start; margin:0; }
+body[data-world="buncho"] .life-health-notebook .life-bird-card:not(.is-unwell) .life-bird-identity > div { grid-column:2; grid-row:2; }
+body[data-world="buncho"] .life-health-notebook .life-bird-card:not(.is-unwell) > .life-small { grid-column:2; grid-row:3; margin:0; }
