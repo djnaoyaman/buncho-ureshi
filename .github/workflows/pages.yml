@@ -41,7 +41,7 @@ jobs:
       - name: Hidden bird search hints, narrow screens and unchanged saves
         run: npx playwright test tests/browser/encounter-search-hints.spec.js --project=chrome --project=webkit --retries=0
       - name: Family companion cards, atomic preferences and current outing
-        run: npx playwright test tests/browser/companion-cards.spec.js --project=chrome --project=webkit --retries=0
+        run: npx playwright test tests/browser/companion-cards.spec.js --project=chrome --project=webkit --retries=0 --output=companion-test-results
       - name: Decoration guarantee, completion and save migration
         run: npx playwright test tests/browser/decor-guarantee.spec.js --project=chrome --project=webkit --retries=0
       - name: Child-friendly game help, ruby and disclosure panels
@@ -61,6 +61,7 @@ jobs:
           path: |
             playwright-report/
             test-results/
+            companion-test-results/
             cage-test-results/
             trial-test-results/
             editorial-test-results/
