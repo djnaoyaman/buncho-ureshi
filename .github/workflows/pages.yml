@@ -38,6 +38,8 @@ jobs:
         run: npx playwright test tests/browser/trial-smoke.spec.js tests/browser/care-gauges.spec.js tests/browser/owner-peek.spec.js tests/browser/full-stage.spec.js tests/browser/garden-social.spec.js tests/browser/garden-protagonist.spec.js tests/browser/garden-interaction.spec.js tests/browser/garden-selector-scroll.spec.js tests/browser/compact-music-settings.spec.js tests/browser/game-music.spec.js --project=chrome --retries=0
       - name: Independent garden visits, legacy saves and notebook resume
         run: npx playwright test tests/browser/garden-visits.spec.js --project=chrome --project=webkit --retries=0
+      - name: Decoration guarantee, completion and save migration
+        run: npx playwright test tests/browser/decor-guarantee.spec.js --project=chrome --project=webkit --retries=0
       - name: Child-friendly game help, ruby and disclosure panels
         run: npx playwright test tests/browser/game-help.spec.js --project=chrome --project=webkit --retries=0
       - name: Game and site Home Screen targets, navigation and history

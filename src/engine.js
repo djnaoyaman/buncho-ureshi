@@ -6,7 +6,7 @@ import {initialEconomy,validateEconomy,syncEconomy,reserveAutomaticGems,awardCar
 /** A deterministic, offline story simulation with fictional lifecycle rules. No real husbandry advice. */
 import { initializeCareSchedule, validateCareSchedule, syncCareSchedule, applyScheduledCare, reconcileImportedCare, careWindow } from './care-schedule.js';
 import { defaultNameFields, automaticNaming, manualNaming, legacyNaming, isValidNaming } from './bird-names.js';
-export const SAVE_VERSION = 10;
+export const SAVE_VERSION = 11;
 const careTime = now => Math.max(0, Math.min(253402268399999, now));
 export { reconcileImportedCare, careWindow };
 export const TICK_MS = 15000;
@@ -35,6 +35,7 @@ export const DECOR_SLOTS = Object.freeze(Object.entries(SLOT_LABELS).map(([id,la
 export const DECOR_COLORS = Object.freeze(Object.entries(COLOR_HEX).map(([id,hex],i)=>Object.freeze({id,hex,label:['ミント','さくら','空色','レモン','ラベンダー','ピーチ','クリーム','アクア'][i]})));
 export const DECOR_TIERS = Object.freeze([{id:'cozy',label:'ほっこり',level:1},{id:'lovely',label:'とっておき',level:3},{id:'special',label:'きらめき',level:6}]);
 export const DECOR_DRAW_COST = 20;
+export const DECOR_DUPLICATE_LIMIT = 2;
 const POINT_CAP = 1000000000;
 
 export const GEM_RULES = Object.freeze({feed:6,pet:5,chat:5,collect:8,chatCooldownTicks:1,fullnessThreshold:90,droppingDelayTicks:2,droppingIntervalTicks:4,maxDroppings:12});
@@ -60,9 +61,10 @@ export function collectDropping(w,droppingId,expectedRevision){
 }
 
 function initialField() { return {place:'home',hostId:null,enteredTick:0}; }
-function initialDecor() {
+function initialDecorStreaks() { return Object.fromEntries(DECOR_SLOTS.map(({id})=>[id,0])); }
+function initialDecor(version=SAVE_VERSION) {
   const inventory=Object.keys(SLOT_LABELS).map(slot=>({id:`${slot}-mint-cozy`,slot,color:'mint',tier:'cozy'}));
-  return {points:20,lifetimePoints:20,inventory,equipped:Object.fromEntries(inventory.map(item=>[item.slot,item.id])),draws:0,lastDrawTick:null};
+  return {points:20,lifetimePoints:20,inventory,equipped:Object.fromEntries(inventory.map(item=>[item.slot,item.id])),draws:0,lastDrawTick:null,...(version>=11?{duplicateStreaks:initialDecorStreaks()}:{})};
 }
 export function decorLevel(w) { return Math.min(20,1+Math.floor(w.decor.lifetimePoints/80)); }
 export function fieldBirds(w) {
@@ -134,18 +136,46 @@ export function endHomeVisits(w,expectedToken,now=Date.now()) {
   return {changed:true,count,message:count?`${count}羽のお友達を見送ったよ。今日は家族とゆっくり過ごそう。`:'今日は家族とゆっくり過ごそう。'};
 }
 export function decorOdds(w) { const n=DECOR_TIERS.filter(t=>decorLevel(w)>=t.level).length;return DECOR_TIERS.slice(0,n).map((t,i)=>({tierId:t.id,probability:(n===1?[1]:n===2?[.65,.35]:[.65,.25,.1])[i]})); }
-export function drawDecoration(w,slot='perch') {
+/** Read-only: guaranteed outcomes are ordinary item odds conditioned on being unowned.
+ * Counters belong to each category and survive navigation, reloads and level unlocks.
+ */
+export function decorDrawStatus(w,slot='perch') {
   if(!Object.hasOwn(SLOT_LABELS,slot))throw new Error('9種類の道具から選んでね。');
+  const owned=new Set(w.decor.inventory.map(item=>item.id));
+  const tiers=decorOdds(w).map(odds=>({...odds,colors:DECOR_COLORS.filter(({id})=>!owned.has(`${slot}-${id}-${odds.tierId}`)).map(({id})=>id)}));
+  const remaining=tiers.reduce((sum,tier)=>sum+tier.colors.length,0),duplicateStreak=w.decor.duplicateStreaks[slot];
+  const complete=remaining===0,guaranteed=!complete&&duplicateStreak===DECOR_DUPLICATE_LIMIT;
+  const total=tiers.reduce((sum,tier)=>sum+tier.probability*tier.colors.length/DECOR_COLORS.length,0);
+  const probabilities=tiers.map(tier=>({tierId:tier.tierId,probability:guaranteed?tier.probability*tier.colors.length/DECOR_COLORS.length/total:tier.probability}));
+  const nextTier=DECOR_TIERS.find(tier=>tier.level>decorLevel(w))||null;
+  return {remaining,duplicateStreak,complete,guaranteed,tiers,probabilities,nextTier};
+}
+export function drawDecoration(w,slot='perch') {
+  const status=decorDrawStatus(w,slot);
+  if(status.complete)return {changed:false,complete:true,message:status.nextTier?`いま出会える${SLOT_LABELS[slot]}はコンプリート！次はLv.${status.nextTier.level}で新しい仕上げが開くよ。Gemsは使っていないよ。`:`${SLOT_LABELS[slot]}は全24種類コンプリート！Gemsは使っていないよ。`};
   if(w.decor.lastDrawTick===w.tick)return {changed:false,message:'さっきのお飾りを楽しもう。次のゲーム時間にまた引けるよ。'};
   if(w.decor.points<DECOR_DRAW_COST)throw new Error('20 Gemsで1回。友達との交流や家族の成長を見守ろう。');
-  const available=DECOR_TIERS.filter(t=>decorLevel(w)>=t.level);
-  const roll=random(w),tier=available.length===3&&roll>=.9?available[2]:available.length>=2&&roll>=.65?available[1]:available[0];
-  const color=pick(w,Object.keys(COLOR_HEX)),id=`${slot}-${color}-${tier.id}`;
+  const roll=random(w);
+  let tier,color;
+  if(status.guaranteed){
+    const candidates=status.probabilities.filter(option=>option.probability>0);
+    let cumulative=0,selected=candidates.at(-1);
+    for(const option of candidates){cumulative+=option.probability;if(roll<cumulative){selected=option;break;}}
+    tier=DECOR_TIERS.find(option=>option.id===selected.tierId);
+    color=pick(w,status.tiers.find(option=>option.tierId===tier.id).colors);
+  }else{
+    const available=DECOR_TIERS.filter(t=>decorLevel(w)>=t.level);
+    tier=available.length===3&&roll>=.9?available[2]:available.length>=2&&roll>=.65?available[1]:available[0];
+    color=pick(w,Object.keys(COLOR_HEX));
+  }
+  const id=`${slot}-${color}-${tier.id}`;
   const item={id,slot,color,tier:tier.id},duplicate=w.decor.inventory.some(x=>x.id===id);
   w.decor.points-=DECOR_DRAW_COST;
   if(duplicate)w.decor.points=Math.min(POINT_CAP,w.decor.points+8);else w.decor.inventory.push(item);
+  w.decor.duplicateStreaks[slot]=duplicate?Math.min(DECOR_DUPLICATE_LIMIT,status.duplicateStreak+1):0;
   w.decor.draws=Math.min(POINT_CAP,w.decor.draws+1);w.decor.lastDrawTick=w.tick;bumpRevision(w);
-  return {changed:true,item,duplicate,message:duplicate?'同じお飾りだったので8 Gemsを返したよ。':`${SLOT_LABELS[slot]}のお飾りが仲間入り！`};
+  const progress=w.decor.duplicateStreaks[slot]===DECOR_DUPLICATE_LIMIT?'次のこのガチャは、まだ持っていないお飾りが必ず出るよ！':'あと1回続けて持っているお飾りが出たら、その次は新しいお飾りが必ず出るよ。';
+  return {changed:true,item,duplicate,guaranteed:status.guaranteed,message:duplicate?`同じお飾りだったので8 Gemsを返したよ。${progress}`:`${status.guaranteed?'新作確定！':''}${SLOT_LABELS[slot]}のお飾りが仲間入り！`};
 }
 export function equipDecoration(w,itemId) {
   const item=w.decor.inventory.find(x=>x.id===itemId);if(!item)throw new Error('持っているお飾りを選んでね。');
@@ -639,7 +669,8 @@ function validateVersion(input, version) {
   if(version>=3){
     if(!shape(w.field,['place','hostId','enteredTick'])||!['home','park','friend'].includes(w.field.place)||!integer(w.field.enteredTick,0,w.tick)||!(w.field.place==='friend'?ref(w.field.hostId)&&findBird(w,w.field.hostId).stage==='adult':w.field.hostId===null))fail('行き先の情報が不正です。');
     const d=w.decor;
-    if(!shape(d,['points','lifetimePoints','inventory','equipped','draws','lastDrawTick'])||!integer(d.points,0,POINT_CAP)||!integer(d.lifetimePoints,d.points,POINT_CAP)||!integer(d.draws,0,POINT_CAP)||!(d.lastDrawTick===null||integer(d.lastDrawTick,0,w.tick))||!Array.isArray(d.inventory)||d.inventory.length<9||d.inventory.length>216||!shape(d.equipped,Object.keys(SLOT_LABELS)))fail('お飾りの情報が不正です。');
+    if(!shape(d,['points','lifetimePoints','inventory','equipped','draws','lastDrawTick',...(version>=11?['duplicateStreaks']:[])])||!integer(d.points,0,POINT_CAP)||!integer(d.lifetimePoints,d.points,POINT_CAP)||!integer(d.draws,0,POINT_CAP)||!(d.lastDrawTick===null||integer(d.lastDrawTick,0,w.tick))||!Array.isArray(d.inventory)||d.inventory.length<9||d.inventory.length>216||!shape(d.equipped,Object.keys(SLOT_LABELS)))fail('お飾りの情報が不正です。');
+    if(version>=11&&(!shape(d.duplicateStreaks,Object.keys(SLOT_LABELS))||Object.values(d.duplicateStreaks).some(value=>!integer(value,0,DECOR_DUPLICATE_LIMIT))))fail('お飾りの新作確定までの情報が不正です。');
     const itemIds=new Set();
     for(const item of d.inventory){
       if(!shape(item,['id','slot','color','tier'])||!Object.hasOwn(SLOT_LABELS,item.slot)||!Object.hasOwn(COLOR_HEX,item.color)||!DECOR_TIERS.some(t=>t.id===item.tier&&t.level<=decorLevel(w))||item.id!==`${item.slot}-${item.color}-${item.tier}`||itemIds.has(item.id))fail('お飾りの種類が不正です。');
@@ -684,7 +715,7 @@ export function migrateV1ToV2(input, now=Date.now()) {
   return migrateV2ToV3(validateVersion(world,2),now);
 }
 export function migrateV2ToV3(input, now=Date.now()) {
-  const world=validateVersion(input,2);world.version=3;world.field=initialField();world.decor=initialDecor();return migrateV3ToV4(validateVersion(world,3),now);
+  const world=validateVersion(input,2);world.version=3;world.field=initialField();world.decor=initialDecor(3);return migrateV3ToV4(validateVersion(world,3),now);
 }
 export function migrateV3ToV4(input, now=Date.now()){
   const world=validateVersion(input,3);world.version=4;world.gems={droppings:[],nextDropId:1};
@@ -710,7 +741,10 @@ export function migrateV8ToV9(input,now=Date.now()){
  const world=validateVersion(input,8);world.version=9;initializeProtagonist(world);return migrateV9ToV10(world,now);
 }
 export function migrateV9ToV10(input,now=Date.now()){
- const world=validateVersion(input,9);world.version=10;world.protagonist.version=2;world.protagonist.familySelections=[];return validateWorld(world);
+ const world=validateVersion(input,9);world.version=10;world.protagonist.version=2;world.protagonist.familySelections=[];return migrateV10ToV11(world,now);
+}
+export function migrateV10ToV11(input,now=Date.now()){
+ const world=validateVersion(input,10);world.version=11;world.decor.duplicateStreaks=initialDecorStreaks();return validateWorld(world);
 }
 export function readCompatibleWorld(input, now=Date.now()) {
   // Do not execute an accessor even to discover the version of an untrusted object.
@@ -725,6 +759,7 @@ export function readCompatibleWorld(input, now=Date.now()) {
   if (descriptor.value === 7) return migrateV7ToV8(input,now);
   if (descriptor.value === 8) return migrateV8ToV9(input,now);
   if (descriptor.value === 9) return migrateV9ToV10(input,now);
+  if (descriptor.value === 10) return migrateV10ToV11(input,now);
   if (descriptor.value === SAVE_VERSION) return validateWorld(input);
   throw new Error('保存データを読み込めません：対応していない版です。元の保存はそのままです。');
 }
