@@ -255,3 +255,11 @@ body[data-world="buncho"] .finch-entry.finch-record-card>.finch-page-actions{jus
 @media(max-width:359px){body[data-world="buncho"] .finch-entry.finch-record-card .finch-view-toggle{gap:8px}body[data-world="buncho"] .finch-entry.finch-record-card .finch-view-toggle button{font-size:.85rem;padding:.65rem .4rem}body[data-world="buncho"] .finch-entry.finch-record-card .finch-friendship{padding:14px}}
 
 body[data-world="buncho"] .finch-entry.finch-record-card .finch-summary{background:transparent;border:0;border-radius:0;text-align:left;margin-top:20px;padding:0}
+
+/* Approved predator A: relationship stays visible alongside the bird portrait. */
+body[data-world="buncho"] .finch-entry.finch-predator-record .finch-record-portrait{padding:18px}
+body[data-world="buncho"] .finch-entry.finch-predator-record .finch-record-portrait img{height:clamp(180px,32dvh,290px);width:100%;max-height:none;object-fit:contain}
+body[data-world="buncho"] .finch-entry.finch-predator-record .finch-predator-relation{display:block;background:#dfe7d2;border-radius:999px;padding:10px 14px;color:#304f45;font-weight:700;font-size:.9rem;line-height:1.5}
+body[data-world="buncho"] .finch-entry.finch-predator-record .finch-predator-pet{margin:20px 0 12px;text-align:left}
+body[data-world="buncho"] .finch-entry.finch-predator-record .finch-predator-pet small{display:block;font-size:.8rem;line-height:1.8;margin-top:10px}
+body[data-world="buncho"] .finch-entry.finch-predator-record>.finch-route-actions{border-top:0;padding:0}

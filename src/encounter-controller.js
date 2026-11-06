@@ -56,7 +56,7 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
     const oldSelector=root.querySelector('.finch-garden-selector');
     const oldScroll=oldSelector?.scrollLeft, oldSelected=oldSelector?.querySelector('[aria-current=page]')?.dataset.gardenSelect;
     if(w.worldId!==worldId){worldId=w.worldId;generation++;busy=false;mode='notebook';pageId=null;notice='';}
-    const nextReadingKey=mode==='entry'?`${w.worldId}:${pageId}`:null,priorReading=hostEntryReading||entryReading();
+    const nextReadingKey=['entry','raptors','crows'].includes(mode)&&pageId?`${w.worldId}:${mode}:${pageId}`:null,priorReading=hostEntryReading||entryReading();
     const savedReading=priorReading?.key===nextReadingKey?priorReading:null;hostEntryReading=null;renderedReadingKey=nextReadingKey;
     media.preserve();
     root.innerHTML=(mode==='raptors'?renderRaptorNotebook(w,{base,id:pageId}):mode==='crows'?renderCrowNotebook(w,{base,id:pageId}):mode==='event'?renderEncounterScene(w,{system,base}):mode==='garden'?renderFinchGarden(w,{system,base,selectedBirdId:getSelectedBirdId(),crowWarning:crowClock.warning}):mode==='entry'?renderEncounterPage(w,pageId,{system,base,showPhoto}):renderEncounterNotebook(w,{system,base}))+`<p class="finch-notice" role="status">${escape(notice)}</p><button type="button" class="finch-media-retry" data-media-retry hidden>絵をもう一度読み込む</button>`;
