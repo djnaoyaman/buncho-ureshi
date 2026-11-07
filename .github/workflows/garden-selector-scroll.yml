@@ -1,0 +1,32 @@
+name: Garden selector synchronous scrolling
+on:
+  pull_request:
+    paths:
+      - 'tests/browser/garden-selector-scroll.spec.js'
+      - '.github/workflows/garden-selector-scroll.yml'
+permissions:
+  contents: read
+jobs:
+  selector:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npx playwright install --with-deps webkit
+      - run: npx playwright install chrome
+      - name: Repeat current-node and synchronous movement checks in Chrome and WebKit
+        run: npx playwright test tests/browser/garden-selector-scroll.spec.js --project=chrome --project=webkit --repeat-each=5 --retries=0 --output=selector-test-results
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: garden-selector-${{ github.sha }}
+          path: |
+            playwright-report/
+            selector-test-results/
+          retention-days: 14

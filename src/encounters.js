@@ -1,3 +1,4 @@
+import {isAlive} from './life-care.js';
 import {initializeGardenVisitSessions,switchGardenVisitSession,pendingGardenGuestLocation,clearCompletedGardenGuest,gardenVisitSessionFields} from './garden-visit-sessions.js';
 import {initialRaptorState,validateRaptorState} from './garden-raptors.js';
 import {initialCrowState,validateCrowState} from './garden-crows.js';
@@ -120,6 +121,18 @@ export function createEncounterSystem(catalog=ENCOUNTER_CATALOG,{knownCatalog=ca
     if(typeof enabled!=='boolean')return {changed:false,reason:'companion'};
     w.encounters.gardenFriends.accompany=enabled;bump(w);return {changed:true};
   }
+  // Atomically remember both choices. The current outing and predator state are immutable here.
+  function chooseOutingPreferences(w,preferences,expected,previous=null){
+    if(!guard(w,expected))return stale();validate(w.encounters,w.tick);
+    const state=w.encounters.gardenFriends;
+    const same=(a,b)=>a.accompany===b.accompany&&Array.isArray(a.companions)&&a.companions.length===b.companions.length&&a.companions.every(id=>b.companions.includes(id));
+    if(previous&&!same(previous,state))return {changed:false,reason:'preferences-changed'};
+    if(!preferences||typeof preferences.accompany!=='boolean'||!Array.isArray(preferences.companions)||preferences.accompany&&!preferences.companions.length)return {changed:false,reason:'companion'};
+    const ids=preferences.companions;
+    if(ids.length>4||new Set(ids).size!==ids.length||ids.some(id=>!w.birds.some(b=>b.id===id&&b.home==='resident'&&isAlive(w,b)&&['juvenile','adult'].includes(b.stage))))return {changed:false,reason:'companion'};
+    if(same(preferences,state))return {changed:false,resumed:true};
+    state.companions=[...ids];state.accompany=preferences.accompany;bump(w);return {changed:true};
+  }
   function leaveGarden(w,expected){
     if(!guard(w,expected))return stale();validate(w.encounters,w.tick);
     if(!w.encounters.garden.open)return {changed:false};
@@ -190,7 +203,7 @@ export function createEncounterSystem(catalog=ENCOUNTER_CATALOG,{knownCatalog=ca
     w.encounters.cageVisitors=w.encounters.cageVisitors.filter(v=>v.id!==id);bump(w);return {changed:true,message:`${knownById.get(id).name}は自分のおうちに帰ったよ。また図鑑から呼べるよ。`};
   }
   function status(w,id){const s=w.encounters,discovery=s.discoveries.find(d=>d.id===id),gardenId=pendingGardenGuestLocation(s,id),visit=gardenId===s.garden.id?s:s.gardenSessions?.find(visit=>visit.gardenId===gardenId);return {discovered:!!discovery,discovery:discovery?{...discovery}:null,ready:!!visit?.queue.includes(id),active:visit?.active?.id===id,gardenId,...encounterFriendship(w,id)};}
-  return Object.freeze({catalog,validate,noteActivity,enterGarden,selectGarden,meetGardenFriend,chooseCompanions,chooseAccompaniment,leaveGarden,observeGarden,open,act,status,pet,inviteGarden,inviteCage,dismissCage});
+  return Object.freeze({catalog,validate,noteActivity,enterGarden,selectGarden,meetGardenFriend,chooseCompanions,chooseAccompaniment,chooseOutingPreferences,leaveGarden,observeGarden,open,act,status,pet,inviteGarden,inviteCage,dismissCage});
 }
 export const encounterSystem=createEncounterSystem(ENCOUNTER_CATALOG,{knownCatalog:ENCOUNTER_CANDIDATES});
 export function validateEncounterState(state,tick){return encounterSystem.validate(state,tick);}

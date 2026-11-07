@@ -50,3 +50,19 @@ test('scene controls start folded and clean up across route entries',async()=>{
  for(let i=0;i<3;i++){chrome.set(true);assert.equal(button.hidden,false);assert.equal(button.getAttribute('aria-expanded'),'false');assert.equal(doc.body.dataset.sceneControls,'closed');button.click();assert.equal(doc.body.dataset.sceneControls,'open');assert.equal(button.getAttribute('aria-expanded'),'true');assert.equal(doc.activeElement,button);chrome.set(true);assert.equal(doc.body.dataset.sceneControls,'open');button.click();assert.equal(doc.body.dataset.sceneControls,'closed');chrome.set(false);assert.equal(button.hidden,true);assert.equal(doc.body.dataset.sceneControls,'prior');}
  chrome.dispose();assert.equal(doc.querySelector('.game-scene-controls-toggle'),null);assert.equal(doc.body.dataset.sceneControls,'prior');await window.happyDOM.close();
 });
+
+test('scene toggle keeps Japanese visible and accessible labels in sync without changing its actions',async()=>{
+ const {window,doc}=fixture(),chrome=createWorldChrome(doc),button=doc.querySelector('.game-scene-controls-toggle');
+ const expectState=(open)=>{
+  assert.equal(button.textContent,open?'よく見る':'ふれ合う');
+  assert.equal(button.getAttribute('aria-label'),open?'よく見る · 操作をたたんで景色を見る':'ふれ合う · 操作メニューを開く');
+  assert.equal(button.getAttribute('aria-expanded'),String(open));
+  assert.equal(doc.body.dataset.sceneControls,open?'open':'closed');
+ };
+ for(let visit=0;visit<3;visit++){
+  chrome.set(true);expectState(false);
+  for(let click=0;click<6;click++){button.click();expectState(click%2===0);assert.equal(doc.activeElement,button);}
+  chrome.set(false);assert.equal(button.hidden,true);assert.equal(doc.body.hasAttribute('data-scene-controls'),false);
+ }
+ chrome.dispose();await window.happyDOM.close();
+});
