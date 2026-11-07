@@ -6,7 +6,9 @@ import {Window} from 'happy-dom';
 // Isolate the pure renderer against its public lifecycle contract. Engine tests
 // separately verify these selectors, migrations, clocks, and transactions.
 const source=await readFile(new URL('../src/life-care-ui.js',import.meta.url),'utf8');
-const stub=`const protagonistStatus=w=>({bird:w.birds[0]??null,generation:1,waiting:null,heir:null});
+const memorialModule=new URL('../src/memorial-designs.js',import.meta.url).href;
+const stub=`import {memorialDesignForBird,renderMemorialArtwork} from '${memorialModule}';
+const protagonistStatus=w=>({bird:w.birds[0]??null,generation:1,waiting:null,heir:null});
 const LIFE_RULES={neglectMs:259200000,hospitalGold:12,caretakerDailyGold:24};
 const lifeStatus=(w,b)=>b.life;
 const isAlive=(w,b)=>!b.life.death;
