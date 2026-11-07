@@ -30,6 +30,7 @@ for(const size of sizes)test(`compact garden and stable controls ${size.join('x'
  const logo=page.locator('.game-world-title img');await expect(logo).toHaveAttribute('src','/buncho-ureshi/game-art/game-title.png');await expect(logo).toHaveAttribute('alt','おもちの文鳥ぐらし');await logo.evaluate(img=>img.decode());
  expect(await logo.evaluate(img=>[img.naturalWidth,img.naturalHeight])).toEqual([2172,724]);
  expect(await logo.evaluate(img=>Math.abs(img.width/img.height-2172/724))).toBeLessThan(.03);
+ await page.screenshot({path:info.outputPath(`game-title-${size.join('x')}.png`)});
  await fits(page.locator('.game-world-exit'));await expect(page.locator('.game-world-exit')).toHaveAccessibleName('文鳥図鑑へ戻る');
  await expect(toggle).toHaveText('ふれ合う');await expect(toggle).toHaveAccessibleName('ふれ合う · 操作メニューを開く');await fits(toggle);await toggle.click();await expect(toggle).toHaveText('よく見る');await expect(toggle).toHaveAccessibleName('よく見る · 操作をたたんで景色を見る');
  await fits(toggle);
