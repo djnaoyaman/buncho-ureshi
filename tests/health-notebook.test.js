@@ -40,3 +40,9 @@ test('zero residents and insufficient gold never create enabled care actions',()
 test('A painting is local to health and preserves keyboard target outlines',async()=>{
  const css=await readFile(new URL('../src/life-care.css',import.meta.url),'utf8');const added=css.slice(css.indexOf('/* Approved A:'));assert.ok(added.includes(':focus-visible'));assert.ok(added.includes('min-height:54px'));assert.ok(added.includes('min-height:56px'));assert.ok(added.includes('max-width:360px'));assert.ok(!added.includes('.life-memorial-panel'));assert.ok(!added.includes('display:none!important'));
 });
+
+test('browser A fixtures pass real save validation before any remote browser launch',async()=>{
+ const {healthNotebookFixture,HEALTH_NOTEBOOK_NOW}=await import('./fixtures/health-notebook.js');
+ const {serializeWorld,parseSave}=await import('../src/engine.js');
+ for(const longName of [false,true]){const w=healthNotebookFixture({longName});assert.deepEqual(parseSave(serializeWorld(w)),w);assert.equal(w.birds[0].naming.assignedName,w.birds[0].name);assert.equal(lifeStatus(w,'b1').condition.deadlineAt-lifeStatus(w,'b1').condition.sinceAt,86400000);assert.equal(w.economy.gold,longName?0:200);if(!longName)assert.equal(lifeStatus(w,'b1').condition.deadlineAt-HEALTH_NOTEBOOK_NOW,12*3600000);}
+});

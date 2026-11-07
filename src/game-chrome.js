@@ -11,7 +11,7 @@ export function createWorldChrome(doc) {
   const exit=doc.createElement('a');exit.className='game-world-exit';exit.textContent='文鳥図鑑';exit.setAttribute('aria-label','文鳥図鑑へ戻る');exit.title='写真で文鳥を学ぶ図鑑へ戻る';exit.href=doc.querySelector('base').getAttribute('href')+'encyclopedia/';exit.hidden=true;exit.setAttribute('data-game-world-control','');toggle.before(exit);
   const sceneToggle=doc.createElement('button');sceneToggle.type='button';sceneToggle.className='game-scene-controls-toggle';sceneToggle.hidden=true;sceneToggle.setAttribute('data-game-world-control','');body.append(sceneToggle);
   const priorSceneControls=body.getAttribute('data-scene-controls');
-  function sceneControls(open){body.dataset.sceneControls=open?'open':'closed';sceneToggle.setAttribute('aria-expanded',String(open));sceneToggle.setAttribute('aria-label',open?'Watch the Birds · 操作をたたんで景色を見る':'Touch the Birds · 操作メニューを開く');sceneToggle.textContent=open?'Watch the Birds':'Touch the Birds';}
+  function sceneControls(open){body.dataset.sceneControls=open?'open':'closed';sceneToggle.setAttribute('aria-expanded',String(open));sceneToggle.setAttribute('aria-label',open?'よく見る · 操作をたたんで景色を見る':'ふれ合う · 操作メニューを開く');sceneToggle.textContent=open?'よく見る':'ふれ合う';}
   const toggleSceneControls=()=>{if(!active)return;sceneControls(body.dataset.sceneControls!=='open');sceneToggle.focus({preventScroll:true});};
   sceneToggle.addEventListener('click',toggleSceneControls);
   const original={label:toggle.getAttribute('aria-label'),html:toggle.innerHTML,href:brand.getAttribute('href'),brandLabel:brand.getAttribute('aria-label')};
