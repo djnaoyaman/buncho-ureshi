@@ -191,7 +191,8 @@ for (const [width, height] of [[320, 568], [390, 844]]) {
     async function closed() {
       await expect(page.locator('body')).toHaveAttribute('data-scene-controls', 'closed');
       await expect(toggle).toHaveAttribute('aria-expanded', 'false');
-      await expect(toggle).toHaveText('Touch the Birds');
+      await expect(toggle).toHaveText('ふれ合う');
+      await expect(toggle).toHaveAccessibleName('ふれ合う · 操作メニューを開く');
       for (const selector of chrome) await expect(page.locator(selector)).toBeHidden();
     }
     async function target(element, selector, index=0) {
@@ -225,7 +226,8 @@ for (const [width, height] of [[320, 568], [390, 844]]) {
     await page.keyboard.press('Enter');
     await expect(toggle).toBeFocused();
     await expect(toggle).toHaveAttribute('aria-expanded', 'true');
-    await expect(toggle).toHaveText('Watch the Birds');
+    await expect(toggle).toHaveText('よく見る');
+    await expect(toggle).toHaveAccessibleName('よく見る · 操作をたたんで景色を見る');
     await expect(page.locator('body')).toHaveAttribute('data-scene-controls', 'open');
     await expect(page.locator('.game-field-nav')).toBeVisible();
     await expect(page.locator('.game-bottom-dock')).toBeVisible();
@@ -247,8 +249,9 @@ for (const [width, height] of [[320, 568], [390, 844]]) {
     await expect(page.locator('.game-encounter-host')).toHaveAttribute('aria-busy', 'false');
     // This case tests care-sheet focus for an explicitly chosen companion.
     await page.locator('[data-garden-details=companions]>summary').click();
+    await page.locator('[data-garden-accompany="true"]').click();
     await page.locator('[data-garden-companion=b1]').click();await expect(page.locator('[data-garden-companion=b1]')).toHaveAttribute('aria-pressed','true');
-    await page.locator('[data-garden-accompany]').click();await expect(page.locator('[data-garden-accompany]')).toHaveAttribute('aria-pressed','true');
+    await page.locator('[data-garden-companions-save]').click();await expect(page.locator('.finch-companion-feedback')).toContainText('覚えたよ');
     await page.locator('[data-garden-details=companions]>summary').click();
     await page.locator('[data-game-close-panel]').click();await expect(page.locator('.game-panel-overlay')).not.toBeVisible();
     await page.locator('.game-field-nav [data-game-panel=outdoors]').click();await expect(page.locator('.finch-garden-household')).toBeVisible();

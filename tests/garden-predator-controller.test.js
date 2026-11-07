@@ -5,8 +5,8 @@ import {createWorld} from '../src/engine.js';
 import {mountEncounterPanel} from '../src/encounter-controller.js';
 import {mountGardenRaptors} from '../src/garden-raptor-controller.js';
 const NOW=Date.UTC(2026,10,5),sleep=()=>new Promise(r=>setTimeout(r,1));
-async function setup({random=()=>0,reverse=false}={}){
- const w=createWorld(NOW);w.encounters.garden.open=true;w.encounters.gardenFriends.attendees=['b1'];w.field.place='park';
+async function setup({random=()=>0,reverse=false,attends=true}={}){
+ const w=createWorld(NOW);w.encounters.garden.open=true;w.encounters.gardenFriends.attendees=attends?['b1']:[];w.field.place='park';
  const win=new Window();win.document.body.innerHTML='<main id="root"><div class="game-app" data-panel="outdoors"><div id="panel"></div></div></main>';
  const root=win.document.querySelector('#root');let panel,elapsed=0,n=0;const timers=new Map(),originalNow=Date.now;Date.now=()=>NOW+elapsed;
  Object.defineProperty(win.performance,'now',{value:()=>elapsed,configurable:true});win.setTimeout=(fn,delay)=>{timers.set(++n,{fn,delay});return n;};win.clearTimeout=id=>timers.delete(id);
@@ -29,4 +29,20 @@ test('real panel destruction and remount cannot buy another early lottery',async
 });
 test('canceling a winning crow warning still consumes the shared entry attempt',async()=>{
  let calls=0;const s=await setup({random:()=>{calls++;return 0;}});try{await s.run(3);assert.equal(s.panel.hasCrowPending(),true);await s.remount();await s.run(4);assert.equal(calls,3);assert.equal(s.panel.hasCrowPending(),false);assert.equal(s.w.encounters.crow.visits.length,0);}finally{s.close();}
+});
+for(const reverse of [false,true])for(const kind of ['crow','raptor'])test(`shared entry permits targetless ${kind} visits, reverse=${reverse}`,async()=>{
+ const values=[0,kind==='crow'?0:.5,0],s=await setup({attends:false,reverse,random:()=>values.shift()??1});
+ const before=structuredClone({birds:s.w.birds,lifecycle:s.w.lifecycle,economy:s.w.economy,decor:s.w.decor,seed:s.w.seed});
+ try{
+  await s.run(kind==='crow'?9:3);
+  if(kind==='crow'){
+   assert.equal(s.w.encounters.crow.visits.length,1);assert.equal(s.w.encounters.crow.arrivalBirdId,null);assert.equal(s.w.encounters.crow.lastHostile,false);
+   assert.equal(s.w.encounters.raptor.active,null);
+  }else{
+   assert.equal(s.w.encounters.raptor.active.targetBirdId,null);assert.equal(s.w.encounters.raptor.active.hostile,false);assert.equal(s.w.encounters.raptor.active.remainingMs,18000);
+   assert.equal(s.w.encounters.crow.visits.length,0);
+  }
+  assert.deepEqual({birds:s.w.birds,lifecycle:s.w.lifecycle,economy:s.w.economy,decor:s.w.decor,seed:s.w.seed},before);
+  assert.deepEqual(s.w.encounters.gardenFriends.attendees,[]);
+ }finally{s.close();}
 });

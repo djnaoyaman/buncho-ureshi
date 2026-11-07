@@ -92,3 +92,20 @@ test('install target follows separate-document game entry/exit, Back/Forward and
   expect(await page.evaluate(() => localStorage.getItem('install-test-preserved'))).toBe('saved');
   expect(errors).toEqual([]);
 });
+
+test('approved install artwork remains visible at phone icon sizes and under a circular mask', async ({ page, request }, testInfo) => {
+  await page.goto('game/');
+  const { manifest, manifestURL } = await checkInstall(page, request, true);
+  const icons = [
+    { src: new URL('game-icons/apple-touch-icon-v1.png', manifestURL).href, label: 'Apple 180' },
+    ...manifest.icons.map(icon => ({ src: new URL(icon.src, manifestURL).href, label: `${icon.sizes} ${icon.purpose}`, mask: icon.purpose === 'maskable' })),
+  ];
+  await page.setContent(`<html><body style="margin:24px;background:#eee;color:#222;font:16px sans-serif"><h1>Existing approved game title artwork</h1><main style="display:flex;gap:24px;flex-wrap:wrap">${icons.map(icon => `<section><h2>${icon.label}</h2>${[60, 120, 180].map(size => `<img alt="${icon.label} at ${size}px" src="${icon.src}" width="${size}" height="${size}" style="display:block;margin:12px 0;${icon.mask ? 'border-radius:50%' : 'border-radius:20%'}">`).join('')}</section>`).join('')}</main></body></html>`);
+  await page.locator('img').evaluateAll(images => Promise.all(images.map(image => image.decode())));
+  for (const image of await page.locator('img').all()) {
+    expect(await image.evaluate(element => element.naturalWidth)).toBeGreaterThan(0);
+  }
+  const path = testInfo.outputPath('install-icons-small-and-masked.png');
+  await page.screenshot({ path, fullPage: true });
+  await testInfo.attach('install-icons-small-and-masked', { path, contentType: 'image/png' });
+});
