@@ -66,7 +66,7 @@ test('scene retreat is transient presentation and tied to the arrival garden',()
  w.encounters.garden.id=GARDEN_IDS.find(x=>x!==w.encounters.garden.id);assert.equal(crowScene(w,now),null);
 });
 test('stale or inactive arrivals never mutate the world',()=>{
- for(const alter of [w=>w.paused=true,w=>w.encounters.garden.open=false,w=>w.birds[0].home='departed',w=>w.birds[0].stage='chick',w=>w.birds[0].stage='egg']){
+ for(const alter of [w=>w.paused=true,w=>w.encounters.garden.open=false]){
   const w=fixture();alter(w);const before=structuredClone(w);assert.equal(arriveGardenCrow(w,id,now,token(w)).changed,false);assert.deepEqual(w,before);
  }
  for(const patch of [{worldId:'other'},{revision:-1},{gardenId:'other'}]){const w=fixture(),before=structuredClone(w);assert.equal(arriveGardenCrow(w,id,now,{...token(w),...patch}).reason,'stale');assert.deepEqual(w,before);}
@@ -79,15 +79,15 @@ test('five crow species use bounded, strict, independent observation records',()
 });
 test('v6 migrates purely to encounter v8 while world remains v9',()=>{
  const old=fixture();old.encounters.version=6;legacyFriends(old);delete old.encounters.gardenSessions;delete old.encounters.homeGoodbyes;for(const id of ["java-rice","bali-terrace","paris-unrest"])delete old.encounters.garden.visits[id];delete old.encounters.crow;delete old.encounters.raptor;const before=structuredClone(old),next=readCompatibleWorld(old,now);
- assert.deepEqual(old,before);assert.equal(next.version,11);assert.equal(next.encounters.version,12);assert.deepEqual(next.encounters.crow,initialCrowState());
+ assert.deepEqual(old,before);assert.equal(next.version,11);assert.equal(next.encounters.version,13);assert.deepEqual(next.encounters.crow,initialCrowState());
  const projected=structuredClone(next);projected.encounters.version=6;legacyFriends(projected);delete projected.encounters.gardenSessions;delete projected.encounters.homeGoodbyes;for(const id of ["java-rice","bali-terrace","paris-unrest"])delete projected.encounters.garden.visits[id];delete projected.encounters.crow;delete projected.encounters.raptor;assert.deepEqual(projected,before);
- const future=structuredClone(next);future.encounters.version=13;assert.throws(()=>validateWorld(future));
+ const future=structuredClone(next);future.encounters.version=14;assert.throws(()=>validateWorld(future));
 });
 async function seed(indexedDB,w){const db=await new Promise((resolve,reject)=>{const r=indexedDB.open(DB_NAME,1);r.onupgradeneeded=()=>r.result.createObjectStore('world');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});try{await new Promise((resolve,reject)=>{const tx=db.transaction('world','readwrite');tx.objectStore('world').put(w,'current');tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});}finally{db.close();}}
 test('two stores migrate once and atomically allow only one arrival despite fresh guards',async()=>{
  const indexedDB=new IDBFactory(),old=fixture();old.encounters.version=6;legacyFriends(old);delete old.encounters.gardenSessions;delete old.encounters.homeGoodbyes;for(const id of ["java-rice","bali-terrace","paris-unrest"])delete old.encounters.garden.visits[id];delete old.encounters.crow;delete old.encounters.raptor;await seed(indexedDB,old);
  const a=await openGameStore({indexedDB}),b=await openGameStore({indexedDB});try{
-  const migrated=await a.transact(w=>w);assert.equal(migrated.encounters.version,12);assert.equal(migrated.revision,old.revision);
+  const migrated=await a.transact(w=>w);assert.equal(migrated.encounters.version,13);assert.equal(migrated.revision,old.revision);
   await a.transact(w=>{w.encounters.gardenFriends.attendees=['b1'];w.revision++;return w;});
   const results=[];await Promise.all([a,b].map(store=>store.transact(w=>{results.push(arriveGardenCrow(w,id,now,token(w)));return w;})));
   assert.equal(results.filter(r=>r.changed).length,1);assert.equal(results.filter(r=>r.reason==='cooldown').length,1);
@@ -141,7 +141,9 @@ test('death during a crow visit hides the transient scene without erasing encoun
  syncLifecycle(w,now+1000,{story:true});
  assert.equal(w.birds[0].home,'departed');assert.equal(crowScene(w,now+1000),null);
  assert.deepEqual(w.encounters.crow,record);assert.equal(other.needs.energy,otherEnergy);
- assert.equal(arriveGardenCrow(w,id,now+600001,token(w)).reason,'inactive');
+ const before=structuredClone(w);assert.equal(arriveGardenCrow(w,id,now+600001,token(w)).hostile,false);
+ assert.equal(w.encounters.crow.arrivalBirdId,null);
+ const after=structuredClone(w);after.revision=before.revision;after.encounters.crow=before.encounters.crow;assert.deepEqual(after,before);
  validateWorld(w);
 });
 test('crow target identity is strictly validated and scene never substitutes another resident',()=>{

@@ -46,7 +46,7 @@ for(const size of [{width:320,height:568},{width:390,height:844},{width:844,heig
 });
 for(const kind of ['queue','active','completed'])test(`legacy switched-away ${kind} migrates through real IndexedDB and browser reload`,async({page})=>{
  const {w,id}=seed(kind),original=structuredClone(w.encounters.active);w.encounters.version=10;useLegacyGardenFriends(w);delete w.encounters.gardenSessions;w.encounters.garden.id='mizukagami';w.encounters.garden.scene='water';
- await start(page,{width:390,height:844},w);const saved=await record(page);expect(saved.encounters.version).toBe(12);expect(saved.encounters.queue).toEqual([]);expect(saved.encounters.active).toBeNull();expect(saved.encounters.gardenSessions.find(s=>s.gardenId==='komugi').active).toEqual(original);
+ await start(page,{width:390,height:844},w);const saved=await record(page);expect(saved.encounters.version).toBe(13);expect(saved.encounters.queue).toEqual([]);expect(saved.encounters.active).toBeNull();expect(saved.encounters.gardenSessions.find(s=>s.gardenId==='komugi').active).toEqual(original);
  await observe(page,'water');expect((await record(page)).encounters.queue).toHaveLength(1);await garden(page,'komugi');await expect(page.locator('.finch-garden-visitor')).toHaveAttribute(kind==='completed'?'data-encounter-page':'data-encounter-open',id);
  await page.reload();await outdoors(page);await expect(page.locator('.finch-garden-visitor')).toHaveAttribute(kind==='completed'?'data-encounter-page':'data-encounter-open',id);
  const after=await record(page);expect(after.encounters.discoveries).toEqual(w.encounters.discoveries);expect(after.decor).toEqual(w.decor);expect(after.birds).toEqual(w.birds);expect(after.seed).toBe(w.seed);

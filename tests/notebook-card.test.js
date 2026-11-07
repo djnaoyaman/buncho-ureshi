@@ -57,3 +57,11 @@ test('reading survives same-bird refresh, photo toggle, host replacement and key
  panel.entry(system.catalog[1].id);assert.equal(root.querySelector('[data-notebook-reading]'),null);panel.entry(entry.id);assert.ok([...root.querySelectorAll('[data-notebook-reading]')].every(d=>!d.open));
  open();w=createWorld(now+1);panel.refresh();assert.equal(root.querySelector('.finch-record-card'),null);panel.destroy();
 });
+
+test('same-bird source links retain keyboard focus and scroll after refresh and host replacement',t=>{
+ const w=seed(),win=new Window(),root=win.document.createElement('div');win.document.body.append(root);
+ const panel=mountEncounterPanel(root,{system,getWorld:()=>w,transact:async fn=>fn(w)});t.after(()=>panel.destroy());panel.entry(entry.id);
+ const sources=root.querySelector('[data-notebook-reading=sources]');sources.open=true;const link=sources.querySelector('a[href]'),href=link.getAttribute('href');link.focus();root.scrollTop=100;
+ w.revision++;panel.refresh();assert.equal(win.document.activeElement.getAttribute('href'),href);assert.equal(root.scrollTop,100);assert.equal(root.querySelector('[data-notebook-reading=sources]').open,true);
+ win.document.dispatchEvent(new win.CustomEvent('buncho-game-will-render'));root.replaceChildren();panel.refresh();assert.equal(win.document.activeElement.getAttribute('href'),href);assert.equal(root.scrollTop,100);
+});

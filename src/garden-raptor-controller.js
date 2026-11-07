@@ -21,10 +21,10 @@ export function mountGardenRaptors(root,{getWorld,transact,onChange=()=>{},isAva
   if(flight){schedule();return;}
   const active=w.encounters.raptor?.active;
   const stage=root.querySelector('.finch-garden-stage');
-  const eligible=!!raptorTarget(w)&&w.encounters.garden.open&&!!stage&&stage.dataset.sceneState==='ready'&&!doc.querySelector('.game-bird-sheet[open]');
+  const eligible=w.encounters.garden.open&&!!stage&&stage.dataset.sceneState==='ready'&&!doc.querySelector('.game-bird-sheet[open]');
   const entry=earlyPredatorVisits?entryClock.sample({key:`${w.worldId}:${w.encounters.garden.id}:${raptorTarget(w)?.id}`,now,eligible,available:!active&&isAvailable()&&!hasCrowPending()&&!crowScene(w)&&!root.querySelector('[data-crow-phase=warning]'),crowAvailable:!!startCrowWarning&&canStartCrowWarning(),raptorAvailable:!raptorCoolingDown(w),gardenId:w.encounters.garden.id}):null;
   if(entry?.kind==='crow')startCrowWarning(entry.id);
-  const sustained=clock.sample({key:`${w.worldId}:${w.encounters.garden.id}:${raptorTarget(w)?.id}`,now,eligible,available:!entry&&!active&&!raptorCoolingDown(w)&&isAvailable()&&!hasCrowPending()&&!crowScene(w)&&!root.querySelector('[data-crow-phase=warning]'),gardenId:w.encounters.garden.id});
+  const sustained=clock.sample({key:`${w.worldId}:${w.encounters.garden.id}:${raptorTarget(w)?.id}`,now,eligible,busy:!isAvailable(),available:!entry&&!active&&!raptorCoolingDown(w)&&!hasCrowPending()&&!crowScene(w)&&!root.querySelector('[data-crow-phase=warning]'),gardenId:w.encounters.garden.id});
   const event=entry?.kind==='raptor'?{kind:'arrive',id:entry.id}:sustained;
   if(active||event?.kind==='arrive'){
    if(active&&(delta<=0||delta>2500)){schedule();return;}
@@ -53,7 +53,7 @@ export function mountGardenRaptors(root,{getWorld,transact,onChange=()=>{},isAva
  const viewChanged=event=>{if(event.type==='buncho-game-garden'){if(event.detail?.gardenId===lastGarden)return;lastGarden=event.detail?.gardenId;}else if(event.type==='buncho-game-panel'){if(event.detail===lastPanel)return;lastPanel=event.detail;}else if(event.detail?.mode==='garden')return;if(!getWorld().encounters.raptor?.active)interrupt();};
  const modalObserver=win.MutationObserver?new win.MutationObserver(records=>{if(!getWorld().encounters.raptor?.active&&records.some(r=>r.target.matches?.('.game-bird-sheet')))interrupt();}):null;
  // Begin at actual ready visibility rather than adding a whole polling second.
- const primeEntry=()=>{const w=getWorld();entryClock.prime({key:`${w.worldId}:${w.encounters.garden.id}:${raptorTarget(w)?.id}`,now:win.performance.now(),eligible:visible()&&!!raptorTarget(w)&&w.encounters.garden.open&&!!root.querySelector('.finch-garden-stage[data-scene-state=ready]')&&!doc.querySelector('.game-bird-sheet[open]')});};
+ const primeEntry=()=>{const w=getWorld();entryClock.prime({key:`${w.worldId}:${w.encounters.garden.id}:${raptorTarget(w)?.id}`,now:win.performance.now(),eligible:visible()&&w.encounters.garden.open&&!!root.querySelector('.finch-garden-stage[data-scene-state=ready]')&&!doc.querySelector('.game-bird-sheet[open]')});};
  const readyObserver=win.MutationObserver?new win.MutationObserver(primeEntry):null;
  readyObserver?.observe(root,{subtree:true,childList:true,attributes:true,attributeFilter:['data-scene-state']});primeEntry();
  if(doc.documentElement)modalObserver?.observe(doc.documentElement,{subtree:true,attributes:true,attributeFilter:['open']});
