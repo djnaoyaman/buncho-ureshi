@@ -17,10 +17,11 @@ async function ready(page, width, elect=true) {
 
 async function optIn(page){
  await page.locator('[data-garden-details="companions"]>summary').click();
+ await page.locator('[data-garden-accompany="true"]').click();
  await page.locator('[data-garden-companion="b1"]').click();
  await expect(page.locator('[data-garden-companion="b1"]')).toHaveAttribute('aria-pressed','true');
- await page.locator('[data-garden-accompany]').click();
- await expect(page.locator('[data-garden-accompany]')).toHaveAttribute('aria-pressed','true');
+ await page.locator('[data-garden-companions-save]').click();
+ await expect(page.locator('.finch-companion-feedback')).toContainText('覚えたよ');
  await page.locator('[data-garden-details="companions"]>summary').click();
  await page.locator('[data-game-close-panel]').click();
  await expect(page.locator('.game-panel-overlay')).not.toBeVisible();
@@ -126,11 +127,11 @@ for (const width of [320,390]) for (const garden of ['komorebi','mizukagami']) t
 for(const width of [320,390])test(`family attendance is optional and changes only on the next outing ${width}`,async({page})=>{
  await ready(page,width,false);await expect(page.locator('[data-garden-household]')).toHaveCount(0);
  await page.locator('[data-garden-details="companions"]>summary').click();
- await page.locator('[data-garden-companion="b1"]').click();await expect(page.locator('[data-garden-companion="b1"]')).toHaveAttribute('aria-pressed','true');
- await page.locator('[data-garden-accompany]').click();await expect(page.locator('[data-garden-accompany]')).toHaveAttribute('aria-pressed','true');
+ await page.locator('[data-garden-accompany="true"]').click();await page.locator('[data-garden-companion="b1"]').click();await expect(page.locator('[data-garden-companion="b1"]')).toHaveAttribute('aria-pressed','true');
+ await page.locator('[data-garden-companions-save]').click();await expect(page.locator('.finch-companion-feedback')).toContainText('覚えたよ');
  await expect(page.locator('[data-garden-household]')).toHaveCount(0);
  await page.locator('[data-garden-details="companions"]>summary').click();await page.locator('[data-game-close-panel]').click();await expect(page.locator('.game-panel-overlay')).not.toBeVisible();await page.locator('[data-game-panel=outdoors]').click();await expect(page.locator('[data-garden-household="b1"]')).toBeVisible();
- await page.locator('[data-garden-details="companions"]>summary').click();await page.locator('[data-garden-accompany]').click();await expect(page.locator('[data-garden-accompany]')).toHaveAttribute('aria-pressed','false');
+ await page.locator('[data-garden-details="companions"]>summary').click();await page.locator('[data-garden-accompany="false"]').click();await page.locator('[data-garden-companions-save]').click();await expect(page.locator('.finch-companion-feedback')).toContainText('覚えたよ');
  await expect(page.locator('[data-garden-household="b1"]')).toBeVisible();
  await page.locator('[data-garden-details="companions"]>summary').click();await page.locator('[data-garden-select="mizukagami"]').click();await expect(page.locator('[data-garden-household="b1"]')).toBeVisible();
  await page.locator('[data-game-close-panel]').click();await expect(page.locator('.game-panel-overlay')).not.toBeVisible();await page.locator('[data-game-panel=outdoors]').click();await expect(page.locator('[data-garden-household]')).toHaveCount(0);
