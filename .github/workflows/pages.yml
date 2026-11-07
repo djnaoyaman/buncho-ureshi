@@ -40,6 +40,8 @@ jobs:
         run: npx playwright test tests/browser/health-notebook.spec.js tests/browser/life-care.spec.js --project=chrome --project=webkit --retries=0 --output=health-test-results
       - name: Settings switch notebook, keyboard focus and persistent music
         run: npx playwright test tests/browser/settings-switchbook.spec.js --project=chrome --project=webkit --retries=0 --output=settings-test-results
+      - name: Approved menu icons, every destination and unchanged saves
+        run: npx playwright test tests/browser/life-menu-icons.spec.js --project=chrome --project=webkit --retries=0 --output=menu-test-results
       - name: Independent garden visits, legacy saves and notebook resume
         run: npx playwright test tests/browser/garden-visits.spec.js --project=chrome --project=webkit --retries=0
       - name: Hidden bird search hints, narrow screens and unchanged saves
@@ -70,6 +72,7 @@ jobs:
             trial-test-results/
             health-test-results/
             settings-test-results/
+            menu-test-results/
             editorial-test-results/
             search-test-results/
           retention-days: 14
@@ -84,6 +87,12 @@ jobs:
         with:
           name: settings-a-screenshots-${{ github.sha }}
           path: settings-test-results/**/*.png
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: approved-menu-screenshots-${{ github.sha }}
+          path: menu-test-results/**/*.png
           retention-days: 14
       - uses: actions/upload-pages-artifact@v3
         if: github.ref == 'refs/heads/main'
