@@ -1,5 +1,5 @@
 import {test,expect} from '@playwright/test';
-import {createWorld,createBird,validateWorld} from '../../src/engine.js';
+import {createWorld,createBird,validateWorld,renameBird} from '../../src/engine.js';
 import {familyLayout} from '../../src/family-layout.js';
 const now=Date.UTC(2026,10,3,12),dbName='buncho-ureshi-garden-v1';
 async function record(page,world){return page.evaluate(({dbName,world})=>new Promise((resolve,reject)=>{const open=indexedDB.open(dbName,1);open.onupgradeneeded=()=>open.result.createObjectStore('world');open.onerror=()=>reject(open.error);open.onsuccess=()=>{const db=open.result,tx=db.transaction('world',world?'readwrite':'readonly'),store=tx.objectStore('world'),req=world?store.put(world,'current'):store.get('current');tx.oncomplete=()=>{db.close();resolve(req.result)};tx.onerror=()=>{db.close();reject(tx.error)}}}),{dbName,world});}
@@ -65,7 +65,7 @@ for(const kind of ['single','pair-children','generations'])test(`${kind}: compac
 
 test('same-name relatives remain distinct through keyboard, roster and zoom limits',async({page},info)=>{
  await page.addInitScript(n=>{Date.now=()=>n;localStorage.setItem('buncho.music.v1',JSON.stringify({enabled:false}));localStorage.setItem('buncho.care-sound-choice.v1',JSON.stringify({explicit:true,enabled:false}));},now);
- await page.setViewportSize({width:390,height:680});await page.goto('');const original=fixture('pair-children');original.birds[1].name=original.birds[0].name;await record(page,original);await page.goto('game/');await openFamily(page);const baseline=await record(page);
+ await page.setViewportSize({width:390,height:680});await page.goto('');const original=fixture('pair-children');renameBird(original,'b2',original.birds[0].name);expect(validateWorld(original).worldId).toBe(original.worldId);await record(page,original);await page.goto('game/');await openFamily(page);const baseline=await record(page);
  const selected=()=>page.locator('.game-family-node[aria-pressed="true"]');
  await expect(selected()).toHaveAttribute('data-family-focus','b1');
  const partner=page.locator('.game-family-node[data-family-focus="b2"]');await partner.focus();await page.keyboard.press('Space');await expect(selected()).toHaveAttribute('data-family-focus','b2');await expect(partner).toBeFocused();
