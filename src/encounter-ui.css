@@ -312,3 +312,13 @@ body[data-world="buncho"] .finch-entry.finch-predator-record .finch-predator-rel
 body[data-world="buncho"] .finch-entry.finch-predator-record .finch-predator-pet{margin:20px 0 12px;text-align:left}
 body[data-world="buncho"] .finch-entry.finch-predator-record .finch-predator-pet small{display:block;font-size:.8rem;line-height:1.8;margin-top:10px}
 body[data-world="buncho"] .finch-entry.finch-predator-record>.finch-route-actions{border-top:0;padding:0}
+
+/* Approved garden C: a narrow bookmark of the same five observation choices. */
+body[data-world="buncho"] .finch-garden .finch-garden-dock>.finch-observe-menu[open]{left:auto;right:0;width:min(100%,26rem);max-height:min(55dvh,360px);padding:14px;background:#f8efdb;border:1px solid #304f45;border-radius:18px;box-shadow:0 6px 18px #304f4526}
+body[data-world="buncho"] .finch-garden .finch-observe-menu .finch-bookmark-title{font-weight:700;font-size:1.05rem;line-height:1.4;margin:4px 0 12px;color:#304f45}
+body[data-world="buncho"] .finch-garden .finch-observe-menu .finch-garden-actions{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;padding:0;overflow:visible;scroll-snap-type:none}
+body[data-world="buncho"] .finch-garden .finch-observe-menu .finch-garden-actions button{display:flex;align-items:center;gap:8px;width:100%;min-width:0;min-height:44px;margin:0;padding:11px 14px;text-align:left;background:#fffcf5;border:0;border-radius:16px;box-shadow:none;color:#304f45;font-size:.9rem;font-weight:700;line-height:1.5;white-space:normal}
+body[data-world="buncho"] .finch-garden .finch-observe-menu .finch-garden-actions button[aria-pressed=true]{background:#f7dc8d;color:#304f45}
+body[data-world="buncho"] .finch-garden .finch-observe-menu .finch-bookmark-check{flex:0 0 1em;text-align:center}
+body[data-world="buncho"] .finch-garden .finch-observe-menu .finch-bookmark-next{margin-left:auto;padding-left:8px}
+body[data-world="buncho"] .finch-garden .finch-observe-menu .finch-garden-actions button:disabled{opacity:.65;cursor:default}
