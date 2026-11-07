@@ -25,6 +25,7 @@ for(const size of [{width:320,height:568},{width:390,height:844},{width:844,heig
   const card=page.locator(`[data-encounter-page="${id}"]`);await card.focus();await page.keyboard.press("Enter");
   await expect(page.locator(".finch-mystery-postcard h3")).toBeFocused();
   await expect(page.locator('.finch-mystery-postcard')).toHaveCSS('background-color','rgb(255, 252, 245)');const landscape=page.locator('.finch-mystery-landscape');await landscape.evaluate(img=>img.decode());await expect(landscape).toHaveAttribute('alt','');await expect(page.locator('.finch-mystery-stamp .finch-art')).toHaveAttribute('alt','');await expect(page.locator('.finch-mystery-stamp .finch-art')).toHaveCSS('filter','brightness(0)');
+  expect(await page.locator('.finch-mystery-picture').evaluate(el=>{const p=el.parentElement.getBoundingClientRect(),b=el.getBoundingClientRect();return b.left>=p.left&&b.right<=p.right;})).toBe(true);
   await page.keyboard.press('Tab');await expect(page.locator('[data-finch-go-garden]')).toBeFocused();await page.keyboard.press('Tab');await expect(page.locator('[data-encounter-back]')).toBeFocused();
   await page.locator('.finch-mystery-postcard h3').scrollIntoViewIfNeeded();
   await page.screenshot({path:info.outputPath(`postcard-${id}-${size.width}.png`),fullPage:true});
