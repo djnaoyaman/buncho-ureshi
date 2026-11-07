@@ -690,7 +690,7 @@ function validateVersion(input, version) {
   }
   if(version>=5)validateCareSchedule(w.careSchedule);
   const legacyHomeLimits=version<6||w.encounters.version<6;
-  if(version>=6){validateEncounterState(w.encounters,w.tick);upgradeEncounterState(w.encounters);if([...w.encounters.gardenFriends.attendees,...w.encounters.gardenFriends.companions,...w.encounters.gardenFriends.references.map(r=>r.birdId)].some(id=>!ref(id)))fail('庭の同行と友達の情報が不正です。');if(w.encounters.homeGoodbyes.some(g=>!ref(g.birdId)))fail('お友達のお見送り情報が不正です。');if(w.encounters.raptor?.active&&!ref(w.encounters.raptor.active.targetBirdId))fail('猛禽と会った文鳥の情報が不正です。');if(w.encounters.crow?.arrivalBirdId&&!ref(w.encounters.crow.arrivalBirdId))fail('カラスと会った文鳥の情報が不正です。');}
+  if(version>=6){validateEncounterState(w.encounters,w.tick);upgradeEncounterState(w.encounters);if([...w.encounters.gardenFriends.attendees,...w.encounters.gardenFriends.companions,...w.encounters.gardenFriends.references.map(r=>r.birdId)].some(id=>!ref(id)))fail('庭の同行と友達の情報が不正です。');if(w.encounters.homeGoodbyes.some(g=>!ref(g.birdId)))fail('お友達のお見送り情報が不正です。');if(w.encounters.raptor?.active&&w.encounters.raptor.active.targetBirdId!==null&&!ref(w.encounters.raptor.active.targetBirdId))fail('猛禽と会った文鳥の情報が不正です。');if(w.encounters.crow?.arrivalBirdId&&!ref(w.encounters.crow.arrivalBirdId))fail('カラスと会った文鳥の情報が不正です。');}
   if(version>=7){
    validateEconomy(w.economy);
    if(w.economy.firstMeetingClaimed.some(id=>!w.encounters.discoveries.some(d=>d.id===id)))fail('初出会いの記録が不正です。');
