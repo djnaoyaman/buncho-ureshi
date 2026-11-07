@@ -29,3 +29,7 @@
 ## 検証境界
 
 純粋な時間計算、保存互換、0エネルギー、友達と家族の保持、2タブ、親しみ100、画面遷移、失敗した保存、連続なで、キーボード、非表示の割り込みを単体・DOMテストで検査。実Chrome/WebKitの画面・同じ足元・320px/短い横画面・影を見て戻る流れは専用CIで検証し、結果確定前に公開済みとはしません。
+
+## Visits without the protagonist
+
+Encounter schema 13 permits a saved null `arrivalBirdId` with `lastHostile:false`. Crows can arrive even while the protagonist stays home, has died or is too young to attend. These visits change no household energy, do not invent a comparison bird, and do not acquire a target if an attendee appears later. The existing 18-second visiting / 45-second retreat phases and ten-minute shared cooldown remain unchanged. Old targeted scenes, old-schema validation and saved history are preserved. Only an actually attending protagonist can receive the existing energy loss; other family birds and garden NPCs are not substitute victims.

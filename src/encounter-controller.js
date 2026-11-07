@@ -238,7 +238,7 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
   }
   function crowEligible(requireReady=true){
     const w=getWorld();
-    return !w.encounters.raptor?.active&&!!crowTarget(w)&&alive&&mode==='garden'&&root.isConnected&&doc.visibilityState!=='hidden'&&win?.navigator?.onLine!==false&&!w.paused&&w.encounters.garden.open&&!doc.querySelector('.game-bird-sheet[open]')&&!!root.querySelector('.finch-garden-stage')&&(!requireReady||root.querySelector('.finch-garden-stage').dataset.sceneState==='ready');
+    return !w.encounters.raptor?.active&&alive&&mode==='garden'&&root.isConnected&&doc.visibilityState!=='hidden'&&win?.navigator?.onLine!==false&&!w.paused&&w.encounters.garden.open&&!doc.querySelector('.game-bird-sheet[open]')&&!!root.querySelector('.finch-garden-stage')&&(!requireReady||root.querySelector('.finch-garden-stage').dataset.sceneState==='ready');
   }
   function canStartCrowWarning(){
     return crowEligible()&&!busy&&!crowFlight&&!crowClock.warning&&!crowCoolingDown(getWorld());
