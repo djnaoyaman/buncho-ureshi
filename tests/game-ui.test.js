@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { Window } from 'happy-dom';
 import { IDBFactory } from 'fake-indexeddb';
 import { mountGame } from '../src/game.js';
+import { mountGameMusic } from '../src/game-music-ui.js';
 import { openGameStore, DB_NAME } from '../src/game-store.js';
 import { arriveGardenRaptor, raptorToken } from '../src/garden-raptors.js';
 import { SAVE_VERSION, createWorld, renameBird, serializeWorld, bumpRevision, adoptBird, advanceTicks } from '../src/engine.js';
@@ -595,4 +596,16 @@ test('settings A keeps native switches, visible state and all existing managemen
  const after=await rawWorld(f.indexedDB);assert.deepEqual(after.birds,initial.birds);assert.deepEqual({...after.economy,seenAt:0},{...initial.economy,seenAt:0});assert.deepEqual(after.decor,initial.decor);assert.equal(after.settings.motion,!oldMotion);assert.equal(after.settings.careSound,!before);
  f.root.querySelector('[data-game-close-panel]').click();f.settings();assert.equal(select('[data-game-care-sound]').checked,!before);assert.equal(select('[data-game-motion]').checked,!oldMotion);assert.equal(f.root.querySelectorAll('.game-switch-card').length,2);
  select('[data-game-action=pause]').click();await until(()=>select('[data-game-time-state]').textContent.includes('のんびり進行中'),'resume status');select('[data-game-action=pause]').click();await until(()=>select('[data-game-time-state]').textContent.includes('一時停止中'),'paused status');
+});
+
+test('settings switch focus survives the real music shell leaving and rejoining the panel',async t=>{
+ const f=await fixture(t),d=f.window.document;f.root.id='game-root';f.window.localStorage.setItem('buncho.music.v1',JSON.stringify({enabled:false}));const host=d.createElement('div');host.dataset.gameTitleSlot='';d.body.prepend(host);
+ const disposeMusic=mountGameMusic(host,{document:d,window:f.window});
+ try{await f.mount();f.settings();const shell=f.root.querySelector('.game-music');assert.ok(shell);
+  for(const selector of ['[data-game-care-sound]','[data-game-motion]','[data-game-care-sound]','[data-game-motion]']){
+   const old=f.root.querySelector(selector),before=old.checked;old.focus();old.click();
+   await until(()=>f.root.querySelector(selector)!==old&&f.root.querySelector(selector).checked===!before,'switch committed and repainted');
+   assert.equal(d.activeElement===f.root.querySelector(selector),true,'the toggled switch keeps focus');assert.equal(f.root.querySelector('.game-music')===shell,true);assert.equal(d.querySelectorAll('.game-music').length,1);
+  }
+ }finally{disposeMusic();}
 });
