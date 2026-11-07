@@ -21,8 +21,15 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
  const syncCrowContext=w=>{const key=`${w.worldId}:${w.encounters.garden.id}:${crowTarget(w)?.id}`;if(key!==crowContext){stopCrow();crowContext=key;}return key;};
   const doc=root.ownerDocument,win=doc.defaultView;
   const media=mountEncounterMedia(root);
-  let hostCatalogScroll=null,hostGardenScroll=null;
+  let hostCatalogScroll=null,hostGardenScroll=null,hostEntryReading=null,renderedReadingKey=null;
+  const entryReading=()=>{
+    const card=root.querySelector('.finch-record-card');if(!card||!renderedReadingKey)return null;
+    const active=doc.activeElement,reading=active?.closest?.('details[data-notebook-reading]');
+    const focused=reading&&card.contains(reading)?{section:reading.dataset.notebookReading,summary:active.matches('summary'),href:active.matches('a[href]')?active.getAttribute('href'):null,index:[...reading.querySelectorAll('a[href]')].indexOf(active)}:null;
+    return {key:renderedReadingKey,open:[...card.querySelectorAll('details[data-notebook-reading][open]')].map(d=>d.dataset.notebookReading),focused,scroll:root.scrollTop};
+  };
   const rememberCatalog=()=>{
+    hostEntryReading=entryReading();
     const catalog=root.querySelector('.finch-catalog');hostCatalogScroll=catalog?{view:renderedView,top:catalog.scrollTop}:null;
     // The game replaces its overlay before calling refresh(). Capture the
     // inner dock while it is still attached; reading after reattachment is
@@ -55,6 +62,8 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
     const oldScroll=oldSelector?.scrollLeft, oldSelected=oldSelector?.querySelector('[aria-current=page]')?.dataset.gardenSelect;
     if(w.worldId!==worldId){worldId=w.worldId;generation++;busy=false;mode='notebook';pageId=null;notice='';}
     const focused=doc.activeElement,companionFocus=focused?.closest?.('.finch-companion-settings')?(focused.hasAttribute('data-garden-companion')?['data-garden-companion',focused.dataset.gardenCompanion]:focused.hasAttribute('data-garden-accompany')?['data-garden-accompany',focused.dataset.gardenAccompany]:focused.hasAttribute('data-garden-companions-save')?['data-garden-companions-save',null]:focused.hasAttribute('data-companion-summary')?['data-companion-summary',null]:null):null;
+    const nextReadingKey=mode==='entry'?`${w.worldId}:${pageId}`:null,priorReading=hostEntryReading||entryReading();
+    const savedReading=priorReading?.key===nextReadingKey?priorReading:null;hostEntryReading=null;renderedReadingKey=nextReadingKey;
     media.preserve();
     root.innerHTML=(mode==='raptors'?renderRaptorNotebook(w,{base,id:pageId}):mode==='crows'?renderCrowNotebook(w,{base,id:pageId}):mode==='event'?renderEncounterScene(w,{system,base}):mode==='garden'?renderFinchGarden(w,{system,base,selectedBirdId:getSelectedBirdId(),crowWarning:crowClock.warning,companionDraft,companionMessage}):mode==='entry'?renderEncounterPage(w,pageId,{system,base,showPhoto}):renderEncounterNotebook(w,{system,base}))+`<p class="finch-notice" role="status">${escape(notice)}</p><button type="button" class="finch-media-retry" data-media-retry hidden>絵をもう一度読み込む</button>`;
     const selector=root.querySelector('.finch-garden-selector');
@@ -86,7 +95,8 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
       for(const detail of details)if(oldDetails.has(detail.dataset.gardenDetails))detail.open=true;
       for(const detail of details)if(oldDetails.has(detail.dataset.gardenDetails))detail.scrollTop=oldDetails.get(detail.dataset.gardenDetails);
     }
-    root.scrollTop=oldEntryScroll;
+    if(savedReading){for(const detail of root.querySelectorAll('details[data-notebook-reading]'))detail.open=savedReading.open.includes(detail.dataset.notebookReading);if(!focus&&savedReading.focused)for(const detail of root.querySelectorAll('details[data-notebook-reading]'))if(detail.dataset.notebookReading===savedReading.focused.section){const remembered=savedReading.focused,links=[...detail.querySelectorAll('a[href]')],target=remembered.summary?detail.querySelector('summary'):links[remembered.index]?.getAttribute('href')===remembered.href?links[remembered.index]:links.find(a=>a.getAttribute('href')===remembered.href);target?.focus({preventScroll:true});}}
+    root.scrollTop=savedReading?.scroll??oldEntryScroll;
     const catalog=root.querySelector('.finch-catalog');if(catalog)catalog.scrollTop=oldCatalogScroll||0;
     media.refresh();
     root.setAttribute('aria-busy',String(busy));

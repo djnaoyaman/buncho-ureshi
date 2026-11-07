@@ -66,10 +66,10 @@ for(const inCage of [false,true])for(const size of [[320,568],[390,844],[768,102
   if(await page.locator('.finch-notebook').isVisible())await page.locator(`[data-encounter-page="${id}"]`).click();
   await expect(page.locator('.finch-entry > h3')).toHaveText(system.catalog.find(e=>e.id===id).name,{timeout:800});
  }).toPass({timeout:10000,intervals:[100,250,500]});
- const summary=page.locator('.finch-summary');await expect(summary).toHaveCSS('background-color','rgba(0, 0, 0, 0)');await expect(summary).toHaveCSS('text-align','left');await expect(async()=>{await summary.scrollIntoViewIfNeeded();await expect(summary).toBeVisible();}).toPass({timeout:10000});
+ await page.locator('.finch-record-description>summary').click();const summary=page.locator('.finch-summary');await expect(summary).toHaveCSS('background-color','rgba(0, 0, 0, 0)');await expect(summary).toHaveCSS('text-align','left');await expect(async()=>{await summary.scrollIntoViewIfNeeded();await expect(summary).toBeVisible();}).toPass({timeout:10000});
  const spacing=await summary.evaluate(el=>el.getBoundingClientRect().top-el.previousElementSibling.getBoundingClientRect().bottom);expect(spacing).toBeGreaterThanOrEqual(19);
  for(const button of await page.locator('.finch-friendship-actions button,.finch-view-toggle button').all())await fits(button);
- for(const button of await page.locator('.finch-friendship-actions button').all())await expect(button).toHaveCSS('background-color','rgb(255, 253, 247)');
+ for(const button of await page.locator('.finch-friendship-actions button').all())await expect(button).toHaveCSS('background-color','rgb(255, 252, 245)');
  if(inCage){await expect(page.locator('[data-finch-go-home]')).toBeVisible();await expect(page.locator('[data-encounter-dismiss-cage]')).toBeVisible();}
  await expect(async()=>{await page.locator('.finch-friendship').scrollIntoViewIfNeeded();}).toPass({timeout:10000});await info.attach(`notebook-${size.join('x')}`,{body:await page.screenshot(),contentType:'image/png'});
  const before=protectedState(await record(page));await page.locator('[data-encounter-view=photo]').click();await expect(page.locator('.finch-photo')).toBeVisible();await page.locator('[data-encounter-view=art]').click();

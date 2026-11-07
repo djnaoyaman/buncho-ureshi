@@ -32,7 +32,7 @@ async function finish(page){
   const action=page.locator('[data-encounter-act]');await expect(action).toHaveAttribute('data-encounter-act',entry.steps[step].action);await action.click();
   if(step<entry.steps.length-1)await expect(page.locator('[data-encounter-act]')).toHaveAttribute('data-encounter-act',entry.steps[step+1].action);
  }
- await expect(page.locator('.finch-summary')).toBeVisible();
+ await page.locator('.finch-record-description>summary').click();await expect(page.locator('.finch-summary')).toBeVisible();
 }
 for(const size of [{width:320,height:568},{width:390,height:844},{width:844,height:390}])test(`independent garden visits, reload and notebook resume ${size.width}x${size.height}`,async({page})=>{
  const {w,id:a}=seed('active'),original=structuredClone(w.encounters.active);await start(page,size,w);
