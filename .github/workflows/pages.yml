@@ -36,12 +36,28 @@ jobs:
         run: npx playwright test tests/browser/cage-placement.spec.js --project=chrome --project=webkit --retries=0 --output=cage-test-results
       - name: Trial startup, actions and save integrity (actual Chrome)
         run: npx playwright test tests/browser/trial-smoke.spec.js tests/browser/care-gauges.spec.js tests/browser/owner-peek.spec.js tests/browser/full-stage.spec.js tests/browser/garden-social.spec.js tests/browser/garden-protagonist.spec.js tests/browser/garden-interaction.spec.js tests/browser/garden-selector-scroll.spec.js tests/browser/compact-music-settings.spec.js tests/browser/game-music.spec.js --project=chrome --retries=0 --output=trial-test-results
+      - name: Health notebook, independent clocks and saved hospital care
+        run: npx playwright test tests/browser/health-notebook.spec.js tests/browser/life-care.spec.js --project=chrome --project=webkit --retries=0 --output=health-test-results
+      - name: Settings switch notebook, keyboard focus and persistent music
+        run: npx playwright test tests/browser/settings-switchbook.spec.js --project=chrome --project=webkit --retries=0 --output=settings-test-results
+      - name: Approved menu icons, every destination and unchanged saves
+        run: npx playwright test tests/browser/life-menu-icons.spec.js --project=chrome --project=webkit --retries=0 --output=menu-test-results
       - name: Independent garden visits, legacy saves and notebook resume
         run: npx playwright test tests/browser/garden-visits.spec.js --project=chrome --project=webkit --retries=0
       - name: Hidden bird search hints, narrow screens and unchanged saves
-        run: npx playwright test tests/browser/encounter-search-hints.spec.js --project=chrome --project=webkit --retries=0
+        run: npx playwright test tests/browser/encounter-search-hints.spec.js --project=chrome --project=webkit --retries=0 --output=unseen-postcard-test-results
+      - name: Family companion cards, atomic preferences and current outing
+        run: npx playwright test tests/browser/companion-cards.spec.js --project=chrome --project=webkit --retries=0 --output=companion-test-results
       - name: Notebook card A, original photos and persistent friendship
         run: npx playwright test tests/browser/notebook-card.spec.js --project=chrome --project=webkit --retries=0 --output=notebook-card-test-results
+      - name: Predator card A, original portraits and readable sources
+        run: npx playwright test tests/browser/predator-catalog-layout.spec.js --project=chrome --project=webkit --retries=0 --output=predator-card-test-results
+      - name: Family portrait cards, responsive zoom and unchanged saves
+        run: npx playwright test --config=playwright.family-alignment.config.js --retries=0 --output=family-test-results
+      - name: Relationship cards A, directed feelings and unchanged saves
+        run: npx playwright test tests/browser/relationship-cards.spec.js --project=chrome --project=webkit --retries=0 --output=relationship-test-results
+      - name: Garden bookmark C, selection rows and scene visibility
+        run: npx playwright test tests/browser/garden-bookmarks.spec.js --project=chrome --project=webkit --retries=0 --output=garden-bookmark-test-results
       - name: Decoration guarantee, completion and save migration
         run: npx playwright test tests/browser/decor-guarantee.spec.js --project=chrome --project=webkit --retries=0
       - name: Child-friendly game help, ruby and disclosure panels
@@ -61,11 +77,38 @@ jobs:
           path: |
             playwright-report/
             test-results/
+            companion-test-results/
             cage-test-results/
             trial-test-results/
+            health-test-results/
+            settings-test-results/
+            menu-test-results/
             editorial-test-results/
             search-test-results/
             notebook-card-test-results/
+            unseen-postcard-test-results/
+            garden-bookmark-test-results/
+            predator-card-test-results/
+            relationship-test-results/
+            family-test-results/
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: health-a-screenshots-${{ github.sha }}
+          path: health-test-results/**/*.png
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: settings-a-screenshots-${{ github.sha }}
+          path: settings-test-results/**/*.png
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: approved-menu-screenshots-${{ github.sha }}
+          path: menu-test-results/**/*.png
           retention-days: 14
       - uses: actions/upload-pages-artifact@v3
         if: github.ref == 'refs/heads/main'

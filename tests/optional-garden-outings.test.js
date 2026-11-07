@@ -93,7 +93,7 @@ async function raw(indexedDB, value) {
 
 test('new worlds leave every family bird home by default, even with a saved selection', () => {
   const w = fresh();
-  assert.equal(w.encounters.version, 12);
+  assert.equal(w.encounters.version, 13);
   assert.equal(w.encounters.gardenFriends.version, 2);
   assert.equal(w.encounters.gardenFriends.accompany, false);
   assert.deepEqual(w.encounters.gardenFriends.attendees, []);
@@ -419,16 +419,18 @@ test('returning snapshots exclude cage guests and pending conversations without 
   assert.deepEqual(parseSave(serializeWorld(w)), w);
 });
 
-test('absent protagonists and attending nonprotagonists cannot attract predators or take household damage', () => {
+test('absent protagonists and attending nonprotagonists allow visits without household damage', () => {
   for (const otherAttends of [false, true]) {
     const w = fresh(), other = createBird(w, {home:'resident'});
     if (otherAttends) accompany(w, [other.id]);
     select(w);
-    const before = clone(w);
+    const before = protectedState(w);
     assert.equal(crowTarget(w), null); assert.equal(raptorTarget(w), null);
-    assert.equal(arriveGardenCrow(w, 'large-billed-crow', NOW, predatorGuard(w)).reason, 'inactive');
-    assert.equal(arriveGardenRaptor(w, 'black-kite', NOW, predatorGuard(w)).reason, 'inactive');
-    assert.deepEqual(w, before);
+    assert.equal(arriveGardenCrow(w, 'large-billed-crow', NOW, predatorGuard(w)).hostile, false);
+    assert.equal(w.encounters.crow.arrivalBirdId, null);
+    assert.equal(arriveGardenRaptor(w, 'black-kite', NOW+45000, predatorGuard(w)).hostile, false);
+    assert.equal(w.encounters.raptor.active.targetBirdId, null);
+    assert.deepEqual(protectedState(w), before);
     assert.deepEqual(attendees(w), otherAttends ? [other.id] : []);
   }
 });
@@ -436,12 +438,12 @@ test('absent protagonists and attending nonprotagonists cannot attract predators
 test('a selected protagonist is vulnerable only after departure and no other household bird is damaged', () => {
   const w = fresh(), other = createBird(w, {home:'resident'});
   select(w); accompany(w, ['b1', other.id]);
-  const absent = clone(w);
-  assert.equal(arriveGardenCrow(w, 'large-billed-crow', NOW, predatorGuard(w)).reason, 'inactive');
-  assert.deepEqual(w, absent);
+  const absent = protectedState(w);
+  assert.equal(arriveGardenCrow(w, 'large-billed-crow', NOW, predatorGuard(w)).hostile, false);
+  assert.deepEqual(protectedState(w), absent);
   leave(w); select(w);
   const energy = w.birds.map(b => b.needs.energy), before = protectedState(w);
-  assert.equal(arriveGardenCrow(w, 'large-billed-crow', NOW, predatorGuard(w)).hostile, true);
+  assert.equal(arriveGardenCrow(w, 'large-billed-crow', NOW+600000, predatorGuard(w)).hostile, true);
   assert.equal(w.birds[0].needs.energy, energy[0]/2);
   assert.equal(other.needs.energy, energy[1]);
   const expected = clone(before); expected.birds[0].needs.energy = energy[0]/2;
@@ -457,7 +459,7 @@ test('v11 migration preserves every old bond and preference, defaults to solo, a
   accompany(w); select(w);
   const old = legacyV11(w), before = clone(old), migrated = readCompatibleWorld(old, NOW);
   assert.deepEqual(old, before);
-  assert.equal(migrated.encounters.version, 12);
+  assert.equal(migrated.encounters.version, 13);
   assert.equal(migrated.revision, old.revision);
   assert.equal(migrated.version, old.version);
   assert.deepEqual(migrated.encounters.gardenFriends, {
@@ -526,8 +528,10 @@ test('succession during an existing warning ends that target rather than harming
   assert.equal(lifeStatus(w, child).death, null); assert.equal(lifeStatus(w, father).death, null);
   assert.deepEqual(protectedState(w), before);
   assert.deepEqual(attendees(w), []);
-  assert.equal(arriveGardenCrow(w, 'large-billed-crow', NOW+DAY+1000, predatorGuard(w)).reason, 'inactive');
-  assert.equal(arriveGardenRaptor(w, 'golden-eagle', NOW+DAY+1000, predatorGuard(w)).reason, 'inactive');
+  assert.equal(arriveGardenCrow(w, 'large-billed-crow', NOW+DAY+1000, predatorGuard(w)).hostile, false);
+  assert.equal(arriveGardenRaptor(w, 'golden-eagle', NOW+DAY+46000, predatorGuard(w)).hostile, false);
+  assert.equal(w.encounters.raptor.active.targetBirdId, null);
+  assert.deepEqual(protectedState(w), before);
   assert.deepEqual(parseSave(serializeWorld(w)), w);
 });
 
@@ -568,9 +572,11 @@ test('an old crow encounter never follows an absent successor or damages another
   advanceTo(w, NOW+DAY); w.paused = false;
   assert.equal(getProtagonistId(w), child.id);
   assert.equal(crowTarget(w), null); assert.equal(crowScene(w, NOW+DAY), null);
-  const before = clone(w);
-  assert.equal(arriveGardenCrow(w, 'carrion-crow', NOW+DAY, predatorGuard(w)).reason, 'inactive');
-  assert.deepEqual(w, before); assert.deepEqual(w.encounters.crow, history);
+  const before = protectedState(w);
+  assert.deepEqual(w.encounters.crow, history);
+  assert.equal(arriveGardenCrow(w, 'carrion-crow', NOW+DAY, predatorGuard(w)).hostile, false);
+  assert.equal(w.encounters.crow.arrivalBirdId, null);
+  assert.deepEqual(protectedState(w), before);
   assert.equal(lifeStatus(w, child).death, null);
   validateWorld(w);
 });
@@ -634,7 +640,7 @@ test('two atomic stores durably migrate v11 once and stale preference/countdown 
   const one = await openGameStore({indexedDB}), two = await openGameStore({indexedDB});
   try {
     const [a, b] = await Promise.all([one.transact(x => x), two.transact(x => x)]);
-    assert.deepEqual(a, b); assert.equal(a.encounters.version, 12);
+    assert.deepEqual(a, b); assert.equal(a.encounters.version, 13);
     assert.equal(a.revision, old.revision); assert.equal(a.version, old.version);
     assert.deepEqual(await raw(indexedDB), a);
     assert.deepEqual(a.encounters.raptor, old.encounters.raptor);
@@ -673,7 +679,7 @@ test('locked local saves persist the solo migration and preserve an existing war
   const store = await openGameStore({localStorage, navigator:{locks:{request:async (_name, operation) => operation()}}});
   try {
     const current = await store.transact(x => x), persisted = JSON.parse(memory.get(STORAGE_KEY));
-    assert.equal(current.encounters.version, 12);
+    assert.equal(current.encounters.version, 13);
     assert.deepEqual(current.encounters.gardenFriends.attendees, []);
     assert.equal(current.encounters.gardenFriends.accompany, false);
     assert.deepEqual(current.encounters.raptor, old.encounters.raptor);

@@ -1,5 +1,5 @@
 import {test,expect} from '@playwright/test';
-import {createWorld,createBird,validateWorld} from '../../src/engine.js';
+import {createWorld,createBird,validateWorld,renameBird} from '../../src/engine.js';
 import {familyLayout} from '../../src/family-layout.js';
 const now=Date.UTC(2026,10,3,12),dbName='buncho-ureshi-garden-v1';
 async function record(page,world){return page.evaluate(({dbName,world})=>new Promise((resolve,reject)=>{const open=indexedDB.open(dbName,1);open.onupgradeneeded=()=>open.result.createObjectStore('world');open.onerror=()=>reject(open.error);open.onsuccess=()=>{const db=open.result,tx=db.transaction('world',world?'readwrite':'readonly'),store=tx.objectStore('world'),req=world?store.put(world,'current'):store.get('current');tx.oncomplete=()=>{db.close();resolve(req.result)};tx.onerror=()=>{db.close();reject(tx.error)}}}),{dbName,world});}
@@ -34,9 +34,11 @@ for(const kind of ['single','pair-children','generations'])test(`${kind}: compac
  await page.addInitScript(n=>{Date.now=()=>n;localStorage.setItem('buncho.music.v1',JSON.stringify({enabled:false}));localStorage.setItem('buncho.care-sound-choice.v1',JSON.stringify({explicit:true,enabled:false}));},now);
  await page.setViewportSize({width:320,height:568});await page.goto('');const original=fixture(kind);await record(page,original);await page.goto('game/');await openFamily(page);const baseline=await record(page);
  const graph=familyLayout(original,'b1');
+ await expect(page.locator('.game-family-node[aria-pressed="true"]')).toHaveCount(1);await expect(page.locator('.game-family-node[aria-pressed="true"]')).toHaveCSS('background-color','rgb(247, 220, 141)');await expect(page.locator('.game-family-selected')).toHaveText('✓');
+ expect(await page.locator('.game-family-cards-a').evaluate(el=>el.querySelector('.game-family-zoom').getBoundingClientRect().top>=el.querySelector('.game-family-pan').getBoundingClientRect().bottom)).toBe(true);
  for(const size of [{width:320,height:568},{width:390,height:680},{width:844,height:390},{width:768,height:1024},{width:1440,height:900}]){
-  await page.setViewportSize(size);await page.evaluate(()=>new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(done))));await zoom(page,100);const g=await balanced(page,graph.height);expect(g.firstVisible).toBe(true);
-  await info.attach(`${kind}-${size.width}x${size.height}-100`,{body:await page.screenshot(),contentType:'image/png'});
+  await page.setViewportSize(size);await page.evaluate(()=>new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(done))));await zoom(page,100);await page.locator('.game-family-heading').scrollIntoViewIfNeeded();const g=await balanced(page,graph.height);expect(g.firstVisible).toBe(true);
+  const shot=info.outputPath(`${kind}-${size.width}x${size.height}-100.png`);await page.screenshot({path:shot});await info.attach(`${kind}-${size.width}x${size.height}-100`,{path:shot,contentType:'image/png'});
   for(const z of [70,120,100]){await zoom(page,z);await balanced(page,graph.height);}
  }
  if(kind==='generations'){
@@ -46,7 +48,7 @@ for(const kind of ['single','pair-children','generations'])test(`${kind}: compac
  }
  if(kind!=='single'){
   const child=original.birds.find(b=>b.parents.includes('b1'));
-  await page.locator(`.game-family-node[data-family-focus="${child.id}"]`).click();await expect(page.locator('.game-family-heading h3')).toHaveText(`${child.name}の家系図`);await balanced(page,360);
+  await page.locator(`.game-family-node[data-family-focus="${child.id}"]`).focus();await page.keyboard.press('Enter');await expect(page.locator(`.game-family-node[data-family-focus="${child.id}"]`)).toBeFocused();await expect(page.locator('.game-family-node[aria-pressed="true"]')).toHaveAttribute('data-family-focus',child.id);await expect(page.locator('.game-family-heading h3')).toHaveText(`${child.name}の家系図`);await balanced(page,360);
   await page.locator('.game-family-node[data-family-focus="b1"]').click();await expect(page.locator('.game-family-heading h3')).toHaveText('おもちの家系図');await balanced(page,graph.height);
  }
  // A real periodic redraw of this test-only record preserves scroll and zoom.
@@ -55,7 +57,20 @@ for(const kind of ['single','pair-children','generations'])test(`${kind}: compac
   const before=await page.locator('.game-family-canvas').elementHandle(),peer=await record(page);peer.revision++;await record(page,peer);
   await expect.poll(()=>before.evaluate(e=>e.isConnected),{timeout:10000}).toBe(false);expect((await geometry(page)).panScroll).toBeCloseTo(30,0);
  }
- const after=await record(page);expect(after.birds).toEqual(baseline.birds);expect(after.decor).toEqual(baseline.decor);expect(after.economy).toEqual(baseline.economy);expect(after.worldId).toBe(baseline.worldId);
+ const after=await record(page);expect(after.birds).toEqual(baseline.birds);expect(after.decor).toEqual(baseline.decor);expect(after.economy).toEqual(baseline.economy);expect(after.worldId).toBe(baseline.worldId);const expected=structuredClone(baseline);if(kind==='generations')expected.revision++;expect(after).toEqual(expected);
  await page.locator('[data-game-close-panel]').click();await page.locator('.game-bottom-dock [data-game-panel="family"]').click();await balanced(page,graph.height);
  await page.reload();await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');expect((await record(page)).birds).toEqual(baseline.birds);
+});
+
+
+test('same-name relatives remain distinct through keyboard, roster and zoom limits',async({page},info)=>{
+ await page.addInitScript(n=>{Date.now=()=>n;localStorage.setItem('buncho.music.v1',JSON.stringify({enabled:false}));localStorage.setItem('buncho.care-sound-choice.v1',JSON.stringify({explicit:true,enabled:false}));},now);
+ await page.setViewportSize({width:390,height:680});await page.goto('');const original=fixture('pair-children');renameBird(original,'b2',original.birds[0].name);expect(validateWorld(original).worldId).toBe(original.worldId);await record(page,original);await page.goto('game/');await openFamily(page);const baseline=await record(page);
+ const selected=()=>page.locator('.game-family-node[aria-pressed="true"]');
+ await expect(selected()).toHaveAttribute('data-family-focus','b1');
+ const partner=page.locator('.game-family-node[data-family-focus="b2"]');await partner.focus();await page.keyboard.press('Space');await expect(selected()).toHaveAttribute('data-family-focus','b2');await expect(partner).toBeFocused();
+ await zoom(page,70);await expect(page.locator('[data-family-zoom="-1"]')).toBeDisabled();await zoom(page,120);await expect(page.locator('[data-family-zoom="1"]')).toBeDisabled();await zoom(page,100);
+ await page.locator('[data-game-details="family-text"] > summary').click();await page.locator('[data-game-details="family-text"] [data-family-focus="b1"]').focus();await page.keyboard.press('Enter');await expect(selected()).toHaveAttribute('data-family-focus','b1');await expect(selected()).toBeFocused();
+ await page.locator('.game-profile-actions [data-game-panel="profile"]').click();await expect(page.locator('.game-family-cards-a')).toHaveCount(0);await page.locator('[data-game-close-panel]').click();await page.locator('.game-bottom-dock [data-game-panel="family"]').click();await expect(selected()).toHaveAttribute('data-family-focus','b1');
+ expect(await record(page)).toEqual(baseline);const shot=info.outputPath('same-name-keyboard.png');await page.screenshot({path:shot});await info.attach('same-name-keyboard',{path:shot,contentType:'image/png'});
 });

@@ -36,3 +36,28 @@
 @media(max-width:360px){.buncho-rel-map{padding:8px}.buncho-rel-peer{margin-inline:4px}.buncho-rel-map small{font-size:.7rem}.buncho-rel-feeling>strong{padding:3px 6px}}
 
 @media(prefers-reduced-motion:no-preference){.buncho-rel-peers{animation:buncho-rel-arrive .18s ease-out}@keyframes buncho-rel-arrive{from{opacity:.6;transform:translateY(4px)}to{opacity:1;transform:none}}}
+
+/* Approved relationships A: two directed feelings, never one blended relationship. */
+body[data-world="buncho"] .buncho-rel-map.buncho-rel-cards-a{max-width:46rem;background:#fffcf5;border:1px solid #b8b49f;border-radius:24px;padding:clamp(16px,3vw,24px);color:#304f45}
+body[data-world="buncho"] .buncho-rel-cards-a h3{text-align:left;font-family:var(--game-font,inherit);font-size:clamp(1.5rem,5vw,2rem);letter-spacing:0;color:#304f45;margin:0 0 20px}
+body[data-world="buncho"] .buncho-rel-cards-a .buncho-rel-picker{justify-content:space-between;margin:0 0 24px}
+body[data-world="buncho"] .buncho-rel-cards-a :is(.buncho-rel-picker,.buncho-rel-pager)>button{background:#f8efdb;border:0;border-radius:999px;box-shadow:none;transform:none;width:56px;flex-basis:56px;color:#304f45}
+body[data-world="buncho"] .buncho-rel-cards-a .buncho-rel-focus{width:100%;display:grid;grid-template-columns:100px minmax(0,1fr);grid-template-rows:auto auto auto;column-gap:16px;row-gap:6px;text-align:left;background:#f7dc8d;border:1px solid #304f45;border-radius:24px;padding:18px;box-sizing:border-box;margin:0 0 24px}
+body[data-world="buncho"] .buncho-rel-cards-a .buncho-rel-focus .buncho-rel-portrait{grid-row:1/4;width:100px;height:120px}
+body[data-world="buncho"] .buncho-rel-cards-a .buncho-rel-focus .game-mini-bird{width:100px!important;height:120px!important;object-fit:contain}
+body[data-world="buncho"] .buncho-rel-cards-a .buncho-rel-current{font-size:.8rem;font-weight:700;background:#fffcf5;border-radius:999px;padding:8px;text-align:center}
+body[data-world="buncho"] .buncho-rel-cards-a .buncho-rel-branches{display:none}
+body[data-world="buncho"] .buncho-rel-cards-a .buncho-rel-peers{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+body[data-world="buncho"] .buncho-rel-cards-a .buncho-rel-peers[data-count="1"]{grid-template-columns:minmax(0,1fr);max-width:none;margin:0}
+body[data-world="buncho"] .buncho-rel-cards-a .buncho-rel-peer{background:#f8efdb;border:1px solid #304f45;border-radius:24px;padding:16px;margin:0;text-align:left;min-width:0}
+body[data-world="buncho"] .buncho-rel-cards-a .buncho-rel-bird{display:grid;grid-template-columns:72px minmax(0,1fr);grid-template-rows:auto auto;gap:4px 12px;text-align:left;padding:0;background:transparent!important;border:0!important;box-shadow:none;border-radius:12px;color:#304f45}
+body[data-world="buncho"] .buncho-rel-cards-a .buncho-rel-bird .buncho-rel-portrait{grid-row:1/3;width:72px;height:90px}
+body[data-world="buncho"] .buncho-rel-cards-a .buncho-rel-bird .game-mini-bird{width:72px!important;height:90px!important;object-fit:contain}
+body[data-world="buncho"] .buncho-rel-cards-a .buncho-rel-feeling{background:#f4c9b7;border-radius:18px;margin:12px 0 0;padding:12px;line-height:1.6;font-size:.85rem}
+body[data-world="buncho"] .buncho-rel-cards-a .buncho-rel-feeling+.buncho-rel-feeling{background:#dfe7d2}
+body[data-world="buncho"] .buncho-rel-cards-a .buncho-rel-feeling>strong{display:block;background:transparent;border-radius:0;padding:0;margin-top:4px;font-size:1.1rem;color:#304f45}
+body[data-world="buncho"] .buncho-rel-cards-a .buncho-rel-peer summary{justify-content:flex-start;text-decoration:none;font-weight:700;margin-top:8px;color:#304f45}
+body[data-world="buncho"] .buncho-rel-cards-a .buncho-rel-peer summary:after{content:'›';margin-left:8px}
+body[data-world="buncho"] .buncho-rel-cards-a .buncho-rel-pager{justify-content:space-between;margin:20px 0}
+body[data-world="buncho"] .buncho-rel-cards-a .buncho-rel-caption{text-align:left;color:#304f45;margin:12px 0 0}
+@media(max-width:600px){body[data-world="buncho"] .buncho-rel-cards-a .buncho-rel-peers{grid-template-columns:minmax(0,1fr)}body[data-world="buncho"] .buncho-rel-cards-a .buncho-rel-focus{grid-template-columns:80px minmax(0,1fr);gap:6px 12px;padding:14px}body[data-world="buncho"] .buncho-rel-cards-a .buncho-rel-focus .buncho-rel-portrait{width:80px;height:110px}body[data-world="buncho"] .buncho-rel-cards-a .buncho-rel-focus .game-mini-bird{width:80px!important;height:110px!important}}

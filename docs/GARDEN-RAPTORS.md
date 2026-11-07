@@ -6,6 +6,8 @@ This is a fictional game mechanic, not a wildlife encounter or husbandry guide.
 
 - After three continuous foreground seconds in a ready garden, one shared entry lottery has a 25% chance of selecting a crow or raptor. When both families are available, their weights are 5:5, so each has a 12.5% chance in that draw. If only one family is available, it keeps the full 25% chance. This entry lottery draws once per visit, with at least two minutes between draws across garden changes and panel resets in the same game session.
 - After two continuous foreground minutes in a ready garden, a separate random source checks once per minute at 1%. It never consumes the world's deterministic random stream.
+- A brief host save defers a due sustained check until the next free poll without moving its deadline. Missed checks never accumulate: after one draw, the next remains one full minute later. Scene exclusions and cooldowns retain their existing delay; the entry lottery, saved warning and save format are unchanged.
+- Arrival does not require an accompanying protagonist. With no eligible protagonist actually present, the raptor visits for 18 visible seconds with no target and cannot harm household birds. A later attendee or successor never becomes the target of an existing targetless visit. No attacks are redirected to another family bird or a garden NPC.
 - One saved arrival per rolling 24 hours, shared by all gardens and nine species. Time moving backwards does not unlock the cap. Existing crow visits and warnings cannot overlap a new raptor event.
 - Black Kite, Northern Goshawk, Peregrine Falcon, Ural Owl, Common Kestrel, Japanese Sparrowhawk, Golden Eagle and Brown Hawk-Owl give one full visible minute to return home.
 - The warning names the bird, shows remaining seconds, explains the accident risk and provides a home button. The same exit is available in notebook, settings, bird sheet, reset, adoption and draw-result dialogs. Navigation alone does not delete the warning.
@@ -15,7 +17,7 @@ This is a fictional game mechanic, not a wildlife encounter or husbandry guide.
 
 ## Saved clock and safety
 
-The root save remains version 9; the encounter sub-schema moves from 7 to 8 only after validating the old schema. It adds a strict raptor record with arrival timestamp, species-specific visits and an optional active event containing fixed event ID, target ID, garden ID, hostility, remaining milliseconds and last progress timestamp.
+The root save remains version 11; the encounter sub-schema moves from 12 to 13 only after validating the old schema. Existing records are unchanged apart from the encounter version. A new targetless arrival uses an explicit null target, a canonical `species:time:none` event ID and nonhostile status. Legacy schemas continue to require real target IDs. Existing targeted warnings retain their exact identity, remaining time, progress timestamp, friendship and cooldown. Older tabs reject encounter version 13 before writing.
 
 Only bounded foreground samples of at most 2.5 seconds advance an active warning. Hidden tabs, offline state, pause and long suspended timer gaps do not catch up. Reload restores the remaining time, not a new minute. Returning home removes the active event, retaining friendship and the 24-hour cap.
 

@@ -30,7 +30,7 @@ for(const size of sizes)test(`compact garden and stable controls ${size.join('x'
  const logo=page.locator('.game-world-title img');await expect(logo).toHaveAttribute('src','brand/wordmark-04-transparent.webp');await logo.evaluate(img=>img.decode());
  expect(await logo.evaluate(img=>Math.abs(img.width/img.height-1120/645))).toBeLessThan(.03);
  await fits(page.locator('.game-world-exit'));await expect(page.locator('.game-world-exit')).toHaveAccessibleName('文鳥図鑑へ戻る');
- await expect(toggle).toHaveText('Touch the Birds');await fits(toggle);await toggle.click();await expect(toggle).toHaveText('Watch the Birds');
+ await expect(toggle).toHaveText('ふれ合う');await expect(toggle).toHaveAccessibleName('ふれ合う · 操作メニューを開く');await fits(toggle);await toggle.click();await expect(toggle).toHaveText('よく見る');await expect(toggle).toHaveAccessibleName('よく見る · 操作をたたんで景色を見る');
  await fits(toggle);
  await page.locator('.game-field-nav [data-game-panel=outdoors]').click();await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-scene-state','ready');
  const header=page.locator('.finch-garden > header');await expect(async()=>{expect(await header.evaluate(el=>el.isConnected?getComputedStyle(el,'::before').content:null)).toBe('none');}).toPass({timeout:10000,intervals:[100,250,500]});
@@ -41,7 +41,7 @@ for(const size of sizes)test(`compact garden and stable controls ${size.join('x'
  for(const button of await page.locator('[data-garden-select]').all())await fits(button);
  await page.locator('[data-garden-select="bali-terrace"]').click();await fits(page.locator('.finch-garden > header button'));await fits(page.locator('[data-game-close-panel]'));
  const title=await page.locator('#finch-garden-title').boundingBox(),tabs=await page.locator('.finch-garden-selector-wrap').boundingBox();expect(title.y+title.height).toBeLessThanOrEqual(tabs.y);
- const expanded=await toggle.boundingBox();await fits(toggle);await toggle.click();await expect(page.locator('.finch-garden-selector-wrap')).toBeHidden();await expect(toggle).toHaveText('Touch the Birds');expect(await toggle.boundingBox()).toEqual(expanded);
+ const expanded=await toggle.boundingBox();await fits(toggle);await toggle.click();await expect(page.locator('.finch-garden-selector-wrap')).toBeHidden();await expect(toggle).toHaveText('ふれ合う');await expect(toggle).toHaveAccessibleName('ふれ合う · 操作メニューを開く');expect(await toggle.boundingBox()).toEqual(expanded);
  await fits(toggle);await toggle.click();await expect(page.locator('.finch-garden-selector-wrap')).toBeVisible();expect(await toggle.boundingBox()).toEqual(expanded);await fits(toggle);
  // Every closed dock action has its own touch target, and the fixed toggle
  // must not obscure a bird, its name, or another control in either state.
