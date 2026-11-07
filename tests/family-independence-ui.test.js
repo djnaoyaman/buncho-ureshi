@@ -49,3 +49,19 @@ test('an unpaused consultation survives background time and acceptance synchroni
  const f=await setup(t,{paused:false}),before=await f.read();f.open();f.time(45000);await f.poll();assert.ok(f.root.querySelector('.game-independence-dialog').open);assert.equal((await f.read()).tick,before.tick);
  f.root.querySelector('[data-independence-accept]').click();await until(async()=>(await f.read()).birds[2].home==='departed');const after=await f.read();assert.equal(after.lifecycle.seenAt,NOW+45000);assert.equal(after.paused,false);assert.equal(after.events.filter(e=>e.kind==='depart').length,1);
 });
+
+test('A family cards identify the selected bird while zoom and navigation leave saves exact',async t=>{
+ const f=await setup(t),before=await f.read(),root=f.root;
+ assert.ok(root.querySelector('.game-family-cards-a'));
+ assert.equal(root.querySelectorAll('.game-family-node[aria-pressed="true"]').length,1);
+ assert.equal(root.querySelector('.game-family-node[aria-pressed="true"]').dataset.familyFocus,'b1');
+ assert.equal(root.querySelector('.game-family-selected').textContent,'✓');
+ const section=root.querySelector('.game-family-cards-a'),children=[...section.children];
+ assert.ok(children.indexOf(section.querySelector('.game-family-pan'))<children.indexOf(section.querySelector('.game-family-zoom')));
+ root.querySelector('.game-family-node[data-family-focus="b2"]').click();
+ assert.equal(root.querySelector('.game-family-node[aria-pressed="true"]').dataset.familyFocus,'b2');
+ assert.match(root.querySelector('.game-family-heading').textContent,/家族1/);
+ root.querySelector('[data-family-zoom="1"]').click();
+ assert.equal(root.querySelector('.game-family-node[aria-pressed="true"]').dataset.familyFocus,'b2');
+ assert.deepEqual(await f.read(),before);
+});

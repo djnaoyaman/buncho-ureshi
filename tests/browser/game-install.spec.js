@@ -7,6 +7,15 @@ async function checkInstall(page, request, game) {
   const filename = game ? 'game.webmanifest' : 'manifest.webmanifest';
   await expect(page.locator('link[rel="manifest"]')).toHaveAttribute('href', filename);
   const name = game ? '文鳥ぐらし' : SITE_NAME;
+  const iconPath = game ? 'game-icons/apple-touch-icon-v1.png' : 'apple-touch-icon.png';
+  await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveAttribute('href', iconPath);
+  const iconURL = await page.locator('link[rel="apple-touch-icon"]').evaluate(link => link.href);
+  const iconResponse = await request.get(iconURL);
+  expect(iconResponse.status()).toBe(200);
+  const bytes = await iconResponse.body();
+  expect(bytes.subarray(1, 4).toString()).toBe('PNG');
+  expect(bytes.readUInt32BE(16)).toBe(180);
+  expect(bytes.readUInt32BE(20)).toBe(180);
   for (const tag of ['application-name', 'apple-mobile-web-app-title']) {
     await expect(page.locator(`meta[name="${tag}"]`)).toHaveAttribute('content', name);
   }
@@ -82,4 +91,21 @@ test('install target follows separate-document game entry/exit, Back/Forward and
   await checkInstall(page, request, true);
   expect(await page.evaluate(() => localStorage.getItem('install-test-preserved'))).toBe('saved');
   expect(errors).toEqual([]);
+});
+
+test('approved install artwork remains visible at phone icon sizes and under a circular mask', async ({ page, request }, testInfo) => {
+  await page.goto('game/');
+  const { manifest, manifestURL } = await checkInstall(page, request, true);
+  const icons = [
+    { src: new URL('game-icons/apple-touch-icon-v1.png', manifestURL).href, label: 'Apple 180' },
+    ...manifest.icons.map(icon => ({ src: new URL(icon.src, manifestURL).href, label: `${icon.sizes} ${icon.purpose}`, mask: icon.purpose === 'maskable' })),
+  ];
+  await page.setContent(`<html><body style="margin:24px;background:#eee;color:#222;font:16px sans-serif"><h1>Existing approved game title artwork</h1><main style="display:flex;gap:24px;flex-wrap:wrap">${icons.map(icon => `<section><h2>${icon.label}</h2>${[60, 120, 180].map(size => `<img alt="${icon.label} at ${size}px" src="${icon.src}" width="${size}" height="${size}" style="display:block;margin:12px 0;${icon.mask ? 'border-radius:50%' : 'border-radius:20%'}">`).join('')}</section>`).join('')}</main></body></html>`);
+  await page.locator('img').evaluateAll(images => Promise.all(images.map(image => image.decode())));
+  for (const image of await page.locator('img').all()) {
+    expect(await image.evaluate(element => element.naturalWidth)).toBeGreaterThan(0);
+  }
+  const path = testInfo.outputPath('install-icons-small-and-masked.png');
+  await page.screenshot({ path, fullPage: true });
+  await testInfo.attach('install-icons-small-and-masked', { path, contentType: 'image/png' });
 });

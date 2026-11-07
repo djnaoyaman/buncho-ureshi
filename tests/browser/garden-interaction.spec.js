@@ -10,10 +10,11 @@ for(const controls of ['open','closed']){if(controls==='closed')await page.locat
 
 async function optIn(page){
  await page.locator('[data-garden-details="companions"]>summary').click();
+ await page.locator('[data-garden-accompany="true"]').click();
  await page.locator('[data-garden-companion="b1"]').click();
  await expect(page.locator('[data-garden-companion="b1"]')).toHaveAttribute('aria-pressed','true');
- await page.locator('[data-garden-accompany]').click();
- await expect(page.locator('[data-garden-accompany]')).toHaveAttribute('aria-pressed','true');
+ await page.locator('[data-garden-companions-save]').click();
+ await expect(page.locator('.finch-companion-feedback')).toContainText('覚えたよ');
  await page.locator('[data-garden-details="companions"]>summary').click();
  await page.locator('[data-game-close-panel]').click();
  await expect(page.locator('.game-panel-overlay')).not.toBeVisible();

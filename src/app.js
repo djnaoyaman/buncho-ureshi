@@ -463,6 +463,10 @@ function render(route) {
   // Keep Home Screen metadata in sync after SPA navigation and Back/Forward.
   setMeta("name", "application-name", metadata.installName);
   setMeta("name", "apple-mobile-web-app-title", metadata.installName);
+  const installIconLink = document.querySelector('link[rel="apple-touch-icon"]');
+  if (installIconLink && installIconLink.getAttribute("href") !== metadata.installIcon) {
+    installIconLink.setAttribute("href", metadata.installIcon);
+  }
   const manifestLink = document.querySelector('link[rel="manifest"]');
   if (manifestLink.getAttribute("href") !== metadata.installManifest) {
     manifestLink.setAttribute("href", metadata.installManifest);

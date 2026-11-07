@@ -54,6 +54,7 @@ test('cards keep long garden lists compact and detail shows every exact garden w
   const card=notebook.querySelector(`[data-encounter-page="${entry.id}"]`),page=dom(renderEncounterPage(w,entry.id,{system}));
   assert.equal(card.querySelector('small').textContent,encounterSearchHint(entry,{compact:true}));
   assert.equal(page.querySelector('[data-encounter-search-hint]').textContent,encounterSearchHint(entry));
+  const garden=gardenById(entry.gardenEvent.gardenIds[0]),art=garden.background.landscape||garden.background;const landscape=page.querySelector('.finch-mystery-landscape');assert.ok(landscape,entry.id);assert.equal(landscape.getAttribute('src'),'/buncho-ureshi/'+art.src.replace(/\.png$/,'.screen.webp'));assert.equal(landscape.alt,'');assert.equal(page.querySelector('.finch-mystery-stamp .finch-art').alt,'');assert.ok(page.querySelector('.finch-mystery-stamp .is-silhouette'));assert.equal(page.querySelector('.finch-mystery-letter h4').textContent,garden.name+'より');
   assert.equal(card.querySelector('strong').textContent,'？？？');
   assert.ok(!card.getAttribute('aria-label').includes(entry.name));
   assert.ok(!page.textContent.includes(entry.name));

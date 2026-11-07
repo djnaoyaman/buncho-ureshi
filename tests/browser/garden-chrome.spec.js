@@ -31,7 +31,7 @@ for(const size of sizes)test(`compact garden and stable controls ${size.join('x'
  expect(await logo.evaluate(img=>[img.naturalWidth,img.naturalHeight])).toEqual([2172,724]);
  expect(await logo.evaluate(img=>Math.abs(img.width/img.height-2172/724))).toBeLessThan(.03);
  await fits(page.locator('.game-world-exit'));await expect(page.locator('.game-world-exit')).toHaveAccessibleName('文鳥図鑑へ戻る');
- await expect(toggle).toHaveText('Touch the Birds');await fits(toggle);await toggle.click();await expect(toggle).toHaveText('Watch the Birds');
+ await expect(toggle).toHaveText('ふれ合う');await expect(toggle).toHaveAccessibleName('ふれ合う · 操作メニューを開く');await fits(toggle);await toggle.click();await expect(toggle).toHaveText('よく見る');await expect(toggle).toHaveAccessibleName('よく見る · 操作をたたんで景色を見る');
  await fits(toggle);
  await page.locator('.game-field-nav [data-game-panel=outdoors]').click();await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-scene-state','ready');
  const header=page.locator('.finch-garden > header');await expect(async()=>{expect(await header.evaluate(el=>el.isConnected?getComputedStyle(el,'::before').content:null)).toBe('none');}).toPass({timeout:10000,intervals:[100,250,500]});
@@ -42,7 +42,7 @@ for(const size of sizes)test(`compact garden and stable controls ${size.join('x'
  for(const button of await page.locator('[data-garden-select]').all())await fits(button);
  await page.locator('[data-garden-select="bali-terrace"]').click();await fits(page.locator('.finch-garden > header button'));await fits(page.locator('[data-game-close-panel]'));
  const title=await page.locator('#finch-garden-title').boundingBox(),tabs=await page.locator('.finch-garden-selector-wrap').boundingBox();expect(title.y+title.height).toBeLessThanOrEqual(tabs.y);
- const expanded=await toggle.boundingBox();await fits(toggle);await toggle.click();await expect(page.locator('.finch-garden-selector-wrap')).toBeHidden();await expect(toggle).toHaveText('Touch the Birds');expect(await toggle.boundingBox()).toEqual(expanded);
+ const expanded=await toggle.boundingBox();await fits(toggle);await toggle.click();await expect(page.locator('.finch-garden-selector-wrap')).toBeHidden();await expect(toggle).toHaveText('ふれ合う');await expect(toggle).toHaveAccessibleName('ふれ合う · 操作メニューを開く');expect(await toggle.boundingBox()).toEqual(expanded);
  await fits(toggle);await toggle.click();await expect(page.locator('.finch-garden-selector-wrap')).toBeVisible();expect(await toggle.boundingBox()).toEqual(expanded);await fits(toggle);
  // Every closed dock action has its own touch target, and the fixed toggle
  // must not obscure a bird, its name, or another control in either state.
@@ -67,10 +67,10 @@ for(const inCage of [false,true])for(const size of [[320,568],[390,844],[768,102
   if(await page.locator('.finch-notebook').isVisible())await page.locator(`[data-encounter-page="${id}"]`).click();
   await expect(page.locator('.finch-entry > h3')).toHaveText(system.catalog.find(e=>e.id===id).name,{timeout:800});
  }).toPass({timeout:10000,intervals:[100,250,500]});
- const summary=page.locator('.finch-summary');await expect(summary).toHaveCSS('background-color','rgba(0, 0, 0, 0)');await expect(summary).toHaveCSS('text-align','left');await expect(async()=>{await summary.scrollIntoViewIfNeeded();await expect(summary).toBeVisible();}).toPass({timeout:10000});
+ await page.locator('.finch-record-description>summary').click();const summary=page.locator('.finch-summary');await expect(summary).toHaveCSS('background-color','rgba(0, 0, 0, 0)');await expect(summary).toHaveCSS('text-align','left');await expect(async()=>{await summary.scrollIntoViewIfNeeded();await expect(summary).toBeVisible();}).toPass({timeout:10000});
  const spacing=await summary.evaluate(el=>el.getBoundingClientRect().top-el.previousElementSibling.getBoundingClientRect().bottom);expect(spacing).toBeGreaterThanOrEqual(19);
  for(const button of await page.locator('.finch-friendship-actions button,.finch-view-toggle button').all())await fits(button);
- for(const button of await page.locator('.finch-friendship-actions button').all())await expect(button).toHaveCSS('background-color','rgb(255, 253, 247)');
+ for(const button of await page.locator('.finch-friendship-actions button').all())await expect(button).toHaveCSS('background-color','rgb(255, 252, 245)');
  if(inCage){await expect(page.locator('[data-finch-go-home]')).toBeVisible();await expect(page.locator('[data-encounter-dismiss-cage]')).toBeVisible();}
  await expect(async()=>{await page.locator('.finch-friendship').scrollIntoViewIfNeeded();}).toPass({timeout:10000});await info.attach(`notebook-${size.join('x')}`,{body:await page.screenshot(),contentType:'image/png'});
  const before=protectedState(await record(page));await page.locator('[data-encounter-view=photo]').click();await expect(page.locator('.finch-photo')).toBeVisible();await page.locator('[data-encounter-view=art]').click();
