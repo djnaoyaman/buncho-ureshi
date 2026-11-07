@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { Window } from 'happy-dom';
-import { PAGE_CATALOG, routeMetadata, BASE_PATH, PRODUCTION_ORIGIN } from '../src/metadata.js';
+import { PAGE_CATALOG, routeMetadata, BASE_PATH, PRODUCTION_ORIGIN, GAME_INSTALL_ICON } from '../src/metadata.js';
 import { SITE_NAME } from '../src/visuals.js';
 
 const base = PRODUCTION_ORIGIN + BASE_PATH;
@@ -18,7 +18,9 @@ test('game and site manifests retain distinct launch identities, valid scope and
   assert.equal(game.start_url, './game/');
   assert.equal(game.name, '文鳥ぐらし');
   assert.equal(game.short_name, '文鳥ぐらし');
-  assert.deepEqual(game.icons, site.icons);
+  assert.notDeepEqual(game.icons, site.icons);
+  assert.ok(game.icons.every(icon => icon.src.startsWith('game-icons/')));
+  assert.ok(site.icons.every(icon => !icon.src.startsWith('game-icons/')));
   for (const [name, manifest, route] of [['manifest.webmanifest', site, ''], ['game.webmanifest', game, 'game/']]) {
     const manifestURL = new URL(name, base);
     const startURL = new URL(manifest.start_url, manifestURL);
@@ -44,6 +46,8 @@ test('every static route has the right install metadata even without JavaScript'
       window.document.write(await read('dist/' + (route === '404.html' ? route : route + 'index.html')));
       const d = window.document, isGame = route === 'game/';
       const name = isGame ? '文鳥ぐらし' : SITE_NAME;
+      assert.equal(d.querySelectorAll('link[rel="apple-touch-icon"]').length, 1);
+      assert.equal(d.querySelector('link[rel="apple-touch-icon"]').getAttribute('href'), isGame ? GAME_INSTALL_ICON : 'apple-touch-icon.png');
       assert.equal(d.querySelectorAll('link[rel="manifest"]').length, 1);
       const documentBase = new URL(d.querySelector('base').getAttribute('href'), base + route);
       assert.equal(new URL(d.querySelector('link[rel="manifest"]').getAttribute('href'), documentBase).href, base + (isGame ? 'game.webmanifest' : 'manifest.webmanifest'));
@@ -54,10 +58,13 @@ test('every static route has the right install metadata even without JavaScript'
 });
 
 test('search, missing routes and ordinary site pages do not inherit the game installation target', () => {
+  assert.equal(routeMetadata('game/').installIcon, GAME_INSTALL_ICON);
+  assert.equal(routeMetadata('game/', { query: '文鳥' }).installIcon, GAME_INSTALL_ICON);
   assert.equal(routeMetadata('game/').installManifest, 'game.webmanifest');
   assert.equal(routeMetadata('game/', { query: '文鳥' }).installManifest, 'game.webmanifest', 'search parameters never change the game document installation identity');
   for (const metadata of [routeMetadata(''), routeMetadata('help/'), routeMetadata('game/', { notFound: true }), routeMetadata('game/not-real/')]) {
     assert.equal(metadata.installManifest, 'manifest.webmanifest');
     assert.equal(metadata.installName, SITE_NAME);
+    assert.equal(metadata.installIcon, 'apple-touch-icon.png');
   }
 });
