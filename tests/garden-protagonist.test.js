@@ -22,7 +22,7 @@ test('every garden visibly renders the explicitly accompanying original househol
     const lead = root.querySelector('[data-garden-household]');
     assert.ok(lead, `${garden.id} has a household protagonist`);
     assert.equal(lead.dataset.gardenHousehold, world.birds[0].id);
-    assert.match(lead.textContent, /おもち/);
+    assert.match(lead.textContent, /エド/);
     assert.equal(lead.querySelector('.garden-bird-sprite').dataset.gardenBirdId, world.birds[0].id);
     assert.equal(root.querySelectorAll('.finch-garden-friend').length, 4);
     assert.deepEqual(world, before);
@@ -43,7 +43,7 @@ test('saved protagonist identity and its renamed label are independent of inspec
     assert.equal(lead.dataset.gardenHousehold, second.id);
     assert.ok(lead.textContent.includes(second.name));
     assert.equal(lead.querySelector('.garden-bird-sprite').dataset.color, 'cinnamon');
-    assert.doesNotMatch(lead.textContent, /おもち/);
+    assert.doesNotMatch(lead.textContent, /エド/);
     assert.equal(lead.querySelectorAll('script').length, 0);
   }
   assert.deepEqual(world, before);

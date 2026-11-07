@@ -11,7 +11,7 @@ for(const mode of ['idb','local','memory'])test(`${mode}: reset and restore pres
  const platform=mode==='idb'?{indexedDB:new IDBFactory(),localStorage:storage}:mode==='local'?{localStorage:storage,navigator:{locks:locks()}}:{};
  const s=await openGameStore(platform),original=await s.transact(()=>fixture());assert.equal(await s.hasResetBackup(),false);
  await assert.rejects(s.resetWorld('wrong-id'));assert.deepEqual(await s.transact(w=>w),original);
- const fresh=await s.resetWorld(original.worldId);assert.equal(fresh.birds.length,1);assert.equal(fresh.birds[0].name,'おもち');assert.equal(fresh.tick,0);assert.notEqual(fresh.worldId,original.worldId);assert.deepEqual(fresh.settings,original.settings);assert(await s.hasResetBackup());
+ const fresh=await s.resetWorld(original.worldId);assert.equal(fresh.birds.length,1);assert.equal(fresh.birds[0].name,'エド');assert.equal(fresh.tick,0);assert.notEqual(fresh.worldId,original.worldId);assert.deepEqual(fresh.settings,original.settings);assert(await s.hasResetBackup());
  await assert.rejects(s.resetWorld(original.worldId));await assert.rejects(s.restoreResetBackup(original.worldId));
  await s.transact(w=>{w.settings.careSound=true;w.revision++;return w;});const restored=await s.restoreResetBackup(fresh.worldId);
  assert.notEqual(restored.worldId,original.worldId);assert.notEqual(restored.worldId,fresh.worldId);assert.equal(await s.hasResetBackup(),false);
@@ -25,7 +25,7 @@ for(const mode of ['idb','local'])test(`${mode}: simultaneous resets reject stal
  const a=await openGameStore(platform),b=await openGameStore(platform),old=await a.transact(()=>fixture());
  const outcomes=await Promise.allSettled([a.resetWorld(old.worldId),b.resetWorld(old.worldId)]);assert.equal(outcomes.filter(r=>r.status==='fulfilled').length,1);assert.equal(outcomes.filter(r=>r.status==='rejected').length,1);
  const fresh=await b.transact(w=>w);await assert.rejects(b.transact(w=>{if(w.worldId!==old.worldId)throw Error('stale');renameBird(w,'b1','古いタブ');return w;}),/stale/);
- assert.equal((await a.transact(w=>w)).birds[0].name,'おもち');assert(await a.hasResetBackup());a.close();b.close();
+ assert.equal((await a.transact(w=>w)).birds[0].name,'エド');assert(await a.hasResetBackup());a.close();b.close();
  const reopened=await openGameStore(platform);assert(await reopened.hasResetBackup());assert.equal((await reopened.transact(w=>w)).worldId,fresh.worldId);reopened.close();
 });
 test('local quota failure leaves current and backup in the original single-key bytes',async()=>{

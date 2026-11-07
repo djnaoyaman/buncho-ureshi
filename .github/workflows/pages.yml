@@ -42,6 +42,8 @@ jobs:
         run: npx playwright test tests/browser/settings-switchbook.spec.js --project=chrome --project=webkit --retries=0 --output=settings-test-results
       - name: Approved menu icons, every destination and unchanged saves
         run: npx playwright test tests/browser/life-menu-icons.spec.js --project=chrome --project=webkit --retries=0 --output=menu-test-results
+      - name: New Ed founder, direct-line names and preserved existing saves
+        run: npx playwright test tests/browser/direct-line-names.spec.js --project=chrome --project=webkit --retries=0 --output=naming-test-results
       - name: Nine memorial designs, fixed identity and preserved offerings
         run: npx playwright test tests/browser/memorial-designs.spec.js --project=chrome --project=webkit --retries=0 --output=memorial-test-results
       - name: Independent garden visits, legacy saves and notebook resume
@@ -84,6 +86,7 @@ jobs:
             trial-test-results/
             health-test-results/
             memorial-test-results/
+            naming-test-results/
             settings-test-results/
             menu-test-results/
             editorial-test-results/
@@ -119,6 +122,12 @@ jobs:
         with:
           name: memorial-nine-screenshots-${{ github.sha }}
           path: memorial-test-results/**/*.png
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: direct-line-naming-screenshots-${{ github.sha }}
+          path: naming-test-results/**/*.png
           retention-days: 14
       - uses: actions/upload-pages-artifact@v3
         if: github.ref == 'refs/heads/main'

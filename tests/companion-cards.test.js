@@ -56,7 +56,7 @@ test('a fifth selected bird is refused and deselection permits an explicit repla
 });
 test('turning off retains the remembered faces and does not remove current attendees',async t=>{
  const f=fixture(t,{seed:w=>{system.chooseOutingPreferences(w,{accompany:true,companions:['b1','b2']},guard(w));system.leaveGarden(w,guard(w));system.enterGarden(w,guard(w));}});f.open();const before=withoutPreferences(f.w);
- await f.click('[data-garden-accompany="false"]');assert.match(f.q('[data-garden-companion=b1] .finch-companion-card-state').textContent,/覚えている/);await f.click('[data-garden-companions-save]');assert.deepEqual(companionPreferences(f.w),{accompany:false,companions:['b1','b2']});assert.deepEqual(withoutPreferences(f.w),before);assert.match(f.q('.finch-companion-current').textContent,/おもち、ゆず/);
+ await f.click('[data-garden-accompany="false"]');assert.match(f.q('[data-garden-companion=b1] .finch-companion-card-state').textContent,/覚えている/);await f.click('[data-garden-companions-save]');assert.deepEqual(companionPreferences(f.w),{accompany:false,companions:['b1','b2']});assert.deepEqual(withoutPreferences(f.w),before);assert.match(f.q('.finch-companion-current').textContent,/エド、ゆず/);
  system.selectGarden(f.w,'mizukagami',guard(f.w));assert.deepEqual(f.w.encounters.gardenFriends.attendees,['b1','b2']);system.leaveGarden(f.w,guard(f.w));system.enterGarden(f.w,guard(f.w));assert.deepEqual(f.w.encounters.gardenFriends.attendees,[]);
 });
 test('closing the panel discards drafts, reopening shows saved settings and causes no write',async t=>{
@@ -119,5 +119,5 @@ test('companion rendering module participates in hash, dependency rewriting and 
  const {readFile}=await import('node:fs/promises');const build=await readFile(new URL('../scripts/build.mjs',import.meta.url),'utf8');
  const hashList=build.match(/const gameVersion =[^\n]+/)[0],rewriteList=build.match(/for \(const name of \[[^\n]+/)[0];
  assert.ok(hashList.includes('"garden-companion-ui.js"'));assert.ok(rewriteList.includes('"garden-companion-ui.js"'));assert.ok(build.includes('.replaceAll("./garden-companion-ui.js", `./garden-companion-ui.js?v=${gameVersion}`)'));
- const w=createWorld(NOW);w.encounters.gardenFriends.companions=['b1'];assert.match(renderCompanionSettings(w),/おもち。次のおでかけ用に覚えている子。いまは家族がお留守番/);
+ const w=createWorld(NOW);w.encounters.gardenFriends.companions=['b1'];assert.match(renderCompanionSettings(w),/エド。次のおでかけ用に覚えている子。いまは家族がお留守番/);
 });

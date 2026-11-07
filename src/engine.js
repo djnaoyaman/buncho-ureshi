@@ -5,7 +5,7 @@ import {initialEncounterState,validateEncounterState,encounterSystem,upgradeEnco
 import {initialEconomy,validateEconomy,syncEconomy,reserveAutomaticGems,awardCareGold,ECONOMY_RULES} from './economy.js';
 /** A deterministic, offline story simulation with fictional lifecycle rules. No real husbandry advice. */
 import { initializeCareSchedule, validateCareSchedule, syncCareSchedule, applyScheduledCare, reconcileImportedCare, careWindow } from './care-schedule.js';
-import { defaultNameFields, automaticNaming, manualNaming, legacyNaming, isValidNaming } from './bird-names.js';
+import { directLineNameFields, newDefaultNameFields, automaticNaming, manualNaming, legacyNaming, isValidNaming } from './bird-names.js';
 export const SAVE_VERSION = 11;
 const careTime = now => Math.max(0, Math.min(253402268399999, now));
 export { reconcileImportedCare, careWindow };
@@ -218,7 +218,10 @@ export function createBird(w, options = {}) {
   const birdId = id(w);
   // Preserve the old story PRNG draw independently from human-readable naming.
   if (!options.name && !options.skipNameDraw) random(w);
-  const namingFields = options.name ? {name:options.name,naming:options.automaticName?automaticNaming(options.name):manualNaming(options.name)} : defaultNameFields(w,birdId);
+  // Only new biological descendants of the original founder receive this policy.
+  // Names, generation numbers and non-blood protagonist succession are not ancestry.
+  const directLine = (options.parents || []).some(parentId => parentId === 'b1' || ancestors(w, parentId).has('b1'));
+  const namingFields = options.name ? {name:options.name,naming:options.automaticName?automaticNaming(options.name):manualNaming(options.name)} : directLine ? directLineNameFields(w,birdId) : newDefaultNameFields(w,birdId);
   const b = { id: birdId, ...namingFields, sex: options.sex || (random(w) < .5 ? 'female' : 'male'), color: options.color || pick(w, COLORS), stage: options.stage || 'adult', bornTick: w.tick, stageTick: w.tick, arrivedTick: w.tick, parents: options.parents || [], generation: options.generation || 0, partner: null, pairTick: null, eggsLaid: 0, lastEggTick: -1000, home: options.home || 'visitor', personality: { curiosity: 25 + Math.floor(random(w) * 65), sociability: 35 + Math.floor(random(w) * 55), caution: 15 + Math.floor(random(w) * 65) }, preference: pick(w, PREFERENCES), mood: 70, needs: { energy: 80, food: 80, play: 60 }, care: { lastFedTick: null, lastPetTick: null }, gemCare: initialGemCare(), relations: {}, memories: [], milestones: [], action: { kind: 'rest', target: null, startedTick: w.tick }, lastSocialTick: -1 };
   w.birds.push(b); registerLifeBird(w,b); return b;
 }
@@ -272,7 +275,7 @@ export function honorBird(w,birdId,kind,token,now=Date.now()){
 export function createWorld(now = Date.now(), seed = 842911) {
   const w = { version: SAVE_VERSION, revision: 0, worldId: `garden-${now}-${seed}`, epoch: now, lastUpdated: now, seed: seed >>> 0, tick: 0, nextId: 1, nextEvent: 1, paused: false, settings: { motion: true, careSound: true, adoptionMode:'ask' }, care: { cleanliness: 100, lastCleanTick: null }, birds: [], events: [], offlineSummary: null, field: initialField(), decor: initialDecor(), gems: {droppings:[],nextDropId:1}, encounters:initialEncounterState(), economy:initialEconomy(careTime(now)), adoption:{pending:null,dismissed:[]} };
   initializeCareSchedule(w,careTime(now)); initializeLifecycle(w,careTime(now));
-  const b = createBird(w, { name: 'おもち', automaticName:true, sex: 'female', color: 'white', home: 'resident' });
+  const b = createBird(w, { name: 'エド', automaticName:true, sex: 'female', color: 'white', home: 'resident' });
   initializeProtagonist(w);
   b.personality = { curiosity: 65, sociability: 75, caution: 30 };
   record(w, 'welcome', [b.id], '新しい庭', '物語が始まった'); return w;

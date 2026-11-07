@@ -2,8 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createWorld as createBaseWorld, createBird, advanceTicks, advanceTo, TICK_MS, MAX_SAVE_BYTES, LIMITS, isRelated, canPair, renameBird, talkToBird, adoptBird, parseSave, serializeWorld, validateWorld, eventText } from '../src/engine.js';
 
-test('begins with the female white Omochi and an unrelated male visitor', () => {
-  const w = createWorld(100); assert.equal(w.birds.length,1); assert.equal(w.birds[0].name,'おもち'); assert.equal(w.birds[0].sex,'female'); assert.equal(w.birds[0].color,'white');
+test('begins with the female white Ed and an unrelated male visitor', () => {
+  const w = createWorld(100); assert.equal(w.birds.length,1); assert.equal(w.birds[0].name,'エド'); assert.equal(w.birds[0].sex,'female'); assert.equal(w.birds[0].color,'white');
   advanceTicks(w,1); const v = w.birds[1]; assert.equal(v.sex,'male'); assert.equal(v.home,'visitor'); assert.equal(isRelated(w,'b1',v.id),false);
   adoptBird(w,v.id,'こめ'); assert.equal(v.name,'こめ'); assert.equal(v.home,'resident');
 });
