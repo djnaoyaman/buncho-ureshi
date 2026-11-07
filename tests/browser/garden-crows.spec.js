@@ -1,5 +1,6 @@
 import {test,expect} from '@playwright/test';
 const NOW=Date.UTC(2026,10,4,9);
+async function savedGame(page){return page.evaluate(()=>new Promise((resolve,reject)=>{const r=indexedDB.open('buncho-ureshi-garden-v1',1);r.onerror=()=>reject(r.error);r.onsuccess=()=>{const db=r.result,tx=db.transaction('world','readonly'),value=tx.objectStore('world').get('current');value.onsuccess=()=>resolve(value.result);tx.oncomplete=()=>db.close();};}));}
 async function setup(page,{species='large-billed-crow',friendly=false,seedVisit=false,earlyPredatorVisits=false}={}){
  await page.goto('');
  const base=new URL('./',page.url()).href;
@@ -62,35 +63,51 @@ test('reduced motion shadow is still visible and locked enemy records disclose n
 
 // Validate the same scene inside the shipped game shell and its complete CSS,
 // not only the isolated controller fixture above.
-for(const [species,size,mode='outdoors',successor=false] of [['large-billed-crow',[390,844]],['hooded-crow',[320,240]],['hooded-crow',[320,240],'notebook'],['large-billed-crow',[390,844],'outdoors',true]])test(`real game shell preserves crow art and return-home controls ${species} ${mode}${successor?' successor':''}`,async({page},info)=>{
+for(const [species,size,mode='outdoors',successor=false,targetless=false] of [['large-billed-crow',[390,844]],['hooded-crow',[320,240]],['hooded-crow',[320,240],'notebook'],['large-billed-crow',[390,844],'outdoors',true],['large-billed-crow',[390,844],'outdoors',false,true],['hooded-crow',[320,240],'outdoors',false,true]])test(`real game shell preserves crow art and return-home controls ${species} ${mode}${successor?' successor':''}${targetless?' targetless':''}`,async({page},info)=>{
  const {createWorld,createBird,advanceTo}=await import('../../src/engine.js');
  const {arriveGardenCrow}=await import('../../src/garden-crows.js');
  const world=createWorld(successor?NOW-86400000:NOW);
  if(successor){const {lifeStatus}=await import('../../src/life-care.js');world.paused=true;const father=createBird(world,{sex:'male',home:'resident'});world.tick=10;createBird(world,{sex:'female',color:'sakura',home:'resident',parents:['b1',father.id],generation:1});lifeStatus(world,'b1').condition={kind:'injury',sinceAt:NOW-86400000,deadlineAt:NOW};advanceTo(world,NOW);world.paused=false;}
- const protagonist=world.birds.find(b=>b.id===world.protagonist.birdId);world.encounters.garden.open=true;world.encounters.gardenFriends.companions=[world.protagonist.birdId];world.encounters.gardenFriends.accompany=true;world.encounters.gardenFriends.attendees=[world.protagonist.birdId];protagonist.needs.energy=80;
- arriveGardenCrow(world,species,NOW,{worldId:world.worldId,revision:world.revision,gardenId:world.encounters.garden.id});world.paused=true;world.settings.motion=false;world.settings.careSound=false;
+ const protagonist=world.birds.find(b=>b.id===world.protagonist.birdId);world.encounters.garden.open=true;world.encounters.gardenFriends.companions=targetless?[]:[world.protagonist.birdId];world.encounters.gardenFriends.accompany=!targetless;world.encounters.gardenFriends.attendees=targetless?[]:[world.protagonist.birdId];protagonist.needs.energy=80;
+ const arrival=arriveGardenCrow(world,species,NOW,{worldId:world.worldId,revision:world.revision,gardenId:world.encounters.garden.id});expect(arrival.changed).toBe(true);if(targetless){expect(arrival.hostile).toBe(false);expect(world.encounters.crow.arrivalBirdId).toBeNull();expect(protagonist.needs.energy).toBe(80);}world.paused=true;world.settings.motion=false;world.settings.careSound=false;
  await page.setViewportSize({width:size[0],height:size[1]});
  await page.addInitScript(now=>{Date.now=()=>now;localStorage.setItem('buncho.music.v1',JSON.stringify({enabled:false}));localStorage.setItem('buncho.care-sound-choice.v1',JSON.stringify({explicit:true,enabled:false}));},NOW);
  await page.goto('');
  await page.evaluate(world=>new Promise((resolve,reject)=>{const r=indexedDB.open('buncho-ureshi-garden-v1',1);r.onupgradeneeded=()=>r.result.createObjectStore('world');r.onerror=()=>reject(r.error);r.onsuccess=()=>{const db=r.result,tx=db.transaction('world','readwrite');tx.objectStore('world').put(world,'current');tx.oncomplete=()=>{db.close();resolve();};tx.onerror=()=>reject(tx.error);};}),world);
  await page.goto('game/');await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');await page.locator('.game-scene-controls-toggle').click();if(mode==='notebook'){await page.locator('[data-game-open-menu]').click();await page.locator('[data-game-panel=notebook]').click();await page.locator('[data-finch-go-garden]').click();}else await page.locator('.game-field-nav [data-game-panel=outdoors]').click();
  await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-scene-state','ready');await expect(page.locator('.finch-crow-actor img')).toBeVisible();await page.locator('.finch-crow-actor img').evaluate(i=>i.decode());
- await expect(page.locator('.finch-garden-stage [data-garden-friend]')).toHaveCount(0);await expect(page.locator('.finch-crow-java>span:last-child')).toContainText(protagonist.name);
+ if(targetless){
+  const stage=page.locator('.finch-garden-stage'),scene=page.locator('.finch-crow-scale-scene'),notice=page.locator('[data-crow-phase=visiting]');
+  await expect(stage.locator('[data-garden-friend]')).toHaveCount(4);await expect(stage.locator('[data-garden-household]')).toHaveCount(0);await expect(page.locator('.finch-crow-java')).toHaveCount(0);await expect(scene).toHaveAttribute('aria-label',/文鳥約14cmを基準/);
+  await expect(notice).toContainText('庭を訪れています');await expect(notice).not.toContainText(/なかよし|元気は半分|安全な場所/);
+  const {CROW_ART,JAVA_ART_LENGTH}=await import('../../src/garden-crow-ui.js');
+  const geometry=await scene.evaluate(e=>{const a=e.querySelector('.finch-crow-actor').getBoundingClientRect(),s=e.getBoundingClientRect(),friend=document.querySelector('.finch-garden-stage [data-garden-friend] .garden-bird-sprite').getBoundingClientRect(),dock=document.querySelector('.finch-garden-dock').getBoundingClientRect();return {left:s.left,right:s.right,artLeft:a.left,artRight:a.right,top:a.top,bottom:a.bottom,crowWidth:a.width,javaWidth:friend.width,ratio:Number(e.dataset.lengthRatio),dockTop:dock.top};});
+  expect(geometry.left).toBeGreaterThanOrEqual(0);expect(geometry.right).toBeLessThanOrEqual(size[0]+1);expect(geometry.artLeft).toBeGreaterThanOrEqual(0);expect(geometry.artRight).toBeLessThanOrEqual(size[0]+1);expect(geometry.top).toBeGreaterThanOrEqual(0);expect(geometry.bottom).toBeLessThanOrEqual(size[1]);expect(geometry.bottom).toBeLessThan(geometry.dockTop);
+  expect(geometry.crowWidth*CROW_ART[species].artWidthFraction/geometry.javaWidth).toBeCloseTo(geometry.ratio*JAVA_ART_LENGTH.white,1);
+  for(const friend of await stage.locator('[data-garden-friend]').all()){
+   const hit=await friend.boundingBox(),sprite=await friend.locator('.garden-bird-sprite').boundingBox();expect(hit.width).toBeGreaterThanOrEqual(43.99);expect(hit.height).toBeGreaterThanOrEqual(43.99);expect(Math.abs(sprite.width-geometry.javaWidth)).toBeLessThan(1);
+  }
+  const current=await savedGame(page);expect(current.encounters.crow).toMatchObject({arrivalBirdId:null,lastHostile:false});expect(current.encounters.gardenFriends.attendees).toEqual([]);expect(current.birds.find(b=>b.id===protagonist.id).needs.energy).toBe(80);expect(current.lifecycle.birds.find(b=>b.birdId===protagonist.id).death).toBeNull();
+ }else{
+  await expect(page.locator('.finch-garden-stage [data-garden-friend]')).toHaveCount(0);await expect(page.locator('.finch-crow-java>span:last-child')).toContainText(protagonist.name);
+ }
  const home=page.locator('.finch-crow-notice [data-finch-go-home]');await expect(home).toBeVisible();await expect.poll(async()=> (await home.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44);
+ if(targetless){const hb=await home.boundingBox();expect(hb.x).toBeGreaterThanOrEqual(0);expect(hb.x+hb.width).toBeLessThanOrEqual(size[0]);expect(hb.y).toBeGreaterThanOrEqual(0);expect(hb.y+hb.height).toBeLessThanOrEqual(size[1]);}
  if(size[1]<=340){
   // The host can replace the scene between separate locator measurements.
   // Resolve all current elements and their geometry in one browser task.
-  let boxes;await expect.poll(async()=>{boxes=await page.evaluate(()=>{
-   const selectors={notice:'.finch-crow-notice',book:'.finch-garden>header [data-encounter-back]',dock:'.finch-garden-dock',crow:'.finch-crow-actor',java:'.finch-crow-java'},result={};
+  let boxes;await expect.poll(async()=>{boxes=await page.evaluate(targetless=>{
+   const selectors={notice:'.finch-crow-notice',book:'.finch-garden>header [data-encounter-back]',dock:'.finch-garden-dock',crow:'.finch-crow-actor',...(!targetless?{java:'.finch-crow-java'}:{})},result={};
    if(document.querySelector('.finch-garden-stage')?.dataset.sceneState!=='ready')return null;
    for(const [key,selector]of Object.entries(selectors)){const e=document.querySelector(selector);if(!e)return null;const r=e.getBoundingClientRect();if(!r.width||!r.height)return null;result[key]={x:r.x,y:r.y,width:r.width,height:r.height};}return result;
-  });return !!boxes;}).toBe(true);
+  },targetless);return !!boxes;}).toBe(true);
   const {notice,book,dock,crow,java}=boxes;expect(notice.x+notice.width).toBeLessThanOrEqual(book.x);expect(crow.y+crow.height).toBeLessThan(dock.y);
   if(mode==='notebook'){await expect(page.locator('.finch-garden-selector-wrap')).not.toBeVisible();expect(crow.y).toBeGreaterThan(notice.y+notice.height);expect(java.y).toBeGreaterThan(notice.y+notice.height);}
  }
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1&&document.documentElement.scrollHeight<=innerHeight+1)).toBe(true);
- await info.attach(`real-game-crow-${species}`,{body:await page.screenshot({path:info.outputPath(`real-game-crow-${species}-${mode}${successor?'-successor':''}.png`)}),contentType:'image/png'});
+ await info.attach(`real-game-crow-${species}${targetless?'-targetless':''}`,{body:await page.screenshot({path:info.outputPath(`real-game-crow-${species}-${mode}${successor?'-successor':''}${targetless?'-targetless':''}.png`)}),contentType:'image/png'});
  await home.click();await expect(page.locator('.finch-crow-scale-scene')).toHaveCount(0);await expect(page.locator('.game-room')).toBeVisible();
+ if(targetless){const after=await savedGame(page);expect(after.encounters.crow.arrivalBirdId).toBeNull();expect(after.encounters.gardenFriends.attendees).toEqual([]);expect(after.birds.find(b=>b.id===protagonist.id).needs.energy).toBe(80);expect(after.lifecycle.birds.find(b=>b.birdId===protagonist.id).death).toBeNull();}
 });
 
 test('live game shell keeps the foreground clock through normal world polling and commits one visit',async({page})=>{

@@ -1376,11 +1376,68 @@ body[data-world="buncho"] .game-panel-overlay[data-scene="true"] .finch-garden-s
 }
 /* End COLOR PLAY. */
 
+/* Approved A: the current choices stay visible in a small switch notebook.
+   Native controls, music shell and persistence remain the existing ones. */
+body[data-world="buncho"] .game-settings.game-switchbook { --switch-ink:#304b42; --switch-paper:#fffcf5; --switch-butter:#f4da91; --switch-peach:#f3c8b5; --switch-mint:#dfe6d3; --switch-cream:#f8efdb; max-width:760px; color:var(--switch-ink); }
+body[data-world="buncho"] .game-switchbook > #game-settings-title { margin:0; font-size:clamp(24px,5vw,28px); line-height:1.4; }
+body[data-world="buncho"] .game-switchbook .game-settings-intro { margin:8px 0 20px; font-size:15px; color:#6d776a; }
+body[data-world="buncho"] .game-switchbook .game-switch-card { position:relative; display:grid; grid-template-columns:minmax(0,1fr) 56px; align-items:center; gap:16px; margin:18px 0; padding:18px; min-height:90px; border:1px solid #b9bba6; border-radius:24px; background:var(--switch-peach); cursor:pointer; }
+body[data-world="buncho"] .game-switchbook .game-motion-switch { background:var(--switch-mint); }
+body[data-world="buncho"] .game-switchbook .game-switch-copy { min-width:0; display:grid; gap:6px; font-size:14px; color:#596753; line-height:1.6; overflow-wrap:anywhere; }
+body[data-world="buncho"] .game-switchbook .game-switch-copy strong { color:var(--switch-ink); font-size:18px; line-height:1.5; }
+body[data-world="buncho"] .game-switchbook .game-switch-card > input { position:absolute; right:18px; top:50%; transform:translateY(-50%); width:56px; height:44px; min-height:44px; min-width:44px; margin:0; padding:0; opacity:0; cursor:pointer; z-index:1; }
+body[data-world="buncho"] .game-switchbook .game-switch-track { position:relative; width:56px; height:32px; border:1.5px solid #596753; border-radius:18px; background:var(--switch-paper); pointer-events:none; }
+body[data-world="buncho"] .game-switchbook .game-switch-track::after { content:''; position:absolute; left:4px; top:4px; width:21px; height:21px; border-radius:50%; background:#596753; }
+body[data-world="buncho"] .game-switchbook input:checked + .game-switch-track { background:var(--switch-ink); border-color:var(--switch-ink); }
+body[data-world="buncho"] .game-switchbook input:checked + .game-switch-track::after { left:28px; background:var(--switch-paper); }
+body[data-world="buncho"] .game-switchbook input:focus-visible + .game-switch-track { outline:3px solid var(--switch-ink); outline-offset:4px; }
+body[data-world="buncho"] .game-switchbook .game-adoption-settings { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; min-width:0; margin:18px 0; padding:12px 18px 18px; border:1px solid #b9bba6; border-radius:24px; background:var(--switch-cream); }
+body[data-world="buncho"] .game-switchbook .game-adoption-settings legend { padding:0 6px; font-size:18px; line-height:1.5; font-weight:700; }
+body[data-world="buncho"] .game-switchbook .game-adoption-settings button { display:flex; align-items:center; justify-content:center; gap:5px; min-width:0; min-height:54px; padding:10px; border:1.5px solid transparent; border-radius:28px; background:var(--switch-paper); color:var(--switch-ink); font-size:14px; line-height:1.6; white-space:normal; box-shadow:none; }
+body[data-world="buncho"] .game-switchbook .game-adoption-settings button[aria-pressed="true"] { background:var(--switch-butter)!important; color:var(--switch-ink)!important; border-color:var(--switch-ink); box-shadow:none; }
+body[data-world="buncho"] .game-switchbook .game-choice-check { flex:none; min-width:.8em; font-size:16px; font-weight:700; }
+body[data-world="buncho"] .game-switchbook .game-adoption-settings small { grid-column:1/-1; min-width:0; font-size:13px; color:#596753; line-height:1.8; }
+body[data-world="buncho"] .game-switchbook .game-settings-time { font-size:14px; color:#6d776a; margin:20px 0 6px; }
+body[data-world="buncho"] .game-switchbook [data-settings-music] .game-music { margin:0 0 18px; padding:0; border:0; color:var(--switch-ink); }
+body[data-world="buncho"] .game-switchbook .game-music-panel { position:static; width:auto; padding:18px; border:1.5px solid var(--switch-ink); border-radius:26px; background:var(--switch-butter); box-shadow:none; }
+body[data-world="buncho"] .game-switchbook .game-music-heading { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:8px; margin-bottom:14px; }
+body[data-world="buncho"] .game-switchbook .game-music-heading h4 { margin:0; font-size:20px; line-height:1.5; }
+body[data-world="buncho"] .game-switchbook .game-music-enabled { padding:4px 12px; border-radius:20px; background:var(--switch-paper); font-size:13px; font-weight:700; }
+body[data-world="buncho"] .game-switchbook .game-music-actions { grid-template-columns:1.25fr 1fr; gap:12px; }
+body[data-world="buncho"] .game-switchbook .game-music-actions button { display:flex; align-items:center; justify-content:center; gap:6px; min-height:48px; padding:9px; border:1.5px solid transparent; border-radius:26px; background:var(--switch-paper); font-size:14px; line-height:1.5; box-shadow:none; }
+body[data-world="buncho"] .game-switchbook .game-music button[aria-pressed="true"] { background:var(--switch-paper)!important; color:var(--switch-ink)!important; border-color:var(--switch-ink); box-shadow:none; }
+body[data-world="buncho"] .game-switchbook .game-music-auto-check:not(:empty) { display:inline-grid; place-items:center; width:24px; height:24px; flex-shrink:0; border-radius:50%; background:var(--switch-ink); color:var(--switch-paper); }
+body[data-world="buncho"] .game-switchbook .game-music-now { margin:14px 0 4px; font-size:15px; line-height:1.6; }
+body[data-world="buncho"] .game-switchbook .game-music-current { font-size:15px; }
+body[data-world="buncho"] .game-switchbook .game-music-saved-track { display:block; color:#596753; font-size:13px; margin-top:4px; }
+body[data-world="buncho"] .game-switchbook .game-music-saved-track[hidden] { display:none; }
+body[data-world="buncho"] .game-switchbook .game-music-volume { display:grid; grid-template-columns:auto minmax(0,1fr) 3.1em; gap:10px; margin:8px 0; font-size:14px; }
+body[data-world="buncho"] .game-switchbook .game-music-volume input { width:100%; min-width:0; min-height:44px; margin:0; accent-color:var(--switch-ink); }
+body[data-world="buncho"] .game-switchbook .game-music-volume-value { text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums; }
+body[data-world="buncho"] .game-switchbook .game-music [data-music-choose] { min-height:44px; margin:0; padding:9px 0; border:0; border-radius:0; background:transparent; color:var(--switch-ink); box-shadow:none; font-size:15px; font-weight:700; }
+body[data-world="buncho"] .game-switchbook .game-music-choose-label { font-size:15px; }
+body[data-world="buncho"] .game-switchbook .game-music-tracks { margin-top:8px; padding:6px; gap:12px; background:var(--switch-paper); border:1px solid #b9bba6; border-radius:16px; }
+body[data-world="buncho"] .game-switchbook .game-music-tracks button { min-height:44px; border-radius:18px; font-size:14px; line-height:1.6; }
+body[data-world="buncho"] .game-switchbook .game-music-tracks button[aria-pressed="true"]::before { content:'✓ '; }
+body[data-world="buncho"] .game-switchbook .game-music-status { font-size:13px; line-height:1.8; color:var(--switch-ink); }
+body[data-world="buncho"] .game-switchbook :is(button,input):focus-visible { outline:3px solid var(--switch-ink); outline-offset:4px; }
+@media(max-width:360px) {
+ body[data-world="buncho"] .game-switchbook :is(.game-music-panel,.game-switch-card) { padding:14px; }
+ body[data-world="buncho"] .game-switchbook .game-switch-card { gap:12px; }
+ body[data-world="buncho"] .game-switchbook .game-switch-card > input { right:14px; }
+ body[data-world="buncho"] .game-switchbook .game-switch-copy strong { font-size:16px; }
+ body[data-world="buncho"] .game-switchbook .game-music-actions { gap:10px; }
+ body[data-world="buncho"] .game-switchbook .game-music-actions button { padding:8px 6px; font-size:13px; }
+ body[data-world="buncho"] .game-switchbook .game-adoption-settings { padding:10px 14px 14px; gap:10px; }
+ body[data-world="buncho"] .game-switchbook .game-adoption-settings button { padding:8px 5px; font-size:13px; }
+}
+
+
 /* Approved family A: real saved relatives, selected portrait and readable bond lines. */
 body[data-world="buncho"] .game-family-tree.game-family-cards-a{background:#fffcf5;padding:clamp(12px,3vw,24px);border:1px solid #b8b49f;border-radius:24px;color:#304f45}
 body[data-world="buncho"] .game-family-cards-a .game-family-heading{display:block}
 body[data-world="buncho"] .game-family-cards-a .game-family-heading h3{font-family:var(--game-font,inherit);font-size:clamp(1.45rem,5vw,2rem);line-height:1.4;margin:0 0 12px}
-body[data-world="buncho"] .game-family-cards-a .game-family-legend{font-size:.85rem;line-height:1.6;gap:8px 14px;color:#6f7b6c;margin-bottom:20px}
+body[data-world="buncho"] .game-family-cards-a .game-family-legend{font-size:.85rem;line-height:1.6;gap:8px 14px;color:#52624f;margin-bottom:20px}
 body[data-world="buncho"] .game-family-cards-a .game-family-legend span:nth-child(2){color:#304f45}
 body[data-world="buncho"] .game-family-cards-a .game-family-pan{background:transparent;border:0;border-radius:0;margin-block:12px}
 body[data-world="buncho"] .game-family-cards-a .game-family-lines path{stroke:#304f45;stroke-width:2}
@@ -1389,7 +1446,7 @@ body[data-world="buncho"] .game-family-cards-a .game-family-node{background:#f8e
 body[data-world="buncho"] .game-family-cards-a .game-family-node[data-family-role=child]{background:#dfe7d2}
 body[data-world="buncho"] .game-family-cards-a .game-family-node.is-focus{background:#f7dc8d;border:2px solid #304f45}
 body[data-world="buncho"] .game-family-cards-a .game-family-node strong{font-size:.75rem;line-height:1.25}
-body[data-world="buncho"] .game-family-cards-a .game-family-node small{font-size:.64rem;color:#657464;line-height:1.35}
+body[data-world="buncho"] .game-family-cards-a .game-family-node small{font-size:.64rem;color:#52624f;line-height:1.35}
 body[data-world="buncho"] .game-family-cards-a .game-family-selected{position:absolute;right:3px;top:3px;display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:#304f45;color:#fffdf6;font-weight:700;line-height:1;z-index:1}
 body[data-world="buncho"] .game-family-cards-a .game-family-zoom{display:flex;justify-content:space-between;gap:16px;margin:20px 0}
 body[data-world="buncho"] .game-family-cards-a .game-family-zoom button{min-width:64px;background:#f8efdb;border:0;border-radius:999px;box-shadow:none;font-size:1.4rem}
@@ -1401,3 +1458,5 @@ body[data-world="buncho"] .game-family-cards-a>details{margin-top:12px;border:0;
 body[data-world="buncho"] .game-family-cards-a>details>summary{min-height:44px;display:flex;align-items:center;font-weight:700;line-height:1.5}
 
 body[data-world="buncho"] .game-family-cards-a .game-family-node .game-mini-bird{width:50px;height:56px;flex:0 0 56px;object-fit:contain}
+
+body[data-world="buncho"] .game-family-cards-a .game-family-legend small{color:#52624f}
