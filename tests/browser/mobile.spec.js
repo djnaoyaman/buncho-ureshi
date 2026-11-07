@@ -120,7 +120,7 @@ async function gameTouchFlow(page, context, name) {
   await context.addInitScript(now => { Date.now = () => now; }, fixedNow);
   await page.goto('game/');
   await expect(page.locator('#game-root .game-app')).toBeVisible();
-  await expect(page.locator('.game-scene-caption strong')).toHaveText('おもち');
+  await expect(page.locator('.game-scene-caption strong')).toHaveText('エド');
   // Backdate only this application's saved timestamp by one tick; actual startup performs the visit.
   await page.evaluate(({ dbName, now, tick }) => new Promise((resolve, reject) => {
     const open = indexedDB.open(dbName, 1);

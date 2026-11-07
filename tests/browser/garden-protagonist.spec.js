@@ -53,20 +53,20 @@ async function verifyTargets(page, width) {
   }
 }
 
-for (const width of [320,390]) test(`Omochi optionally joins the garden and returns from care without overlapping friends ${width}`, async ({page}, info) => {
+for (const width of [320,390]) test(`Ed optionally joins the garden and returns from care without overlapping friends ${width}`, async ({page}, info) => {
   await ready(page,width);
   for (const garden of ['komorebi','mizukagami']) {
     await page.locator(`[data-garden-select="${garden}"]`).click();
     await expect(page.locator('.game-encounter-host')).toHaveAttribute('aria-busy','false');
     const lead=page.locator('.finch-garden-stage [data-garden-household]');
     await expect(lead).toBeVisible();
-    await expect(lead).toContainText('おもち');
+    await expect(lead).toContainText('エド');
     await lead.locator('img').evaluate(image=>image.decode());
     await verifyTargets(page,width);
     await page.screenshot({path:info.outputPath(`protagonist-${garden}-${width}.png`)});
     await lead.click();
     await expect(page.locator('.game-bird-sheet')).toBeVisible();
-    await expect(page.locator('#game-sheet-title')).toHaveText('おもち');
+    await expect(page.locator('#game-sheet-title')).toHaveText('エド');
     await page.locator('[data-game-close-bird]').click();
     await expect(page.locator('.game-bird-sheet')).not.toBeVisible();
     await expect(page.locator(`.finch-garden-stage[data-garden-id="${garden}"]`)).toBeVisible();

@@ -120,14 +120,14 @@ test.beforeEach(async ({ context, page }) => {
   await page.route(/youtube|youtu\.be|googlevideo|ytimg/i, route => route.abort());
 });
 
-test('game starts with Omochi, then names and welcomes the unrelated male visitor', async ({ page }) => {
+test('game starts with Ed, then names and welcomes the unrelated male visitor', async ({ page }) => {
   await openGame(page);
   await tab(page,'profile');
-  await expect(page.locator('.game-profile-heading h3')).toHaveText('おもち');
+  await expect(page.locator('.game-profile-heading h3')).toHaveText('エド');
   await expect(page.locator('.game-profile-heading')).toContainText('メス · 白文鳥 · 成鳥');
   let world = await readWorld(page);
   expect(world.birds).toHaveLength(1);expect(world.settings.adoptionMode).toBe('ask');
-  expect(world.birds[0]).toMatchObject({ id: 'b1', name: 'おもち', sex: 'female', color: 'white' });
+  expect(world.birds[0]).toMatchObject({ id: 'b1', name: 'エド', sex: 'female', color: 'white' });
   await seedWorld(page, world, fixedNow - TICK_MS);
   await openGame(page);
   await page.locator('[data-game-scene-select][data-bird-id="b2"]').click();

@@ -49,7 +49,7 @@ for(const kind of ['single','pair-children','generations'])test(`${kind}: compac
  if(kind!=='single'){
   const child=original.birds.find(b=>b.parents.includes('b1'));
   await page.locator(`.game-family-node[data-family-focus="${child.id}"]`).focus();await page.keyboard.press('Enter');await expect(page.locator(`.game-family-node[data-family-focus="${child.id}"]`)).toBeFocused();await expect(page.locator('.game-family-node[aria-pressed="true"]')).toHaveAttribute('data-family-focus',child.id);await expect(page.locator('.game-family-heading h3')).toHaveText(`${child.name}の家系図`);await balanced(page,360);
-  await page.locator('.game-family-node[data-family-focus="b1"]').click();await expect(page.locator('.game-family-heading h3')).toHaveText('おもちの家系図');await balanced(page,graph.height);
+  await page.locator('.game-family-node[data-family-focus="b1"]').click();await expect(page.locator('.game-family-heading h3')).toHaveText('エドの家系図');await balanced(page,graph.height);
  }
  // A real periodic redraw of this test-only record preserves scroll and zoom.
  if(kind==='generations'){

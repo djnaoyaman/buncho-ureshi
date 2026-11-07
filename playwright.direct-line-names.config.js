@@ -1,0 +1,2 @@
+import {defineConfig,devices} from '@playwright/test';
+export default defineConfig({testDir:'./tests/browser',testMatch:'direct-line-names.spec.js',timeout:60000,workers:1,retries:0,reporter:'list',use:{baseURL:'http://127.0.0.1:4173/buncho-ureshi/',trace:'retain-on-failure'},projects:[{name:'names-chrome',use:{...devices['Pixel 7'],browserName:'chromium',channel:'chrome'}},{name:'names-webkit',use:{...devices['iPhone 13'],browserName:'webkit'}}],webServer:{command:'node scripts/serve.mjs',url:'http://127.0.0.1:4173/buncho-ureshi/',reuseExistingServer:false}});

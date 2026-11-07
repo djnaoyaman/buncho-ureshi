@@ -22,6 +22,30 @@ export const DEFAULT_BIRD_NAMES = Object.freeze(`
 てまり こまり りぼん ぼたんゆき ゆきみ もちこ もちまる ふく まる まめ ぴの ぽぽ
 `.trim().split(/\s+/u));
 
+/** Short-form given names for future biological descendants of the original b1.
+ * Keep the pool explicit and editable; existing names are never reassigned.
+ * More than the world's 128 lifetime birds avoids numeric collision suffixes.
+ */
+export const DIRECT_LINE_BIRD_NAMES = Object.freeze(`
+アル ベン サム マックス リズ ケイト ベス レオ ニック
+アベ アディ アルフ アルビ アン アニー アンジー アート アーチー アイク
+アレクス アレク イジー イヴ ウィル ウィリー ウォルト ウェス
+エイミー エディ エル エリー エルザ エミー エム エヴァ オリー オズ
+カル キャム キャシー キャット キム キット キキ クリス クレム
+ケン ケニー コリー コニー コーディ ココ コール サリー サンディ シド
+シンディ ジェイ ジェス ジェシー ジェニー ジム ジミー ジャック
+ジュード ジュディ ジュール ジョー ジョーイ ジョニー ジル ジーン スー スージー
+ステフ スタン スティヴ ヴィック ヴィン ヴィニー ダン ダニー デイヴ
+ディー ティム ティミー テス テディ テリー トッド トニー トム トミー
+ドム ドリー ドット ドッティ ナット ナンシー ニッキー ニール ネッド ネリー
+ノーラ ノーム ノリー ハリー ハンク パット パティ パム バート バリー
+バーニー ビー ビル ビリー フィル フィン フレッド フラン フランク フレディ
+ペグ ペギー ペニー ベニー ベル ボブ ボビー ポリー マギー マット
+マディ マイク ミック ミッキー ミミ ミリー メグ メル モリー モー
+ラリー リック リッキー リッチ リッチー ルー ルーク ルディ ルビー レイ
+レニー ロイ ロニー ロブ ロビー ロン ロージー ローリー
+`.trim().split(/\s+/u));
+
 function hash(text) {
   let value = 2166136261;
   for (const char of text) value = Math.imul(value ^ char.codePointAt(0), 16777619) >>> 0;
@@ -30,14 +54,31 @@ function hash(text) {
 const comparisonName = name => name.normalize('NFKC').trim();
 /** All birds count, including departed family members. Existing duplicate manual names stay intact. */
 export function chooseDefaultBirdName(world, birdId) {
+  return chooseFromPool(world, birdId, DEFAULT_BIRD_NAMES);
+}
+function chooseFromPool(world, birdId, pool, excludeOmochi = false) {
   const taken = new Set(world.birds.filter(b => b.id !== birdId).map(b => comparisonName(b.name)));
-  const start = hash(`${world.worldId}\u0000${birdId}`) % DEFAULT_BIRD_NAMES.length;
-  for (let offset = 0; offset < DEFAULT_BIRD_NAMES.length; offset++) {
-    const name = DEFAULT_BIRD_NAMES[(start + offset) % DEFAULT_BIRD_NAMES.length];
+  const start = hash(`${world.worldId}\u0000${birdId}`) % pool.length;
+  for (let offset = 0; offset < pool.length; offset++) {
+    const name = pool[(start + offset) % pool.length];
+    // Keep the original pool/index so excluding a name does not reshuffle others.
+    if (excludeOmochi && /^おもち[0-9]*$/u.test(comparisonName(name))) continue;
     if (!taken.has(name)) return name;
   }
   // Impossible for the validated 128-bird world: do not introduce numeric fallback.
   throw new RangeError('自然な名前の候補が足りません。');
+}
+/** Creation only. Do not use this policy to repair or rename any saved bird.
+ * Numeric suffixes are not generated, but are excluded here defensively too.
+ * Legacy chooser/suggestions retain their prior behavior and manual choice is free.
+ */
+export function newDefaultNameFields(world, birdId) {
+  const name = chooseFromPool(world, birdId, DEFAULT_BIRD_NAMES, true);
+  return {name, naming: automaticNaming(name)};
+}
+export function directLineNameFields(world, birdId) {
+  const name = chooseFromPool(world, birdId, DIRECT_LINE_BIRD_NAMES);
+  return {name, naming: automaticNaming(name)};
 }
 export function automaticNaming(name) {
   return {version: NAME_POLICY_VERSION, source: 'automatic', assignedName: name};
