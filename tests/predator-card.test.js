@@ -5,7 +5,17 @@ import {createWorld,serializeWorld} from '../src/engine.js';
 import {renderCrowNotebook} from '../src/garden-crow-ui.js';
 import {renderRaptorNotebook,renderRaptorNotice} from '../src/garden-raptor-ui.js';
 import {mountEncounterPanel} from '../src/encounter-controller.js';
+import {arriveGardenRaptor,raptorToken} from '../src/garden-raptors.js';
 const now=Date.UTC(2026,10,7);
+test('predator card reading preserves an active warning and its home action',()=>{
+ const w=createWorld(now);w.encounters.garden.open=true;w.field.place='park';w.encounters.gardenFriends.attendees=['b1'];
+ assert.equal(arriveGardenRaptor(w,'black-kite',now,{...raptorToken(w),gardenId:w.encounters.garden.id}).hostile,true);
+ const before=serializeWorld(w),warning=renderRaptorNotice(w);
+ assert.match(warning,/data-raptor-seconds/);assert.match(warning,/data-game-raptor-home/);
+ const win=new Window(),root=win.document.createElement('div');win.document.body.append(root);
+ const panel=mountEncounterPanel(root,{getWorld:()=>w,transact:async fn=>fn(w)});
+ try{root.querySelector('[data-crow-notebook]').click();root.querySelector('[data-raptor-entry=black-kite]').click();root.querySelector('[data-notebook-reading=ecology]').open=true;panel.refresh();assert.equal(root.querySelector('[data-notebook-reading=ecology]').open,true);assert.equal(renderRaptorNotice(w),warning);assert.equal(serializeWorld(w),before);}finally{panel.destroy();win.happyDOM.abort();}
+});
 function seed(){const w=createWorld(now);Object.assign(w.encounters.crow,{lastArrivalAt:now-86400000,gardenId:'komorebi',speciesId:'large-billed-crow',arrivalBirdId:w.birds[0].id});w.encounters.raptor.lastArrivalAt=now-86400000;w.encounters.crow.visits.push({id:'large-billed-crow',firstTick:0,lastTick:0,count:2,petPoints:20});for(const id of ['black-kite','osprey'])w.encounters.raptor.visits.push({id,firstTick:0,lastTick:0,count:2,petPoints:20});return w;}
 test('predator A keeps species, live relationship, visitor count and source in a save-neutral card',()=>{
  const w=seed(),before=serializeWorld(w);

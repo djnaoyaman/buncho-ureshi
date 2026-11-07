@@ -158,6 +158,7 @@ for(const size of sizes){
   await expect(page.locator('.life-caretaker')).toHaveCSS('background-color','rgba(0, 0, 0, 0)');
   await capture(page,info,'health-unified-top',size);
   await expect(page.locator('.life-care-warning')).toContainText('すべてゲームのルール');
+  await page.locator('.life-caretaker-fold > summary').click();
   for(const button of await page.locator('.life-hire-options button').all())await fit(button);
   await page.locator('.life-caretaker').scrollIntoViewIfNeeded();await capture(page,info,'health-caretaker',size);
   const treat=page.locator('[data-life-treat=b1]');await fit(treat);await capture(page,info,'health-hospital',size);
@@ -167,7 +168,7 @@ for(const size of sizes){
   await fit(page.locator('[data-life-hire="3"]'));await page.locator('[data-life-hire="3"]').click();
   await expect.poll(async()=>(await record(page)).economy.gold).toBe(116);await expect(page.locator('.life-contract')).toContainText('3日');await expect(page.locator('[data-life-hire="7"]')).toBeDisabled();
   const saved=await record(page);expect(protectedState(saved)).toEqual(protectedState(expected));expect(saved.decor).toEqual(before.decor);
-  await fit(page.locator('.life-risk-help > summary'));await page.locator('.life-risk-help > summary').click();await expect(page.locator('.life-risk-help')).toHaveAttribute('open','');
+  await page.locator('.life-health-rules > summary').click();await fit(page.locator('.life-risk-help > summary'));await page.locator('.life-risk-help > summary').click();await expect(page.locator('.life-risk-help')).toHaveAttribute('open','');
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
   await page.keyboard.press('Escape');await expect(page.locator('.game-panel-overlay')).not.toBeVisible();await page.reload();
   const restored=await record(page);expect(restored.lifecycle).toEqual(saved.lifecycle);expect(restored.economy).toEqual(saved.economy);
