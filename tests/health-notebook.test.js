@@ -46,3 +46,10 @@ test('browser A fixtures pass real save validation before any remote browser lau
  const {serializeWorld,parseSave}=await import('../src/engine.js');
  for(const longName of [false,true]){const w=healthNotebookFixture({longName});assert.deepEqual(parseSave(serializeWorld(w)),w);assert.equal(w.birds[0].naming.assignedName,w.birds[0].name);assert.equal(lifeStatus(w,'b1').condition.deadlineAt-lifeStatus(w,'b1').condition.sinceAt,86400000);assert.equal(w.economy.gold,longName?0:200);if(!longName)assert.equal(lifeStatus(w,'b1').condition.deadlineAt-HEALTH_NOTEBOOK_NOW,12*3600000);}
 });
+
+test('health A separates priority, complete time units and age without duplicating the treatment hint',()=>{
+ const w=seed();lifeStatus(w,'b1').condition={kind:'respiratory',sinceAt:NOW,deadlineAt:NOW+DAY};const doc=view(w),card=doc.querySelector('.is-unwell');
+ assert.equal(card.querySelector('.life-health-condition').textContent,'呼吸器の病気');assert.match(card.querySelector('.life-bird-age').textContent,/ゲーム内/);assert.equal(card.querySelector('.life-treatment-hint'),null);assert.equal(card.querySelector('[data-life-treat]').nextElementSibling.className,'life-small life-deadline-note');
+ assert.equal(card.querySelectorAll('.life-time-unit').length,4);for(const unit of card.querySelectorAll('.life-time-unit'))assert.match(unit.textContent,/^\d+(日|時間|分)$/);
+ assert.equal(card.querySelector('.life-deadline-label').textContent,'通院まで（実時間）');assert.equal(card.querySelector('.life-deadline-priority').textContent,'先に必要');
+});
