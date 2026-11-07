@@ -200,7 +200,7 @@ test('close labels distinguish garden return and unsaved owner navigation from d
   for (const key of ['birds', 'decor', 'economy', 'settings']) assert.deepEqual(after[key], before[key]);
 });
 
-test('an active raptor names the real home exit but owner cancel still returns without ending the warning', async t => {
+test('an active raptor keeps the real home exit after character settings removal', async t => {
   const f = await fixture(t), world = await rawWorld(f.indexedDB);
   world.paused = false; world.field.place = 'park'; world.encounters.garden.open = true;
   world.encounters.gardenFriends.attendees = ['b1'];
@@ -209,12 +209,9 @@ test('an active raptor names the real home exit but owner cancel still returns w
   f.settings();
   assert.equal(f.root.querySelector('[data-game-close-panel]').textContent, 'おうちへ');
   const before = await rawWorld(f.indexedDB);
-  f.root.querySelector('.game-settings [data-game-panel="owner"]').click();
-  assert.equal(f.root.querySelector('[data-game-close-panel]').textContent, '保存せずに設定へ');
-  f.root.querySelector('[data-game-close-panel]').click();
-  assert.equal(f.root.querySelector('.game-app').dataset.panel, 'settings');
+  assert.equal(f.root.querySelector('.game-settings [data-game-panel="owner"]'), null);
+  assert.equal(f.root.querySelector('.buncho-owner-editor'), null);
   assert.deepEqual((await rawWorld(f.indexedDB)).encounters.raptor.active, before.encounters.raptor.active);
-  assert.equal(f.root.querySelector('[data-game-close-panel]').textContent, 'おうちへ');
   f.root.querySelector('[data-game-close-panel]').click();
   await until(async () => !(await rawWorld(f.indexedDB)).encounters.raptor.active, 'safe return ends warning');
   const after = await rawWorld(f.indexedDB);

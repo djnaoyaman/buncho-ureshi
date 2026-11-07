@@ -229,6 +229,9 @@
 @media(max-width:480px){.finch-page-actions>button{flex:1 1 12rem}}
 
 /* Family outing cards: names and checks carry selection, never color alone. */
+/* Raise only the open companion sheet above garden navigation, keeping warnings first. */
+body[data-world="buncho"] .finch-garden-dock:has(>.finch-companion-settings[open]){z-index:7}
+body[data-world="buncho"] .finch-garden:has(.finch-companion-settings[open])>.finch-crow-notice{z-index:8}
 .finch-companion-open-title{display:none}
 .finch-companion-settings[open] .finch-companion-closed-title{display:none}
 .finch-companion-settings[open] .finch-companion-open-title{display:inline}

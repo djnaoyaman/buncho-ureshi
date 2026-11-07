@@ -191,7 +191,8 @@ for (const [width, height] of [[320, 568], [390, 844]]) {
     async function closed() {
       await expect(page.locator('body')).toHaveAttribute('data-scene-controls', 'closed');
       await expect(toggle).toHaveAttribute('aria-expanded', 'false');
-      await expect(toggle).toHaveText('Touch the Birds');
+      await expect(toggle).toHaveText('ふれ合う');
+      await expect(toggle).toHaveAccessibleName('ふれ合う · 操作メニューを開く');
       for (const selector of chrome) await expect(page.locator(selector)).toBeHidden();
     }
     async function target(element, selector, index=0) {
@@ -225,7 +226,8 @@ for (const [width, height] of [[320, 568], [390, 844]]) {
     await page.keyboard.press('Enter');
     await expect(toggle).toBeFocused();
     await expect(toggle).toHaveAttribute('aria-expanded', 'true');
-    await expect(toggle).toHaveText('Watch the Birds');
+    await expect(toggle).toHaveText('よく見る');
+    await expect(toggle).toHaveAccessibleName('よく見る · 操作をたたんで景色を見る');
     await expect(page.locator('body')).toHaveAttribute('data-scene-controls', 'open');
     await expect(page.locator('.game-field-nav')).toBeVisible();
     await expect(page.locator('.game-bottom-dock')).toBeVisible();
@@ -302,7 +304,7 @@ for (const [width, height] of [[320, 568], [390, 844]]) {
 }
 
 for (const [width, height] of [[320, 568], [390, 844]]) {
-  test(`designed menu fits eleven cards and restores keyboard focus ${width}`, async ({page}, info) => {
+  test(`designed menu fits ten cards and restores keyboard focus ${width}`, async ({page}, info) => {
     await page.setViewportSize({width, height});
     await ready(page);
     const opener = page.locator('#game-nav-open');
@@ -310,10 +312,10 @@ for (const [width, height] of [[320, 568], [390, 844]]) {
     await opener.click();
     await expect(menu).toBeVisible();
     const cards = menu.locator('.game-tabs button');
-    await expect(cards).toHaveCount(11);
+    await expect(cards).toHaveCount(10);
     expect(await menu.evaluate(el => el.contains(document.activeElement))).toBe(true);
-    const ids = ['health', 'memorial', 'profile', 'relations', 'family', 'diary', 'roster', 'notebook', 'owner', 'settings', 'help'];
-    await expect(menu.locator('#game-menu-owner')).toHaveText('キャラクター設定');
+    const ids = ['health', 'memorial', 'profile', 'relations', 'family', 'diary', 'roster', 'notebook', 'settings', 'help'];
+    await expect(menu.locator('#game-menu-owner')).toHaveCount(0);
     await expect(menu.locator('#game-menu-settings')).toHaveText('保存・設定');
     for (const id of ids) {
       const card = menu.locator(`#game-menu-${id}`);
@@ -324,7 +326,7 @@ for (const [width, height] of [[320, 568], [390, 844]]) {
     // World polling can replace this disclosure between the query and the
     // geometry task. Re-resolve the live cards; retain every layout threshold.
     await expect(async () => {
-      await expect(cards).toHaveCount(11);
+      await expect(cards).toHaveCount(10);
       const bounds = await cards.evaluateAll(elements => elements.map(el => {
         const r = el.getBoundingClientRect();
         return {x:r.x,y:r.y,w:r.width,h:r.height};
