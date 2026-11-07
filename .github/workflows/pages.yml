@@ -45,7 +45,7 @@ jobs:
       - name: Independent garden visits, legacy saves and notebook resume
         run: npx playwright test tests/browser/garden-visits.spec.js --project=chrome --project=webkit --retries=0
       - name: Hidden bird search hints, narrow screens and unchanged saves
-        run: npx playwright test tests/browser/encounter-search-hints.spec.js --project=chrome --project=webkit --retries=0
+        run: npx playwright test tests/browser/encounter-search-hints.spec.js --project=chrome --project=webkit --retries=0 --output=unseen-postcard-test-results
       - name: Family companion cards, atomic preferences and current outing
         run: npx playwright test tests/browser/companion-cards.spec.js --project=chrome --project=webkit --retries=0 --output=companion-test-results
       - name: Notebook card A, original photos and persistent friendship
@@ -86,6 +86,7 @@ jobs:
             editorial-test-results/
             search-test-results/
             notebook-card-test-results/
+            unseen-postcard-test-results/
             garden-bookmark-test-results/
             predator-card-test-results/
             relationship-test-results/
@@ -127,4 +128,3 @@ jobs:
       - uses: actions/configure-pages@v5
       - uses: actions/deploy-pages@v4
         id: deployment
-
