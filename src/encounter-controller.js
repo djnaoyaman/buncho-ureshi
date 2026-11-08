@@ -257,7 +257,7 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
   }
   function crowEligible(requireReady=true){
     const w=getWorld();
-    return !w.encounters.raptor?.active&&alive&&mode==='garden'&&root.isConnected&&doc.visibilityState!=='hidden'&&win?.navigator?.onLine!==false&&!w.paused&&w.encounters.garden.open&&!doc.querySelector('.game-bird-sheet[open]')&&!!root.querySelector('.finch-garden-stage')&&(!requireReady||root.querySelector('.finch-garden-stage').dataset.sceneState==='ready');
+    return !w.encounters.raptor?.active&&alive&&mode==='garden'&&root.isConnected&&doc.visibilityState!=='hidden'&&!doc.body.hasAttribute('data-game-view-blocked')&&win?.navigator?.onLine!==false&&!w.paused&&w.encounters.garden.open&&!doc.querySelector('.game-bird-sheet[open]')&&!!root.querySelector('.finch-garden-stage')&&(!requireReady||root.querySelector('.finch-garden-stage').dataset.sceneState==='ready');
   }
   function canStartCrowWarning(){
     return crowEligible()&&!busy&&!crowFlight&&!crowClock.warning&&!crowCoolingDown(getWorld());
@@ -272,6 +272,7 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
   async function pollCrow(){
     if(!alive)return;
     const w=getWorld(),now=Date.now(),phase=crowScene(w,now)?.phase||null,priorWarning=crowClock.warning;
+    if(doc.body.hasAttribute('data-game-view-blocked')){crowClock.holdWarning(win.performance.now());if(alive)crowTimer=win.setTimeout(pollCrow,1000);return;}
     // Rendering the shared warning can briefly reload its stage before the
     // crow timer runs in the same turn. Keep the warning, but spend no warning
     // time until the scene is ready and an in-flight save has settled. A slow
@@ -306,11 +307,13 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
   const crowInterrupted=()=>{stopCrow();if(alive&&mode==='garden')render();};
   const crowModalObserver=win.MutationObserver?new win.MutationObserver(records=>{if(records.some(r=>r.target.matches?.('.game-bird-sheet')))stopCrow();}):null;
   if(doc.documentElement)crowModalObserver?.observe(doc.documentElement,{subtree:true,attributes:true,attributeFilter:['open']});
+  const viewVisibility=()=>crowClock.holdWarning(win.performance.now());
+  doc.addEventListener('buncho-game-view-visibility',viewVisibility);
   doc.addEventListener('visibilitychange',crowInterrupted);
   win.addEventListener('offline',crowInterrupted);
   win.addEventListener('pagehide',crowInterrupted);
   crowTimer=win.setTimeout(pollCrow,1000);
   root.classList.add('finch-overlay-content');root.addEventListener('click',click);root.addEventListener('pointerdown',startRub);root.addEventListener('keydown',keyRub);doc.addEventListener('pointermove',moveRub,{passive:false});doc.addEventListener('pointerup',endRub);doc.addEventListener('pointercancel',endRub);render();
   const motion=mountGardenBirdMotion(root,{enabled:()=>alive&&!getWorld().paused&&getWorld().settings.motion});
-  return {canStartCrowWarning,startCrowWarning,hasCrowPending:()=>alive&&(!!crowClock.warning||crowFlight),open,garden,entry(id){generation++;rub=null;busy=false;mode='entry';pageId=id;showPhoto=false;notice='';render({focus:true});},notebook(){rub=null;generation++;busy=false;mode='notebook';pageId=null;notice='';render({focus:true});},refresh(){render();},destroy(){stopCrow();crowModalObserver?.disconnect();win.clearTimeout(crowTimer);doc.removeEventListener('visibilitychange',crowInterrupted);win.removeEventListener('offline',crowInterrupted);win.removeEventListener('pagehide',crowInterrupted);doc.removeEventListener('buncho-game-will-render',rememberCatalog);media.destroy();motion();alive=false;generation++;rub=null;clearTimeout(petTimer);root.removeEventListener('pointerdown',startRub);root.removeEventListener('keydown',keyRub);doc.removeEventListener('pointermove',moveRub);doc.removeEventListener('pointerup',endRub);doc.removeEventListener('pointercancel',endRub);root.removeEventListener('click',click);root.removeEventListener('toggle',companionToggle,true);discardCompanions();root.removeAttribute('aria-busy');root.classList.remove('finch-overlay-content');}};
+  return {canStartCrowWarning,startCrowWarning,hasCrowPending:()=>alive&&(!!crowClock.warning||crowFlight),open,garden,entry(id){generation++;rub=null;busy=false;mode='entry';pageId=id;showPhoto=false;notice='';render({focus:true});},notebook(){rub=null;generation++;busy=false;mode='notebook';pageId=null;notice='';render({focus:true});},refresh(){render();},destroy(){stopCrow();crowModalObserver?.disconnect();win.clearTimeout(crowTimer);doc.removeEventListener('visibilitychange',crowInterrupted);doc.removeEventListener('buncho-game-view-visibility',viewVisibility);win.removeEventListener('offline',crowInterrupted);win.removeEventListener('pagehide',crowInterrupted);doc.removeEventListener('buncho-game-will-render',rememberCatalog);media.destroy();motion();alive=false;generation++;rub=null;clearTimeout(petTimer);root.removeEventListener('pointerdown',startRub);root.removeEventListener('keydown',keyRub);doc.removeEventListener('pointermove',moveRub);doc.removeEventListener('pointerup',endRub);doc.removeEventListener('pointercancel',endRub);root.removeEventListener('click',click);root.removeEventListener('toggle',companionToggle,true);discardCompanions();root.removeAttribute('aria-busy');root.classList.remove('finch-overlay-content');}};
 }

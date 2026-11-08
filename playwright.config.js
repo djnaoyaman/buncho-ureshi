@@ -1,3 +1,4 @@
+import { gameDeviceTestState } from './tests/fixtures/game-device-state.js';
 import { defineConfig, devices } from "@playwright/test";
 const publicURL = process.env.PUBLIC_URL;
 export default defineConfig({
@@ -8,7 +9,7 @@ export default defineConfig({
   workers: 2,
   retries: process.env.CI ? 1 : 0,
   reporter: [["list"], ["html", { open: "never" }]],
-  use: {
+  use: {storageState:gameDeviceTestState(),
     baseURL: publicURL || "http://127.0.0.1:4173/buncho-ureshi/",
     trace: "retain-on-failure",
     screenshot: "only-on-failure",

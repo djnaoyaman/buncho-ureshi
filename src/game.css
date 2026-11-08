@@ -1528,3 +1528,26 @@ body[data-world="buncho"] .game-profile-card-screen .game-name-form{display:flex
     font-size: max(16px, 1rem);
   }
 }
+
+/* Route-only announcements. Native dialogs keep existing game sheets and drafts
+   underneath intact, including focus and scroll when portrait view returns. */
+body[data-world="buncho"] .game-environment-notice {
+  box-sizing: border-box; inset: 0; margin: auto;
+  width: min(560px, calc(100% - 32px)); max-width: calc(100% - 32px);
+  max-height: calc(var(--game-viewport-height, 100dvh) - 32px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  overflow: auto; overscroll-behavior: contain; padding: clamp(20px, 5vw, 36px);
+  border: 2px solid #b8baaa; border-radius: 28px;
+  background: #fcf8ed; color: #304f43; line-height: 1.8;
+}
+.game-environment-notice:not([open]) { display: none; }
+.game-environment-notice::backdrop { background: #19372ad9; }
+.game-environment-notice .game-environment-kicker { margin: 0 0 12px; font-size: .85rem; }
+.game-environment-notice h2 { margin: 0 0 18px; font-size: clamp(1.35rem, 4vw, 1.9rem); line-height: 1.6; overflow-wrap: anywhere; }
+.game-environment-notice p { overflow-wrap: anywhere; }
+.game-environment-remember { min-height: 44px; display: flex; align-items: flex-start; gap: 10px; margin: 22px 0; font-size: .9rem; }
+.game-environment-remember input { flex: none; width: 24px; height: 24px; margin: 3px 0; accent-color: #496e50; }
+.game-environment-actions { display: grid; gap: 12px; margin-top: 24px; }
+.game-environment-actions > :is(a, button) { display: flex; justify-content: center; align-items: center; min-width: 0; min-height: 48px; padding: 12px; font: inherit; border-radius: 24px; text-align: center; white-space: normal; overflow-wrap: anywhere; }
+.game-environment-actions button { border: 0; background: #e2edb0; color: #304f43; }
+.game-environment-actions a { color: #304f43; }
+.game-environment-notice [hidden] { display: none !important; }

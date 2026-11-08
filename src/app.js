@@ -1,3 +1,4 @@
+import { mountGameEnvironment } from "./game-environment.js";
 import { bindEditorialParallax } from "./editorial-parallax.js";
 import { mountGameMusic } from "./game-music-ui.js";
 import { renderHome } from "./home.js";
@@ -561,38 +562,40 @@ function render(route) {
     studioSeed = null;
   } else if (route === "game/") {
     const gameRoot = document.querySelector("#game-root");
-    const musicCleanup = mountGameMusic(document.querySelector("[data-game-title-slot]"), {base:BASE});
-    teardown = musicCleanup;
-    Promise.resolve(
-      mountGame(gameRoot, {
-        birdSvg: gameBirdSvg,
-        goArticle: (id) => {
-          const patterns = {
-            bathing: /水浴/,
-            food: /食べ|食事/,
-            behavior: /しぐさ|行動/,
-          };
-          const a =
-            articles.find((a) => a.id === id) ||
-            articles.find((a) => (patterns[id] || /水浴/).test(a.title)) ||
-            articles[0];
-          navigate(`encyclopedia/${a.id}/`);
-        },
-        goArt: (seed) => {
-          studioSeed = seed;
-          navigate("studio/");
-        },
-      }),
-    )
-      .then((cleanup) => {
-        if (gameRoot.isConnected)
-          teardown = () => { musicCleanup(); if(typeof cleanup === "function") cleanup(); };
-        else { musicCleanup(); if (typeof cleanup === "function") cleanup(); }
-      })
-      .catch((error) => {
-        if (gameRoot.isConnected)
-          gameRoot.innerHTML = `<p>ゲームをひらけませんでした。読み直してみてください。</p><p>${esc(error.message)}</p>`;
-      });
+    teardown = mountGameEnvironment(gameRoot, { exitURL: url("encyclopedia/"), start() {
+      const musicCleanup = mountGameMusic(document.querySelector("[data-game-title-slot]"), {base:BASE});
+      let active = true, gameCleanup = null;
+      Promise.resolve(
+        mountGame(gameRoot, {
+          birdSvg: gameBirdSvg,
+          goArticle: (id) => {
+            const patterns = {
+              bathing: /水浴/,
+              food: /食べ|食事/,
+              behavior: /しぐさ|行動/,
+            };
+            const a =
+              articles.find((a) => a.id === id) ||
+              articles.find((a) => (patterns[id] || /水浴/).test(a.title)) ||
+              articles[0];
+            navigate(`encyclopedia/${a.id}/`);
+          },
+          goArt: (seed) => {
+            studioSeed = seed;
+            navigate("studio/");
+          },
+        }),
+      )
+        .then((cleanup) => {
+          if (active && gameRoot.isConnected) gameCleanup = cleanup;
+          else if (typeof cleanup === "function") cleanup();
+        })
+        .catch((error) => {
+          if (active && gameRoot.isConnected)
+            gameRoot.innerHTML = `<p>ゲームをひらけませんでした。読み直してみてください。</p><p>${esc(error.message)}</p>`;
+        });
+      return () => { active = false; musicCleanup(); if (typeof gameCleanup === "function") gameCleanup(); };
+    }});
   } else if (route === "help/")
     document.querySelector("#motion-toggle").onchange = (e) => {
       settings.motion = e.target.checked;

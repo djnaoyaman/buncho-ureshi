@@ -8,7 +8,7 @@ export function mountGardenRaptors(root,{getWorld,transact,onChange=()=>{},isAva
  const doc=root.ownerDocument,win=doc.defaultView,clock=createGardenRaptorClock({random}),entryClock=createGardenPredatorClock({random:predatorRandom});
  let alive=true,flight=false,timer=null,last=null,epoch=0,lastWorld=getWorld().worldId,lastPanel=root.querySelector('.game-app')?.dataset.panel,lastGarden=getWorld().encounters.garden.id;
  let renderedScene=sceneKey(getWorld());
- const visible=()=>alive&&root.isConnected&&!['loading','shown'].includes(doc.body.dataset.gameIntro)&&doc.visibilityState!=='hidden'&&win.navigator?.onLine!==false&&!getWorld().paused;
+ const visible=()=>alive&&root.isConnected&&!['loading','shown'].includes(doc.body.dataset.gameIntro)&&doc.visibilityState!=='hidden'&&!doc.body.hasAttribute('data-game-view-blocked')&&win.navigator?.onLine!==false&&!getWorld().paused;
  const interrupt=()=>{last=null;clock.reset();entryClock.reset();epoch++;};
  function sceneKey(w){const s=raptorScene(w);return s?`${s.species.id}:${s.phase}:${s.hostile}`:'';}
  async function poll(){
@@ -58,6 +58,6 @@ export function mountGardenRaptors(root,{getWorld,transact,onChange=()=>{},isAva
  readyObserver?.observe(root,{subtree:true,childList:true,attributes:true,attributeFilter:['data-scene-state']});primeEntry();
  if(doc.documentElement)modalObserver?.observe(doc.documentElement,{subtree:true,attributes:true,attributeFilter:['open']});
  doc.addEventListener('buncho-game-garden',viewChanged);doc.addEventListener('buncho-game-panel',viewChanged);doc.addEventListener('buncho-game-encounter-view',viewChanged);
- doc.addEventListener('visibilitychange',interrupt);win.addEventListener('offline',interrupt);win.addEventListener('pagehide',interrupt);schedule();
- return {poll,reset:interrupt,destroy(){alive=false;interrupt();modalObserver?.disconnect();readyObserver?.disconnect();doc.removeEventListener('buncho-game-garden',viewChanged);doc.removeEventListener('buncho-game-panel',viewChanged);doc.removeEventListener('buncho-game-encounter-view',viewChanged);win.clearTimeout(timer);doc.removeEventListener('visibilitychange',interrupt);win.removeEventListener('offline',interrupt);win.removeEventListener('pagehide',interrupt);}};
+ doc.addEventListener('visibilitychange',interrupt);doc.addEventListener('buncho-game-view-visibility',interrupt);win.addEventListener('offline',interrupt);win.addEventListener('pagehide',interrupt);schedule();
+ return {poll,reset:interrupt,destroy(){alive=false;interrupt();modalObserver?.disconnect();readyObserver?.disconnect();doc.removeEventListener('buncho-game-garden',viewChanged);doc.removeEventListener('buncho-game-panel',viewChanged);doc.removeEventListener('buncho-game-encounter-view',viewChanged);win.clearTimeout(timer);doc.removeEventListener('visibilitychange',interrupt);doc.removeEventListener('buncho-game-view-visibility',interrupt);win.removeEventListener('offline',interrupt);win.removeEventListener('pagehide',interrupt);}};
 }

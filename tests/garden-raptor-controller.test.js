@@ -37,7 +37,7 @@ test('queued arrival invalidates on hidden, destruction, other garden or replace
  for(const change of ['hidden','destroy','garden','world']){let w=fixture(),release;const s=setup(w,{getWorld:()=>w,transact:fn=>new Promise(resolve=>{release=()=>resolve(fn(w));})});try{await s.run(120);const {flight}=await s.tick();assert.ok(release);const old=w;if(change==='hidden')s.win.document.dispatchEvent(new s.win.Event('visibilitychange'));if(change==='destroy')s.controller.destroy();if(change==='garden')w.encounters.garden.id='komugi';if(change==='world'){w=fixture();w.worldId+='new';}release();await flight;assert.equal(old.encounters.raptor.active,null);assert.equal(w.encounters.raptor.active,null);}finally{s.close();}}
 });
 test('queued final countdown cannot undo a successful escape or mutate a replacement world',async()=>{
- for(const change of ['escape','world','hide']){let w=fixture(true),release;w.encounters.raptor.active.remainingMs=1000;const old=w,s=setup(w,{getWorld:()=>w,transact:fn=>new Promise(resolve=>{release=()=>resolve(fn(w));})});try{await s.run(1);const {flight}=await s.tick();assert.ok(release);if(change==='escape')escapeGardenRaptor(w,raptorToken(w));if(change==='world')w=fixture();if(change==='hide')s.win.document.dispatchEvent(new s.win.Event('visibilitychange'));release();await flight;assert.equal(lifeStatus(old,'b1').death,null);assert.equal(lifeStatus(w,'b1').death,null);}finally{s.close();}}
+ for(const change of ['escape','world','hide','orientation']){let w=fixture(true),release;w.encounters.raptor.active.remainingMs=1000;const old=w,s=setup(w,{getWorld:()=>w,transact:fn=>new Promise(resolve=>{release=()=>resolve(fn(w));})});try{await s.run(1);const {flight}=await s.tick();assert.ok(release);if(change==='escape')escapeGardenRaptor(w,raptorToken(w));if(change==='world')w=fixture();if(change==='hide')s.win.document.dispatchEvent(new s.win.Event('visibilitychange'));if(change==='orientation'){s.win.document.body.dataset.gameViewBlocked='orientation';s.win.document.dispatchEvent(new s.win.CustomEvent('buncho-game-view-visibility'));}release();await flight;assert.equal(lifeStatus(old,'b1').death,null);assert.equal(lifeStatus(w,'b1').death,null);}finally{s.close();}}
 });
 test('failed persistence leaves the one minute warning intact and retry is safe',async()=>{
  const w=fixture(true),before=structuredClone(w),s=setup(w,{transact:async()=>{throw new Error('full disk');}});try{await s.run(3);assert.deepEqual(w,before);assert.ok(s.changes.some(x=>x.error));assert.equal(lifeStatus(w,'b1').death,null);}finally{s.close();}
@@ -70,4 +70,17 @@ test('pending crow save retains priority even after its warning DOM is replaced'
 
 test('early entry still grants the full minute to escape',async()=>{
  const w=fixture(),s=setup(w,{earlyPredatorVisits:true,predatorRandom:()=>0});try{await s.run(2);assert.equal(w.encounters.raptor.active,null);await s.run(1);assert.equal(w.encounters.raptor.active.remainingMs,60000);await s.run(59);assert.equal(lifeStatus(w,'b1').death,null);escapeGardenRaptor(w,raptorToken(w));await s.run(2);assert.equal(lifeStatus(w,'b1').death,null);}finally{s.close();}
+});
+
+test('portrait notice holds the exact saved warning and invalidates a queued hidden countdown',async()=>{
+ const w=fixture(true),s=setup(w);try{
+  await s.run(5);const before=structuredClone(w);
+  s.win.document.body.dataset.gameViewBlocked='orientation';
+  s.win.document.dispatchEvent(new s.win.CustomEvent('buncho-game-view-visibility',{detail:{blocked:true}}));
+  await s.run(100);assert.deepEqual(w,before);
+  delete s.win.document.body.dataset.gameViewBlocked;
+  s.win.document.dispatchEvent(new s.win.CustomEvent('buncho-game-view-visibility',{detail:{blocked:false}}));
+  await s.run(1);assert.deepEqual(w,before);
+  await s.run(1);assert.equal(w.encounters.raptor.active.remainingMs,before.encounters.raptor.active.remainingMs-1000);
+ }finally{s.close();}
 });

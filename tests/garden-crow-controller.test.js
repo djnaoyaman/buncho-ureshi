@@ -92,3 +92,16 @@ test('a founder warning clears immediately on succession refresh before the next
 test('shared entry handoff preserves a full six second warning',async()=>{
  const w=fixture(),s=setup(w);try{await s.run(3);assert.equal(w.encounters.crow.visits.length,0);assert.equal(s.panel.startCrowWarning(id),true);assert.ok(s.root.querySelector('[data-crow-phase=warning]'));await s.run(5);assert.equal(w.encounters.crow.visits.length,0);await s.run(1);assert.equal(w.encounters.crow.visits.length,1);}finally{s.close();}
 });
+
+test('portrait notice holds a visible crow warning without cancelling it or consuming hidden time',async()=>{
+ const w=fixture(),s=setup(w);try{
+  await s.run(121);assert.equal(s.panel.hasCrowPending(),true);const before=structuredClone(w);
+  s.win.document.body.dataset.gameViewBlocked='orientation';
+  s.win.document.dispatchEvent(new s.win.CustomEvent('buncho-game-view-visibility',{detail:{blocked:true}}));
+  await s.run(40);assert.deepEqual(w,before);assert.equal(s.panel.hasCrowPending(),true);
+  delete s.win.document.body.dataset.gameViewBlocked;
+  s.win.document.dispatchEvent(new s.win.CustomEvent('buncho-game-view-visibility',{detail:{blocked:false}}));
+  await s.run(5);assert.deepEqual(w,before);
+  await s.run(1);assert.equal(w.encounters.crow.speciesId,id);
+ }finally{s.close();}
+});

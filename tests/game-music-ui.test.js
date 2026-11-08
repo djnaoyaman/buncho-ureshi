@@ -85,3 +85,14 @@ test('music A shows saved mode, current track and native 0 to 60 volume without 
 test('music A never hides loading and failure behind the on state',async()=>{
  let reject;const held=new Promise((_,no)=>{reject=no;});const f=setup(undefined,{fetcher:()=>held}),d=f.document;f.emit('buncho-game-panel','settings');f.trustedShell('[data-music-auto]');await tick();assert.equal(d.querySelector('.game-music').dataset.status,'loading');assert.match(d.querySelector('.game-music-status').textContent,/準備しています/);reject(new Error('offline'));await tick();await tick();assert.equal(d.querySelector('.game-music').dataset.status,'error');assert.ok(d.querySelector('.game-music-status').textContent.length>0);assert.equal(d.querySelector('.game-music-enabled').textContent,'音楽オン');f.trustedShell('[data-music-off]');assert.equal(d.querySelector('.game-music').dataset.status,'off');assert.equal(d.querySelector('.game-music-status').textContent,'');f.dispose();f.window.happyDOM.abort();
 });
+
+test('orientation notice silences playback without changing music preference or automatically restarting',async()=>{
+ const f=setup();try{
+  f.trustedField();await tick();assert.ok(f.started.some(source=>source.live));
+  f.document.body.dataset.gameViewBlocked='orientation';f.emit('buncho-game-view-visibility',{blocked:true});
+  assert.equal(f.started.filter(source=>source.live).length,0);
+  delete f.document.body.dataset.gameViewBlocked;f.emit('buncho-game-view-visibility',{blocked:false});await tick();
+  assert.equal(f.started.filter(source=>source.live).length,0);
+  f.trustedField();await tick();assert.ok(f.started.some(source=>source.live));
+ }finally{f.dispose();f.window.happyDOM.abort();}
+});
