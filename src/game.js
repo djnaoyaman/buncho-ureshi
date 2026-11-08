@@ -823,6 +823,13 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
       if(controls.length){ev.preventDefault();const next=index<0?(ev.shiftKey?controls.length-1:0):(index+(ev.shiftKey?-1:1)+controls.length)%controls.length;controls[next].focus({preventScroll:!sheet.matches('.game-independence-dialog,.game-successor-dialog')});}
       return;
     }
+    // WebKit can leave native Tab on an open summary when the first action
+    // is below this scrollable dialog. Preserve that one forward DOM-order step.
+    if(panel==='health'&&ev.key==='Tab'&&!ev.shiftKey&&!ev.altKey&&!ev.ctrlKey&&!ev.metaKey){
+      const summary=ev.target.closest('.life-caretaker-fold[open] > summary');
+      const hire=summary?.closest('.game-panel-overlay[open]')&&summary.parentElement.querySelector('.caretaker-recruitment button[data-life-hire]:not(:disabled)');
+      if(hire&&!hire.closest('[hidden],[inert]')){ev.preventDefault();hire.focus();return;}
+    }
     if(ev.key==='Escape'&&ev.target.closest('.game-secondary-menu[open]')){ev.preventDefault();closeGameMenu();}
   }
   function syncCarePreference(ev) {
