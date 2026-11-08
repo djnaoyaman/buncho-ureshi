@@ -1,6 +1,7 @@
 import {test,expect} from '@playwright/test';
 import {eventText,bumpRevision} from '../../src/engine.js';
 import {diaryFixture,validated,expectedDiary,detailSelector,summarySelector,FULL,CARD} from '../fixtures/diary-paper.js';
+import {diaryIntroSnapshot,diaryRowSnapshot,normalizedDiaryRows,normalizeDiaryText} from '../fixtures/diary-snapshots.js';
 
 // Match date evidence across the browser and Node assertion environments.
 test.use({timezoneId:'UTC'});
@@ -32,10 +33,8 @@ async function start(page,world,size){
   expect(await record(page)).toEqual(world);
 }
 async function shot(page,info,label,target){
-  await Promise.all([
-    expect(page.locator('body')).toHaveAttribute('data-game-intro','done'),
-    expect(page.locator('.game-logo-intro')).toHaveCount(0)
-  ]);
+  await expect.poll(()=>page.locator('body, .game-logo-intro').evaluateAll(diaryIntroSnapshot),
+    {timeout:10000,message:'one completed intro body and no intro overlays before capture'}).toEqual({intro:['done'],overlays:0});
   await target.scrollIntoViewIfNeeded();await expect(target).toBeInViewport();
   const path=info.outputPath(`${label}.png`);await page.screenshot({path});await info.attach(label,{path,contentType:'image/png'});
 }
@@ -105,11 +104,9 @@ for(const kind of ['historical','manual-omochi','deceased','empty'])test(`diary 
   const row=page.locator(detailSelector('milestone',e.id)).locator('..');
   const bird=w.birds.find(b=>b.id===e.ids[0]);
   const stage=e.kind==='egg'?'egg':e.kind==='hatch'?'chick':e.kind==='grow'?e.data.stage:bird.stage;
-  await Promise.all([
-    expect(row.locator('figcaption')).toHaveText(bird.name),
-    expect(row.locator('.game-sprite')).toHaveAttribute('data-stage',stage),
-    expect(row.locator('.game-sprite')).toHaveAttribute('data-color',bird.color)
-  ]);
+  await expect.poll(async()=>normalizedDiaryRows(await row.evaluateAll(diaryRowSnapshot)),
+    {timeout:10000,message:`one diary row, caption and sprite with exact identity for ${e.id}`})
+    .toEqual([{names:[normalizeDiaryText(bird.name)],sprites:[{stage,color:bird.color}]}]);
   await shot(page,info,`${kind}-${e.kind}-${e.id}`,row.locator('.diary-paper-portrait'));
  }
  expect(await record(page)).toEqual(w);await page.reload();await ready(page);await openDiary(page);await content(page,w);expect(await record(page)).toEqual(w);
