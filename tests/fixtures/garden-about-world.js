@@ -14,6 +14,16 @@ export function fixture(kind='solo',gardenId=GARDENS[0].id){
  if(['chick','egg'].includes(kind))w.birds[0].stage=kind;
  if(kind==='dead')throw new Error('dead fixture requires async fixtureWithLife');
  const token=()=>({...raptor.raptorToken(w),gardenId:w.encounters.garden.id});
+ // Navigation/focus alone uses naturally completed visits, keeping both entry
+ // lotteries in their normal cooldown without changing clocks or random draws.
+ if(kind==='navigation-cooldown'){
+  const past=NOW-90000;
+  if(!raptor.arriveGardenRaptor(w,'black-kite',past,token()).changed)throw Error('navigation raptor history failed');
+  for(let elapsed=2000;elapsed<=raptor.RAPTOR_RULES.visitMs;elapsed+=2000)
+   if(!engine.advanceGardenRaptor(w,2000,past+elapsed,raptor.raptorToken(w)).changed)throw Error('navigation raptor completion failed');
+  if(!crow.arriveGardenCrow(w,'large-billed-crow',NOW-60000,token()).changed)throw Error('navigation crow history failed');
+  if(crow.crowScene(w,NOW)||raptor.raptorScene(w)||!crow.crowCoolingDown(w,NOW)||!raptor.raptorCoolingDown(w,NOW))throw Error('navigation cooldown failed');
+ }
  if(kind.startsWith('crow-')&&kind!=='crow-warning'){
   if(!crow.arriveGardenCrow(w,'large-billed-crow',NOW,token()).changed)throw Error('crow arrival failed');
   if(kind==='crow-friendly')for(let n=0;n<13;n++)crow.petGardenCrow(w,'large-billed-crow',8,token());
