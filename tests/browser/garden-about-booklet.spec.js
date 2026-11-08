@@ -20,6 +20,8 @@ async function setup(page,kind='solo',garden=GARDENS[0].id){
  if(await page.locator('body').getAttribute('data-game-intro')==='shown')await page.clock.runFor(2000);
  await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');
  await page.locator('.game-scene-controls-toggle').click();
+ const outdoors=page.locator('.game-field-nav [data-game-panel=outdoors]');
+ if(await outdoors.getAttribute('aria-pressed')!=='true')await outdoors.click();
  await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-scene-state','ready');
 }
 const about=page=>page.locator('.finch-garden-dock > [data-garden-details=about]');
