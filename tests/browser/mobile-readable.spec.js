@@ -57,15 +57,17 @@ for (const size of sizes) test(`phone inputs, enlarged text and reduced height $
   await page.addStyleTag({ content: 'html { font-size:32px!important; }' });
   await readableInputs(page, 32); await fits(page);
   await page.setViewportSize({ width: size.width, height: 300 });
+  // Resize crosses the compact-layout media query and redraws the sheet.
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
   await page.locator('#game-words').focus();
-  await page.locator('#game-words').scrollIntoViewIfNeeded();
+  await expect(page.locator('#game-words')).toBeFocused();
   await expect(page.locator('#game-words')).toBeInViewport();
   // Narrow screens intentionally stack the existing send button. Native Tab
   // must reveal it inside the dialog, including with the keyboard-height view.
   await page.keyboard.press('Tab');
   await expect(page.locator('#game-talk-send')).toBeFocused();
   await expect(page.locator('#game-talk-send')).toBeInViewport();
-  await page.locator('#game-sheet-close').scrollIntoViewIfNeeded();
+  await page.locator('#game-sheet-close').focus();
   await expect(page.locator('#game-sheet-close')).toBeInViewport();
   await page.locator('#game-sheet-close').click();
   await fits(page);

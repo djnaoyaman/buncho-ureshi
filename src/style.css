@@ -2138,3 +2138,8 @@ body:not([data-world="buncho"]) .header-menu nav { margin-bottom: 0; }
     max-width: 100%;
   }
 }
+
+/* Flex children must be allowed to shrink around enlarged ruby text in Safari. */
+@media (max-width: 900px) {
+  .morph-discovery-link > span { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
+}
