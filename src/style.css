@@ -2126,3 +2126,15 @@ body:not([data-world="buncho"]) .header-menu #site-search {
   border-bottom: 1px solid var(--line);
 }
 body:not([data-world="buncho"]) .header-menu nav { margin-bottom: 0; }
+
+/* Phone inputs stay readable on focus and follow enlarged root text. The
+   existing palette, desktop layout and canvas touch handling stay in place. */
+@media (max-width: 900px), (any-pointer: coarse) {
+  body:not([data-world="buncho"]) input:is([type="text"], [type="search"], [type="date"], [type="email"], [type="url"], [type="tel"], [type="number"], [type="password"], :not([type])),
+  body:not([data-world="buncho"]) textarea,
+  body:not([data-world="buncho"]) select {
+    font-size: max(16px, 1rem);
+    min-width: 0;
+    max-width: 100%;
+  }
+}

@@ -821,7 +821,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
         return true;
       });
       const index=controls.indexOf(document.activeElement);
-      if(controls.length){ev.preventDefault();const next=index<0?(ev.shiftKey?controls.length-1:0):(index+(ev.shiftKey?-1:1)+controls.length)%controls.length;controls[next].focus({preventScroll:!sheet.matches('.game-independence-dialog,.game-successor-dialog')});}
+      if(controls.length){ev.preventDefault();const next=index<0?(ev.shiftKey?controls.length-1:0):(index+(ev.shiftKey?-1:1)+controls.length)%controls.length;controls[next].focus();}
       return;
     }
     // WebKit can leave native Tab on an open summary when the first action
