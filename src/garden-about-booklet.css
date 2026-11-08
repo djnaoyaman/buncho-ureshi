@@ -1,0 +1,25 @@
+/* Scoped to 庭のこと only. Native details/summary and parent scrolling stay intact. */
+.garden-about-booklet { --booklet-ink:#405343; --booklet-rule:#d7c9ae; color:var(--booklet-ink); }
+.garden-about-booklet .garden-about-booklet__cover { padding:1.1rem .45rem .8rem; }
+.garden-about-booklet .garden-about-booklet__eyebrow { margin:0 0 .55rem; font-size:.78rem; letter-spacing:.12em; font-weight:700; }
+.garden-about-booklet .garden-about-booklet__cover h4 { margin:0; font-size:clamp(1.3rem,3vw,1.8rem); line-height:1.4; }
+.garden-about-booklet .garden-about-booklet__cover p:last-child { margin:.6rem 0 0; }
+.garden-about-booklet .garden-about-booklet__paper { padding:1.4rem .85rem 1.2rem 3.1rem; border:1px solid var(--booklet-rule); border-radius:.65rem; background:#f8f0da; box-shadow:inset .25rem 0 0 #eee3c9; overflow-wrap:anywhere; }
+.garden-about-booklet .garden-about-booklet__chapter { position:relative; min-width:0; padding:0 0 1.9rem; }
+.garden-about-booklet .garden-about-booklet__chapter:last-child { padding-bottom:0; }
+.garden-about-booklet .garden-about-booklet__chapter::before { content:""; position:absolute; left:-1.65rem; top:.5rem; bottom:-.5rem; border-left:1px solid var(--booklet-rule); }
+.garden-about-booklet .garden-about-booklet__chapter:last-child::before { bottom:0; }
+.garden-about-booklet .garden-about-booklet__chapter h5 { margin:0 0 1rem; font-size:1.18rem; line-height:1.5; }
+.garden-about-booklet .garden-about-booklet__number { position:absolute; left:-2.7rem; top:-.15rem; display:grid; place-items:center; width:2.1rem; height:2.1rem; border-radius:50%; background:#f6da85; border:1px solid #fffae8; font-size:.86rem; font-variant-numeric:tabular-nums; }
+.garden-about-booklet .garden-about-booklet__chapter p { margin:.75rem 0; line-height:1.9; font-size:1rem; }
+.garden-about-booklet .garden-about-booklet__chapter h6 { margin:1rem 0 .4rem; font-size:1.05rem; line-height:1.6; }
+.garden-about-booklet .garden-about-booklet__figure { margin:0 0 1rem; }
+.garden-about-booklet .garden-about-booklet__figure img { display:block; width:100%; height:auto; max-height:18rem; object-fit:cover; border-radius:1rem; }
+.garden-about-booklet .garden-about-booklet__figure figcaption { margin-top:.5rem; font-size:.88rem; line-height:1.6; }
+.garden-about-booklet .garden-about-booklet__warning { margin:1rem 0 .2rem; padding:1rem; border:1.5px solid #a94c35; border-radius:1rem; background:#fbe5d8; color:#603c2d; }
+.garden-about-booklet .garden-about-booklet__warning h6 { margin:0; }
+.garden-about-booklet .garden-about-booklet__warning strong { color:#923b28; font-size:1.15rem; line-height:1.7; }
+.garden-about-booklet .garden-about-booklet__rules { margin-top:1.2rem; padding:.8rem; border:1px solid var(--booklet-rule); border-radius:.8rem; background:#fffdf6; }
+.garden-about-booklet .garden-about-booklet__rules > summary { cursor:pointer; line-height:1.7; font-weight:700; min-height:2.75rem; align-content:center; }
+.garden-about-booklet summary:focus-visible { outline:3px solid #405343; outline-offset:3px; }
+@media (forced-colors:active) { .garden-about-booklet .garden-about-booklet__number { border:1px solid CanvasText; } }

@@ -76,6 +76,17 @@ jobs:
           pactl load-module module-null-sink sink_name=ci_audio sink_properties=device.description=CI_Audio
           pactl set-default-sink ci_audio
           pactl info
+      - name: Garden B booklet, all identities, notices and exact saves
+        if: matrix.lane == 'd'
+        run: npx playwright test --config=playwright.garden-about.config.js --project=chrome --project=webkit --retries=0 --output=garden-about-test-results
+      - uses: actions/upload-artifact@v4
+        if: always() && matrix.lane == 'd'
+        with:
+          name: garden-about-evidence-${{ github.sha }}
+          path: |
+            garden-about-test-results/**/*.png
+            garden-about-test-results/**/*.json
+          retention-days: 14
       - name: Consultation letters A, native consent and exact save transitions
         if: matrix.lane == 'a'
         run: npx playwright test tests/browser/consultation-letter.spec.js --project=chrome --project=webkit --retries=0 --output=consultation-test-results
@@ -180,6 +191,7 @@ jobs:
             diary-test-results/
             consultation-test-results/
             help-guide-test-results/
+            garden-about-test-results/
             settings-test-results/
             menu-test-results/
             editorial-test-results/
