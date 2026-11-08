@@ -16,11 +16,14 @@ async function setup(page,kind='solo',garden=GARDENS[0].id){
  await page.addInitScript(()=>{localStorage.setItem('buncho.music.v1',JSON.stringify({enabled:false}));localStorage.setItem('buncho.care-sound-choice.v1',JSON.stringify({explicit:true,enabled:false}));});
  await page.goto('');await page.clock.install({time:at(kind)});await page.clock.pauseAt(at(kind)+1000);
  await raw(page,worldFor(kind,garden));await page.goto('game/');
+ await enterVisibleGarden(page);
+}
+async function enterVisibleGarden(page){
  await expect.poll(()=>page.locator('body').getAttribute('data-game-intro')).toMatch(/shown|done/);
  if(await page.locator('body').getAttribute('data-game-intro')==='shown')await page.clock.runFor(2000);
  await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');
- await page.locator('.game-scene-controls-toggle').click();
  const outdoors=page.locator('.game-field-nav [data-game-panel=outdoors]');
+ if(!await outdoors.isVisible())await page.locator('.game-scene-controls-toggle').click();
  if(await outdoors.getAttribute('aria-pressed')!=='true')await outdoors.click();
  await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-scene-state','ready');
 }
@@ -30,7 +33,7 @@ const layouts=[...GARDENS.map(g=>({garden:g,size:[320,740]})),...[ [390,844],[84
 for(const {garden,size} of layouts)test('layout '+garden.id+' '+size.join('x'),async({page},info)=>{
  await page.setViewportSize({width:size[0],height:size[1]});await setup(page,'solo',garden.id);const a=await open(page);
  await expect(a.locator('h4')).toHaveText(garden.name);await expect(a).toContainText(garden.description);
- const img=a.locator('img');await img.scrollIntoViewIfNeeded();await img.evaluate(i=>i.decode());expect(await img.evaluate(i=>i.naturalWidth)).toBeGreaterThan(0);
+ const img=a.locator('img');await expect(img).toHaveCount(1);await img.scrollIntoViewIfNeeded();await img.evaluate(i=>i.decode());expect(await img.evaluate(i=>i.naturalWidth)).toBeGreaterThan(0);
  await page.screenshot({path:info.outputPath('01-identity.png')});
  await a.locator('.garden-about-booklet__warning > p').first().scrollIntoViewIfNeeded();await expect(a.locator('.garden-about-booklet__warning > p').first()).toBeInViewport({ratio:1});
  await page.screenshot({path:info.outputPath('02-warning.png')});
@@ -41,7 +44,10 @@ for(const {garden,size} of layouts)test('layout '+garden.id+' '+size.join('x'),a
 for(const kind of cases.filter(k=>k!=='crow-warning'))test('exact saves and actual notices '+kind,async({page})=>{
  await setup(page,kind);const before=await raw(page),bytes=engine.serializeWorld(before),a=await open(page);
  await a.locator('[data-garden-details=about-rules] > summary').click();await a.evaluate(e=>e.scrollTop=e.scrollHeight);
- await a.locator(':scope > summary').click();await a.locator(':scope > summary').focus();await page.keyboard.press('Space');
+ const summary=a.locator(':scope > summary');await summary.scrollIntoViewIfNeeded();
+ const box=await summary.boundingBox(),closePoint={x:box.width-24,y:box.height/2};
+ expect(await summary.evaluate((e,p)=>{const b=e.getBoundingClientRect();return e.contains(document.elementFromPoint(b.x+p.x,b.y+p.y));},closePoint)).toBe(true);
+ await summary.click({position:closePoint});await a.locator(':scope > summary').focus();await page.keyboard.press('Space');
  await expect(a).toHaveAttribute('open','');expect(await raw(page)).toEqual(before);expect(engine.serializeWorld(await raw(page))).toBe(bytes);
  const notice=page.locator('.game-panel-overlay > [data-raptor-notice]');
  if(['raptor-hostile','settings-after-warning','legacy-warning'].includes(kind)){await expect(notice).toHaveAttribute('data-raptor-phase','warning');await expect(notice.locator('[data-game-raptor-home]')).toBeVisible();}
@@ -66,15 +72,15 @@ test('polling focus scroll and close/reopen navigation',async({page})=>{
  await page.locator('[data-garden-select=kazaguruma]').click();await expect(page.locator('#finch-garden-title')).toHaveText(GARDENS.find(g=>g.id==='kazaguruma').name);
  await page.locator('.game-overlay-head [data-game-close-panel]').click();await expect(page.locator('.game-room')).toBeVisible();
  await page.locator('.game-field-nav [data-game-panel=outdoors]').click();await expect(about(page)).toHaveCount(1);
- await page.reload();await expect(about(page)).toHaveCount(1);
+ await page.reload();await enterVisibleGarden(page);await expect(about(page)).toHaveCount(1);
 });
 
 test('browser history leaves and restores a single garden disclosure',async({page})=>{
  await setup(page);await open(page);
  await page.goto(new URL('../',page.url()).href);
- await page.goBack();await expect(about(page)).toHaveCount(1);
+ await page.goBack();await expect(page).toHaveURL(/\/game\/$/);await enterVisibleGarden(page);await expect(about(page)).toHaveCount(1);
  await page.goForward();await expect(about(page)).toHaveCount(0);
- await page.goBack();await expect(about(page)).toHaveCount(1);
+ await page.goBack();await expect(page).toHaveURL(/\/game\/$/);await enterVisibleGarden(page);await expect(about(page)).toHaveCount(1);
 });
 
 test('native tab order, scoped long text enlargement, and forced-color focus',async({page},info)=>{
