@@ -42,7 +42,9 @@ test('encyclopedia and studio stay available on desktop without device announcem
 });
 for(const deviceName of ['phone','tablet'])test(`${deviceName} portrait starts directly; rotation retains sheet, draft, focus and exact saved world`,async({browser,browserName,baseURL})=>{
  const device=deviceName==='tablet'?devices['iPad Mini']:devices[browserName==='webkit'?'iPhone 13':'Pixel 7'];
- const context=await browser.newContext({...device,baseURL,storageState:empty});
+ // The desktop project's physical screen otherwise leaks into iPad emulation.
+ // Model both viewport and physical screen as the same portrait device.
+ const context=await browser.newContext({...device,screen:device.screen||device.viewport,baseURL,storageState:empty});
  try{
   await initialize(context);const page=await context.newPage();await page.goto('game/');await ready(page);
   await expect(page.locator('body')).toHaveAttribute('data-game-device','touch');await expect(notice(page)).not.toBeVisible();
