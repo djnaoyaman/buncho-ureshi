@@ -97,6 +97,8 @@ jobs:
           path: |
             caretaker-test-results/**/*.png
             caretaker-test-results/**/*.json
+            caretaker-test-results/**/trace.zip
+            caretaker-test-results/**/error-context.md
           retention-days: 14
       - name: Garden Friends A cards, measured text, identities and exact saves
         if: matrix.lane == 'c'
