@@ -76,6 +76,17 @@ jobs:
           pactl load-module module-null-sink sink_name=ci_audio sink_properties=device.description=CI_Audio
           pactl set-default-sink ci_audio
           pactl info
+      - name: Preservation Box B, native safety and exact saved worlds
+        if: matrix.lane == 'b'
+        run: npx playwright test --config=playwright.preservation.config.js --project=chrome --project=webkit --retries=0 --output=preservation-test-results
+      - uses: actions/upload-artifact@v4
+        if: always() && matrix.lane == 'b'
+        with:
+          name: preservation-box-evidence-${{ github.sha }}
+          path: |
+            preservation-test-results/**/*.png
+            preservation-test-results/**/*.json
+          retention-days: 14
       - name: Caretaker A signboard, contracts and exact saves
         if: matrix.lane == 'b'
         run: npx playwright test --config=playwright.caretaker.config.js --retries=0 --output=caretaker-test-results

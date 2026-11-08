@@ -1,0 +1,18 @@
+{
+  "screen": "保存・読み込みB",
+  "status": "isolated integrated candidate, not published",
+  "selection": "B and box instead of envelope explicitly requested",
+  "individual_final_art_approval": "No claim of individual final PNG approval. Parent confirmed B / box specification authorizes ordinary integration and review; separate PNG approval is not required.",
+  "source_reference": "/workspace/scratch/9fe5510e6089/buncho-selected-design-refinements-20261107/09-preservation-three-designs.png",
+  "source_art": "/workspace/scratch/9fe5510e6089/buncho-selected-design-refinements-20261107/assets/preservation-box-B-v1.png",
+  "destination": "public/assets/preservation/preservation-box-B-v1.png",
+  "sha256": "9edca842e31045437c9d7edd85018127647df892f71acbe775e7578971689bb5",
+  "dimensions": [
+    1312,
+    1199
+  ],
+  "bytes_changed": false,
+  "source_message_id": "Sentinel_078aef40ec608191b21da9f174f749b6",
+  "verbatim_selection_excerpt": "B（封筒より箱が良いな。ガチャレベルのクオリティでね。）",
+  "render_reference_difference": "Native visible file input retained for keyboard and original handling; no faux import button or interactive artwork. Caption is below image, not painted into original art."
+}

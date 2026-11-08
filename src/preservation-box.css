@@ -1,0 +1,21 @@
+/* Only this management subsection. No global type, settings or modal changes. */
+.game-preservation{color:#405445;min-width:0;overflow-wrap:anywhere;padding-block:.5rem}
+.game-preservation h4{font-size:1.35rem;margin:.5rem 0 1rem;line-height:1.5}
+.game-preservation p{line-height:1.85}
+.game-preservation .game-preservation-art{margin:1.25rem auto;max-width:26rem;text-align:center}
+.game-preservation .game-preservation-art img{display:block;width:100%;height:auto;object-fit:contain}
+.game-preservation .game-preservation-art figcaption{font-weight:700;margin-top:.5rem}
+.game-preservation .game-preservation-card{min-width:0;padding:clamp(.8rem,3vw,1.5rem);border:1px solid #d6c9b4;border-radius:1.5rem;margin-block:1rem}
+.game-preservation .game-preservation-export{background:#f9efd8}
+.game-preservation .game-preservation-import{background:#f5cbbc}
+.game-preservation h5{font-size:1.2rem;line-height:1.5;margin:0 0 .6rem}
+.game-preservation .game-preservation-card p{margin:.6rem 0 1rem}
+.game-preservation button{max-width:100%;min-height:44px;white-space:normal;overflow-wrap:anywhere;border:1px solid #a99d87;border-radius:1.6rem;padding:.8rem 1rem;color:#354d3b;background:#fffdf5;font:inherit;font-weight:700;cursor:pointer}
+.game-preservation .game-preservation-export button{width:100%;background:#f7dc8d}
+.game-preservation .game-import-label{display:block;color:#354d3b;font-weight:700;margin:1rem 0 .5rem;line-height:1.7}
+.game-preservation input[type=file]{display:block;box-sizing:border-box;width:100%;max-width:100%;min-width:0;min-height:44px;padding:.5rem;border:1px solid #a99d87;border-radius:.7rem;background:#fffdf5;color:#354d3b;font:inherit}
+.game-preservation input[type=file]::file-selector-button{max-width:100%;min-height:44px;white-space:normal;border:1px solid #a99d87;border-radius:.6rem;background:#fffdf5;color:#354d3b;padding:.5rem;font:inherit;cursor:pointer}
+.game-preservation :is(button,input):focus-visible{outline:3px solid #285e55;outline-offset:3px}
+.game-preservation .game-preservation-reset{border-top:1px solid #d6c9b4;padding-top:1.2rem;margin-top:1.4rem}
+.game-preservation .game-small{font-size:.9rem;color:#405445}
+@media(forced-colors:active){.game-preservation .game-preservation-card{border-color:CanvasText}.game-preservation :is(button,input):focus-visible{outline-color:Highlight}}
