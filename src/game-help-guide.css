@@ -1,0 +1,55 @@
+/* Help design B only. Load after game.css when this screen is integrated. */
+.game-help.game-help-guide {
+  color: #304d43;
+  background: #fffdf6;
+  border: 1px solid #c8c5b3;
+  border-radius: 1.8rem;
+  padding: clamp(1rem, 3vw, 2rem);
+}
+.game-help-guide .game-help-guide-intro { margin-bottom: 1.75rem; }
+.game-help-guide .game-help-guide-map {
+  list-style: none;
+  padding: 0;
+  margin: 0 auto 2.5rem;
+  max-width: 36rem;
+}
+.game-help-guide .game-help-guide-stop {
+  position: relative;
+  padding: 0;
+  margin: 0 0 2rem;
+  width: 84%;
+  isolation: isolate;
+}
+.game-help-guide .game-help-guide-stop:nth-child(even) { margin-left: 16%; }
+.game-help-guide .game-help-guide-card {
+  position: relative;
+  z-index: 1;
+  display: block;
+  padding: 0;
+  margin: 0;
+  border: 2px solid #38564b;
+  border-radius: 1.8rem;
+  color: #304d43;
+  background: #f7efda;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+.game-help-guide .game-help-guide-stop:nth-child(1) .game-help-guide-card { background: #f5dc90; }
+.game-help-guide .game-help-guide-stop:nth-child(2) .game-help-guide-card { background: #f3c9b5; }
+.game-help-guide .game-help-guide-stop:nth-child(4) .game-help-guide-card { background: #dfe7d3; }
+.game-help-guide .game-help-guide-card:hover { box-shadow: 0 3px 0 #b7b6a2; }
+.game-help-guide summary:focus-visible { outline: 3px solid #8c392d; outline-offset: 4px; }
+.game-help-guide .game-help-guide-label { display: flex; align-items: center; gap: .7rem; font-size: 1.25rem; font-weight: 700; }
+.game-help-guide .game-help-guide-number { background: #fffdf6; border-radius: 2rem; padding: .1rem .65rem; font-size: .85rem; flex-shrink: 0; }
+.game-help-guide .game-help-guide-caption { display: block; margin-top: .7rem; font-size: .95rem; line-height: 2; }
+.game-help-guide .game-help-guide-curve { position: absolute; top: 100%; left: 35%; width: 45%; height: 2rem; overflow: visible; pointer-events: none; }
+.game-help-guide .game-help-guide-curve path { fill: none; stroke: #b7b6a2; stroke-width: 5; vector-effect: non-scaling-stroke; }
+.game-help-guide .game-help-guide-stop:nth-child(even) .game-help-guide-curve { left: 15%; transform: scaleX(-1); }
+.game-help-guide .game-help-guide-bird { position: absolute; bottom: 0; left: 101%; width: 18%; height: auto; pointer-events: none; }
+.game-help-guide .game-help-guide-explanation { padding: 0 clamp(.8rem, 3vw, 1.5rem) 1rem; border-top: 1px solid #b7b6a2; }
+.game-help-guide .game-help-guide-card > summary { padding: 1rem clamp(.8rem, 3vw, 1.5rem); border-radius: 1.6rem; }
+.game-help-guide .game-help-guide-card > summary::marker { color: #304d43; }
+.game-help-guide .game-help-guide-card .game-help-guide-caption { font-weight: 400; }
+.game-help-guide .game-help-guide-explanation p { margin-block: .5rem; }
+.game-help-guide > details { border-bottom: 1px solid #c8c5b3; padding-block: .5rem; }
+.game-help-guide > details > summary { padding-block: .6rem; }
