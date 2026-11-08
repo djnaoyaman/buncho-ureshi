@@ -136,6 +136,17 @@ jobs:
       - name: Decoration guarantee, completion and save migration
         if: matrix.lane == 'd'
         run: npx playwright test tests/browser/decor-guarantee.spec.js --project=chrome --project=webkit --retries=0
+      - name: Help B guide, native disclosures and unchanged saves
+        if: matrix.lane == 'b'
+        run: npx playwright test --config=playwright.help-guide.config.js --project=chrome --project=webkit --retries=0 --output=help-guide-test-results
+      - uses: actions/upload-artifact@v4
+        if: always() && matrix.lane == 'b'
+        with:
+          name: help-guide-evidence-${{ github.sha }}
+          path: |
+            help-guide-test-results/**/*.png
+            help-guide-test-results/**/*.json
+          retention-days: 14
       - name: Child-friendly game help, ruby and disclosure panels
         if: matrix.lane == 'b'
         run: npx playwright test tests/browser/game-help.spec.js --project=chrome --project=webkit --retries=0
@@ -168,6 +179,7 @@ jobs:
             profile-test-results/
             diary-test-results/
             consultation-test-results/
+            help-guide-test-results/
             settings-test-results/
             menu-test-results/
             editorial-test-results/
