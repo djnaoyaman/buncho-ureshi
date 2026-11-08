@@ -20,3 +20,14 @@ test('every reachable built module import carries a cache version and resolves',
   await visit(path.resolve('dist/src/app.js'));
   assert.ok(visited.size > 40, 'walk the actual site and game dependency graph');
 });
+
+test('metadata importer refreshes when its article and photo data change', async () => {
+  const app = await readFile('dist/src/app.js', 'utf8');
+  const metadata = await readFile('dist/src/metadata.js', 'utf8');
+  const dataVersion = app.match(/\.\/data\/articles\.js\?v=([a-f0-9]+)["']/)?.[1];
+  const metadataVersion = app.match(/\.\/metadata\.js\?v=([a-f0-9-]+)["']/)?.[1];
+  assert.ok(dataVersion);
+  assert.ok(metadataVersion?.endsWith('-' + dataVersion), 'the importer must change with the data URL it contains');
+  assert.ok(metadata.includes('./data/articles.js?v=' + dataVersion));
+  assert.ok(metadata.includes('./data/photos.js?v=' + dataVersion));
+});
