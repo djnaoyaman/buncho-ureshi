@@ -117,7 +117,7 @@ for(const kind of ['fresh','manual-omochi'])test(`profile ${kind}: actual identi
 for(const size of [{width:320,height:568},{width:390,height:844},{width:844,height:390},{width:1440,height:900}])test(`profile A composition, lower sections, care dialog and keyboard routes at ${size.width}x${size.height}`,async({page},info)=>{
   const world=fixture();await start(page,world,size);await openProfile(page,'b2');const b=world.birds[1];await identity(page,world,b);await fits(page);
   for(const [label,selector]of [['portrait','.game-profile-portrait'],['identity','.game-profile-identity'],['likes','.game-profile-likes'],['actions','.game-profile-actions'],['rename','.game-name-form']])await shot(page,info,`profile-${size.width}-${label}`,page.locator('.game-profile-card-screen').locator(selector));
-  const details=page.locator('.game-profile-details');await details.locator('summary').click();
+  const details=page.locator('.game-profile-details');await details.locator(':scope > summary').click();
   for(const [label,selector]of [['facts','.game-facts'],['meters','.game-meters'],['memory','.game-last-memory']]){
     const target=details.locator(selector);if(await target.count())await shot(page,info,`profile-${size.width}-${label}`,target);
   }
