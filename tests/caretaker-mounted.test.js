@@ -70,3 +70,36 @@ test('closing panel after accepted click does not cancel or repeat its single pu
  await until(async()=>(await rawWorld(f.indexedDB)).economy.gold===476,'accepted purchase');
  assert.deepEqual(await rawWorld(f.indexedDB),expected);await open(f);assert.deepEqual(await rawWorld(f.indexedDB),expected);
 });
+
+function key(f,target,key='Tab',options={}){
+ const event=new f.window.KeyboardEvent('keydown',{key,bubbles:true,cancelable:true,...options});target.dispatchEvent(event);return event;
+}
+test('caretaker summary forward Tab reaches first enabled action without trapping reverse or adjacent controls',async t=>{
+ const f=await fixture(t);await f.mount();const section=await open(f),fold=section.parentElement,summary=fold.querySelector(':scope > summary'),first=section.querySelector('[data-life-hire="1"]'),before=await rawWorld(f.indexedDB);
+ summary.focus();assert.equal(key(f,summary).defaultPrevented,true);assert.equal(f.window.document.activeElement,first);
+ for(const target of [summary,first]){target.focus();assert.equal(key(f,target,'Tab',{shiftKey:true}).defaultPrevented,false);assert.equal(f.window.document.activeElement,target);}
+ first.focus();assert.equal(key(f,first).defaultPrevented,false,'subsequent buttons retain native traversal');
+ for(const modifier of ['altKey','ctrlKey','metaKey'])assert.equal(key(f,summary,'Tab',{[modifier]:true}).defaultPrevented,false);
+ fold.open=false;summary.focus();assert.equal(key(f,summary).defaultPrevented,false,'closed fold retains native traversal');
+ fold.open=true;const rules=f.root.querySelector('.life-health-rules > summary');rules.focus();assert.equal(key(f,rules).defaultPrevented,false,'other health disclosures retain native traversal');
+ assert.equal(key(f,summary,'Escape').defaultPrevented,false,'native dialog cancel remains untouched');
+ assert.deepEqual(await rawWorld(f.indexedDB),before);
+});
+for(const kind of ['poor','empty','cap'])test('caretaker Tab respects '+kind+' disabled state',async t=>{
+ const f=await fixture(t),w=await rawWorld(f.indexedDB);
+ if(kind==='poor')w.economy.gold=0;
+ if(kind==='empty')w.birds.forEach(b=>b.home='departed');
+ if(kind==='cap'){w.economy.gold=w.economy.lifetimeGold=5000;for(const d of [7,7,7,7,1])hireCaretaker(w,d,economyToken(w),NOW);}
+ await rawWorld(f.indexedDB,validateWorld(w));await f.mount();const section=await open(f),summary=section.parentElement.querySelector(':scope > summary'),before=await rawWorld(f.indexedDB);
+ summary.focus();const event=key(f,summary),enabled=section.querySelector('button:not(:disabled)');
+ assert.equal(event.defaultPrevented,kind==='cap');assert.equal(f.window.document.activeElement,enabled||summary);assert.deepEqual(await rawWorld(f.indexedDB),before);
+});
+test('caretaker Tab fallback leaves other panels and higher-priority dialogs unchanged',async t=>{
+ const f=await fixture(t);await f.mount();let section=await open(f);const summary=section.parentElement.querySelector(':scope > summary'),before=await rawWorld(f.indexedDB);
+ const modal=f.root.querySelector('.game-bird-sheet');modal.setAttribute('open','');
+ // The DOM emulator has no layout. Give the higher-priority dialog control a rect.
+ const control=f.window.document.createElement('button');control.textContent='nested dialog';control.getClientRects=()=>[{}];modal.append(control);
+ summary.focus();assert.equal(key(f,summary).defaultPrevented,true);assert.equal(f.window.document.activeElement,control);modal.removeAttribute('open');control.remove();
+ for(const panel of ['memorial','help']){f.root.querySelector('[data-game-close-panel]').click();f.root.querySelector('#game-menu-'+panel).click();const target=f.root.querySelector('[data-game-close-panel]');target.focus();assert.equal(key(f,target).defaultPrevented,false);}
+ assert.deepEqual(await rawWorld(f.indexedDB),before);
+});

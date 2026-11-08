@@ -89,6 +89,10 @@ test('layout, exact artwork, native actions and cancellation',async({page},info)
   await page.evaluate(()=>window.__caretakerFocus.snapshot('after-tab'));
   await expect(button).toBeFocused();
   expect(await button.evaluate(b=>getComputedStyle(b).outlineStyle)).not.toBe('none');
+  await page.keyboard.press('Shift+Tab');await expect(page.locator('.life-caretaker-fold > summary')).toBeFocused();
+  await page.keyboard.press('Tab');await expect(button).toBeFocused();
+  for(const days of ['3','7']){await page.keyboard.press('Tab');await expect(section.locator('[data-life-hire=\"'+days+'\"]')).toBeFocused();}
+  await page.keyboard.press('Tab');await expect(page.locator('.life-health-rules > summary')).toBeFocused();
  }finally{
   const events=await page.evaluate(()=>window.__caretakerFocus.finish()),path=info.outputPath('caretaker-keyboard-focus.json');
   await writeFile(path,JSON.stringify(events,null,2));await info.attach('caretaker-keyboard-focus',{path,contentType:'application/json'});
