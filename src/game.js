@@ -1,3 +1,4 @@
+import { renderDiaryPaper } from './diary-paper.js';
 import { LIFE_MENU_ITEMS, renderLifeMenuIcon } from './life-menu-icons.js';
 import {renderGameHelp} from './game-help.js';
 import { createFeedbackTimer } from './game-feedback.js';
@@ -584,9 +585,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
   function resizeFamily(){if(panel==='family'){render();centerFamily();}else if(panel==='garden'&&!interactionActive())render();}
   function centerFamily(){const pan=root.querySelector('.game-family-pan'),canvas=root.querySelector('.game-family-canvas');if(pan&&canvas)pan.scrollLeft=Math.max(0,parseFloat(canvas.style.width)*familyZoom/2-pan.clientWidth/2);}
   function diary() {
-    const all=world.events.slice().reverse(),important=all.filter(e=>['pair','egg','hatch','grow','adopt','movein','depart'].includes(e.kind));
-    const rows=(events,scope)=>events.map(e=>`<li><time datetime="${new Date(e.at).toISOString()}">${day(e.tick)}</time><p>${escape(eventText(world,e))}</p><details data-game-details="diary-${scope}-${e.id}"><summary>くわしく</summary><p>${escape(e.condition)}。${escape(e.result)}。</p><p>${new Date(e.at).toLocaleString('ja-JP')}</p></details>${['egg','hatch','grow','pair'].includes(e.kind)?`<button data-game-event-art="${e.id}">記念カード</button>`:''}</li>`).join('');
-    return `<section><h3>大切なできごと</h3><ol class="game-diary">${rows(important.slice(0,12),'milestone')||'<li>家族の節目が、ここに残ります。</li>'}</ol><details class="game-full-diary" data-game-details="full-diary"><summary>すべての日記 · ${all.length}件</summary><ol class="game-diary">${rows(all,'all')}</ol><p class="game-small">新しい240件を保存。名前・家系・つがいは名簿にも残ります。</p></details></section>`;
+    return renderDiaryPaper(world, {portrait:b=>`<span class="game-mini-bird">${birdSvg(b.color,b.stage,'left')}</span>`});
   }
   function roster() {
     const current=chosen();
