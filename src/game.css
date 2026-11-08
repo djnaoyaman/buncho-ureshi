@@ -1551,3 +1551,14 @@ body[data-world="buncho"] .game-environment-notice {
 .game-environment-actions button { border: 0; background: #e2edb0; color: #304f43; }
 .game-environment-actions a { color: #304f43; }
 .game-environment-notice [hidden] { display: none !important; }
+
+/* Portrait tablet workspaces: preserve the adopted artwork and phone layout.
+   Compact keyboard/split-screen views keep their existing compact rules. */
+@media (min-width: 700px) and (min-height: 600px) {
+  body[data-world="buncho"][data-game-device="touch"] .game-main .game-secondary-menu[open] { width: min(720px, calc(100% - 64px)); }
+  body[data-world="buncho"][data-game-device="touch"] .game-secondary-menu .game-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  body[data-world="buncho"][data-game-device="touch"] .game-secondary-menu .game-tabs button { min-height: 112px; font-size: 1rem; overflow-wrap: anywhere; }
+  body[data-world="buncho"][data-game-device="touch"] .game-secondary-menu .game-tabs svg { width: 40px; height: 40px; flex-basis: 40px; }
+  body[data-world="buncho"][data-game-device="touch"] .game-panel-overlay:not([data-scene="true"]) { width: min(880px, calc(100% - 64px)); }
+  body[data-world="buncho"][data-game-device="touch"] .game-app .game-bird-sheet { width: min(600px, calc(100% - 64px)); max-width: calc(100% - 64px); }
+}
