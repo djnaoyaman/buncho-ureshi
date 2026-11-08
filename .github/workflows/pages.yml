@@ -44,6 +44,8 @@ jobs:
         run: npx playwright test tests/browser/life-menu-icons.spec.js --project=chrome --project=webkit --retries=0 --output=menu-test-results
       - name: Roster face cards A, keyboard selection and unchanged saves
         run: npx playwright test tests/browser/roster-cards.spec.js --project=chrome --project=webkit --retries=0 --output=roster-test-results
+      - name: Profile cards A, real identities, routes and unchanged saves
+        run: npx playwright test tests/browser/profile-cards.spec.js --project=chrome --project=webkit --retries=0 --output=profile-test-results
       - name: New Ed founder, direct-line names and preserved existing saves
         run: npx playwright test tests/browser/direct-line-names.spec.js --project=chrome --project=webkit --retries=0 --output=naming-test-results
       - name: Nine memorial designs, fixed identity and preserved offerings
@@ -90,6 +92,7 @@ jobs:
             memorial-test-results/
             naming-test-results/
             roster-test-results/
+            profile-test-results/
             settings-test-results/
             menu-test-results/
             editorial-test-results/
@@ -137,6 +140,12 @@ jobs:
         with:
           name: roster-card-screenshots-${{ github.sha }}
           path: roster-test-results/**/*.png
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: profile-card-screenshots-${{ github.sha }}
+          path: profile-test-results/**/*.png
           retention-days: 14
       - uses: actions/upload-pages-artifact@v3
         if: github.ref == 'refs/heads/main'
