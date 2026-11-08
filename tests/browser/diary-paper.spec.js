@@ -32,7 +32,10 @@ async function start(page,world,size){
   expect(await record(page)).toEqual(world);
 }
 async function shot(page,info,label,target){
-  await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');await expect(page.locator('.game-logo-intro')).toHaveCount(0);
+  await Promise.all([
+    expect(page.locator('body')).toHaveAttribute('data-game-intro','done'),
+    expect(page.locator('.game-logo-intro')).toHaveCount(0)
+  ]);
   await target.scrollIntoViewIfNeeded();await expect(target).toBeInViewport();
   const path=info.outputPath(`${label}.png`);await page.screenshot({path});await info.attach(label,{path,contentType:'image/png'});
 }
@@ -101,10 +104,12 @@ for(const kind of ['historical','manual-omochi','deceased','empty'])test(`diary 
  else for(const e of important){
   const row=page.locator(detailSelector('milestone',e.id)).locator('..');
   const bird=w.birds.find(b=>b.id===e.ids[0]);
-  await expect(row.locator('figcaption')).toHaveText(bird.name);
   const stage=e.kind==='egg'?'egg':e.kind==='hatch'?'chick':e.kind==='grow'?e.data.stage:bird.stage;
-  await expect(row.locator('.game-sprite')).toHaveAttribute('data-stage',stage);
-  await expect(row.locator('.game-sprite')).toHaveAttribute('data-color',bird.color);
+  await Promise.all([
+    expect(row.locator('figcaption')).toHaveText(bird.name),
+    expect(row.locator('.game-sprite')).toHaveAttribute('data-stage',stage),
+    expect(row.locator('.game-sprite')).toHaveAttribute('data-color',bird.color)
+  ]);
   await shot(page,info,`${kind}-${e.kind}-${e.id}`,row.locator('.diary-paper-portrait'));
  }
  expect(await record(page)).toEqual(w);await page.reload();await ready(page);await openDiary(page);await content(page,w);expect(await record(page)).toEqual(w);
