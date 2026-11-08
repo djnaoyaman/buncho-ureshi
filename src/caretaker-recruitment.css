@@ -1,0 +1,27 @@
+/* Standalone A advertisement. Intentionally scoped: no health/memorial styles. */
+.caretaker-recruitment { min-width: 0; }
+.caretaker-recruitment .caretaker-recruitment-sign { position: relative; container-type: inline-size; width: 100%; max-width: 520px; margin: 12px auto 18px; }
+.caretaker-recruitment-sign > img { display: block; width: 100%; height: auto; }
+.caretaker-recruitment .caretaker-recruitment-sign-copy { position: absolute; inset: 28% 19% 18% 20%; display: flex; flex-direction: column; align-items: center; justify-content: space-around; text-align: center; color: #fff5de; }
+.caretaker-recruitment-sign-copy :where(p) { margin: 0; padding: 0; line-height: 1.3; color: inherit; }
+.caretaker-recruitment .caretaker-recruitment-kicker { width: 100%; padding-bottom: 2cqw; border-bottom: 1px solid #f9dc94; font-size: 3.2cqw; font-weight: 700; color: #f9dc94; }
+.caretaker-recruitment .caretaker-recruitment-name { font-size: 8cqw; line-height: 1.18; font-weight: 800; letter-spacing: .06em; }
+.caretaker-recruitment .caretaker-recruitment-tagline { font-size: 3cqw; font-weight: 700; }
+.caretaker-recruitment .caretaker-recruitment-rate { width: 100%; padding-top: 2cqw; border-top: 1px solid #799a75; font-size: 2.9cqw; font-weight: 700; color: #f9dc94; }
+.caretaker-recruitment-rate strong { display: block; font-size: 10cqw; line-height: 1.05; overflow-wrap: anywhere; }
+.caretaker-recruitment-rate small { font-size: 4.8cqw; }
+.caretaker-recruitment .caretaker-recruitment-service { font-size: 2.9cqw; font-weight: 700; }
+.caretaker-recruitment-service small { display: block; margin-top: 1cqw; font-size: 2.4cqw; font-weight: 400; }
+.caretaker-recruitment .caretaker-recruitment-options-title { font-size: 1.1rem; margin: 18px 0 12px; }
+.caretaker-recruitment .caretaker-recruitment-options { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; }
+.caretaker-recruitment .caretaker-recruitment-options button { position: relative; display: flex; flex-direction: column; align-items: center; gap: 14px; min-width: 0; min-height: 156px; padding: 16px 4px 48px; border: 1px solid #d6c9b5; border-radius: 24px; background: #f5dc93; color: #435a49; text-align: center; overflow-wrap: anywhere; }
+.caretaker-recruitment .caretaker-recruitment-options button:nth-child(2) { background: #f8efdb; }
+.caretaker-recruitment .caretaker-recruitment-days { font-size: 1.6rem; font-weight: 700; }
+.caretaker-recruitment .caretaker-recruitment-action { position: absolute; left: 10%; right: 10%; bottom: 14px; padding-top: 10px; border-top: 1px solid #d6c9b5; font-size: .85rem; }
+.caretaker-recruitment .caretaker-recruitment-options strong { font-size: 1rem; }
+.caretaker-recruitment .caretaker-recruitment-options button:disabled { opacity: .55; cursor: not-allowed; }
+.caretaker-recruitment .caretaker-recruitment-options button:focus-visible { outline: 3px solid #365a42; outline-offset: 3px; }
+@media (max-width: 360px) {
+ .caretaker-recruitment .caretaker-recruitment-options { gap: 5px; }
+ .caretaker-recruitment .caretaker-recruitment-action { font-size: .75rem; }
+}
