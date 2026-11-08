@@ -37,7 +37,19 @@ for(const kind of ['single','pair-children','generations'])test(`${kind}: compac
  await expect(page.locator('.game-family-node[aria-pressed="true"]')).toHaveCount(1);await expect(page.locator('.game-family-node[aria-pressed="true"]')).toHaveCSS('background-color','rgb(247, 220, 141)');await expect(page.locator('.game-family-selected')).toHaveText('✓');
  expect(await page.locator('.game-family-cards-a').evaluate(el=>el.querySelector('.game-family-zoom').getBoundingClientRect().top>=el.querySelector('.game-family-pan').getBoundingClientRect().bottom)).toBe(true);
  for(const size of [{width:320,height:568},{width:390,height:680},{width:844,height:390},{width:768,height:1024},{width:1440,height:900}]){
-  await page.setViewportSize(size);await page.evaluate(()=>new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(done))));await zoom(page,100);await page.locator('.game-family-heading').scrollIntoViewIfNeeded();const g=await balanced(page,graph.height);expect(g.firstVisible).toBe(true);
+  await page.setViewportSize(size);
+  if(size.width>size.height&&await page.locator('body').getAttribute('data-game-device')==='touch'){
+   // Supported phones now intentionally show an orientation notice. Verify that
+   // transition and the unchanged save, then exercise the same graph in portrait.
+   // Desktop continuation still exercises every original landscape geometry.
+   const notice=page.locator('.game-environment-notice');
+   await expect(notice).toBeVisible();await expect(notice).toHaveAttribute('data-reason','orientation');
+   expect(await record(page)).toEqual(baseline);
+   await expect(page.locator('.game-family-canvas')).toBeAttached();
+   const shot=info.outputPath(`${kind}-${size.width}x${size.height}-orientation.png`);await page.screenshot({path:shot});await info.attach(`${kind}-${size.width}x${size.height}-orientation`,{path:shot,contentType:'image/png'});
+   await page.setViewportSize({width:size.height,height:size.width});await expect(notice).not.toBeVisible();
+  }
+  await page.evaluate(()=>new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(done))));await zoom(page,100);await page.locator('.game-family-heading').scrollIntoViewIfNeeded();const g=await balanced(page,graph.height);expect(g.firstVisible).toBe(true);
   const shot=info.outputPath(`${kind}-${size.width}x${size.height}-100.png`);await page.screenshot({path:shot});await info.attach(`${kind}-${size.width}x${size.height}-100`,{path:shot,contentType:'image/png'});
   for(const z of [70,120,100]){await zoom(page,z);await balanced(page,graph.height);}
  }
