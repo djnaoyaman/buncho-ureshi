@@ -1460,3 +1460,31 @@ body[data-world="buncho"] .game-family-cards-a>details>summary{min-height:44px;d
 body[data-world="buncho"] .game-family-cards-a .game-family-node .game-mini-bird{width:50px;height:56px;flex:0 0 56px;object-fit:contain}
 
 body[data-world="buncho"] .game-family-cards-a .game-family-legend small{color:#52624f}
+
+/* Approved roster A: local face cards, never shared bird-link styling. */
+.game-app .game-roster-catalog{max-width:680px;margin:0 auto;color:#304f43}
+.game-app .game-roster-catalog>h3{margin:0 0 .35rem}
+.game-roster-catalog .game-roster-intro{margin:0 0 1.6rem;color:#596b5d}
+.game-roster-catalog .game-roster-group{margin:0 0 1.25rem;min-width:0}
+.game-roster-catalog .game-roster-group>h4{display:flex;justify-content:space-between;align-items:baseline;gap:.6rem;margin:0 0 .7rem;overflow-wrap:anywhere}
+.game-roster-catalog [data-roster-count]{flex-shrink:0;font-size:.85rem;white-space:nowrap}
+.game-roster-catalog .game-roster{grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(.65rem,2.5vw,1.25rem)}
+.game-app .game-roster-catalog .game-roster-card{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:.2rem;min-width:0;width:100%;padding:1rem .55rem .75rem;border:2px solid #b8baaa;border-radius:1.6rem;background:#f4c9b7;text-align:center;color:#304f43}
+.game-app .game-roster-catalog .game-roster-card[aria-pressed=true]{background:#f7dc8d;border-color:#304f43}
+.game-app .game-roster-catalog .game-roster-card:hover{box-shadow:0 3px 0 #b9bca9}
+.game-roster-catalog .game-roster-card>.game-mini-bird{width:clamp(82px,20vw,145px);height:clamp(88px,22vw,155px);min-width:0;flex:0 0 auto;align-items:center;justify-content:center}
+.game-roster-catalog .game-roster-card .game-sprite{max-height:100%;object-fit:contain}
+.game-roster-catalog .game-roster-card>strong{font-size:clamp(1rem,2.7vw,1.35rem);line-height:1.5;overflow-wrap:anywhere;max-width:100%}
+.game-roster-catalog .game-roster-card>small{font-size:.78rem;line-height:1.6;color:#4d5d4a;overflow-wrap:anywhere;max-width:100%}
+.game-roster-catalog .game-roster-card>.game-roster-home{font-size:.7rem}
+.game-roster-catalog .game-roster-check{position:absolute;right:.65rem;top:.65rem;display:grid;place-items:center;width:1.65rem;height:1.65rem;border-radius:50%;background:#304f43;color:#fffdf6;font-weight:700;font-size:1.1rem;line-height:1}
+.game-roster-catalog .game-roster-check:empty{display:none}
+.game-roster-catalog .game-roster-current{margin:.7rem 0 0;font-size:.85rem;color:#4d5d4a;overflow-wrap:anywhere}
+.game-roster-catalog .game-roster-group:not([data-roster-group=resident]){padding:1rem;border-radius:1.4rem;background:#f8efdc}
+.game-roster-catalog .game-roster-empty{margin:0;font-size:.85rem;color:#596b5d}
+.game-roster-catalog .game-roster-note{display:flex;align-items:center;gap:1rem;background:#dfe7d2;border-radius:1.5rem;padding:1rem;margin:1.75rem 0 1.25rem}
+.game-roster-catalog .game-roster-note .game-mini-bird{width:68px;min-width:0;flex:0 0 68px}
+.game-roster-catalog .game-roster-note p{margin:0;font-size:.9rem;overflow-wrap:anywhere}
+.game-roster-catalog .game-roster-capacity{padding:.25rem 0 .75rem}
+.game-roster-catalog .game-roster-capacity>summary{min-height:44px;padding:.6rem 0;cursor:pointer;font-weight:700;line-height:1.65}
+.game-roster-catalog .game-roster-capacity>p{font-size:.85rem;color:#4d5d4a;margin:.5rem 0;overflow-wrap:anywhere}
