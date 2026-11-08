@@ -1488,3 +1488,34 @@ body[data-world="buncho"] .game-family-cards-a .game-family-legend small{color:#
 .game-roster-catalog .game-roster-capacity{padding:.25rem 0 .75rem}
 .game-roster-catalog .game-roster-capacity>summary{min-height:44px;padding:.6rem 0;cursor:pointer;font-weight:700;line-height:1.65}
 .game-roster-catalog .game-roster-capacity>p{font-size:.85rem;color:#4d5d4a;margin:.5rem 0;overflow-wrap:anywhere}
+
+/* Approved profile A: portrait, current character and likes on one local card. */
+.game-app .game-profile-card-screen{max-width:680px;margin:0 auto;color:#304f43}
+.game-profile-card-screen .game-profile-title{margin:.5rem 0 .25rem;overflow-wrap:anywhere}
+.game-profile-card-screen .game-profile-subtitle{margin:0 0 1.25rem;color:#596b5d;font-size:.9rem}
+.game-profile-card-screen .game-profile-card{padding:clamp(.85rem,3vw,1.6rem);border:2px solid #365847;border-radius:2rem;background:#f7dc8d}
+.game-profile-card-screen .game-profile-heading{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(.65rem,3vw,1.5rem);align-items:center;text-align:left}
+.game-profile-card-screen .game-profile-heading>.game-profile-portrait{width:100%;max-width:220px;min-width:0;min-height:0;flex:none;margin:0 auto;padding-bottom:2px;align-items:center;justify-content:center}
+/* Keep the complete atlas pose (including its tail) inside this portrait only. */
+.game-profile-card-screen .game-profile-portrait .game-sprite{width:82%;height:auto;max-width:100%;flex:none;margin:0 18% 0 0;overflow:visible;object-fit:contain}
+.game-profile-card-screen .game-profile-identity{min-width:0;overflow-wrap:anywhere}
+.game-profile-card-screen .game-profile-identity h3{font-size:clamp(1.3rem,3.5vw,2rem);margin:0 0 .9rem;line-height:1.5}
+.game-profile-card-screen .game-profile-now span,.game-profile-card-screen .game-profile-likes>span{display:block;font-size:.8rem;font-weight:400;color:#596b5d}
+.game-profile-card-screen .game-profile-now strong{display:block;font-size:clamp(.95rem,2.8vw,1.3rem);line-height:1.7}
+.game-profile-card-screen .game-profile-personality{font-size:.9rem;line-height:1.8;margin:1rem 0 0;font-weight:700}
+.game-profile-card-screen .game-profile-likes{padding:.8rem 1.1rem;border-radius:1.4rem;background:#fffdf6;margin-top:1rem;overflow-wrap:anywhere}
+.game-profile-card-screen .game-profile-likes>strong{display:block;font-size:1.15rem;line-height:1.6}
+.game-profile-card-screen .game-profile-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.8rem;margin:1.2rem 0 1.5rem}
+body[data-world="buncho"] .game-app .game-profile-card-screen .game-profile-actions>button{background:#f4c9b7!important;border:2px solid #365847!important;min-height:54px;padding:.7rem .5rem;font-weight:700;box-shadow:0 3px 0 #c5bd9f!important}
+body[data-world="buncho"] .game-app .game-profile-card-screen .game-profile-actions>button:nth-child(2){background:#f8efdc!important}
+body[data-world="buncho"] .game-profile-card-screen .game-name-form{display:flex;flex-wrap:wrap;gap:.55rem;padding:.8rem;border:1px solid #b8baaa;border-radius:1.3rem;background:#fffdf6;align-items:center}
+.game-profile-card-screen .game-name-form label{width:auto;flex:0 0 auto;font-size:.9rem}
+.game-profile-card-screen .game-name-form input{width:0;flex:1 1 100px;max-width:none;min-width:0}
+.game-profile-card-screen .game-name-form button{flex:0 1 auto;font-size:.85rem}
+.game-profile-card-screen .game-profile-details{margin:1rem 0 0;border:0;border-bottom:1px solid #d3d1bd}
+.game-profile-card-screen .game-profile-details>summary{font-weight:700;padding:.9rem .1rem;line-height:1.7}
+.game-profile-card-screen .game-facts{grid-template-columns:repeat(2,minmax(0,1fr));overflow-wrap:anywhere}
+.game-profile-card-screen .game-meters{flex-wrap:wrap}
+.game-profile-card-screen .game-links{display:flex;flex-direction:column;align-items:stretch;gap:.5rem;margin:.8rem 0 1.5rem}
+.game-profile-card-screen .game-links>button{text-align:left;min-height:48px;overflow-wrap:anywhere}
+.game-profile-card-screen .game-profile-disclosure{margin:1.5rem 0 0;font-size:.8rem;color:#596b5d}

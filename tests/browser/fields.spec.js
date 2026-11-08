@@ -277,14 +277,24 @@ test('all nine slots show 24 future items without granting locked or unowned equ
  }
 });
 
-for(const width of [320,390,1440])test(`immersive Gem world, complete collection and centered bird pixels at ${width}px`,async({page},info)=>{
+for(const width of [320,390,1440])test(`immersive Gem world, complete collection and profile A portrait card at ${width}px`,async({page},info)=>{
  const w=collectibleWorld();await seedWorld(page,w);await page.setViewportSize({width,height:1000});await page.emulateMedia({reducedMotion:'reduce'});await openGame(page);await decodeScene(page);
  await expect(page.locator('.game-field-nav button')).toHaveCount(3);await expect(page.locator('.game-bottom-dock [data-game-panel="decorate"]')).toBeVisible();await expect(page.locator('#game-scene-resident')).toHaveCount(0);
  if(info.project.name==='chrome')await info.attach(`gem-main-${width}`,{body:await page.screenshot({animations:'disabled'}),contentType:'image/png'});
  const pickup=page.locator('[data-gem-collect]').first(),before=(await readWorld(page)).decor.points;await pickup.click();await expect(page.locator('.game-gem-reward')).toContainText('+8 Gem');expect((await readWorld(page)).decor.points).toBe(before+8);
  if(info.project.name==='chrome')await info.attach(`gem-collect-${width}`,{body:await page.screenshot({animations:'disabled'}),contentType:'image/png'});
  await tab(page,'profile');await expect(page.locator('.game-profile-heading .game-mini-bird')).toBeVisible();
- const placement=await page.locator('.game-profile-heading').evaluate(h=>{const b=h.querySelector('.game-mini-bird').getBoundingClientRect(),r=h.getBoundingClientRect();return{width:b.width,centerError:Math.abs((b.left+b.right-r.left-r.right)/2)};});expect(placement.width).toBeGreaterThanOrEqual(200);expect(placement.centerError).toBeLessThan(3);
+ await expect.poll(()=>page.locator('.game-profile-portrait img').evaluateAll(images=>images.length>0&&images.every(image=>image.complete&&image.naturalWidth>0))).toBe(true);
+ // Approved A uses two balanced columns, with the complete face-visible crop beside identity.
+ const placement=await page.locator('.game-profile-heading').evaluate(h=>{
+  const portrait=h.querySelector('.game-profile-portrait'),b=portrait.getBoundingClientRect(),r=h.getBoundingClientRect(),identity=h.querySelector('.game-profile-identity').getBoundingClientRect(),card=h.closest('.game-profile-card').getBoundingClientRect(),frame=(portrait.querySelector('.game-pose-window')||portrait.querySelector('.game-sprite')).getBoundingClientRect();
+  return {portraitShare:b.width/r.width,identityShare:identity.width/r.width,sideBySide:b.right<=identity.left+1,aligned:Math.abs((b.top+b.bottom-identity.top-identity.bottom)/2),frameShare:frame.width/b.width,frameContained:frame.left>=b.left-1&&frame.right<=b.right+1&&frame.top>=b.top-1&&frame.bottom<=b.bottom+1,cardContained:b.left>=card.left&&identity.right<=card.right,decoded:[...portrait.querySelectorAll('img')].every(image=>image.complete&&image.naturalWidth>0)};
+ });
+ expect(placement.portraitShare).toBeGreaterThanOrEqual(.32);expect(placement.portraitShare).toBeLessThanOrEqual(.5);expect(placement.identityShare).toBeGreaterThanOrEqual(.4);expect(placement.identityShare).toBeLessThanOrEqual(.5);expect(placement.sideBySide).toBe(true);expect(placement.aligned).toBeLessThan(2);expect(placement.frameShare).toBeGreaterThanOrEqual(.75);expect(placement.frameContained).toBe(true);expect(placement.cardContained).toBe(true);expect(placement.decoded).toBe(true);
+ await expect(page.locator('.game-profile-portrait .game-sprite')).toHaveAttribute('data-pose','left');
+ await expect(page.locator('.game-profile-heading h3')).toHaveText(w.birds[0].name);
+ await expect(page.locator('.game-profile-subtitle')).toBeVisible();
+ await expect(page.locator('.game-profile-subtitle')).toHaveText(`${{white:'白文鳥',sakura:'桜文鳥',silver:'シルバー',cinnamon:'シナモン'}[w.birds[0].color]} · ${w.birds[0].sex==='female'?'メス':'オス'} · 成鳥`);
  if(info.project.name==='chrome')await info.attach(`gem-profile-${width}`,{body:await page.screenshot({animations:'disabled'}),contentType:'image/png'});
  await tab(page,'decorate');await page.locator('[data-decor-slot="swing"]').click();await expect(page.locator('[data-decor-preview]')).toHaveCount(24);
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
