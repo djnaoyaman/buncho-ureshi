@@ -116,6 +116,7 @@ for(const size of [{width:320,height:568},{width:390,height:844},{width:844,heig
       const card=group.locator(`[data-game-select="${bird.id}"]`);
       await expect(card).toHaveJSProperty('tagName','BUTTON');await expect(card).toHaveAttribute('type','button');
       await expect(card.locator('strong')).toHaveText(bird.name);await expect(card).toHaveAttribute('aria-pressed',String(bird.id==='b1'));
+      if(['adult','juvenile'].includes(bird.stage))await expect(card.locator('.game-sprite')).toHaveAttribute('data-pose','left');
     }
   }
   const geometry=await catalog.locator('[data-roster-group="resident"] .game-roster').evaluate(grid=>({
@@ -128,6 +129,36 @@ for(const size of [{width:320,height:568},{width:390,height:844},{width:844,heig
   await fits(page);
   await screenshot(page,info,`roster-${size.width}x${size.height}-resident`,catalog.locator('h3'));
   for(const home of ['visitor','departed'])await screenshot(page,info,`roster-${size.width}x${size.height}-${home}`,catalog.locator(`[data-roster-group="${home}"] h4`));
+  // Keep the existing overview evidence, then show actual faces, names and home labels.
+  // Short landscape panels may need two natural scroll positions for a tall card.
+  const panel=page.locator('.game-panel-overlay > .game-panel'),capacity=catalog.locator('[data-game-details="roster-capacity"]');
+  const previousScroll=await panel.evaluate(el=>el.scrollTop),capacityWasOpen=await capacity.evaluate(el=>el.open);
+  const previousFocus=await page.evaluateHandle(()=>document.activeElement);
+  try{
+    for(const home of GROUPS){
+      const first=catalog.locator(`[data-roster-group="${home}"] .game-roster-card`).first();
+      await screenshot(page,info,`roster-${size.width}x${size.height}-${home}-first-card`,first);
+      const clipped=await first.evaluate(el=>{
+        const box=el.getBoundingClientRect(),panel=el.closest('.game-panel'),frame=panel.getBoundingClientRect();
+        return box.top<frame.top+panel.clientTop-1||box.bottom>frame.top+panel.clientTop+panel.clientHeight+1;
+      });
+      if(clipped){
+        await screenshot(page,info,`roster-${size.width}x${size.height}-${home}-first-card-portrait`,first.locator('.game-mini-bird'));
+        await first.locator('.game-roster-home').scrollIntoViewIfNeeded();
+        await expect(first.locator('strong')).toBeInViewport();await expect(first.locator('.game-roster-home')).toBeInViewport();
+        await screenshot(page,info,`roster-${size.width}x${size.height}-${home}-first-card-name-home`,first.locator('.game-roster-home'));
+      }
+    }
+    await screenshot(page,info,`roster-${size.width}x${size.height}-note`,catalog.locator('.game-roster-note'));
+    if(!capacityWasOpen)await capacity.locator('summary').click();
+    await expect(capacity.locator('p')).toHaveText(CAPACITY);
+    await screenshot(page,info,`roster-${size.width}x${size.height}-capacity-body`,capacity.locator('p'));
+  }finally{
+    if(await capacity.evaluate(el=>el.open)!==capacityWasOpen)await capacity.locator('summary').click();
+    await panel.evaluate((el,top)=>{el.scrollTop=top;},previousScroll);
+    await previousFocus.evaluate(el=>{if(el?.isConnected)el.focus({preventScroll:true});});
+    await previousFocus.dispose();
+  }
   for(const [id,key]of [['b2','click'],['b3','Enter'],['b7','Space'],['b9','Enter']]){
     const bird=world.birds.find(bird=>bird.id===id),card=catalog.locator(`[data-game-select="${id}"]`);
     await card.scrollIntoViewIfNeeded();await card.focus();await expect(card).toBeFocused();

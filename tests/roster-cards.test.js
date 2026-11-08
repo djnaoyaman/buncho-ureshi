@@ -85,6 +85,7 @@ function expectRoster(root,world,selected='b1'){
       assert.equal(card.getAttribute('aria-pressed'),String(bird.id===selected));
       assert.equal(card.querySelector('.game-roster-check').textContent,bird.id===selected?'✓':'');
       assert.ok(card.querySelector('.game-mini-bird'),'each card has a portrait');
+      if(['adult','juvenile'].includes(bird.stage))assert.equal(card.querySelector('.game-sprite').dataset.pose,'left','identification portraits keep the face visible instead of resting or preening');
     }
   }
   assert.equal(catalog.querySelectorAll('.game-roster-card[aria-pressed="true"]').length,1);
