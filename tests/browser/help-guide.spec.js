@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {writeFileSync} from 'node:fs';
 import {helpWorld,validated,engine} from '../fixtures/help-guide-world.js';
 
 test.use({timezoneId:'UTC'});
@@ -73,7 +74,17 @@ for(const size of [{width:320,height:568},{width:390,height:844},{width:844,heig
 }
 test('help B unknown holidays and enlarged text preserve every disclosure',async({page},info)=>{
  const world=helpWorld(false);await start(page,world,{width:390,height:844});await openHelp(page);
- await page.addStyleTag({content:'html {font-size:200%}'});
+ // Test-only 200% text enlargement, not native browser zoom. Capture every
+ // computed size first so nested ruby/em sizes are doubled once, not compounded.
+ const fontSizes=await page.locator('.game-help').evaluate(help=>{
+  const nodes=[help,...help.querySelectorAll('*')],before=nodes.map(e=>parseFloat(getComputedStyle(e).fontSize));
+  nodes.forEach((e,i)=>e.style.setProperty('font-size',`${before[i]*2}px`,'important'));
+  return nodes.map((e,i)=>({tag:e.tagName,class:e.getAttribute('class'),before:before[i],after:parseFloat(getComputedStyle(e).fontSize)}));
+ });
+ for(const size of fontSizes){expect(size.before).toBeGreaterThan(0);expect(size.after/size.before).toBeCloseTo(2,3);}
+ const measurements=info.outputPath('help-text-enlargement-measurements.json');
+ writeFileSync(measurements,JSON.stringify({mode:'test-only computed text sizes; not native browser zoom',ratio:2,fontSizes},null,2));
+ await info.attach('help-text-enlargement-measurements',{path:measurements,contentType:'application/json'});
  for(const s of await page.locator('.game-help details > summary').all())await s.click();
  await expect(page.locator('.game-help details[open]')).toHaveCount(8);
  const care=page.locator('[data-game-details="help-care"]');
