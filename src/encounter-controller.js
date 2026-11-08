@@ -28,6 +28,10 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
     const focused=reading&&card.contains(reading)?{section:reading.dataset.notebookReading,summary:active.matches('summary'),href:active.matches('a[href]')?active.getAttribute('href'):null,index:[...reading.querySelectorAll('a[href]')].indexOf(active)}:null;
     return {key:renderedReadingKey,open:[...card.querySelectorAll('details[data-notebook-reading][open]')].map(d=>d.dataset.notebookReading),focused,scroll:root.scrollTop};
   };
+  const bookletSummaryFocus=()=>{
+    const active=doc.activeElement,key=active?.parentElement?.dataset?.gardenDetails;
+    return active?.matches?.('summary')&&root.contains(active)&&active.closest('.garden-about-booklet')&&['about','about-rules'].includes(key)?key:null;
+  };
   const rememberCatalog=()=>{
     hostEntryReading=entryReading();
     const catalog=root.querySelector('.finch-catalog');hostCatalogScroll=catalog?{view:renderedView,top:catalog.scrollTop}:null;
@@ -38,6 +42,7 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
     hostGardenScroll=garden?{
       view:renderedView,world:garden.dataset.gardenWorld,
       gardenId:garden.querySelector('[aria-current=page]')?.dataset.gardenSelect,
+      bookletFocus:bookletSummaryFocus(),
       details:new Map([...garden.querySelectorAll('details[data-garden-details][open]')].map(d=>[d.dataset.gardenDetails,d.scrollTop])),
     }:null;
   };
@@ -60,6 +65,9 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
     const oldDetails=savedGarden?.details||new Map(oldGarden?[...oldGarden.querySelectorAll('details[data-garden-details][open]')].map(d=>[d.dataset.gardenDetails,d.scrollTop]):[]);
     const oldSelector=root.querySelector('.finch-garden-selector');
     const oldScroll=oldSelector?.scrollLeft, oldSelected=oldSelector?.querySelector('[aria-current=page]')?.dataset.gardenSelect;
+    const sameBooklet=oldGarden?.dataset.gardenWorld===w.worldId&&oldSelected===w.encounters.garden.id;
+    const outsideBookletFocus=doc.activeElement!==doc.body&&doc.activeElement!==doc.documentElement&&!bookletSummaryFocus();
+    const bookletFocus=sameBooklet&&!outsideBookletFocus?(savedGarden?.bookletFocus??bookletSummaryFocus()):null;
     if(w.worldId!==worldId){worldId=w.worldId;generation++;busy=false;mode='notebook';pageId=null;notice='';}
     const focused=doc.activeElement,companionFocus=focused?.closest?.('.finch-companion-settings')?(focused.hasAttribute('data-garden-companion')?['data-garden-companion',focused.dataset.gardenCompanion]:focused.hasAttribute('data-garden-accompany')?['data-garden-accompany',focused.dataset.gardenAccompany]:focused.hasAttribute('data-garden-companions-save')?['data-garden-companions-save',null]:focused.hasAttribute('data-companion-summary')?['data-companion-summary',null]:null):null;
     const nextReadingKey=['entry','raptors','crows'].includes(mode)&&pageId?`${w.worldId}:${mode}:${pageId}`:null,priorReading=hostEntryReading||entryReading();
@@ -103,6 +111,7 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
     if(busy)for(const button of root.querySelectorAll('button'))button.disabled=true;
     doc.dispatchEvent(new win.CustomEvent('buncho-game-encounter-view',{detail:{mode}}));
     if(focus)root.querySelector('h3')?.focus({preventScroll:true});
+    else if(bookletFocus&&mode==='garden')root.querySelector('[data-garden-details='+bookletFocus+'] > summary')?.focus({preventScroll:true});
     else if(companionFocus){const [attribute,value]=companionFocus;const target=[...root.querySelectorAll(`[${attribute}]`)].find(el=>value===null||el.getAttribute(attribute)===value);if(!target?.disabled)target?.focus({preventScroll:true});}
   }
   function refreshBond(){
