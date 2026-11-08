@@ -1,3 +1,4 @@
+import {renderConsultationLetter} from './consultation-letter.js';
 import { renderDiaryPaper } from './diary-paper.js';
 import { LIFE_MENU_ITEMS, renderLifeMenuIcon } from './life-menu-icons.js';
 import {renderGameHelp} from './game-help.js';
@@ -266,7 +267,15 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
   function openAdoptionDialog(){
     const request=world.adoption.pending,b=request&&findBird(world,request.birdId);if(!b||adoptionBusy)return;
     let dialog=root.querySelector('.game-adoption-dialog');if(!dialog){dialog=document.createElement('dialog');dialog.className='game-adoption-dialog';dialog.setAttribute('aria-labelledby','game-adoption-title');root.querySelector('.game-app').append(dialog);}
-    adoptionDialogToken={...economyToken(world),birdId:b.id};dialog.innerHTML=`<h2 id="game-adoption-title">${escape(b.name)}と暮らす？</h2>${smallBird(b)}<p>このおうちの仲間に迎えます。今は友達のままでも、また遊びに来てくれるよ。</p><button data-adoption-cancel autofocus>あとで決める</button><button data-adoption-decision="later">また遊ぼう</button><button data-adoption-decision="accept">いっしょに暮らす</button><p data-adoption-notice role="status"></p>`;dialog.showModal();updateRaptorNotice(root,world);dialog.querySelector('[autofocus]').focus({preventScroll:true});
+    adoptionDialogToken={...economyToken(world),birdId:b.id};dialog.innerHTML=renderConsultationLetter({
+  kind:'adoption', title:`${b.name}と暮らす？`,
+  letter:'このおうちの仲間に迎えます。今は友達のままでも、また遊びに来てくれるよ。',
+  signature:b.name, trustedBirdMarkup:smallBird(b),
+  changes:'「いっしょに暮らす」を選ぶと、このおうちの仲間に迎えます。「また遊ぼう」を選ぶと、今回のお迎えの相談を終えます。',
+  remains:'「また遊ぼう」を選んだときは、お友達のままです。',
+  warning:'「あとで決める」は、お迎えを決めずにこの相談を閉じます。',
+  acceptLabel:'いっしょに暮らす'
+});dialog.showModal();updateRaptorNotice(root,world);dialog.querySelector('[autofocus]').focus({preventScroll:true});
   }
   async function adoptionDecision(button){
     if(adoptionBusy||!adoptionDialogToken||button.disabled)return;const token={...adoptionDialogToken},dialog=root.querySelector('.game-adoption-dialog');adoptionBusy=true;dialog.querySelectorAll('button').forEach(b=>b.disabled=true);let result;
@@ -292,7 +301,16 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     const group=independenceCandidates(world).find(g=>g.ids[0]===id);if(!group)return;
     let dialog=root.querySelector('.game-independence-dialog');if(!dialog){dialog=document.createElement('dialog');dialog.className='game-independence-dialog';dialog.setAttribute('aria-labelledby','game-independence-title');root.querySelector('.game-app').append(dialog);}
     independenceDialogToken={...economyToken(world),ids:[...group.ids]};
-    dialog.innerHTML=`<h2 id="game-independence-title">${group.names.map(escape).join('と')}から独立の相談</h2><p>「${group.ids.length===2?'ふたりで':'新しい'}おうちで暮らしてみたいな。また遊びに来るね。」</p><p>${group.ids.length}羽が家族の枠を空け、別のおうちで暮らします。名前・血縁・つがい・日記・持ち物は消えません。自動お迎えには戻らず、もう一度家族に迎えたいときは「紹介」から選べます。</p><button type="button" data-independence-cancel autofocus>今は一緒に暮らす</button><button type="button" data-independence-accept>相談を承諾して、見送る</button><p data-independence-notice role="status"></p>`;
+    dialog.innerHTML=renderConsultationLetter({
+  kind:'independence', title:`${group.names.join('と')}から独立の相談`,
+  letter:`「${group.ids.length===2?'ふたりで':'新しい'}おうちで暮らしてみたいな。また遊びに来るね。」`,
+  signature:group.names.join('と'),
+  trustedBirdMarkup:group.ids.map(id=>smallBird(findBird(world,id))).join(''),
+  changes:`${group.ids.length}羽が家族の枠を空け、別のおうちで暮らします。`,
+  remains:'名前・血縁・つがい・日記・持ち物は消えません。',
+  warning:'自動お迎えには戻らず、もう一度家族に迎えたいときは「紹介」から選べます。',
+  acceptLabel:'相談を承諾して、見送る'
+});
     dialog.showModal();dialog.querySelector('[autofocus]').focus();
   }
   async function independenceDecision(button){
@@ -319,7 +337,15 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     let dialog=root.querySelector('.game-successor-dialog');
     if(!dialog){dialog=document.createElement('dialog');dialog.className='game-successor-dialog';dialog.setAttribute('aria-labelledby','game-successor-title');root.querySelector('.game-app').append(dialog);}
     successorDialogToken={...economyToken(world),fromId:getProtagonistId(world),birdId:id,panel};
-    dialog.innerHTML=`<h2 id="game-successor-title">${escape(candidate.bird.name)}に物語を引き継ぐ？</h2><p>この家族を次の主人公にします。${candidate.bird.home!=='resident'?'同じ文鳥が、おうちに帰ってきます。':''}</p><p>先代のお墓、名前・血縁・つがい・日記・持ち物は残ります。GoldやGemsは使いません。確認後は、この文鳥が旅立つまで主人公になります。</p><button type="button" data-successor-cancel autofocus>今は選ばない</button><button type="button" data-successor-accept>${escape(candidate.bird.name)}に引き継ぐ</button><p data-successor-notice role="status"></p>`;
+    dialog.innerHTML=renderConsultationLetter({
+  kind:'successor', title:`${candidate.bird.name}に物語を引き継ぐ？`,
+  letter:`この家族を次の主人公にします。${candidate.bird.home!=='resident'?'同じ文鳥が、おうちに帰ってきます。':''}`,
+  signature:candidate.bird.name, trustedBirdMarkup:smallBird(candidate.bird),
+  changes:`この家族を次の主人公にします。${candidate.bird.home!=='resident'?'同じ文鳥が、おうちに帰ってきます。':''}`,
+  remains:'先代のお墓、名前・血縁・つがい・日記・持ち物は残ります。GoldやGemsは使いません。',
+  warning:'確認後は、この文鳥が旅立つまで主人公になります。',
+  acceptLabel:`${candidate.bird.name}に引き継ぐ`
+});
     dialog.showModal();dialog.querySelector('[autofocus]').focus();
   }
   async function successorDecision(button){

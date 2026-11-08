@@ -1,0 +1,24 @@
+/* Scoped to the three existing dialogs; never change global fonts or atlas windows. */
+body[data-world="buncho"] .game-app :is(.game-adoption-dialog,.game-independence-dialog,.game-successor-dialog):has(>.game-consultation-letter){width:min(580px,calc(100% - 32px));max-width:calc(100% - 32px);padding:clamp(16px,3vw,28px);border:1px solid #aaa994;border-radius:28px;background:#fffdf6;color:#304f43;box-shadow:4px 6px 0 #282b1d20}
+.game-consultation-letter{min-width:0;text-align:left;overflow-wrap:anywhere}
+.game-consultation-letter h2{font-size:clamp(1.25rem,3vw,1.8rem);line-height:1.5;margin:0 0 1.25rem}
+.game-consultation-letter p{line-height:1.8;white-space:pre-line}
+.game-consultation-letter .game-consultation-paper{border:2px solid #365847;border-radius:18px;background:#f8efda;padding:clamp(16px,4vw,28px);margin-bottom:1.4rem}
+.game-consultation-letter .game-consultation-portrait{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;overflow:visible;padding:12px 18px 20px}
+.game-consultation-letter .game-consultation-portrait .game-mini-bird{display:flex;align-items:center;justify-content:center;width:140px;height:auto;min-height:150px;max-width:100%;min-width:0;flex:0 1 140px;margin:0;overflow:visible}
+/* Full-body framing: the inner .game-pose-window retains its own atlas clip. */
+.game-consultation-letter .game-consultation-portrait .game-sprite{width:82%;height:auto;max-width:100%;flex:none;margin:0 18% 0 0;overflow:visible;object-fit:contain}
+.game-consultation-letter .game-consultation-message{font-size:clamp(1.15rem,3vw,1.6rem);font-weight:700;margin:.5rem 0 1rem}
+.game-consultation-letter .game-consultation-signature{font-weight:700;margin:0}
+.game-consultation-letter .game-consultation-outcomes h3{font-size:1rem;margin:1.2rem 0 .25rem}
+.game-consultation-letter .game-consultation-outcomes p{margin:.25rem 0 .75rem}
+.game-consultation-letter .game-consultation-warning{font-weight:700}
+.game-consultation-letter .game-consultation-actions{display:grid;gap:12px;margin-top:1.8rem}
+body[data-world="buncho"] .game-app .game-consultation-letter .game-consultation-actions>button{display:block;width:100%;box-sizing:border-box;margin:0;min-height:48px;padding:14px 18px;border:1px solid #365847!important;border-radius:28px;background:#fffdf6!important;color:#304f43;white-space:normal;overflow-wrap:anywhere;line-height:1.65;box-shadow:none!important}
+body[data-world="buncho"] .game-app .game-consultation-letter .game-consultation-actions>:is([data-independence-accept],[data-successor-accept],[data-adoption-decision="accept"]){background:#f3c9b8!important;font-weight:700}
+.game-consultation-letter [data-adoption-cancel]{justify-self:start}
+.game-consultation-letter [role="status"]:empty{margin:0}
+.game-consultation-letter button:focus-visible{outline:3px solid #365847;outline-offset:3px}
+.game-consultation-letter button:disabled{opacity:.55;cursor:default}
+/* Adoption keeps its third, non-mutating defer control apart from the two decisions. */
+body[data-world="buncho"] .game-app .game-consultation-letter .game-consultation-actions>[data-adoption-cancel]{width:auto;margin:0 0 12px;padding:8px 16px;font-size:.875rem;background:#f8efda!important}
