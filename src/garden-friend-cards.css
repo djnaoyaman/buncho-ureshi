@@ -1,0 +1,35 @@
+/* Isolated adopted A. No global font, layout, header or dock rules. */
+body[data-world="buncho"] .garden-friend-cards{--friend-ink:#435748;--friend-paper:#fffcf5;--friend-line:#d6cbb8;color:var(--friend-ink)}
+body[data-world="buncho"] .garden-friend-cards .garden-friend-cards-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:20px 0 4px}
+body[data-world="buncho"] .garden-friend-cards .garden-friend-cards-heading h4{font-size:1.5rem;margin:0}
+body[data-world="buncho"] .garden-friend-cards .garden-friend-cards-heading>span{background:#dfe6d3;border-radius:30px;padding:6px 14px;white-space:nowrap}
+body[data-world="buncho"] .garden-friend-cards .garden-friend-cards-place{margin:0 0 22px;color:#776f60}
+body[data-world="buncho"] .garden-friend-cards .garden-friend-cards-list{display:grid;gap:20px}
+body[data-world="buncho"] .garden-friend-cards .garden-friend-card{min-width:0;border:1px solid var(--friend-line);border-radius:25px;background:var(--friend-paper);box-shadow:2px 4px 0 #e6dfcf;overflow:hidden}
+body[data-world="buncho"] .garden-friend-cards .garden-friend-card-face{display:grid;grid-template-columns:minmax(68px,34%) minmax(0,1fr);align-items:center;gap:12px;padding:18px;background:#dfe6d3;border-radius:24px}
+body[data-world="buncho"] .garden-friend-cards .garden-friend-card-face.tone-1{background:#f3c9b7}
+body[data-world="buncho"] .garden-friend-cards .garden-friend-card-face.tone-2{background:#dbe9e9}
+body[data-world="buncho"] .garden-friend-cards .garden-friend-card-face img{display:block;width:100%;height:140px;object-fit:contain}
+body[data-world="buncho"] .garden-friend-cards .garden-friend-card-face h5{font-size:1.65rem;margin:0 0 12px;overflow-wrap:anywhere}
+body[data-world="buncho"] .garden-friend-cards .garden-friend-card-face p{margin:3px 0 8px}
+body[data-world="buncho"] .garden-friend-cards .garden-friend-card-face strong{font-size:1.8rem;margin-right:8px}
+body[data-world="buncho"] .garden-friend-cards .garden-friend-card-face meter{display:block;width:100%;height:10px;accent-color:var(--friend-ink)}
+body[data-world="buncho"] .garden-friend-cards meter::-webkit-meter-bar{background:#d7ddc7;border:0;border-radius:10px}
+body[data-world="buncho"] .garden-friend-cards meter::-webkit-meter-optimum-value{background:var(--friend-ink);border-radius:10px}
+body[data-world="buncho"] .garden-friend-cards meter::-moz-meter-bar{background:var(--friend-ink)}
+body[data-world="buncho"] .garden-friend-cards .garden-friend-card-body{padding:18px}
+body[data-world="buncho"] .garden-friend-cards .garden-friend-card-body>p{margin:0 0 14px;overflow-wrap:anywhere}
+body[data-world="buncho"] .garden-friend-cards .garden-friend-card-memory{border:1px solid var(--friend-line);border-radius:12px;padding:10px 12px;margin-bottom:18px}
+body[data-world="buncho"] .garden-friend-cards .garden-friend-card-memory summary{cursor:pointer;min-height:24px;font-weight:bold}
+body[data-world="buncho"] .garden-friend-cards .garden-friend-card-memory li{margin:8px 0;overflow-wrap:anywhere}
+body[data-world="buncho"] .garden-friend-cards .garden-friend-card-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;align-items:stretch}
+body[data-world="buncho"] .garden-friend-cards .garden-friend-card-button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;width:100%;height:100%;min-height:118px;padding:10px 5px;border:1px solid var(--friend-line);border-radius:16px;box-shadow:0 3px 0 #e6dfcf;color:var(--friend-ink);font:inherit;font-weight:bold;line-height:1.55;overflow-wrap:anywhere;cursor:pointer}
+body[data-world="buncho"] .garden-friend-cards .action-watch{background:#f6efd9}
+body[data-world="buncho"] .garden-friend-cards .action-play{background:#dbe9e9}
+body[data-world="buncho"] .garden-friend-cards .action-chat{background:#f3c9b7}
+body[data-world="buncho"] .garden-friend-cards .garden-friend-card-button svg{display:block;width:min(100%,76px);height:76px;flex:none}
+body[data-world="buncho"] .garden-friend-cards .garden-friend-card-button small{font-size:.8em;font-weight:normal}
+body[data-world="buncho"] .garden-friend-cards button:disabled{opacity:.62;cursor:default}
+body[data-world="buncho"] .garden-friend-cards :is(button,summary):focus-visible{outline:3px solid var(--friend-ink);outline-offset:3px}
+body[data-world="buncho"] .garden-friend-cards .garden-friend-cards-footer{text-align:center;margin:22px 0;color:#776f60}
+@media(max-width:360px){body[data-world="buncho"] .garden-friend-cards .garden-friend-card-body{padding:12px}body[data-world="buncho"] .garden-friend-cards .garden-friend-card-face{padding:14px;gap:8px}body[data-world="buncho"] .garden-friend-cards .garden-friend-card-actions{gap:5px}}

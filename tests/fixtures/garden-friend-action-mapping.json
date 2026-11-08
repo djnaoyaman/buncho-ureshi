@@ -1,0 +1,218 @@
+[
+  {
+    "gardenId": "komorebi",
+    "kind": "chat",
+    "label": "木陰でおしゃべり",
+    "artKey": "chat"
+  },
+  {
+    "gardenId": "komorebi",
+    "kind": "watch",
+    "label": "木漏れ日を眺める",
+    "artKey": "komorebi-watch"
+  },
+  {
+    "gardenId": "komorebi",
+    "kind": "play",
+    "label": "葉っぱを追う",
+    "artKey": "komorebi-play"
+  },
+  {
+    "gardenId": "mizukagami",
+    "kind": "watch",
+    "label": "水面を一緒に眺める",
+    "artKey": "mizukagami-watch"
+  },
+  {
+    "gardenId": "mizukagami",
+    "kind": "chat",
+    "label": "飛び石でごあいさつ",
+    "artKey": "chat"
+  },
+  {
+    "gardenId": "mizukagami",
+    "kind": "play",
+    "label": "波紋の絵あそび",
+    "artKey": "mizukagami-play"
+  },
+  {
+    "gardenId": "komugi",
+    "kind": "play",
+    "label": "穂の揺れをまねる",
+    "artKey": "komugi-play"
+  },
+  {
+    "gardenId": "komugi",
+    "kind": "chat",
+    "label": "柵でおしゃべり",
+    "artKey": "chat"
+  },
+  {
+    "gardenId": "komugi",
+    "kind": "watch",
+    "label": "小道でひと休み",
+    "artKey": "komugi-watch"
+  },
+  {
+    "gardenId": "hanadokei",
+    "kind": "play",
+    "label": "花の輪をたどる",
+    "artKey": "hanadokei-play"
+  },
+  {
+    "gardenId": "hanadokei",
+    "kind": "chat",
+    "label": "花壇でおしゃべり",
+    "artKey": "chat"
+  },
+  {
+    "gardenId": "hanadokei",
+    "kind": "watch",
+    "label": "日時計を眺める",
+    "artKey": "hanadokei-watch"
+  },
+  {
+    "gardenId": "kazaguruma",
+    "kind": "watch",
+    "label": "風車を眺める",
+    "artKey": "windmill"
+  },
+  {
+    "gardenId": "kazaguruma",
+    "kind": "play",
+    "label": "風のポーズ",
+    "artKey": "pose"
+  },
+  {
+    "gardenId": "kazaguruma",
+    "kind": "chat",
+    "label": "丘でおしゃべり",
+    "artKey": "chat"
+  },
+  {
+    "gardenId": "yuyake",
+    "kind": "chat",
+    "label": "卓でおしゃべり",
+    "artKey": "chat"
+  },
+  {
+    "gardenId": "yuyake",
+    "kind": "watch",
+    "label": "木の実の絵を見る",
+    "artKey": "yuyake-watch"
+  },
+  {
+    "gardenId": "yuyake",
+    "kind": "play",
+    "label": "木箱のリズム",
+    "artKey": "yuyake-play"
+  },
+  {
+    "gardenId": "tsukiakari",
+    "kind": "watch",
+    "label": "月を一緒に眺める",
+    "artKey": "tsukiakari-watch"
+  },
+  {
+    "gardenId": "tsukiakari",
+    "kind": "chat",
+    "label": "小声でおしゃべり",
+    "artKey": "chat"
+  },
+  {
+    "gardenId": "tsukiakari",
+    "kind": "play",
+    "label": "星のかたちあそび",
+    "artKey": "tsukiakari-play"
+  },
+  {
+    "gardenId": "shrine-grove",
+    "kind": "chat",
+    "label": "境内でごあいさつ",
+    "artKey": "chat"
+  },
+  {
+    "gardenId": "shrine-grove",
+    "kind": "watch",
+    "label": "落ち葉を見つける",
+    "artKey": "shrine-grove-watch"
+  },
+  {
+    "gardenId": "shrine-grove",
+    "kind": "play",
+    "label": "祭りの待ち合わせ",
+    "artKey": "shrine-grove-play"
+  },
+  {
+    "gardenId": "onsen",
+    "kind": "chat",
+    "label": "湯上がりの待ち合わせ",
+    "artKey": "chat"
+  },
+  {
+    "gardenId": "onsen",
+    "kind": "watch",
+    "label": "離れて湯けむりを眺める",
+    "artKey": "onsen-watch"
+  },
+  {
+    "gardenId": "onsen",
+    "kind": "play",
+    "label": "休憩処でひと休み",
+    "artKey": "onsen-play"
+  },
+  {
+    "gardenId": "java-rice",
+    "kind": "chat",
+    "label": "木の上でおしゃべり",
+    "artKey": "chat"
+  },
+  {
+    "gardenId": "java-rice",
+    "kind": "watch",
+    "label": "水田を見下ろす",
+    "artKey": "java-rice-watch"
+  },
+  {
+    "gardenId": "java-rice",
+    "kind": "play",
+    "label": "木漏れ日を探す",
+    "artKey": "java-rice-play"
+  },
+  {
+    "gardenId": "bali-terrace",
+    "kind": "chat",
+    "label": "友達とおしゃべり",
+    "artKey": "chat"
+  },
+  {
+    "gardenId": "bali-terrace",
+    "kind": "watch",
+    "label": "風景を観察する",
+    "artKey": "bali-terrace-watch"
+  },
+  {
+    "gardenId": "bali-terrace",
+    "kind": "play",
+    "label": "小道をチョンチョン",
+    "artKey": "bali-terrace-play"
+  },
+  {
+    "gardenId": "paris-unrest",
+    "kind": "chat",
+    "label": "友達とおしゃべり",
+    "artKey": "chat"
+  },
+  {
+    "gardenId": "paris-unrest",
+    "kind": "watch",
+    "label": "風景を観察する",
+    "artKey": "paris-unrest-watch"
+  },
+  {
+    "gardenId": "paris-unrest",
+    "kind": "play",
+    "label": "小道をチョンチョン",
+    "artKey": "paris-unrest-play"
+  }
+]

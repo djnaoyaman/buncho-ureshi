@@ -63,7 +63,7 @@ for(const kind of cases.filter(k=>k!=='crow-warning'))test('exact saves and actu
  await page.locator('[data-garden-details=observe] > summary').click();await expect(a).not.toHaveAttribute('open','');
 });
 test('polling focus scroll and close/reopen navigation',async({page})=>{
- await setup(page);const a=await open(page);await a.locator('[data-garden-details=about-rules] > summary').click();
+ await setup(page,'navigation-cooldown');const a=await open(page);await a.locator('[data-garden-details=about-rules] > summary').click();
  await a.locator('[data-garden-details=about-rules] > summary').focus();
  const top=await a.evaluate(e=>{e.scrollTop=e.scrollHeight;return e.scrollTop;});expect(top).toBeGreaterThan(0);
  await page.clock.runFor(7000);await expect(a).toHaveAttribute('open','');await expect(a.locator('[data-garden-details=about-rules]')).toHaveAttribute('open','');

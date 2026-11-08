@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96"><g stroke="#52604D" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="48" cy="86" rx="30" ry="4" fill="#D8DFCB" stroke="none"/>
+  <path d="M29 83 L34 41 L61 41 L66 83 Z" fill="#EED9AF"/>
+  <path d="M53 44 L60 44 L64 81 L57 81 Z" fill="#DDC493" stroke="none"/>
+  <path d="M29 43 L47.5 24 L66 43 Z" fill="#D5997D"/>
+  <path d="M36 42 L48 29 L60 42" fill="none" stroke="#F8D9BA" stroke-width="2"/>
+  <path d="M43 83 V71 A5 5 0 0 1 53 71 V83" fill="#A9886D"/>
+  <rect x="43" y="52" width="10" height="11" rx="3" fill="#FFFCF5"/>
+  <path d="M48 52 V63 M43 57.5 H53" stroke-width="1.4"/>
+  <path d="M24 84 H71" fill="none"/>
+  <g transform="translate(48 35) rotate(32)">
+  <g id="sail"><path d="M-2 -3 V-31 H8 V-11 L2 -3 Z" fill="#FFFCF5"/><path d="M3 -31 V-8 M-2 -24 H8 M-2 -17 H8 M-2 -10 H6" fill="none" stroke="#AB997B" stroke-width="1.4"/></g>
+  <use href="#sail" transform="rotate(90)"/><use href="#sail" transform="rotate(180)"/><use href="#sail" transform="rotate(270)"/>
+  <circle r="5" fill="#D5997D"/><circle r="1.4" fill="#52604D" stroke="none"/>
+  </g><path d="M18 85 L17 79 M20 85 L23 79 M77 85 L80 78 M77 85 L75 80" fill="none" stroke="#859B72" stroke-width="2"/></g></svg>
