@@ -73,8 +73,26 @@ test('layout, exact artwork, native actions and cancellation',async({page},info)
  expect(metrics.cards.every((c,i)=>c.direction==='column'&&Math.abs(c.rect.top-metrics.cards[0].rect.top)<1&&c.day.bottom<=c.price.top+1&&c.price.bottom<=c.action.top+1&&(i===metrics.cards.length-1||c.rect.right<=metrics.cards[i+1].rect.left+1))).toBe(true);
  await evidence(page,section,info,'caretaker-panel',before);
  const button=section.getByRole('button',{name:/1日.*お願いする.*24 Gold/});
- await page.locator('.life-caretaker-fold > summary').focus();await page.keyboard.press('Tab');await expect(button).toBeFocused();
- expect(await button.evaluate(b=>getComputedStyle(b).outlineStyle)).not.toBe('none');
+ // Observe the unmodified native Tab path, including periodic render replacement.
+ await page.evaluate(()=>{
+  const ids=new WeakMap();let next=0;
+  const node=el=>el?{id:ids.has(el)?ids.get(el):(ids.set(el,++next),next),tag:el.tagName,domId:el.id,class:el.className,text:el.textContent?.slice(0,90),connected:el.isConnected,hire:el.dataset?.lifeHire}:null;
+  const events=[],snapshot=(type,ev)=>{if(events.length<200)events.push({type,time:performance.now(),key:ev?.key,prevented:ev?.defaultPrevented,target:node(ev?.target),active:node(document.activeElement),summary:node(document.querySelector('.life-caretaker-fold > summary')),open:document.querySelector('.life-caretaker-fold')?.open});};
+  const listeners=['focusin','focusout','keydown','keyup'].map(type=>{const fn=ev=>snapshot(type,ev);document.addEventListener(type,fn,true);return [type,fn];});
+  const observer=new MutationObserver(records=>snapshot('mutation:'+records.filter(r=>r.type==='childList').length));observer.observe(document.querySelector('.game-panel-overlay'),{childList:true,subtree:true,attributes:true,attributeFilter:['open']});
+  window.__caretakerFocus={snapshot,finish:()=>{snapshot('finish');observer.disconnect();for(const [type,fn] of listeners)document.removeEventListener(type,fn,true);return events;}};
+ });
+ try{
+  await page.locator('.life-caretaker-fold > summary').focus();
+  await page.evaluate(()=>window.__caretakerFocus.snapshot('after-summary-focus'));
+  await page.keyboard.press('Tab');
+  await page.evaluate(()=>window.__caretakerFocus.snapshot('after-tab'));
+  await expect(button).toBeFocused();
+  expect(await button.evaluate(b=>getComputedStyle(b).outlineStyle)).not.toBe('none');
+ }finally{
+  const events=await page.evaluate(()=>window.__caretakerFocus.finish()),path=info.outputPath('caretaker-keyboard-focus.json');
+  await writeFile(path,JSON.stringify(events,null,2));await info.attach('caretaker-keyboard-focus',{path,contentType:'application/json'});
+ }
  await page.keyboard.press('Escape');await expect(page.locator('.game-panel-overlay')).not.toBeVisible();
  expect(await record(page)).toEqual(before);
  await recruitment(page);await page.locator('.caretaker-recruitment [data-life-hire="3"]').evaluate(b=>{b.querySelector('strong').click();b.click();});
