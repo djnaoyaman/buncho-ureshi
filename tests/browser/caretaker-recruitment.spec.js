@@ -65,12 +65,12 @@ test('layout, exact artwork, native actions and cancellation',async({page},info)
   const copyRect=rect(copy),art=rect(copy.parentElement),inside=(b,r)=>b.left>=r.left-1&&b.right<=r.right+1&&b.top>=r.top-1&&b.bottom<=r.bottom+1;
   const paragraphs=[...copy.children].map(el=>{const s=getComputedStyle(el);return {class:el.className,rect:rect(el),marginTop:s.marginTop,marginBottom:s.marginBottom,fontSize:s.fontSize,lineHeight:s.lineHeight};});
   const options=section.querySelector('.caretaker-recruitment-options'),cards=[...options.children].map(el=>({rect:rect(el),day:rect(el.querySelector('.caretaker-recruitment-days')),price:rect(el.querySelector('strong')),action:rect(el.querySelector('.caretaker-recruitment-action')),direction:getComputedStyle(el).flexDirection}));
-  return {copyRect,art,paragraphs,cards,columns:getComputedStyle(options).gridTemplateColumns,inside:inside(copyRect,art)&&paragraphs.every(p=>inside(p.rect,copyRect))};
+  return {copyRect,art,paragraphs,cards,columns:getComputedStyle(options).gridTemplateColumns,inside:copyRect.left>=art.left&&copyRect.right<=art.right&&copyRect.top>=art.top&&copyRect.bottom<=art.bottom&&paragraphs.every(p=>inside(p.rect,copyRect))};
  });
  const metricsPath=info.outputPath('caretaker-layout-metrics.json');await writeFile(metricsPath,JSON.stringify(metrics,null,2));await info.attach('caretaker-layout-metrics',{path:metricsPath,contentType:'application/json'});
  expect(metrics.inside).toBe(true);
  expect(metrics.paragraphs.every(p=>p.marginTop==='0px'&&p.marginBottom==='0px')).toBe(true);
- expect(metrics.cards.every(c=>c.direction==='column'&&Math.abs(c.rect.top-metrics.cards[0].rect.top)<1&&c.price.bottom<=c.action.top+1)).toBe(true);
+ expect(metrics.cards.every((c,i)=>c.direction==='column'&&Math.abs(c.rect.top-metrics.cards[0].rect.top)<1&&c.day.bottom<=c.price.top+1&&c.price.bottom<=c.action.top+1&&(i===metrics.cards.length-1||c.rect.right<=metrics.cards[i+1].rect.left+1))).toBe(true);
  await evidence(page,section,info,'caretaker-panel',before);
  const button=section.getByRole('button',{name:/1日.*お願いする.*24 Gold/});
  await page.locator('.life-caretaker-fold > summary').focus();await page.keyboard.press('Tab');await expect(button).toBeFocused();
