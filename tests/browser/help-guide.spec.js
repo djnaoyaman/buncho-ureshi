@@ -17,7 +17,7 @@ async function start(page,world,size){
 }
 async function openHelp(page){
  const scene=page.locator('.game-scene-controls-toggle');if(await scene.getAttribute('aria-expanded')!=='true')await scene.click();
- await page.locator('#menu-toggle').click();await page.locator('[data-world-action="help"]').click();
+ await page.locator('#game-nav-open').click();await page.locator('#game-menu-help').click();
  await expect(page.locator('.game-help-guide h3')).toBeFocused();
  await expect(page.locator(CARD)).toHaveCount(5);
  // Real production CSS/assets must be wired; no injected component styles or HTML.

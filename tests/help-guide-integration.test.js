@@ -32,7 +32,7 @@ for(const known of [true,false])test(`actual game DOM: strict ${known?'known':'u
  const {mountGame}=await loadGame();dispose=await mountGame(root,{audioFactory:()=>({setEnabled(){},unlockFromGesture:async()=>true,chirp:async()=>false,cancel(){},close(){}})});
  assert.deepEqual(await record(db),world);
  const url=window.location.href;
- const open=()=>window.document.dispatchEvent(new window.CustomEvent('buncho-world-action',{detail:'help'}));
+ const open=()=>{root.querySelector('#game-nav-open').click();assert.equal(root.querySelectorAll('#game-menu-help').length,1);root.querySelector('#game-menu-help').click();};
  const select=()=>root.querySelector('[data-game-details="help-guide-step-1"]');
  for(let cycle=0;cycle<3;cycle++){
   open();assert.equal(root.querySelectorAll('.game-help-guide-card').length,5);assert.equal(window.document.activeElement,root.querySelector('.game-help h3'));
