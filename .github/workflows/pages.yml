@@ -76,6 +76,9 @@ jobs:
           pactl load-module module-null-sink sink_name=ci_audio sink_properties=device.description=CI_Audio
           pactl set-default-sink ci_audio
           pactl info
+      - name: Consultation letters A, native consent and exact save transitions
+        if: matrix.lane == 'a'
+        run: npx playwright test tests/browser/consultation-letter.spec.js --project=chrome --project=webkit --retries=0 --output=consultation-test-results
       - name: Cage fixture placement and saved furnishings
         if: matrix.lane == 'a'
         run: npx playwright test tests/browser/cage-placement.spec.js --project=chrome --project=webkit --retries=0 --output=cage-test-results
@@ -164,6 +167,7 @@ jobs:
             roster-test-results/
             profile-test-results/
             diary-test-results/
+            consultation-test-results/
             settings-test-results/
             menu-test-results/
             editorial-test-results/
@@ -223,6 +227,14 @@ jobs:
         with:
           name: diary-paper-screenshots-${{ github.sha }}
           path: diary-test-results/**/*.png
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        if: always() && matrix.lane == 'a'
+        with:
+          name: consultation-letter-evidence-${{ github.sha }}
+          path: |
+            consultation-test-results/**/*.png
+            consultation-test-results/**/*.json
           retention-days: 14
   verify:
     if: always()
