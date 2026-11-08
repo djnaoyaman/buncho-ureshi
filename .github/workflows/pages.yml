@@ -76,6 +76,19 @@ jobs:
           pactl load-module module-null-sink sink_name=ci_audio sink_properties=device.description=CI_Audio
           pactl set-default-sink ci_audio
           pactl info
+      - name: Caretaker A signboard, contracts and exact saves
+        if: matrix.lane == 'b'
+        run: npx playwright test --config=playwright.caretaker.config.js --retries=0 --output=caretaker-test-results
+      - uses: actions/upload-artifact@v4
+        if: always() && matrix.lane == 'b'
+        with:
+          name: caretaker-evidence-${{ github.sha }}
+          path: |
+            caretaker-test-results/**/*.png
+            caretaker-test-results/**/*.json
+            caretaker-test-results/**/trace.zip
+            caretaker-test-results/**/error-context.md
+          retention-days: 14
       - name: Garden Friends A cards, measured text, identities and exact saves
         if: matrix.lane == 'c'
         run: npx playwright test --config=playwright.garden-friends.config.js --project=chrome --project=webkit --retries=0 --output=garden-friends-test-results
