@@ -7,7 +7,9 @@ import {Window} from 'happy-dom';
 // separately verify these selectors, migrations, clocks, and transactions.
 const source=await readFile(new URL('../src/life-care-ui.js',import.meta.url),'utf8');
 const memorialModule=new URL('../src/memorial-designs.js',import.meta.url).href;
-const stub=`import {memorialDesignForBird,renderMemorialArtwork} from '${memorialModule}';
+const caretakerModule=new URL('../src/caretaker-recruitment-ui.js',import.meta.url).href;
+const stub=`import {renderCaretakerRecruitment} from '${caretakerModule}';
+import {memorialDesignForBird,renderMemorialArtwork} from '${memorialModule}';
 const protagonistStatus=w=>({bird:w.birds[0]??null,generation:1,waiting:null,heir:null});
 const LIFE_RULES={neglectMs:259200000,hospitalGold:12,caretakerDailyGold:24};
 const lifeStatus=(w,b)=>b.life;
@@ -33,7 +35,7 @@ test('health rendering is pure and states fictional real-time rules and prices',
 test('hospital action escapes ids and names and disables only unaffordable treatment',()=>{
  const w=world();w.birds[0].name='<img src=x onerror=alert(1)>';w.birds[0].id='x" autofocus="true';w.birds[0].life.condition={kind:'respiratory',deadlineAt:time+3600000};w.economy.gold=11;
  const doc=documentFor(renderLifeCarePanel(w)),button=doc.querySelector('[data-life-treat]');
- assert.equal(doc.querySelector('img'),null);assert.equal(button.getAttribute('autofocus'),null);assert.equal(button.dataset.lifeTreat,w.birds[0].id);assert.equal(button.disabled,true);assert.match(button.textContent,/12 Gold/);
+ assert.equal(doc.querySelector('.life-bird-card img'),null);assert.equal(doc.querySelectorAll('img').length,1);assert.equal(doc.querySelector('img').getAttribute('src'),'./assets/caretaker-signboard-A-v2.png');const art=doc.querySelector('img');assert.equal(art.getAttribute('alt'),'');assert.deepEqual([...art.attributes].map(a=>[a.name,a.value]).sort(),[['alt',''],['height','1312'],['src','./assets/caretaker-signboard-A-v2.png'],['width','1199']]);assert.equal([...doc.querySelectorAll('*')].some(el=>[...el.attributes].some(a=>/^on/i.test(a.name))),false);assert.equal(button.getAttribute('autofocus'),null);assert.equal(button.dataset.lifeTreat,w.birds[0].id);assert.equal(button.disabled,true);assert.match(button.textContent,/12 Gold/);
  w.economy.gold=12;assert.equal(documentFor(renderLifeCarePanel(w)).querySelector('[data-life-treat]').disabled,false);
 });
 test('only living residents appear in health panel and active contracts say extension',()=>{
