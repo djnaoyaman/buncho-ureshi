@@ -1574,3 +1574,9 @@ body[data-world="buncho"] .game-main .game-room[data-field="friend"]{--room-rati
 
 /* The machine remains stationary from the first visible result frame. */
 body[data-world="buncho"] .game-app .game-draw-result{animation:none}
+
+/* Machine cards get their own content-sized row above the category strip. */
+body[data-world="buncho"] .game-app .game-decoration{grid-template-columns:minmax(0,1fr);grid-template-rows:none;grid-auto-rows:auto}
+body[data-world="buncho"] .game-app .game-decoration>*{grid-column:1/-1;grid-row:auto;min-width:0}
+body[data-world="buncho"] .game-app .game-decoration>.game-decor-workbench{min-height:240px}
+body[data-world="buncho"] .game-app .game-decoration .game-decor-preview{min-height:220px}
