@@ -22,7 +22,7 @@ export function renderDiaryPaper(world, { portrait = () => '' } = {}) {
     const text = eventText({ birds }, { ...e, ids, data: e.data || {} });
     const date = typeof e.at === 'number' && Number.isFinite(e.at) ? new Date(e.at) : null;
     const validDate = date && Number.isFinite(date.getTime());
-    const legacy=Number(e.id?.slice(1))<=(world.clock?.legacyEventMax??-1);
+    const legacy=e.id?.startsWith('legacy-pair-')||Number(e.id?.slice(1))<=(world.clock?.legacyEventMax??-1);
     const dateLabel = validDate ? date.toLocaleString('ja-JP')+(legacy?'（旧時計の記録）':'') : '日時の記録なし';
     const subject = birds.find(b => b.id === ids[0]);
     const stage = e.kind === 'egg' ? 'egg' : e.kind === 'hatch' ? 'chick' : e.kind === 'grow' && ['chick','juvenile','adult'].includes(e.data?.stage) ? e.data.stage : subject?.stage;

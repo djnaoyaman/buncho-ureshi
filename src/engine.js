@@ -371,7 +371,7 @@ function interact(w, a, b) {
   }
 }
 function grow(w) {
-  for (const b of w.birds.filter(b=>isAlive(w,b))) {
+  for (const b of allBirds(w).filter(b=>isAlive(w,b))) {
     const age = w.tick - b.stageTick;
     const next = b.stage === 'egg' && age >= 12 ? 'chick' : b.stage === 'chick' && age >= 24 ? 'juvenile' : b.stage === 'juvenile' && age >= 48 ? 'adult' : null;
     if (next) { b.stage = next; b.stageTick = w.tick; if (next === 'chick' && (b.naming.source === 'automatic' || b.naming.source === 'legacy' && /^たまご[12]$/.test(b.name))) random(w); record(w, next === 'chick' ? 'hatch' : 'grow', [b.id, ...b.parents], '成長の時間がたった', `${STAGES[next]}になった`, { stage: next }); }
