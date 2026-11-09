@@ -346,3 +346,15 @@ test('settings heading retains focus after a saved peer update replaces the pane
  const peer=f.read();peer.settings.motion=!peer.settings.motion;bumpRevision(peer);f.write(peer);await f.poll();
  const next=f.root.querySelector('.game-settings h3');assert.notEqual(next,heading);assert.ok(f.window.document.activeElement===next,'settings heading keeps focus after polling');assert.equal(next.tabIndex,-1);
 });
+
+
+test('guidance follows only the selected bird and durable care changes',async t=>{
+ const f=await fixture(t);await f.mount();
+ const guide=()=>f.root.querySelector('.game-bird-sheet [data-care-guidance]');
+ assert.equal(guide().dataset.guidanceBird,'b1');assert.match(guide().textContent,/ごはん/);
+ for(let i=0;i<3;i++){f.clickCare('feed');await f.settle();}
+ assert.match(guide().textContent,/名前を呼ぶ/);
+ f.select('b2');assert.equal(guide().dataset.guidanceBird,'b2');
+ assert.doesNotMatch(guide().textContent,/家族.*完了/);
+ f.closeCare();assert(!f.root.querySelector('.game-bird-sheet[open] [data-care-guidance]'));
+});
