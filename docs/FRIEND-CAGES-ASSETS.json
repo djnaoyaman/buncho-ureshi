@@ -1,0 +1,85 @@
+{
+  "title": "友達のおうち：広い鳥かごと9つのデザイン様式",
+  "status": "User-provided final nine illustrations; deployed variants are WebP encodings.",
+  "assignment": "友達ごとに一度ランダムで選び、その後保持する方針。",
+  "notes": [
+    "横長の居住空間の比較見本です。",
+    "現行のおうちの広さ、二段の止まり木、床、右の巣を参照しています。",
+    "実装時は家具を分離し、縦画面の構成と実際の操作を別途検証します。"
+  ],
+  "designs": [
+    {
+      "number": 1,
+      "title": "バウハウス",
+      "description": "鋼管と木の組み合わせ・見える接合部",
+      "filename": "artwork/birdcage-01.png",
+      "sha256": "4d77caddbb694cf5c4253d8ba8f49fa9b397f22d6f341c9cd127a1482ac6ccae",
+      "reference": "https://djnaoyaman.github.io/design-lineage/entries/bauhaus.html"
+    },
+    {
+      "number": 2,
+      "title": "デ・ステイル",
+      "description": "水平と垂直・ずらした面・三原色",
+      "filename": "artwork/birdcage-02.png",
+      "sha256": "2d384bb93b4093d842c285c7ea0ae3d2f0fa3a38c853a15ad55fac7e9f96ddea",
+      "reference": "https://djnaoyaman.github.io/design-lineage/entries/de-stijl.html"
+    },
+    {
+      "number": 3,
+      "title": "アール・デコ",
+      "description": "段状の屋根・真鍮・左右対称",
+      "filename": "artwork/birdcage-03.png",
+      "sha256": "7036b561dfc6fc3fe5cade4f23da3da7de2fbf50650992063ebc9d08ef586d57",
+      "reference": "https://djnaoyaman.github.io/design-lineage/entries/art-deco.html"
+    },
+    {
+      "number": 4,
+      "title": "ストリームライン",
+      "description": "連続する曲面・ミント・水平のライン",
+      "filename": "artwork/birdcage-04.png",
+      "sha256": "768b5b0726e36edca7cda54b2fa556cfffe8dba776a6943de8d12b9435fdc2d1",
+      "reference": "https://djnaoyaman.github.io/design-lineage/entries/streamline-moderne.html"
+    },
+    {
+      "number": 5,
+      "title": "北欧モダン",
+      "description": "曲げ木・白樺の積層・静かな暖かさ",
+      "filename": "artwork/birdcage-05.png",
+      "sha256": "0737ea0e241d8a638d7392d05b876b3b282dc31b1dc6d24323ffb494daad75b3",
+      "reference": "https://djnaoyaman.github.io/design-lineage/entries/scandinavian-modern.html"
+    },
+    {
+      "number": 6,
+      "title": "ミッドセンチュリー",
+      "description": "蝶のような屋根・ウォールナット",
+      "filename": "artwork/birdcage-06.png",
+      "sha256": "088c9e9aefc2241841374f35d1ba6ee5cf526a7c76ccd68b15dadea8a0a83907",
+      "reference": "https://djnaoyaman.github.io/design-lineage/entries/mid-century-modern.html"
+    },
+    {
+      "number": 7,
+      "title": "スイス・スタイル",
+      "description": "精密な整列・白い余白・赤い一点",
+      "filename": "artwork/birdcage-07.png",
+      "sha256": "685cbbe85656674a0d4c1f4741feac33ebb0cce820ddc1b3e55a22b378eabbe2",
+      "reference": "https://djnaoyaman.github.io/design-lineage/entries/swiss-style.html"
+    },
+    {
+      "number": 8,
+      "title": "ブルータリズム",
+      "description": "コンクリートの梁と柱・木の床",
+      "filename": "artwork/birdcage-08.png",
+      "sha256": "5fd8d3aea8a69be9da4c70cb5130c686c1e566767709becadf96cda56795bb6c",
+      "reference": "https://djnaoyaman.github.io/design-lineage/entries/brutalism.html"
+    },
+    {
+      "number": 9,
+      "title": "メンフィス",
+      "description": "違う形の組み合わせ・色と素材の遊び",
+      "filename": "artwork/birdcage-09.png",
+      "sha256": "ce4df0bd75534befe0317d53820d99d264fc225e79b9500854467fce082f5458",
+      "reference": "https://djnaoyaman.github.io/design-lineage/entries/memphis.html"
+    }
+  ],
+  "source": "friend-cages-modern-wide-artwork(1).zip"
+}

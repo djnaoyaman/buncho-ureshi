@@ -5,6 +5,12 @@ async function record(page,world){return page.evaluate(({world,dbName})=>new Pro
 function furnished(tier='cozy',form=0){const w=createWorld(now);w.paused=true;w.decor.lifetimePoints=9999;w.decor.inventory=DECOR_SLOTS.flatMap(s=>DECOR_COLORS.flatMap(c=>DECOR_TIERS.map(t=>({id:`${s.id}-${c.id}-${t.id}`,slot:s.id,color:c.id,tier:t.id}))));for(const [i,s] of DECOR_SLOTS.entries())w.decor.equipped[s.id]=`${s.id}-${DECOR_COLORS[(form+i)%8].id}-${tier}`;return w;}
 async function inspect(page){
  await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');
+ if(await page.locator('.game-room').getAttribute('data-field')==='friend'){
+  await expect(page.locator('.game-room')).toHaveAttribute('data-friend-cage',/^[1-9]$/);
+  await expect(page.locator('.game-room .game-furnishings')).toHaveCount(0);
+  await expect(page.locator('.game-habitat img')).toHaveJSProperty('complete',true);
+  await page.locator('.game-room-bird.is-selected').click({trial:true});return {};
+ }
  await expect(page.locator('.game-room [data-scene-mount="wall"]')).toHaveCount(4);
  const geometry=await page.evaluate(()=>{const room=document.querySelector('.game-room'),r=room.getBoundingClientRect(),items={};for(const el of room.querySelectorAll('.game-furnishing')){const box=el.getBoundingClientRect();items[el.dataset.equippedSlot]={x:box.x,y:box.y,right:box.right,bottom:box.bottom,width:box.width,height:box.height,mount:el.querySelector('svg').dataset.sceneMount,pointer:getComputedStyle(el).pointerEvents,anchor:parseFloat(getComputedStyle(el).top)};}return{items,viewport:{width:innerWidth,height:innerHeight},room:{y:r.y,height:r.height}};});
  const {items,viewport}=geometry;

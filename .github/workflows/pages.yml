@@ -125,6 +125,9 @@ jobs:
       - name: Consultation letters A, native consent and exact save transitions
         if: matrix.lane == 'a'
         run: npx playwright test tests/browser/consultation-letter.spec.js --project=chrome --project=webkit --retries=0 --output=consultation-test-results
+      - name: Nine friend cages and stable saved identities
+        if: matrix.lane == 'a'
+        run: npx playwright test --config=playwright.friend-cages.config.js
       - name: Cage fixture placement and saved furnishings
         if: matrix.lane == 'a'
         run: npx playwright test tests/browser/cage-placement.spec.js --project=chrome --project=webkit --retries=0 --output=cage-test-results

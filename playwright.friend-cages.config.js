@@ -1,0 +1,3 @@
+import {defineConfig} from '@playwright/test';
+import {gameDeviceTestState} from './tests/fixtures/game-device-state.js';
+export default defineConfig({testDir:'./tests/browser',testMatch:'friend-cages.spec.js',workers:2,retries:0,reporter:'list',use:{storageState:gameDeviceTestState(),baseURL:'http://127.0.0.1:4173/buncho-ureshi/',screenshot:'only-on-failure',trace:'retain-on-failure'},projects:[{name:'chrome',use:{browserName:'chromium',...(process.env.LOCAL_CHROMIUM?{launchOptions:{executablePath:process.env.LOCAL_CHROMIUM}}:{channel:'chrome'})}},{name:'webkit',use:{browserName:'webkit'}}],webServer:{command:'node scripts/serve.mjs',url:'http://127.0.0.1:4173/buncho-ureshi/'}});

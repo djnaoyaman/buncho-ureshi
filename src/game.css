@@ -1562,3 +1562,7 @@ body[data-world="buncho"] .game-environment-notice {
   body[data-world="buncho"][data-game-device="touch"] .game-panel-overlay:not([data-scene="true"]) { width: min(880px, calc(100% - 64px)); }
   body[data-world="buncho"][data-game-device="touch"] .game-app .game-bird-sheet { width: min(600px, calc(100% - 64px)); max-width: calc(100% - 64px); }
 }
+
+/* Final friend cages keep their wide architectural proportions. */
+body[data-world="buncho"] .game-main .game-room[data-field="friend"]{--room-ratio:1.6}
+.game-house-portrait{position:relative}.game-friend-cage-preview{display:block;width:100%;height:auto;border-radius:14px}.game-house-portrait:has(.game-friend-cage-preview) .game-mini-bird{position:absolute;left:42%;bottom:16%;width:18%}
