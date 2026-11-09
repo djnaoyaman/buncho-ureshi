@@ -578,7 +578,7 @@ test('draw result is centered and care opens full screen on a compact viewport',
  await page.locator('[data-decor-draw]').click();
  const result=page.locator('.game-draw-result');await expect(result).toBeVisible();
  const box=await measuredBox(result);expect(Math.abs(box.x+box.width/2-195)).toBeLessThan(2);expect(Math.abs(box.y+box.height/2-300)).toBeLessThan(2);expect(box.height).toBeLessThan(600);
- await expect(result.locator('button')).toBeFocused();await page.screenshot({path:testInfo.outputPath('draw-result-centered.png')});
+ await expect(result.locator('[data-draw-result-close]')).toBeFocused();await page.screenshot({path:testInfo.outputPath('draw-result-centered.png')});
  await page.keyboard.press('Escape');await expect(result).toHaveCount(0);await expect(page.locator('[data-decor-slot][aria-pressed=true]')).toBeFocused();
  await page.locator('[data-game-close-panel]').click();await page.locator('#game-open-bird').click();
  const sheet=page.locator('.game-bird-sheet');await expect(sheet).toBeVisible();const birdBox=await measuredBox(sheet);expect(birdBox.x).toBeCloseTo(0,0);expect(birdBox.y).toBeCloseTo(0,0);expect(birdBox.width).toBeCloseTo(390,0);expect(birdBox.height).toBeCloseTo(600,0);

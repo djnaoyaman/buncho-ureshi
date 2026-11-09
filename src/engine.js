@@ -1,3 +1,4 @@
+import {gachaMachine} from './gacha-machines.js';
 import {advanceRaptorState} from './garden-raptors.js';
 import {getProtagonistId,initializeProtagonist,syncProtagonist,validateProtagonist,protagonistStatus,familySuccessorCandidates,selectFamilyProtagonist,recordedFamilySuccession} from './protagonist.js';
 import {accidentLifeBird,rebaseLifecycleClock,initializeLifecycle,registerLifeBird,syncLifecycle,validateLifecycle,isAlive,lifeStatus,noteLifeFeeding,noteLifeConflict,treatLifeBird,hireLifeCaretaker,honorLifeBird} from './life-care.js';
@@ -135,14 +136,20 @@ export function endHomeVisits(w,expectedToken,now=Date.now()) {
   bumpRevision(w);
   return {changed:true,count,message:count?`${count}羽のお友達を見送ったよ。今日は家族とゆっくり過ごそう。`:'今日は家族とゆっくり過ごそう。'};
 }
-export function decorOdds(w) { const n=DECOR_TIERS.filter(t=>decorLevel(w)>=t.level).length;return DECOR_TIERS.slice(0,n).map((t,i)=>({tierId:t.id,probability:(n===1?[1]:n===2?[.65,.35]:[.65,.25,.1])[i]})); }
+export function decorOdds(w,machineId='house') {
+ const m=gachaMachine(machineId),available=DECOR_TIERS.filter(t=>decorLevel(w)>=t.level);
+ if(machineId==='house'){const n=available.length;return available.map((t,i)=>({tierId:t.id,probability:(n===1?[1]:n===2?[.65,.35]:m.weights)[i]}));}
+ const total=available.reduce((n,t)=>n+m.weights[DECOR_TIERS.indexOf(t)],0);
+ return available.map(t=>({tierId:t.id,probability:m.weights[DECOR_TIERS.indexOf(t)]/total}));
+}
+
 /** Read-only: guaranteed outcomes are ordinary item odds conditioned on being unowned.
  * Counters belong to each category and survive navigation, reloads and level unlocks.
  */
-export function decorDrawStatus(w,slot='perch') {
+export function decorDrawStatus(w,slot='perch',machineId='house') {
   if(!Object.hasOwn(SLOT_LABELS,slot))throw new Error('9種類の道具から選んでね。');
   const owned=new Set(w.decor.inventory.map(item=>item.id));
-  const tiers=decorOdds(w).map(odds=>({...odds,colors:DECOR_COLORS.filter(({id})=>!owned.has(`${slot}-${id}-${odds.tierId}`)).map(({id})=>id)}));
+  const tiers=decorOdds(w,machineId).map(odds=>({...odds,colors:DECOR_COLORS.filter(({id})=>!owned.has(`${slot}-${id}-${odds.tierId}`)).map(({id})=>id)}));
   const remaining=tiers.reduce((sum,tier)=>sum+tier.colors.length,0),duplicateStreak=w.decor.duplicateStreaks[slot];
   const complete=remaining===0,guaranteed=!complete&&duplicateStreak===DECOR_DUPLICATE_LIMIT;
   const total=tiers.reduce((sum,tier)=>sum+tier.probability*tier.colors.length/DECOR_COLORS.length,0);
@@ -150,11 +157,12 @@ export function decorDrawStatus(w,slot='perch') {
   const nextTier=DECOR_TIERS.find(tier=>tier.level>decorLevel(w))||null;
   return {remaining,duplicateStreak,complete,guaranteed,tiers,probabilities,nextTier};
 }
-export function drawDecoration(w,slot='perch') {
-  const status=decorDrawStatus(w,slot);
+export function drawDecoration(w,slot='perch',machineId='house') {
+  const machine=gachaMachine(machineId),status=decorDrawStatus(w,slot,machineId);
+  if(decorLevel(w)<machine.level)return {changed:false,reason:'locked',message:`Lv.${machine.level}から選べるよ。`};
   if(status.complete)return {changed:false,complete:true,message:status.nextTier?`いま出会える${SLOT_LABELS[slot]}はコンプリート！次はLv.${status.nextTier.level}で新しい仕上げが開くよ。Gemsは使っていないよ。`:`${SLOT_LABELS[slot]}は全24種類コンプリート！Gemsは使っていないよ。`};
   if(w.decor.lastDrawTick===w.tick)return {changed:false,message:'さっきのお飾りを楽しもう。次のゲーム時間にまた引けるよ。'};
-  if(w.decor.points<DECOR_DRAW_COST)throw new Error('20 Gemsで1回。友達との交流や家族の成長を見守ろう。');
+  if(w.decor.points<machine.cost)throw new Error(`${machine.cost} Gemsで1回。友達との交流や家族の成長を見守ろう。`);
   const roll=random(w);
   let tier,color;
   if(status.guaranteed){
@@ -164,18 +172,17 @@ export function drawDecoration(w,slot='perch') {
     tier=DECOR_TIERS.find(option=>option.id===selected.tierId);
     color=pick(w,status.tiers.find(option=>option.tierId===tier.id).colors);
   }else{
-    const available=DECOR_TIERS.filter(t=>decorLevel(w)>=t.level);
-    tier=available.length===3&&roll>=.9?available[2]:available.length>=2&&roll>=.65?available[1]:available[0];
+    const odds=decorOdds(w,machineId);let total=0,selected=odds.at(-1);for(const option of odds){total+=option.probability;if(roll<total){selected=option;break;}}tier=DECOR_TIERS.find(t=>t.id===selected.tierId);
     color=pick(w,Object.keys(COLOR_HEX));
   }
   const id=`${slot}-${color}-${tier.id}`;
   const item={id,slot,color,tier:tier.id},duplicate=w.decor.inventory.some(x=>x.id===id);
-  w.decor.points-=DECOR_DRAW_COST;
-  if(duplicate)w.decor.points=Math.min(POINT_CAP,w.decor.points+8);else w.decor.inventory.push(item);
+  w.decor.points-=machine.cost;
+  if(duplicate)w.decor.points=Math.min(POINT_CAP,w.decor.points+machine.refund);else w.decor.inventory.push(item);
   w.decor.duplicateStreaks[slot]=duplicate?Math.min(DECOR_DUPLICATE_LIMIT,status.duplicateStreak+1):0;
   w.decor.draws=Math.min(POINT_CAP,w.decor.draws+1);w.decor.lastDrawTick=w.tick;bumpRevision(w);
   const progress=w.decor.duplicateStreaks[slot]===DECOR_DUPLICATE_LIMIT?'次のこのガチャは、まだ持っていないお飾りが必ず出るよ！':'あと1回続けて持っているお飾りが出たら、その次は新しいお飾りが必ず出るよ。';
-  return {changed:true,item,duplicate,guaranteed:status.guaranteed,message:duplicate?`同じお飾りだったので8 Gemsを返したよ。${progress}`:`${status.guaranteed?'新作確定！':''}${SLOT_LABELS[slot]}のお飾りが仲間入り！`};
+  return {changed:true,item,duplicate,machineId,cost:machine.cost,refund:duplicate?machine.refund:0,guaranteed:status.guaranteed,message:duplicate?`同じお飾りだったので${machine.refund} Gemsを返したよ。${progress}`:`${status.guaranteed?'新作確定！':''}${SLOT_LABELS[slot]}のお飾りが仲間入り！`};
 }
 export function equipDecoration(w,itemId) {
   const item=w.decor.inventory.find(x=>x.id===itemId);if(!item)throw new Error('持っているお飾りを選んでね。');

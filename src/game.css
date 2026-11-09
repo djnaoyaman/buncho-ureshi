@@ -1563,7 +1563,32 @@ body[data-world="buncho"] .game-environment-notice {
   body[data-world="buncho"][data-game-device="touch"] .game-app .game-bird-sheet { width: min(600px, calc(100% - 64px)); max-width: calc(100% - 64px); }
 }
 
+.game-gacha-machines{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.5rem;border:0;padding:.4rem 0}.game-gacha-machines legend{font-weight:700}.game-gacha-machines button{display:flex;flex-direction:column;align-items:center;padding:.45rem;gap:.2rem;min-width:0}.game-gacha-machines img{width:100%;height:100px;object-fit:contain}.game-gacha-machines strong{font-size:.8rem}.game-gacha-machines span{font-size:.75rem}.game-gacha-machines button[aria-pressed=true]{outline:3px solid #799a70;background:#f4f8ed}
+.gacha-mechanism{width:min(220px,100%);margin:0 auto}.gacha-stage{position:relative;aspect-ratio:1199/1450;isolation:isolate;overflow:hidden}.gacha-stage img{position:absolute;pointer-events:none}.gacha-fixed-body{inset:0 0 auto;width:100%;height:auto;z-index:1}.gacha-chamber{position:absolute;left:25.6%;top:23.45%;width:52.6%;height:33%;z-index:2;overflow:hidden;border-radius:45% 45% 20% 20%;background:linear-gradient(130deg,#b99c6f,#e7d0a4 45%,#c4a87f)}.gacha-mechanism-round .gacha-chamber{background:transparent}.gacha-internal-capsule{width:39%;height:auto;transform:translate(-50%,-50%)}.gacha-fixed-plate{position:absolute;left:48%;top:52.6%;width:18%;aspect-ratio:1;z-index:3;border-radius:50%;background:radial-gradient(circle at 35% 30%,#f7dfa0,#d5a24c 50%,#996520)}.gacha-handle{left:57%;top:60%;width:21%;z-index:4;transform:translate(-50%,-50%)}.gacha-outlet{position:absolute;left:43%;top:67%;width:22%;height:13%;background:#95724d;border-radius:45% 45% 15% 15%;z-index:3}.gacha-exit-capsule{left:54%;top:74.8%;width:20.4%;z-index:5;opacity:0;transform:translate(-50%,0)}.gacha-flap{left:37.4%;top:66.5%;width:33.8%;z-index:6;transform-origin:50% 0;opacity:.55}.gacha-skip{font-size:.75rem!important;min-height:44px}.gacha-mechanism[data-finished=true] .gacha-exit-capsule{opacity:1;transform:translate(30%,62%) rotate(80deg)}.gacha-mechanism[data-finished=true] .gacha-dispensed{opacity:0}
+.gacha-mechanism-house .gacha-chamber{top:29%;left:25%;height:29%;width:54%}.gacha-mechanism-cloud .gacha-chamber{top:23%;left:30%;height:31%;width:49%}
+@media(prefers-reduced-motion:reduce){.gacha-stage *{animation:none!important;transition:none!important}}
 .game-care-guidance{margin:.5rem 0;padding:.55rem .7rem;background:#eff4e7;border-radius:12px;color:#35533f;line-height:1.5}.game-clean-guidance{display:block;font-size:.8rem;background:#fff5dc;padding:.4rem;border-radius:8px}
 /* Final friend cages keep their wide architectural proportions. */
 body[data-world="buncho"] .game-main .game-room[data-field="friend"]{--room-ratio:1.6}
 .game-house-portrait{position:relative}.game-friend-cage-preview{display:block;width:100%;height:auto;border-radius:14px}.game-house-portrait:has(.game-friend-cage-preview) .game-mini-bird{position:absolute;left:42%;bottom:16%;width:18%}
+
+/* The machine remains stationary from the first visible result frame. */
+body[data-world="buncho"] .game-app .game-draw-result{animation:none}
+
+/* Machine cards get their own content-sized row above the category strip. */
+body[data-world="buncho"] .game-app .game-decoration{grid-template-columns:minmax(0,1fr);grid-template-rows:none;grid-auto-rows:auto}
+body[data-world="buncho"] .game-app .game-decoration>*{grid-column:1/-1;grid-row:auto;min-width:0}
+body[data-world="buncho"] .game-app .game-decoration>.game-decor-workbench{min-height:240px}
+body[data-world="buncho"] .game-app .game-decoration .game-decor-preview{min-height:220px}
+
+@media(max-height:600px){
+ body[data-world="buncho"] .game-app .game-decoration{gap:2px}
+ body[data-world="buncho"] .game-app .game-gacha-machines{margin:0;padding:0;gap:4px}
+ body[data-world="buncho"] .game-app .game-gacha-machines legend{font-size:.7rem;line-height:1.2}
+ body[data-world="buncho"] .game-app .game-gacha-machines button{display:grid;grid-template-columns:28px minmax(0,1fr);column-gap:2px;row-gap:1px;min-height:44px;padding:2px;text-align:left}
+ body[data-world="buncho"] .game-app .game-gacha-machines img{grid-column:1;grid-row:1/3;width:28px;height:28px}
+ body[data-world="buncho"] .game-app .game-gacha-machines strong,body[data-world="buncho"] .game-app .game-gacha-machines span{grid-column:2;font-size:.65rem;line-height:1.15}
+ body[data-world="buncho"] .game-app .game-decoration>.game-decor-filter{grid-row:4}
+ body[data-world="buncho"] .game-app .game-decoration>.game-decor-workbench{grid-row:5;min-height:150px}
+ body[data-world="buncho"] .game-app .game-decoration .game-decor-preview{min-height:128px}
+}
