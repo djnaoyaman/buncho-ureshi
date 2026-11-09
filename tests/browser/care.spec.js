@@ -64,7 +64,7 @@ test.beforeEach(async({page})=>{await page.addInitScript(value=>{Date.now=()=>va
 test('an existing v1 device save migrates in place without advancing paused family history',async({page})=>{
   const legacy=structuredClone(legacyWorld);legacy.paused=true;legacy.lastUpdated=now;
   await seed(page,legacy);const migrated=await record(page);
-  expect(migrated.version).toBe(11);expect(migrated.worldId).toBe(legacy.worldId);expect(migrated.tick).toBe(legacy.tick);
+  expect(migrated.version).toBe(12);expect(migrated.worldId).toBe(legacy.worldId);expect(migrated.tick).toBe(legacy.tick);
   expect(migrated.birds.map(({care,gemCare,naming,...bird})=>bird)).toEqual(legacy.birds);expect(migrated.events).toEqual(legacy.events);
   expect(migrated.care).toEqual({cleanliness:100,lastCleanTick:null});expect(migrated.settings.careSound).toBe(true);
   expect(migrated.birds.every(b=>b.care.lastFedTick===null&&b.care.lastPetTick===null)).toBe(true);expect(migrated.birds.every(b=>Object.values(b.gemCare).every(value=>value===null))).toBe(true);expect(migrated.gems).toEqual({droppings:[],nextDropId:1});
@@ -102,7 +102,7 @@ test('care sound opt-in schedules a short native synthetic chirp or reports unav
     console.log('NATIVE_CARE_AUDIO_RESULT',JSON.stringify(native));
   }
   await sound(page,false);await expect.poll(()=>page.evaluate(()=>window.__careAudio.active)).toBe(0);await expect.poll(async()=> (await record(page)).settings.careSound).toBe(false);
-  const starts=await page.evaluate(()=>window.__careAudio.starts);await expect(page.locator('[data-game-care="pet"]')).toBeDisabled();expect(await page.evaluate(()=>window.__careAudio.starts)).toBe(starts);
+  const starts=await page.evaluate(()=>window.__careAudio.starts);await expect(page.locator('[data-game-care="pet"]')).toBeEnabled();expect(await page.evaluate(()=>window.__careAudio.starts)).toBe(starts);
   await page.reload();await expect(page.locator('.game-app')).toBeVisible();expect(await page.evaluate(()=>window.__careAudio.starts)).toBe(0);expect(await page.evaluate(()=>window.__careAudio.contexts)).toBe(0);
 });
 
@@ -125,7 +125,7 @@ test('care unavailable stages explain disabled actions and retain their natural 
 
 test('care export preserves v2 values, cancelled import is exact, confirmed import with sound preference never autoplays',async({page})=>{
   await trackNativeAudio(page);await seed(page);await page.locator('[data-game-care="feed"]').click();await expect(page.locator('[data-game-fullness]')).toHaveText('60 / 100');await tab(page,'settings');
-  await openManagement(page);const downloadEvent=page.waitForEvent('download');await page.locator('[data-game-action="export"]').click();const exported=validateWorld(JSON.parse(await downloadText(await downloadEvent)));expect(exported.version).toBe(11);expect(exported.birds[0].needs.food).toBe(60);expect(exported.care.cleanliness).toBe(15);expect(exported.settings.careSound).toBe(false);
+  await openManagement(page);const downloadEvent=page.waitForEvent('download');await page.locator('[data-game-action="export"]').click();const exported=validateWorld(JSON.parse(await downloadText(await downloadEvent)));expect(exported.version).toBe(12);expect(exported.birds[0].needs.food).toBe(60);expect(exported.care.cleanliness).toBe(15);expect(exported.settings.careSound).toBe(false);
   const next=fixture({sound:true});next.worldId+='-import';next.birds[0].needs.food=73;next.care.cleanliness=44;
   const file={name:'care.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(next))},before=await record(page);
   await openManagement(page);page.once('dialog',dialog=>dialog.dismiss());await page.locator('#game-import').setInputFiles(file);await expect(page.locator('#game-import')).toHaveValue('');expect(await record(page)).toEqual(before);
@@ -151,7 +151,7 @@ test('care Gems share real-window bars and survive reload without reward replay'
  const w=fixture();w.birds[0].needs.food=80;w.birds[0].needs.energy=60;await seed(page,w);const before=(await record(page)).decor.points;
  await page.locator('[data-game-care="feed"]').click();await expect.poll(async()=>(await record(page)).decor.points).toBe(before+6);await expect(page.locator('.game-gem-reward')).toContainText('+6 Gem');await expect(page.locator('[data-game-care="feed"]')).toBeDisabled();
  await page.locator('[data-game-care="pet"]').press('Enter');await expect.poll(async()=>(await record(page)).decor.points).toBe(before+11);await expect(page.locator('[data-game-energy]')).toHaveText('80 / 100');
- await page.locator('[data-game-talk="名前を呼ぶ"]').click();await expect.poll(async()=>(await record(page)).decor.points).toBe(before+16);await expect(page.locator('[data-game-talk="名前を呼ぶ"]')).toBeDisabled();await expect(page.locator('[data-game-care="pet"]')).toBeDisabled();
+ await page.locator('[data-game-talk="名前を呼ぶ"]').click();await expect.poll(async()=>(await record(page)).decor.points).toBe(before+16);await expect(page.locator('[data-game-talk="名前を呼ぶ"]')).toBeEnabled();await expect(page.locator('[data-game-care="pet"]')).toBeEnabled();await page.locator('[data-game-talk="名前を呼ぶ"]').click();expect((await record(page)).decor.points).toBe(before+16);
  await page.reload();await expect(page.locator('.game-app')).toBeVisible();expect((await record(page)).decor.points).toBe(before+16);await expect(page.locator('.game-gem-reward')).toHaveCount(0);await openCare(page);await expect(page.locator('[data-next-care]')).toContainText('日本時間');
  const next=Date.UTC(2026,10,3,3);await page.evaluate(time=>{Date.now=()=>time;},next);await expect(page.locator('[data-game-energy]')).toHaveText('60 / 100',{timeout:10000});await expect(page.locator('[data-game-care="pet"]')).toBeEnabled();expect((await record(page)).paused).toBe(true);
 });
