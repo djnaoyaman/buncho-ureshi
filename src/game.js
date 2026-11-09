@@ -1,3 +1,4 @@
+import {friendCage} from './friend-cages.js';
 import {renderPreservationBox} from './preservation-box.js';
 import {renderConsultationLetter} from './consultation-letter.js';
 import { renderDiaryPaper } from './diary-paper.js';
@@ -456,7 +457,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
   function friendRooms(){
     const friends=world.birds.filter(b=>b.home!=='resident'&&b.stage==='adult'&&isAlive(world,b));
     const metFriends=world.birds.length>1||world.events.some(e=>['visit','revisit','adopt','movein'].includes(e.kind));
-    return `<section class="game-friends"><div class="game-section-title"><div><p class="game-eyebrow">A LITTLE VISIT</p><h3>友達のおうち</h3></div></div><div class="game-friend-carousel-controls"><button data-friend-step="-1" aria-label="前の友達">‹</button><span>友達のおうちをめくる</span><button data-friend-step="1" aria-label="次の友達">›</button></div><div class="game-friend-houses" tabindex="0" aria-label="友達のおうち。横にスワイプして選ぶ">${friends.map(b=>`<article class="game-friend-house" data-friend-card="${b.id}"><div class="game-house-portrait">${smallBird(b)}</div><h4>${escape(b.name)}のおうち</h4><p>${b.sex==='male'?'オス':'メス'} · ${colorName[b.color]}<br>${b.home==='visitor'?'いま、こちらのおうちに遊びに来ています':'また会える、なじみのお友達'}</p><div><button data-field-travel="friend" data-field-host="${b.id}">会いに行く</button><button data-field-invite="${b.id}" ${b.home==='visitor'?'disabled':''}>おうちに招く</button></div></article>`).join('')||`<div class="game-empty-home"><h4>${metFriends?'いま訪ねられる友達はいません':'友達が来るのを待とう'}</h4><p>${metFriends?'仲間たちは、このおうちで暮らしています。':'時間を動かすと、友達が訪ねてきます。'}</p><button data-game-panel="outdoors">庭へ</button><button data-field-travel="home">おうちへ</button></div>`}</div></section>`;
+    return `<section class="game-friends"><div class="game-section-title"><div><p class="game-eyebrow">A LITTLE VISIT</p><h3>友達のおうち</h3></div></div><div class="game-friend-carousel-controls"><button data-friend-step="-1" aria-label="前の友達">‹</button><span>友達のおうちをめくる</span><button data-friend-step="1" aria-label="次の友達">›</button></div><div class="game-friend-houses" tabindex="0" aria-label="友達のおうち。横にスワイプして選ぶ">${friends.map(b=>`<article class="game-friend-house" data-friend-card="${b.id}"><div class="game-house-portrait"><img class="game-friend-cage-preview" src="${GAME_ART}${friendCage(world,b.id).file}" alt="${escape(friendCage(world,b.id).title)}の鳥かご" loading="lazy">${smallBird(b)}</div><h4>${escape(b.name)}のおうち</h4><p>${b.sex==='male'?'オス':'メス'} · ${colorName[b.color]}<br>${b.home==='visitor'?'いま、こちらのおうちに遊びに来ています':'また会える、なじみのお友達'}</p><div><button data-field-travel="friend" data-field-host="${b.id}">会いに行く</button><button data-field-invite="${b.id}" ${b.home==='visitor'?'disabled':''}>おうちに招く</button></div></article>`).join('')||`<div class="game-empty-home"><h4>${metFriends?'いま訪ねられる友達はいません':'友達が来るのを待とう'}</h4><p>${metFriends?'仲間たちは、このおうちで暮らしています。':'時間を動かすと、友達が訪ねてきます。'}</p><button data-game-panel="outdoors">庭へ</button><button data-field-travel="home">おうちへ</button></div>`}</div></section>`;
   }
   function decorationRoom(){
     const slot=DECOR_SLOTS.find(s=>s.id===decorSlot)||DECOR_SLOTS[0],owned=world.decor.inventory.filter(i=>i.slot===slot.id);
@@ -523,11 +524,11 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
   }
   function roomGeometry(kind){
     const win=root.ownerDocument.defaultView,width=win.innerWidth||390,height=Number.parseFloat(document.body.style.getPropertyValue('--game-viewport-height'))||win.innerHeight||844,ratio=kind==='tall'?.75:1.6;
-    const planeWidth=Math.max(width,height*ratio),planeHeight=Math.max(height,width/ratio),top=Math.max(height-planeHeight,Math.min(0,height*.7-planeHeight*.79));
+    const planeWidth=Math.max(width,height*(world.field.place==='friend'?1.6:ratio)),planeHeight=Math.max(height,width/(world.field.place==='friend'?1.6:ratio)),top=Math.max(height-planeHeight,Math.min(0,height*.7-planeHeight*.79));
     return {width,height,planeWidth,planeHeight,top,left:(planeWidth-width)/2};
   }
   function visibleFieldPositions(birds,kind,place){
-    const positions=fieldPositions(birds,kind,place),g=roomGeometry(kind),fraction=g.width/g.planeWidth;
+    const positions=fieldPositions(birds,place==='friend'?'wide':kind,place),g=roomGeometry(kind),fraction=g.width/g.planeWidth;
     return new Map([...positions].map(([id,p])=>[id,{...p,x:(1-fraction)/2+p.x*fraction,width:p.width*fraction}]));
   }
   // Keep the caption in a free viewport band, including crowded perch rows.
@@ -580,9 +581,9 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
         actors.forEach((actor,i)=>{const row=Math.floor(i/columns),count=Math.min(columns,actors.length-row*columns),x=(i%columns+1)/(count+1),foot=rows===1?geometry.height*(geometry.width<=600&&geometry.height<=280 ? .57 : .68):geometry.height*.46+row*Math.max(90,geometry.height*.23);map.set(actor.id,{...map.get(actor.id),x:(1-fraction)/2+x*fraction,y:(Math.min(geometry.height-26,foot)-geometry.top)/geometry.planeHeight});});
       }
     }
-    return `${fieldNavigation()}<div class="game-room" data-compact="${!!compactLayout?.matches}" data-many-guests="${cageGuests.length>2}" data-home-crowded="${world.field.place==='home'&&(actors.length>8||(compactLayout?.matches&&cageGuests.length>0))}" data-field="${world.field.place}" aria-label="${escape(fieldTitle())}。イラストのゲーム用風景です。">
-      <picture class="game-habitat"><source media="(max-width: 600px)" srcset="${GAME_ART}${world.field.place==='park'?'field-park':'field-home'}-tall.webp"><img src="${GAME_ART}${world.field.place==='park'?'field-park':'field-home'}-wide.webp" alt="" aria-hidden="true" width="1600" height="1000" decoding="async"></picture>
-      ${world.field.place!=='park'?sceneFurniture():''}${gemCollectibles()}<span class="game-floor-soil" style="--care-soil-opacity:${careFloorOpacity(getCleanliness(world)).toFixed(3)}" aria-hidden="true"></span>
+    return `${fieldNavigation()}<div class="game-room" data-compact="${!!compactLayout?.matches}" data-many-guests="${cageGuests.length>2}" data-home-crowded="${world.field.place==='home'&&(actors.length>8||(compactLayout?.matches&&cageGuests.length>0))}" data-field="${world.field.place}" data-friend-cage="${world.field.place==='friend'?friendCage(world,world.field.hostId).id:''}" aria-label="${escape(fieldTitle())}。イラストのゲーム用風景です。">
+      ${world.field.place==='friend'?`<picture class="game-habitat"><img src="${GAME_ART}${friendCage(world,world.field.hostId).file}" alt="" aria-hidden="true" width="1600" height="1000" decoding="async"></picture>`:`<picture class="game-habitat"><source media="(max-width: 600px)" srcset="${GAME_ART}${world.field.place==='park'?'field-park':'field-home'}-tall.webp"><img src="${GAME_ART}${world.field.place==='park'?'field-park':'field-home'}-wide.webp" alt="" aria-hidden="true" width="1600" height="1000" decoding="async"></picture>`}
+      ${world.field.place==='home'?sceneFurniture():''}${gemCollectibles()}<span class="game-floor-soil" style="--care-soil-opacity:${careFloorOpacity(getCleanliness(world)).toFixed(3)}" aria-hidden="true"></span>
       ${shown.map(b=>{
         const pos=positions.get(b.id),mobile=mobilePositions.get(b.id),isSelected=b.id===selected;
         const pose=poseFor(b,globalThis.matchMedia?.('(max-width: 600px)').matches?mobilePositions:positions,shown);
