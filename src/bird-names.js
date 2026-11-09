@@ -1,3 +1,4 @@
+import {allBirds} from './world-birds.js';
 /** Pure naming policy. Call only after the engine has validated the world.
  * Names are presentation, never identity. No story PRNG, clock, or global state.
  */
@@ -57,7 +58,7 @@ export function chooseDefaultBirdName(world, birdId) {
   return chooseFromPool(world, birdId, DEFAULT_BIRD_NAMES);
 }
 function chooseFromPool(world, birdId, pool, excludeOmochi = false) {
-  const taken = new Set(world.birds.filter(b => b.id !== birdId).map(b => comparisonName(b.name)));
+  const taken = new Set(allBirds(world).filter(b => b.id !== birdId).map(b => comparisonName(b.name)));
   const start = hash(`${world.worldId}\u0000${birdId}`) % pool.length;
   for (let offset = 0; offset < pool.length; offset++) {
     const name = pool[(start + offset) % pool.length];
@@ -66,7 +67,15 @@ function chooseFromPool(world, birdId, pool, excludeOmochi = false) {
     if (!taken.has(name)) return name;
   }
   // Impossible for the validated 128-bird world: do not introduce numeric fallback.
-  throw new RangeError('自然な名前の候補が足りません。');
+  // Continue with readable combinations after a long family history exhausts the pool.
+  for(let size=2;size<=3;size++){
+    const count=pool.length**size,start=hash(`${world.epoch}:${birdId}:${size}`)%count;
+    for(let offset=0;offset<count;offset++){
+      let index=(start+offset)%count,parts=[];for(let i=0;i<size;i++){parts.push(pool[index%pool.length]);index=Math.floor(index/pool.length);}
+      const name=parts.join('・');if(name.length<=16&&!taken.has(name))return name;
+    }
+  }
+  throw new RangeError('名前の候補を確認してください。');
 }
 /** Creation only. Do not use this policy to repair or rename any saved bird.
  * Numeric suffixes are not generated, but are excluded here defensively too.

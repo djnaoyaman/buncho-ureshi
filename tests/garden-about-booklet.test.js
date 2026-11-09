@@ -40,7 +40,7 @@ test('pure renderer escapes text, refuses external art and preserves frozen VM a
 });
 test('renderer imports only rule constants and has no state, event handlers, clocks or writable APIs; CSS is scoped',()=>{
  const js=readFileSync(new URL('../src/garden-about-booklet.js',import.meta.url),'utf8');assert.doesNotMatch(js,/Date\.|Math\.random|localStorage|indexedDB|fetch\(|addEventListener|\bonclick=/);
- assert.deepEqual([...js.matchAll(/import \{([^}]+)\}/g)].map(x=>x[1]),['CROW_RULES','RAPTOR_RULES']);
+ assert.deepEqual([...js.matchAll(/import \{([^}]+)\}/g)].map(x=>x[1]),['PREDATOR_ENTRY_RULES','CROW_RULES','RAPTOR_RULES']);
  const css=readFileSync(new URL('../src/garden-about-booklet.css',import.meta.url),'utf8');assert.doesNotMatch(css,/font-family|position:\s*fixed|overflow:\s*hidden|display:\s*none/);
  for(const selector of css.split('}').map(s=>s.slice(s.lastIndexOf('}')+1)).filter(s=>s.includes('{')&&!s.includes('@media'))){assert.ok(selector.includes('.garden-about-booklet'));}
 });

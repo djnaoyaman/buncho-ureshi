@@ -11,6 +11,7 @@ const caretakerModule=new URL('../src/caretaker-recruitment-ui.js',import.meta.u
 const stub=`import {renderCaretakerRecruitment} from '${caretakerModule}';
 import {memorialDesignForBird,renderMemorialArtwork} from '${memorialModule}';
 const protagonistStatus=w=>({bird:w.birds[0]??null,generation:1,waiting:null,heir:null});
+const allBirds=w=>[...w.birds,...(w.archive||[])];
 const LIFE_RULES={neglectMs:259200000,hospitalGold:12,caretakerDailyGold:24};
 const lifeStatus=(w,b)=>b.life;
 const isAlive=(w,b)=>!b.life.death;

@@ -13,11 +13,11 @@ function locks(){let tail=Promise.resolve();return {request(name,fn){assert.equa
 async function dbConnection(indexedDB){return new Promise((resolve,reject)=>{const req=indexedDB.open(DB_NAME,1);req.onupgradeneeded=()=>req.result.createObjectStore('world');req.onerror=()=>reject(req.error);req.onsuccess=()=>resolve(req.result);});}
 async function rawWrite(indexedDB,value){const db=await dbConnection(indexedDB);await new Promise((resolve,reject)=>{const tx=db.transaction('world','readwrite');tx.objectStore('world').put(value,'current');tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});db.close();}
 async function rawRead(indexedDB){const db=await dbConnection(indexedDB);const value=await new Promise((resolve,reject)=>{const tx=db.transaction('world','readonly'),req=tx.objectStore('world').get('current');req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});db.close();return value;}
-function stripCare(world){const copy=structuredClone(world);copy.version=1;delete copy.decor?.duplicateStreaks;delete copy.field;delete copy.decor;delete copy.care;delete copy.gems;delete copy.careSchedule;delete copy.encounters;delete copy.economy;delete copy.lifecycle;delete copy.protagonist;delete copy.adoption;delete copy.settings.adoptionMode;delete copy.settings.careSound;for(const bird of copy.birds){delete bird.care;delete bird.gemCare;delete bird.naming;}return copy;}
+function stripCare(world){const copy=structuredClone(world);copy.version=1;for(const k of ['clock','archive','journal'])delete copy[k];for(const e of copy.events)e.at=copy.epoch+e.tick*15000;delete copy.decor?.duplicateStreaks;delete copy.field;delete copy.decor;delete copy.care;delete copy.gems;delete copy.careSchedule;delete copy.encounters;delete copy.economy;delete copy.lifecycle;delete copy.protagonist;delete copy.adoption;delete copy.settings.adoptionMode;delete copy.settings.careSound;for(const bird of copy.birds){delete bird.care;delete bird.gemCare;delete bird.naming;}return copy;}
 
 test('strict v1 migration preserves the complete world and adds only the documented care defaults',()=>{
  const before=JSON.stringify(legacy);validateLegacyWorld(legacy);
- const migrated=migrateV1ToV2(legacy);assert.equal(SAVE_VERSION,11);assert.equal(migrated.version,11);
+ const migrated=migrateV1ToV2(legacy);assert.equal(SAVE_VERSION,12);assert.equal(migrated.version,12);
  assert.deepEqual(stripCare(migrated),legacy);assert.deepEqual(migrated.care,{cleanliness:100,lastCleanTick:null});assert.equal(migrated.settings.careSound,true);
  assert.ok(migrated.birds.every(b=>b.care.lastFedTick===null&&b.care.lastPetTick===null));
  assert.deepEqual(readCompatibleWorld(migrated),migrated);const paused=structuredClone(legacy);paused.paused=true;paused.settings.motion=false;assert.deepEqual(stripCare(migrateV1ToV2(paused)),paused);assert.deepEqual(stripCare(parseSave(before)),legacy);assert.deepEqual(stripCare(parseSave(serializeWorld(legacy))),legacy);assert.equal(JSON.stringify(legacy),before);
@@ -49,7 +49,7 @@ test('cleanliness is a cosmetic 0–100 value with deterministic bounded decay a
 test('floor cleanliness has no effect on autonomous state, reproduction or bounded offline absence',()=>{
  const clean=createWorld(0),dirty=createWorld(0);dirty.care.cleanliness=0;
  advanceTo(clean,TICK_MS*100000000);advanceTo(dirty,TICK_MS*100000000);
- assert.equal(clean.tick,LIMITS.offlineTicks);assert.deepEqual(clean.birds,dirty.birds);assert.deepEqual(clean.events,dirty.events);assert.equal(clean.seed,dirty.seed);
+ assert.equal(clean.tick,100000000);assert.deepEqual(clean.birds,dirty.birds);assert.deepEqual(clean.events,dirty.events);assert.equal(clean.seed,dirty.seed);
  assert.equal(clean.care.cleanliness,0);assert.equal(dirty.care.cleanliness,0);assert.ok(clean.birds.every(b=>b.mood>=35&&b.needs.energy>=12));
  for(const b of clean.birds)if(b.partner)assert.equal(isRelated(clean,b.id,b.partner),false);
  const tick=clean.tick;advanceTo(clean,TICK_MS*100000000);assert.equal(clean.tick,tick);assert.deepEqual(parseSave(serializeWorld(clean)),clean);
@@ -86,7 +86,7 @@ test('eggs, nestlings, departed and unknown birds cannot receive direct care; ju
 test('IndexedDB persists migration with no elapsed tick and no revision bump, using historical backend names',async()=>{
  assert.equal(DB_NAME,'buncho-ureshi-garden-v1');assert.equal(STORAGE_KEY,'buncho-ureshi-world-v1');
  const indexedDB=new IDBFactory();await rawWrite(indexedDB,legacy);const store=await openGameStore({indexedDB});
- const read=await store.transact(w=>w),raw=await rawRead(indexedDB);assert.equal(raw.version,11);assert.deepEqual(raw,read);assert.equal(raw.revision,legacy.revision);assert.equal(raw.lastUpdated,legacy.lastUpdated);assert.equal(raw.tick,legacy.tick);
+ const read=await store.transact(w=>w),raw=await rawRead(indexedDB);assert.equal(raw.version,12);assert.deepEqual(raw,read);assert.equal(raw.revision,legacy.revision);assert.equal(raw.lastUpdated,legacy.lastUpdated);assert.equal(raw.tick,legacy.tick);
  assert.deepEqual(await store.transact(w=>w),read);store.close();
 });
 
@@ -102,7 +102,7 @@ test('failed migration transaction and future/corrupt persisted values leave raw
 test('simultaneous tabs migrate once and cannot duplicate care effects, lose edits or overwrite current from a v1 tab',async()=>{
  const indexedDB=new IDBFactory(),old=await openLegacyStore({indexedDB});await rawWrite(indexedDB,legacy);
  const a=await openGameStore({indexedDB}),b=await openGameStore({indexedDB});
- await Promise.all([a.transact(w=>w),b.transact(w=>w)]);assert.equal((await rawRead(indexedDB)).version,11);
+ await Promise.all([a.transact(w=>w),b.transact(w=>w)]);assert.equal((await rawRead(indexedDB)).version,12);
  const before=await rawRead(indexedDB);await assert.rejects(old.transact(w=>{w.birds[0].name='old client';w.revision++;return w;}));assert.deepEqual(await rawRead(indexedDB),before);
  const next=createWorld(0);next.birds[0].needs.food=50;next.birds[0].mood=50;next.care.cleanliness=25;next.revision=before.revision+1;await a.transact(()=>next);
  const results=[];
@@ -113,7 +113,7 @@ test('simultaneous tabs migrate once and cannot duplicate care effects, lose edi
 
 test('locked local migration is persisted once, cancellation/future versions preserve bytes, and concurrent care serializes',async()=>{
  const storage=new Storage(),lock=locks();storage.setItem(STORAGE_KEY,JSON.stringify(legacy));const platform={localStorage:storage,navigator:{locks:lock}};
- const a=await openGameStore(platform),b=await openGameStore(platform);const before=storage.writes;await Promise.all([a.transact(w=>w),b.transact(w=>w)]);assert.equal(storage.writes,before+1);assert.equal(JSON.parse(storage.getItem(STORAGE_KEY)).version,11);
+ const a=await openGameStore(platform),b=await openGameStore(platform);const before=storage.writes;await Promise.all([a.transact(w=>w),b.transact(w=>w)]);assert.equal(storage.writes,before+2);assert.equal(JSON.parse(storage.getItem(STORAGE_KEY)).version,12);
  const old=await openLegacyStore(platform),migratedBytes=storage.getItem(STORAGE_KEY);await assert.rejects(old.transact(w=>w));assert.equal(storage.getItem(STORAGE_KEY),migratedBytes);old.close();
  const next=createWorld(0);next.birds[0].needs.food=50;next.revision=legacy.revision+1;await a.transact(()=>next);
  await Promise.all(Array.from({length:30},(_,i)=>(i%2?a:b).transact(w=>{feedBird(w,'b1',0);return w;})));assert.equal((await a.transact(w=>w)).birds[0].needs.food,100);

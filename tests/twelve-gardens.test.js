@@ -14,7 +14,7 @@ test('garden arrows wrap at both ends and keep intermediate page movement',()=>{
 test('frozen production v8 save preserves its complete data apart from the intentional migration',()=>{
  const old=JSON.parse(readFileSync(new URL('./fixtures/v8-nine-gardens-world.json',import.meta.url),'utf8'));
  const input=structuredClone(old),next=readCompatibleWorld(old,old.lastWallTime);
- const expected=structuredClone(old);expected.version=11;expected.decor.duplicateStreaks=Object.fromEntries(Object.keys(expected.decor.equipped).map(id=>[id,0]));expected.protagonist.version=2;expected.protagonist.familySelections=[];expected.encounters.version=13;expected.encounters.gardenSessions=[];expected.encounters.homeGoodbyes=[];expected.encounters.gardenFriends={...expected.encounters.gardenFriends,version:2,accompany:false,attendees:[],visits:[]};
+ const expected=structuredClone(old);expected.version=12;expected.archive=[];expected.journal=next.journal;expected.clock=next.clock;for(const e of expected.events)e.at=expected.epoch+e.tick*15000;expected.decor.duplicateStreaks=Object.fromEntries(Object.keys(expected.decor.equipped).map(id=>[id,0]));expected.protagonist.version=2;expected.protagonist.familySelections=[];expected.encounters.version=13;expected.encounters.gardenSessions=[];expected.encounters.homeGoodbyes=[];expected.encounters.gardenFriends={...expected.encounters.gardenFriends,version:2,accompany:false,attendees:[],visits:[]};
  for(const id of GARDEN_IDS.slice(9))expected.encounters.garden.visits[id]=0;
  assert.deepEqual(old,input);assert.deepEqual(next,expected);assert.deepEqual(parseSave(serializeWorld(next)),expected);
 });

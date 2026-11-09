@@ -72,14 +72,14 @@ test('cooldown, insufficient Gems and invalid category never spend or advance pr
 
 test('frozen v10 migration adds only zero counters and preserves all former data without mutation',()=>{
  const old=JSON.parse(readFileSync(new URL('./fixtures/v10-gacha-world.json',import.meta.url))),before=clone(old);
- const w=readCompatibleWorld(old,now+86400000),projection=clone(w);assert.equal(w.version,11);assert.deepEqual(w.decor.duplicateStreaks,Object.fromEntries(DECOR_SLOTS.map(s=>[s.id,0])));
- projection.version=10;delete projection.decor.duplicateStreaks;assert.equal(projection.encounters.version,13);projection.encounters.version=old.encounters.version;assert.deepEqual(projection,old);assert.deepEqual(old,before);
+ const w=readCompatibleWorld(old,now+86400000),projection=clone(w);assert.equal(w.version,12);assert.deepEqual(w.decor.duplicateStreaks,Object.fromEntries(DECOR_SLOTS.map(s=>[s.id,0])));
+ projection.version=10;for(const k of ['clock','archive','journal'])delete projection[k];for(const e of projection.events)e.at=projection.epoch+e.tick*15000;delete projection.decor.duplicateStreaks;assert.equal(projection.encounters.version,13);projection.encounters.version=old.encounters.version;assert.deepEqual(projection,old);assert.deepEqual(old,before);
  assert.deepEqual(readCompatibleWorld(w),w);assert.deepEqual(parseSave(serializeWorld(w)),w);
  const forged=clone(old);forged.decor.duplicateStreaks=clone(w.decor.duplicateStreaks);assert.throws(()=>readCompatibleWorld(forged));
 });
 
 test('missing, extra, malformed and future protection states fail closed without input mutation',()=>{
- const mutations=[w=>delete w.decor.duplicateStreaks,w=>w.decor.duplicateStreaks=null,w=>delete w.decor.duplicateStreaks.toy,w=>w.decor.duplicateStreaks.other=0,w=>w.decor.duplicateStreaks.toy=-1,w=>w.decor.duplicateStreaks.toy=3,w=>w.decor.duplicateStreaks.toy=.5,w=>w.decor.duplicateStreaks.toy='2',w=>w.decor.duplicateStreaks.toy=NaN,w=>w.version=12];
+ const mutations=[w=>delete w.decor.duplicateStreaks,w=>w.decor.duplicateStreaks=null,w=>delete w.decor.duplicateStreaks.toy,w=>w.decor.duplicateStreaks.other=0,w=>w.decor.duplicateStreaks.toy=-1,w=>w.decor.duplicateStreaks.toy=3,w=>w.decor.duplicateStreaks.toy=.5,w=>w.decor.duplicateStreaks.toy='2',w=>w.decor.duplicateStreaks.toy=NaN,w=>w.version=999];
  for(const mutate of mutations){const w=world();mutate(w);const before=clone(w);assert.throws(()=>readCompatibleWorld(w));assert.deepEqual(w,before);}
  const w=world();let touched=false;Object.defineProperty(w.decor.duplicateStreaks,'perch',{get(){touched=true;return 2;},enumerable:true});assert.throws(()=>validateWorld(w));assert.equal(touched,false);
 });
@@ -94,7 +94,7 @@ test('two tabs commit one guaranteed draw and preserve the same durable outcome'
 
 test('v10 no-op store read persists its additive migration exactly once',async()=>{
  const indexedDB=new IDBFactory(),old=JSON.parse(readFileSync(new URL('./fixtures/v10-gacha-world.json',import.meta.url)));await raw(indexedDB,old);const store=await openGameStore({indexedDB});
- try{const first=await store.transact(w=>w),persisted=await raw(indexedDB);assert.deepEqual(first,persisted);assert.equal(persisted.version,11);assert.equal(persisted.revision,old.revision);assert.deepEqual(await store.transact(w=>w),persisted);}finally{store.close();}
+ try{const first=await store.transact(w=>w),persisted=await raw(indexedDB);assert.deepEqual(first,persisted);assert.equal(persisted.version,12);assert.equal(persisted.revision,old.revision);assert.deepEqual(await store.transact(w=>w),persisted);}finally{store.close();}
 });
 
 test('the previous published v10 store rejects the new save before any write callback',async()=>{
@@ -116,6 +116,6 @@ test('locked local tabs serialize the guaranteed draw and the old tab cannot era
 test('root migration preserves PR110 visit snapshots, companion choices and exact active warning',async()=>{
  const old=await import('./fixtures/engine-v10.js'),{encounterSystem:system}=await import('../src/encounters.js'),{arriveGardenRaptor,raptorToken}=await import('../src/garden-raptors.js');
  const w=old.createWorld(now,42);system.chooseCompanions(w,['b1'],old.economyToken(w));system.chooseAccompaniment(w,true,old.economyToken(w));system.selectGarden(w,'komugi',old.economyToken(w));
- assert.equal(arriveGardenRaptor(w,'black-kite',now,{...raptorToken(w),gardenId:w.encounters.garden.id}).changed,true);old.advanceGardenRaptor(w,1000,now+1000,raptorToken(w));assert.equal(w.encounters.raptor.active.remainingMs,59000);const prior=old.validateWorld(w),snapshot=clone(prior),m=readCompatibleWorld(prior),projected=clone(m);projected.version=10;delete projected.decor.duplicateStreaks;
+ assert.equal(arriveGardenRaptor(w,'black-kite',now,{...raptorToken(w),gardenId:w.encounters.garden.id}).changed,true);old.advanceGardenRaptor(w,1000,now+1000,raptorToken(w));assert.equal(w.encounters.raptor.active.remainingMs,59000);const prior=old.validateWorld(w),snapshot=clone(prior),m=readCompatibleWorld(prior),projected=clone(m);projected.version=10;for(const k of ['clock','archive','journal'])delete projected[k];for(const e of projected.events)e.at=projected.epoch+e.tick*15000;delete projected.decor.duplicateStreaks;
  assert.deepEqual(projected,snapshot);assert.deepEqual(m.encounters,prior.encounters);assert.deepEqual(prior,snapshot);assert.equal(m.encounters.version,13);assert.equal(m.encounters.gardenFriends.version,2);
 });

@@ -1,4 +1,4 @@
-import { createWorld, parseSave, serializeWorld, validateWorld, readCompatibleWorld, prepareWorldReplacement } from './engine.js';
+import { MAX_SAVE_BYTES, createWorld, parseSave, serializeWorld, validateWorld, readCompatibleWorld, prepareWorldReplacement } from './engine.js';
 
 export const STORAGE_KEY = 'buncho-ureshi-world-v1';
 export const DB_NAME = 'buncho-ureshi-garden-v1';
@@ -92,6 +92,7 @@ export async function openGameStore(platform = globalThis) {
     }
     return {
       mode: 'device',
+      async migrationBackup(){return new Promise((resolve,reject)=>{const tx=db.transaction('world','readonly'),q=tx.objectStore('world').get('migration-backup-v11');q.onsuccess=()=>resolve(q.result||null);q.onerror=()=>reject(q.error);});},
       replaceWorld(expectedWorldId,replacement,now=Date.now(),{guard=()=>true}={}){
         if(closed)return Promise.reject(closedError());
         return new Promise((resolve,reject)=>{
@@ -134,6 +135,7 @@ export async function openGameStore(platform = globalThis) {
               const current = exists ? readCompatibleWorld(request.result) : createWorld();
               const beforeWorldId = current.worldId, beforeRevision = current.revision, beforeTime = current.lastUpdated, beforeCareTime=current.careSchedule?.seenAt;
               result = validateWorld(fn(current));
+              if(exists&&request.result.version<12)store.put(request.result,'migration-backup-v11');
               // Compare against the raw persisted schema, not the already-migrated object.
               if (!exists || request.result.version !== result.version || request.result.encounters?.version !== result.encounters?.version || result.worldId !== beforeWorldId || result.revision !== beforeRevision || result.lastUpdated !== beforeTime || result.careSchedule?.seenAt !== beforeCareTime) store.put(result, 'current');
             } catch (error) { failure = error; tx.abort(); }
@@ -158,7 +160,7 @@ export async function openGameStore(platform = globalThis) {
 function localRecord(raw) {
   if (raw === null) return { current: createWorld(), backup: null, envelope: false };
   // Bound the wrapper before parsing two independently bounded game saves.
-  if (raw.length > 8000000) throw new Error('保存データが大きすぎます。');
+  if (raw.length > MAX_SAVE_BYTES*2) throw new Error('保存データが大きすぎます。');
   const parsed = JSON.parse(raw);
   if (parsed?.format === LOCAL_FORMAT) {
     if (Object.keys(parsed).length !== 3 || !Object.hasOwn(parsed, 'current') || !Object.hasOwn(parsed, 'backup')) throw new Error('保存の項目が不正です。');
@@ -184,6 +186,7 @@ function lockedLocalStore(storage, locks) {
   });
   return {
     mode: 'locked-local',
+    migrationBackup:()=>locked(()=>{const raw=storage.getItem(STORAGE_KEY+'-migration-v11');return raw?(JSON.parse(raw).current??JSON.parse(raw)):null;}),
     replaceWorld(expectedWorldId,replacement,now=Date.now(),{guard=()=>true}={}){
       return locked(()=>{
         const raw=storage.getItem(STORAGE_KEY),record=localRecord(raw);
@@ -202,6 +205,7 @@ function lockedLocalStore(storage, locks) {
         const raw = storage.getItem(STORAGE_KEY), record = localRecord(raw);
         const result = validateWorld(fn(record.current));
         const encoded = record.envelope ? encodeRecord(result, record.backup) : serializeWorld(result);
+        if(raw&&(JSON.parse(raw)?.current??JSON.parse(raw))?.version<12&&!storage.getItem(STORAGE_KEY+'-migration-v11'))storage.setItem(STORAGE_KEY+'-migration-v11',raw);
         if (encoded !== raw) storage.setItem(STORAGE_KEY, encoded);
         return result;
       });
@@ -221,6 +225,7 @@ function memoryStore() {
   };
   return {
     mode: 'memory',
+    async migrationBackup(){return null;},
     async replaceWorld(expectedWorldId,replacement,now=Date.now(),{guard=()=>true}={}){
       if(closed)throw closedError();if(!guard())return structuredClone(world);
       const result=replacementResult(world,expectedWorldId,replacement,now);world=result;return structuredClone(world);

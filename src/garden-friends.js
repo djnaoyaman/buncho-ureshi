@@ -1,3 +1,4 @@
+import {allBirds} from './world-birds.js';
 /** Persistent fictional Java Sparrow garden regulars. Not family birds or spawnable cage visitors. */
 import {isAlive} from './life-care.js';
 import {GARDEN_IDS,gardenById,drawGardenFriendIds,closeGardenAcquaintance} from './data/gardens.js';
@@ -21,7 +22,7 @@ function validBond(r,tick){return int(r.affinity,0,100)&&(r.lastInteractionTick=
 export function validateGardenFriends(state,tick,encounterVersion=12){
  const fail=()=>{throw new Error('庭の友達の記録が不正です。');};
  const modern=encounterVersion>=12;
- if(!shape(state,['version','regulars','references','companions',...(modern?['accompany','attendees','visits']:[])])||state.version!==(modern?2:1)||!Array.isArray(state.regulars)||state.regulars.length!==GARDEN_REGULARS.length||!Array.isArray(state.references)||state.references.length>128||!Array.isArray(state.companions)||state.companions.length>4||new Set(state.companions).size!==state.companions.length||state.companions.some(id=>!/^b[1-9][0-9]*$/.test(id)))fail();
+ if(!shape(state,['version','regulars','references','companions',...(modern?['accompany','attendees','visits']:[])])||state.version!==(modern?2:1)||!Array.isArray(state.regulars)||state.regulars.length!==GARDEN_REGULARS.length||!Array.isArray(state.references)||state.references.length>100000||!Array.isArray(state.companions)||state.companions.length>4||new Set(state.companions).size!==state.companions.length||state.companions.some(id=>!/^b[1-9][0-9]*$/.test(id)))fail();
  const ids=new Set();for(const r of state.regulars){const d=GARDEN_REGULARS.find(x=>x.id===r.id);if(!d||ids.has(r.id)||!shape(r,['id','name','speciesId','primaryGardenId','appearance','favorite','personality','preferredMemory','affinity','lastInteractionTick','memories'])||Object.keys(d).some(k=>JSON.stringify(r[k])!==JSON.stringify(d[k]))||!validBond(r,tick))fail();ids.add(r.id);}
  const refs=new Set();for(const r of state.references){if(!shape(r,['id','birdId','primaryGardenId','affinity','lastInteractionTick','memories'])||!/^b[1-9][0-9]*$/.test(r.birdId)||r.id!==`known-${r.birdId}`||refs.has(r.birdId)||!GARDEN_IDS.includes(r.primaryGardenId)||!validBond(r,tick))fail();refs.add(r.birdId);}
  if(modern){
@@ -32,9 +33,9 @@ export function validateGardenFriends(state,tick,encounterVersion=12){
  return state;
 }
 /** Retain old references and memories; enroll only actual close friends, including descendants. */
-export function rememberGardenAcquaintances(world){const state=world.encounters.gardenFriends;for(const b of world.birds){if(!closeGardenAcquaintance(world,b)||state.references.some(r=>r.birdId===b.id)||state.references.length>=128)continue;const n=Number(b.id.slice(1));state.references.push({id:`known-${b.id}`,birdId:b.id,primaryGardenId:GARDEN_IDS[(n-1)%GARDEN_IDS.length],affinity:0,lastInteractionTick:null,memories:[]});}}
-export function setGardenCompanions(world,ids){if(!Array.isArray(ids)||ids.length>4||new Set(ids).size!==ids.length||ids.some(id=>!world.birds.some(b=>b.id===id&&b.home==='resident'&&isAlive(world,b)&&['juvenile','adult'].includes(b.stage))))return false;world.encounters.gardenFriends.companions=[...ids];return true;}
-export function beginGardenOuting(world){const state=world.encounters.gardenFriends;state.attendees=state.accompany?state.companions.filter(id=>world.birds.some(b=>b.id===id&&b.home==='resident'&&isAlive(world,b)&&['juvenile','adult'].includes(b.stage))):[];}
+export function rememberGardenAcquaintances(world){const state=world.encounters.gardenFriends;for(const b of allBirds(world)){if(!closeGardenAcquaintance(world,b)||state.references.some(r=>r.birdId===b.id)||state.references.length>=100000)continue;const n=Number(b.id.slice(1));state.references.push({id:`known-${b.id}`,birdId:b.id,primaryGardenId:GARDEN_IDS[(n-1)%GARDEN_IDS.length],affinity:0,lastInteractionTick:null,memories:[]});}}
+export function setGardenCompanions(world,ids){if(!Array.isArray(ids)||ids.length>4||new Set(ids).size!==ids.length||ids.some(id=>!allBirds(world).some(b=>b.id===id&&b.home==='resident'&&isAlive(world,b)&&['juvenile','adult'].includes(b.stage))))return false;world.encounters.gardenFriends.companions=[...ids];return true;}
+export function beginGardenOuting(world){const state=world.encounters.gardenFriends;state.attendees=state.accompany?state.companions.filter(id=>allBirds(world).some(b=>b.id===id&&b.home==='resident'&&isAlive(world,b)&&['juvenile','adult'].includes(b.stage))):[];}
 export function recordGardenVisit(world,returningIds=[]){
  const state=world.encounters.gardenFriends,g=world.encounters.garden;
  rememberGardenAcquaintances(world);

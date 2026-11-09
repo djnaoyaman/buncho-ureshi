@@ -3,14 +3,14 @@ import {createWorld,createBird,renameBird,validateWorld,serializeWorld,parseSave
 import {accidentLifeBird} from '../../src/life-care.js';
 
 export const NOW=Date.UTC(2026,10,8),LONG_NAME='あいうえおかきくけこさしすせそた';
-export const IMPORTANT=new Set(['pair','egg','hatch','grow','adopt','movein','depart']);
+export const IMPORTANT=new Set(['pair','egg','hatch','grow','adopt','movein','depart','death','succession']);
 export const CARD=new Set(['egg','hatch','grow','pair']);
 export const detailSelector=(scope,id)=>`[data-game-details="diary-${scope}-${id}"]`;
 export const summarySelector=(scope,id)=>`${detailSelector(scope,id)} > summary`;
 export const FULL='[data-game-details="full-diary"]';
 export function validated(world){
   validateWorld(world);const restored=parseSave(serializeWorld(world));assert.deepEqual(restored,world);
-  assert.equal(world.version,11);assert.equal(world.encounters.version,13);assert.equal(world.encounters.gardenFriends.version,2);
+  assert.equal(world.version,12);assert.equal(world.encounters.version,13);assert.equal(world.encounters.gardenFriends.version,2);
   return restored;
 }
 /** Synthetic event history with real engine birds, lifecycle, naming and strict save validation.
@@ -39,7 +39,7 @@ export function diaryFixture(kind='mixed'){
   const count=kind==='empty'?1:240;w.tick=239;w.epoch=now-w.tick*TICK_MS;
   const empty=kind==='empty';
   w.events=Array.from({length:count},(_,i)=>{const [kind,ids,data]=history[empty?10:i%history.length];return {id:`e${i+1}`,kind,ids:[...ids],data:{...data},tick:i,at:w.epoch+i*TICK_MS,condition:`条件${i+1}：庭での記録`,result:`結果${i+1}：名前とできごとを保存`};});
-  w.nextEvent=count+1;
+  w.journal=[];w.nextEvent=count+1;
   return validated(w);
 }
-export function expectedDiary(w){const all=w.events.slice().reverse();return {all,important:all.filter(e=>IMPORTANT.has(e.kind)).slice(0,12)};}
+export function expectedDiary(w){const all=[...new Map([...(w.journal||[]),...w.events].map(e=>[e.id,e])).values()].sort((a,b)=>b.tick-a.tick||Number(b.id.slice(1))-Number(a.id.slice(1)));return {all,important:all.filter(e=>IMPORTANT.has(e.kind)).slice(0,12)};}

@@ -2,6 +2,7 @@
  * art is a resolved existing local garden image supplied by the integration caller.
  * Keep the outer native disclosure identity: the encounter controller owns its lifecycle.
  */
+import {PREDATOR_ENTRY_RULES} from './garden-predator-clock.js';
 import {CROW_RULES} from './garden-crows.js';
 import {RAPTOR_RULES} from './garden-raptors.js';
 const duration=ms=>ms%60000===0?`${ms/60000}分`:`${ms/1000}秒`;
@@ -15,7 +16,7 @@ export function renderGardenAboutBooklet({name,description,landform,art=null}){
  <div class="garden-about-booklet__paper">
  <section class="garden-about-booklet__chapter"><h5><span class="garden-about-booklet__number" aria-hidden="true">01</span>どんな庭？</h5>${figure}<p>${esc(description)}</p></section>
  <section class="garden-about-booklet__chapter"><h5><span class="garden-about-booklet__number" aria-hidden="true">02</span>空からの来客</h5>
- <h6>カラス</h6><p>庭に続けて${duration(CROW_RULES.dwellMs)}いると、カラスが来ることがあります。大きな影で知らせるので、おうちに戻れます。友達との仲や図鑑は消えません。</p>
+ <p>庭で${duration(PREDATOR_ENTRY_RULES.dwellMs)}過ごすと、${PREDATOR_ENTRY_RULES.chance*100}%でカラスか猛禽を抽選します。両方が来られるときの比率は${PREDATOR_ENTRY_RULES.crowWeight}対${PREDATOR_ENTRY_RULES.raptorWeight}です。</p><h6>カラス</h6><p>庭に続けて${duration(CROW_RULES.dwellMs)}いると、カラスが来ることがあります。大きな影で知らせるので、おうちに戻れます。友達との仲や図鑑は消えません。</p>
  <p>まれに猛禽類も来訪します。カラスも猛禽類も、主人公が同行していない庭にも来ます。来訪時に同行している主人公だけが標的になります。</p>
  <p>主人公の同行なしで始まった来訪には標的がなく、安全に眺められます。その来訪の途中から別の文鳥を標的にすることはありません。</p>
  <aside class="garden-about-booklet__warning" aria-label="猛禽の警告が出たときの注意"><h6>猛禽類の警告が出たら</h6><p><strong>猛禽の警告が出たら${duration(RAPTOR_RULES.warningMs)}以内におうちへ。</strong><br>間に合わないと事故死します。</p><p>おうちで留守番している文鳥は狙われません。</p><p>ミサゴとなかよしの種類は襲いません。</p></aside></section>
