@@ -40,11 +40,24 @@ export function accidentLifeBird(world,birdId,now){
  return die(world,bird,s,'accident',at);
 }
 function recover(bird,s,at){s.condition=null;s.lastRecoveredAt=at;resetExposure(s);bird.needs.food=Math.max(80,bird.needs.food);bird.needs.energy=Math.max(80,bird.needs.energy);}
-/** Evaluate real absence before story catch-up, and age after each actual story tick.
+/** Next known real deadline; observation-only illness is never inferred here. */
+export function nextLifecycleDeadline(world,after){
+ let next=Infinity;const contract=world.lifecycle?.caretaker;
+ if(contract?.until>after)next=contract.until;
+ for(const bird of allBirds(world)){
+  const s=lifeStatus(world,bird);if(!s||s.death||bird.home!=='resident')continue;
+  const covered=contract&&contract.fromAt<=after?Math.min(after,contract.until):s.lastCareAt;
+  for(const at of [Math.max(s.lastCareAt,covered)+LIFE_RULES.neglectMs,s.condition?.deadlineAt]){
+   if(at>after&&at<=MAX_TIME)next=Math.min(next,at);
+  }
+ }
+ return next;
+}
+/** Settle known real deadlines and age at the supplied chronological checkpoint.
  * Newly discovered illness always gets a full visible treatment window; never infer a
  * retroactive diagnosis/death from an unobserved exposure interval.
  */
-export function syncLifecycle(world,now,{story=false}={}){
+export function syncLifecycle(world,now,{story=false,observe=true}={}){
  time(now);if(!world.lifecycle)initializeLifecycle(world,now);
  const l=world.lifecycle;if(now<l.seenAt)return {changed:false,events:[],rollback:true};
  let changed=now!==l.seenAt;l.seenAt=now;const events=[],contract=l.caretaker,states=new Map(l.birds.map(s=>[s.birdId,s]));
@@ -55,11 +68,11 @@ export function syncLifecycle(world,now,{story=false}={}){
   if(coveredUntil!==null&&coveredUntil>=s.lastCareAt&&coveredUntil>=contract.fromAt){
    if(coveredUntil>s.lastCareAt){s.lastCareAt=coveredUntil;changed=true;}
    if(s.condition&&s.condition.sinceAt<=coveredUntil){recover(bird,s,coveredUntil);events.push({kind:'caretaker-treatment',birdId:bird.id});changed=true;}
-   if(now<=contract.until){if(bird.needs.food<100||bird.needs.energy<100||world.care.cleanliness<100)changed=true;bird.needs.food=100;bird.needs.energy=100;world.care.cleanliness=100;resetExposure(s);continue;}
+   if(now<=contract.until){if(observe){if(bird.needs.food<100||bird.needs.energy<100||world.care.cleanliness<100)changed=true;bird.needs.food=100;bird.needs.energy=100;world.care.cleanliness=100;}resetExposure(s);continue;}
   }
   const hungry=s.lastCareAt+LIFE_RULES.neglectMs,untreated=s.condition?.deadlineAt??Infinity;
   if(Math.min(hungry,untreated)<=now){const cause=untreated<=hungry?(s.condition.kind==='injury'?'injury':'illness'):'neglect';events.push(die(world,bird,s,cause,Math.min(hungry,untreated)));changed=true;continue;}
-  if(s.condition||['egg','chick'].includes(bird.stage))continue;
+  if(!observe||s.condition||['egg','chick'].includes(bird.stage))continue;
   // A treatment gives a full real day without recurrence.
   if(s.lastRecoveredAt!==null&&now-s.lastRecoveredAt<DAY)continue;
   const dirty=world.care.cleanliness<=20,low=bird.needs.food<=40&&bird.needs.energy<=40;

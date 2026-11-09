@@ -16,10 +16,10 @@ export function protagonistStatus(world){
  return {bird,generation,heir,waiting:!heir?'no-child':heir.stage==='egg'?'hatch':heir.home!=='resident'&&allBirds(world).filter(b=>b.home==='resident').length>=6?'room':'ready'};
 }
 /** Called after every bird's death has been resolved, so a same-batch death never inherits. */
-export function syncProtagonist(world){
+export function syncProtagonist(world,{residentOnly=false}={}){
  initializeProtagonist(world);
  const {bird,heir,waiting}=protagonistStatus(world);
- if(waiting!=='ready')return null;
+ if(waiting!=='ready'||residentOnly&&heir.home!=='resident')return null;
  return transitionProtagonist(world,bird,heir);
 }
 /** Family membership is checked at choice time, never reconstructed from later deaths. */

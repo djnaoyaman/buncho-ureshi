@@ -2,7 +2,7 @@ import {allBirds,activateBird,archiveDetachedBirds} from './world-birds.js';
 import {gachaMachine} from './gacha-machines.js';
 import {advanceRaptorState} from './garden-raptors.js';
 import {getProtagonistId,initializeProtagonist,syncProtagonist,validateProtagonist,protagonistStatus,familySuccessorCandidates,selectFamilyProtagonist,recordedFamilySuccession} from './protagonist.js';
-import {accidentLifeBird,rebaseLifecycleClock,initializeLifecycle,registerLifeBird,syncLifecycle,validateLifecycle,isAlive,lifeStatus,noteLifeFeeding,noteLifeConflict,treatLifeBird,hireLifeCaretaker,honorLifeBird} from './life-care.js';
+import {accidentLifeBird,rebaseLifecycleClock,initializeLifecycle,registerLifeBird,syncLifecycle,nextLifecycleDeadline,LIFE_RULES,validateLifecycle,isAlive,lifeStatus,noteLifeFeeding,noteLifeConflict,treatLifeBird,hireLifeCaretaker,honorLifeBird} from './life-care.js';
 import {initialEncounterState,validateEncounterState,encounterSystem,upgradeEncounterState,cageVisitorCount,expireEncounterVisitors} from './encounters.js';
 import {initialEconomy,validateEconomy,syncEconomy,reserveAutomaticGems,awardCareGold,ECONOMY_RULES} from './economy.js';
 /** A deterministic, offline story simulation with fictional lifecycle rules. No real husbandry advice. */
@@ -250,8 +250,8 @@ function lifeEvent(w,event){
  const text=event.kind==='death'?{accident:'ゲーム内の猛禽との遭遇で事故にあい、旅立った',lifespan:'ゲーム内の10年を生き、静かに旅立った',neglect:'現実の3日間、ごはんが届かなかった',illness:'ゲームの病気を治療しないまま時間が過ぎた',injury:'けんかのけがを治療しないまま時間が過ぎた'}[event.cause]:event.kind==='illness'?'体調の変化に気づいた。病院で診てもらおう':event.kind==='caretaker-treatment'?'飼育員さんが病院へ連れていった':'病院で治療を受けて元気になった';
  record(w,event.kind,[event.birdId],text,event.kind==='death'?'名前と家族と思い出は、お墓にずっと残る':text,{},event.kind==='death'?lifeStatus(w,event.birdId).death.at:null);
 }
-function synchronizeProtagonist(w){const succession=syncProtagonist(w);if(succession){record(w,'succession',[succession.fromId,succession.toId],'先代の子が家族の物語を引き継ぐ',`${birdName(w,succession.toId)}が第${w.protagonist.lineage.length}代の主人公になった`);bumpRevision(w);}return succession;}
-function synchronizeLife(w,now,story=false){const result=syncLifecycle(w,now,{story});for(const event of result.events)lifeEvent(w,event);if(result.changed)bumpRevision(w);synchronizeProtagonist(w);return result;}
+function synchronizeProtagonist(w,residentOnly=false){const succession=syncProtagonist(w,{residentOnly});if(succession){record(w,'succession',[succession.fromId,succession.toId],'先代の子が家族の物語を引き継ぐ',`${birdName(w,succession.toId)}が第${w.protagonist.lineage.length}代の主人公になった`);bumpRevision(w);}return succession;}
+function synchronizeLife(w,now,story=false,observe=true){const result=syncLifecycle(w,now,{story,observe});for(const event of result.events)lifeEvent(w,event);if(result.changed)bumpRevision(w);synchronizeProtagonist(w,!observe);return result;}
 /** Explicit family choice: lifecycle and ordinary child priority are resolved first. */
 export function chooseFamilyProtagonist(w,birdId,token,now=Date.now()){
  if(!currentToken(w,token)||token.fromId!==getProtagonistId(w))return {...staleEconomy(),reason:'stale'};
@@ -436,19 +436,33 @@ export function stepWorld(w, now=w.lifecycle?.seenAt??Date.now()) {
 export function advanceTicks(w, count, now=w.lifecycle?.seenAt??Date.now()) { if (!Number.isFinite(count) || count <= 0) return w; for (let i = 0; i < Math.min(Math.floor(count), 100000); i++) stepWorld(w,now); return w; }
 /** Absence advances growth and age, without replaying thousands of social visits. */
 function advanceAbsentStory(w,count,now){
- const end=w.tick+count,start=w.tick;w.care.cleanliness=Math.max(0,w.care.cleanliness-count*CARE_RULES.soilPerTick);
- while(w.tick<end){
-  let next=end;
+ const start=w.tick,startAt=w.lastUpdated,end=start+count;
+ let at=Math.max(startAt,w.lifecycle.seenAt);
+ synchronizeLife(w,careTime(at),true,false);
+ while(w.tick<end||at<now){
+  let nextTick=w.tick<end?end:Infinity;
   for(const b of allBirds(w)){
    const life=lifeStatus(w,b);if(!life||life.death)continue;
    const growth={egg:12,chick:24,juvenile:48}[b.stage];
-   if(growth)next=Math.min(next,Math.max(w.tick+1,b.stageTick+growth));
-   if(b.stage!=='egg')next=Math.min(next,Math.max(w.tick+1,life.ageOriginTick+87600-life.initialAgeTicks));
+   if(w.tick<end){
+    if(growth)nextTick=Math.min(nextTick,Math.max(w.tick+1,b.stageTick+growth));
+    if(b.stage!=='egg')nextTick=Math.min(nextTick,Math.max(w.tick+1,life.ageOriginTick+LIFE_RULES.lifespanTicks-life.initialAgeTicks));
+    if(b.home==='visitor')nextTick=Math.min(nextTick,Math.max(w.tick+1,b.arrivedTick+97));
+   }
   }
-  const at=Math.max(w.lifecycle.seenAt,now-(end-next)*TICK_MS);
-  w.tick=next;synchronizeLife(w,careTime(at),true);grow(w);synchronizeProtagonist(w);
+  nextTick=Math.min(nextTick,end);
+  const tickAt=w.tick<end?startAt+(nextTick-start)*TICK_MS:Infinity;
+  const nextAt=Math.min(now,Math.max(at,tickAt),nextLifecycleDeadline(w,at));
+  const tick=Math.min(nextTick,start+Math.floor((nextAt-startAt)/TICK_MS));
+  const elapsed=tick-w.tick;w.tick=tick;
+  w.care.cleanliness=Math.max(0,w.care.cleanliness-elapsed*CARE_RULES.soilPerTick);
+  synchronizeLife(w,careTime(nextAt),true,false);
+  if(elapsed){grow(w);synchronizeProtagonist(w,true);expireEncounterVisitors(w);visitsWithoutArrivals(w);}
+  at=nextAt;
  }
- expireEncounterVisitors(w);visitsWithoutArrivals(w);archiveDetachedBirds(w);bumpRevision(w);
+ // Keep the ordinary single care-slot renewal and a full visible treatment window.
+ synchronizeLife(w,careTime(now));
+ archiveDetachedBirds(w);bumpRevision(w);
  return w.tick-start;
 }
 function visitsWithoutArrivals(w){
@@ -459,15 +473,22 @@ export function advanceTo(w,now=Date.now()){
  if(!Number.isSafeInteger(now)||now<0||now>MAX_DATE_MS)return w;
  if(syncEconomy(w.economy,careTime(now)))bumpRevision(w);
  const care=syncCareSchedule(w,careTime(now));if(care.renewed)bumpRevision(w);
+ const startAt=Math.max(w.lastUpdated,w.clock.originAt);
+ const due=w.paused||now<startAt?0:Math.floor((now-startAt)/TICK_MS);
+ if(due>4){
+  if(now<w.lifecycle.seenAt)return w;
+  const before={birds:allBirds(w).length,tick:w.tick};
+  w.lastUpdated=startAt;advanceAbsentStory(w,due,now);w.lastUpdated+=due*TICK_MS;
+  w.offlineSummary={ticks:due,skipped:0,newBirds:allBirds(w).length-before.birds,fromTick:before.tick,toTick:w.tick};
+  return w;
+ }
  synchronizeLife(w,careTime(now));
  if(now<Math.max(w.lastUpdated,w.clock.originAt))return w;
  w.lastUpdated=Math.max(w.lastUpdated,w.clock.originAt);
  if(w.paused){w.lastUpdated=now;return w;}
- const due=Math.floor((now-w.lastUpdated)/TICK_MS);if(!due)return w;
- const before={birds:allBirds(w).length,tick:w.tick};
- if(due>4)advanceAbsentStory(w,due,now);else for(let i=0;i<due;i++)stepWorld(w,now);
+ if(!due)return w;
+ for(let i=0;i<due;i++)stepWorld(w,now);
  w.lastUpdated+=due*TICK_MS;
- if(due>4)w.offlineSummary={ticks:due,skipped:0,newBirds:allBirds(w).length-before.birds,fromTick:before.tick,toTick:w.tick};
  return w;
 }
 
