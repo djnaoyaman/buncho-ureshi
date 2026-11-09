@@ -10,7 +10,7 @@ test('only a newly created founder is Ed, with unchanged identity and naming sch
  const w=createWorld(1000,842911);
  assert.equal(w.birds[0].name,'エド');
  assert.deepEqual(w.birds[0].naming,{version:1,source:'automatic',assignedName:'エド'});
- assert.equal(SAVE_VERSION,11);assert.equal(w.birds[0].id,'b1');
+ assert.equal(SAVE_VERSION,12);assert.equal(w.birds[0].id,'b1');
  assert.deepEqual(w.protagonist.lineage,['b1']);
  assert.deepEqual(parseSave(serializeWorld(w)),w);
 });
@@ -84,7 +84,7 @@ test('future birth in an existing Omochi save keeps all prior names and round-tr
 });
 test('all reserved short names fail explicitly without numeric suffix or side effects',()=>{
  const w={worldId:'all-reserved',seed:42,birds:DIRECT_LINE_BIRD_NAMES.map((name,i)=>({id:`b${i}`,name}))};
- const before=structuredClone(w);assert.throws(()=>directLineNameFields(w,'new'),RangeError);assert.deepEqual(w,before);
+ const before=structuredClone(w);const n=directLineNameFields(w,'new').name;assert.ok(!DIRECT_LINE_BIRD_NAMES.includes(n));assert.ok(!/[0-9]/.test(n));assert.ok(n.length<=16);assert.deepEqual(w,before);
 });
 
 test('new unrelated automatic names exclude Omochi without changing the legacy pool or chooser',()=>{
@@ -114,5 +114,5 @@ test('existing automatic Omochi and numbered names and new manual Omochi stay pe
 test('new automatic selection never falls back to Omochi when other candidates are occupied',()=>{
  const w={worldId:'reserved-ordinary',seed:42,birds:DEFAULT_BIRD_NAMES.filter(name=>name!=='おもち').map((name,i)=>({id:`b${i}`,name}))};
  const before=structuredClone(w);assert.equal(chooseDefaultBirdName(w,'new'),'おもち');
- assert.throws(()=>newDefaultNameFields(w,'new'),RangeError);assert.deepEqual(w,before);
+ const n=newDefaultNameFields(w,'new').name;assert.ok(!/^おもち[0-9]*$/.test(n));assert.ok(!/[0-9]/.test(n));assert.ok(n.length<=16);assert.deepEqual(w,before);
 });

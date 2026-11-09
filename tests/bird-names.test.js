@@ -18,7 +18,7 @@ test('manual and departed names reserve candidates without changing duplicates',
   const w=make(),name=chooseDefaultBirdName(w,'b3'); w.birds=[{id:'b1',name,home:'departed'},{id:'b2',name,home:'resident'}]; const before=structuredClone(w);assert.notEqual(chooseDefaultBirdName(w,'b3'),name);assert.deepEqual(w,before);
 });
 test('all candidates occupied fails explicitly, never appends numbers',()=>{
-  const w=make();w.birds=DEFAULT_BIRD_NAMES.map((name,i)=>({id:`b${i}`,name}));assert.throws(()=>chooseDefaultBirdName(w,'new'),RangeError);
+  const w=make();w.birds=DEFAULT_BIRD_NAMES.map((name,i)=>({id:`b${i}`,name}));const n=chooseDefaultBirdName(w,'new');assert.ok(!DEFAULT_BIRD_NAMES.includes(n));assert.ok(!/[0-9]/.test(n));assert.ok(n.length<=16);
 });
 test('automatic migration requires affirmative metadata, not matching old format',()=>{
   const w=make(); w.birds=[{id:'b17',name:'ひなた17',stage:'adult',parents:['b1','b2'],naming:automaticNaming('ひなた17')},{id:'b4',name:'そら4',stage:'adult',parents:['b1','b2']},{id:'b7',name:'こはく7',naming:manualNaming('こはく7')},{id:'b8',name:'たまご1',stage:'egg'}];

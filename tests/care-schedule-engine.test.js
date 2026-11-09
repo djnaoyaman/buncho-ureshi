@@ -5,10 +5,10 @@ import * as old from './fixtures/engine-v4.js';
 import * as engine from '../src/engine.js';
 import {openGameStore} from '../src/game-store.js';
 const now=Date.UTC(2026,10,2,0),clone=structuredClone;
-function projection(w){const x=clone(w);x.version=4;delete x.decor?.duplicateStreaks;delete x.careSchedule;delete x.encounters;delete x.economy;delete x.lifecycle;delete x.protagonist;delete x.adoption;delete x.settings.adoptionMode;for(const b of x.birds)delete b.naming;return x;}
+function projection(w){const x=clone(w);x.version=4;for(const k of ['clock','archive','journal'])delete x[k];for(const e of x.events)e.at=x.epoch+e.tick*15000;delete x.decor?.duplicateStreaks;delete x.careSchedule;delete x.encounters;delete x.economy;delete x.lifecycle;delete x.protagonist;delete x.adoption;delete x.settings.adoptionMode;for(const b of x.birds)delete b.naming;return x;}
 test('v4 migration retains every existing value including ambiguous numbered and spaced legacy names',()=>{
  const w=old.createWorld(now);old.advanceTicks(w,300);w.birds[0].name=' おもち7 ';w.birds[1].name='そら2';w.birds[0].needs.food=20;const before=clone(w);
- const next=engine.readCompatibleWorld(w,now+10000);assert.equal(next.version,11);assert.deepEqual(projection(next),w);assert.deepEqual(w,before);assert.equal(next.careSchedule.seenAt,now+10000);assert.ok(next.birds.every(b=>b.naming.source==='legacy'));
+ const next=engine.readCompatibleWorld(w,now+10000);assert.equal(next.version,12);assert.deepEqual(projection(next),w);assert.deepEqual(w,before);assert.equal(next.careSchedule.seenAt,now+10000);assert.ok(next.birds.every(b=>b.naming.source==='legacy'));
  assert.deepEqual(engine.parseSave(engine.serializeWorld(next)),next);const bad=clone(w);bad.birds[0].naming={source:'manual'};assert.throws(()=>engine.readCompatibleWorld(bad));
  const invalid=clone(next);invalid.birds[0].naming.assignedName='別名';assert.throws(()=>engine.validateWorld(invalid));
 });

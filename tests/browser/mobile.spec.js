@@ -3,7 +3,6 @@ import { photos } from '../../src/data/photos.js';
 import { parseSave, TICK_MS } from '../../src/engine.js';
 
 const STUDIO_KEY = 'buncho-ureshi-studio-v1';
-const DB_NAME = 'buncho-ureshi-garden-v1';
 const fixedNow = Date.UTC(2026, 10, 2, 12, 0, 0);
 const photo = photos.find(p => p.artAllowed);
 const youtubeRequests = /youtube|youtu\.be|googlevideo|ytimg/i;
@@ -117,22 +116,14 @@ async function studioTouchFlow(page, testInfo, deviceLabel) {
 }
 
 async function gameTouchFlow(page, context, name) {
-  await context.addInitScript(now => { Date.now = () => now; }, fixedNow);
+  await context.addInitScript(now => { Date.now = () => Number(sessionStorage.getItem('buncho-test-game-now') ?? now); }, fixedNow);
   await page.goto('game/');
   await expect(page.locator('#game-root .game-app')).toBeVisible();
   await expect(page.locator('.game-scene-caption strong')).toHaveText('エド');
-  // Backdate only this application's saved timestamp by one tick; actual startup performs the visit.
-  await page.evaluate(({ dbName, now, tick }) => new Promise((resolve, reject) => {
-    const open = indexedDB.open(dbName, 1);
-    open.onerror = () => reject(open.error);
-    open.onsuccess = () => {
-      const db = open.result, tx = db.transaction('world', 'readwrite'), store = tx.objectStore('world');
-      const get = store.get('current');
-      get.onsuccess = () => { const world = get.result; world.lastUpdated = now - tick; store.put(world, 'current'); };
-      tx.oncomplete = () => { db.close(); resolve(); };
-      tx.onerror = () => { db.close(); reject(tx.error); };
-    };
-  }), { dbName: DB_NAME, now: fixedNow, tick: TICK_MS });
+  // Move the test clock forward by one real tick without rewriting the save's high-water marks.
+  await page.evaluate(tick => {
+    sessionStorage.setItem('buncho-test-game-now', String(Date.now() + tick));
+  }, TICK_MS);
   await page.reload();
   await trustedTap(page, page.locator('[data-game-scene-select][data-bird-id="b2"]'));
   await page.locator('.game-bird-sheet [data-game-panel="profile"]').tap();

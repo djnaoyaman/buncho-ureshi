@@ -43,7 +43,7 @@ for(const kind of ['feed','pet','talk'])test(`${kind} survives an own paused clo
 
 test('live story-tick poll preserves feed intent without advancing it twice',async t=>{
  const advance=clock(t),f=await fixture(t,{sound:true});await f.mount();const live=f.read();live.paused=false;f.write(live);await f.poll();
- const before=f.read(),gate=f.hold();advance(15000);const polling=f.poll();f.clickCare('feed');gate.resolve();await polling;await f.settle();
+ const before=f.read(),gate=f.hold();advance(60000);const polling=f.poll();f.clickCare('feed');gate.resolve();await polling;await f.settle();
  assert.equal(f.read().tick,before.tick+1);assert.equal(f.read().birds[0].needs.food,60);assert.equal(f.read().economy.gold,before.economy.gold+4);
 });
 

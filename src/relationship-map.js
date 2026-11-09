@@ -1,3 +1,4 @@
+import {allBirds,activateBird} from './world-birds.js';
 // View-only: records, names and directed relationship labels remain engine-owned.
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const colors = {white:'白文鳥',sakura:'桜文鳥',silver:'シルバー',cinnamon:'シナモン'};
@@ -8,7 +9,7 @@ export function relationshipContext(bird) {
   return [colors[bird.color] || bird.color, stages[bird.stage] || bird.stage, homes[bird.home] || bird.home].filter(Boolean).join('・');
 }
 export function relationshipMapModel(world, selectedId, page = 0) {
-  const birds = world?.birds || [], focus = birds.find(b => b.id === selectedId) || birds[0] || null;
+  const birds = world?.birds ? allBirds(world) : [], focus = birds.find(b => b.id === selectedId) || birds[0] || null;
   const contacts = focus ? birds.filter(b => b.id !== focus.id && (focus.relations?.[b.id] || b.relations?.[focus.id])) : [];
   const pageCount = Math.max(1, Math.ceil(contacts.length / RELATION_PAGE_SIZE));
   const currentPage = Math.max(0, Math.min(pageCount - 1, Number.isFinite(page) ? Math.trunc(page) : 0));
@@ -20,7 +21,7 @@ export function relationshipMapModel(world, selectedId, page = 0) {
   return {focus,peers,edges,currentPage,pageCount,total:contacts.length,focusIndex:focus?birds.indexOf(focus):-1,birdCount:birds.length};
 }
 export function navigateRelationships(world, state, action) {
-  const m = relationshipMapModel(world,state.selectedId,state.page), birds = world?.birds || [];
+  const m = relationshipMapModel(world,state.selectedId,state.page), birds = world?.birds ? allBirds(world) : [];
   if (!m.focus) return {selectedId:null,page:0};
   if (action.type === 'focus-id' && birds.some(b=>b.id===action.id)) return {selectedId:action.id,page:0};
   if (action.type === 'focus-step') return {selectedId:birds[(m.focusIndex+(action.step<0?-1:1)+birds.length)%birds.length].id,page:0};

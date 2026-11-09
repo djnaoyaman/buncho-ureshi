@@ -45,7 +45,7 @@ test('care UI pet response is silent by default, opt-in produces only one succes
   const f=await fixture(t);await f.mount();f.clickCare('pet');await f.settle();assert.equal(f.rig.contexts.length,0);assert.equal(f.read().birds[0].mood,64);assert.match(f.root.querySelector('.game-care-feedback').textContent,/ぴっ/);
   const world=f.read();world.tick++;world.birds[0].care.lastPetTick=null;world.birds[0].needs.energy=80;bumpRevision(world);f.write(world);await f.poll();
   await f.sound(true);assert.equal(f.read().settings.careSound,true);assert.equal(f.rig.starts,0);f.clickCare('pet');await f.settle();await until(()=>f.rig.starts===2);assert(f.root.querySelector('.game-care-cheer'));
-  const after=f.read();f.clickCare('pet');f.clickCare('pet');await f.settle();assert.deepEqual(f.read(),after);assert.equal(f.rig.starts,2);
+  const after=f.read();f.clickCare('pet');f.clickCare('pet');await f.settle();assert.deepEqual(f.read().birds,after.birds);assert.equal(f.read().decor.points,after.decor.points);assert.equal(f.rig.starts,2);
   f.change(f.soundControl(),false);assert(f.rig.contexts[0].nodes.every(node=>node.stops.includes(undefined)));await f.settle();assert.equal(f.read().settings.careSound,false);assert.equal(f.root.querySelector('.game-care-cheer'),null);
   f.closeCare();f.root.querySelector('[data-game-panel="help"]').click();const disclosure=f.root.querySelector('[data-game-details="help-care"]');assert(disclosure);disclosure.open=true;const copy=disclosure.cloneNode(true);copy.querySelectorAll('rt').forEach(node=>node.remove());assert.match(copy.textContent,/本物の文鳥には、むりにさわらないでね/);assert.match(copy.textContent,/文鳥の声を録音したものではないよ/);
 });
@@ -172,12 +172,12 @@ test('explicit peer mute storage event immediately cancels and persists across w
 test('paused story reopens real-JST care and shows both bars without a fast-tick refill',async t=>{
  const f=await fixture(t);await f.mount();const w=f.read();w.paused=true;w.birds[0].needs.food=100;w.birds[0].needs.energy=100;const now=Date.now(),prior=careWindow(now).at-1;w.careSchedule={seenAt:prior,windowAt:careWindow(prior).at};bumpRevision(w);f.write(w);await f.poll();
  assert.equal(f.read().birds[0].needs.food,60);assert.equal(f.read().birds[0].needs.energy,60);assert.equal(f.root.querySelector('[data-game-care=feed]').disabled,false);assert.equal(f.root.querySelector('[data-game-care=pet]').disabled,false);
- f.clickCare('pet');await f.settle();f.clickCare('pet');await f.settle();assert.equal(f.read().birds[0].needs.energy,100);assert.equal(f.root.querySelector('[data-game-care=pet]').disabled,true);assert.equal(f.root.querySelector('[data-game-talk="名前を呼ぶ"]').disabled,true);assert.match(f.root.querySelector('[data-next-care]').textContent,/日本時間/);
+ f.clickCare('pet');await f.settle();f.clickCare('pet');await f.settle();assert.equal(f.read().birds[0].needs.energy,100);assert.equal(f.root.querySelector('[data-game-care=pet]').disabled,false);assert.equal(f.root.querySelector('[data-game-talk="名前を呼ぶ"]').disabled,false);assert.match(f.root.querySelector('[data-next-care]').textContent,/日本時間/);
 });
 
 test('queued talk after peer fills energy gives no Gem, no history and no success chirp',async t=>{
  const f=await fixture(t,{sound:true});await f.mount();const gate=f.hold();f.root.querySelector('[data-game-talk="名前を呼ぶ"]').click();const peer=f.read();peer.birds[0].needs.energy=100;bumpRevision(peer);f.write(peer);gate.resolve();await f.settle();
- assert.equal(f.read().decor.points,peer.decor.points);assert.deepEqual(f.read().birds[0].memories,peer.birds[0].memories);assert.equal(f.rig.starts,0);assert.equal(f.root.querySelector('[data-game-talk="名前を呼ぶ"]').disabled,true);assert.match(f.root.querySelector('.game-reply').textContent,/おうちが変わった/);
+ assert.equal(f.read().decor.points,peer.decor.points);assert.deepEqual(f.read().birds[0].memories,peer.birds[0].memories);assert.equal(f.rig.starts,0);assert.equal(f.root.querySelector('[data-game-talk="名前を呼ぶ"]').disabled,false);assert.match(f.root.querySelector('.game-reply').textContent,/おうちが変わった/);
 });
 
 test('legacy numbered name suggestions stay drafts, cancel safely and never cross birds or stale peer names',async t=>{

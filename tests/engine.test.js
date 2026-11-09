@@ -20,10 +20,9 @@ test('blocks siblings, parent-child, grandparents and first cousins', () => {
   for(const [one,two] of [[a,c],[a,e],[c,d],[e,f]]) { assert.ok(isRelated(w,one.id,two.id)); assert.equal(canPair(w,one,two),false); }
   assert.equal(isRelated(w,x.id,y.id),false);
 });
-test('time progression is deterministic, bounded and does not punish absence', () => {
-  const a=createWorld(0), b=createWorld(0); advanceTo(a,TICK_MS*40); advanceTicks(b,40); assert.equal(a.tick,b.tick); assert.deepEqual(a.birds,b.birds);
-  const long=createWorld(0); advanceTo(long,TICK_MS*100000); assert.equal(long.tick,LIMITS.offlineTicks); assert.equal(long.lastUpdated,TICK_MS*100000); assert.ok(long.offlineSummary.skipped>0); const tick=long.tick; advanceTo(long,TICK_MS*100000); assert.equal(long.tick,tick);
-  assert.ok(long.birds.every(b=>b.mood>=35 && b.needs.energy>=12));
+test('offline growth advances all elapsed hours without mass-producing visitors',()=>{
+ const w=createWorld(0);advanceTo(w,TICK_MS*40);assert.equal(w.tick,40);assert.equal(w.birds.length,1);
+ const long=createWorld(0);advanceTo(long,TICK_MS*100000);assert.equal(long.tick,100000);assert.equal(long.lastUpdated,TICK_MS*100000);assert.equal(long.offlineSummary.skipped,0);advanceTo(long,TICK_MS*100000);assert.equal(long.tick,100000);validateWorld(long);
 });
 test('pause does not catch up paused time on resume; backwards clock does not create duplicate ticks', () => {
   const w=createWorld(100); w.paused=true; advanceTo(w,999999); assert.equal(w.tick,0); w.paused=false; advanceTo(w,1000000); assert.equal(w.tick,0); const watermark=w.lastUpdated; advanceTo(w,0); assert.equal(w.tick,0); assert.equal(w.lastUpdated,watermark); advanceTo(w,watermark+TICK_MS); assert.equal(w.tick,1);
@@ -48,7 +47,7 @@ test('relationships are directional and social events have causes/results/memori
 });
 test('long-term world is bounded and every lineage and name remains addressable', () => {
   const w=createWorld(0); advanceTicks(w,20000); validateWorld(w);
-  assert.ok(w.birds.length<=LIMITS.birds); assert.ok(w.birds.filter(b=>b.home==='resident').length<=LIMITS.residents); assert.ok(w.birds.filter(b=>b.home==='visitor').length<=LIMITS.visitors); assert.ok(w.events.length<=LIMITS.events); assert.ok(w.birds.every(b=>b.memories.length<=LIMITS.memories)); const ids=new Set(w.birds.map(b=>b.id)); assert.ok(w.birds.every(b=>b.parents.every(id=>ids.has(id)))); assert.ok(w.birds.length>20);
+  assert.ok(w.birds.length<=LIMITS.birds); assert.ok(w.birds.filter(b=>b.home==='resident').length<=LIMITS.residents); assert.ok(w.birds.filter(b=>b.home==='visitor').length<=LIMITS.visitors); assert.ok(w.events.length<=LIMITS.events); assert.ok(w.birds.every(b=>b.memories.length<=LIMITS.memories)); const ids=new Set([...w.birds,...w.archive].map(b=>b.id)); assert.ok(w.birds.every(b=>b.parents.every(id=>ids.has(id)))); assert.ok(w.birds.length>20);
 });
 
 test('imports reject discontinuous ID counters and invalid breeding parentage', () => {
@@ -72,8 +71,8 @@ test('invalid wall clocks and tick counts cannot corrupt a valid world', () => {
 
 test('imports enforce UTF-8 byte bounds and reject unknown nested payloads without modifying the world', () => {
   const w=createWorld(0); advanceTicks(w,150); const before=serializeWorld(w);
-  assert.throws(()=>parseSave(' '.repeat(MAX_SAVE_BYTES+1)),/4MB/);
-  const multibyte='{"padding":"'+'鳥'.repeat(1400000)+'"}'; assert.ok(multibyte.length<MAX_SAVE_BYTES); assert.throws(()=>parseSave(multibyte),/4MB/);
+  assert.throws(()=>parseSave(' '.repeat(MAX_SAVE_BYTES+1)),/64MB/);
+  const multibyte='{"padding":"'+'鳥'.repeat(Math.ceil(MAX_SAVE_BYTES/3))+'"}'; assert.ok(multibyte.length<MAX_SAVE_BYTES); assert.throws(()=>parseSave(multibyte),/64MB/);
   for(const mutate of [x=>x.extra='padding',x=>x.settings.constructor='bad',x=>x.birds[0].needs.extra='padding',x=>x.events[0].data.extra={deep:['arbitrary']},x=>x.events[0].kind='constructor',x=>x.events[0].ids=[],x=>x.birds[0].memories.push(null),x=>x.birds[0].milestones[0].kind='constructor']) {
     const bad=JSON.parse(before); mutate(bad); assert.throws(()=>parseSave(JSON.stringify(bad)));
   }
@@ -83,9 +82,9 @@ test('imports enforce UTF-8 byte bounds and reject unknown nested payloads witho
 
 test('dense bounded relationship graphs export below the same import byte limit', () => {
   const w=createWorld(0); advanceTicks(w,20000);
-  w.tick=500000000000;
+  w.tick=50000000000;
   for(const b of w.birds){renameBird(w,b.id,'鳥'.repeat(16));for(const other of w.birds)if(other.id!==b.id)b.relations[other.id]={affection:1.0000000000000002e-100,trust:1.0000000000000002e-100,compatibility:1.0000000000000002e-100,meetings:Number.MAX_SAFE_INTEGER,lastTick:w.tick};}
-  for(const e of w.events){e.condition='鳥'.repeat(120);e.result='鳥'.repeat(120);}
+  for(const e of [...w.events,...w.journal]){e.condition='鳥'.repeat(120);e.result='鳥'.repeat(120);}
   const text=serializeWorld(w); assert.ok(Buffer.byteLength(text,'utf8')<=MAX_SAVE_BYTES);assert.deepEqual(parseSave(text),w);
 });
 

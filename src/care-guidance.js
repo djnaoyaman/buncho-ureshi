@@ -1,8 +1,9 @@
+import {allBirds} from './world-birds.js';
 import {lifeStatus} from './life-care.js';
 
 /** Pure presentation of the selected bird's actual available care. */
 export function careGuidance(world,birdId){
- const bird=world.birds.find(b=>b.id===birdId);if(!bird)return '';
+ const bird=allBirds(world).find(b=>b.id===birdId);if(!bird)return '';
  const life=lifeStatus(world,bird),danger=world.encounters?.raptor?.active;
  if(life?.death)return '思い出の庭で、この子に会えるよ。';
  if(danger?.hostile&&danger.targetBirdId===birdId)return '危険が近づいているよ。おうちへ帰ろう。';

@@ -1,3 +1,4 @@
+import {allBirds} from '../world-birds.js';
 import {isAlive} from '../life-care.js';
 import {GARDEN_ASSETS} from './garden-assets.js';
 /** Twelve fictional, always-open social gardens. No real-world arrival/season promises. */
@@ -23,7 +24,7 @@ export const gardenById=id=>GARDENS.find(g=>g.id===id)||null;
 export function gardenCompanionRoster(world){
  const state=world.encounters?.gardenFriends,active=world.encounters?.raptor?.active;
  const ids=[...(state?.attendees||[]),...(active&&active.targetBirdId===(world.protagonist?.birdId||'b1')?[active.targetBirdId]:[])];
- return [...new Set(ids)].flatMap(id=>{const b=world.birds.find(x=>x.id===id);return b&&b.home==='resident'&&isAlive(world,b)&&['juvenile','adult'].includes(b.stage)?[{birdId:b.id,name:b.name,color:b.color,kind:'companion'}]:[];});
+ return [...new Set(ids)].flatMap(id=>{const b=allBirds(world).find(x=>x.id===id);return b&&b.home==='resident'&&isAlive(world,b)&&['juvenile','adult'].includes(b.stage)?[{birdId:b.id,name:b.name,color:b.color,kind:'companion'}]:[];});
 }
 /** References existing close friends; never moves household membership or spawns. */
 export function gardenFriendRoster(world,id){
@@ -35,20 +36,20 @@ export function gardenFriendRoster(world,id){
  return ids.flatMap(friendId=>{
   const r=state.regulars.find(r=>r.id===friendId);
   if(r)return [{friendId:r.id,birdId:null,name:r.name,color:r.appearance.color,kind:r.primaryGardenId===id?'regular':'visiting',affinity:r.affinity,memories:r.memories.map(m=>({...m})),personality:r.personality}];
-  const ref=state.references.find(r=>r.id===friendId),b=ref&&world.birds.find(b=>b.id===ref.birdId);
+  const ref=state.references.find(r=>r.id===friendId),b=ref&&allBirds(world).find(b=>b.id===ref.birdId);
   if(!b||!isAlive(world,b)||!['juvenile','adult'].includes(b.stage)||b.home!=='departed'||attendees.has(b.id))return [];
   return [{friendId:ref.id,birdId:b.id,name:b.name,color:b.color,kind:'known',affinity:ref.affinity,memories:ref.memories.map(m=>({...m})),personality:'親しい文鳥の友達'}];
  }).map((r,i)=>({...r,spot:garden.spots[i%garden.spots.length]}));
 }
 export function closeGardenAcquaintance(world,bird,reference=null){
- const protagonistId=world.protagonist?.birdId||'b1',lead=world.birds.find(b=>b.id===protagonistId),bond=lead?.relations?.[bird.id];
+ const protagonistId=world.protagonist?.birdId||'b1',lead=allBirds(world).find(b=>b.id===protagonistId),bond=lead?.relations?.[bird.id];
  return bird.id!==protagonistId&&bird.home==='departed'&&isAlive(world,bird)&&['juvenile','adult'].includes(bird.stage)&&((bond?.affection>65&&bond?.trust>50)||(reference?.affinity||0)>=60);
 }
 /** Select actual IDs once per visit. Later deaths, home moves or new relationships
  * may remove an unavailable guest, but never replace or reshuffle the others. */
 export function drawGardenFriendIds(world,id,{regularsOnly=false}={}){
  const state=world.encounters.gardenFriends,visit=world.encounters.garden.visits[id]||0;
- const regulars=state.regulars.map(r=>r.id),close=regularsOnly?[]:state.references.filter(r=>{const b=world.birds.find(b=>b.id===r.birdId);return b&&closeGardenAcquaintance(world,b,r);}).map(r=>r.id);
+ const regulars=state.regulars.map(r=>r.id),close=regularsOnly?[]:state.references.filter(r=>{const b=allBirds(world).find(b=>b.id===r.birdId);return b&&closeGardenAcquaintance(world,b,r);}).map(r=>r.id);
  const bag=shuffleGardenPool([...regulars,...close],`${world.worldId}:${id}`),count=Math.min(4,bag.length),offset=(visit*count)%Math.max(1,bag.length);
  return shuffleGardenPool(Array.from({length:count},(_,i)=>bag[(offset+i)%bag.length]),`${world.worldId}:${id}:${visit}`);
 }

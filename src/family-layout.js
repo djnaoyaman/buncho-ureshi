@@ -1,7 +1,8 @@
+import {allBirds} from './world-birds.js';
 /** Focused, top-down blood-family layout. Pair bonds are a separate edge type. */
 export function familyLayout(world,selectedId){
- const byId=new Map(world.birds.map(b=>[b.id,b])),focus=byId.get(selectedId)||world.birds[0],mate=byId.get(focus.partner);
- const children=world.birds.filter(b=>b.parents.includes(focus.id)),parents=[...new Set([...focus.parents,...(mate?.parents||[])])].map(id=>byId.get(id)).filter(Boolean);
+ const birds=allBirds(world),byId=new Map(birds.map(b=>[b.id,b])),focus=byId.get(selectedId)||birds[0],mate=byId.get(focus.partner);
+ const children=birds.filter(b=>b.parents.includes(focus.id)),parents=[...new Set([...focus.parents,...(mate?.parents||[])])].map(id=>byId.get(id)).filter(Boolean);
  const cardW=112,cardH=132,padding=24,rowStep=180;
  // Reserve only generations that exist. An absent parent row must not push
  // the first cards 180px down, especially inside a short phone viewport.

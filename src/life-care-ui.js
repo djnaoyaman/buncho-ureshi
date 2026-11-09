@@ -1,3 +1,4 @@
+import {allBirds,activateBird} from './world-birds.js';
 import {renderCaretakerRecruitment} from './caretaker-recruitment-ui.js';
 import {memorialDesignForBird,renderMemorialArtwork} from './memorial-designs.js';
 import {protagonistStatus,familySuccessorCandidates} from './protagonist.js';
@@ -9,7 +10,7 @@ const number=value=>Math.max(0,Math.floor(Number(value)||0)).toLocaleString('ja-
 const now=world=>Number(world.lifecycle?.seenAt)||0;
 const remaining=ms=>{const minutes=Math.max(0,Math.ceil(ms/60000));return minutes>=1440?`${Math.floor(minutes/1440)}日 ${Math.floor(minutes%1440/60)}時間`:minutes>=60?`${Math.floor(minutes/60)}時間 ${minutes%60}分`:`${minutes}分`;};
 const remainingUnits=ms=>remaining(ms).split(' ').map(unit=>`<span class="life-time-unit">${unit}</span>`).join(' ');
-const names=(world,ids)=>ids.map(id=>world.birds.find(b=>b.id===id)?.name||'庭の仲間').map(escape).join('・');
+const names=(world,ids)=>ids.map(id=>allBirds(world).find(b=>b.id===id)?.name||'庭の仲間').map(escape).join('・');
 const causeLabel=cause=>({accident:'事故死',lifespan:'寿命',age:'寿命',neglect:'お世話のない時間が続いたため',starvation:'お世話のない時間が続いたため',illness:'病気',disease:'病気',injury:'けが',untreated:'病気・けが'}[cause]||'病気・けが');
 const warning='<p class="life-care-warning"><strong>ここにある年齢・期限・治療は、すべてゲームのルールです。</strong>実際の文鳥の飼育目安には使えません。現実の体調変化やけがは、待たずに鳥を診られる獣医師へ相談してください。</p>';
 
@@ -39,7 +40,7 @@ export function renderLifeSummary(world,bird){
 }
 
 export function renderLifeCarePanel(world,{birdSvg=()=>''}={}){
-  const residents=world.birds.filter(b=>b.home==='resident'&&isAlive(world,b));
+  const residents=allBirds(world).filter(b=>b.home==='resident'&&isAlive(world,b));
   const care=caretakerStatus(world),gold=Math.max(0,Number(world.economy?.gold)||0);
   const cost=LIFE_RULES.hospitalGold;
   const unwell=residents.filter(b=>lifeStatus(world,b).condition);
@@ -54,9 +55,9 @@ export function renderLifeCarePanel(world,{birdSvg=()=>''}={}){
 }
 
 export function renderMemorialPanel(world){
-  const departed=world.birds.filter(b=>lifeStatus(world,b).death);
+  const departed=allBirds(world).filter(b=>lifeStatus(world,b).death);
   return `<section class="life-memorial-panel life-memorial-gallery" aria-label="思い出の庭"><header class="life-panel-heading"><p class="game-eyebrow">ALWAYS IN OUR GARDEN</p><h3>思い出の庭</h3><p>名前も、家族も、過ごした時間も。ここに残ります。</p></header>${renderProtagonistSummary(world)}<p class="life-small">お線香とお祈りにGoldはかかりません。それぞれ1分に1回できます。お線香は画面の中だけの表現です。現実では、生きている鳥に煙を近づけないでください。</p><div class="life-grave-grid">${departed.map(b=>{
-    const state=lifeStatus(world,b),design=memorialDesignForBird(world,b),family=[b.partner?`つがい：${names(world,[b.partner])}`:'',b.parents?.length?`親：${names(world,b.parents)}`:'',world.birds.some(child=>child.parents?.includes(b.id))?`子：${names(world,world.birds.filter(child=>child.parents?.includes(b.id)).map(child=>child.id))}`:''].filter(Boolean).join('<br>');
+    const state=lifeStatus(world,b),design=memorialDesignForBird(world,b),family=[b.partner?`つがい：${names(world,[b.partner])}`:'',b.parents?.length?`親：${names(world,b.parents)}`:'',allBirds(world).some(child=>child.parents?.includes(b.id))?`子：${names(world,allBirds(world).filter(child=>child.parents?.includes(b.id)).map(child=>child.id))}`:''].filter(Boolean).join('<br>');
     return `<article class="life-grave" data-memorial-bird="${escape(b.id)}" data-memorial-design="${design.id}">${renderMemorialArtwork(design,b)}<h4>${escape(b.name)}</h4><p class="life-small">${escape(colors[b.color]||'文鳥')} · ${escape(ageLabel(world,b))}</p><p>${escape(causeLabel(state.death.cause))}で旅立ちました</p>${family?`<p class="life-family">${family}</p>`:''}<div class="life-memorial-counts"><span>お線香 ${number(state.incenseCount)}回</span><span>お祈り ${number(state.prayerCount)}回</span></div><div class="life-memorial-actions"><button type="button" data-life-incense="${escape(b.id)}" ${state.lastIncenseAt!=null&&now(world)-state.lastIncenseAt<60000?'disabled':''}>お線香をあげる</button><button type="button" data-life-pray="${escape(b.id)}" ${state.lastPrayerAt!=null&&now(world)-state.lastPrayerAt<60000?'disabled':''}>お祈りする</button></div><button type="button" class="life-memory-card" data-game-art="${escape(b.id)}">思い出の記念カード</button><a class="memorial-lineage-link" href="${design.sourceURL}" target="_blank" rel="noopener noreferrer" aria-label="${escape(design.linkLabel)}（DESIGN LINEAGE・新しいタブ）">${escape(design.linkLabel)}<span aria-hidden="true"> ↗</span></a></article>`;
   }).join('')||'<div class="life-empty"><span aria-hidden="true">❀</span><p>今は、まだお墓はありません。<br>一緒に過ごす今日を大切に。</p></div>'}</div></section>`;
 }

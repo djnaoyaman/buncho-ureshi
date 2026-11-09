@@ -1,3 +1,4 @@
+import {allBirds,activateBird} from './world-birds.js';
 import {isAlive,lifeStatus,LIFE_RULES} from './life-care.js';
 
 /** Identity belongs to the save, never to a name or the currently selected bird. */
@@ -10,9 +11,9 @@ export function initializeProtagonist(world){
 export function protagonistStatus(world){
  const bird=getProtagonistBird(world),generation=world.protagonist?.lineage.length??1;
  if(!bird||isAlive(world,bird))return {bird,generation,waiting:null,heir:null};
- const children=world.birds.filter(b=>b.parents.includes(bird.id)&&isAlive(world,b)).sort((a,b)=>a.bornTick-b.bornTick||Number(a.id.slice(1))-Number(b.id.slice(1)));
+ const children=allBirds(world).filter(b=>b.parents.includes(bird.id)&&isAlive(world,b)).sort((a,b)=>a.bornTick-b.bornTick||Number(a.id.slice(1))-Number(b.id.slice(1)));
  const heir=children[0]??null;
- return {bird,generation,heir,waiting:!heir?'no-child':heir.stage==='egg'?'hatch':heir.home!=='resident'&&world.birds.filter(b=>b.home==='resident').length>=6?'room':'ready'};
+ return {bird,generation,heir,waiting:!heir?'no-child':heir.stage==='egg'?'hatch':heir.home!=='resident'&&allBirds(world).filter(b=>b.home==='resident').length>=6?'room':'ready'};
 }
 /** Called after every bird's death has been resolved, so a same-batch death never inherits. */
 export function syncProtagonist(world){
@@ -24,8 +25,8 @@ export function syncProtagonist(world){
 /** Family membership is checked at choice time, never reconstructed from later deaths. */
 export function familySuccessorCandidates(world){
  if(protagonistStatus(world).waiting!=='no-child')return [];
- const count=world.birds.filter(b=>b.home==='resident').length,now=world.lifecycle.seenAt;
- return world.birds.filter(b=>isAlive(world,b)&&!world.protagonist.lineage.includes(b.id)&&(b.home==='resident'||b.parents.length===2||b.milestones.some(m=>['welcome','adopt','movein'].includes(m.kind))))
+ const count=allBirds(world).filter(b=>b.home==='resident').length,now=world.lifecycle.seenAt;
+ return allBirds(world).filter(b=>isAlive(world,b)&&!world.protagonist.lineage.includes(b.id)&&(b.home==='resident'||b.parents.length===2||b.milestones.some(m=>['welcome','adopt','movein'].includes(m.kind))))
   .map(b=>{const condition=lifeStatus(world,b).condition;return {bird:b,reason:b.stage==='egg'?'hatch':b.home!=='resident'&&count>=6?'room':b.home!=='resident'&&condition&&condition.deadlineAt<=now&&now>253402268399999-LIFE_RULES.treatmentMs?'clock':null};});
 }
 /** Only called after the engine checks the exact choice against fresh lifecycle state. */
@@ -42,13 +43,13 @@ export function recordedFamilySuccession(world,fromId,toId,tick){
 function transitionProtagonist(world,bird,heir){
  const fromId=bird.id,now=world.lifecycle.seenAt;
  if(heir.home!=='resident'){
-  heir.home='resident';heir.arrivedTick=world.tick;
+  activateBird(world,heir);heir.home='resident';heir.arrivedTick=world.tick;
   if(world.field.place==='friend'&&world.field.hostId===heir.id)world.field={place:'home',hostId:null,enteredTick:world.tick};
   const care=lifeStatus(world,heir);care.lastCareAt=now;care.dirtySinceAt=null;care.lowSinceAt=null;
   // Outside birds are not under household care. Give an overdue condition a visible
   // treatment window on return, without curing it or changing its kind.
   if(care.condition&&care.condition.deadlineAt<=now&&now<=253402268399999-LIFE_RULES.treatmentMs){care.condition.sinceAt=now;care.condition.deadlineAt=now+LIFE_RULES.treatmentMs;}
-  if(world.adoption.pending?.birdId===heir.id||world.birds.filter(b=>b.home==='resident').length>=6)world.adoption.pending=null;
+  if(world.adoption.pending?.birdId===heir.id||allBirds(world).filter(b=>b.home==='resident').length>=6)world.adoption.pending=null;
  }
  world.protagonist.birdId=heir.id;world.protagonist.lineage.push(heir.id);
  const friends=world.encounters?.gardenFriends;
@@ -58,13 +59,13 @@ function transitionProtagonist(world,bird,heir){
 export function validateProtagonist(world){
  const p=world.protagonist,fail=()=>{throw new Error('保存データを読み込めません：主人公の代替わり情報が不正です。');};
  const current=world.version>=10,keys=current?['version','birdId','lineage','familySelections']:['version','birdId','lineage'];
- if(!p||typeof p!=='object'||Array.isArray(p)||Object.keys(p).length!==keys.length||keys.some(k=>!Object.hasOwn(p,k))||p.version!==(current?2:1)||!Array.isArray(p.lineage)||!p.lineage.length||p.lineage.length>world.birds.length||p.lineage[0]!=='b1'||p.birdId!==p.lineage.at(-1)||new Set(p.lineage).size!==p.lineage.length)fail();
+ if(!p||typeof p!=='object'||Array.isArray(p)||Object.keys(p).length!==keys.length||keys.some(k=>!Object.hasOwn(p,k))||p.version!==(current?2:1)||!Array.isArray(p.lineage)||!p.lineage.length||p.lineage.length>allBirds(world).length||p.lineage[0]!=='b1'||p.birdId!==p.lineage.at(-1)||new Set(p.lineage).size!==p.lineage.length)fail();
  const selections=current?p.familySelections:[];
  if(!Array.isArray(selections)||selections.length>=p.lineage.length)fail();
  let priorIndex=0,priorTick=0,priorAt=0;
  for(const row of selections){
   if(!row||typeof row!=='object'||Array.isArray(row)||Object.keys(row).length!==4||!['fromId','toId','tick','at'].every(k=>Object.hasOwn(row,k)))fail();
-  const index=p.lineage.indexOf(row.toId),from=world.birds.find(b=>b.id===row.fromId),to=world.birds.find(b=>b.id===row.toId);
+  const index=p.lineage.indexOf(row.toId),from=allBirds(world).find(b=>b.id===row.fromId),to=allBirds(world).find(b=>b.id===row.toId);
   if(index<=priorIndex||p.lineage[index-1]!==row.fromId||!from||!to||to.parents.includes(from.id))fail();
   const death=lifeStatus(world,from).death,laterDeath=lifeStatus(world,to).death;
   if(!death||!Number.isSafeInteger(row.tick)||row.tick<Math.max(priorTick,death.tick,to.bornTick)||row.tick>world.tick||!Number.isSafeInteger(row.at)||row.at<Math.max(priorAt,death.at)||row.at>world.lifecycle.seenAt||laterDeath&&(laterDeath.tick<row.tick||laterDeath.at<row.at))fail();
@@ -73,7 +74,7 @@ export function validateProtagonist(world){
   priorIndex=index;priorTick=row.tick;priorAt=row.at;
  }
  for(let i=0;i<p.lineage.length;i++){
-  const bird=world.birds.find(b=>b.id===p.lineage[i]);
+  const bird=allBirds(world).find(b=>b.id===p.lineage[i]);
   if(!bird||i&&(!bird.parents.includes(p.lineage[i-1])&&!selections.some(s=>s.fromId===p.lineage[i-1]&&s.toId===bird.id)||bird.stage==='egg')||i<p.lineage.length-1&&isAlive(world,bird))fail();
  }
  return p;

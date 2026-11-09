@@ -14,7 +14,7 @@ test('all 240 records and newest 12 important events retain exact order, text, d
   const rows=[...d.querySelector(selector).children];assert.equal(rows.length,expected.length);
   rows.forEach((row,i)=>{const e=expected[i];assert.equal(row.querySelector('.diary-paper-event').textContent,eventText(w,e));assert.equal(row.querySelector('details').dataset.gameDetails,`diary-${scope}-${e.id}`);assert.equal(row.querySelector('details p').textContent,`${e.condition}。${e.result}。`);assert.equal(row.querySelector('time').dateTime,new Date(e.at).toISOString());assert.equal(row.querySelector('button')?.dataset.gameEventArt,['egg','hatch','grow','pair'].includes(e.kind)?e.id:undefined);});
  }
- assert.equal(JSON.stringify(w),before);assert.equal(d.querySelector('.game-full-diary').open,false);assert.match(d.body.textContent,/すべての日記 · 240件/);assert.match(d.body.textContent,/新しい240件を保存/);win.happyDOM.abort();
+ assert.equal(JSON.stringify(w),before);assert.equal(d.querySelector('.game-full-diary').open,false);assert.match(d.body.textContent,/すべての日記 · 240件/);assert.match(d.body.textContent,/大切な出来事はずっと保存/);win.happyDOM.abort();
 });
 test('actual historical date, not current date or prototype twelfth day',()=>{
  const w=fixture(1),win=dom(render(w));const time=win.document.querySelector('time');assert.equal(time.dateTime,'2025-02-03T00:00:00.000Z');assert.match(time.textContent,/1日目 0時/);assert.match(time.textContent,/2025\/2\/3/);win.happyDOM.abort();

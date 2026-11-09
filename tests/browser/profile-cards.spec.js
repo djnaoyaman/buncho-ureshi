@@ -144,7 +144,7 @@ test('profile A stages, visitors, departed and deceased birds retain actual cont
     await shot(page,info,`state-${id}-profile`,page.locator('.game-profile-heading'));
     if(b.home==='visitor'){await expect(page.locator('.game-profile-card-screen [data-game-action="adopt"]')).toBeVisible();await expect(page.locator('.game-profile-card-screen [data-home-goodbye]')).toBeVisible();}
     await page.locator('#game-profile-open-bird').click();
-    if(b.home==='departed'||!['juvenile','adult'].includes(b.stage)||b.needs.energy>=100)await expect(page.locator('#game-talk-call')).toBeDisabled();else await expect(page.locator('#game-talk-call')).toBeEnabled();
+    if(b.home==='departed'||!['juvenile','adult'].includes(b.stage))await expect(page.locator('#game-talk-call')).toBeDisabled();else await expect(page.locator('#game-talk-call')).toBeEnabled();
     await shot(page,info,`state-${id}-controls`,page.locator('.game-care-actions'));await returnHome(page);expect(await record(page)).toEqual(world);
   }
   const deceased=fixture('deceased');await record(page,deceased);await page.reload();await ready(page);await openProfile(page,'b2');await identity(page,deceased,deceased.birds[1]);
