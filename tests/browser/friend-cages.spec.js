@@ -9,3 +9,22 @@ for(const [width,height] of [[320,568],[390,844],[844,390],[1440,900]])test(`nin
  for(const [id,b] of byCage){travelTo(w,'friend',b.id);await record(page,w);await page.goto('game/');await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');await expect(page.locator('.game-room')).toHaveAttribute('data-friend-cage',String(id));await expect(page.locator('.game-habitat img')).toHaveJSProperty('complete',true);expect(await page.locator('.game-habitat img').evaluate(el=>el.naturalWidth)).toBeGreaterThan(1000);await page.locator('.game-room-bird.is-selected').click({trial:true});expect((await record(page)).birds).toEqual(w.birds);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);}
  await page.reload();await expect(page.locator('.game-room')).toHaveAttribute('data-friend-cage',String(friendCage(w,w.field.hostId).id));
 });
+
+test('an archived friend house renders its original cage without changing the saved family',async({page})=>{
+ await page.addInitScript(n=>{Date.now=()=>n;localStorage.setItem('buncho.music.v1',JSON.stringify({enabled:false}));},now);
+ await page.goto('');
+ const world=createWorld(now);world.paused=true;
+ const friend=createBird(world,{home:'departed'}),cage=friendCage(world,friend.id);
+ for(let i=0;i<150;i++)createBird(world,{home:'departed'});
+ expect(world.archive.some(b=>b.id===friend.id)).toBe(true);
+ travelTo(world,'friend',friend.id);await record(page,world);
+ const errors=[];page.on('pageerror',error=>errors.push(error.message));
+ await page.goto('game/');await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');
+ await expect(page.locator('.game-room')).toHaveAttribute('data-friend-cage',String(cage.id));
+ await expect(page.locator('.game-habitat img')).toHaveAttribute('src',new RegExp(cage.file.replaceAll('.','\\.')+'$'));
+ await expect.poll(()=>page.locator('.game-habitat img').evaluate(el=>el.naturalWidth)).toBeGreaterThan(1000);
+ await page.locator('.game-room-bird.is-selected').click({trial:true});
+ expect(errors).toEqual([]);expect(await record(page)).toEqual(world);
+ await page.reload();await expect(page.locator('.game-room')).toHaveAttribute('data-friend-cage',String(cage.id));
+ expect(await record(page)).toEqual(world);
+});
