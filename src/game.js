@@ -500,11 +500,17 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
   function householdIncome(){const status=householdIncomeStatus(world),feed=familyCareStatus(world,'feed'),pet=familyCareStatus(world,'pet');return `<section class="game-household-income" aria-label="毎日のお世話のお礼"><div><strong>今日の暮らしと30 Gold</strong><p>${escape(status.message)}</p></div><button type="button" data-household-income data-economy-world="${escape(world.worldId)}" data-economy-revision="${world.revision}" ${!status.ready||economyPending?'disabled':''}>暮らしを確認して受け取る</button><div class="game-household-care" role="group" aria-label="家族のお世話"><button type="button" data-family-care="feed" data-economy-world="${escape(world.worldId)}" data-economy-revision="${world.revision}" ${!feed.ready||economyPending?'disabled':''}>家族にごはん</button><button type="button" data-family-care="pet" data-economy-world="${escape(world.worldId)}" data-economy-revision="${world.revision}" ${!pet.ready||economyPending?'disabled':''}>家族とふれ合う</button><small>${world.field.place==='home'?`ごはん ${feed.count}羽・ふれあい ${pet.count}羽。1羽ずつのお世話と同じ回復量・Gemsです。卵やひなは見守ります。`:'家族のお世話は、おうちに戻ってから。'}</small></div></section>`;}
   function automaticGift(){const gift=world.economy.pending;return (pairProposals(world).length?'<button class="game-pair-invitation" data-game-panel="family">新しいつがいの相談</button>':'')+(gift?`<button class="game-auto-gift" data-auto-gift="${escape(gift.id)}" data-economy-world="${escape(world.worldId)}" data-economy-revision="${world.revision}" aria-label="みんなからの贈り物 ${gift.amount} Gemsを受け取る">🎁 <span>${gift.amount} Gems</span></button>`:'');}
   async function economyAction(button){
-    if(economyPending||button.disabled)return;economyPending=true;button.disabled=true;
-    const token={worldId:button.dataset.economyWorld,revision:Number(button.dataset.economyRevision)};let result;
-    try{const committed=await mutate(w=>{result=button.dataset.familyCare?careFamily(w,button.dataset.familyCare,token):button.hasAttribute('data-household-income')?claimHouseholdIncome(w,token):button.dataset.autoGift?claimAutomaticGift(w,button.dataset.autoGift,token):buyOrdinaryFurniture(w,button.dataset.goldBuy,token);},'',()=>alive,{bump:false,advanceCurrent:false});
+    if(economyPending||button.disabled)return;
+    const clickedToken={worldId:button.dataset.economyWorld,revision:Number(button.dataset.economyRevision)};
+    const intent=button.dataset.familyCare?reserveCareIntent(clickedToken):null;
+    if(button.dataset.familyCare&&!intent)return;
+    const gestureAt=button.dataset.familyCare?Date.now():null;
+    economyPending=true;button.disabled=true;let token=clickedToken,result;
+    try{
+      if(intent?.poll){token=await afterCarePoll(intent,()=>alive&&root.isConnected);if(!token)return;}
+      const committed=await mutate(w=>{result=button.dataset.familyCare?careFamily(w,button.dataset.familyCare,token,gestureAt):button.hasAttribute('data-household-income')?claimHouseholdIncome(w,token):button.dataset.autoGift?claimAutomaticGift(w,button.dataset.autoGift,token):buyOrdinaryFurniture(w,button.dataset.goldBuy,token);},'',()=>alive,{bump:false,advanceCurrent:false});
       if(committed&&result){setMessage(result.message||'');render();showGemReward(result.gemAward,undefined,result.goldAward);if(!button.dataset.familyCare&&result.changed)root.querySelector(button.hasAttribute('data-household-income')?'.game-menu-close':button.dataset.autoGift?'[data-game-open-menu]':'[data-decor-preview="'+button.dataset.goldBuy+'"]')?.focus({preventScroll:true});}
-    }finally{economyPending=false;if(alive){render();if(button.dataset.familyCare){(root.querySelector('[data-family-care="'+button.dataset.familyCare+'"]:not(:disabled)')||root.querySelector('[data-family-care]:not(:disabled)')||root.querySelector('[data-household-income]:not(:disabled)')||root.querySelector('.game-menu-close'))?.focus();}}}
+    }finally{if(intent)releaseCareIntent(intent);economyPending=false;if(alive){render();if(button.dataset.familyCare){(root.querySelector('[data-family-care="'+button.dataset.familyCare+'"]:not(:disabled)')||root.querySelector('[data-family-care]:not(:disabled)')||root.querySelector('[data-household-income]:not(:disabled)')||root.querySelector('.game-menu-close'))?.focus();}}}
   }
   function gemCollectibles(){
     if(world.field.place!=='home')return '';
@@ -757,9 +763,9 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
   function artPayload(b, e) { const family=[b,...b.parents.map(id=>findBird(world,id)),...(b.partner?[findBird(world,b.partner)]:[])].filter(Boolean); return {title:e?eventText(world,e):`${b.name}の家族`,name:b.name,names:family.map(x=>x.name),birds:family.map(x=>({id:x.id,name:x.name,color:x.color,stage:x.stage})),date:day(e?.tick??world.tick),event:e?.kind||'family',source:'game',caption:'おもちの文鳥ぐらし・ゲームの記念カード'}; }
   // Only our captured poll may advance this gesture's token. Never adopt an
   // arbitrary newer revision: a peer write must still fail the engine guard.
-  function reserveCareIntent(){
+  function reserveCareIntent(token=economyToken(world)){
     if(pendingCareIntent)return null;
-    return pendingCareIntent={token:economyToken(world),poll:pollFlight};
+    return pendingCareIntent={token,poll:pollFlight};
   }
   function releaseCareIntent(intent){if(pendingCareIntent===intent)pendingCareIntent=null;}
   async function afterCarePoll(intent,current){

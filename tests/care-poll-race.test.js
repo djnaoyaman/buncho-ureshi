@@ -94,3 +94,28 @@ test('cancelled intent cannot clear a newer reservation while the same poll is p
  const advance=clock(t),f=await fixture(t,{sound:true});await f.mount();const gate=f.hold();advance(1000);const polling=f.poll();f.clickCare('feed');f.closeCare();f.openCare();f.clickCare('feed');f.clickCare('feed');gate.resolve();await polling;await f.settle();
  assert.equal(f.read().birds[0].needs.food,60);assert.equal(f.read().economy.gold,0);assert.equal(f.rig.starts,2);
 });
+
+function familyButton(f,kind='feed'){
+ f.closeCare();const toggle=f.root.querySelector('.game-scene-controls-toggle');if(toggle?.getAttribute('aria-expanded')==='false')toggle.click();const menu=f.root.querySelector('.game-secondary-menu');if(!menu.open)f.root.querySelector('[data-game-open-menu]').click();return f.root.querySelector(`[data-family-care="${kind}"]`);
+}
+test('family care reserves an own paused poll and duplicate gestures without losing the intent',async t=>{
+ const advance=clock(t),f=await fixture(t);await f.mount();const button=familyButton(f),before=f.read(),gate=f.hold();advance(1000);const polling=f.poll();button.click();button.click();gate.resolve();await polling;await f.settle();
+ assert.equal(f.read().birds[0].needs.food,60);assert.equal(f.read().decor.points,before.decor.points+12);assert.equal(f.read().economy.gold,before.economy.gold);assert.equal(f.rig.starts,0);
+});
+test('family care never rebases over a peer write and releases the reservation for retry',async t=>{
+ const advance=clock(t),f=await fixture(t);await f.mount();const button=familyButton(f),gate=f.hold();advance(1000);const polling=f.poll();button.click();const peer=f.read();renameBird(peer,'b1','別の名前');f.write(peer);gate.resolve();await polling;await f.settle();assert.equal(f.read().birds[0].needs.food,40);assert.equal(f.read().decor.points,peer.decor.points);assert.match(f.root.querySelector('.game-message').textContent,/もう一度/);
+ familyButton(f).click();await f.settle();assert.equal(f.read().birds[0].needs.food,60);
+});
+test('family care uses the gesture time across a queued save, then preserves the true illness deadline',async t=>{
+ const advance=clock(t),f=await fixture(t);await f.mount();const gestureAt=Date.now(),state=f.read();state.lifecycle.birds[0].condition={kind:'injury',sinceAt:gestureAt-86400000+1,deadlineAt:gestureAt+1};f.write(state);await f.poll();const button=familyButton(f),before=f.read(),gate=f.hold();button.click();advance(2);gate.resolve();await f.settle();
+ assert.equal(f.read().birds[0].needs.food,60);assert.equal(f.read().lifecycle.birds[0].death,null);assert.equal(f.read().lifecycle.birds[0].lastCareAt,gestureAt);assert.equal(f.read().decor.points,before.decor.points+12);
+ await f.poll();assert.equal(f.read().lifecycle.birds[0].death.at,gestureAt+1);assert.equal(f.read().birds[0].needs.food,60);assert.equal(f.rig.starts,0);
+});
+test('family care releases failed poll and failed write reservations without partial rewards',async t=>{
+ const advance=clock(t),f=await fixture(t);await f.mount();const button=familyButton(f),before=f.read(),gate=f.hold();f.failNext();advance(1000);const polling=f.poll();button.click();gate.resolve();await polling;await f.settle();assert.equal(f.read().decor.points,before.decor.points);f.failNext();familyButton(f).click();await f.settle();assert.equal(f.read().birds[0].needs.food,40);assert.equal(f.read().decor.points,before.decor.points);familyButton(f).click();await f.settle();assert.equal(f.read().birds[0].needs.food,60);
+});
+
+test('a peer change after the captured family poll still meets the engine revision guard',async t=>{
+ const advance=clock(t),f=await fixture(t);await f.mount();const button=familyButton(f),gate=f.hold();advance(1000);const polling=f.poll();button.click();const before=f.read();
+ f.window.document.addEventListener('buncho-game-panel',()=>{const peer=f.read();renameBird(peer,'b1','新しい名前');f.write(peer);},{once:true});gate.resolve();await polling;await f.settle();assert.equal(f.read().birds[0].needs.food,40);assert.equal(f.read().decor.points,before.decor.points);assert.match(f.root.querySelector('.game-message').textContent,/もう一度/);familyButton(f).click();await f.settle();assert.equal(f.read().birds[0].needs.food,60);
+});
