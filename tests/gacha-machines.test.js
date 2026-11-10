@@ -20,3 +20,13 @@ for(const machine of GACHA_MACHINES){
 test('higher-price machines increase top-tier probability',()=>{const w=ready(),p=GACHA_MACHINES.map(m=>decorDrawStatus(w,'perch',m.id).probabilities[2].probability);assert.ok(p[0]<p[1]&&p[1]<p[2]);});
 test('muted and reduced motion produces the durable result without any audio or animation',async()=>{const win=new Window(),dialog=win.document.createElement('dialog');win.document.body.append(dialog);let contexts=0;win.AudioContext=class{constructor(){contexts++;}};const motion=mountGachaMotion(dialog,{motion:false,getSound:()=>false});assert.equal(dialog.querySelector('.gacha-mechanism').dataset.finished,'true');assert.equal(contexts,0);motion.destroy();assert.equal(dialog.children.length,0);await win.happyDOM.close();});
 test('cancel and route destruction stop presentation with the body fixed',async()=>{const win=new Window(),dialog=win.document.createElement('dialog');win.document.body.append(dialog);const targets=[],cancelled=[];win.HTMLElement.prototype.animate=function(){targets.push(this.className);return{cancel(){cancelled.push(true);}};};const m=mountGachaMotion(dialog,{getSound:()=>false});assert.equal(targets.length,4);assert.ok(!targets.some(t=>t.includes('fixed-body')));dialog.querySelector('.gacha-skip').click();assert.equal(cancelled.length,4);m.destroy();assert.equal(dialog.children.length,0);await win.happyDOM.close();});
+
+for(const machine of GACHA_MACHINES)for(const extra of [0,1])test(`${machine.id}: exact price and one extra Gem charge the selected machine`,()=>{
+ const w=ready();w.decor.points=machine.cost+extra;
+ const r=drawDecoration(w,'perch',machine.id);assert.equal(r.changed,true);assert.equal(r.cost,machine.cost);
+ assert.equal(w.decor.points,extra+(r.duplicate?machine.refund:0));validateWorld(w);
+});
+for(const machine of GACHA_MACHINES)test(`${machine.id}: full collection never charges or advances the random sequence`,()=>{
+ const w=ready();w.decor.inventory=DECOR_SLOTS.flatMap(s=>DECOR_COLORS.flatMap(c=>DECOR_TIERS.map(t=>({id:`${s.id}-${c.id}-${t.id}`,slot:s.id,color:c.id,tier:t.id}))));
+ const before=serializeWorld(w);assert.equal(drawDecoration(w,'perch',machine.id).complete,true);assert.equal(serializeWorld(w),before);validateWorld(w);
+});

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Window } from 'happy-dom';
+import {GACHA_MACHINES} from '../src/gacha-machines.js';
 import { IDBFactory } from 'fake-indexeddb';
 import { mountGame } from '../src/game.js';
 import { mountGameMusic } from '../src/game-music-ui.js';
@@ -608,4 +609,17 @@ test('settings switch focus survives the real music shell leaving and rejoining 
    assert.equal(d.activeElement===f.root.querySelector(selector),true,'the toggled switch keeps focus');assert.equal(f.root.querySelector('.game-music')===shell,true);assert.equal(d.querySelectorAll('.game-music').length,1);
   }
  }finally{disposeMusic();}
+});
+
+for(const machine of GACHA_MACHINES)for(const delta of [-1,0,1])test(`gacha ${machine.id}: displayed charge, refund and shortage at price ${delta>=0?'+':''}${delta}`,async t=>{
+ const f=await fixture(t);f.initial.decor.lifetimePoints=1000;f.initial.decor.points=machine.cost+delta;
+ await rawWorld(f.indexedDB,f.initial);await f.mount();const before=await rawWorld(f.indexedDB);
+ f.root.querySelector('[data-game-panel="decorate"]').click();
+ f.root.querySelector(`[data-gacha-machine="${machine.id}"]`).click();
+ assert.equal(f.root.querySelector('.game-gacha-cost').textContent,`1回 · ${machine.cost} Gems`);
+ assert.ok(f.root.querySelector('[data-game-details="draw-odds"]').textContent.includes(`同じお飾りは${machine.refund} Gems返却`));
+ assert.equal(f.root.querySelector('[data-decor-draw]').disabled,delta<0);
+ assert.equal(f.root.querySelector('[data-decor-guarantee]').textContent.includes(`${machine.cost} Gemsを集めよう。`),delta<0);
+ assert.equal(f.window.localStorage.getItem('buncho.gacha-machine.v1'),machine.id);
+ assert.deepEqual(await rawWorld(f.indexedDB),before,'machine selection and pricing leave the entire save unchanged');
 });
