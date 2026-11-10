@@ -1593,7 +1593,7 @@ body[data-world="buncho"] .game-app .game-decoration .game-decor-preview{min-hei
  body[data-world="buncho"] .game-app .game-decoration .game-decor-preview{min-height:128px}
 }
 
-/* Household receipt stays below the scene, outside the art and touch controls. */
+/* The household receipt belongs to the scrollable life menu, outside the scene. */
 .game-household-income{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:12px 0;padding:16px;border:1px solid #d9dfcf;border-radius:16px;background:#fffdf5;color:#4c5746}
 .game-household-income>div{flex:1 1 180px;min-width:0;overflow-wrap:anywhere}
 .game-household-income p{margin:6px 0 0;font-size:.85rem;line-height:1.7}
