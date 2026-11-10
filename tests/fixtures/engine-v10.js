@@ -3,7 +3,7 @@ import {advanceRaptorState} from '../../src/garden-raptors.js';
 import {getProtagonistId,initializeProtagonist,syncProtagonist,validateProtagonist,protagonistStatus,familySuccessorCandidates,selectFamilyProtagonist,recordedFamilySuccession} from '../../src/protagonist.js';
 import {accidentLifeBird,rebaseLifecycleClock,initializeLifecycle,registerLifeBird,syncLifecycle,validateLifecycle,isAlive,lifeStatus,noteLifeFeeding,noteLifeConflict,treatLifeBird,hireLifeCaretaker,honorLifeBird} from '../../src/life-care.js';
 import {initialEncounterState,validateEncounterState,encounterSystem,upgradeEncounterState,cageVisitorCount,expireEncounterVisitors} from '../../src/encounters.js';
-import {initialEconomy,validateEconomy,syncEconomy,reserveAutomaticGems,awardCareGold,ECONOMY_RULES} from '../../src/economy.js';
+import {initialEconomy,validateEconomy,syncEconomy,reserveAutomaticGems,awardCareGold,ECONOMY_RULES} from './economy-v1.js';
 /** A deterministic, offline story simulation with fictional lifecycle rules. No real husbandry advice. */
 import { initializeCareSchedule, validateCareSchedule, syncCareSchedule, applyScheduledCare, reconcileImportedCare, careWindow } from '../../src/care-schedule.js';
 import { defaultNameFields, automaticNaming, manualNaming, legacyNaming, isValidNaming } from '../../src/bird-names.js';

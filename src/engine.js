@@ -4,11 +4,11 @@ import {advanceRaptorState} from './garden-raptors.js';
 import {getProtagonistId,initializeProtagonist,syncProtagonist,validateProtagonist,protagonistStatus,familySuccessorCandidates,selectFamilyProtagonist,recordedFamilySuccession} from './protagonist.js';
 import {accidentLifeBird,rebaseLifecycleClock,initializeLifecycle,registerLifeBird,syncLifecycle,nextLifecycleDeadline,LIFE_RULES,validateLifecycle,isAlive,lifeStatus,noteLifeFeeding,noteLifeConflict,treatLifeBird,hireLifeCaretaker,honorLifeBird} from './life-care.js';
 import {initialEncounterState,validateEncounterState,encounterSystem,upgradeEncounterState,cageVisitorCount,expireEncounterVisitors} from './encounters.js';
-import {initialEconomy,validateEconomy,syncEconomy,reserveAutomaticGems,awardCareGold,ECONOMY_RULES} from './economy.js';
+import {initialEconomy,validateEconomy,syncEconomy,reserveAutomaticGems,awardHouseholdGold,ECONOMY_RULES} from './economy.js';
 /** A deterministic, offline story simulation with fictional lifecycle rules. No real husbandry advice. */
-import { initializeCareSchedule, validateCareSchedule, syncCareSchedule, applyScheduledCare, reconcileImportedCare, careWindow } from './care-schedule.js';
+import { initializeCareSchedule, validateCareSchedule, syncCareSchedule, applyScheduledCare, reconcileImportedCare, careWindow, careDay } from './care-schedule.js';
 import { directLineNameFields, newDefaultNameFields, automaticNaming, manualNaming, legacyNaming, isValidNaming } from './bird-names.js';
-export const SAVE_VERSION = 12;
+export const SAVE_VERSION = 13;
 const careTime = now => Math.max(0, Math.min(253402268399999, now));
 export { reconcileImportedCare, careWindow };
 export const TICK_MS = 60000;
@@ -203,6 +203,27 @@ export function claimAutomaticGift(w,giftId,expectedToken,now=Date.now()){
  if(gemAward){gift.amount-=gemAward;if(!gift.amount)w.economy.pending=null;}
  if(synced||gemAward)bumpRevision(w);
  return {changed:gemAward>0,gemAward,message:gemAward?`${gemAward} Gemsを受け取ったよ。`:'お財布がいっぱい。贈り物はここに残しておくね。'};
+}
+/** Pure presentation of the last synchronized world; claim rechecks fresh state. */
+export function householdIncomeStatus(w){
+ const e=w.economy,h=e.household;
+ if(e.day<h.startedDay)return {ready:false,reason:'migration',message:`毎日のお世話のお礼は${h.startedDay}から。日本時間で1日30 Gold、来なかった日のお取り置きはありません。`};
+ if(h.lastClaimedDay===e.day)return {ready:false,reason:'claimed',message:'今日の30 Goldは受け取りました。また明日、会いに来てね。'};
+ const family=w.birds.filter(b=>b.home==='resident'&&isAlive(w,b));
+ const hungry=family.filter(b=>['juvenile','adult'].includes(b.stage)&&b.needs.food<100).length;
+ const tired=family.filter(b=>['juvenile','adult'].includes(b.stage)&&b.needs.energy<100).length;
+ const tasks=[...(hungry?[`ごはん ${hungry}羽`]:[]),...(tired?[`ふれあい ${tired}羽`]:[]),...(w.care.cleanliness<=20?['おうちの掃除']:[])];
+ if(tasks.length)return {ready:false,reason:'care',message:`お礼の前に：${tasks.join('・')}。通院は受取の条件ではありません。`};
+ if(e.gold>ECONOMY_RULES.balanceMax-ECONOMY_RULES.householdGold)return {ready:false,reason:'full',message:'Goldのお財布がいっぱい。30 Gold分の空きができたら受け取れます。'};
+ return {ready:true,reason:'ready',message:'暮らしを確認したら、家庭で1日30 Gold。飼育員に任せたお世話も対象です。'};
+}
+export function claimHouseholdIncome(w,expectedToken,now=Date.now()){
+ if(!currentToken(w,expectedToken))return staleEconomy();
+ advanceTo(w,now);
+ const status=householdIncomeStatus(w);
+ if(!status.ready)return {changed:false,goldAward:0,message:status.message};
+ const goldAward=awardHouseholdGold(w.economy);if(goldAward)bumpRevision(w);
+ return {changed:goldAward>0,goldAward,message:goldAward?'今日の暮らしを確認しました。30 Goldを受け取ったよ。':status.message};
 }
 export function ordinaryFurnitureCatalog(w){return DECOR_SLOTS.flatMap(({id:slot})=>DECOR_COLORS.map(({id:color})=>({id:`${slot}-${color}-cozy`,slot,color,tier:'cozy',gold:ECONOMY_RULES.ordinaryFurnitureGold,owned:w.decor.inventory.some(i=>i.id===`${slot}-${color}-cozy`)})));}
 export function buyOrdinaryFurniture(w,itemId,expectedToken,now=Date.now()){
@@ -606,7 +627,7 @@ export function feedBird(w, birdId, now=w.lifecycle?.seenAt??Date.now(), expecte
   const result=applyScheduledCare(w,birdId,'feed',careTime(now));
   if(!result.changed)return {...careResult('feed',birdId,false,result.before,result.after,0,`${bird.name}は、おなかいっぱい。`,'full'),nextAt:result.nextAt};
   noteLifeFeeding(w,bird,careTime(now));bird.care.lastFedTick=w.tick;fullMeal(w,bird);setAction(w,bird,'eat');
-  const gemAward=grantGems(w,result.gemAward),goldAward=awardCareGold(w.economy);
+  const gemAward=grantGems(w,result.gemAward),goldAward=0;
   record(w,'user-feed',[birdId],'利用者がゲームのごはんを選んだ','おなかの満ちぐあいが増えた');bumpRevision(w);
   return {...careResult('feed',birdId,true,result.before,result.after,0,`${bird.name}がごはんを食べたよ。`,'success'),gemAward,goldAward,nextAt:result.nextAt};
 }
@@ -617,7 +638,7 @@ export function petBird(w, birdId, now=w.lifecycle?.seenAt??Date.now(), expected
   const result=applyScheduledCare(w,birdId,'pet',careTime(now));
   if(!result.changed)return {...careResult('pet',birdId,false,result.before,result.after,0,`${bird.name}は、元気いっぱい。`,'full'),nextAt:result.nextAt};
   bird.mood=clamp(bird.mood+CARE_RULES.petMoodGain);bird.care.lastPetTick=w.tick;setAction(w,bird,'talk');
-  const gemAward=grantGems(w,result.gemAward),goldAward=awardCareGold(w.economy);
+  const gemAward=grantGems(w,result.gemAward),goldAward=0;
   record(w,'user-pet',[birdId],'利用者がゲームのふれあいを選んだ','元気が少し増えた');bumpRevision(w);
   return {...careResult('pet',birdId,true,result.before,result.after,0,`${bird.name}「ぴっ♪」`,'success'),gemAward,goldAward,nextAt:result.nextAt};
 }
@@ -657,7 +678,7 @@ export function talkToBird(w, birdId, text, now=w.lifecycle?.seenAt??Date.now(),
     answer = `${b.name}だよ。いまは${b.needs.energy < 40 ? 'のんびりしたい気分' : b.mood > 75 ? 'わくわくした気分' : 'おだやかな気分'}。${last?.otherId ? `さっきは${birdName(w, last.otherId)}のことを考えていたよ。` : `${b.preference}が気になるな。`}`;
   } else { topic = 'unknown'; answer = `${b.name}だよ。そのお話はまだわからないけれど、声は届いたよ。「遊ぼう」「水浴び」「友達」「おやすみ」のお話ならできるよ。`; }
   let gemAward=0,goldAward=0;
-  if(care.changed){b.gemCare.lastChatTick=w.tick;gemAward=grantGems(w,care.gemAward);goldAward=awardCareGold(w.economy);}
+  if(care.changed){b.gemCare.lastChatTick=w.tick;gemAward=grantGems(w,care.gemAward);goldAward=0;}
   b.mood = clamp(b.mood + 2); remember(w, b, `user-${topic}`); bumpRevision(w); return { answer, topic, gemAward, goldAward, careChanged:care.changed, nextAt:care.nextAt };
 }
 export function eventText(w, e) {
@@ -779,7 +800,7 @@ function validateVersion(input, version) {
   const legacyHomeLimits=version<6||w.encounters.version<6;
   if(version>=6){if(version<12&&w.encounters.gardenFriends?.references?.length>128)fail('庭の友達の情報が多すぎます。');validateEncounterState(w.encounters,w.tick);upgradeEncounterState(w.encounters);if([...w.encounters.gardenFriends.attendees,...w.encounters.gardenFriends.companions,...w.encounters.gardenFriends.references.map(r=>r.birdId)].some(id=>!ref(id)))fail('庭の同行と友達の情報が不正です。');if(w.encounters.homeGoodbyes.some(g=>!ref(g.birdId)))fail('お友達のお見送り情報が不正です。');if(w.encounters.raptor?.active&&w.encounters.raptor.active.targetBirdId!==null&&!ref(w.encounters.raptor.active.targetBirdId))fail('猛禽と会った文鳥の情報が不正です。');if(w.encounters.crow?.arrivalBirdId&&!ref(w.encounters.crow.arrivalBirdId))fail('カラスと会った文鳥の情報が不正です。');}
   if(version>=7){
-   validateEconomy(w.economy);
+   validateEconomy(w.economy,version>=13?2:1);
    if(w.economy.firstMeetingClaimed.some(id=>!w.encounters.discoveries.some(d=>d.id===id)))fail('初出会いの記録が不正です。');
    if(!['ask','auto'].includes(w.settings.adoptionMode)||!shape(w.adoption,['pending','dismissed'])||!Array.isArray(w.adoption.dismissed)||w.adoption.dismissed.length>LIMITS.birds||new Set(w.adoption.dismissed).size!==w.adoption.dismissed.length||w.adoption.dismissed.some(id=>!ref(id)))fail('お迎え相談の情報が不正です。');
    const p=w.adoption.pending;
@@ -832,7 +853,7 @@ export function migrateV5ToV6(input, now=Date.now()) {
  const world=validateVersion(input,5);world.version=6;world.encounters=initialEncounterState();return migrateV6ToV7(world,now);
 }
 export function migrateV6ToV7(input, now=Date.now()) {
- const world=validateVersion(input,6);world.version=7;world.economy=initialEconomy(careTime(now));world.settings.adoptionMode='auto';world.adoption={pending:null,dismissed:[]};world.economy.firstMeetingClaimed=world.encounters.discoveries.map(d=>d.id);return migrateV7ToV8(world,now);
+ const world=validateVersion(input,6);world.version=7;world.economy=initialEconomy(careTime(now),1);world.settings.adoptionMode='auto';world.adoption={pending:null,dismissed:[]};world.economy.firstMeetingClaimed=world.encounters.discoveries.map(d=>d.id);return migrateV7ToV8(world,now);
 }
 export function migrateV7ToV8(input,now=Date.now()){
  const world=validateVersion(input,7);world.version=8;initializeLifecycle(world,careTime(Math.max(now,world.careSchedule.seenAt,world.economy.seenAt)),true);return migrateV8ToV9(world,now);
@@ -847,7 +868,15 @@ export function migrateV10ToV11(input,now=Date.now()){
  const world=validateVersion(input,10);world.version=11;world.decor.duplicateStreaks=initialDecorStreaks();return migrateV11ToV12(world,now);
 }
 export function migrateV11ToV12(input,now=Date.now()){
- const w=validateVersion(input,11);w.version=12;w.archive=[];w.journal=w.events.filter(e=>['welcome','adopt','movein','pair','egg','hatch','grow','depart','death','succession'].includes(e.kind)).map(clone);for(const b of w.birds){if(b.partner&&b.sex==='female'&&!w.journal.some(e=>e.kind==='pair'&&e.ids.includes(b.id)&&e.ids.includes(b.partner))){w.journal.push({id:`legacy-pair-${b.id}`,kind:'pair',ids:[b.id,b.partner],condition:'移行前の家族情報',result:'つがいの記録を引き継いだ',data:{},tick:b.pairTick,at:w.epoch+b.pairTick*15000});}}for(const b of w.birds){if(b.partner&&lifeStatus(w,b)?.death){const partner=findBird(w,b.partner);partner.partner=null;partner.pairTick=null;b.partner=null;b.pairTick=null;}}w.clock={version:2,originTick:w.tick,originAt:Math.max(w.lastUpdated,now),legacyEventMax:w.nextEvent-1};return validateWorld(w);
+ const w=validateVersion(input,11);w.version=12;w.archive=[];w.journal=w.events.filter(e=>['welcome','adopt','movein','pair','egg','hatch','grow','depart','death','succession'].includes(e.kind)).map(clone);for(const b of w.birds){if(b.partner&&b.sex==='female'&&!w.journal.some(e=>e.kind==='pair'&&e.ids.includes(b.id)&&e.ids.includes(b.partner))){w.journal.push({id:`legacy-pair-${b.id}`,kind:'pair',ids:[b.id,b.partner],condition:'移行前の家族情報',result:'つがいの記録を引き継いだ',data:{},tick:b.pairTick,at:w.epoch+b.pairTick*15000});}}for(const b of w.birds){if(b.partner&&lifeStatus(w,b)?.death){const partner=findBird(w,b.partner);partner.partner=null;partner.pairTick=null;b.partner=null;b.pairTick=null;}}w.clock={version:2,originTick:w.tick,originAt:Math.max(w.lastUpdated,now),legacyEventMax:w.nextEvent-1};return migrateV12ToV13(w,now);
+}
+/** Preserve the raw v12 world at the storage boundary before committing this migration. */
+export function migrateV12ToV13(input,now=Date.now()){
+ const w=validateVersion(input,12),at=careTime(Math.max(now,w.economy.seenAt,w.careSchedule.seenAt,w.lifecycle.seenAt));
+ w.version=13;w.economy.version=2;
+ // Block the migration day: the old client may already have awarded care Gold.
+ const today=careDay(at).date,next=today==='9999-12-31'?today:new Date(Date.parse(today+'T00:00:00Z')+86400000).toISOString().slice(0,10);
+ w.economy.household={startedDay:next,lastClaimedDay:next===today?today:null};return validateWorld(w);
 }
 export function readCompatibleWorld(input, now=Date.now()) {
   // Do not execute an accessor even to discover the version of an untrusted object.
@@ -864,6 +893,7 @@ export function readCompatibleWorld(input, now=Date.now()) {
   if (descriptor.value === 9) return migrateV9ToV10(input,now);
   if (descriptor.value === 10) return migrateV10ToV11(input,now);
   if (descriptor.value === 11) return migrateV11ToV12(input,now);
+  if (descriptor.value === 12) return migrateV12ToV13(input,now);
   if (descriptor.value === SAVE_VERSION) return validateWorld(input);
   throw new Error('保存データを読み込めません：対応していない版です。元の保存はそのままです。');
 }

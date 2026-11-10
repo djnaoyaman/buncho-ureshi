@@ -15,5 +15,5 @@ export function renderCaretakerRecruitment(view){
 <p>実時間1日につき <strong>${daily} Gold</strong>。この庭で暮らす全員のごはん・掃除・自動通院（追加料金なし）をお任せできます。</p>
 ${view.active?`<p class="life-contract">契約の残り：<strong>実時間 ${escape(view.remainingLabel)}</strong><br><small>延長分は現在の契約の後に追加されます。</small></p>`:''}
 <h5 class="caretaker-recruitment-options-title">お願いする日数</h5><div class="life-hire-options caretaker-recruitment-options">${view.options.map(option=>`<button type="button" data-life-hire="${option.days}" ${option.disabled?'disabled':''}><span class="caretaker-recruitment-days">${option.days}日<span class="caretaker-recruitment-action">${view.active?'延長':'お願いする'}</span></span><strong>${escape(option.priceLabel)} Gold</strong></button>`).join('')}</div>
-<p class="life-small">1日は、実時間の24時間です。</p><p class="life-small">Gold・Gemsは増えません。寿命は延びません。契約は残り合計30日までです。</p><p class="life-small">所持金：${escape(view.goldLabel)} Gold${view.insufficientGold?' · 契約に必要なGoldが足りません。':''}</p></section>`;
+<p class="life-small">1日は、実時間の24時間です。</p><p class="life-small">自動のお世話ではGemsは増えません。毎日のお礼30 Goldは、暮らしを確認して受け取れます。寿命は延びません。契約は残り合計30日までです。</p><p class="life-small">所持金：${escape(view.goldLabel)} Gold${view.insufficientGold?' · 契約に必要なGoldが足りません。':''}</p></section>`;
 }

@@ -272,7 +272,7 @@ test('direct care ignores taps and short movement, then commits exactly one rewa
   assert.deepEqual(f.read(),before,'movement is not a save');assert.equal(f.root.querySelector('[data-care-rub]').dataset.rubbing,'ready');
   directRub(f,'pointerup');await f.settle();const after=f.read();
   assert.equal(after.events.filter(e=>e.kind==='user-pet').length,1);assert.equal(after.birds[0].mood,before.birds[0].mood+4);
-  assert.equal(after.economy.gold,before.economy.gold+4);assert.equal(after.decor.points,before.decor.points+5);
+  assert.equal(after.economy.gold,before.economy.gold);assert.equal(after.decor.points,before.decor.points+5);
   assert.deepEqual(after.encounters,before.encounters,'catalog affection is independent');
   assert.equal(f.root.querySelector('#game-sheet-title').textContent,before.birds[0].name,'rubbing never switches birds');
   directRub(f,'pointerup');await f.settle();assert.deepEqual(f.read(),after,'duplicate release cannot award twice');

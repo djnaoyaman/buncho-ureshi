@@ -4,6 +4,19 @@ export const STORAGE_KEY = 'buncho-ureshi-world-v1';
 export const DB_NAME = 'buncho-ureshi-garden-v1';
 const BACKUP_KEY = 'reset-backup';
 const LOCAL_FORMAT = 'buncho-world-with-reset-backup-v1';
+// Raw migration copies are independent of the reset backup and never overwrite an older copy.
+function preserveMigration(store,raw){
+ if(!raw||raw.version>=13)return;
+ const key=raw.version<12?'migration-backup-v11':'migration-backup-v12',q=store.get(key);
+ q.onsuccess=()=>{if(q.result===undefined)store.put(raw,key);};
+}
+function preserveLocalMigration(storage,raw){
+ if(!raw)return;const world=JSON.parse(raw).current??JSON.parse(raw);
+ if(world.version>=13)return;
+ const key=STORAGE_KEY+(world.version<12?'-migration-v11':'-migration-v12');
+ if(storage.getItem(key)===null)storage.setItem(key,raw);
+}
+
 let generation = 0;
 const staleError = () => new Error('別のタブで庭が変わりました。画面を更新して、もう一度確認してください。');
 const noBackupError = () => new Error('復元できるリセット前の庭はありません。');
@@ -71,6 +84,7 @@ export async function openGameStore(platform = globalThis) {
           try {
             if (request.result === undefined) throw staleError();
             const current = readCompatibleWorld(request.result);
+            preserveMigration(store,request.result);
             if (current.worldId !== expectedWorldId) throw staleError();
             if (restore) {
               const saved = store.get(BACKUP_KEY);
@@ -92,7 +106,7 @@ export async function openGameStore(platform = globalThis) {
     }
     return {
       mode: 'device',
-      async migrationBackup(){return new Promise((resolve,reject)=>{const tx=db.transaction('world','readonly'),q=tx.objectStore('world').get('migration-backup-v11');q.onsuccess=()=>resolve(q.result||null);q.onerror=()=>reject(q.error);});},
+      async migrationBackup(version=11){return new Promise((resolve,reject)=>{const tx=db.transaction('world','readonly'),q=tx.objectStore('world').get(version===12?'migration-backup-v12':'migration-backup-v11');q.onsuccess=()=>resolve(q.result||null);q.onerror=()=>reject(q.error);});},
       replaceWorld(expectedWorldId,replacement,now=Date.now(),{guard=()=>true}={}){
         if(closed)return Promise.reject(closedError());
         return new Promise((resolve,reject)=>{
@@ -102,7 +116,7 @@ export async function openGameStore(platform = globalThis) {
             const current=request.result===undefined?createWorld(now):readCompatibleWorld(request.result,now);
             if(!guard()){result=current;return;}
             if(request.result===undefined)throw staleError();
-            result=replacementResult(current,expectedWorldId,replacement,now);store.put(result,'current');
+            result=replacementResult(current,expectedWorldId,replacement,now);preserveMigration(store,request.result);store.put(result,'current');
           }catch(error){failure=error;tx.abort();}};
           request.onerror=()=>{failure=request.error;};
           tx.oncomplete=()=>resolve(result);
@@ -135,7 +149,7 @@ export async function openGameStore(platform = globalThis) {
               const current = exists ? readCompatibleWorld(request.result) : createWorld();
               const beforeWorldId = current.worldId, beforeRevision = current.revision, beforeTime = current.lastUpdated, beforeCareTime=current.careSchedule?.seenAt;
               result = validateWorld(fn(current));
-              if(exists&&request.result.version<12)store.put(request.result,'migration-backup-v11');
+              if(exists)preserveMigration(store,request.result);
               // Compare against the raw persisted schema, not the already-migrated object.
               if (!exists || request.result.version !== result.version || request.result.encounters?.version !== result.encounters?.version || result.worldId !== beforeWorldId || result.revision !== beforeRevision || result.lastUpdated !== beforeTime || result.careSchedule?.seenAt !== beforeCareTime) store.put(result, 'current');
             } catch (error) { failure = error; tx.abort(); }
@@ -180,19 +194,21 @@ function lockedLocalStore(storage, locks) {
     if (raw === null) throw staleError();
     const { current, backup } = localRecord(raw);
     const result = resetResult(current, expected, backup, restore);
+    preserveLocalMigration(storage,raw);
     // One key, one atomic storage operation: quota/security errors preserve both old values.
     storage.setItem(STORAGE_KEY, encodeRecord(result, restore ? null : current));
     return result;
   });
   return {
     mode: 'locked-local',
-    migrationBackup:()=>locked(()=>{const raw=storage.getItem(STORAGE_KEY+'-migration-v11');return raw?(JSON.parse(raw).current??JSON.parse(raw)):null;}),
+    migrationBackup:(version=11)=>locked(()=>{const raw=storage.getItem(STORAGE_KEY+(version===12?'-migration-v12':'-migration-v11'));return raw?(JSON.parse(raw).current??JSON.parse(raw)):null;}),
     replaceWorld(expectedWorldId,replacement,now=Date.now(),{guard=()=>true}={}){
       return locked(()=>{
         const raw=storage.getItem(STORAGE_KEY),record=localRecord(raw);
         if(!guard())return record.current;
         if(raw===null)throw staleError();
         const result=replacementResult(record.current,expectedWorldId,replacement,now);
+        preserveLocalMigration(storage,raw);
         storage.setItem(STORAGE_KEY,record.envelope?encodeRecord(result,record.backup):serializeWorld(result));
         return result;
       });
@@ -205,7 +221,7 @@ function lockedLocalStore(storage, locks) {
         const raw = storage.getItem(STORAGE_KEY), record = localRecord(raw);
         const result = validateWorld(fn(record.current));
         const encoded = record.envelope ? encodeRecord(result, record.backup) : serializeWorld(result);
-        if(raw&&(JSON.parse(raw)?.current??JSON.parse(raw))?.version<12&&!storage.getItem(STORAGE_KEY+'-migration-v11'))storage.setItem(STORAGE_KEY+'-migration-v11',raw);
+        preserveLocalMigration(storage,raw);
         if (encoded !== raw) storage.setItem(STORAGE_KEY, encoded);
         return result;
       });

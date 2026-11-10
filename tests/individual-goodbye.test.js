@@ -129,7 +129,7 @@ test('legacy encounter schemas 4–9 migrate additively with empty cooldowns and
   if(version<9)for(const id of GARDEN_IDS.slice(9))delete w.encounters.garden.visits[id];
   if(version<8)delete w.encounters.raptor;if(version<7)delete w.encounters.crow;if(version<6)delete w.encounters.homeClosedUntil;
   if(version<5){delete w.encounters.friendship;delete w.encounters.cageVisitors;}
-  const before=clone(w),next=readCompatibleWorld(w,now);assert.deepEqual(w,before);assert.equal(next.version,12);assert.equal(next.encounters.version,13);assert.deepEqual(next.encounters.homeGoodbyes,[]);
+  const before=clone(w),next=readCompatibleWorld(w,now);assert.deepEqual(w,before);assert.equal(next.version,13);assert.equal(next.encounters.version,13);assert.deepEqual(next.encounters.homeGoodbyes,[]);
   assert.deepEqual(next.encounters.gardenFriends,{...before.encounters.gardenFriends,version:2,accompany:false,attendees:[],visits:[]});
   assert.deepEqual(next.birds,w.birds);assert.deepEqual(next.events,w.events);assert.equal(next.revision,w.revision);assert.deepEqual(parseSave(serializeWorld(next)),next);
   const projected=clone(next);projected.encounters=before.encounters;assert.deepEqual(projected,before);

@@ -133,7 +133,7 @@ test('a frozen pre-fix v12 save is never backfilled, revived or compensated',()=
 });
 
 test('migrated v11 records and the caller input are never rewritten by future catch-up',()=>{
- const old=createWorld(NOW);old.version=11;delete old.clock;delete old.archive;delete old.journal;
+ const old=createWorld(NOW);old.version=11;if(old.economy){old.economy.version=1;delete old.economy.household;}delete old.clock;delete old.archive;delete old.journal;
  const original=structuredClone(old),world=readCompatibleWorld(old,NOW+DAY),history=structuredClone(world.events);
  advanceTo(world,NOW+2*DAY);
  assert.deepEqual(old,original);assert.deepEqual(world.events.slice(0,history.length),history);

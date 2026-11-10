@@ -37,14 +37,14 @@ for(const kind of ['feed','pet','talk'])test(`${kind} survives an own paused clo
  const advance=clock(t),f=await fixture(t,{sound:true});await f.mount();const before=f.read(),gate=f.hold();advance(1000);const polling=f.poll();
  act(f,kind);act(f,kind);assert.equal(f.rig.contexts.length,1,'unlock happens synchronously before held poll');assert.equal(f.rig.starts,0);
  gate.resolve();await polling;await f.settle();await until(()=>f.rig.starts===2);
- const after=f.read();assert.equal(after.economy.gold,before.economy.gold+4);assert.equal(after.decor.points,before.decor.points+(kind==='feed'?6:5));
+ const after=f.read();assert.equal(after.economy.gold,before.economy.gold);assert.equal(after.decor.points,before.decor.points+(kind==='feed'?6:5));
  assert.equal(after.birds[0].needs[kind==='feed'?'food':'energy'],kind==='feed'?60:100);assert.equal(f.rig.starts,2);
 });
 
 test('live story-tick poll preserves feed intent without advancing it twice',async t=>{
  const advance=clock(t),f=await fixture(t,{sound:true});await f.mount();const live=f.read();live.paused=false;f.write(live);await f.poll();
  const before=f.read(),gate=f.hold();advance(60000);const polling=f.poll();f.clickCare('feed');gate.resolve();await polling;await f.settle();
- assert.equal(f.read().tick,before.tick+1);assert.equal(f.read().birds[0].needs.food,60);assert.equal(f.read().economy.gold,before.economy.gold+4);
+ assert.equal(f.read().tick,before.tick+1);assert.equal(f.read().birds[0].needs.food,60);assert.equal(f.read().economy.gold,before.economy.gold);
 });
 
 for(const change of ['fill','rename','import'])test(`poll cannot rebase a care intent over peer ${change}`,async t=>{
@@ -76,21 +76,21 @@ test('failed poll and failed care save release their reservation without reward 
  const advance=clock(t),f=await fixture(t,{sound:true});await f.mount();const before=f.read(),gate=f.hold();f.failNext();advance(1000);const polling=f.poll();f.clickCare('feed');gate.resolve();await polling;await f.settle();
  assert.equal(f.read().birds[0].needs.food,40);assert.equal(f.rig.starts,0);
  f.failNext();f.clickCare('feed');await f.settle();assert.equal(f.read().decor.points,before.decor.points);assert.equal(f.rig.starts,0);
- f.clickCare('feed');await f.settle();assert.equal(f.read().birds[0].needs.food,60);assert.equal(f.read().economy.gold,4);
+ f.clickCare('feed');await f.settle();assert.equal(f.read().birds[0].needs.food,60);assert.equal(f.read().economy.gold,0);
 });
 
 for(const kind of ['pet','talk'])test(`${kind} may commit after a slow own poll but must never play its stale chirp`,async t=>{
  const advance=clock(t),f=await fixture(t,{sound:true});await f.mount();const gate=f.hold();advance(1000);const polling=f.poll();act(f,kind);advance(1501);gate.resolve();await polling;await f.settle();
- assert.equal(f.read().birds[0].needs.energy,100);assert.equal(f.read().economy.gold,4);assert.equal(f.rig.starts,0);
+ assert.equal(f.read().birds[0].needs.energy,100);assert.equal(f.read().economy.gold,0);assert.equal(f.rig.starts,0);
 });
 
 test('pet and talk queued behind the same poll share one pending care reservation',async t=>{
  const advance=clock(t),f=await fixture(t,{sound:true});await f.mount();const w=f.read();w.birds[0].needs.energy=40;bumpRevision(w);f.write(w);await f.poll();
  const before=f.read(),gate=f.hold();advance(1000);const polling=f.poll();act(f,'pet');act(f,'talk');gate.resolve();await polling;await f.settle();
- assert.equal(f.read().birds[0].needs.energy,60);assert.equal(f.read().economy.gold,before.economy.gold+4);assert.equal(f.rig.starts,2);
+ assert.equal(f.read().birds[0].needs.energy,60);assert.equal(f.read().economy.gold,before.economy.gold);assert.equal(f.rig.starts,2);
 });
 
 test('cancelled intent cannot clear a newer reservation while the same poll is pending',async t=>{
  const advance=clock(t),f=await fixture(t,{sound:true});await f.mount();const gate=f.hold();advance(1000);const polling=f.poll();f.clickCare('feed');f.closeCare();f.openCare();f.clickCare('feed');f.clickCare('feed');gate.resolve();await polling;await f.settle();
- assert.equal(f.read().birds[0].needs.food,60);assert.equal(f.read().economy.gold,4);assert.equal(f.rig.starts,2);
+ assert.equal(f.read().birds[0].needs.food,60);assert.equal(f.read().economy.gold,0);assert.equal(f.rig.starts,2);
 });
