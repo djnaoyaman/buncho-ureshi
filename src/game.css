@@ -1598,3 +1598,7 @@ body[data-world="buncho"] .game-app .game-decoration .game-decor-preview{min-hei
 .game-household-income>div{flex:1 1 180px;min-width:0;overflow-wrap:anywhere}
 .game-household-income p{margin:6px 0 0;font-size:.85rem;line-height:1.7}
 .game-household-income button{min-height:48px;max-width:100%;white-space:normal;overflow-wrap:anywhere}
+
+.game-household-income>.game-household-care{flex:1 1 100%;display:flex;flex-wrap:wrap;gap:8px}
+.game-household-care button{flex:1 1 8rem;min-width:0}
+.game-household-care small{flex:1 1 100%;line-height:1.7}

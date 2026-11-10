@@ -1,3 +1,4 @@
+import {careFamily,familyCareStatus} from './family-care.js';
 import {pairProposals,resolvePairProposal} from './engine.js';
 import {allBirds,activateBird} from './world-birds.js';
 import {GACHA_MACHINES,gachaMachine} from './gacha-machines.js';
@@ -496,14 +497,14 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
 
   let economyPending=false;
   function pairConsultations(){return pairProposals(world).map(e=>`<section class="game-pair-consultation"><h4>新しいつがいの相談</h4><p>${e.ids.map(id=>escape(birdName(world,id))).join('と')}が、なかよくなったよ。これまでの家族と思い出も残ります。</p><button type="button" data-pair-decision="accept" data-pair-event="${e.id}">新しいつがいを見守る</button><button type="button" data-pair-decision="later" data-pair-event="${e.id}">今回は見守る</button></section>`).join('');}
-  function householdIncome(){const status=householdIncomeStatus(world);return `<section class="game-household-income" aria-label="毎日のお世話のお礼"><div><strong>今日の暮らしと30 Gold</strong><p>${escape(status.message)}</p></div><button type="button" data-household-income data-economy-world="${escape(world.worldId)}" data-economy-revision="${world.revision}" ${!status.ready||economyPending?'disabled':''}>暮らしを確認して受け取る</button></section>`;}
+  function householdIncome(){const status=householdIncomeStatus(world),feed=familyCareStatus(world,'feed'),pet=familyCareStatus(world,'pet');return `<section class="game-household-income" aria-label="毎日のお世話のお礼"><div><strong>今日の暮らしと30 Gold</strong><p>${escape(status.message)}</p></div><button type="button" data-household-income data-economy-world="${escape(world.worldId)}" data-economy-revision="${world.revision}" ${!status.ready||economyPending?'disabled':''}>暮らしを確認して受け取る</button><div class="game-household-care" role="group" aria-label="家族のお世話"><button type="button" data-family-care="feed" data-economy-world="${escape(world.worldId)}" data-economy-revision="${world.revision}" ${!feed.ready||economyPending?'disabled':''}>家族にごはん</button><button type="button" data-family-care="pet" data-economy-world="${escape(world.worldId)}" data-economy-revision="${world.revision}" ${!pet.ready||economyPending?'disabled':''}>家族とふれ合う</button><small>${world.field.place==='home'?`ごはん ${feed.count}羽・ふれあい ${pet.count}羽。1羽ずつのお世話と同じ回復量・Gemsです。卵やひなは見守ります。`:'家族のお世話は、おうちに戻ってから。'}</small></div></section>`;}
   function automaticGift(){const gift=world.economy.pending;return (pairProposals(world).length?'<button class="game-pair-invitation" data-game-panel="family">新しいつがいの相談</button>':'')+(gift?`<button class="game-auto-gift" data-auto-gift="${escape(gift.id)}" data-economy-world="${escape(world.worldId)}" data-economy-revision="${world.revision}" aria-label="みんなからの贈り物 ${gift.amount} Gemsを受け取る">🎁 <span>${gift.amount} Gems</span></button>`:'');}
   async function economyAction(button){
     if(economyPending||button.disabled)return;economyPending=true;button.disabled=true;
     const token={worldId:button.dataset.economyWorld,revision:Number(button.dataset.economyRevision)};let result;
-    try{const committed=await mutate(w=>{result=button.hasAttribute('data-household-income')?claimHouseholdIncome(w,token):button.dataset.autoGift?claimAutomaticGift(w,button.dataset.autoGift,token):buyOrdinaryFurniture(w,button.dataset.goldBuy,token);},'',()=>alive,{bump:false,advanceCurrent:false});
-      if(committed&&result){setMessage(result.message||'');render();showGemReward(result.gemAward,undefined,result.goldAward);if(result.changed)root.querySelector(button.hasAttribute('data-household-income')?'.game-menu-close':button.dataset.autoGift?'[data-game-open-menu]':'[data-decor-preview="'+button.dataset.goldBuy+'"]')?.focus({preventScroll:true});}
-    }finally{economyPending=false;if(alive)render();}
+    try{const committed=await mutate(w=>{result=button.dataset.familyCare?careFamily(w,button.dataset.familyCare,token):button.hasAttribute('data-household-income')?claimHouseholdIncome(w,token):button.dataset.autoGift?claimAutomaticGift(w,button.dataset.autoGift,token):buyOrdinaryFurniture(w,button.dataset.goldBuy,token);},'',()=>alive,{bump:false,advanceCurrent:false});
+      if(committed&&result){setMessage(result.message||'');render();showGemReward(result.gemAward,undefined,result.goldAward);if(!button.dataset.familyCare&&result.changed)root.querySelector(button.hasAttribute('data-household-income')?'.game-menu-close':button.dataset.autoGift?'[data-game-open-menu]':'[data-decor-preview="'+button.dataset.goldBuy+'"]')?.focus({preventScroll:true});}
+    }finally{economyPending=false;if(alive){render();if(button.dataset.familyCare){(root.querySelector('[data-family-care="'+button.dataset.familyCare+'"]:not(:disabled)')||root.querySelector('[data-family-care]:not(:disabled)')||root.querySelector('[data-household-income]:not(:disabled)')||root.querySelector('.game-menu-close'))?.focus();}}}
   }
   function gemCollectibles(){
     if(world.field.place!=='home')return '';
@@ -912,7 +913,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     if(button.dataset.familyZoom){familyZoomManual=true;familyZoom=Math.max(.7,Math.min(1.2,Math.round((familyZoom+Number(button.dataset.familyZoom)*.1)*10)/10));render();centerFamily();return;}
     if(button.dataset.birdStep){switchBird(Number(button.dataset.birdStep));return;}
     if(button.dataset.gemCollect){await collectGem(button);return;}
-    if(button.hasAttribute('data-household-income')||button.hasAttribute('data-auto-gift')||button.hasAttribute('data-gold-buy')){await economyAction(button);return;}
+    if(button.hasAttribute('data-family-care')||button.hasAttribute('data-household-income')||button.hasAttribute('data-auto-gift')||button.hasAttribute('data-gold-buy')){await economyAction(button);return;}
     if(button.hasAttribute('data-game-open-menu')){const menu=root.querySelector('.game-secondary-menu');menu.open=!menu.open;if(menu.open)menu.querySelector('button')?.focus({preventScroll:true});return;}
     if(button.hasAttribute('data-game-close-panel')){closePanel();return;}
     if(button.hasAttribute('data-game-close-bird')){closeBirdSheet();return;}
