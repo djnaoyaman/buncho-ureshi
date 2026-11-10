@@ -157,3 +157,49 @@ test('concurrent persisted resumptions commit milestone Gems and history once',a
   assert.equal(world.journal.filter(e=>e.kind==='death').length,3);validateWorld(world);
  }finally{a.close();b.close();}
 });
+
+for(const stops of [[10,13,35,38,83,85,100],[11,14,34,37,82,86,100]])test(`short resumes date growth at its actual minute ${stops}`,()=>{
+ const {world,child}=family();for(const t of stops)advanceTo(world,NOW+t*minute);advanceTo(world,NOW+4*DAY);
+ const growth=world.journal.filter(e=>e.ids[0]===child.id&&['hatch','grow'].includes(e.kind));
+ assert.deepEqual(growth.map(e=>[e.kind,e.tick,e.at]),[['hatch',12,NOW+12*minute],['grow',36,NOW+36*minute],['grow',84,NOW+84*minute]]);
+ assert.equal(child.stage,'adult');assert.equal(world.decor.points,95);assert.deepEqual(lifeStatus(world,child).death,{cause:'neglect',at:NOW+3*DAY,tick:4320});
+ const saved=serializeWorld(world);advanceTo(world,NOW+4*DAY);assert.equal(serializeWorld(world),saved);validateWorld(world);
+});
+for(const offset of [0,30000])test(`short resume resolves an existing treatment deadline between ticks ${offset}`,()=>{
+ const w=createWorld(NOW);lifeStatus(w,'b1').condition={kind:'injury',sinceAt:NOW-DAY+2*minute+offset,deadlineAt:NOW+2*minute+offset};
+ advanceTo(w,NOW+4*minute);assert.deepEqual(lifeStatus(w,'b1').death,{cause:'injury',at:NOW+2*minute+offset,tick:2});
+ assert.equal(w.journal.find(e=>e.kind==='death').at,NOW+2*minute+offset);validateWorld(w);
+});
+for(const at of [1,2,3])test(`short resume orders a feeding deadline and hatching at minute ${at}`,()=>{
+ const {world,child}=family();world.tick=10;world.clock.originTick=10;
+ lifeStatus(world,child).lastCareAt=NOW-3*DAY+at*minute;
+ advanceTo(world,NOW+4*minute);
+ assert.equal(child.stage,at<=2?'egg':'chick');assert.equal(world.decor.points,at<=2?20:55);
+ assert.deepEqual(lifeStatus(world,child).death,{cause:'neglect',at:NOW+at*minute,tick:10+at});validateWorld(world);
+});
+test('short catch-up retains ordinary arrivals and deterministic social actions',()=>{
+ const once=createWorld(NOW),each=structuredClone(once);advanceTo(once,NOW+4*minute);
+ for(let i=1;i<=4;i++)advanceTo(each,NOW+i*minute);
+ assert.ok(once.birds.length>1,'ordinary first visitor still arrives');
+ for(const key of ['birds','seed','events','journal','decor','protagonist','tick'])assert.deepEqual(once[key],each[key],key);validateWorld(once);
+});
+
+test('short interval observes caretaker expiry at its actual second without granting rewards',()=>{
+ const w=createWorld(NOW),until=NOW+2*minute+30000;
+ w.lifecycle.caretaker={fromAt:until-DAY,until};const points=w.decor.points;
+ advanceTo(w,NOW+4*minute);assert.equal(lifeStatus(w,'b1').lastCareAt,until);
+ assert.equal(w.decor.points,points);assert.equal(w.economy.gold,0);assert.equal(lifeStatus(w,'b1').death,null);validateWorld(w);
+});
+test('short resume defers an outside heir to observation and preserves its full treatment window',()=>{
+ const w=createWorld(NOW);w.tick=LIFE_RULES.lifespanTicks-2;w.clock.originTick=w.tick;
+ const father=createBird(w,{home:'departed',sex:'male'}),child=createBird(w,{home:'departed',parents:['b1',father.id],generation:1});
+ lifeStatus(w,child).condition={kind:'injury',sinceAt:NOW-DAY,deadlineAt:NOW};
+ advanceTo(w,NOW+4*minute);assert.equal(w.protagonist.birdId,child.id);assert.equal(child.home,'resident');
+ assert.equal(lifeStatus(w,child).lastCareAt,NOW+4*minute);assert.equal(lifeStatus(w,child).death,null);
+ assert.deepEqual(lifeStatus(w,child).condition,{kind:'injury',sinceAt:NOW+4*minute,deadlineAt:NOW+4*minute+DAY});validateWorld(w);
+});
+
+test('a safe-integer tick limit does not trap short resumption in a non-progressing loop',()=>{
+ const w=createWorld(NOW);w.tick=Number.MAX_SAFE_INTEGER;w.clock.originTick=w.tick;w.clock.legacyEventMax=w.nextEvent-1;lifeStatus(w,'b1').ageOriginTick=w.tick;
+ validateWorld(w);advanceTo(w,NOW+minute);assert.equal(w.tick,Number.MAX_SAFE_INTEGER);assert.equal(w.lastUpdated,NOW+minute);validateWorld(w);
+});

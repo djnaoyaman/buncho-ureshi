@@ -409,10 +409,10 @@ function visits(w, now=Date.now()) {
   // Resident independence is always a separate, explicitly accepted consultation.
   for (const b of w.birds.filter(b => b.home === 'visitor' && w.tick - b.arrivedTick > 96)) { b.home = 'departed'; record(w, 'depart', [b.id], '外の庭にも暮らしがある', 'また会う約束をした'); }
 }
-export function stepWorld(w, now=w.lifecycle?.seenAt??Date.now()) {
+export function stepWorld(w, now=w.lifecycle?.seenAt??Date.now(), {observe=true}={}) {
   const economySynced=syncEconomy(w.economy,careTime(now));if(economySynced)bumpRevision(w);
   if (w.paused || !Number.isSafeInteger(w.tick + 1) || w.clock.originAt+(w.tick+1-w.clock.originTick)*TICK_MS > MAX_DATE_MS) return w;
-  w.tick++; synchronizeLife(w,careTime(now),true); w.care.cleanliness = Math.max(0, w.care.cleanliness - CARE_RULES.soilPerTick); grow(w); synchronizeProtagonist(w); expireEncounterVisitors(w); visits(w,now);
+  w.tick++; synchronizeLife(w,careTime(now),true,observe); w.care.cleanliness = Math.max(0, w.care.cleanliness - CARE_RULES.soilPerTick); grow(w); synchronizeProtagonist(w,!observe); expireEncounterVisitors(w); visits(w,now);
   if(w.field.place==='friend'&&findBird(w,w.field.hostId)?.home==='resident')w.field={place:'home',hostId:null,enteredTick:w.tick};
   const active = fieldBirds(w).filter(b => b.stage !== 'egg');
   for (const b of active) {
@@ -465,6 +465,24 @@ function advanceAbsentStory(w,count,now){
  archiveDetachedBirds(w);bumpRevision(w);
  return w.tick-start;
 }
+/** Keep the ordinary visits/social simulation, but date every elapsed minute and
+ * known real deadline before observing new illness or returning an outside heir. */
+function advanceShortStory(w,count,now){
+ const start=w.tick,startAt=w.lastUpdated,end=start+count;
+ let at=Math.max(startAt,w.lifecycle.seenAt);
+ synchronizeLife(w,careTime(at),true,false);
+ while(w.tick<end||at<now){
+  const tickAt=w.tick<end?startAt+(w.tick+1-start)*TICK_MS:Infinity;
+  const nextAt=Math.min(now,Math.max(at,tickAt),nextLifecycleDeadline(w,at));
+  if(tickAt<=nextAt){
+   const before=w.tick;stepWorld(w,careTime(nextAt),{observe:false});
+   if(w.tick===before)break; // The existing counter/date guard may refuse a tick.
+  }
+  else synchronizeLife(w,careTime(nextAt),true,false);
+  at=nextAt;
+ }
+ synchronizeLife(w,careTime(now));
+}
 function visitsWithoutArrivals(w){
  for(const b of w.birds.filter(b=>b.home==='visitor'&&w.tick-b.arrivedTick>96)){b.home='departed';record(w,'depart',[b.id],'留守の間にお友達が自分のおうちへ帰った','名前と関係を残して、また会える');}
  refreshAdoption(w);
@@ -482,13 +500,15 @@ export function advanceTo(w,now=Date.now()){
   w.offlineSummary={ticks:due,skipped:0,newBirds:allBirds(w).length-before.birds,fromTick:before.tick,toTick:w.tick};
   return w;
  }
+ if(due){
+  if(now<w.lifecycle.seenAt)return w;
+  w.lastUpdated=startAt;advanceShortStory(w,due,now);w.lastUpdated+=due*TICK_MS;
+  return w;
+ }
  synchronizeLife(w,careTime(now));
  if(now<Math.max(w.lastUpdated,w.clock.originAt))return w;
  w.lastUpdated=Math.max(w.lastUpdated,w.clock.originAt);
- if(w.paused){w.lastUpdated=now;return w;}
- if(!due)return w;
- for(let i=0;i<due;i++)stepWorld(w,now);
- w.lastUpdated+=due*TICK_MS;
+ if(w.paused)w.lastUpdated=now;
  return w;
 }
 
