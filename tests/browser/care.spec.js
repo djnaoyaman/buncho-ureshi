@@ -66,7 +66,7 @@ test('an existing v1 device save migrates in place without advancing paused fami
   const legacy=structuredClone(legacyWorld);legacy.paused=true;legacy.lastUpdated=now;
   await seed(page,legacy);const migrated=await record(page);
   expect(migrated.version).toBe(14);expect(migrated.worldId).toBe(legacy.worldId);expect(migrated.tick).toBe(legacy.tick);
-  expect(migrated.birds.map(({care,gemCare,naming,...bird})=>bird)).toEqual(legacy.birds);expect(migrated.events).toEqual(legacy.events);
+  expect(migrated.birds.every(b=>b.growthPace==='legacy')).toBe(true);expect(migrated.birds.map(({care,gemCare,naming,growthPace,...bird})=>bird)).toEqual(legacy.birds);expect(migrated.events).toEqual(legacy.events);
   expect(migrated.care).toEqual({cleanliness:100,lastCleanTick:null});expect(migrated.settings.careSound).toBe(true);
   expect(migrated.birds.every(b=>b.care.lastFedTick===null&&b.care.lastPetTick===null)).toBe(true);expect(migrated.birds.every(b=>Object.values(b.gemCare).every(value=>value===null))).toBe(true);expect(migrated.gems).toEqual({droppings:[],nextDropId:1});
   await page.reload();await expect(page.locator('.game-app')).toBeVisible();expect(await record(page)).toEqual(migrated);

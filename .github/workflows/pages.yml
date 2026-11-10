@@ -137,6 +137,9 @@ jobs:
       - name: Historical file import cancellation, complete migration and export
         if: matrix.lane == 'a'
         run: npx playwright test tests/browser/fields.spec.js --grep 'v2 import cancellation' --project=chrome --project=webkit --retries=0 --output=historical-import-test-results
+      - name: Complete historical birds and single hatch across two tabs
+        if: matrix.lane == 'a'
+        run: npx playwright test tests/browser/care.spec.js tests/browser/game.spec.js tests/browser/life-care.spec.js --grep 'an existing v1 device|simultaneous tabs serialize|legacy v7' --project=chrome --project=webkit --retries=0 --output=growth-migration-test-results
       - name: Lifecycle migration, old clocks and archived family
         if: matrix.lane == 'a'
         run: npx playwright test --config=playwright.lifecycle.config.js --retries=0 --output=lifecycle-test-results
@@ -254,6 +257,7 @@ jobs:
             cleanliness-test-results/
             growth-test-results/
             historical-import-test-results/
+            growth-migration-test-results/
             mobile-readable-test-results/
             game-device-policy-test-results/
             game-tablet-test-results/

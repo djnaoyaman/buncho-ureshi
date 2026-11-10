@@ -291,7 +291,8 @@ test('simultaneous tabs serialize catch-up, hatch once, and preserve both users 
   while (!seeded.birds.some(b => b.stage === 'egg') && seeded.tick < 500) advanceTicks(seeded, 1);
   const egg = seeded.birds.find(b => b.stage === 'egg');
   expect(egg).toBeTruthy();
-  const behind = 12;
+  expect(egg.growthPace).toBe('relaxed');
+  const behind = 336;
   seeded.lastUpdated = fixedNow - behind * TICK_MS;
   const expected = structuredClone(seeded);
   advanceTo(expected, fixedNow);
@@ -302,6 +303,7 @@ test('simultaneous tabs serialize catch-up, hatch once, and preserve both users 
   let actual = validateWorld(await readWorld(page));
   expect(actual.birds).toEqual(expected.birds);
   expect(actual.events.filter(e => e.kind === 'hatch' && e.ids[0] === egg.id)).toHaveLength(1);
+  await Promise.all([page.locator('.game-scene-controls-toggle').click(),other.locator('.game-scene-controls-toggle').click()]);
   await Promise.all([tab(page, 'profile'), tab(other, 'roster')]);
   await other.locator('.game-roster [data-game-select="b2"]').click();
   await page.locator('#game-name').fill('一つ目のタブ');
