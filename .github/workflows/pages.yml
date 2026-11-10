@@ -134,6 +134,9 @@ jobs:
       - name: Growth pace, original13 backups, inherited children and new eggs
         if: matrix.lane == 'a'
         run: npx playwright test tests/browser/growth-pace.spec.js --project=chrome --project=webkit --retries=0 --output=growth-test-results
+      - name: Historical file import cancellation, complete migration and export
+        if: matrix.lane == 'a'
+        run: npx playwright test tests/browser/fields.spec.js --grep 'v2 import cancellation' --project=chrome --project=webkit --retries=0 --output=historical-import-test-results
       - name: Lifecycle migration, old clocks and archived family
         if: matrix.lane == 'a'
         run: npx playwright test --config=playwright.lifecycle.config.js --retries=0 --output=lifecycle-test-results
@@ -250,6 +253,7 @@ jobs:
             trial-test-results/
             cleanliness-test-results/
             growth-test-results/
+            historical-import-test-results/
             mobile-readable-test-results/
             game-device-policy-test-results/
             game-tablet-test-results/

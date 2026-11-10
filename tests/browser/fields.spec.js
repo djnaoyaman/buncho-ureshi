@@ -1,6 +1,6 @@
 import {stripGrowthPace} from '../fixtures/growth-legacy.js';
 import {test,expect} from '@playwright/test';
-import {createWorld,createBird,advanceTicks,validateWorld,feedBird,DECOR_SLOTS,DECOR_COLORS,DECOR_TIERS,drawDecoration} from '../../src/engine.js';
+import {createWorld,createBird,advanceTicks,validateWorld,readCompatibleWorld,feedBird,DECOR_SLOTS,DECOR_COLORS,DECOR_TIERS,drawDecoration} from '../../src/engine.js';
 const DB_NAME = 'buncho-ureshi-garden-v1';
 const fixedNow = Date.UTC(2026, 10, 2, 12, 0, 0);
 async function decodeScene(page) {
@@ -152,9 +152,10 @@ test('draw repeated clicks and concurrent tabs charge exactly once; preview does
  await expect.poll(async()=> (await readWorld(page)).decor.draws).toBe(1);const saved=validateWorld(await readWorld(page));expect(saved.decor).toEqual(expected.decor);expect(saved.decor.equipped.toy).toBe('toy-mint-cozy');await expect(page.locator('[data-decor-draw="toy"]')).toBeDisabled();expect(result.item.slot).toBe('toy');await second.close();
 });
 
-test('v2 import cancellation preserves state; accepted migration keeps birds diary care and exports v7',async({page})=>{
- const old=createWorld(fixedNow);advanceTicks(old,80);old.paused=true;old.birds[0].name='大切なおもち';old.version=2;stripGrowthPace(old);delete old.decor?.duplicateStreaks;delete old.encounters;delete old.economy;delete old.lifecycle;delete old.protagonist;delete old.adoption;delete old.settings.adoptionMode;delete old.field;delete old.decor;delete old.gems;delete old.careSchedule;for(const b of old.birds){delete b.gemCare;delete b.naming;}
- await openGame(page);await tab(page,'settings');const before=await readWorld(page);const file={name:'old-world-v2.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(old))};
+test('v2 import cancellation preserves state; accepted migration keeps birds diary care and exports v14',async({page})=>{
+ const old=createWorld(fixedNow);advanceTicks(old,80);old.paused=true;old.birds[0].name='大切なおもち';old.version=2;stripGrowthPace(old);for(const key of ['clock','archive','journal'])delete old[key];for(const event of old.events)event.at=old.epoch+event.tick*15000;delete old.decor?.duplicateStreaks;delete old.encounters;delete old.economy;delete old.lifecycle;delete old.protagonist;delete old.adoption;delete old.settings.adoptionMode;delete old.field;delete old.decor;delete old.gems;delete old.careSchedule;for(const b of old.birds){delete b.gemCare;delete b.naming;}
+ validateWorld(readCompatibleWorld(old,fixedNow));
+ await openGame(page);await page.locator('.game-scene-controls-toggle').click();await tab(page,'settings');const before=await readWorld(page);const file={name:'old-world-v2.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(old))};
  await openManagement(page);page.once('dialog',dialog=>dialog.dismiss());await page.locator('#game-import').setInputFiles(file);await expect.poll(async()=> (await readWorld(page)).worldId).toBe(before.worldId);expect((await readWorld(page)).birds).toEqual(before.birds);
  await openManagement(page);page.once('dialog',dialog=>dialog.accept());await page.locator('#game-import').setInputFiles(file);await expect(page.locator('.game-message')).toContainText('復元しました');const saved=validateWorld(await readWorld(page));expect(saved.version).toBe(14);expect(saved.birds.map(({gemCare,naming,growthPace,...bird})=>bird)).toEqual(old.birds);expect(saved.events).toEqual(old.events);expect(saved.care).toEqual(old.care);expect(saved.decor.points).toBe(20);
  await openManagement(page);const download=page.waitForEvent('download');await page.locator('[data-game-action="export"]').click();expect(JSON.parse(await readDownload(await download)).decor).toEqual(saved.decor);
