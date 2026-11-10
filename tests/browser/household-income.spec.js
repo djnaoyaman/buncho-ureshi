@@ -1,3 +1,4 @@
+import {stripGrowthPace} from '../fixtures/growth-legacy.js';
 import {test,expect} from '@playwright/test';
 import {createWorld} from '../../src/engine.js';
 const now=Date.parse('2026-11-10T12:00:00+09:00');
@@ -24,7 +25,7 @@ for(const width of [320,390,430,768])test(`household receipt persists with no ov
  const size=await page.locator('[data-household-income]').boundingBox();expect(size.height).toBeGreaterThanOrEqual(48);expect(size.y).toBeGreaterThanOrEqual(0);expect(size.y+size.height).toBeLessThanOrEqual(1024);
 });
 test('legacy12 starts tomorrow and exports its exact raw migration copy',async({page})=>{
- const old=ready();old.version=12;old.economy.version=1;delete old.economy.household;old.economy.gold=old.economy.lifetimeGold=173;await setup(page,old);
+ const old=ready();old.version=12;stripGrowthPace(old);old.economy.version=1;delete old.economy.household;old.economy.gold=old.economy.lifetimeGold=173;await setup(page,old);
  await expect(page.locator('.game-household-income')).toContainText('2026-11-11から');await expect(page.locator('[data-household-income]')).toBeDisabled();expect((await record(page)).economy.gold).toBe(173);
  await page.locator('#game-menu-settings').click();await page.locator('[data-game-details="management"] summary').click();
  const download=page.waitForEvent('download');await page.locator('[data-game-action="export-household-migration"]').click();const file=await download;const stream=await file.createReadStream(),chunks=[];for await(const chunk of stream)chunks.push(chunk);expect(JSON.parse(Buffer.concat(chunks).toString())).toEqual(old);

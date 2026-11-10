@@ -8,7 +8,7 @@ import {initialEconomy,validateEconomy,syncEconomy,reserveAutomaticGems,awardHou
 /** A deterministic, offline story simulation with fictional lifecycle rules. No real husbandry advice. */
 import { initializeCareSchedule, validateCareSchedule, syncCareSchedule, applyScheduledCare, reconcileImportedCare, careWindow, careDay } from './care-schedule.js';
 import { directLineNameFields, newDefaultNameFields, automaticNaming, manualNaming, legacyNaming, isValidNaming } from './bird-names.js';
-export const SAVE_VERSION = 13;
+export const SAVE_VERSION = 14;
 const careTime = now => Math.max(0, Math.min(253402268399999, now));
 export { reconcileImportedCare, careWindow };
 export const TICK_MS = 60000;
@@ -22,6 +22,10 @@ const MEMORY_KINDS = [...LEGACY_MEMORY_KINDS, 'user-feed', 'user-pet', 'illness'
 export const CARE_RULES = Object.freeze({ feedGain: 20, petMoodGain: 4, feedCooldownTicks: 2, petCooldownTicks: 1, cleanCooldownTicks: 1, soilIntervalTicks: 27 });
 export const LIMITS = Object.freeze({ residents: 6, visitors: 6, birds: 128, events: 240, memories: 16, offlineTicks: 576 });
 export const STAGES = Object.freeze({ egg: '卵', chick: 'ひな', juvenile: '幼鳥', adult: '成鳥' });
+export const GROWTH_RULES=Object.freeze({legacy:Object.freeze({egg:12,chick:24,juvenile:48}),relaxed:Object.freeze({egg:336,chick:672,juvenile:4368})});
+/** Durations are per stage: hatch336, fledge1008, adult5376 ticks after laying. */
+export function growthDuration(bird){return GROWTH_RULES[bird.growthPace]?.[bird.stage]??null;}
+
 export const ACTIONS = Object.freeze({ rest: 'ひとやすみ', eat: 'ごはん', bath: '水浴び', explore: 'たんけん', talk: 'おしゃべり', play: 'いっしょに遊ぶ', nest: '巣で過ごす', visit: 'あそびに来たよ' });
 const clamp = (n, min = 0, max = 100) => Math.max(min, Math.min(max, n));
 const COLORS = ['white', 'sakura', 'silver', 'cinnamon'];
@@ -252,7 +256,7 @@ export function createBird(w, options = {}) {
   // Names, generation numbers and non-blood protagonist succession are not ancestry.
   const directLine = (options.parents || []).some(parentId => parentId === 'b1' || ancestors(w, parentId).has('b1'));
   const namingFields = options.name ? {name:options.name,naming:options.automaticName?automaticNaming(options.name):manualNaming(options.name)} : directLine ? directLineNameFields(w,birdId) : newDefaultNameFields(w,birdId);
-  const b = { id: birdId, ...namingFields, sex: options.sex || (random(w) < .5 ? 'female' : 'male'), color: options.color || pick(w, COLORS), stage: options.stage || 'adult', bornTick: w.tick, stageTick: w.tick, arrivedTick: w.tick, parents: options.parents || [], generation: options.generation || 0, partner: null, pairTick: null, eggsLaid: 0, lastEggTick: -1000, home: options.home || 'visitor', personality: { curiosity: 25 + Math.floor(random(w) * 65), sociability: 35 + Math.floor(random(w) * 55), caution: 15 + Math.floor(random(w) * 65) }, preference: pick(w, PREFERENCES), mood: 70, needs: { energy: 80, food: 80, play: 60 }, care: { lastFedTick: null, lastPetTick: null }, gemCare: initialGemCare(), relations: {}, memories: [], milestones: [], action: { kind: 'rest', target: null, startedTick: w.tick }, lastSocialTick: -1 };
+  const b = { id: birdId, ...namingFields, sex: options.sex || (random(w) < .5 ? 'female' : 'male'), color: options.color || pick(w, COLORS), stage: options.stage || 'adult', growthPace: 'relaxed', bornTick: w.tick, stageTick: w.tick, arrivedTick: w.tick, parents: options.parents || [], generation: options.generation || 0, partner: null, pairTick: null, eggsLaid: 0, lastEggTick: -1000, home: options.home || 'visitor', personality: { curiosity: 25 + Math.floor(random(w) * 65), sociability: 35 + Math.floor(random(w) * 55), caution: 15 + Math.floor(random(w) * 65) }, preference: pick(w, PREFERENCES), mood: 70, needs: { energy: 80, food: 80, play: 60 }, care: { lastFedTick: null, lastPetTick: null }, gemCare: initialGemCare(), relations: {}, memories: [], milestones: [], action: { kind: 'rest', target: null, startedTick: w.tick }, lastSocialTick: -1 };
   w.birds.push(b); registerLifeBird(w,b); return b;
 }
 function remember(w, b, kind, otherId = null) { const memory = { kind, otherId, tick: w.tick }; b.memories.push(memory); if (b.memories.length > LIMITS.memories) b.memories.shift(); if (['welcome','adopt','movein','pair','egg','hatch','grow','depart'].includes(kind) && !b.milestones.some(m => m.kind === kind && m.otherId === otherId)) { b.milestones.push(memory); if (b.milestones.length > LIMITS.memories) b.milestones.shift(); } }
@@ -394,7 +398,7 @@ function interact(w, a, b) {
 function grow(w) {
   for (const b of allBirds(w).filter(b=>isAlive(w,b))) {
     const age = w.tick - b.stageTick;
-    const next = b.stage === 'egg' && age >= 12 ? 'chick' : b.stage === 'chick' && age >= 24 ? 'juvenile' : b.stage === 'juvenile' && age >= 48 ? 'adult' : null;
+    const duration=growthDuration(b),next=duration!==null&&age>=duration?({egg:'chick',chick:'juvenile',juvenile:'adult'})[b.stage]:null;
     if (next) { b.stage = next; b.stageTick = w.tick; if (next === 'chick' && (b.naming.source === 'automatic' || b.naming.source === 'legacy' && /^たまご[12]$/.test(b.name))) random(w); record(w, next === 'chick' ? 'hatch' : 'grow', [b.id, ...b.parents], '成長の時間がたった', `${STAGES[next]}になった`, { stage: next }); }
   }
 }
@@ -483,7 +487,7 @@ function advanceAbsentStory(w,count,now){
   let nextTick=w.tick<end?end:Infinity;
   for(const b of allBirds(w)){
    const life=lifeStatus(w,b);if(!life||life.death)continue;
-   const growth={egg:12,chick:24,juvenile:48}[b.stage];
+   const growth=growthDuration(b);
    if(w.tick<end){
     if(growth)nextTick=Math.min(nextTick,Math.max(w.tick+1,b.stageTick+growth));
     if(b.stage!=='egg')nextTick=Math.min(nextTick,Math.max(w.tick+1,life.ageOriginTick+LIFE_RULES.lifespanTicks-life.initialAgeTicks));
@@ -748,12 +752,13 @@ function validateVersion(input, version) {
   const validEvents = version >= 12 ? EVENT_KINDS : version >= 9 ? EVENT_KINDS.filter(k=>!['pair-proposal','pair-declined'].includes(k)) : version >= 8 ? EVENT_KINDS.filter(k=>k!=='succession') : version >= 2 ? [...LEGACY_EVENT_KINDS,'user-feed','user-pet'] : LEGACY_EVENT_KINDS, validMemories = version >= 12 ? MEMORY_KINDS : version >= 9 ? MEMORY_KINDS.filter(k=>!['pair-proposal','pair-declined'].includes(k)) : version >= 8 ? MEMORY_KINDS.filter(k=>k!=='succession') : version >= 2 ? [...LEGACY_MEMORY_KINDS,'user-feed','user-pet'] : LEGACY_MEMORY_KINDS;
   if (!str(w.worldId) || !integer(w.revision) || !integer(w.seed, 0, 4294967295) || !integer(w.tick) || !integer(w.nextId, 1, version>=12?Number.MAX_SAFE_INTEGER:LIMITS.birds+1) || !integer(w.nextEvent, 2) || !integer(w.epoch, 0, MAX_DATE_MS) || !integer(w.lastUpdated, 0, MAX_DATE_MS) || !integer(version>=12?w.clock.originAt+(w.tick-w.clock.originTick)*TICK_MS:w.epoch+w.tick*15000, 0, MAX_DATE_MS) || typeof w.paused !== 'boolean' || !w.settings || typeof w.settings.motion !== 'boolean') fail('基本情報が不正です。');
   if (!Array.isArray(w.birds) || !w.birds.length || (version<12&&w.birds.length > LIMITS.birds) || !Array.isArray(w.events) || !w.events.length || w.events.length > LIMITS.events) fail('鳥や日記が多すぎます。');
-  if (w.birds.some(b => !shape(b, ['id','name','sex','color','stage','bornTick','stageTick','arrivedTick','parents','generation','partner','pairTick','eggsLaid','lastEggTick','home','personality','preference','mood','needs','relations','memories','milestones','action','lastSocialTick', ...(version >= 2 ? ['care'] : []), ...(version >= 4 ? ['gemCare'] : []), ...(version >= 5 ? ['naming'] : [])]))) fail('文鳥の項目が不正です。');
+  if (w.birds.some(b => !shape(b, ['id','name','sex','color','stage','bornTick','stageTick','arrivedTick','parents','generation','partner','pairTick','eggsLaid','lastEggTick','home','personality','preference','mood','needs','relations','memories','milestones','action','lastSocialTick', ...(version >= 2 ? ['care'] : []), ...(version >= 4 ? ['gemCare'] : []), ...(version >= 5 ? ['naming'] : []), ...(version >= 14 ? ['growthPace'] : [])]))) fail('文鳥の項目が不正です。');
   const ids = new Set(w.birds.map(b => b.id));
   if (ids.size !== w.birds.length) fail('同じIDが重なっています。');
   if (w.nextId !== w.birds.length + 1 || w.birds.some((_, i) => !ids.has(`b${i + 1}`))) fail('文鳥のIDの順序が不正です。');
   const ref = (bid, optional = false) => optional && bid === null || typeof bid === 'string' && ids.has(bid);
   for (const b of w.birds) {
+    if(version>=14&&!['legacy','relaxed'].includes(b.growthPace))fail('成長期間の種類が不正です。');
     if(version>=5&&(!isValidNaming(b.naming)||b.naming.assignedName!==b.name))fail('名前の情報が不正です。');
     if (!/^b[1-9]\d{0,8}$/.test(b.id) || Number(b.id.slice(1)) >= w.nextId || !str(b.name, 16) || !b.name.trim() || !['female', 'male'].includes(b.sex) || !COLORS.includes(b.color) || !Object.hasOwn(STAGES, b.stage) || !['resident','visitor','departed'].includes(b.home) || !PREFERENCES.includes(b.preference)) fail('文鳥の情報が不正です。');
     for (const k of ['bornTick', 'stageTick', 'arrivedTick']) if (!integer(b[k], 0, w.tick) || k !== 'bornTick' && b[k] < b.bornTick) fail('成長の時刻が不正です。');
@@ -895,7 +900,13 @@ export function migrateV12ToV13(input,now=Date.now()){
  w.version=13;w.economy.version=2;
  // Block the migration day: the old client may already have awarded care Gold.
  const today=careDay(at).date,next=today==='9999-12-31'?today:new Date(Date.parse(today+'T00:00:00Z')+86400000).toISOString().slice(0,10);
- w.economy.household={startedDay:next,lastClaimedDay:next===today?today:null};return validateWorld(w);
+ w.economy.household={startedDay:next,lastClaimedDay:next===today?today:null};return migrateV13ToV14(w);
+}
+/** Existing birds keep their original pace; never retime a recorded stage or birth. */
+export function migrateV13ToV14(input){
+ const w=validateVersion(input,13);w.version=14;
+ for(const b of allBirds(w))b.growthPace='legacy';
+ return validateWorld(w);
 }
 export function readCompatibleWorld(input, now=Date.now()) {
   // Do not execute an accessor even to discover the version of an untrusted object.
@@ -913,6 +924,7 @@ export function readCompatibleWorld(input, now=Date.now()) {
   if (descriptor.value === 10) return migrateV10ToV11(input,now);
   if (descriptor.value === 11) return migrateV11ToV12(input,now);
   if (descriptor.value === 12) return migrateV12ToV13(input,now);
+  if (descriptor.value === 13) return migrateV13ToV14(input);
   if (descriptor.value === SAVE_VERSION) return validateWorld(input);
   throw new Error('保存データを読み込めません：対応していない版です。元の保存はそのままです。');
 }

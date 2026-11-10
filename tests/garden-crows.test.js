@@ -79,7 +79,7 @@ test('five crow species use bounded, strict, independent observation records',()
 });
 test('v6 migrates purely to encounter v8 while world remains v9',()=>{
  const old=fixture();old.encounters.version=6;legacyFriends(old);delete old.encounters.gardenSessions;delete old.encounters.homeGoodbyes;for(const id of ["java-rice","bali-terrace","paris-unrest"])delete old.encounters.garden.visits[id];delete old.encounters.crow;delete old.encounters.raptor;const before=structuredClone(old),next=readCompatibleWorld(old,now);
- assert.deepEqual(old,before);assert.equal(next.version,13);assert.equal(next.encounters.version,13);assert.deepEqual(next.encounters.crow,initialCrowState());
+ assert.deepEqual(old,before);assert.equal(next.version,14);assert.equal(next.encounters.version,13);assert.deepEqual(next.encounters.crow,initialCrowState());
  const projected=structuredClone(next);projected.encounters.version=6;legacyFriends(projected);delete projected.encounters.gardenSessions;delete projected.encounters.homeGoodbyes;for(const id of ["java-rice","bali-terrace","paris-unrest"])delete projected.encounters.garden.visits[id];delete projected.encounters.crow;delete projected.encounters.raptor;assert.deepEqual(projected,before);
  const future=structuredClone(next);future.encounters.version=14;assert.throws(()=>validateWorld(future));
 });

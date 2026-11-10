@@ -6,14 +6,14 @@ const BACKUP_KEY = 'reset-backup';
 const LOCAL_FORMAT = 'buncho-world-with-reset-backup-v1';
 // Raw migration copies are independent of the reset backup and never overwrite an older copy.
 function preserveMigration(store,raw){
- if(!raw||raw.version>=13)return;
- const key=raw.version<12?'migration-backup-v11':'migration-backup-v12',q=store.get(key);
+ if(!raw||raw.version>=14)return;
+ const key=raw.version>=13?'migration-backup-v13':raw.version<12?'migration-backup-v11':'migration-backup-v12',q=store.get(key);
  q.onsuccess=()=>{if(q.result===undefined)store.put(raw,key);};
 }
 function preserveLocalMigration(storage,raw){
  if(!raw)return;const world=JSON.parse(raw).current??JSON.parse(raw);
- if(world.version>=13)return;
- const key=STORAGE_KEY+(world.version<12?'-migration-v11':'-migration-v12');
+ if(world.version>=14)return;
+ const key=STORAGE_KEY+(world.version>=13?'-migration-v13':world.version<12?'-migration-v11':'-migration-v12');
  if(storage.getItem(key)===null)storage.setItem(key,raw);
 }
 
@@ -106,7 +106,7 @@ export async function openGameStore(platform = globalThis) {
     }
     return {
       mode: 'device',
-      async migrationBackup(version=11){return new Promise((resolve,reject)=>{const tx=db.transaction('world','readonly'),q=tx.objectStore('world').get(version===12?'migration-backup-v12':'migration-backup-v11');q.onsuccess=()=>resolve(q.result||null);q.onerror=()=>reject(q.error);});},
+      async migrationBackup(version=11){return new Promise((resolve,reject)=>{const tx=db.transaction('world','readonly'),q=tx.objectStore('world').get(version===13?'migration-backup-v13':version===12?'migration-backup-v12':'migration-backup-v11');q.onsuccess=()=>resolve(q.result||null);q.onerror=()=>reject(q.error);});},
       replaceWorld(expectedWorldId,replacement,now=Date.now(),{guard=()=>true}={}){
         if(closed)return Promise.reject(closedError());
         return new Promise((resolve,reject)=>{
@@ -201,7 +201,7 @@ function lockedLocalStore(storage, locks) {
   });
   return {
     mode: 'locked-local',
-    migrationBackup:(version=11)=>locked(()=>{const raw=storage.getItem(STORAGE_KEY+(version===12?'-migration-v12':'-migration-v11'));return raw?(JSON.parse(raw).current??JSON.parse(raw)):null;}),
+    migrationBackup:(version=11)=>locked(()=>{const raw=storage.getItem(STORAGE_KEY+(version===13?'-migration-v13':version===12?'-migration-v12':'-migration-v11'));return raw?(JSON.parse(raw).current??JSON.parse(raw)):null;}),
     replaceWorld(expectedWorldId,replacement,now=Date.now(),{guard=()=>true}={}){
       return locked(()=>{
         const raw=storage.getItem(STORAGE_KEY),record=localRecord(raw);

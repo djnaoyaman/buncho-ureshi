@@ -1,14 +1,15 @@
+import {stripGrowthPace} from './fixtures/growth-legacy.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createWorld as createBaseWorld,createBird,advanceTicks,advanceTo,travelTo,fieldBirds,inviteFriend,drawDecoration,equipDecoration,decorLevel,decorOdds,DECOR_SLOTS,DECOR_COLORS,DECOR_TIERS,parseSave,serializeWorld,validateWorld,readCompatibleWorld,isRelated,economyToken,claimAutomaticGift} from '../src/engine.js';
 const clone=structuredClone;
-function v2(w){const x=clone(w);x.version=2;for(const k of ['clock','archive','journal'])delete x[k];for(const e of x.events)e.at=x.epoch+e.tick*15000;delete x.decor?.duplicateStreaks;delete x.field;delete x.decor;delete x.gems;delete x.careSchedule;delete x.encounters;delete x.economy;delete x.lifecycle;delete x.protagonist;delete x.adoption;delete x.settings.adoptionMode;for(const b of x.birds){delete b.gemCare;delete b.naming;}return x;}
+function v2(w){const x=clone(w);x.version=2;stripGrowthPace(x);for(const k of ['clock','archive','journal'])delete x[k];for(const e of x.events)e.at=x.epoch+e.tick*15000;delete x.decor?.duplicateStreaks;delete x.field;delete x.decor;delete x.gems;delete x.careSchedule;delete x.encounters;delete x.economy;delete x.lifecycle;delete x.protagonist;delete x.adoption;delete x.settings.adoptionMode;for(const b of x.birds){delete b.gemCare;delete b.naming;}return x;}
 test('v1 and v2 migrate purely preserving every old field, with one welcome gift',()=>{
  const old=v2(createWorld(100));advanceTicks(old,0);const before=JSON.stringify(old),m=readCompatibleWorld(old);
- assert.equal(m.version,13);assert.deepEqual(v2(m),old);assert.equal(JSON.stringify(old),before);assert.equal(m.decor.points,20);assert.equal(m.decor.inventory.length,9);
+ assert.equal(m.version,14);assert.deepEqual(v2(m),old);assert.equal(JSON.stringify(old),before);assert.equal(m.decor.points,20);assert.equal(m.decor.inventory.length,9);
  for(let i=0;i<4;i++)assert.deepEqual(parseSave(serializeWorld(m)),m);
- const legacy=JSON.parse(readFileSync(new URL('./fixtures/v1-world.json',import.meta.url)));const upgraded=readCompatibleWorld(legacy);assert.equal(upgraded.version,13);assert.deepEqual(upgraded.events,legacy.events);assert.deepEqual(upgraded.birds.map(b=>b.name),legacy.birds.map(b=>b.name));
+ const legacy=JSON.parse(readFileSync(new URL('./fixtures/v1-world.json',import.meta.url)));const upgraded=readCompatibleWorld(legacy);assert.equal(upgraded.version,14);assert.deepEqual(upgraded.events,legacy.events);assert.deepEqual(upgraded.birds.map(b=>b.name),legacy.birds.map(b=>b.name));
 });
 test('travel is real co-presence, roundtrip is idempotent, and young stay home',()=>{
  const w=createWorld(100);advanceTicks(w,1);const friend=w.birds[1];const egg=createBird(w,{stage:'egg',home:'resident'});
@@ -40,7 +41,7 @@ test('family gifts are direct and social gifts require a tap; no repeated reward
 });
 test('long male visits build mutual relationships then pair, hatch and grow without bypassing kinship',()=>{
  const w=createWorld(100);advanceTicks(w,1);const male=w.birds[1];assert.equal(male.sex,'male');assert.equal(male.home,'visitor');const start=male.arrivedTick;
- advanceTicks(w,250);const female=w.birds[0];assert.ok(female.partner);assert.ok(female.pairTick-start>=16);assert.ok(!isRelated(w,female.id,female.partner));assert.ok(w.birds.some(b=>b.parents.includes(female.id)&&b.stage!=='egg'));validateWorld(w);
+ advanceTicks(w,600);const female=w.birds[0];assert.ok(female.partner);assert.ok(female.pairTick-start>=16);assert.ok(!isRelated(w,female.id,female.partner));assert.ok(w.birds.some(b=>b.parents.includes(female.id)&&b.stage!=='egg'));validateWorld(w);
 });
 test('v3 invalid fields fail closed without source mutation or getter execution',()=>{
  for(const change of [w=>w.field.place='internet',w=>w.field.hostId='b2',w=>w.decor.points=-1,w=>w.decor.points=1.5,w=>w.decor.inventory.push(w.decor.inventory[0]),w=>w.decor.equipped.toy='perch-mint-cozy',w=>w.decor.inventory[0].tier='special',w=>w.decor.lastDrawTick=w.tick+1,w=>w.decor.extra=true]){

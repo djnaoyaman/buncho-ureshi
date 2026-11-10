@@ -70,7 +70,7 @@ test('v12 migration changes only the encounter version and preserves a pinned wa
     old.encounters.version=12;const before=clone(old),expected=clone(old);expected.encounters.version=13;
     const migrated=readCompatibleWorld(old,NOW+1000);
     assert.deepEqual(old,before);assert.deepEqual(migrated,expected);
-    assert.equal(migrated.version,13);assert.equal(migrated.encounters.gardenFriends.version,2);
+    assert.equal(migrated.version,14);assert.equal(migrated.encounters.gardenFriends.version,2);
     if(withWarning){assert.equal(migrated.encounters.raptor.active.targetBirdId,'b1');assert.equal(migrated.encounters.raptor.active.remainingMs,59000);}
   }
 });

@@ -1,3 +1,4 @@
+import {withLegacyGrowth} from '../fixtures/growth-legacy.js';
 import {test,expect} from '@playwright/test';
 import {readFileSync} from 'node:fs';
 import {createWorld,DECOR_COLORS,DECOR_TIERS} from '../../src/engine.js';
@@ -35,7 +36,7 @@ test('all unlocked items stop spending and the next level keeps saved protection
 });
 
 test('a deployed root10 save migrates without losing the current garden or collection',async({page})=>{
- const old=JSON.parse(readFileSync(new URL('../fixtures/v10-gacha-world.json',import.meta.url),'utf8'));await start(page,old);await expect(status(page)).toHaveAttribute('data-decor-guarantee','0');const saved=await record(page);expect(saved.version).toBe(13);expect(saved.encounters.version).toBe(13);expect(saved.decor.inventory).toEqual(old.decor.inventory);expect(saved.decor.points).toBe(old.decor.points);expect(saved.encounters).toEqual({...old.encounters,version:13});expect(saved.birds).toEqual(old.birds);expect(Object.values(saved.decor.duplicateStreaks)).toEqual(Array(9).fill(0));
+ const old=JSON.parse(readFileSync(new URL('../fixtures/v10-gacha-world.json',import.meta.url),'utf8'));await start(page,old);await expect(status(page)).toHaveAttribute('data-decor-guarantee','0');const saved=await record(page);expect(saved.version).toBe(14);expect(saved.encounters.version).toBe(13);expect(saved.decor.inventory).toEqual(old.decor.inventory);expect(saved.decor.points).toBe(old.decor.points);expect(saved.encounters).toEqual({...old.encounters,version:13});expect(saved.birds).toEqual(withLegacyGrowth(old.birds));expect(Object.values(saved.decor.duplicateStreaks)).toEqual(Array(9).fill(0));
  await page.reload();await open(page);expect((await record(page)).decor).toEqual(saved.decor);
 });
 

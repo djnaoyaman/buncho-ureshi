@@ -1,3 +1,5 @@
+import {seedLegacyGrowth,withLegacyGrowth} from './fixtures/growth-legacy.js';
+import {stripGrowthPace} from './fixtures/growth-legacy.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -11,7 +13,7 @@ const NOW=Date.UTC(2026,10,9),DAY=86400000,minute=TICK_MS;
 function family(at=NOW){
  const world=createWorld(at),father=createBird(world,{home:'resident',sex:'male'});
  const child=createBird(world,{home:'resident',stage:'egg',parents:['b1',father.id],generation:1});
- return {world,child};
+ seedLegacyGrowth(world);return {world,child};
 }
 // Care bars intentionally open one slot per observation. Compare the durable
 // identity/history/health/economy outcomes, without changing that existing rule.
@@ -70,7 +72,7 @@ test('lifespan and inheritance occur before later real deadlines',()=>{
  const world=createWorld(NOW);world.tick=LIFE_RULES.lifespanTicks-20;
  world.clock.originTick=world.tick;
  const father=createBird(world,{home:'departed',sex:'male'});
- const child=createBird(world,{home:'resident',stage:'egg',parents:['b1',father.id],generation:1});
+ const child=createBird(world,{home:'resident',stage:'egg',parents:['b1',father.id],generation:1});child.growthPace='legacy';
  validateWorld(world);advanceTo(world,NOW+100*minute);
  assert.deepEqual(lifeStatus(world,'b1').death,{cause:'lifespan',at:NOW+20*minute,tick:LIFE_RULES.lifespanTicks});
  assert.equal(world.protagonist.birdId,child.id);assert.equal(child.stage,'adult');
@@ -127,13 +129,13 @@ test('a frozen pre-fix v12 save is never backfilled, revived or compensated',()=
  const world=readCompatibleWorld(original,NOW+8*DAY);
  assert.equal(world.birds[2].stage,'egg');assert.equal(world.decor.points,20);
  advanceTo(world,NOW+8*DAY);
- assert.deepEqual(world.birds,original.birds);assert.deepEqual(world.events,original.events);assert.deepEqual(world.journal,original.journal);
+ assert.deepEqual(world.birds,withLegacyGrowth(original.birds));assert.deepEqual(world.events,original.events);assert.deepEqual(world.journal,original.journal);
  assert.deepEqual(world.lifecycle.birds,original.lifecycle.birds);assert.deepEqual(world.decor,original.decor);
  assert.deepEqual(world.protagonist,original.protagonist);assert.equal(world.seed,original.seed);validateWorld(world);
 });
 
 test('migrated v11 records and the caller input are never rewritten by future catch-up',()=>{
- const old=createWorld(NOW);old.version=11;if(old.economy){old.economy.version=1;delete old.economy.household;}delete old.clock;delete old.archive;delete old.journal;
+ const old=createWorld(NOW);old.version=11;stripGrowthPace(old);if(old.economy){old.economy.version=1;delete old.economy.household;}delete old.clock;delete old.archive;delete old.journal;
  const original=structuredClone(old),world=readCompatibleWorld(old,NOW+DAY),history=structuredClone(world.events);
  advanceTo(world,NOW+2*DAY);
  assert.deepEqual(old,original);assert.deepEqual(world.events.slice(0,history.length),history);

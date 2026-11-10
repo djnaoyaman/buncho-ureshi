@@ -1,3 +1,4 @@
+import {stripGrowthPace,seedLegacyGrowth} from './fixtures/growth-legacy.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {IDBFactory} from 'fake-indexeddb';
@@ -14,15 +15,15 @@ function family({sex='female',stage='adult',home='resident'}={}){
  const w=createWorld(NOW,42);w.paused=true;w.settings.motion=false;const father=createBird(w,{sex:'male',home:'resident'});
  w.tick=10;const elder=createBird(w,{sex,stage,home,parents:['b1',father.id],generation:1});
  w.tick=20;const younger=createBird(w,{sex:sex==='female'?'male':'female',home:'resident',parents:['b1',father.id],generation:1});
- return {w,father,elder,younger};
+ seedLegacyGrowth(w);return {w,father,elder,younger};
 }
 function illness(w,birdId,at=NOW){lifeStatus(w,birdId).condition={kind:'injury',sinceAt:at,deadlineAt:at+DAY};}
 function die(w,birdId='b1',at=NOW){illness(w,birdId,at);advanceTo(w,at+DAY);validateWorld(w);}
-function oldV8(w){const x=clone(w);x.version=8;if(x.economy){x.economy.version=1;delete x.economy.household;}for(const k of ['clock','archive','journal'])delete x[k];for(const e of x.events)e.at=x.epoch+e.tick*15000;delete x.decor?.duplicateStreaks;delete x.protagonist;x.events=x.events.filter(e=>e.kind!=='succession');x.nextEvent=Number(x.events.at(-1).id.slice(1))+1;for(const b of x.birds)b.memories=b.memories.filter(m=>m.kind!=='succession');return x;}
+function oldV8(w){const x=clone(w);x.version=8;stripGrowthPace(x);if(x.economy){x.economy.version=1;delete x.economy.household;}for(const k of ['clock','archive','journal'])delete x[k];for(const e of x.events)e.at=x.epoch+e.tick*15000;delete x.decor?.duplicateStreaks;delete x.protagonist;x.events=x.events.filter(e=>e.kind!=='succession');x.nextEvent=Number(x.events.at(-1).id.slice(1))+1;for(const b of x.birds)b.memories=b.memories.filter(m=>m.kind!=='succession');return x;}
 async function raw(db,value){const connection=await new Promise((resolve,reject)=>{const r=db.open(DB_NAME,1);r.onupgradeneeded=()=>r.result.createObjectStore('world');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});try{return await new Promise((resolve,reject)=>{const tx=connection.transaction('world',value?'readwrite':'readonly'),r=value?tx.objectStore('world').put(value,'current'):tx.objectStore('world').get('current');tx.oncomplete=()=>resolve(r.result);tx.onerror=()=>reject(tx.error);});}finally{connection.close();}}
 
 test('new v9 identity is b1 and name or inspection selection cannot change it',()=>{
- const {w,elder}=family();assert.equal(w.version,13);assert.equal(getProtagonistId(w),'b1');assert.equal(getProtagonistId(oldV8(w)),'b1');renameBird(w,'b1','しらたま');renameBird(w,elder.id,'おもち');assert.equal(getProtagonistBird(w).name,'しらたま');assert.deepEqual(w.protagonist.lineage,['b1']);assert.deepEqual(parseSave(serializeWorld(w)),w);
+ const {w,elder}=family();assert.equal(w.version,14);assert.equal(getProtagonistId(w),'b1');assert.equal(getProtagonistId(oldV8(w)),'b1');renameBird(w,'b1','しらたま');renameBird(w,elder.id,'おもち');assert.equal(getProtagonistBird(w).name,'しらたま');assert.deepEqual(w.protagonist.lineage,['b1']);assert.deepEqual(parseSave(serializeWorld(w)),w);
 });
 for(const sex of ['male','female'])test(`oldest living ${sex} child inherits, without changing identity, assets or the grave`,()=>{
  const {w,elder}=family({sex});w.economy.gold=w.economy.lifetimeGold=80;const decor=clone(w.decor),ids=w.birds.map(b=>b.id),name=elder.name;die(w);
@@ -50,13 +51,13 @@ test('a living departed child returns with its same identity and a fresh respons
 test('a full home waits without evicting anyone, then returns the eldest when space opens',()=>{
  const {w,elder}=family({home:'departed'});die(w); // Create the pre-feature shape with an already-dead founder and six residents.
  const old=oldV8(w);old.birds.find(b=>b.id===elder.id).home='departed';for(let i=old.birds.filter(b=>b.home==='resident').length;i<6;i++)createBird(old,{home:'resident'});
- const migrated=readCompatibleWorld(old,NOW+DAY);assert.equal(getProtagonistId(migrated),'b1');assert.equal(protagonistStatus(migrated).waiting,'room');assert.equal(migrated.birds.filter(b=>b.home==='resident').length,6);migrated.birds.find(b=>b.home==='resident'&&b.id!==elder.id).home='departed';advanceTo(migrated,NOW+DAY);assert.equal(getProtagonistId(migrated),elder.id);assert.equal(migrated.birds.filter(b=>b.home==='resident').length,6);validateWorld(migrated);
+ stripGrowthPace(old);const migrated=readCompatibleWorld(old,NOW+DAY);assert.equal(getProtagonistId(migrated),'b1');assert.equal(protagonistStatus(migrated).waiting,'room');assert.equal(migrated.birds.filter(b=>b.home==='resident').length,6);migrated.birds.find(b=>b.home==='resident'&&b.id!==elder.id).home='departed';advanceTo(migrated,NOW+DAY);assert.equal(getProtagonistId(migrated),elder.id);assert.equal(migrated.birds.filter(b=>b.home==='resident').length,6);validateWorld(migrated);
 });
 test('current protagonist cannot be sent home as a visitor or autonomously move away',()=>{
  const {w,elder}=family();die(w);elder.home='visitor';const result=endHomeVisits(w,economyToken(w),NOW+DAY);assert.notEqual(elder.home,'departed');elder.home='resident';w.paused=false;for(let i=w.birds.filter(b=>b.home==='resident').length;i<6;i++)createBird(w,{home:'resident'});advanceTicks(w,600,NOW+DAY);assert.equal(elder.home,'resident');assert.equal(getProtagonistId(w),elder.id);validateWorld(w);
 });
 test('v8 migration is additive for living founders and source objects stay untouched',()=>{
- const {w}=family();const old=oldV8(w),before=clone(old),next=readCompatibleWorld(old,NOW+100*DAY);assert.deepEqual(old,before);assert.deepEqual(oldV8(next),{...old,lastUpdated:next.lastUpdated});assert.equal(next.version,13);assert.equal(next.protagonist.birdId,'b1');assert.deepEqual(next.lifecycle,old.lifecycle);
+ const {w}=family();const old=oldV8(w),before=clone(old),next=readCompatibleWorld(old,NOW+100*DAY);assert.deepEqual(old,before);assert.deepEqual(oldV8(next),{...old,lastUpdated:next.lastUpdated});assert.equal(next.version,14);assert.equal(next.protagonist.birdId,'b1');assert.deepEqual(next.lifecycle,old.lifecycle);
 });
 test('v8 dead-founder migration chooses a child once across concurrent persistent readers',async()=>{
  const {w,elder}=family();die(w);const old=oldV8(w);old.events=old.events.filter(e=>e.kind!=='succession');old.nextEvent=Number(old.events.at(-1).id.slice(1))+1;for(const b of old.birds)b.memories=b.memories.filter(m=>m.kind!=='succession');old.encounters.gardenFriends.companions=['b1'];const before=clone(old),db=new IDBFactory();await raw(db,old);const a=await openGameStore({indexedDB:db}),b=await openGameStore({indexedDB:db});try{const [x,y]=await Promise.all([a.transact(w=>advanceTo(w,NOW+DAY)),b.transact(w=>advanceTo(w,NOW+DAY))]);assert.deepEqual(x,y);assert.equal(x.protagonist.birdId,elder.id);assert.equal(x.events.filter(e=>e.kind==='succession').length,1);assert.deepEqual((await raw(db)).protagonist,x.protagonist);assert.deepEqual(old,before);}finally{a.close();b.close();}

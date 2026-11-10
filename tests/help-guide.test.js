@@ -19,10 +19,12 @@ for (const holidayCoverageKnown of [true,false]) {
   });
   const additions=result.querySelectorAll('[data-game-cleanliness-help]');assert.equal(additions.length,1);
   assert.equal(plain(additions[0]),'そうじをして床が100になると、20までへるのは、ほんとうの時間で約36時間だよ。物語を止めているあいだは、床もよごれないよ。ごはんや病院の期限は、そのまま進むよ。');
-  // Allow only this exact new paragraph; every existing disclosure remains byte-exact.
+  const growth=result.querySelectorAll('[data-game-growth-help]');assert.equal(growth.length,1);
+  assert.match(plain(growth[0]),/約5時間36分.*約11時間12分.*約3.5日.*更新前からいる/);
+  // Allow only these approved additions; every existing disclosure remains byte-exact.
   for(const detail of original.querySelectorAll('details')) {
    const actual=result.querySelector(`[data-game-details="${detail.dataset.gameDetails}"]`).outerHTML;
-   assert.equal(actual.replace(additions[0].outerHTML+'\n',''),detail.outerHTML);
+   assert.equal(actual.replace(additions[0].outerHTML+'\n','').replace(growth[0].outerHTML+'\n',''),detail.outerHTML);
   }
   assert.equal(result.querySelector(':scope > section > p').innerHTML,original.querySelector(':scope > section > p').innerHTML);
   const unannotated=result.cloneNode(true);unannotated.querySelectorAll('ruby').forEach(n=>n.remove());

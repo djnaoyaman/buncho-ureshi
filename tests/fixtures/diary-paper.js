@@ -10,7 +10,7 @@ export const summarySelector=(scope,id)=>`${detailSelector(scope,id)} > summary`
 export const FULL='[data-game-details="full-diary"]';
 export function validated(world){
   validateWorld(world);const restored=parseSave(serializeWorld(world));assert.deepEqual(restored,world);
-  assert.equal(world.version,13);assert.equal(world.encounters.version,13);assert.equal(world.encounters.gardenFriends.version,2);
+  assert.equal(world.version,14);assert.equal(world.encounters.version,13);assert.equal(world.encounters.gardenFriends.version,2);
   return restored;
 }
 /** Synthetic event history with real engine birds, lifecycle, naming and strict save validation.

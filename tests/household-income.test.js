@@ -1,3 +1,4 @@
+import {stripGrowthPace} from './fixtures/growth-legacy.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {IDBFactory} from 'fake-indexeddb';
@@ -5,7 +6,7 @@ import {createWorld,createBird,validateWorld,readCompatibleWorld,advanceTo,feedB
 import {openGameStore,DB_NAME,STORAGE_KEY} from '../src/game-store.js';
 const NOW=Date.parse('2026-11-10T12:00:00+09:00'), DAY=86400000;
 function ready(now=NOW){const w=createWorld(now);w.paused=true;for(const b of w.birds)b.needs.food=b.needs.energy=100;return w;}
-function legacy(w){const v=structuredClone(w);v.version=12;v.economy.version=1;delete v.economy.household;return v;}
+function legacy(w){const v=structuredClone(w);v.version=12;stripGrowthPace(v);v.economy.version=1;delete v.economy.household;return v;}
 const claim=(w,now=NOW)=>claimHouseholdIncome(w,economyToken(w),now);
 test('new household earns exactly30 once, receipt roundtrips and PRNG/history/Gems stay unchanged',()=>{
  const w=ready(),before=structuredClone(w);const r=claim(w);assert.equal(r.goldAward,30);assert.equal(w.economy.lifetimeGold,30);assert.equal(w.economy.household.lastClaimedDay,'2026-11-10');
@@ -36,7 +37,7 @@ test('JST midnight opens one new reward, rollback cannot reopen yesterday and mi
 });
 test('migration preserves every old field, blocks update day and allows tomorrow even after reloading',()=>{
  const old=legacy(ready());old.economy.gold=127;old.economy.lifetimeGold=200;const before=structuredClone(old),w=readCompatibleWorld(old,NOW);assert.deepEqual(old,before);
- const projected=structuredClone(w);projected.version=12;projected.economy.version=1;delete projected.economy.household;assert.deepEqual(projected,before);
+ const projected=structuredClone(w);projected.version=12;stripGrowthPace(projected);projected.economy.version=1;delete projected.economy.household;assert.deepEqual(projected,before);
  assert.equal(householdIncomeStatus(w).reason,'migration');assert.equal(claim(w).goldAward,0);
  const reloaded=readCompatibleWorld(w,NOW+DAY);assert.equal(reloaded.economy.household.startedDay,'2026-11-11');advanceTo(reloaded,NOW+DAY);for(const b of reloaded.birds)b.needs.food=b.needs.energy=100;
  assert.equal(claim(reloaded,NOW+DAY).goldAward,30);assert.equal(reloaded.economy.gold,157);
