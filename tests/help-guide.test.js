@@ -7,7 +7,7 @@ import {renderGameHelp as baseline} from './fixtures/help-guide-baseline.js';
 function dom(markup) {const w = new Window(); w.document.body.innerHTML = markup; return w.document.body;}
 function plain(el) {const copy=el.cloneNode(true);copy.querySelectorAll('rt').forEach(n=>n.remove());return copy.textContent;}
 for (const holidayCoverageKnown of [true,false]) {
- test(`preserves every baseline explanation, annotation and disclosure (holiday coverage ${holidayCoverageKnown})`,()=>{
+ test(`preserves every baseline explanation plus the approved36h explanation (holiday coverage ${holidayCoverageKnown})`,()=>{
   const original=dom(baseline({holidayCoverageKnown})), result=dom(renderGameHelp({holidayCoverageKnown}));
   assert.equal(result.querySelector('h3').innerHTML,original.querySelector('h3').innerHTML);
   const oldSteps=[...original.querySelectorAll('ol>li')];
@@ -17,8 +17,12 @@ for (const holidayCoverageKnown of [true,false]) {
    assert.equal(newSteps[i].querySelector('h4').innerHTML,li.querySelector('strong').innerHTML);
    assert.equal(newSteps[i].querySelector('p').innerHTML,li.innerHTML.split('<br>')[1]);
   });
+  const additions=result.querySelectorAll('[data-game-cleanliness-help]');assert.equal(additions.length,1);
+  assert.equal(plain(additions[0]),'そうじをして床が100になると、20までへるのは、ほんとうの時間で約36時間だよ。物語を止めているあいだは、床もよごれないよ。ごはんや病院の期限は、そのまま進むよ。');
+  // Allow only this exact new paragraph; every existing disclosure remains byte-exact.
   for(const detail of original.querySelectorAll('details')) {
-   assert.equal(result.querySelector(`[data-game-details="${detail.dataset.gameDetails}"]`).outerHTML,detail.outerHTML);
+   const actual=result.querySelector(`[data-game-details="${detail.dataset.gameDetails}"]`).outerHTML;
+   assert.equal(actual.replace(additions[0].outerHTML+'\n',''),detail.outerHTML);
   }
   assert.equal(result.querySelector(':scope > section > p').innerHTML,original.querySelector(':scope > section > p').innerHTML);
   const unannotated=result.cloneNode(true);unannotated.querySelectorAll('ruby').forEach(n=>n.remove());

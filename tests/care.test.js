@@ -40,10 +40,10 @@ test('legacy and current corrupt saves fail closed without getter execution or s
 
 test('cleanliness is a cosmetic 0–100 value with deterministic bounded decay and free idempotent cleaning',()=>{
  const w=createWorld(0);assert.equal(getCleanliness(w),100);const original=serializeWorld(w);assert.equal(cleanGarden(w).changed,false);assert.equal(serializeWorld(w),original);
- advanceTicks(w,20);assert.equal(w.care.cleanliness,80);const birds=structuredClone(w.birds),events=structuredClone(w.events),seed=w.seed;
- const cleaned=cleanGarden(w);assert.deepEqual({before:cleaned.before,after:cleaned.after,changed:cleaned.changed},{before:80,after:100,changed:true});assert.equal(w.care.lastCleanTick,20);
+ advanceTicks(w,20*27);assert.equal(w.care.cleanliness,80);const birds=structuredClone(w.birds),events=structuredClone(w.events),seed=w.seed;
+ const cleaned=cleanGarden(w);assert.deepEqual({before:cleaned.before,after:cleaned.after,changed:cleaned.changed},{before:80,after:100,changed:true});assert.equal(w.care.lastCleanTick,20*27);
  assert.deepEqual(w.birds,birds);assert.deepEqual(w.events,events);assert.equal(w.seed,seed);const once=serializeWorld(w);for(let i=0;i<500;i++)assert.equal(cleanGarden(w).changed,false);assert.equal(serializeWorld(w),once);
- advanceTicks(w,1000);assert.equal(w.care.cleanliness,0);cleanGarden(w);w.paused=true;advanceTicks(w,100);advanceTo(w,TICK_MS*100000);assert.equal(w.care.cleanliness,100);validateWorld(w);
+ advanceTicks(w,100*27);assert.equal(w.care.cleanliness,0);cleanGarden(w);w.paused=true;advanceTicks(w,100);advanceTo(w,TICK_MS*100000);assert.equal(w.care.cleanliness,100);validateWorld(w);
 });
 
 test('floor cleanliness has no effect on autonomous state, reproduction or bounded offline absence',()=>{

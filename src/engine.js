@@ -19,7 +19,7 @@ const EVENT_KINDS = [...LEGACY_EVENT_KINDS, 'user-feed', 'user-pet', 'illness', 
 const MILESTONE_KINDS = ['welcome','adopt','movein','pair','egg','hatch','grow','depart'];
 const LEGACY_MEMORY_KINDS = [...LEGACY_EVENT_KINDS, ...['hello','rest','bath','friend','play','food','unknown'].map(kind => `user-${kind}`)];
 const MEMORY_KINDS = [...LEGACY_MEMORY_KINDS, 'user-feed', 'user-pet', 'illness', 'death', 'treatment', 'caretaker-treatment', 'succession','pair-proposal','pair-declined'];
-export const CARE_RULES = Object.freeze({ feedGain: 20, petMoodGain: 4, feedCooldownTicks: 2, petCooldownTicks: 1, cleanCooldownTicks: 1, soilPerTick: 1 });
+export const CARE_RULES = Object.freeze({ feedGain: 20, petMoodGain: 4, feedCooldownTicks: 2, petCooldownTicks: 1, cleanCooldownTicks: 1, soilIntervalTicks: 27 });
 export const LIMITS = Object.freeze({ residents: 6, visitors: 6, birds: 128, events: 240, memories: 16, offlineTicks: 576 });
 export const STAGES = Object.freeze({ egg: '卵', chick: 'ひな', juvenile: '幼鳥', adult: '成鳥' });
 export const ACTIONS = Object.freeze({ rest: 'ひとやすみ', eat: 'ごはん', bath: '水浴び', explore: 'たんけん', talk: 'おしゃべり', play: 'いっしょに遊ぶ', nest: '巣で過ごす', visit: 'あそびに来たよ' });
@@ -430,10 +430,29 @@ function visits(w, now=Date.now()) {
   // Resident independence is always a separate, explicitly accepted consultation.
   for (const b of w.birds.filter(b => b.home === 'visitor' && w.tick - b.arrivedTick > 96)) { b.home = 'departed'; record(w, 'depart', [b.id], '外の庭にも暮らしがある', 'また会う約束をした'); }
 }
+/** Integer decay retains the partial interval across saves and batched absence.
+ * Cleaning is the phase origin; no new save fields or story random draws. */
+function soilFloor(w,fromTick,now,fromAt){
+ const origin=w.care.lastCleanTick??0,interval=CARE_RULES.soilIntervalTicks;
+ const contract=w.lifecycle?.caretaker,at=Math.max(now,w.lifecycle?.seenAt??now);
+ let dirtyFrom=fromTick;
+ if(contract){
+  if(at>=contract.fromAt&&at<=contract.until){w.care.cleanliness=100;return;}
+  // Care can update the real clock before story catch-up. Honor known paid
+  // cleaning inside this story interval without rewinding health or its clock.
+  const startAt=fromAt??at-(w.tick-fromTick)*TICK_MS;
+  if(contract.until>=startAt&&contract.until<at){
+   w.care.cleanliness=100;
+   dirtyFrom=Math.min(w.tick,fromTick+Math.floor((contract.until-startAt)/TICK_MS));
+  }
+ }
+ const amount=Math.floor((w.tick-origin)/interval)-Math.floor((dirtyFrom-origin)/interval);
+ w.care.cleanliness=Math.max(0,w.care.cleanliness-amount);
+}
 export function stepWorld(w, now=w.lifecycle?.seenAt??Date.now(), {observe=true}={}) {
   const economySynced=syncEconomy(w.economy,careTime(now));if(economySynced)bumpRevision(w);
   if (w.paused || !Number.isSafeInteger(w.tick + 1) || w.clock.originAt+(w.tick+1-w.clock.originTick)*TICK_MS > MAX_DATE_MS) return w;
-  w.tick++; synchronizeLife(w,careTime(now),true,observe); w.care.cleanliness = Math.max(0, w.care.cleanliness - CARE_RULES.soilPerTick); grow(w); synchronizeProtagonist(w,!observe); expireEncounterVisitors(w); visits(w,now);
+  w.tick++; synchronizeLife(w,careTime(now),true,observe); soilFloor(w,w.tick-1,careTime(now)); grow(w); synchronizeProtagonist(w,!observe); expireEncounterVisitors(w); visits(w,now);
   if(w.field.place==='friend'&&findBird(w,w.field.hostId)?.home==='resident')w.field={place:'home',hostId:null,enteredTick:w.tick};
   const active = fieldBirds(w).filter(b => b.stage !== 'egg');
   for (const b of active) {
@@ -476,7 +495,7 @@ function advanceAbsentStory(w,count,now){
   const nextAt=Math.min(now,Math.max(at,tickAt),nextLifecycleDeadline(w,at));
   const tick=Math.min(nextTick,start+Math.floor((nextAt-startAt)/TICK_MS));
   const elapsed=tick-w.tick;w.tick=tick;
-  w.care.cleanliness=Math.max(0,w.care.cleanliness-elapsed*CARE_RULES.soilPerTick);
+  soilFloor(w,tick-elapsed,careTime(nextAt),startAt+(tick-elapsed-start)*TICK_MS);
   synchronizeLife(w,careTime(nextAt),true,false);
   if(elapsed){grow(w);synchronizeProtagonist(w,true);expireEncounterVisitors(w);visitsWithoutArrivals(w);}
   at=nextAt;
