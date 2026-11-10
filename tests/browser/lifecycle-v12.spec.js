@@ -37,3 +37,17 @@ test('loading an existing pre-fix v12 grave preserves its historical stage, date
  expect(saved.lifecycle.birds).toEqual(original.lifecycle.birds);
  await page.reload();await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');expect(await record(page)).toEqual(saved);
 });
+
+test('actual short startup dates adult growth before resuming later health deadlines',async({page})=>{
+ const minute=60000,day=86400000;
+ await page.addInitScript(at=>{Date.now=()=>Number(sessionStorage.getItem('short-resume-now')??at);localStorage.setItem('buncho.music.v1',JSON.stringify({enabled:false}));},now+85*minute);
+ await page.goto('');const world=createWorld(now),father=createBird(world,{home:'resident',sex:'male'});
+ const child=createBird(world,{home:'resident',stage:'egg',parents:['b1',father.id],generation:1});advanceTo(world,now+83*minute);
+ await record(page,world);await page.goto('game/');await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');
+ const short=await record(page);expect(short.birds.find(b=>b.id===child.id).stage).toBe('adult');expect(short.decor.points).toBe(95);
+ expect(short.journal.find(e=>e.kind==='grow'&&e.ids[0]===child.id&&e.tick===84).at).toBe(now+84*minute);
+ await page.evaluate(at=>sessionStorage.setItem('short-resume-now',String(at)),now+4*day);await page.reload();await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');
+ const final=await record(page);expect(final.decor.points).toBe(95);expect(final.lifecycle.birds.find(b=>b.birdId===child.id).death).toEqual({cause:'neglect',at:now+3*day,tick:4320});
+ expect(final.journal.filter(e=>e.ids[0]===child.id&&['hatch','grow'].includes(e.kind)).map(e=>e.at)).toEqual([now+12*minute,now+36*minute,now+84*minute]);
+ await page.reload();await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');expect(await record(page)).toEqual(final);
+});
