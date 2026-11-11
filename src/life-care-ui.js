@@ -28,7 +28,7 @@ export function renderProtagonistSummary(world){
 function renderCareDeadlines(world,state,care){
   const grace=relaxedBird(world,state.birdId)?.healthGraceUntil??0;
   if(grace===253402268399999)return '<p class="life-small" data-return-care>おかえり。ごはんや、びょういんでおせわしよう。</p>';
-  if(grace>now(world))return `<p class="life-small" data-return-care>おかえり。ごはんや、びょういんでおせわしよう。おせわできるじかん ${remainingUnits(grace-now(world))}</p>`;
+  if(grace>now(world)&&Math.min(state.lastCareAt+LIFE_RULES.neglectMs,state.condition?.deadlineAt??Infinity)<=grace)return `<p class="life-small" data-return-care>おかえり。ごはんや、びょういんでおせわしよう。おせわできるじかん ${remainingUnits(grace-now(world))}</p>`;
   if(!state.condition)return `<p class="life-small">${care.active?'飼育員がお世話をしています。':`ごはんの期限まで：実時間 ${remainingUnits(effectiveHealthDeadline(world,state,state.lastCareAt+LIFE_RULES.neglectMs)-now(world))}`}</p>`;
   const deadlines=[{kind:'feed',label:'ごはん',at:effectiveHealthDeadline(world,state,state.lastCareAt+LIFE_RULES.neglectMs)},{kind:'treatment',label:'通院',at:effectiveHealthDeadline(world,state,state.condition.deadlineAt)}].sort((a,b)=>a.at-b.at);
   const tied=deadlines[0].at===deadlines[1].at;

@@ -99,3 +99,9 @@ test('a return just before a known treatment deadline still provides a full day 
  advanceTo(w,NOW+DAY-60000);assert.equal(s.death,null);assert.deepEqual(s.condition,diagnosis);assert.equal(w.careRules.birds[0].healthGraceUntil,NOW+2*DAY-60000);validateWorld(w);
  const max=253402268399999,x=createWorld(max-2*DAY);x.paused=true;advanceTo(x,max);assert.equal(x.lifecycle.birds[0].death,null);validateWorld(x);
 });
+
+test('successful feeding removes the return-grace prompt when the ordinary food deadline is later and no illness remains',async()=>{
+ const {renderLifeCarePanel}=await import('../src/life-care-ui.js');const w=world(),at=NOW+4*DAY;advanceTo(w,at);assert.match(renderLifeCarePanel(w),/data-return-care/);
+ for(let i=0;i<3;i++)feedBird(w,'b1',at);assert.equal(w.lifecycle.birds[0].lastCareAt,at);assert.doesNotMatch(renderLifeCarePanel(w),/data-return-care/);
+ w.lifecycle.birds[0].condition={kind:'injury',sinceAt:NOW,deadlineAt:NOW+DAY};assert.match(renderLifeCarePanel(w),/data-return-care/);validateWorld(w);
+});
