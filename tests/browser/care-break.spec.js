@@ -11,7 +11,7 @@ for(const [width,height] of [[320,568],[390,844]])test(`full gauges allow a quie
  const before=validateWorld(await record(page));await page.locator('#game-care-pet').focus();await page.keyboard.press('Enter');
  await expect(page.locator('.game-care-feedback')).toContainText('うれしそう');await expect(page.locator('[data-care-receipt]')).toContainText('ほぞんしたよ');
  const after=validateWorld(await record(page));expect(after).toEqual(before);
- await page.evaluate(()=>document.documentElement.style.fontSize='200%');await page.locator('[data-care-receipt]').scrollIntoViewIfNeeded();await expect(page.locator('[data-care-receipt]')).toBeInViewport();expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+ await page.evaluate(()=>document.documentElement.style.fontSize='200%');await page.locator('[data-care-receipt]').evaluate(el=>el.scrollIntoView({block:'center'}));await expect(page.locator('[data-care-receipt]')).toBeInViewport();expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
  await info.attach('saved-care-break',{body:await page.screenshot(),contentType:'image/png'});
  await page.locator('#game-sheet-close').click();await expect(page.locator('.game-bird-sheet')).not.toBeVisible();await page.reload();await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');expect(validateWorld(await record(page))).toEqual(after);await expect(page.locator('[data-care-receipt]')).toHaveCount(0);
 });
