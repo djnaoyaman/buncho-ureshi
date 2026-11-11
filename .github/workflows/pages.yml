@@ -75,7 +75,9 @@ jobs:
           test "$(cat SOURCE_SHA)" = "$GITHUB_SHA"
           tar -xf dist.tar -C ..
       - run: npx playwright install --with-deps webkit
+        timeout-minutes: 5
       - run: npx playwright install chrome
+        timeout-minutes: 5
       - name: Run the selected checks on Chrome and Safari-compatible WebKit
         env:
           BROWSER_TESTS_JSON: ${{ needs.build.outputs.browser_tests }}
