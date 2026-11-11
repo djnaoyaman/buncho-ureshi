@@ -1645,13 +1645,13 @@ body[data-world="buncho"] .game-next-goal-list button{min-height:44px;max-width:
   white-space:nowrap;
  }
  body[data-world="buncho"] .game-scene-toolbar .game-garden-care meter {
-  grid-column:2; width:100%; min-width:0;
+  display:block; grid-column:2; width:100%; min-width:0;
  }
  body[data-world="buncho"] .game-scene-toolbar .game-garden-care output {
-  grid-column:3; white-space:nowrap; font-size:12px;
+  display:block; grid-column:3; white-space:nowrap; font-size:12px;
  }
  body[data-world="buncho"] .game-scene-toolbar .game-garden-care :is(.game-clean-guidance,.game-care-feedback) {
-  grid-column:1/-1; max-width:none; min-width:0; margin:0; font-size:13px;
+  display:block; grid-column:1/-1; max-width:none; min-width:0; margin:0; font-size:13px;
   line-height:1.5; white-space:normal; overflow-wrap:anywhere;
  }
 }
