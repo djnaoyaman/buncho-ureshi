@@ -1,7 +1,7 @@
 {
-  "base": "18b714497dbb4c17f6f0df7d6100f0dc98f90d44",
+  "base": "a50933955b6db4f3e904d02f67473ccac7904013",
   "tests": [
-    "tests/browser/predator-warning-guide.spec.js"
+    "tests/browser/next-enjoyments.spec.js"
   ],
-  "reason": "予兆・残り10秒の表示と帰宅ボタン、320pxと横長画面、警告中のフォーカス維持と帰宅後の保存をChrome/WebKitで確認。確率・時計・事故処理・保存形式は変更しない。"
+  "reason": "暮らしのメニュー内の新しい案内を、Chrome/WebKitで狭い画面・拡大文字・各遷移・再読込と保存全体の不変性まで確認する。報酬・目標・進行ルールの追加はない。"
 }
