@@ -1,3 +1,4 @@
+import {renderNextEnjoyments} from './game-next-goals.js';
 import {advanceObservedWorld} from './away-session.js';
 import {notePresence,unreadAway,acknowledgeAway,awayText,awayViewKey} from './away-reports.js';
 import {careFamily,familyCareStatus} from './family-care.js';
@@ -436,7 +437,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
   function fieldTitle(){return world.field.place==='park'?'みんなの文鳥公園':world.field.place==='friend'?`${birdName(world,world.field.hostId)}のおうち`:`${birdName(world,getProtagonistId(world))}たちのおうち`;}
   function fieldControls(){return `<nav class="game-field-nav" aria-label="文鳥のおでかけ"><button data-field-travel="home" data-game-panel="garden" aria-label="おうちへ" aria-pressed="${panel==='garden'&&world.field.place==='home'}">おうち</button><button data-game-panel="outdoors" aria-label="おにわへ遊びに行く" aria-pressed="${panel==='outdoors'}">おにわ</button><button data-game-panel="friends" aria-label="友だちのおうちへ" aria-pressed="${panel==='friends'||panel==='garden'&&world.field.place==='friend'}">友だち</button></nav><div class="game-play-actions"><button data-game-panel="decorate" aria-label="おうちを飾る" aria-pressed="${panel==='decorate'}"><span aria-hidden="true">✧</span> お飾りガチャ</button></div>`;}
   function secondaryMenu(){
-    return `<details class="game-secondary-menu" data-game-details="navigation"><summary id="game-nav-summary">文鳥のこと・家族・記録</summary><div class="game-menu-heading"><strong>暮らしのメニュー</strong><button class="game-menu-close" data-game-close-menu aria-label="メニューをとじる">とじる</button></div>${householdIncome()}<nav class="game-tabs" aria-label="文鳥ぐらしのメニュー">${LIFE_MENU_ITEMS.map(([id,label])=>`<button id="game-menu-${id}" data-game-panel="${id}" aria-pressed="${panel===id}">${renderLifeMenuIcon(id)}<span>${label}</span></button>`).join('')}</nav></details>`;
+    return `<details class="game-secondary-menu" data-game-details="navigation"><summary id="game-nav-summary">文鳥のこと・家族・記録</summary><div class="game-menu-heading"><strong>暮らしのメニュー</strong><button class="game-menu-close" data-game-close-menu aria-label="メニューをとじる">とじる</button></div>${householdIncome()}${renderNextEnjoyments(world)}<nav class="game-tabs" aria-label="文鳥ぐらしのメニュー">${LIFE_MENU_ITEMS.map(([id,label])=>`<button id="game-menu-${id}" data-game-panel="${id}" aria-pressed="${panel===id}">${renderLifeMenuIcon(id)}<span>${label}</span></button>`).join('')}</nav></details>`;
   }
   function lifeNotice(){
     const sick=allBirds(world).filter(b=>b.home==='resident'&&lifeStatus(world,b)?.condition),dead=world.lifecycle.birds.filter(s=>s.death);
@@ -945,7 +946,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     if(button.dataset.decorPreview){fieldViewRequest++;previewItem=button.dataset.decorPreview;setMessage('');render();return;}
     if(button.hasAttribute('data-decor-cancel')){fieldViewRequest++;previewItem=null;drawResult=null;render();return;}
     if(button.dataset.gameCare){if(button.hasAttribute('data-care-rub')&&ev.detail>0){ev.preventDefault();return;}await careAction(button);return;}
-    if(button.dataset.gamePanel){if(button.dataset.gamePanel==='owner')return;const menu=root.querySelector('.game-secondary-menu');if(menu)menu.open=false;sheetOpen=false;fieldViewRequest++;cancelCareEffects();panel=button.dataset.gamePanel;setMessage('');render();focusPanel();if(panel==='family')centerFamily();return;}
+    if(button.dataset.gamePanel||button.dataset.goalPanel){if(button.dataset.gamePanel==='owner')return;const menu=root.querySelector('.game-secondary-menu');if(menu)menu.open=false;sheetOpen=false;fieldViewRequest++;cancelCareEffects();panel=button.dataset.gamePanel||button.dataset.goalPanel;if(panel==='decorate'&&DECOR_SLOTS.some(s=>s.id===button.dataset.goalSlot)){decorSlot=button.dataset.goalSlot;previewItem=null;}setMessage('');render();focusPanel();if(panel==='notebook'&&encounterSystem.catalog.some(e=>e.id===button.dataset.goalEncounter))encounterController?.entry(button.dataset.goalEncounter);if(panel==='family')centerFamily();return;}
     if(button.hasAttribute('data-cage-guest')){const id=button.dataset.cageGuest;panel='notebook';render();encounterController?.entry(id);return;}
     if(button.dataset.gameSelect&&button.hasAttribute('data-game-scene-select')){openBirdSheet(button.dataset.gameSelect);return;}
     if(button.dataset.gameSelect){sheetOpen=false;fieldViewRequest++;cancelCareEffects();selected=button.dataset.gameSelect;panel='profile';lastReply='';render();focusPanel();if(panel==='family')centerFamily();return;}

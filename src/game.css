@@ -1609,3 +1609,14 @@ body[data-world="buncho"] .game-app .game-decoration .game-decor-preview{min-hei
 /* Urgent warning uses words and a steady border, never flashing or motion. */
 body[data-world="buncho"] .game-raptor-notice[data-raptor-urgent="true"]{border-color:#8b2c1b;background:#ffe1c9;outline:2px solid #8b2c1b;outline-offset:1px}
 body[data-world="buncho"] .game-raptor-notice[data-raptor-urgent="true"] button{background:#8b2c1b!important;color:#fff!important}
+
+/* A quiet, optional set of suggestions inside the existing life menu. */
+body[data-world="buncho"] .game-next-goals{margin:12px 0;padding:10px 12px;border:2px solid var(--play-green,#66835b);border-radius:16px;background:var(--play-paper,#fffaf1)}
+body[data-world="buncho"] .game-next-goals>summary{font-weight:800;cursor:pointer;min-height:44px;display:list-item;align-content:center}
+body[data-world="buncho"] .game-next-goal-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+body[data-world="buncho"] .game-next-goal-list article{min-width:0;padding:12px;border:1px solid #b5cbb3;border-radius:12px;background:#fffdf6;overflow-wrap:anywhere}
+body[data-world="buncho"] .game-next-goal-list h4{margin:0 0 6px;font-size:16px}
+body[data-world="buncho"] .game-next-goal-list p{margin:6px 0;font-size:13px;line-height:1.7}
+body[data-world="buncho"] .game-next-goal-progress{font-weight:700;color:#365844}
+body[data-world="buncho"] .game-next-goal-list button{min-height:44px;max-width:100%;white-space:normal;margin-top:6px}
+@media(max-width:600px){body[data-world="buncho"] .game-next-goal-list{grid-template-columns:minmax(0,1fr)}}
