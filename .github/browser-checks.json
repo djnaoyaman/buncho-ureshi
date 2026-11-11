@@ -1,7 +1,9 @@
 {
-  "base": "f39c7792543830a8c3334bf3d76336d7a9d13d05",
+  "base": "1de51aac25a7cf9a83393244c4a24df4b63797e2",
   "tests": [
-    "tests/browser/home-cleaning-layout.spec.js"
+    "tests/browser/gacha-home-layout.spec.js",
+    "tests/browser/gacha-machines.spec.js",
+    "tests/browser/reading-scroll.spec.js"
   ],
-  "reason": "そうじ後の背景更新と測定が競合しないよう、配置を同じブラウザ処理で一括測定する。Chrome/WebKitの320・390・402pxで表示・非重複・掃除・保存を再確認する。"
+  "reason": "ガチャ入口・結果・試着の表示と共通のおうち描画を変更。Chrome/WebKitで背景・家具・相対位置、試着と保存、料金と選択、狭い画面の操作、スクロール位置の保持を確認する。"
 }
