@@ -1,7 +1,7 @@
 {
-  "base": "b6a585bbb83f1b61a83c56c8abaea58df6b61469",
+  "base": "f39c7792543830a8c3334bf3d76336d7a9d13d05",
   "tests": [
     "tests/browser/home-cleaning-layout.spec.js"
   ],
-  "reason": "スマホのおうちでそうじ欄がGems・移動ボタン・一時停止と重なるため独立行にする。Chrome/WebKitの320・390・402pxで汚れ案内と掃除後の配置、操作、保存を確認する。"
+  "reason": "そうじ後の背景更新と測定が競合しないよう、配置を同じブラウザ処理で一括測定する。Chrome/WebKitの320・390・402pxで表示・非重複・掃除・保存を再確認する。"
 }
