@@ -40,7 +40,7 @@ async function setupCrow(page,{species='large-billed-crow',friendly=false,seedVi
  await page.clock.runFor(1000);
 }
 
-for(const [width,height] of [[320,568],[844,390],[320,240]])test(`urgent raptor keeps focus and returns safely ${width}`,async({page},info)=>{
+for(const [width,height] of [[320,568],[844,390],[320,240]])test(`urgent raptor keeps focus and returns safely ${width}x${height}`,async({page},info)=>{
  await page.setViewportSize({width,height});const w=seed();w.encounters.raptor.active.remainingMs=11000;
  await setup(page,{world:w});const banner=page.locator('.game-panel-overlay>[data-raptor-notice]'),home=banner.locator('[data-game-raptor-home]');
  await expect(banner).toHaveAttribute('data-raptor-urgent','false');await home.focus();
