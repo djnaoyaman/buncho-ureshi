@@ -20,7 +20,7 @@ export function careGuidance(world,birdId){
  */
 export function careIsSettled(world){
  const family=allBirds(world).filter(b=>b.home==='resident'&&!lifeStatus(world,b)?.death);
- return family.length>0&&world.care.cleanliness>20&&!world.encounters?.raptor?.active?.hostile&&family.every(b=>
+ return family.length>0&&world.care.cleanliness>20&&!world.gems?.droppings?.length&&!world.encounters?.raptor?.active?.hostile&&family.every(b=>
   !lifeStatus(world,b)?.condition&&(['egg','chick'].includes(b.stage)||b.needs.food>=100&&b.needs.energy>=100));
 }
 export function cleaningGuidance(world){

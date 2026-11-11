@@ -25,6 +25,6 @@ test('a care break checks the whole living household, illness, dirt and danger w
  w.lifecycle.birds.find(s=>s.birdId===b.id).condition=null;
  w.care.cleanliness=20;assert.equal(careIsSettled(w),false);w.care.cleanliness=100;
  w.encounters.raptor.active={hostile:true};assert.equal(careIsSettled(w),false);
- w.encounters.raptor.active=null;b.stage='chick';b.needs.food=0;assert.equal(careIsSettled(w),true);
+ w.encounters.raptor.active=null;w.gems.droppings=[{birdId:b.id}];assert.equal(careIsSettled(w),false);w.gems.droppings=[];b.stage='chick';b.needs.food=0;assert.equal(careIsSettled(w),true);
  for(const bird of w.birds)bird.home='departed';assert.equal(careIsSettled(w),false);
 });
