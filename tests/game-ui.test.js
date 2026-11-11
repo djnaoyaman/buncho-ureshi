@@ -647,3 +647,33 @@ test('next enjoyment disclosure and all four routes preserve the complete paused
  open();f.root.querySelector('[data-next-goal="family"] button').click();assert.ok(f.root.querySelector('.game-panel-overlay[open]'));assert.equal(f.root.querySelector('.game-app').dataset.panel,'family');f.root.querySelector('[data-game-close-panel]').click();
  assert.deepEqual(await rawWorld(f.indexedDB),before,'reading suggestions and following links never awards, equips or rewrites progress');
 });
+
+test('background poll retains the open life menu reading position and nested disclosures without changing the peer save',async t=>{
+ const now=Date.now();t.mock.method(Date,'now',()=>now);
+ const f=await fixture(t);await f.mount();const menu=f.root.querySelector('.game-secondary-menu');menu.open=true;const goals=menu.querySelector('[data-game-details="next-goals"]');goals.open=true;menu.scrollTop=430;goals.scrollTop=35;const tabs=menu.querySelector('.game-tabs');tabs.scrollTop=72;tabs.scrollLeft=18;
+ const peer=await rawWorld(f.indexedDB);bumpRevision(peer);await rawWorld(f.indexedDB,peer);await [...f.timers.values()][0]();
+ const next=f.root.querySelector('.game-secondary-menu');assert.notEqual(next,menu);assert.equal(next.open,true);assert.equal(next.scrollTop,430);assert.equal(next.querySelector('[data-game-details="next-goals"]').open,true);assert.equal(next.querySelector('[data-game-details="next-goals"]').scrollTop,35);assert.equal(next.querySelector('.game-tabs').scrollTop,72);assert.equal(next.querySelector('.game-tabs').scrollLeft,18);assert.deepEqual(await rawWorld(f.indexedDB),peer);
+});
+test('background poll retains the scrolling odds disclosure while collection and save stay unchanged',async t=>{
+ const now=Date.now();t.mock.method(Date,'now',()=>now);
+ const f=await fixture(t);await f.mount();f.root.querySelector('[data-game-panel="decorate"]').click();const odds=f.root.querySelector('[data-game-details="draw-odds"]');odds.open=true;odds.scrollTop=210;
+ const peer=await rawWorld(f.indexedDB);bumpRevision(peer);await rawWorld(f.indexedDB,peer);await [...f.timers.values()][0]();assert.equal(f.root.querySelector('[data-game-details="draw-odds"]').scrollTop,210);assert.deepEqual(await rawWorld(f.indexedDB),peer);
+});
+
+test('same-view refresh preserves panel reading positions across the existing long screens',async t=>{
+ const now=Date.now();t.mock.method(Date,'now',()=>now);const f=await fixture(t);await f.mount();
+ for(const panel of ['help','settings','health','profile','roster','diary','relations','family']){
+  f.root.querySelector(`[data-game-panel="${panel}"]`).click();const scroller=f.root.querySelector('.game-panel-overlay>.game-panel');scroller.scrollTop=170;
+  const family=f.root.querySelector('.game-family-pan');if(family){family.scrollTop=61;family.scrollLeft=83;}
+  const peer=await rawWorld(f.indexedDB);bumpRevision(peer);await rawWorld(f.indexedDB,peer);await [...f.timers.values()][0]();
+  assert.equal(f.root.querySelector('.game-panel-overlay>.game-panel').scrollTop,170,panel);if(family){assert.equal(f.root.querySelector('.game-family-pan').scrollTop,61);assert.equal(f.root.querySelector('.game-family-pan').scrollLeft,83);}assert.deepEqual(await rawWorld(f.indexedDB),peer,panel);
+  f.root.querySelector('[data-game-close-panel]').click();
+ }
+});
+test('welcome reading and care sheet scroll survive refresh, but a replaced world does not inherit an old menu offset',async t=>{
+ const now=Date.now();t.mock.method(Date,'now',()=>now);const f=await fixture(t);f.initial.offlineSummary={ticks:0,skipped:0,newBirds:0,fromTick:0,toTick:0};await rawWorld(f.indexedDB,f.initial);await f.mount();f.root.querySelector('.game-welcome').scrollTop=93;
+ let peer=await rawWorld(f.indexedDB);bumpRevision(peer);await rawWorld(f.indexedDB,peer);await [...f.timers.values()][0]();assert.equal(f.root.querySelector('.game-welcome').scrollTop,93);assert.deepEqual(await rawWorld(f.indexedDB),peer);
+ f.openBird();f.root.querySelector('.game-bird-sheet').scrollTop=144;peer=await rawWorld(f.indexedDB);bumpRevision(peer);await rawWorld(f.indexedDB,peer);await [...f.timers.values()][0]();assert.equal(f.root.querySelector('.game-bird-sheet').scrollTop,144);f.closeBird();
+ const menu=f.root.querySelector('.game-secondary-menu');menu.open=true;menu.scrollTop=430;
+ const replacement=savedWorld('別のおうち',202);await rawWorld(f.indexedDB,replacement);await [...f.timers.values()][0]();assert.equal(f.root.querySelector('.game-secondary-menu').scrollTop,0);assert.equal((await rawWorld(f.indexedDB)).worldId,replacement.worldId);
+});
