@@ -1,3 +1,4 @@
+import {initialAway,validateAway} from './away-reports.js';
 import {allBirds,activateBird,archiveDetachedBirds} from './world-birds.js';
 import {gachaMachine} from './gacha-machines.js';
 import {advanceRaptorState} from './garden-raptors.js';
@@ -8,7 +9,7 @@ import {initialEconomy,validateEconomy,syncEconomy,reserveAutomaticGems,awardHou
 /** A deterministic, offline story simulation with fictional lifecycle rules. No real husbandry advice. */
 import { initializeCareSchedule, validateCareSchedule, syncCareSchedule, applyScheduledCare, reconcileImportedCare, careWindow, careDay } from './care-schedule.js';
 import { directLineNameFields, newDefaultNameFields, automaticNaming, manualNaming, legacyNaming, isValidNaming } from './bird-names.js';
-export const SAVE_VERSION = 14;
+export const SAVE_VERSION = 15;
 const careTime = now => Math.max(0, Math.min(253402268399999, now));
 export { reconcileImportedCare, careWindow };
 export const TICK_MS = 60000;
@@ -308,7 +309,7 @@ export function honorBird(w,birdId,kind,token,now=Date.now()){
  const result=honorLifeBird(w,birdId,kind,economyToken(w),careTime(now));if(result.changed)bumpRevision(w);return result;
 }
 export function createWorld(now = Date.now(), seed = 842911) {
-  const w = { version: SAVE_VERSION, revision: 0, worldId: `garden-${now}-${seed}`, epoch: now, clock:{version:2,originTick:0,originAt:now,legacyEventMax:0},archive:[],journal:[], lastUpdated: now, seed: seed >>> 0, tick: 0, nextId: 1, nextEvent: 1, paused: false, settings: { motion: true, careSound: true, adoptionMode:'ask' }, care: { cleanliness: 100, lastCleanTick: null }, birds: [], events: [], offlineSummary: null, field: initialField(), decor: initialDecor(), gems: {droppings:[],nextDropId:1}, encounters:initialEncounterState(), economy:initialEconomy(careTime(now)), adoption:{pending:null,dismissed:[]} };
+  const w = { away:initialAway(careTime(now)), version: SAVE_VERSION, revision: 0, worldId: `garden-${now}-${seed}`, epoch: now, clock:{version:2,originTick:0,originAt:now,legacyEventMax:0},archive:[],journal:[], lastUpdated: now, seed: seed >>> 0, tick: 0, nextId: 1, nextEvent: 1, paused: false, settings: { motion: true, careSound: true, adoptionMode:'ask' }, care: { cleanliness: 100, lastCleanTick: null }, birds: [], events: [], offlineSummary: null, field: initialField(), decor: initialDecor(), gems: {droppings:[],nextDropId:1}, encounters:initialEncounterState(), economy:initialEconomy(careTime(now)), adoption:{pending:null,dismissed:[]} };
   initializeCareSchedule(w,careTime(now)); initializeLifecycle(w,careTime(now));
   const b = createBird(w, { name: 'エド', automaticName:true, sex: 'female', color: 'white', home: 'resident' });
   initializeProtagonist(w);
@@ -713,7 +714,7 @@ function validateVersion(input, version) {
   const fail = msg => { throw new Error(`保存データを読み込めません：${msg}`); };
   if (!input || typeof input !== 'object' || Array.isArray(input)) fail('形式が違います。');
   const shape = (value, keys) => value !== null && typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length === keys.length && keys.every(key => Object.hasOwn(value, key));
-  const worldKeys = ['version','revision','worldId','epoch','lastUpdated','seed','tick','nextId','nextEvent','paused','settings','birds','events','offlineSummary', ...(version >= 2 ? ['care'] : []), ...(version >= 3 ? ['field','decor'] : []), ...(version >= 4 ? ['gems'] : []), ...(version >= 5 ? ['careSchedule'] : []), ...(version >= 6 ? ['encounters'] : []), ...(version >= 7 ? ['economy','adoption'] : []), ...(version >= 8 ? ['lifecycle'] : []), ...(version >= 9 ? ['protagonist'] : []),...(version>=12?['clock','archive','journal']:[])];
+  const worldKeys = ['version','revision','worldId','epoch','lastUpdated','seed','tick','nextId','nextEvent','paused','settings','birds','events','offlineSummary', ...(version >= 2 ? ['care'] : []), ...(version >= 3 ? ['field','decor'] : []), ...(version >= 4 ? ['gems'] : []), ...(version >= 5 ? ['careSchedule'] : []), ...(version >= 6 ? ['encounters'] : []), ...(version >= 7 ? ['economy','adoption'] : []), ...(version >= 8 ? ['lifecycle'] : []), ...(version >= 9 ? ['protagonist'] : []),...(version>=12?['clock','archive','journal']:[]),...(version>=15?['away']:[])];
   if (!shape(input, worldKeys)) fail('保存の項目が不正です。');
   // Check bounded input before JSON cloning, including direct IndexedDB values.
   // Descriptors avoid invoking getters/toJSON on malformed non-JSON objects.
@@ -846,6 +847,7 @@ function validateVersion(input, version) {
     }
     w.birds=activeBirds;
   }
+  if(version>=15)validateAway(w);
   return w;
 }
 /** Strict current-version validator for transactions; use compatibility only at read boundaries. */
@@ -906,8 +908,10 @@ export function migrateV12ToV13(input,now=Date.now()){
 export function migrateV13ToV14(input){
  const w=validateVersion(input,13);w.version=14;
  for(const b of allBirds(w))b.growthPace='legacy';
- return validateWorld(w);
+ return migrateV14ToV15(w);
 }
+/** First observation establishes presence; never backfill pre-update absence. */
+export function migrateV14ToV15(input){const w=validateVersion(input,14);w.version=15;w.away=initialAway();return validateWorld(w);}
 export function readCompatibleWorld(input, now=Date.now()) {
   // Do not execute an accessor even to discover the version of an untrusted object.
   const descriptor = input && typeof input === 'object' ? Object.getOwnPropertyDescriptor(input, 'version') : null;
@@ -925,6 +929,7 @@ export function readCompatibleWorld(input, now=Date.now()) {
   if (descriptor.value === 11) return migrateV11ToV12(input,now);
   if (descriptor.value === 12) return migrateV12ToV13(input,now);
   if (descriptor.value === 13) return migrateV13ToV14(input);
+  if (descriptor.value === 14) return migrateV14ToV15(input);
   if (descriptor.value === SAVE_VERSION) return validateWorld(input);
   throw new Error('保存データを読み込めません：対応していない版です。元の保存はそのままです。');
 }
@@ -976,6 +981,7 @@ export function prepareWorldReplacement(current,replacement,now=Date.now(),newWo
  if(newWorldId===next.worldId)throw new Error('新しい庭の識別子が必要です。');
  const effective=Math.max(now,current.lastUpdated,next.lastUpdated,current.careSchedule.seenAt,next.careSchedule.seenAt,current.economy.seenAt,next.economy.seenAt,current.lifecycle?.seenAt??0,next.lifecycle.seenAt);
  const at=careTime(effective);
+ next.away.seenAt=Math.max(at,current.away?.seenAt??0,next.away.seenAt??0);
  next.lastUpdated=effective;
  next.careSchedule={seenAt:at,windowAt:careWindow(at).at};
  syncEconomy(next.economy,at);

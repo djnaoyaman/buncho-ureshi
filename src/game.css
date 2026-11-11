@@ -1602,3 +1602,6 @@ body[data-world="buncho"] .game-app .game-decoration .game-decor-preview{min-hei
 .game-household-income>.game-household-care{flex:1 1 100%;display:flex;flex-wrap:wrap;gap:8px}
 .game-household-care button{flex:1 1 8rem;min-width:0}
 .game-household-care small{flex:1 1 100%;line-height:1.7}
+
+/* Bounded ambient history shares the existing welcome and diary surfaces. */
+.game-away-reports{padding-inline-start:1.2em;overflow-wrap:anywhere;min-width:0}.game-away-reports li{margin-block:.65em}.game-away-reports time{display:block;font-size:.85em}.game-away-history{margin-block:1rem}

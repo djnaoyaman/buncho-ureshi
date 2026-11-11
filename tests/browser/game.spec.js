@@ -258,7 +258,7 @@ test('save download imports back exactly; malformed files do not replace the cur
   const exportedText = await readDownload(await downloaded);
   const exported = validateWorld(JSON.parse(exportedText));
   expect(exported.tick).toBe(300);
-  expect(exported.version).toBe(14);
+  expect(exported.version).toBe(15);
   await tab(page, 'profile');
   await page.locator('#game-name').fill('あとから変えた名前');
   await page.locator('[data-game-form="rename"] button[type="submit"]').click();
