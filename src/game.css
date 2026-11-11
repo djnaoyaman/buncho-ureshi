@@ -1741,3 +1741,6 @@ body[data-world="buncho"] .game-draw-result-actions [data-draw-result-preview] {
  body[data-world="buncho"] .game-decor-draw>.game-small { margin:0; }
  body[data-world="buncho"] .game-draw-result .gacha-mechanism { width:80px; }
 }
+
+/* A saved-care receipt uses one full row beside the existing cleaning controls. */
+.game-garden-care [data-care-receipt] { grid-column: 1 / -1; }

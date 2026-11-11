@@ -172,7 +172,7 @@ test('explicit peer mute storage event immediately cancels and persists across w
 test('paused story reopens real-JST care and shows both bars without a fast-tick refill',async t=>{
  const f=await fixture(t);await f.mount();const w=f.read();w.paused=true;w.birds[0].needs.food=100;w.birds[0].needs.energy=100;const now=Date.now(),prior=careWindow(now).at-1;w.careSchedule={seenAt:prior,windowAt:careWindow(prior).at};bumpRevision(w);f.write(w);await f.poll();
  assert.equal(f.read().birds[0].needs.food,60);assert.equal(f.read().birds[0].needs.energy,60);assert.equal(f.root.querySelector('[data-game-care=feed]').disabled,false);assert.equal(f.root.querySelector('[data-game-care=pet]').disabled,false);
- f.clickCare('pet');await f.settle();f.clickCare('pet');await f.settle();assert.equal(f.read().birds[0].needs.energy,100);assert.equal(f.root.querySelector('[data-game-care=pet]').disabled,false);assert.equal(f.root.querySelector('[data-game-talk="名前を呼ぶ"]').disabled,false);assert.match(f.root.querySelector('[data-next-care]').textContent,/日本時間/);
+ f.clickCare('pet');await f.settle();f.clickCare('pet');await f.settle();assert.equal(f.read().birds[0].needs.energy,100);assert.equal(f.root.querySelector('[data-game-care=pet]').disabled,false);assert.equal(f.root.querySelector('[data-game-talk="名前を呼ぶ"]').disabled,false);assert.equal(f.root.querySelector('[data-next-care]'),null);
 });
 
 test('queued talk after peer fills energy gives no Gem, no history and no success chirp',async t=>{
@@ -357,4 +357,22 @@ test('guidance follows only the selected bird and durable care changes',async t=
  f.select('b2');assert.equal(guide().dataset.guidanceBird,'b2');
  assert.doesNotMatch(guide().textContent,/家族.*完了/);
  f.closeCare();assert(!f.root.querySelector('.game-bird-sheet[open] [data-care-guidance]'));
+});
+
+test('full-energy petting responds without extra rewards, growth, feeding or history; successful durable write gives a quiet break',async t=>{
+ const f=await fixture(t);const w=f.read();for(const b of w.birds)b.needs.food=b.needs.energy=100;w.care.cleanliness=100;f.write(w);await f.mount();
+ assert.equal(f.root.querySelector('[data-care-receipt]'),null);
+ const before=f.read();f.clickCare('pet');await f.settle();const after=f.read();
+ assert.equal(after.decor.points,before.decor.points);assert.equal(after.economy.gold,before.economy.gold);assert.equal(after.seed,before.seed);assert.equal(after.tick,before.tick);
+ assert.deepEqual(after.birds,before.birds);assert.deepEqual(after.events,before.events);assert.deepEqual(after.lifecycle.birds,before.lifecycle.birds);
+ assert.match(f.root.querySelector('.game-care-feedback').textContent,/うれしそう/);
+ assert.equal(f.root.querySelector('.game-care-rub-note').textContent,'♪');assert.match(f.root.querySelector('[data-care-receipt]').textContent,/ほぞんしたよ/);
+ assert.equal(f.root.querySelector('[data-next-care]'),null);assert.equal(f.root.querySelector('[data-game-care=feed]').disabled,true);
+});
+
+test('a failed save and untreated illness never claim a completed saved-care break',async t=>{
+ const f=await fixture(t);const w=f.read();for(const b of w.birds)b.needs.food=b.needs.energy=100;w.care.cleanliness=100;f.write(w);await f.mount();
+ f.failNext();f.clickCare('pet');await f.settle();assert.equal(f.root.querySelector('[data-care-receipt]'),null);assert.match(f.root.textContent,/test save failure/);
+ const sick=f.read();sick.lifecycle.birds[0].condition={kind:'injury',sinceAt:sick.lifecycle.seenAt,deadlineAt:sick.lifecycle.seenAt+86400000};f.write(sick);await f.poll();
+ f.clickCare('pet');await f.settle();assert.equal(f.root.querySelector('[data-care-receipt]'),null);assert.match(f.root.querySelector('[data-care-guidance]').textContent,/病院/);
 });

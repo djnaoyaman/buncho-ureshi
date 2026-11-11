@@ -13,7 +13,15 @@ export function careGuidance(world,birdId){
  if(bird.home==='visitor')return '遊びに来たお友達。お話ししてみよう。';
  if(bird.needs.food<100)return 'ごはんで、この子のおなかを満たそう。';
  if(bird.needs.energy<100)return '名前を呼ぶか、なでてふれ合おう。';
- return 'この子のお世話は完了。ゆっくり過ごそう。';
+ return 'おなかも、げんきもいっぱい。なでてあそぼう。';
+}
+/** Presentation only. A receipt is shown separately, only after a successful write.
+ * Full gauges alone never override untreated illness, danger or a dirty home.
+ */
+export function careIsSettled(world){
+ const family=allBirds(world).filter(b=>b.home==='resident'&&!lifeStatus(world,b)?.death);
+ return family.length>0&&world.care.cleanliness>20&&!world.encounters?.raptor?.active?.hostile&&family.every(b=>
+  !lifeStatus(world,b)?.condition&&(['egg','chick'].includes(b.stage)||b.needs.food>=100&&b.needs.energy>=100));
 }
 export function cleaningGuidance(world){
  const c=world.care;

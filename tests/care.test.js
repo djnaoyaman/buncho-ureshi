@@ -141,3 +141,10 @@ test('long mixed care and automatic-adoption progression remains bounded with pr
  }
  assert.equal(world.tick,5000);assert.ok(world.birds.length<=LIMITS.birds);assert.equal(world.events.length,LIMITS.events);assert.ok(world.birds.some(b=>b.generation>=1));assert.deepEqual(parseSave(serializeWorld(world)),world);
 });
+
+test('full feeding cannot refresh a health deadline or rearm an already produced 8-Gem drop',()=>{
+ const w=createWorld(0),b=w.birds[0];feedBird(w,b.id,0);advanceTicks(w,2);assert(w.gems.droppings.some(d=>d.birdId===b.id));
+ const before=structuredClone(w),lastFed=w.lifecycle.birds.find(s=>s.birdId===b.id).lastCareAt;
+ for(let i=0;i<50;i++)assert.equal(feedBird(w,b.id,0).changed,false);
+ assert.deepEqual(w,before);assert.equal(w.lifecycle.birds.find(s=>s.birdId===b.id).lastCareAt,lastFed);assert.equal(b.gemCare.fullSinceTick,null);
+});
