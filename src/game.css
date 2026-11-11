@@ -1665,7 +1665,7 @@ body[data-world="buncho"] .game-home-preview-viewport {
  overflow:hidden; isolation:isolate; margin-inline:auto; border-radius:16px;
  background:#f4e7cf;
 }
-body[data-world="buncho"] .game-home-preview-viewport .game-preview-room { overflow:visible; }
+body[data-world="buncho"] .game-home-preview-viewport .game-preview-room { position:absolute; margin:0; border:0; isolation:isolate; overflow:visible; }
 body[data-world="buncho"] .game-app .game-decoration { gap:12px; padding:4px 2px 20px; }
 body[data-world="buncho"] .game-decoration>.game-section-title { grid-row:1; margin:0; }
 body[data-world="buncho"] .game-decoration>.game-decor-intro { grid-row:2; gap:8px; }
