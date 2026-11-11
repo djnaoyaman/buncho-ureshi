@@ -1,7 +1,7 @@
 {
-  "base": "b582166fa45053efbb516fd45bc8030d074181e9",
+  "base": "8fb9f3209f9be354554e2ac882007336b3f7f7dc",
   "tests": [
     "tests/browser/reading-scroll.spec.js"
   ],
-  "reason": "メニューとガチャ説明のスクロールが背景更新で0に戻る事象を修正。Chrome/WebKitで実際のホイール操作、複数回の更新、ヘルプ・設定・健康・ケア画面の位置と保存全体の一致を確認する。"
+  "reason": "WebKitのホイール移動の完了を待ってから更新前後の位置を比較する。Chrome/WebKitの320px・390pxで、メニュー・ガチャ説明・関連画面のスクロール保持と保存全体の一致を再確認する。"
 }
