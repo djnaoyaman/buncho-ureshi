@@ -82,8 +82,13 @@ jobs:
         timeout-minutes: 5
         run: |
           curl --fail --location --retry 2 --max-time 120 https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb --output /tmp/google-chrome.deb
-          dpkg -i /tmp/google-chrome.deb
-          google-chrome --version
+          # Extract the official browser; desktop integration (xdg-utils) is not
+          # used in this headless container. Verify every runtime library exists.
+          dpkg-deb --extract /tmp/google-chrome.deb /
+          ldd /opt/google/chrome/chrome > /tmp/chrome-libraries.txt
+          cat /tmp/chrome-libraries.txt
+          if grep -q 'not found' /tmp/chrome-libraries.txt; then exit 1; fi
+          /opt/google/chrome/chrome --version
       - name: Run the selected checks on Chrome and Safari-compatible WebKit
         env:
           BROWSER_TESTS_JSON: ${{ needs.build.outputs.browser_tests }}
