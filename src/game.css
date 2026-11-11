@@ -1605,3 +1605,7 @@ body[data-world="buncho"] .game-app .game-decoration .game-decor-preview{min-hei
 
 /* Bounded ambient history shares the existing welcome and diary surfaces. */
 .game-away-reports{padding-inline-start:1.2em;overflow-wrap:anywhere;min-width:0}.game-away-reports li{margin-block:.65em}.game-away-reports time{display:block;font-size:.85em}.game-away-history{margin-block:1rem}
+
+/* Urgent warning uses words and a steady border, never flashing or motion. */
+body[data-world="buncho"] .game-raptor-notice[data-raptor-urgent="true"]{border-color:#8b2c1b;background:#ffe1c9;outline:2px solid #8b2c1b;outline-offset:1px}
+body[data-world="buncho"] .game-raptor-notice[data-raptor-urgent="true"] button{background:#8b2c1b!important;color:#fff!important}

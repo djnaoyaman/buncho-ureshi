@@ -7,13 +7,21 @@ const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const image=(id,base)=>`${esc(base)}game-art/raptors/${esc(id)}.webp`;
 export function renderRaptorNotice(w,{homeAttribute='data-game-raptor-home'}={}){
  const s=raptorScene(w);if(!s)return '';
- const seconds=Math.ceil(s.remainingMs/1000),bird=raptorTarget(w),hostile=s.hostile,friendly=raptorFriendship(w,s.species.id).friendly;
- return `<aside class="game-raptor-notice ${hostile?'is-danger':'is-friendly'}" data-raptor-notice data-raptor-kind="${s.species.id}" data-raptor-phase="${hostile?'warning':'visiting'}" data-raptor-friendly="${friendly}" role="status" aria-live="polite"><div><strong>${esc(s.species.name)}${hostile?'が近づいている！':s.species.harmless?'が水辺に来たよ':friendly?'が遊びに来たよ':'が庭に来たよ'}</strong>${hostile?`<span class="game-raptor-deadline">あと <b data-raptor-seconds aria-live="off">${seconds}</b> 秒で危険</span><span class="game-raptor-instruction">${esc(bird?.name||'主人公')}をおうちへ。間に合わないと事故死してしまいます。</span>`:`<span class="game-raptor-instruction">${s.species.harmless?'魚を捕る水辺の仲間。文鳥は襲わないよ。':friendly?'もうなかよしだから、襲わないよ。':'庭を訪れています。そっと観察してみよう。'}</span>`}</div><button type="button" ${homeAttribute}>おうちへ戻る</button></aside>`;
+ const seconds=Math.ceil(s.remainingMs/1000),urgent=s.hostile&&s.remainingMs<=10000,bird=raptorTarget(w),hostile=s.hostile,friendly=raptorFriendship(w,s.species.id).friendly;
+ return `<aside class="game-raptor-notice ${hostile?'is-danger':'is-friendly'}" data-raptor-notice data-raptor-urgent="${urgent}" data-raptor-kind="${s.species.id}" data-raptor-phase="${hostile?'warning':'visiting'}" data-raptor-friendly="${friendly}" role="status" aria-live="polite"><div><strong data-raptor-heading>${esc(s.species.name)}${urgent?'・すぐおうちへ！':hostile?'が近づいている！':s.species.harmless?'が水辺に来たよ':friendly?'が遊びに来たよ':'が庭に来たよ'}</strong>${hostile?`<span class="game-raptor-deadline">あと <b data-raptor-seconds aria-live="off">${seconds}</b> 秒で危険</span><span class="game-raptor-instruction">${esc(bird?.name||'主人公')}をおうちへ。間に合わないと事故死してしまいます。</span>`:`<span class="game-raptor-instruction">${s.species.harmless?'魚を捕る水辺の仲間。文鳥は襲わないよ。':friendly?'もうなかよしだから、襲わないよ。':'庭を訪れています。そっと観察してみよう。'}</span>`}</div><button type="button" ${homeAttribute}>${urgent?'今すぐ帰る':'おうちへ戻る'}</button></aside>`;
 }
 export function updateRaptorNotice(root,w){
  const s=raptorScene(w);
  for(const notice of root.querySelectorAll('[data-raptor-notice]')){if(!s)notice.remove();else if(notice.dataset.raptorPhase!==s.phase||notice.dataset.raptorKind!==s.species.id||notice.dataset.raptorFriendly!==String(raptorFriendship(w,s.species.id).friendly))notice.outerHTML=renderRaptorNotice(w);}
  if(s)for(const dialog of root.querySelectorAll('dialog[open]'))if(!dialog.querySelector('[data-raptor-notice]'))dialog.insertAdjacentHTML('afterbegin',renderRaptorNotice(w));
+ if(s)for(const notice of root.querySelectorAll('[data-raptor-notice]')){
+  const urgent=s.hostile&&s.remainingMs<=10000;
+  if(notice.dataset.raptorUrgent!==String(urgent)){
+   notice.dataset.raptorUrgent=String(urgent);
+   const heading=notice.querySelector('[data-raptor-heading]');if(heading)heading.textContent=s.species.name+(urgent?'・すぐおうちへ！':s.hostile?'が近づいている！':s.species.harmless?'が水辺に来たよ':raptorFriendship(w,s.species.id).friendly?'が遊びに来たよ':'が庭に来たよ');
+   const home=notice.querySelector('button');if(home)home.textContent=urgent?'今すぐ帰る':'おうちへ戻る';
+  }
+ }
  for(const node of root.querySelectorAll('[data-raptor-seconds]'))node.textContent=String(Math.ceil((s?.remainingMs||0)/1000));
 }
 /** Pixel/cm shares the Java Sparrow's measured profile. Upright owls use their
