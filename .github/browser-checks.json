@@ -1,9 +1,9 @@
 {
-  "base": "1de51aac25a7cf9a83393244c4a24df4b63797e2",
+  "base": "e69a87c91f99b01693fd8c7028b85568b8a7ab49",
   "tests": [
-    "tests/browser/gacha-home-layout.spec.js",
-    "tests/browser/gacha-machines.spec.js",
+    "tests/browser/care-break.spec.js",
+    "tests/browser/care-gauges.spec.js",
     "tests/browser/reading-scroll.spec.js"
   ],
-  "reason": "ガチャ入口・結果・試着の表示と共通のおうち描画を変更。Chrome/WebKitで背景・家具・相対位置、試着と保存、料金と選択、狭い画面の操作、スクロール位置の保持を確認する。"
+  "reason": "満タン時のなでる反応、次回時刻表示の削除、実際の保存後だけの区切り案内を変更。Chrome/WebKitで満腹の無報酬反応・保存一致・文字拡大・ゲージと掃除・既存スクロール保持を確認する。減少率・報酬方式・健康・保存形式は未確定のため変更せず、候補計算は本番から参照しない試算専用に分離する。"
 }

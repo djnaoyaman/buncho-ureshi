@@ -14,6 +14,7 @@ export function renderGameHelp({holidayCoverageKnown = true} = {}) {
 <li class="game-help-guide-stop"><details class="game-help-guide-card" data-game-details="help-guide-step-5"><summary><span class="game-help-guide-label"><span class="game-help-guide-number">05</span><span>おもいで</span></span><span class="game-help-guide-caption">記念{きねん}カードをつくろう</span></summary><div class="game-help-guide-explanation"><h4>思{おも}い出{で}をつくろう。</h4><p>「家系図{かけいず}」は、家族{かぞく}のつながりがわかる図{ず}だよ。「家系図{かけいず}」や「日記{にっき}」の「記念{きねん}カード」から、アート工房{こうぼう}へ行{い}けるよ。家族{かぞく}のお祝{いわ}いカードをつくってみよう。</p></div></details><img class="game-help-guide-bird" src="./game-art/white.webp" alt="" width="1176" height="1364" loading="lazy"></li>
 </ol>
 <details data-game-details="help-care"><summary>お世話{せわ}・おこづかい・次{つぎ}のお楽{たの}しみ</summary>
+<section data-help-update="care-reactions" class="game-help-mini-guide"><p><strong>なでたり、おはなししたり。</strong></p><p>なでたり、話{はな}しかけたりするのは、いつでもできるよ。おなかがすいたら、ごはんをあげよう。</p><p>おなかいっぱいのときは、ごはんをあげなくていいよ。なでたり、お話{はなし}したりして、あそぼう。お返事{へんじ}だけでは、おこづかいや、ごはんを食{た}べた記録{きろく}はふえないよ。</p><p>「ほぞんしたよ」と出{で}たら、変{か}えたことは残{のこ}っているよ。画面{がめん}をとじられるよ。ごはんや病院{びょういん}の期限{きげん}は、そのまま進{すす}むよ。</p></section>
 <p>日本{にほん}の時刻{じこく}で、毎日{まいにち}7時{じ}・17時{じ}・20時{じ}に、またお世話{せわ}ができるよ。土曜日{どようび}・日曜日{にちようび}・祝日{しゅくじつ}は、12時{じ}にもできるよ。</p>
 <p>ごはんは、おなかがいっぱいになるまであげられるよ。名前{なまえ}を呼{よ}んだり、なでたり、お話{はなし}したりすると、元気{げんき}がいっぱいまで回復{かいふく}するよ。元気{げんき}がいっぱいでも、なでたり、お話{はなし}したりして遊{あそ}べるよ。</p>
 <p>物語{ものがたり}を止{と}めていても、お世話{せわ}の時刻{じこく}は来{く}るよ。おなかや元気{げんき}がへるのは1回分{かいぶん}だけ。でも、ごはんや病院{びょういん}に行{い}くまでの時間{じかん}は、そのまま進{すす}むよ。</p>
