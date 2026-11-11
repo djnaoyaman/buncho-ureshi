@@ -155,35 +155,35 @@ body[data-world="buncho"] .game-play-actions button{background:#e7edcb;border:1p
 }
 /* Keep fixtures inside the visible portion of a full-bleed cage. The image
    can crop at unusual aspect ratios; collectible furnishings must not vanish. */
-body[data-world="buncho"] .game-main .game-room .game-furnishing:not(.furnishing-paper){left:clamp(calc(max(0px,(100% - 100cqw)/2) + var(--furniture-width)/2 + 2px),var(--furniture-x),calc(100% - max(0px,(100% - 100cqw)/2) - var(--furniture-width)/2 - 2px))}
-body[data-world="buncho"] .game-main .game-room{--roof-visible-top:calc(0px - clamp(calc(100cqh - var(--plane-h)),calc(70cqh - var(--plane-h)*.79),0px))}
-body[data-world="buncho"] .game-main .game-room .furnishing-swing,
-body[data-world="buncho"] .game-main .game-room .furnishing-toy{top:max(var(--roof-y),calc(var(--roof-visible-top) + 8cqh))}
-body[data-world="buncho"] .game-main .game-room .furnishing-swing{--roof-y:11.5%;--roof-fraction:.115}
-body[data-world="buncho"] .game-main .game-room .furnishing-toy{--roof-y:13%;--roof-fraction:.13}
-body[data-world="buncho"] .game-main .game-room .furnishing-swing:before,
-body[data-world="buncho"] .game-main .game-room .furnishing-toy:before{display:block;bottom:98%;height:calc(14% + max(0px,var(--roof-visible-top) + 8cqh - var(--plane-h)*var(--roof-fraction)));width:2px}
-@media(max-width:600px){body[data-world="buncho"] .game-main .game-room .furnishing-swing{--roof-y:9%;--roof-fraction:.09}}
+body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room) .game-furnishing:not(.furnishing-paper){left:clamp(calc(max(0px,(100% - 100cqw)/2) + var(--furniture-width)/2 + 2px),var(--furniture-x),calc(100% - max(0px,(100% - 100cqw)/2) - var(--furniture-width)/2 - 2px))}
+body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room){--roof-visible-top:calc(0px - clamp(calc(100cqh - var(--plane-h)),calc(70cqh - var(--plane-h)*.79),0px))}
+body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room) .furnishing-swing,
+body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room) .furnishing-toy{top:max(var(--roof-y),calc(var(--roof-visible-top) + 8cqh))}
+body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room) .furnishing-swing{--roof-y:11.5%;--roof-fraction:.115}
+body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room) .furnishing-toy{--roof-y:13%;--roof-fraction:.13}
+body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room) .furnishing-swing:before,
+body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room) .furnishing-toy:before{display:block;bottom:98%;height:calc(14% + max(0px,var(--roof-visible-top) + 8cqh - var(--plane-h)*var(--roof-fraction)));width:2px}
+@media(max-width:600px){body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room) .furnishing-swing{--roof-y:9%;--roof-fraction:.09}}
 @media(max-height:500px){
- body[data-world="buncho"] .game-main .game-room .furnishing-swing{--furniture-width:11%;width:var(--furniture-width)}
- body[data-world="buncho"] .game-main .game-room .furnishing-toy{--furniture-width:7%;width:var(--furniture-width)}
+ body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room) .furnishing-swing{--furniture-width:11%;width:var(--furniture-width)}
+ body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room) .furnishing-toy{--furniture-width:7%;width:var(--furniture-width)}
 }
 
 
 /* In wide, shallow windows the illustrated roof is outside the visible crop.
    Use the visible lower crossbar for the perch and keep dishes on the back wall. */
 @media(min-width:601px) and (min-aspect-ratio:2/1){
- body[data-world="buncho"] .game-main .game-room .game-furnishing:not(.furnishing-paper){top:calc(var(--roof-visible-top) + var(--compact-mount-y));transform:translate(-50%,0)}
- body[data-world="buncho"] .game-main .game-room .game-furnishing.furnishing-perch{--furniture-width:40cqh;top:59.2%;transform:translate(-50%,-24.2%)}
- body[data-world="buncho"] .game-main .game-room .furnishing-feed{--compact-mount-y:28cqh;--furniture-width:14cqh}
- body[data-world="buncho"] .game-main .game-room .furnishing-water{--compact-mount-y:28cqh;--furniture-width:13cqh}
- body[data-world="buncho"] .game-main .game-room .furnishing-greens{--compact-mount-y:40cqh;--furniture-width:9cqh}
- body[data-world="buncho"] .game-main .game-room .furnishing-shellgrit{--compact-mount-y:40cqh;--furniture-width:8cqh}
- body[data-world="buncho"] .game-main .game-room .furnishing-swing{--compact-mount-y:8cqh;--furniture-width:18cqh}
- body[data-world="buncho"] .game-main .game-room .furnishing-toy{--compact-mount-y:10cqh;--furniture-width:12cqh}
- body[data-world="buncho"] .game-main .game-room .game-furnishing.furnishing-bath{--compact-mount-y:90cqh;--furniture-width:24cqh;transform:translate(-50%,-94%)}
- body[data-world="buncho"] .game-main .game-room .furnishing-swing:before,
- body[data-world="buncho"] .game-main .game-room .furnishing-toy:before{height:calc(14% + max(0px,var(--roof-visible-top) + var(--compact-mount-y) - var(--plane-h)*var(--roof-fraction)))}
+ body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room) .game-furnishing:not(.furnishing-paper){top:calc(var(--roof-visible-top) + var(--compact-mount-y));transform:translate(-50%,0)}
+ body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room) .game-furnishing.furnishing-perch{--furniture-width:40cqh;top:59.2%;transform:translate(-50%,-24.2%)}
+ body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room) .furnishing-feed{--compact-mount-y:28cqh;--furniture-width:14cqh}
+ body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room) .furnishing-water{--compact-mount-y:28cqh;--furniture-width:13cqh}
+ body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room) .furnishing-greens{--compact-mount-y:40cqh;--furniture-width:9cqh}
+ body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room) .furnishing-shellgrit{--compact-mount-y:40cqh;--furniture-width:8cqh}
+ body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room) .furnishing-swing{--compact-mount-y:8cqh;--furniture-width:18cqh}
+ body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room) .furnishing-toy{--compact-mount-y:10cqh;--furniture-width:12cqh}
+ body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room) .game-furnishing.furnishing-bath{--compact-mount-y:90cqh;--furniture-width:24cqh;transform:translate(-50%,-94%)}
+ body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room) .furnishing-swing:before,
+ body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room) .furnishing-toy:before{height:calc(14% + max(0px,var(--roof-visible-top) + var(--compact-mount-y) - var(--plane-h)*var(--roof-fraction)))}
 }
 
 /* Only the game gets this exit and its compact world controls. */
@@ -327,8 +327,8 @@ body[data-world="buncho"] .game-field-bar{min-width:0;gap:.3rem}body[data-world=
 
 /* Fit the reviewed coordinate plane; never crop its habitat or stretch contacts. */
 body[data-world="buncho"] .game-main{container-type:size}
-body[data-world="buncho"] .game-main .game-room{--scene-h:min(calc(100cqh - 100px),calc(100cqw * 5 / 8));height:var(--scene-h);width:auto;aspect-ratio:8/5;max-width:none;top:calc(36px + (100cqh - 100px - var(--scene-h)) / 2);bottom:auto}
-@media(max-width:600px){body[data-world="buncho"] .game-main .game-room{--scene-h:min(calc(100cqh - 100px),calc(100cqw * 4 / 3));aspect-ratio:3/4}}
+body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room){--scene-h:min(calc(100cqh - 100px),calc(100cqw * 5 / 8));height:var(--scene-h);width:auto;aspect-ratio:8/5;max-width:none;top:calc(36px + (100cqh - 100px - var(--scene-h)) / 2);bottom:auto}
+@media(max-width:600px){body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room){--scene-h:min(calc(100cqh - 100px),calc(100cqw * 4 / 3));aspect-ratio:3/4}}
 
 /* A short viewport is a focused scene, not ten competing tiny touch targets.
    The existing swipe/previous/next controls still visit every bird. */
@@ -342,8 +342,8 @@ body[data-world="buncho"] .game-main .game-room{--scene-h:min(calc(100cqh - 100p
  body[data-world="buncho"] .game-field-bar .game-wallet strong{font-size:12px}
  body[data-world="buncho"] .game-field-nav{top:0;left:4px;right:4px;width:auto;max-width:none;height:44px;gap:3px}
  body[data-world="buncho"] .game-field-nav button{height:44px;min-height:44px;padding:2px;font-size:11px}
- body[data-world="buncho"] .game-main .game-room{--scene-h:min(calc(100cqh - 92px),calc(100cqw * 5 / 8));top:calc(44px + (100cqh - 92px - var(--scene-h)) / 2)}
- body[data-world="buncho"] .game-main .game-room .game-room-bird:not(.game-nestling){width:64px;min-width:64px;min-height:64px}
+ body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room){--scene-h:min(calc(100cqh - 92px),calc(100cqw * 5 / 8));top:calc(44px + (100cqh - 92px - var(--scene-h)) / 2)}
+ body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room) .game-room-bird:not(.game-nestling){width:64px;min-width:64px;min-height:64px}
  body[data-world="buncho"] .game-bottom-dock{height:48px;padding:0 4px;gap:2px;border-radius:12px 12px 0 0}
  body[data-world="buncho"] .game-bottom-dock button{min-height:48px;gap:0;font-size:10px}
  body[data-world="buncho"] .game-bottom-dock svg{width:22px;height:22px}
@@ -362,7 +362,7 @@ body[data-world="buncho"] .game-main .game-room{--scene-h:min(calc(100cqh - 100p
  body[data-world="buncho"] .game-room .game-scene-caption,body[data-world="buncho"] .game-owner-companion{display:none}
  body[data-world="buncho"] .game-main .game-secondary-menu{bottom:50px}
 }
-@media(max-height:500px) and (max-width:600px){body[data-world="buncho"] .game-main .game-room{--scene-h:min(calc(100cqh - 92px),calc(100cqw * 4 / 3))}}
+@media(max-height:500px) and (max-width:600px){body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room){--scene-h:min(calc(100cqh - 92px),calc(100cqw * 4 / 3))}}
 /* Fixed-height game shell must not retain the legacy article's 3rem bottom pad. */
 body[data-world="buncho"] .game-app{padding:0;margin:0;max-width:none}
 @media(max-height:500px){
@@ -382,8 +382,8 @@ body[data-world="buncho"] .game-world-exit{position:fixed;top:calc(8px + env(saf
 body[data-world="buncho"] .game-world-title{position:fixed;left:8px;top:calc(5px + env(safe-area-inset-top,0px));transform:none;z-index:60}
 body[data-world="buncho"] .game-world-title img{width:clamp(110px,28vw,170px);max-height:56px}
 body[data-world="buncho"] .game-main{overflow:hidden;border-radius:0}
-body[data-world="buncho"] .game-main .game-room{--room-ratio:1.6;--plane-h:max(100cqh,calc(100cqw / var(--room-ratio)));height:var(--plane-h);width:max(100cqw,calc(100cqh * var(--room-ratio)));aspect-ratio:auto;top:clamp(calc(100cqh - var(--plane-h)),calc(70cqh - var(--plane-h) * .79),0px);left:50%;transform:translateX(-50%);max-height:none;max-width:none;border-radius:0}
-body[data-world="buncho"] .game-main .game-room .game-habitat img{object-fit:fill}
+body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room){--room-ratio:1.6;--plane-h:max(100cqh,calc(100cqw / var(--room-ratio)));height:var(--plane-h);width:max(100cqw,calc(100cqh * var(--room-ratio)));aspect-ratio:auto;top:clamp(calc(100cqh - var(--plane-h)),calc(70cqh - var(--plane-h) * .79),0px);left:50%;transform:translateX(-50%);max-height:none;max-width:none;border-radius:0}
+body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room) .game-habitat img{object-fit:fill}
 body[data-world="buncho"] .game-field-bar{top:calc(10px + env(safe-area-inset-top,0px));left:auto;right:86px;width:auto;z-index:61}
 body[data-world="buncho"] .game-field-bar>div:first-child{display:none}
 body[data-world="buncho"] .game-wallet{background:linear-gradient(#fffbea,#e9dfb9);border:2px solid #fff6d8;border-radius:24px;box-shadow:0 3px 0 #a18c5b,0 5px 14px #2540302b;padding:5px 9px!important;gap:8px}
@@ -416,7 +416,7 @@ body[data-world="buncho"] .game-encounter-host .finch-garden{height:100%;min-hei
 body[data-world="buncho"] .game-encounter-host .finch-garden-scenery{position:absolute;inset:0;height:100%;min-height:0;margin:0;border-radius:0}
 body[data-world="buncho"]:has(.game-app[data-panel=outdoors]) .game-world-title{z-index:65;width:120px}
 body[data-world="buncho"]:has(.game-app[data-panel=outdoors]) .site-header{visibility:hidden}
-@media(max-width:600px){body[data-world="buncho"] .game-main .game-room{--room-ratio:.75}body[data-world="buncho"] .game-field-bar{top:calc(50px + env(safe-area-inset-top,0px));right:8px}body[data-world="buncho"] .game-field-nav{top:calc(98px + env(safe-area-inset-top,0px));width:calc(100% - 76px)}body[data-world="buncho"] .game-main>.game-heading{top:calc(98px + env(safe-area-inset-top,0px))}}
+@media(max-width:600px){body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room){--room-ratio:.75}body[data-world="buncho"] .game-field-bar{top:calc(50px + env(safe-area-inset-top,0px));right:8px}body[data-world="buncho"] .game-field-nav{top:calc(98px + env(safe-area-inset-top,0px));width:calc(100% - 76px)}body[data-world="buncho"] .game-main>.game-heading{top:calc(98px + env(safe-area-inset-top,0px))}}
 @media(max-height:500px){body[data-world="buncho"] .game-world-title img{width:105px;max-height:35px}body[data-world="buncho"] .game-field-bar{top:8px;right:86px}body[data-world="buncho"] .game-field-nav{top:48px;width:250px}body[data-world="buncho"] .game-main>.game-heading{top:48px}body[data-world="buncho"] .game-bottom-dock{height:64px;width:330px;left:auto;right:8px;transform:none}body[data-world="buncho"] .game-bottom-dock button{min-height:54px;font-size:10px;border-radius:19px}body[data-world="buncho"] .game-bottom-dock svg{width:23px;height:23px}body[data-world="buncho"] .game-scene-toolbar{left:8px;bottom:8px;transform:none;width:210px;max-height:50px}body[data-world="buncho"] .game-scene-toolbar .game-bird-carousel-face .game-mini-bird{display:none}body[data-world="buncho"] .game-owner-companion{display:none}}
 @media(max-height:500px) and (max-width:600px){body[data-world="buncho"] .game-bottom-dock{left:50%;right:auto;transform:translateX(-50%);bottom:0}body[data-world="buncho"] .game-scene-toolbar{left:50%;bottom:70px;transform:translateX(-50%)}body[data-world="buncho"] .game-field-nav{top:74px}body[data-world="buncho"] .game-main>.game-heading{top:74px}body[data-world="buncho"] .game-field-bar{top:38px;right:8px}}
 body[data-world="buncho"]:has(.game-app[data-panel=outdoors]) .game-world-title{display:none}
@@ -562,7 +562,7 @@ body[data-world="buncho"] #main.page-content{max-width:none;padding:0}
 body[data-world="buncho"] .game-bottom-dock[data-home-dock="true"]{grid-template-columns:repeat(5,minmax(0,1fr));width:min(510px,100%);gap:5px;padding-inline:6px}
 body[data-world="buncho"] .game-bottom-dock [data-home-close] span{font-size:10px;line-height:1.2}
 body[data-world="buncho"] .game-bottom-dock [data-home-close]:disabled{opacity:.65;box-shadow:0 2px 0 #a18857}
-@media(max-height:500px){body[data-world="buncho"] .game-bottom-dock[data-home-dock="true"]{width:min(360px,100%)}body[data-world="buncho"] .game-main .game-room[data-many-guests="true"] .game-room-bird:not(.game-nestling){width:48px;min-width:48px;min-height:48px}.game-app .game-room-bird>.game-home-role{font-size:9px;padding:1px 3px;gap:1px}}
+@media(max-height:500px){body[data-world="buncho"] .game-bottom-dock[data-home-dock="true"]{width:min(360px,100%)}body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room)[data-many-guests="true"] .game-room-bird:not(.game-nestling){width:48px;min-width:48px;min-height:48px}.game-app .game-room-bird>.game-home-role{font-size:9px;padding:1px 3px;gap:1px}}
 
 .game-app .finch-cage-guest>span:not(.game-home-role){top:calc(100% + 20px);max-width:min(90px,16vw);overflow:hidden;text-overflow:ellipsis}
 @media(max-height:500px){.game-app .finch-cage-guest>span:not(.game-home-role){top:calc(100% + 17px);font-size:8px;max-width:min(66px,18vw);padding:1px 3px}}
@@ -1569,7 +1569,7 @@ body[data-world="buncho"] .game-environment-notice {
 @media(prefers-reduced-motion:reduce){.gacha-stage *{animation:none!important;transition:none!important}}
 .game-care-guidance{margin:.5rem 0;padding:.55rem .7rem;background:#eff4e7;border-radius:12px;color:#35533f;line-height:1.5}.game-clean-guidance{display:block;font-size:.8rem;background:#fff5dc;padding:.4rem;border-radius:8px}
 /* Final friend cages keep their wide architectural proportions. */
-body[data-world="buncho"] .game-main .game-room[data-field="friend"]{--room-ratio:1.6}
+body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room)[data-field="friend"]{--room-ratio:1.6}
 .game-house-portrait{position:relative}.game-friend-cage-preview{display:block;width:100%;height:auto;border-radius:14px}.game-house-portrait:has(.game-friend-cage-preview) .game-mini-bird{position:absolute;left:42%;bottom:16%;width:18%}
 
 /* The machine remains stationary from the first visible result frame. */
@@ -1654,4 +1654,90 @@ body[data-world="buncho"] .game-next-goal-list button{min-height:44px;max-width:
   display:block; grid-column:1/-1; max-width:none; min-width:0; margin:0; font-size:13px;
   line-height:1.5; white-space:normal; overflow-wrap:anywhere;
  }
+}
+
+/* Decoration uses the living home's cover geometry at a smaller viewport.
+   Its container ratio follows the actual home viewport; furniture and backdrop
+   therefore crop and scale together rather than stretching a second room. */
+body[data-world="buncho"] .game-home-preview-viewport {
+ position:relative; width:min(100%,calc(50dvh * var(--home-preview-ratio)));
+ aspect-ratio:var(--home-preview-ratio); container-type:size; flex:none;
+ overflow:hidden; isolation:isolate; margin-inline:auto; border-radius:16px;
+ background:#f4e7cf;
+}
+body[data-world="buncho"] .game-home-preview-viewport .game-preview-room { overflow:visible; }
+body[data-world="buncho"] .game-app .game-decoration { gap:12px; padding:4px 2px 20px; }
+body[data-world="buncho"] .game-decoration>.game-section-title { grid-row:1; margin:0; }
+body[data-world="buncho"] .game-decoration>.game-decor-intro { grid-row:2; gap:8px; }
+body[data-world="buncho"] .game-decoration>.game-gacha-machines { grid-row:3; }
+body[data-world="buncho"] .game-decoration>.game-gacha-feature { grid-row:4; }
+body[data-world="buncho"] .game-decoration>.game-decor-slots { grid-row:5; }
+body[data-world="buncho"] .game-decoration>.game-decor-filter { grid-row:6; }
+body[data-world="buncho"] .game-app .game-decoration>.game-decor-workbench { grid-row:7; }
+body[data-world="buncho"] .game-decoration>.game-decor-tiers { grid-row:8; }
+body[data-world="buncho"] .game-decoration>.game-collection-heading { grid-row:9; }
+body[data-world="buncho"] .game-decoration>.game-collection { grid-row:10; }
+body[data-world="buncho"] .game-decor-intro>p { font-size:14px; line-height:1.5; }
+body[data-world="buncho"] .game-gacha-feature { display:grid; justify-items:center; gap:6px; padding:12px; border-radius:24px; background:#fff8ec; }
+body[data-world="buncho"] .game-gacha-feature img { width:144px; height:158px; object-fit:contain; }
+body[data-world="buncho"] .game-gacha-feature strong { font-size:19px; }
+body[data-world="buncho"] .game-gacha-feature>span { font-size:15px; }
+body[data-world="buncho"] .game-app .game-gacha-machines { gap:8px; margin:0; padding:4px; }
+body[data-world="buncho"] .game-gacha-machines legend { font-size:16px; }
+body[data-world="buncho"] .game-app .game-gacha-machines button { display:flex; min-height:64px; padding:8px 4px; gap:4px; text-align:center; }
+body[data-world="buncho"] .game-app .game-gacha-machines img { display:none; }
+body[data-world="buncho"] .game-app .game-gacha-machines strong { font-size:13px; line-height:1.4; }
+body[data-world="buncho"] .game-app .game-gacha-machines span { font-size:13px; }
+body[data-world="buncho"] .game-app .game-decor-slots { display:flex; overflow-x:auto; gap:8px; padding:4px; margin:0; }
+body[data-world="buncho"] .game-decor-slots button { flex:0 0 92px; min-height:48px; padding:8px; }
+body[data-world="buncho"] .game-decor-slots span { font-size:13px; }
+body[data-world="buncho"] .game-app .game-decoration>.game-decor-workbench { display:flex; flex-direction:column; gap:20px; min-height:0; padding:0; border:0; background:none; }
+body[data-world="buncho"] .game-decor-draw { position:relative; display:grid; gap:8px; order:-1; }
+body[data-world="buncho"] .game-decor-draw h4 { margin:0; font-size:17px; }
+body[data-world="buncho"] .game-decor-draw .game-draw-button { min-height:56px; font-size:18px; }
+body[data-world="buncho"] .game-decor-draw>.game-small { font-size:13px; line-height:1.6; }
+body[data-world="buncho"] .game-decor-draw details { font-size:14px; }
+body[data-world="buncho"] .game-decor-draw details[open] { position:relative; inset:auto; max-height:50dvh; overflow:auto; border-radius:16px; padding:12px; }
+body[data-world="buncho"] .game-decor-draw summary { min-height:44px; padding:10px; }
+body[data-world="buncho"] .game-app .game-decoration .game-decor-preview {
+ position:relative; display:flex; align-items:stretch; gap:10px; height:auto;
+ min-height:0; padding:14px; overflow:visible; background:var(--play-paper,#fffaf0);
+ border:1px solid #d9ccba; border-radius:24px;
+}
+body[data-world="buncho"] .game-decor-preview>h4 { margin:0; font-size:18px; }
+body[data-world="buncho"] .game-decor-preview>.game-item-art { display:none; }
+body[data-world="buncho"] .game-decor-preview>p,
+body[data-world="buncho"] .game-decor-preview>small { padding:0; font-size:14px; line-height:1.6; background:none; }
+body[data-world="buncho"] .game-decor-preview>.game-preview-actions { display:flex; gap:8px; position:sticky; bottom:0; padding:8px 0; font-size:15px; background:var(--play-paper,#fffaf0); }
+body[data-world="buncho"] .game-decor-preview .game-preview-actions button { flex:1; min-height:48px; font-size:16px; }
+body[data-world="buncho"] .game-app .game-draw-result[open] {
+ position:fixed; inset:0; margin:auto; transform:none; box-sizing:border-box;
+ width:min(440px,calc(100vw - 24px)); max-width:calc(100vw - 24px);
+ height:min(700px,calc(100dvh - 24px)); max-height:calc(100dvh - 24px);
+ display:flex; flex-direction:column; gap:10px; padding:16px; overflow:hidden;
+ background:var(--play-paper,#fffaf0); border:1px solid #d9ccba;
+}
+body[data-world="buncho"] .game-draw-result .gacha-mechanism { width:120px; flex:none; margin:0 auto; }
+body[data-world="buncho"] .game-draw-result-body { flex:1 1 auto; min-height:0; overflow-y:auto; text-align:center; padding:4px; }
+body[data-world="buncho"] #game-draw-result-title { display:block; font-size:22px; line-height:1.5; }
+body[data-world="buncho"] .game-draw-item { width:120px; margin:12px auto; padding:12px; border-radius:50%; background:#f8efdf; }
+body[data-world="buncho"] .game-draw-item svg { width:100%; height:auto; }
+body[data-world="buncho"] .game-draw-result-body h3 { margin:8px 0; font-size:18px; }
+body[data-world="buncho"] .game-draw-result-body p { font-size:14px; line-height:1.7; }
+body[data-world="buncho"] .game-draw-result-body .game-draw-receipt { display:grid; gap:6px; padding:12px; border-radius:18px; background:#faefd9; }
+body[data-world="buncho"] .game-draw-result-actions { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:8px; flex:none; padding-top:8px; border-top:1px solid #dacbb6; }
+body[data-world="buncho"] .game-draw-result-actions button { min-height:48px; font-size:16px; }
+body[data-world="buncho"] .game-draw-result-actions [data-draw-result-preview] { background:var(--play-yellow,#f8df9d); }
+@media(max-height:600px) {
+ body[data-world="buncho"] .game-app .game-decoration { gap:6px; }
+ body[data-world="buncho"] .game-decoration>.game-section-title,
+ body[data-world="buncho"] .game-decoration>.game-gacha-feature { display:none; }
+ body[data-world="buncho"] .game-decoration>.game-decor-intro { grid-row:1; }
+ body[data-world="buncho"] .game-decoration>.game-gacha-machines { grid-row:2; }
+ body[data-world="buncho"] .game-decoration>.game-decor-slots { grid-row:3; }
+ body[data-world="buncho"] .game-decoration>.game-decor-filter { grid-row:4; }
+ body[data-world="buncho"] .game-app .game-decoration>.game-decor-workbench { grid-row:5; }
+ body[data-world="buncho"] .game-app .game-gacha-machines button { min-height:56px; padding:4px; }
+ body[data-world="buncho"] .game-decor-draw>.game-small { margin:0; }
+ body[data-world="buncho"] .game-draw-result .gacha-mechanism { width:80px; }
 }

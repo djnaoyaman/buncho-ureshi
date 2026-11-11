@@ -677,3 +677,19 @@ test('welcome reading and care sheet scroll survive refresh, but a replaced worl
  const menu=f.root.querySelector('.game-secondary-menu');menu.open=true;menu.scrollTop=430;
  const replacement=savedWorld('別のおうち',202);await rawWorld(f.indexedDB,replacement);await [...f.timers.values()][0]();assert.equal(f.root.querySelector('.game-secondary-menu').scrollTop,0);assert.equal((await rawWorld(f.indexedDB)).worldId,replacement.worldId);
 });
+
+test('decoration shares the home backdrop and changes only the temporary candidate furniture',async t=>{
+ const f=await fixture(t);await f.mount();
+ const picture=f.root.querySelector('.game-main .game-room [data-home-background]').outerHTML;
+ const ids=scope=>Object.fromEntries([...scope.querySelectorAll('[data-equipped-slot]')].map(e=>[e.dataset.equippedSlot,e.dataset.equippedItem]));
+ const home=ids(f.root.querySelector('.game-main .game-room')),before=await rawWorld(f.indexedDB);
+ f.root.querySelector('[data-game-panel="decorate"]').click();
+ const preview=()=>f.root.querySelector('.game-home-preview-viewport');
+ assert.equal(preview().querySelector('[data-home-background]').outerHTML,picture);
+ assert.deepEqual(ids(preview()),home);
+ f.root.querySelector('[data-decor-preview="perch-rose-cozy"]').click();
+ assert.deepEqual(ids(preview()),{...home,perch:'perch-rose-cozy'});
+ assert.deepEqual(await rawWorld(f.indexedDB),before,'preview does not alter equipment, currency, clocks or seed');
+ f.root.querySelector('[data-decor-cancel]').click();assert.deepEqual(ids(preview()),home);
+ assert.deepEqual(await rawWorld(f.indexedDB),before);
+});
