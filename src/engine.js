@@ -1,3 +1,5 @@
+import {initializeRelaxedCare,registerRelaxedBird,validateRelaxedCare,protectAbsentCare,rebaseRelaxedCare,careBaseStatus,takeCareBase,awardCareExtra,careDropUnits} from './care-rules.js';
+export {careBaseStatus};
 import {initialAway,validateAway} from './away-reports.js';
 import {allBirds,activateBird,archiveDetachedBirds} from './world-birds.js';
 import {gachaMachine} from './gacha-machines.js';
@@ -9,7 +11,7 @@ import {initialEconomy,validateEconomy,syncEconomy,reserveAutomaticGems,awardHou
 /** A deterministic, offline story simulation with fictional lifecycle rules. No real husbandry advice. */
 import { initializeCareSchedule, validateCareSchedule, syncCareSchedule, applyScheduledCare, reconcileImportedCare, careWindow, careDay } from './care-schedule.js';
 import { directLineNameFields, newDefaultNameFields, automaticNaming, manualNaming, legacyNaming, isValidNaming } from './bird-names.js';
-export const SAVE_VERSION = 15;
+export const SAVE_VERSION = 16;
 const careTime = now => Math.max(0, Math.min(253402268399999, now));
 export { reconcileImportedCare, careWindow };
 export const TICK_MS = 60000;
@@ -59,11 +61,12 @@ function produceDroppings(w){
     c.lastDropTick=w.tick;c.fullSinceTick=null;
   }
 }
-export function collectDropping(w,droppingId,expectedRevision){
+export function collectDropping(w,droppingId,expectedRevision,now=w.lifecycle?.seenAt??Date.now()){
   if(expectedRevision!==undefined&&expectedRevision!==w.revision)return {changed:false,gemAward:0,droppingId,message:'おうちが変わったよ。もう一度見つけてね。'};
+  if(w.careRules)syncCareSchedule(w,careTime(now));
   const index=w.gems.droppings.findIndex(d=>d.id===droppingId);
   if(index<0||w.field.place!=='home')return {changed:false,gemAward:0,droppingId,message:index<0?'もうきれいになっているよ。':'おうちで見つけてね。'};
-  const [drop]=w.gems.droppings.splice(index,1),gemAward=grantGems(w,GEM_RULES.collect);
+  const [drop]=w.gems.droppings.splice(index,1),gemAward=grantGems(w,w.careRules?awardCareExtra(w,careDropUnits(GEM_RULES.collect)):GEM_RULES.collect);
   bumpRevision(w);return {changed:true,gemAward,droppingId,birdId:drop.birdId,message:`きれいになったよ。${gemAward} Gems！`};
 }
 
@@ -230,6 +233,11 @@ export function claimHouseholdIncome(w,expectedToken,now=Date.now()){
  const goldAward=awardHouseholdGold(w.economy);if(goldAward)bumpRevision(w);
  return {changed:goldAward>0,goldAward,message:goldAward?'今日の暮らしを確認しました。30 Goldを受け取ったよ。':status.message};
 }
+export function claimCareBase(w,token,now=Date.now()){
+ if(!currentToken(w,token))return staleEconomy();
+ advanceTo(w,now);const gemAward=grantGems(w,takeCareBase(w));if(gemAward)bumpRevision(w);
+ return {changed:gemAward>0,gemAward,goldAward:0,message:gemAward?'きょうの30 Gemsを、うけとったよ。':careBaseStatus(w).message};
+}
 export function ordinaryFurnitureCatalog(w){return DECOR_SLOTS.flatMap(({id:slot})=>DECOR_COLORS.map(({id:color})=>({id:`${slot}-${color}-cozy`,slot,color,tier:'cozy',gold:ECONOMY_RULES.ordinaryFurnitureGold,owned:w.decor.inventory.some(i=>i.id===`${slot}-${color}-cozy`)})));}
 export function buyOrdinaryFurniture(w,itemId,expectedToken,now=Date.now()){
  if(!currentToken(w,expectedToken))return staleEconomy();
@@ -258,7 +266,7 @@ export function createBird(w, options = {}) {
   const directLine = (options.parents || []).some(parentId => parentId === 'b1' || ancestors(w, parentId).has('b1'));
   const namingFields = options.name ? {name:options.name,naming:options.automaticName?automaticNaming(options.name):manualNaming(options.name)} : directLine ? directLineNameFields(w,birdId) : newDefaultNameFields(w,birdId);
   const b = { id: birdId, ...namingFields, sex: options.sex || (random(w) < .5 ? 'female' : 'male'), color: options.color || pick(w, COLORS), stage: options.stage || 'adult', growthPace: 'relaxed', bornTick: w.tick, stageTick: w.tick, arrivedTick: w.tick, parents: options.parents || [], generation: options.generation || 0, partner: null, pairTick: null, eggsLaid: 0, lastEggTick: -1000, home: options.home || 'visitor', personality: { curiosity: 25 + Math.floor(random(w) * 65), sociability: 35 + Math.floor(random(w) * 55), caution: 15 + Math.floor(random(w) * 65) }, preference: pick(w, PREFERENCES), mood: 70, needs: { energy: 80, food: 80, play: 60 }, care: { lastFedTick: null, lastPetTick: null }, gemCare: initialGemCare(), relations: {}, memories: [], milestones: [], action: { kind: 'rest', target: null, startedTick: w.tick }, lastSocialTick: -1 };
-  w.birds.push(b); registerLifeBird(w,b); return b;
+  w.birds.push(b); registerLifeBird(w,b); registerRelaxedBird(w,b); return b;
 }
 function remember(w, b, kind, otherId = null) { const memory = { kind, otherId, tick: w.tick }; b.memories.push(memory); if (b.memories.length > LIMITS.memories) b.memories.shift(); if (['welcome','adopt','movein','pair','egg','hatch','grow','depart'].includes(kind) && !b.milestones.some(m => m.kind === kind && m.otherId === otherId)) { b.milestones.push(memory); if (b.milestones.length > LIMITS.memories) b.milestones.shift(); } }
 function record(w, kind, ids, condition, result, data = {},at=null) {
@@ -310,7 +318,7 @@ export function honorBird(w,birdId,kind,token,now=Date.now()){
 }
 export function createWorld(now = Date.now(), seed = 842911) {
   const w = { away:initialAway(careTime(now)), version: SAVE_VERSION, revision: 0, worldId: `garden-${now}-${seed}`, epoch: now, clock:{version:2,originTick:0,originAt:now,legacyEventMax:0},archive:[],journal:[], lastUpdated: now, seed: seed >>> 0, tick: 0, nextId: 1, nextEvent: 1, paused: false, settings: { motion: true, careSound: true, adoptionMode:'ask' }, care: { cleanliness: 100, lastCleanTick: null }, birds: [], events: [], offlineSummary: null, field: initialField(), decor: initialDecor(), gems: {droppings:[],nextDropId:1}, encounters:initialEncounterState(), economy:initialEconomy(careTime(now)), adoption:{pending:null,dismissed:[]} };
-  initializeCareSchedule(w,careTime(now)); initializeLifecycle(w,careTime(now));
+  initializeCareSchedule(w,careTime(now)); initializeLifecycle(w,careTime(now));initializeRelaxedCare(w,careTime(now));
   const b = createBird(w, { name: 'エド', automaticName:true, sex: 'female', color: 'white', home: 'resident' });
   initializeProtagonist(w);
   b.personality = { curiosity: 65, sociability: 75, caution: 30 };
@@ -532,8 +540,9 @@ function visitsWithoutArrivals(w){
  for(const b of w.birds.filter(b=>b.home==='visitor'&&w.tick-b.arrivedTick>96)){b.home='departed';record(w,'depart',[b.id],'留守の間にお友達が自分のおうちへ帰った','名前と関係を残して、また会える');}
  refreshAdoption(w);
 }
-export function advanceTo(w,now=Date.now()){
+export function advanceTo(w,now=Date.now(),{present=false}={}){
  if(!Number.isSafeInteger(now)||now<0||now>MAX_DATE_MS)return w;
+ if(!present&&w.careRules&&protectAbsentCare(w,careTime(now)))bumpRevision(w);
  if(syncEconomy(w.economy,careTime(now)))bumpRevision(w);
  const care=syncCareSchedule(w,careTime(now));if(care.renewed)bumpRevision(w);
  const startAt=Math.max(w.lastUpdated,w.clock.originAt);
@@ -646,7 +655,7 @@ function careResult(kind, birdId, changed, before, after, cooldownTicks, message
 }
 export function feedBird(w, birdId, now=w.lifecycle?.seenAt??Date.now(), expectedToken) {
   if(expectedToken&&!currentToken(w,expectedToken))return staleEconomy();
-  const bird=careBird(w,birdId);synchronizeLife(w,careTime(now));
+  const bird=careBird(w,birdId);if(w.careRules&&now>w.careRules.seenAt+15000)protectAbsentCare(w,careTime(now));synchronizeLife(w,careTime(now));
   if(!isAlive(w,bird))return {...staleEconomy(),reason:'unavailable',message:'思い出の庭で会えるよ。'};
   const result=applyScheduledCare(w,birdId,'feed',careTime(now));
   if(!result.changed)return {...careResult('feed',birdId,false,result.before,result.after,0,`${bird.name}は、おなかいっぱい。`,'full'),nextAt:result.nextAt};
@@ -657,7 +666,7 @@ export function feedBird(w, birdId, now=w.lifecycle?.seenAt??Date.now(), expecte
 }
 export function petBird(w, birdId, now=w.lifecycle?.seenAt??Date.now(), expectedToken) {
   if(expectedToken&&!currentToken(w,expectedToken))return staleEconomy();
-  const bird=careBird(w,birdId);synchronizeLife(w,careTime(now));
+  const bird=careBird(w,birdId);if(w.careRules&&now>w.careRules.seenAt+15000)protectAbsentCare(w,careTime(now));synchronizeLife(w,careTime(now));
   if(!isAlive(w,bird))return {...staleEconomy(),reason:'unavailable',message:'思い出の庭で会えるよ。'};
   const result=applyScheduledCare(w,birdId,'pet',careTime(now));
   if(!result.changed)return {...careResult('pet',birdId,false,result.before,result.after,0,`${bird.name}は、元気いっぱい。`,'full'),nextAt:result.nextAt};
@@ -666,14 +675,15 @@ export function petBird(w, birdId, now=w.lifecycle?.seenAt??Date.now(), expected
   record(w,'user-pet',[birdId],'利用者がゲームのふれあいを選んだ','元気が少し増えた');bumpRevision(w);
   return {...careResult('pet',birdId,true,result.before,result.after,0,`${bird.name}「ぴっ♪」`,'success'),gemAward,goldAward,nextAt:result.nextAt};
 }
-export function cleanGarden(w) {
+export function cleanGarden(w,now=w.lifecycle?.seenAt??Date.now()) {
+  if(w.careRules)syncCareSchedule(w,careTime(now));
   const before = w.care.cleanliness;
   const wait = remaining(w.care.lastCleanTick, w.tick, CARE_RULES.cleanCooldownTicks);
   const droppingCount = w.field.place === 'home' ? w.gems.droppings.length : 0;
   if ((before === 100 && !droppingCount) || wait) return careResult('clean', null, false, before, before, wait, '庭の床はきれいだよ。のんびり過ごそう。', wait ? 'cooldown' : 'clean');
   // The clean action collects the same home drops as individual taps, once.
   // Keep the existing per-drop reward and never collect remotely from a park.
-  const gemAward = droppingCount ? grantGems(w, droppingCount * GEM_RULES.collect) : 0;
+  const gemAward = droppingCount ? grantGems(w, w.careRules?awardCareExtra(w,careDropUnits(droppingCount * GEM_RULES.collect)):droppingCount * GEM_RULES.collect) : 0;
   if (droppingCount) w.gems.droppings = [];
   w.care.cleanliness = 100;
   w.care.lastCleanTick = w.tick;
@@ -683,7 +693,7 @@ export function cleanGarden(w) {
 export function talkToBird(w, birdId, text, now=w.lifecycle?.seenAt??Date.now(), expectedToken) {
   if(expectedToken&&!currentToken(w,expectedToken))return {...staleEconomy(),answer:"おうちが変わったよ。もう一度話しかけてね。",careChanged:false};
   const b = findBird(w, birdId); if (!b) throw new Error('文鳥を選んでね。');
-  synchronizeLife(w,careTime(now));
+  if(w.careRules&&now>w.careRules.seenAt+15000)protectAbsentCare(w,careTime(now));synchronizeLife(w,careTime(now));
   if(!isAlive(w,b))return {answer:'思い出の庭で、いっしょに過ごした日々を想おう。',gemAward:0,goldAward:0,careChanged:false};
   const input = String(text).trim().slice(0, 100);
   const care=applyScheduledCare(w,birdId,'talk',careTime(now),input);
@@ -714,7 +724,7 @@ function validateVersion(input, version) {
   const fail = msg => { throw new Error(`保存データを読み込めません：${msg}`); };
   if (!input || typeof input !== 'object' || Array.isArray(input)) fail('形式が違います。');
   const shape = (value, keys) => value !== null && typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length === keys.length && keys.every(key => Object.hasOwn(value, key));
-  const worldKeys = ['version','revision','worldId','epoch','lastUpdated','seed','tick','nextId','nextEvent','paused','settings','birds','events','offlineSummary', ...(version >= 2 ? ['care'] : []), ...(version >= 3 ? ['field','decor'] : []), ...(version >= 4 ? ['gems'] : []), ...(version >= 5 ? ['careSchedule'] : []), ...(version >= 6 ? ['encounters'] : []), ...(version >= 7 ? ['economy','adoption'] : []), ...(version >= 8 ? ['lifecycle'] : []), ...(version >= 9 ? ['protagonist'] : []),...(version>=12?['clock','archive','journal']:[]),...(version>=15?['away']:[])];
+  const worldKeys = ['version','revision','worldId','epoch','lastUpdated','seed','tick','nextId','nextEvent','paused','settings','birds','events','offlineSummary', ...(version >= 2 ? ['care'] : []), ...(version >= 3 ? ['field','decor'] : []), ...(version >= 4 ? ['gems'] : []), ...(version >= 5 ? ['careSchedule'] : []), ...(version >= 6 ? ['encounters'] : []), ...(version >= 7 ? ['economy','adoption'] : []), ...(version >= 8 ? ['lifecycle'] : []), ...(version >= 9 ? ['protagonist'] : []),...(version>=12?['clock','archive','journal']:[]),...(version>=15?['away']:[]),...(version>=16?['careRules']:[])];
   if (!shape(input, worldKeys)) fail('保存の項目が不正です。');
   // Check bounded input before JSON cloning, including direct IndexedDB values.
   // Descriptors avoid invoking getters/toJSON on malformed non-JSON objects.
@@ -848,6 +858,7 @@ function validateVersion(input, version) {
     w.birds=activeBirds;
   }
   if(version>=15)validateAway(w);
+  if(version>=16)validateRelaxedCare(w);
   return w;
 }
 /** Strict current-version validator for transactions; use compatibility only at read boundaries. */
@@ -902,16 +913,17 @@ export function migrateV12ToV13(input,now=Date.now()){
  w.version=13;w.economy.version=2;
  // Block the migration day: the old client may already have awarded care Gold.
  const today=careDay(at).date,next=today==='9999-12-31'?today:new Date(Date.parse(today+'T00:00:00Z')+86400000).toISOString().slice(0,10);
- w.economy.household={startedDay:next,lastClaimedDay:next===today?today:null};return migrateV13ToV14(w);
+ w.economy.household={startedDay:next,lastClaimedDay:next===today?today:null};return migrateV13ToV14(w,now);
 }
 /** Existing birds keep their original pace; never retime a recorded stage or birth. */
-export function migrateV13ToV14(input){
+export function migrateV13ToV14(input,now=Date.now()){
  const w=validateVersion(input,13);w.version=14;
  for(const b of allBirds(w))b.growthPace='legacy';
- return migrateV14ToV15(w);
+ return migrateV14ToV15(w,now);
 }
 /** First observation establishes presence; never backfill pre-update absence. */
-export function migrateV14ToV15(input){const w=validateVersion(input,14);w.version=15;w.away=initialAway();return validateWorld(w);}
+export function migrateV14ToV15(input,now=Date.now()){const w=validateVersion(input,14);w.version=15;w.away=initialAway();return migrateV15ToV16(w,now);}
+export function migrateV15ToV16(input,now=Date.now()){const w=validateVersion(input,15);w.version=16;initializeRelaxedCare(w,careTime(Math.max(now,w.careSchedule.seenAt,w.lifecycle.seenAt,w.economy.seenAt)));return validateWorld(w);}
 export function readCompatibleWorld(input, now=Date.now()) {
   // Do not execute an accessor even to discover the version of an untrusted object.
   const descriptor = input && typeof input === 'object' ? Object.getOwnPropertyDescriptor(input, 'version') : null;
@@ -928,8 +940,9 @@ export function readCompatibleWorld(input, now=Date.now()) {
   if (descriptor.value === 10) return migrateV10ToV11(input,now);
   if (descriptor.value === 11) return migrateV11ToV12(input,now);
   if (descriptor.value === 12) return migrateV12ToV13(input,now);
-  if (descriptor.value === 13) return migrateV13ToV14(input);
-  if (descriptor.value === 14) return migrateV14ToV15(input);
+  if (descriptor.value === 13) return migrateV13ToV14(input,now);
+  if (descriptor.value === 14) return migrateV14ToV15(input,now);
+  if (descriptor.value === 15) return migrateV15ToV16(input,now);
   if (descriptor.value === SAVE_VERSION) return validateWorld(input);
   throw new Error('保存データを読み込めません：対応していない版です。元の保存はそのままです。');
 }
@@ -979,11 +992,12 @@ export function prepareWorldReplacement(current,replacement,now=Date.now(),newWo
  if(typeof newWorldId!=='string'||!newWorldId||newWorldId===current.worldId)throw new Error('新しい庭の識別子が必要です。');
  const next=readCompatibleWorld(replacement,now);
  if(newWorldId===next.worldId)throw new Error('新しい庭の識別子が必要です。');
- const effective=Math.max(now,current.lastUpdated,next.lastUpdated,current.careSchedule.seenAt,next.careSchedule.seenAt,current.economy.seenAt,next.economy.seenAt,current.lifecycle?.seenAt??0,next.lifecycle.seenAt);
+ const effective=Math.max(now,current.lastUpdated,next.lastUpdated,current.careSchedule.seenAt,next.careSchedule.seenAt,current.careRules?.seenAt??0,next.careRules?.seenAt??0,current.economy.seenAt,next.economy.seenAt,current.lifecycle?.seenAt??0,next.lifecycle.seenAt);
  const at=careTime(effective);
  next.away.seenAt=Math.max(at,current.away?.seenAt??0,next.away.seenAt??0);
  next.lastUpdated=effective;
  next.careSchedule={seenAt:at,windowAt:careWindow(at).at};
+ rebaseRelaxedCare(next,at);
  syncEconomy(next.economy,at);
  // Import restores its recorded health/deaths; advance the clock without replaying absence.
  rebaseLifecycleClock(next,at);

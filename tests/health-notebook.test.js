@@ -1,8 +1,10 @@
+// Deliberate active-clock deadline setup; return protection is covered separately.
+const advanceTo=(w,at)=>advanceActiveClock(w,at,{present:true});
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {Window} from 'happy-dom';
-import {createWorld,createBird,advanceTo,validateWorld} from '../src/engine.js';
+import {createWorld,createBird,advanceTo as advanceActiveClock,validateWorld} from '../src/engine.js';
 import {lifeStatus} from '../src/life-care.js';
 import {renderLifeCarePanel} from '../src/life-care-ui.js';
 import {gameBirdSvg} from '../src/game.js';

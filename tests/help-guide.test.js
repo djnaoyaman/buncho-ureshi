@@ -18,20 +18,17 @@ for (const holidayCoverageKnown of [true,false]) {
    if(i!==3)assert.equal(newSteps[i].querySelector('p').innerHTML,li.innerHTML.split('<br>')[1]);else{const text=plain(newSteps[i]);for(const fact of ['家族が6羽','独立の相談','「いいよ」とえらんだときだけ','家系図と思い出に残る','また友達として招ける'])assert.ok(text.includes(fact),fact);}
   });
   const additions=result.querySelectorAll('[data-game-cleanliness-help]');assert.equal(additions.length,1);
-  assert.equal(plain(additions[0]),'そうじをして床が100になると、20までへるのは、ほんとうの時間で約36時間だよ。物語を止めているあいだは、床もよごれないよ。ごはんや病院の期限は、そのまま進むよ。');
+  assert.equal(plain(additions[0]),'そうじをして床が100になると、20までへるのは、ほんとうの時間で約36時間だよ。物語を止めているあいだは、床もよごれないよ。留守から戻ったら、体調も見てあげよう。');
   const growth=result.querySelectorAll('[data-game-growth-help]');assert.equal(growth.length,1);
   assert.match(plain(growth[0]),/約5時間36分.*約11時間12分.*約3日半.*更新前からいる/s);
-  // Only reviewed help blocks and the corrected full-energy explanation may differ.
-  for(const detail of original.querySelectorAll('details')) {
-   const actual=result.querySelector(`[data-game-details="${detail.dataset.gameDetails}"]`).cloneNode(true),expected=detail.cloneNode(true);
-   actual.querySelectorAll('[data-help-update],[data-game-cleanliness-help],[data-game-growth-help]').forEach(n=>n.remove());
-   if(detail.dataset.gameDetails==='help-care'){
-    assert.match(plain(actual),/元気がいっぱいでも、なでたり、お話したりして遊べる/);
-    assert.match(plain(actual),/おなかや元気がへるのは1回分だけ/);
-    for(const root of [actual,expected]){root.querySelector('summary').remove();for(const start of ['ごはんは、','物語を止めていても']) [...root.querySelectorAll('p')].find(p=>plain(p).startsWith(start)).remove();}
-   }
-   assert.equal(actual.outerHTML.replace(/>\s+</g,'><'),expected.outerHTML.replace(/>\s+</g,'><'));
+  // The approved care/life rules intentionally change these two blocks;
+  // preserve the story disclosure exactly and assert every changed fact separately.
+  for(const key of ['help-care','help-life']){const text=plain(result.querySelector(`[data-game-details="${key}"]`));
+   assert.match(text,key==='help-care'?/24時間で30ずつ、40まで/:/留守のあいだ.*それだけで亡くならない/s);
+   if(key==='help-care'){for(const fact of ['30 Gems','10 Gems','30 Gold','元気がいっぱいでも'])assert(text.includes(fact),fact);}
+   else for(const fact of ['10年','3日間','24時間','12 Gold','24 Gold','寿命と事故'])assert(text.includes(fact),fact);
   }
+  assert.equal(result.querySelector('[data-game-details="help-story"]').outerHTML,original.querySelector('[data-game-details="help-story"]').outerHTML);
   assert.equal(result.querySelector(':scope > section > p').innerHTML,original.querySelector(':scope > section > p').innerHTML);
   const unannotated=result.cloneNode(true);unannotated.querySelectorAll('ruby').forEach(n=>n.remove());
   assert.doesNotMatch(unannotated.textContent,/[一-龠々]/);
@@ -71,8 +68,8 @@ test('only authored content is rendered, with no executable or untrusted input i
 });
 test('deadline, cost, care schedule and safety remain unchanged',()=>{
  const text=plain(dom(renderGameHelp()));
- for(const expected of ['7時・17時・20時','12時','10年','3日間','24時間','12 Gold','24 Gold','家族が6羽','「いいよ」とえらんだときだけ','むりにさわらない','録音したものではない','AIの絵','ゲームの外へ送ることもない','お手本ではない','本物のおもちは、女の子の白文鳥']) assert(text.includes(expected),expected);
- assert.match(text,/物語を止めても、ごはんや病院に行くまでの時間は止まらない/);
+ for(const expected of ['24時間で30ずつ','40まで','10年','3日間','24時間','12 Gold','24 Gold','家族が6羽','「いいよ」とえらんだときだけ','むりにさわらない','録音したものではない','AIの絵','ゲームの外へ送ることもない','お手本ではない','本物のおもちは、女の子の白文鳥']) assert(text.includes(expected),expected);
+ assert.match(text,/物語を止めても、おなかと元気の時間は止まらない/);
  assert.doesNotMatch(text,/ガチャ|エド|12時間/);
  assert.doesNotMatch(text,/この年の祝日/);
  assert.match(plain(dom(renderGameHelp({holidayCoverageKnown:false}))),/この年の祝日は、まだゲームに入っていない/);

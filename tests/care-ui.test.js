@@ -15,6 +15,7 @@ function worldFixture({stage='adult',home='resident',sound=false}={}){
   w.care.cleanliness=12;w.settings.careSound=sound;return validateWorld(w);
 }
 async function fixture(t,options={}){
+  const realNow=Date.now,fixedNow=realNow();Date.now=()=>fixedNow;t.after(()=>{Date.now=realNow;});
   const window=new Window({url:'https://djnaoyaman.github.io/buncho-ureshi/game/',settings:{disableJavaScriptEvaluation:true,disableJavaScriptFileLoading:true,disableCSSFileLoading:true}});
   const rig=options.rig||audioRig(),initial=worldFixture(options),timers=new Map(),globals=new Map();let dispose,tail=Promise.resolve(),nextGate=null,nextFailure=null,confirmResult=true;
   const locks={request(name,fn){const gate=nextGate,failure=nextFailure;nextGate=null;nextFailure=null;const job=tail.then(async()=>{if(gate)await gate.promise;if(failure)throw failure;return fn();});tail=job.catch(()=>{});return job;}};
@@ -169,9 +170,9 @@ test('explicit peer mute storage event immediately cancels and persists across w
  const rig=audioRig({held:true}),f=await fixture(t,{sound:true,rig});await f.mount();f.clickCare('pet');await f.settle();f.window.dispatchEvent(new f.window.StorageEvent('storage',{key:'buncho.care-sound-choice.v1',newValue:JSON.stringify({explicit:true,enabled:false})}));rig.gate.resolve();await sleep(10);assert.equal(rig.starts,0);assert.equal(f.soundChecked(),false);await f.poll();assert.equal(f.soundChecked(),false);
 });
 
-test('paused story reopens real-JST care and shows both bars without a fast-tick refill',async t=>{
- const f=await fixture(t);await f.mount();const w=f.read();w.paused=true;w.birds[0].needs.food=100;w.birds[0].needs.energy=100;const now=Date.now(),prior=careWindow(now).at-1;w.careSchedule={seenAt:prior,windowAt:careWindow(prior).at};bumpRevision(w);f.write(w);await f.poll();
- assert.equal(f.read().birds[0].needs.food,60);assert.equal(f.read().birds[0].needs.energy,60);assert.equal(f.root.querySelector('[data-game-care=feed]').disabled,false);assert.equal(f.root.querySelector('[data-game-care=pet]').disabled,false);
+test('paused story decays by elapsed real time and shows both bars without a scheduled or fast-tick refill',async t=>{
+ const f=await fixture(t);await f.mount();const w=f.read();w.paused=true;w.birds[0].needs.food=100;w.birds[0].needs.energy=100;const now=Date.now(),prior=now-86400000;w.careSchedule={seenAt:prior,windowAt:careWindow(prior).at};w.careRules.startedAt=w.careRules.seenAt=prior;w.careRules.day=new Date(prior+32400000).toISOString().slice(0,10);for(const state of w.careRules.birds)state.at=prior;bumpRevision(w);f.write(w);await f.poll();
+ assert.equal(f.read().birds[0].needs.food,70);assert.equal(f.read().birds[0].needs.energy,70);assert.equal(f.root.querySelector('[data-game-care=feed]').disabled,false);assert.equal(f.root.querySelector('[data-game-care=pet]').disabled,false);
  f.clickCare('pet');await f.settle();f.clickCare('pet');await f.settle();assert.equal(f.read().birds[0].needs.energy,100);assert.equal(f.root.querySelector('[data-game-care=pet]').disabled,false);assert.equal(f.root.querySelector('[data-game-talk="名前を呼ぶ"]').disabled,false);assert.equal(f.root.querySelector('[data-next-care]'),null);
 });
 

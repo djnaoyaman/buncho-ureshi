@@ -1,9 +1,9 @@
 {
-  "base": "e69a87c91f99b01693fd8c7028b85568b8a7ab49",
+  "base": "338e962bc94e9ac1726f3923abe232d963c146ea",
   "tests": [
+    "tests/browser/care-approved.spec.js",
     "tests/browser/care-break.spec.js",
-    "tests/browser/care-gauges.spec.js",
     "tests/browser/reading-scroll.spec.js"
   ],
-  "reason": "満タン時のなでる反応、次回時刻表示の削除、実際の保存後だけの区切り案内を変更。Chrome/WebKitで満腹の無報酬反応・保存一致・文字拡大・ゲージと掃除・既存スクロール保持を確認する。減少率・報酬方式・健康・保存形式は未確定のため変更せず、候補計算は本番から参照しない試算専用に分離する。"
+  "reason": "承認された実時間30/日・下限40、家庭30 Gemsと追加10上限、不在時の非致死保護と保存16移行を一体で変更。Chrome/WebKitで旧保存の病気持ち復帰、基礎とGoldの分離、個別/一括の上限、再読込24/48時間、2タブ、文字拡大、満タンの反応と保存案内、スクロール保持を確認する。"
 }

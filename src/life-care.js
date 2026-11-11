@@ -1,3 +1,4 @@
+import {effectiveHealthDeadline} from './care-rules.js';
 import {allBirds,activateBird} from './world-birds.js';
 /** Fictional game lifecycle. Real birds need prompt veterinary assessment, not these timers.
  * Pure state operations; invoke only inside the game's fresh-state transaction.
@@ -47,7 +48,7 @@ export function nextLifecycleDeadline(world,after){
  for(const bird of allBirds(world)){
   const s=lifeStatus(world,bird);if(!s||s.death||bird.home!=='resident')continue;
   const covered=contract&&contract.fromAt<=after?Math.min(after,contract.until):s.lastCareAt;
-  for(const at of [Math.max(s.lastCareAt,covered)+LIFE_RULES.neglectMs,s.condition?.deadlineAt]){
+  for(const at of [effectiveHealthDeadline(world,s,Math.max(s.lastCareAt,covered)+LIFE_RULES.neglectMs),s.condition?effectiveHealthDeadline(world,s,s.condition.deadlineAt):undefined]){
    if(at>after&&at<=MAX_TIME)next=Math.min(next,at);
   }
  }
@@ -70,7 +71,7 @@ export function syncLifecycle(world,now,{story=false,observe=true}={}){
    if(s.condition&&s.condition.sinceAt<=coveredUntil){recover(bird,s,coveredUntil);events.push({kind:'caretaker-treatment',birdId:bird.id});changed=true;}
    if(now<=contract.until){if(observe){if(bird.needs.food<100||bird.needs.energy<100||world.care.cleanliness<100)changed=true;bird.needs.food=100;bird.needs.energy=100;world.care.cleanliness=100;}resetExposure(s);continue;}
   }
-  const hungry=s.lastCareAt+LIFE_RULES.neglectMs,untreated=s.condition?.deadlineAt??Infinity;
+  const hungry=effectiveHealthDeadline(world,s,s.lastCareAt+LIFE_RULES.neglectMs),untreated=s.condition?effectiveHealthDeadline(world,s,s.condition.deadlineAt):Infinity;
   if(Math.min(hungry,untreated)<=now){const cause=untreated<=hungry?(s.condition.kind==='injury'?'injury':'illness'):'neglect';events.push(die(world,bird,s,cause,Math.min(hungry,untreated)));changed=true;continue;}
   if(!observe||s.condition||['egg','chick'].includes(bird.stage))continue;
   // A treatment gives a full real day without recurrence.

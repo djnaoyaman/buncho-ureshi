@@ -13,9 +13,9 @@ test('new household earns exactly30 once, receipt roundtrips and PRNG/history/Ge
  assert.equal(claim(w).goldAward,0);assert.deepEqual(parseSave(serializeWorld(w)),w);
  for(const key of ['birds','archive','journal','events','seed','decor','gems','protagonist'])assert.deepEqual(w[key],before[key],key);validateWorld(w);
 });
-test('per-action Gold is removed while exact6/5/5 Gems and stale-click guard remain',()=>{
- const w=createWorld(NOW);assert.equal(feedBird(w,'b1',NOW,economyToken(w)).goldAward,0);assert.equal(petBird(w,'b1',NOW,economyToken(w)).goldAward,0);assert.equal(w.decor.points,31);assert.equal(w.economy.gold,0);
- w.birds[0].needs.energy=80;const r=talkToBird(w,'b1','こんにちは',NOW,economyToken(w));assert.equal(r.gemAward,5);assert.equal(r.goldAward,0);assert.equal(w.economy.gold,0);
+test('Gold stays separate while care shares the approved 10-Gem cap and stale-click guard',()=>{
+ const w=createWorld(NOW);assert.equal(feedBird(w,'b1',NOW,economyToken(w)).goldAward,0);assert.equal(petBird(w,'b1',NOW,economyToken(w)).goldAward,0);assert.equal(w.decor.points,30);assert.equal(w.economy.gold,0);
+ w.birds[0].needs.energy=80;const r=talkToBird(w,'b1','こんにちは',NOW,economyToken(w));assert.equal(r.gemAward,0);assert.equal(r.goldAward,0);assert.equal(w.economy.gold,0);
 });
 test('family care requirements exclude guests, eggs, chicks and departed birds; cleaning is checked even away',()=>{
  const w=ready();for(const stage of ['egg','chick']){const b=createBird(w,{home:'resident',stage});b.needs.food=b.needs.energy=0;}

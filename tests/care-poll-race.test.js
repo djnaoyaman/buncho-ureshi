@@ -100,7 +100,7 @@ function familyButton(f,kind='feed'){
 }
 test('family care reserves an own paused poll and duplicate gestures without losing the intent',async t=>{
  const advance=clock(t),f=await fixture(t);await f.mount();const button=familyButton(f),before=f.read(),gate=f.hold();advance(1000);const polling=f.poll();button.click();button.click();gate.resolve();await polling;await f.settle();
- assert.equal(f.read().birds[0].needs.food,60);assert.equal(f.read().decor.points,before.decor.points+12);assert.equal(f.read().economy.gold,before.economy.gold);assert.equal(f.rig.starts,0);
+ assert.equal(f.read().birds[0].needs.food,60);assert.equal(f.read().decor.points,before.decor.points+10);assert.equal(f.read().economy.gold,before.economy.gold);assert.equal(f.rig.starts,0);
 });
 test('family care never rebases over a peer write and releases the reservation for retry',async t=>{
  const advance=clock(t),f=await fixture(t);await f.mount();const button=familyButton(f),gate=f.hold();advance(1000);const polling=f.poll();button.click();const peer=f.read();renameBird(peer,'b1','別の名前');f.write(peer);gate.resolve();await polling;await f.settle();assert.equal(f.read().birds[0].needs.food,40);assert.equal(f.read().decor.points,peer.decor.points);assert.match(f.root.querySelector('.game-message').textContent,/もう一度/);
@@ -108,7 +108,7 @@ test('family care never rebases over a peer write and releases the reservation f
 });
 test('family care uses the gesture time across a queued save, then preserves the true illness deadline',async t=>{
  const advance=clock(t),f=await fixture(t);await f.mount();const gestureAt=Date.now(),state=f.read();state.lifecycle.birds[0].condition={kind:'injury',sinceAt:gestureAt-86400000+1,deadlineAt:gestureAt+1};f.write(state);await f.poll();const button=familyButton(f),before=f.read(),gate=f.hold();button.click();advance(2);gate.resolve();await f.settle();
- assert.equal(f.read().birds[0].needs.food,60);assert.equal(f.read().lifecycle.birds[0].death,null);assert.equal(f.read().lifecycle.birds[0].lastCareAt,gestureAt);assert.equal(f.read().decor.points,before.decor.points+12);
+ assert.equal(f.read().birds[0].needs.food,60);assert.equal(f.read().lifecycle.birds[0].death,null);assert.equal(f.read().lifecycle.birds[0].lastCareAt,gestureAt);assert.equal(f.read().decor.points,before.decor.points+10);
  await f.poll();assert.equal(f.read().lifecycle.birds[0].death.at,gestureAt+1);assert.equal(f.read().birds[0].needs.food,60);assert.equal(f.rig.starts,0);
 });
 test('family care releases failed poll and failed write reservations without partial rewards',async t=>{

@@ -12,17 +12,17 @@ const strip=w=>{const x=clone(w);x.version=3;stripGrowthPace(x);for(const k of [
 function ready(){const w=createWorld(100);feedBird(w,'b1');advanceTicks(w,2);assert.equal(w.gems.droppings.length,1);return w;}
 test('v3 migration is pure additive and preserves all balances inventory names care histories',()=>{
  const legacy=old.createWorld(100);old.advanceTicks(legacy,300);legacy.paused=true;legacy.birds[0].name='大切なおもち';old.drawDecoration(legacy,'swing');const before=clone(legacy),w=readCompatibleWorld(legacy);
- assert.equal(w.version,15);assert.deepEqual(strip(w),legacy);assert.deepEqual(legacy,before);assert.deepEqual(w.gems,{droppings:[],nextDropId:1});assert.ok(w.birds.every(b=>Object.values(b.gemCare).every(v=>v===null)));
+ assert.equal(w.version,16);assert.deepEqual(strip(w),legacy);assert.deepEqual(legacy,before);assert.deepEqual(w.gems,{droppings:[],nextDropId:1});assert.ok(w.birds.every(b=>Object.values(b.gemCare).every(v=>v===null)));
  for(let i=0;i<4;i++)assert.deepEqual(parseSave(serializeWorld(w)),w);
 });
 test('v1 and v2 migrate without losing legacy state or giving extra welcome Gems',()=>{
- const v1=JSON.parse(readFileSync(new URL('./fixtures/v1-world.json',import.meta.url)));const one=readCompatibleWorld(v1);assert.equal(one.version,15);assert.deepEqual(one.events,v1.events);assert.equal(one.decor.points,20);
+ const v1=JSON.parse(readFileSync(new URL('./fixtures/v1-world.json',import.meta.url)));const one=readCompatibleWorld(v1);assert.equal(one.version,16);assert.deepEqual(one.events,v1.events);assert.equal(one.decor.points,20);
  const v2=old.createWorld(100);v2.version=2;stripGrowthPace(v2);for(const k of ['clock','archive','journal'])delete v2[k];for(const e of v2.events)e.at=v2.epoch+e.tick*15000;delete v2.decor?.duplicateStreaks;delete v2.field;delete v2.decor;const two=readCompatibleWorld(v2);assert.deepEqual(two.birds.map(b=>{const x=clone(b);delete x.gemCare;delete x.naming;delete x.growthPace;return x;}),v2.birds);assert.equal(two.decor.points,20);
 });
 test('feed pet and meaningful chat earn bounded Gems until their real-window bars are full',()=>{
  const w=createWorld(100);w.birds[0].needs.energy=60;const start=w.decor.points;
- assert.equal(feedBird(w,'b1').gemAward,6);assert.equal(petBird(w,'b1').gemAward,5);assert.equal(talkToBird(w,'b1','こんにちは').gemAward,5);assert.equal(w.decor.points,start+16);
- for(let i=0;i<20;i++){assert.equal(feedBird(w,'b1').gemAward,0);assert.equal(petBird(w,'b1').gemAward,0);assert.equal(talkToBird(w,'b1','こんにちは').gemAward,0);}assert.equal(w.decor.points,start+16);
+ assert.equal(feedBird(w,'b1').gemAward,6);assert.equal(petBird(w,'b1').gemAward,4);assert.equal(talkToBird(w,'b1','こんにちは').gemAward,0);assert.equal(w.decor.points,start+10);
+ for(let i=0;i<20;i++){assert.equal(feedBird(w,'b1').gemAward,0);assert.equal(petBird(w,'b1').gemAward,0);assert.equal(talkToBird(w,'b1','こんにちは').gemAward,0);}assert.equal(w.decor.points,start+10);
  advanceTicks(w,20);assert.equal(feedBird(w,'b1').gemAward,0);assert.equal(petBird(w,'b1').gemAward,0);validateWorld(w);
 });
 test('nonempty natural words award without hidden vocabulary penalty; empty young departed do not',()=>{
@@ -32,10 +32,10 @@ test('nonempty natural words award without hidden vocabulary penalty; empty youn
 });
 test('full meal schedules delayed natural dropping, collection cleans and rewards exactly once',()=>{
  const w=createWorld(100);feedBird(w,'b1');assert.equal(w.gems.droppings.length,0);advanceTicks(w,1);assert.equal(w.gems.droppings.length,0);advanceTicks(w,1);const [drop]=w.gems.droppings;assert.equal(drop.birdId,'b1');assert.equal(drop.createdTick,2);assert.equal(drop.location,'home');
- const before=w.decor.points;const result=collectDropping(w,drop.id);assert.equal(result.changed,true);assert.equal(result.gemAward,8);assert.equal(w.gems.droppings.length,0);assert.equal(w.decor.points,before+8);const saved=clone(w);for(let i=0;i<30;i++)assert.equal(collectDropping(w,drop.id).gemAward,0);assert.deepEqual(w,saved);validateWorld(w);
+ const before=w.decor.points;const result=collectDropping(w,drop.id);assert.equal(result.changed,true);assert.equal(result.gemAward,4);assert.equal(w.gems.droppings.length,0);assert.equal(w.decor.points,before+4);const saved=clone(w);for(let i=0;i<30;i++)assert.equal(collectDropping(w,drop.id).gemAward,0);assert.deepEqual(w,saved);validateWorld(w);
 });
 test('home collection cannot run remotely and no direct-care click creates instant drops',()=>{
- const w=ready(),id=w.gems.droppings[0].id;travelTo(w,'park');const before=clone(w);assert.equal(collectDropping(w,id).changed,false);assert.deepEqual(w,before);travelTo(w,'home');assert.equal(collectDropping(w,id).gemAward,8);
+ const w=ready(),id=w.gems.droppings[0].id;travelTo(w,'park');const before=clone(w);assert.equal(collectDropping(w,id).changed,false);assert.deepEqual(w,before);travelTo(w,'home');assert.equal(collectDropping(w,id).gemAward,4);
  const x=createWorld(100);petBird(x,'b1');talkToBird(x,'b1','こんにちは');assert.equal(x.gems.droppings.length,0);
 });
 test('pause and offline are deterministic, bounded and never auto-collect or punish birds',()=>{
@@ -53,11 +53,11 @@ test('malformed or duplicate dropping saves fail closed without mutation',()=>{
 test('simultaneous saved collections and care commit once across tabs',async()=>{
  const indexedDB=new IDBFactory(),a=await openGameStore({indexedDB}),b=await openGameStore({indexedDB});const w=ready(),id=w.gems.droppings[0].id;w.paused=true;await a.transact(()=>w);const results=[];
  await Promise.all(Array.from({length:30},(_,i)=>(i%2?a:b).transact(world=>{results.push(collectDropping(world,id));return world;})));
- assert.equal(results.filter(r=>r.changed).length,1);assert.equal((await a.transact(w=>w)).decor.points,w.decor.points+8);assert.equal((await b.transact(w=>w)).gems.droppings.length,0);a.close();b.close();
+ assert.equal(results.filter(r=>r.changed).length,1);assert.equal((await a.transact(w=>w)).decor.points,w.decor.points+4);assert.equal((await b.transact(w=>w)).gems.droppings.length,0);a.close();b.close();
 });
 test('stale revision collection after snapshot rollback or another update rejects without mutation',()=>{
  const w=ready(),snapshot=serializeWorld(w),id=w.gems.droppings[0].id,observed=w.revision;collectDropping(w,id,observed);const restored=parseSave(snapshot);restored.revision=w.revision+1;const before=clone(restored);
- assert.equal(collectDropping(restored,id,observed).changed,false);assert.deepEqual(restored,before);assert.equal(collectDropping(restored,id,restored.revision).gemAward,8);
+ assert.equal(collectDropping(restored,id,observed).changed,false);assert.deepEqual(restored,before);assert.equal(collectDropping(restored,id,restored.revision).gemAward,4);
  // A user-requested snapshot import intentionally restores its balance too;
  // there is no backend/permanent claim ledger, and replay is never additive.
  assert.equal(restored.decor.points,w.decor.points);validateWorld(restored);
