@@ -17,5 +17,5 @@ export function careGuidance(world,birdId){
 }
 export function cleaningGuidance(world){
  const c=world.care;
- return world.field.place==='home'&&c.cleanliness<=20&&(c.lastCleanTick===null||world.tick-c.lastCleanTick>=1)?'床が汚れてきたよ。そうじをしよう。':'';
+ return world.field.place==='home'&&c.cleanliness<=20&&(c.lastCleanTick===null||world.tick-c.lastCleanTick>=1)?'ゆかが よごれているよ。':'';
 }

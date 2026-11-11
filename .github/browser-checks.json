@@ -1,7 +1,7 @@
 {
-  "base": "8fb9f3209f9be354554e2ac882007336b3f7f7dc",
+  "base": "b6a585bbb83f1b61a83c56c8abaea58df6b61469",
   "tests": [
-    "tests/browser/reading-scroll.spec.js"
+    "tests/browser/home-cleaning-layout.spec.js"
   ],
-  "reason": "WebKitのホイール移動の完了を待ってから更新前後の位置を比較する。Chrome/WebKitの320px・390pxで、メニュー・ガチャ説明・関連画面のスクロール保持と保存全体の一致を再確認する。"
+  "reason": "スマホのおうちでそうじ欄がGems・移動ボタン・一時停止と重なるため独立行にする。Chrome/WebKitの320・390・402pxで汚れ案内と掃除後の配置、操作、保存を確認する。"
 }

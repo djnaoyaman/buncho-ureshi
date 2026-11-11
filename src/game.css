@@ -1620,3 +1620,38 @@ body[data-world="buncho"] .game-next-goal-list p{margin:6px 0;font-size:13px;lin
 body[data-world="buncho"] .game-next-goal-progress{font-weight:700;color:#365844}
 body[data-world="buncho"] .game-next-goal-list button{min-height:44px;max-width:100%;white-space:normal;margin-top:6px}
 @media(max-width:600px){body[data-world="buncho"] .game-next-goal-list{grid-template-columns:minmax(0,1fr)}}
+
+/* Home cleaning gets its own row. Absolute positioning formerly pushed its
+   tall hint upward behind the wallet and travel buttons on phones. */
+@media(max-width:600px) and (min-height:501px) {
+ body[data-world="buncho"] .game-scene-toolbar {
+  top:calc(195px + env(safe-area-inset-top,0px)); bottom:auto;
+  left:16px; right:16px; width:auto; height:auto; max-height:none;
+  margin:0; transform:none; display:grid; grid-template-columns:minmax(0,1fr);
+  align-items:start; gap:8px;
+ }
+ body[data-world="buncho"] .game-scene-toolbar .game-bird-carousel {
+  box-sizing:border-box; width:calc(100% - 64px); min-width:0; margin:0;
+ }
+ body[data-world="buncho"] .game-scene-toolbar .game-garden-care {
+  position:static; inset:auto; box-sizing:border-box; width:100%; max-width:none;
+  margin:0; padding:6px 10px; display:grid!important;
+  grid-template-columns:auto minmax(40px,1fr) auto; align-items:center; gap:6px 10px;
+  background:var(--play-paper,#fffaf0); border:var(--play-soft-edge,1px solid #cbbda7);
+  border-radius:18px;
+ }
+ body[data-world="buncho"] .game-scene-toolbar .game-garden-care button {
+  grid-column:1; min-width:76px; width:auto; min-height:44px; padding:6px 12px;
+  white-space:nowrap;
+ }
+ body[data-world="buncho"] .game-scene-toolbar .game-garden-care meter {
+  display:block; grid-column:2; width:100%; min-width:0;
+ }
+ body[data-world="buncho"] .game-scene-toolbar .game-garden-care output {
+  display:block; grid-column:3; white-space:nowrap; font-size:12px;
+ }
+ body[data-world="buncho"] .game-scene-toolbar .game-garden-care :is(.game-clean-guidance,.game-care-feedback) {
+  display:block; grid-column:1/-1; max-width:none; min-width:0; margin:0; font-size:13px;
+  line-height:1.5; white-space:normal; overflow-wrap:anywhere;
+ }
+}
