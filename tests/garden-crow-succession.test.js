@@ -1,6 +1,8 @@
+// Deliberate active-clock deadline setup; return protection is covered separately.
+const advanceTo=(w,at)=>advanceActiveClock(w,at,{present:true});
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createWorld,createBird,advanceTo,validateWorld,serializeWorld,parseSave} from '../src/engine.js';
+import {createWorld,createBird,advanceTo as advanceActiveClock,validateWorld,serializeWorld,parseSave} from '../src/engine.js';
 import {lifeStatus} from '../src/life-care.js';
 import {getProtagonistId} from '../src/protagonist.js';
 import {arriveGardenCrow,crowTarget,crowScene,crowFriendship,petGardenCrow} from '../src/garden-crows.js';
@@ -11,7 +13,7 @@ function family(){const w=createWorld(NOW,42);w.paused=true;w.settings.motion=fa
 function nearDeath(w){advanceTo(w,NOW+DAY-1000);w.paused=false;return NOW+DAY-1000;}
 function die(w){w.paused=true;advanceTo(w,NOW+DAY);w.paused=false;validateWorld(w);}
 test('a just-arrived crow closes with the deceased founder and never transfers damage or identity to an heir',()=>{
- const {w,elder,younger}=family(),at=nearDeath(w);w.birds[0].needs.energy=80;elder.needs.energy=76;younger.needs.energy=62;
+ const {w,elder,younger}=family(),at=nearDeath(w);w.birds[0].needs.energy=80;elder.needs.energy=76;younger.needs.energy=62;for(const state of w.careRules.birds)state.energyRemainder=0;
  assert.equal(arriveGardenCrow(w,id,at,token(w)).changed,true);const history=structuredClone(w.encounters.crow);
  die(w);assert.equal(getProtagonistId(w),elder.id);assert.equal(crowTarget(w),elder);assert.equal(elder.needs.energy,76);assert.equal(younger.needs.energy,62);assert.equal(crowScene(w,NOW+DAY),null);assert.equal(renderCrowScene(w,{now:NOW+DAY}),'');assert.equal(renderCrowNotice(w,{now:NOW+DAY}),'');assert.deepEqual(w.encounters.crow,history);
  assert.equal(arriveGardenCrow(w,'carrion-crow',at+600000,token(w)).changed,true);assert.equal(elder.needs.energy,38);assert.equal(younger.needs.energy,62);assert.equal(w.birds[0].needs.energy,40);assert.equal(w.encounters.crow.arrivalBirdId,elder.id);assert.match(renderCrowScene(w,{now:at+600000}),new RegExp(elder.name));assert.deepEqual(parseSave(serializeWorld(w)),w);

@@ -1,3 +1,4 @@
+import {effectiveHealthDeadline,relaxedBird} from './care-rules.js';
 import {allBirds,activateBird} from './world-birds.js';
 import {renderCaretakerRecruitment} from './caretaker-recruitment-ui.js';
 import {memorialDesignForBird,renderMemorialArtwork} from './memorial-designs.js';
@@ -25,8 +26,11 @@ export function renderProtagonistSummary(world){
 
 /** The illness deadline never replaces the independent feeding deadline. */
 function renderCareDeadlines(world,state,care){
-  if(!state.condition)return `<p class="life-small">${care.active?'飼育員がお世話をしています。':`ごはんの期限まで：実時間 ${remainingUnits(state.lastCareAt+LIFE_RULES.neglectMs-now(world))}`}</p>`;
-  const deadlines=[{kind:'feed',label:'ごはん',at:state.lastCareAt+LIFE_RULES.neglectMs},{kind:'treatment',label:'通院',at:state.condition.deadlineAt}].sort((a,b)=>a.at-b.at);
+  const grace=relaxedBird(world,state.birdId)?.healthGraceUntil??0;
+  if(grace===253402268399999)return '<p class="life-small" data-return-care>おかえり。ごはんや、びょういんでおせわしよう。</p>';
+  if(grace>now(world))return `<p class="life-small" data-return-care>おかえり。ごはんや、びょういんでおせわしよう。おせわできるじかん ${remainingUnits(grace-now(world))}</p>`;
+  if(!state.condition)return `<p class="life-small">${care.active?'飼育員がお世話をしています。':`ごはんの期限まで：実時間 ${remainingUnits(effectiveHealthDeadline(world,state,state.lastCareAt+LIFE_RULES.neglectMs)-now(world))}`}</p>`;
+  const deadlines=[{kind:'feed',label:'ごはん',at:effectiveHealthDeadline(world,state,state.lastCareAt+LIFE_RULES.neglectMs)},{kind:'treatment',label:'通院',at:effectiveHealthDeadline(world,state,state.condition.deadlineAt)}].sort((a,b)=>a.at-b.at);
   const tied=deadlines[0].at===deadlines[1].at;
   return '<div class="life-deadline-grid">'+deadlines.map((d,i)=>`<p class="life-deadline" data-life-deadline="${d.kind}"><span class="life-deadline-priority${tied||i===0?' is-priority':''}">${tied?'同じ時刻':i===0?'先に必要':''}</span><span class="life-deadline-label">${d.label}まで<small>（実時間）</small></span><strong>${remainingUnits(d.at-now(world))}</strong></p>`).join('')+'</div>';
 }

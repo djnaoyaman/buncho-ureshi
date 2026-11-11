@@ -1,3 +1,4 @@
+import {syncRelaxedCare,applyRelaxedCare,reconcileRelaxedCare} from './care-rules.js';
 /** Real-JST care opportunities, deliberately independent of the fast story clock.
  * Call only inside the existing fresh-state transaction; persist changes/revision there.
  * No schema version, Gem balance, family, story PRNG or encounter writes in this module.
@@ -63,6 +64,7 @@ const renew = n => Math.min(n, Math.max(40, n - 40));
  */
 export function syncCareSchedule(world, now) {
   time(now);
+  if(world.careRules)return syncRelaxedCare(world,now);
   if (world.careSchedule === undefined) return {changed: initializeCareSchedule(world, now), renewed: false, rollback: false};
   validateCareSchedule(world.careSchedule);
   const state = world.careSchedule;
@@ -86,6 +88,7 @@ export function applyScheduledCare(world, birdId, kind, now, text = '') {
   if (!['feed','name','pet','talk'].includes(kind)) throw new Error('お世話の種類が不正です。');
   const bird = world.birds.find(b => b.id === birdId);
   if (!bird || !careable(bird)) return {changed:false, reason:'unavailable', gemAward:0};
+  if(world.careRules)return applyRelaxedCare(world,bird,kind,now,text);
   const sync = syncCareSchedule(world, now);
   const stat = kind === 'feed' ? 'food' : 'energy', before = bird.needs[stat];
   const nextAt = careWindow(world.careSchedule.seenAt).nextAt;
@@ -101,6 +104,7 @@ export function applyScheduledCare(world, birdId, kind, now, text = '') {
  */
 export function reconcileImportedCare(incoming, current, now) {
   time(now);
+  if(incoming.careRules&&current.careRules)return reconcileRelaxedCare(incoming,current,now);
   const same = incoming.worldId === current.worldId;
   const local = current.careSchedule ? validateCareSchedule(current.careSchedule) : null;
   const imported = incoming.careSchedule ? validateCareSchedule(incoming.careSchedule) : null;

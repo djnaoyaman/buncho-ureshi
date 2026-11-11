@@ -1,5 +1,7 @@
+// Deliberate active-clock deadline setup; return protection is covered separately.
+const advanceTo=(w,at)=>advanceActiveClock(w,at,{present:true});
 import assert from 'node:assert/strict';
-import {createWorld,createBird,validateWorld,serializeWorld,parseSave,advanceTo,economyToken,resolveAdoption,acceptIndependence,chooseFamilyProtagonist} from '../../src/engine.js';
+import {createWorld,createBird,validateWorld,serializeWorld,parseSave,advanceTo as advanceActiveClock,economyToken,resolveAdoption,acceptIndependence,chooseFamilyProtagonist} from '../../src/engine.js';
 import {lifeStatus} from '../../src/life-care.js';
 export const NOW=Date.UTC(2026,10,8),LONG_NAME='あいうえおかきくけこさしすせそた';
 export function validated(w){validateWorld(w);const restored=parseSave(serializeWorld(w));assert.deepEqual(restored,w);return restored;}

@@ -1,9 +1,11 @@
+// Deliberate active-clock deadline setup; return protection is covered separately.
+const advanceTo=(w,at)=>advanceActiveClock(w,at,{present:true});
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {IDBFactory} from 'fake-indexeddb';
 import {
   createWorld, createBird, economyToken, validateWorld, readCompatibleWorld,
-  serializeWorld, parseSave, advanceTo, advanceGardenRaptor,
+  serializeWorld, parseSave, advanceTo as advanceActiveClock, advanceGardenRaptor,
 } from '../src/engine.js';
 import {createEncounterSystem, encounterFriendship} from '../src/encounters.js';
 import {ENCOUNTER_CANDIDATES} from '../src/data/encounter-catalog.js';
@@ -461,7 +463,7 @@ test('v11 migration preserves every old bond and preference, defaults to solo, a
   assert.deepEqual(old, before);
   assert.equal(migrated.encounters.version, 13);
   assert.equal(migrated.revision, old.revision);
-  assert.equal(migrated.version,15);
+  assert.equal(migrated.version,16);
   assert.deepEqual(migrated.encounters.gardenFriends, {
     ...old.encounters.gardenFriends, version:2, accompany:false, attendees:[], visits:[],
   });

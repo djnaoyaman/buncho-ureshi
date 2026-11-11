@@ -40,8 +40,8 @@ test('family care and its engine dependency share the production cache version',
  const {readFile}=await import('node:fs/promises');const ui=await readFile(new URL('../dist/src/game.js',import.meta.url),'utf8'),module=await readFile(new URL('../dist/src/family-care.js',import.meta.url),'utf8');const version=ui.match(/family-care\.js\?v=([a-f\d]+)/)?.[1];assert(version);assert(module.includes(`engine.js?v=${version}`));assert(module.includes(`life-care.js?v=${version}`));
 });
 
-test('a later family member whose illness expires during the first action is skipped without aborting the others',()=>{
+test('a returning ill family member receives grace and family care stays identical to individual care',()=>{
  const w=family(3),patient=w.birds[1],at=NOW+86400000;w.lifecycle.birds.find(b=>b.birdId===patient.id).condition={kind:'injury',sinceAt:NOW,deadlineAt:at};const expected=structuredClone(w),ids=expected.birds.map(b=>b.id);
  for(const id of ids){const bird=expected.birds.find(b=>b.id===id);if(bird.home==='resident'&&!expected.lifecycle.birds.find(b=>b.birdId===id).death)feedBird(expected,id,at,economyToken(expected));}
- const result=careFamily(w,'feed',economyToken(w),at);assert.equal(result.results.filter(r=>r.changed).length,2);assert.deepEqual(w,expected);assert.equal(w.lifecycle.birds.find(b=>b.birdId===patient.id).death.at,at);validateWorld(w);
+ const result=careFamily(w,'feed',economyToken(w),at);assert.equal(result.results.filter(r=>r.changed).length,3);assert.deepEqual(w,expected);assert.equal(w.lifecycle.birds.find(b=>b.birdId===patient.id).death,null);assert.equal(w.careRules.birds.find(b=>b.birdId===patient.id).healthGraceUntil,at+86400000);validateWorld(w);
 });
