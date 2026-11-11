@@ -623,3 +623,16 @@ for(const machine of GACHA_MACHINES)for(const delta of [-1,0,1])test(`gacha ${ma
  assert.equal(f.window.localStorage.getItem('buncho.gacha-machine.v1'),machine.id);
  assert.deepEqual(await rawWorld(f.indexedDB),before,'machine selection and pricing leave the entire save unchanged');
 });
+
+for(const slot of ['perch','swing'])test(`draw preview guide preserves the saved world and focuses the selected ${slot}`,async t=>{
+ const f=await fixture(t);await f.mount();f.root.querySelector('[data-game-panel="decorate"]').click();f.root.querySelector(`[data-decor-slot="${slot}"]`).click();
+ f.root.querySelector('[data-decor-draw]').click();await until(()=>f.root.querySelector('.game-draw-result')?.open,'draw result');
+ const before=await rawWorld(f.indexedDB),itemId=f.root.querySelector('.game-decor-preview').dataset.previewItem,item=before.decor.inventory.find(i=>i.id===itemId);
+ f.root.querySelector('[data-draw-result-preview]').click();
+ assert.equal(f.root.querySelector('.game-draw-result'),null);assert.equal(f.root.querySelector('.game-decor-preview').dataset.previewItem,item.id);
+ assert.equal(f.root.querySelector('[data-decor-filter="owned"]').getAttribute('aria-pressed'),'true');
+ const target=f.root.querySelector(`[data-decor-equip="${item.id}"]`)||f.root.querySelector(`[data-decor-preview="${item.id}"]`);
+ assert.equal(f.window.document.activeElement,target);
+ for(const tier of ['cozy','lovely','special']){const button=f.root.querySelector(`[data-decor-tier="${tier}"]`);if(button)assert.ok(button.textContent.includes(`${before.decor.inventory.filter(i=>i.slot===slot&&i.tier===tier).length} / 8`));}
+ assert.deepEqual(await rawWorld(f.indexedDB),before,'trying the result is a view change, without equipping or spending');
+});

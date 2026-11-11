@@ -1,7 +1,7 @@
 {
-  "base": "b9b186377d6927873cf988908013c6b42b069024",
+  "base": "ba1f5a2dcc2534d994602a0939b105116f60d91e",
   "tests": [
-    "tests/browser/away-reports.spec.js"
+    "tests/browser/gacha-machines.spec.js"
   ],
-  "reason": "新しい帰宅報告の表示・既読保存、旧14原本のダウンロード、複数タブの連携は単体検査だけでは判断できないため、この3ケースのみChromeとSafari互換WebKitで確認。"
+  "reason": "ガチャ結果から試着への導線・フォーカス・所持数表示と保存の不変性を、既存のガチャ検査でChromeとSafari互換WebKit確認。価格・抽選・保存形式は変更しない。"
 }
