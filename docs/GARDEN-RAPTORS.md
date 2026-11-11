@@ -40,3 +40,21 @@ Unknown notebook entries show each species' actual silhouette, without its name.
 Pure tests cover exact expiry, save round trips, old schema migration, malformed data, rollback clocks, daily quota, multiple tabs, species friendship, Osprey habitat, crow exclusion, target replacement, accident graves and succession.
 
 Controller tests cover visible dwell, hidden/offline/pause/suspension, all menu navigation, queued transaction interruption, failed saves, per-species keyboard petting and the host's transaction busy state. Browser tests exercise all nine illustrations in the real game, tiny screens, foot/scale geometry, safe return, reload, modal escape, accident succession and the live lottery clock. The `Garden raptor encounters` workflow runs Chrome and WebKit and saves screenshots/traces.
+
+## 2026-11-11 警告と回避の案内
+
+確率・時計・標的・事故・保存形式は維持し、説明と警告の見せ方だけを更新。
+来訪の25%抽選と事故判定を区別し、カラスの影から6秒・猛禽の警告から1分を案内する。
+猛禽の残り時間が10秒以下なら、見出しを「すぐおうちへ！」、既存の帰宅ボタンを
+「今すぐ帰る」に変更する。点滅・音・新しい自動操作は追加しない。
+毎秒の表示更新は既存ボタンを置き換えず、キーボードのフォーカスを維持する。
+主人公の同行なし・なかよし・ミサゴは危険表示を出さない既存ルールのまま。
+庭のことには来訪の抽選、被害、帰宅操作、猛禽警告が再読込後も続くことを記載する。
+
+合成保存で、10秒境界・保存不変・既存の標的なし表示を検査。
+Chrome/WebKitで狭い画面・横画面、警告更新中のフォーカスと帰宅後の生存を確認する。
+公開は必須検査とPages成功、配信ソースの照合後に完了とする。
+
+検証中の補修：PR更新イベントのbeforeは直前のPR headであり、公開先のbaseではない。
+ブラウザ検査の選定はPRではbase SHAを優先し、pushは従来のbeforeを使うよう修正。
+検査範囲の一致要求を弱めず、PR全体とmainの差分を正しく照合する。回帰検査を追加。

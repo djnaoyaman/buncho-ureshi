@@ -1,7 +1,7 @@
 {
-  "base": "ba1f5a2dcc2534d994602a0939b105116f60d91e",
+  "base": "18b714497dbb4c17f6f0df7d6100f0dc98f90d44",
   "tests": [
-    "tests/browser/gacha-machines.spec.js"
+    "tests/browser/predator-warning-guide.spec.js"
   ],
-  "reason": "ガチャ結果から試着への導線・フォーカス・所持数表示と保存の不変性を、既存のガチャ検査でChromeとSafari互換WebKit確認。価格・抽選・保存形式は変更しない。"
+  "reason": "予兆・残り10秒の表示と帰宅ボタン、320pxと横長画面、警告中のフォーカス維持と帰宅後の保存をChrome/WebKitで確認。確率・時計・事故処理・保存形式は変更しない。"
 }

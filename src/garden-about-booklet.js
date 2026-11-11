@@ -16,11 +16,11 @@ export function renderGardenAboutBooklet({name,description,landform,art=null}){
  <div class="garden-about-booklet__paper">
  <section class="garden-about-booklet__chapter"><h5><span class="garden-about-booklet__number" aria-hidden="true">01</span>どんな庭？</h5>${figure}<p>${esc(description)}</p></section>
  <section class="garden-about-booklet__chapter"><h5><span class="garden-about-booklet__number" aria-hidden="true">02</span>空からの来客</h5>
- <p>庭で${duration(PREDATOR_ENTRY_RULES.dwellMs)}過ごすと、${PREDATOR_ENTRY_RULES.chance*100}%でカラスか猛禽を抽選します。両方が来られるときの比率は${PREDATOR_ENTRY_RULES.crowWeight}対${PREDATOR_ENTRY_RULES.raptorWeight}です。</p><h6>カラス</h6><p>庭に続けて${duration(CROW_RULES.dwellMs)}いると、カラスが来ることがあります。大きな影で知らせるので、おうちに戻れます。友達との仲や図鑑は消えません。</p>
- <p>まれに猛禽類も来訪します。カラスも猛禽類も、主人公が同行していない庭にも来ます。来訪時に同行している主人公だけが標的になります。</p>
+ <p>庭で${duration(PREDATOR_ENTRY_RULES.dwellMs)}過ごすと、${PREDATOR_ENTRY_RULES.chance*100}%でカラスか猛禽を抽選します。両方が来られるときの比率は${PREDATOR_ENTRY_RULES.crowWeight}対${PREDATOR_ENTRY_RULES.raptorWeight}です。これは来訪の抽選で、事故の確率ではありません。</p><h6>カラス</h6><p>庭に続けて${duration(CROW_RULES.dwellMs)}いると、カラスが来ることがあります。その後は${duration(CROW_RULES.checkMs)}ごとに${CROW_RULES.chance*100}%で抽選します。大きな影で知らせるので、おうちに戻れます。影の合図から${duration(CROW_RULES.warningMs)}で来訪するので、合図が見えたら「おうちへ戻る」を押そう。来訪時に狙われた主人公は元気が半分になり、おうちのお世話で回復できます。友達との仲や図鑑は消えません。</p>
+ <p>まれに猛禽類も来訪します。猛禽類は${duration(RAPTOR_RULES.dwellMs)}過ごしてから、${duration(RAPTOR_RULES.checkMs)}ごとに${RAPTOR_RULES.chance*100}%で抽選します。カラスも猛禽類も、主人公が同行していない庭にも来ます。来訪時に同行している主人公だけが標的になります。</p>
  <p>主人公の同行なしで始まった来訪には標的がなく、安全に眺められます。その来訪の途中から別の文鳥を標的にすることはありません。</p>
- <aside class="garden-about-booklet__warning" aria-label="猛禽の警告が出たときの注意"><h6>猛禽類の警告が出たら</h6><p><strong>猛禽の警告が出たら${duration(RAPTOR_RULES.warningMs)}以内におうちへ。</strong><br>間に合わないと事故死します。</p><p>おうちで留守番している文鳥は狙われません。</p><p>ミサゴとなかよしの種類は襲いません。</p></aside></section>
+ <aside class="garden-about-booklet__warning" aria-label="猛禽の警告が出たときの注意"><h6>猛禽類の警告が出たら</h6><p><strong>猛禽の警告が出たら${duration(RAPTOR_RULES.warningMs)}以内におうちへ。</strong><br>間に合わないと事故死します。警告の「おうちへ戻る」を押して帰宅しよう。残り10秒では「今すぐ帰る」に変わります。</p><p>おうちで留守番している文鳥は狙われません。</p><p>ミサゴとなかよしの種類は襲いません。</p></aside></section>
  <section class="garden-about-booklet__chapter"><h5><span class="garden-about-booklet__number" aria-hidden="true">03</span>この庭について</h5><p>いつでも遊べる、ゲームの創作の庭です。現実の季節・渡来・由緒を示すものではありません。留守にしても出会いは待っていてくれるよ。</p>
- <details data-garden-details="about-rules" class="garden-about-booklet__rules"><summary>標的・留守番・時間のルール</summary><p>来訪時に同行している主人公だけが標的になります。おうちで留守番している文鳥は狙われません。</p><p>画面非表示の間は警告の時間が止まり、再読込でも残り時間を引き継ぎます。</p><p>主人公の同行なしで始まった来訪には、後から標的が付くことはありません。すでに主人公への警告が出ているときは、同行設定を変えても警告は消えません。</p></details></section>
+ <details data-garden-details="about-rules" class="garden-about-booklet__rules"><summary>標的・留守番・時間のルール</summary><p>来訪時に同行している主人公だけが標的になります。おうちで留守番している文鳥は狙われません。</p><p>猛禽については、画面非表示の間は警告の時間が止まり、再読込でも残り時間を引き継ぎます。警告が消えると思って画面を閉じず、帰宅のボタンで回避しよう。</p><p>主人公の同行なしで始まった来訪には、後から標的が付くことはありません。すでに主人公への警告が出ているときは、同行設定を変えても警告は消えません。</p></details></section>
  </div></details>`;
 }

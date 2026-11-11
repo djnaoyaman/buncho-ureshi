@@ -14,7 +14,7 @@ const sources={
 export const crowImage=(id,base)=>`${esc(base)}game-art/crows/${esc(id)}.webp`;
 export function renderCrowNotice(w,{warning=null,now=Date.now()}={}){
  const scene=crowScene(w,now),name=w.birds.find(b=>b.id===scene?.targetBirdId)?.name||'文鳥';
- if(warning)return '<aside class="finch-crow-notice" role="status" data-crow-phase="warning"><strong>大きな影が近づいてきた…</strong><span>カラスが来るかも。おうちに戻ると安心だよ。</span><button type="button" data-finch-go-home>おうちへ戻る</button></aside>';
+ if(warning)return `<aside class="finch-crow-notice" role="status" data-crow-phase="warning"><strong>大きな影！ おうちへ戻ろう</strong><span>影の合図から${CROW_RULES.warningMs/1000}秒でカラスが来るよ。来る前に「おうちへ戻る」を押してね。</span><button type="button" data-finch-go-home>おうちへ戻る</button></aside>`;
  if(!scene)return '';
  const friendly=crowFriendship(w,scene.species.id).friendly;
  return `<aside class="finch-crow-notice" role="status" data-crow-phase="${scene.phase}"><strong>${scene.phase==='visiting'?esc(scene.species.name)+'が来たよ':'カラスは飛んでいったよ'}</strong><span>${!scene.retreat?(friendly?'なかよしのカラスだよ。みんな安心していっしょに過ごせるよ。':scene.phase==='visiting'?'庭を訪れています。そっと観察してみよう。':'庭で出会ったカラスのことを、記録で見られるよ。'):scene.phase==='visiting'?`友達は安全な場所へ。${esc(name)}の元気は半分に。おうちでお世話すると回復できるよ。`:'友達は少し休んでいるよ。しばらくすると戻ってくるよ。'}</span><button type="button" data-finch-go-home>おうちへ戻る</button><button type="button" data-crow-entry="${scene.species.id}">カラスの記録</button></aside>`;
