@@ -74,6 +74,20 @@ jobs:
           sha256sum --check SHA256SUMS
           test "$(cat SOURCE_SHA)" = "$GITHUB_SHA"
           tar -xf dist.tar -C ..
+      - name: Use official Ubuntu archives directly for browser dependencies
+        run: |
+          sudo python3 - <<'PYTHON'
+          from pathlib import Path
+          for path in [Path('/etc/apt/sources.list'), *Path('/etc/apt/sources.list.d').glob('*.sources'), *Path('/etc/apt/sources.list.d').glob('*.list')]:
+              if not path.exists():
+                  continue
+              source = path.read_text()
+              source = source.replace('mirror+file:/etc/apt/apt-mirrors.txt', 'https://archive.ubuntu.com/ubuntu')
+              source = source.replace('mirror+file:/etc/apt/apt-mirrors-security.txt', 'https://security.ubuntu.com/ubuntu')
+              source = source.replace('http://azure.archive.ubuntu.com/ubuntu', 'https://archive.ubuntu.com/ubuntu')
+              path.write_text(source)
+          Path('/etc/apt/apt.conf.d/80-ci-timeouts').write_text('Acquire::Retries "1";\nAcquire::http::Timeout "20";\nAcquire::https::Timeout "20";\n')
+          PYTHON
       - run: npx playwright install --with-deps webkit
         timeout-minutes: 5
       - run: npx playwright install chrome
