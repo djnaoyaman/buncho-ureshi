@@ -54,3 +54,7 @@ Controller tests cover visible dwell, hidden/offline/pause/suspension, all menu 
 合成保存で、10秒境界・保存不変・既存の標的なし表示を検査。
 Chrome/WebKitで狭い画面・横画面、警告更新中のフォーカスと帰宅後の生存を確認する。
 公開は必須検査とPages成功、配信ソースの照合後に完了とする。
+
+検証中の補修：PR更新イベントのbeforeは直前のPR headであり、公開先のbaseではない。
+ブラウザ検査の選定はPRではbase SHAを優先し、pushは従来のbeforeを使うよう修正。
+検査範囲の一致要求を弱めず、PR全体とmainの差分を正しく照合する。回帰検査を追加。
