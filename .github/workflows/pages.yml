@@ -55,6 +55,8 @@ jobs:
     needs: build
     if: needs.build.outputs.browser_tests != '[]'
     runs-on: ubuntu-24.04
+    container:
+      image: mcr.microsoft.com/playwright:v1.64.1-noble
     steps:
       - uses: actions/checkout@v4
         with:
@@ -74,24 +76,14 @@ jobs:
           sha256sum --check SHA256SUMS
           test "$(cat SOURCE_SHA)" = "$GITHUB_SHA"
           tar -xf dist.tar -C ..
-      - name: Use official Ubuntu archives directly for browser dependencies
+      - name: Require the browser image and installed Playwright versions to match
+        run: node -e "if(require('@playwright/test/package.json').version !== '1.64.1') throw Error('Update the official browser image to match Playwright');"
+      - name: Install actual Google Chrome using the prepared browser dependencies
+        timeout-minutes: 5
         run: |
-          sudo python3 - <<'PYTHON'
-          from pathlib import Path
-          for path in [Path('/etc/apt/sources.list'), *Path('/etc/apt/sources.list.d').glob('*.sources'), *Path('/etc/apt/sources.list.d').glob('*.list')]:
-              if not path.exists():
-                  continue
-              source = path.read_text()
-              source = source.replace('mirror+file:/etc/apt/apt-mirrors.txt', 'https://archive.ubuntu.com/ubuntu')
-              source = source.replace('mirror+file:/etc/apt/apt-mirrors-security.txt', 'https://security.ubuntu.com/ubuntu')
-              source = source.replace('http://azure.archive.ubuntu.com/ubuntu', 'https://archive.ubuntu.com/ubuntu')
-              path.write_text(source)
-          Path('/etc/apt/apt.conf.d/80-ci-timeouts').write_text('Acquire::Retries "1";\nAcquire::http::Timeout "20";\nAcquire::https::Timeout "20";\n')
-          PYTHON
-      - run: npx playwright install --with-deps webkit
-        timeout-minutes: 5
-      - run: npx playwright install chrome
-        timeout-minutes: 5
+          curl --fail --location --retry 2 --max-time 120 https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb --output /tmp/google-chrome.deb
+          dpkg -i /tmp/google-chrome.deb
+          google-chrome --version
       - name: Run the selected checks on Chrome and Safari-compatible WebKit
         env:
           BROWSER_TESTS_JSON: ${{ needs.build.outputs.browser_tests }}
