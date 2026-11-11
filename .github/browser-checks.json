@@ -1,7 +1,7 @@
 {
-  "base": "a50933955b6db4f3e904d02f67473ccac7904013",
+  "base": "182e4bfe8efcf293b92e3536f48799157816358a",
   "tests": [
-    "tests/browser/next-enjoyments.spec.js"
+    "tests/browser/help-current-rules.spec.js"
   ],
-  "reason": "暮らしのメニュー内の新しい案内を、Chrome/WebKitで狭い画面・拡大文字・各遷移・再読込と保存全体の不変性まで確認する。報酬・目標・進行ルールの追加はない。"
+  "reason": "小学生向けのふりがな付き説明と手順図をChrome/WebKitで確認。320px・200%文字拡大・開閉・再読込と保存全体の一致を検査。ゲームの実行ルールと保存形式は変更しない。"
 }

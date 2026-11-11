@@ -16,3 +16,11 @@ test('plain help preserves care, life, price and fictional-safety facts',()=>{
 test('unknown holiday coverage is readable and annotated only when needed',()=>{
  assert.doesNotMatch(plain(help()),/この年の祝日/);const root=help({holidayCoverageKnown:false});assert.match(plain(root),/この年の祝日は、まだゲームに入っていない/);assert.match(plain(root),/12時のお世話は、土曜日と日曜日だけ/);
 });
+
+test('current child guide gives pictured steps, exact limits and the real menu labels without technical terms',()=>{
+ const root=help(),text=plain(root),gold=root.querySelector('[data-help-update="gold"]'),growth=root.querySelector('[data-game-growth-help]');
+ assert.equal(gold.querySelectorAll('[role=listitem]').length,3);assert.equal(growth.querySelectorAll('[role=listitem]').length,3);assert.equal(root.querySelector('[data-help-update="predators"]').querySelectorAll('[role=listitem]').length,2);
+ for(const expected of ['30 Gold','暮らしを確認して受け取る','何羽いても','来なかった日のぶん','病院に行く前でも','1分が、ゲームの1時間','30分以上','7日分','合図から6秒','1分以内','残り10秒','今すぐ帰る','次のお楽しみ','元気がいっぱいでも','3日半'])assert.ok(text.includes(expected),expected);
+ assert.doesNotMatch(text,/ゲージ|承諾|トランザクション|スキーマ/);
+ for(const node of root.querySelectorAll('*'))for(const a of node.attributes)assert.doesNotMatch(a.value,/<ruby|<rt|[{}]/,'ruby belongs in visible text, not attribute values');
+});
