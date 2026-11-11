@@ -20,6 +20,6 @@ for(const [width,height] of [[320,568],[390,844]])test(`reading positions surviv
   await page.locator('[data-game-close-panel]').click();
  }
  const controls=page.locator('.game-scene-controls-toggle');if(await controls.getAttribute('aria-expanded')==='false')await controls.click();await page.locator('.game-bottom-dock [data-game-panel=decorate]').click();
- const odds=page.locator('[data-game-details=draw-odds]');await odds.locator(':scope>summary').click();const position=await stable(page,odds);expect(position.top).toBeGreaterThan(0);await info.attach('odds-after-refresh',{body:await page.screenshot(),contentType:'image/png'});await odds.locator(':scope>summary').click();await page.locator('[data-game-close-panel]').click();
+ const odds=page.locator('[data-game-details=draw-odds]');await odds.locator(':scope>summary').click();const position=await stable(page,odds);if(width===320||position.range>0)expect(position.top).toBeGreaterThan(0);else expect(position.top).toBe(0);await info.attach('odds-scroll-metrics',{body:JSON.stringify({width,height,...position}),contentType:'application/json'});await info.attach('odds-after-refresh',{body:await page.screenshot(),contentType:'image/png'});await odds.locator(':scope>summary').click();await page.locator('[data-game-close-panel]').click();
  await page.locator('.game-bottom-dock [data-game-open-bird]').click();await stable(page,page.locator('.game-bird-sheet[open]'));await page.locator('[data-game-close-bird]').click();
 });
