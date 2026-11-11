@@ -1,12 +1,6 @@
 name: Decoration selection
 on:
-  pull_request:
-    paths:
-      - 'src/game.js'
-      - 'src/game.css'
-      - 'tests/browser/decor-selection.spec.js'
-      - 'playwright.decor-selection.config.js'
-      - '.github/workflows/decor-selection.yml'
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:

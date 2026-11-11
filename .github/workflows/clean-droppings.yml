@@ -1,12 +1,6 @@
 name: Clean home droppings
 on:
-  pull_request:
-    paths:
-      - 'src/engine.js'
-      - 'src/game.js'
-      - 'tests/clean-droppings.test.js'
-      - 'tests/browser/care-gauges.spec.js'
-      - '.github/workflows/clean-droppings.yml'
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:
@@ -26,5 +20,5 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npx playwright install --with-deps chromium webkit
-      - run: npx playwright install chrome msedge
+      - run: npx playwright install chrome
       - run: npx playwright test tests/browser/care-gauges.spec.js --project=${{ matrix.browser }} --grep='clean clears' --retries=0

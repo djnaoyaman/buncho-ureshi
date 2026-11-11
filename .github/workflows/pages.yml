@@ -4,6 +4,11 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+    inputs:
+      full_browser:
+        description: '必要な場合のみ既存の広範なChrome/WebKit検査も実行'
+        type: boolean
+        default: false
 permissions:
   contents: read
 concurrency:
@@ -11,15 +16,22 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   build:
+    outputs:
+      browser_tests: ${{ steps.browser_scope.outputs.tests }}
+      browser_reason: ${{ steps.browser_scope.outputs.reason }}
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.sha }}
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
+      - name: Select only the browser checks reviewed for this change
+        id: browser_scope
+        run: node scripts/browser-scope.mjs
       - run: npm ci
       - run: npm run check
       - run: npm test
@@ -38,7 +50,48 @@ jobs:
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 14
+  focused_browser:
+    name: reviewed-chrome-and-webkit
+    needs: build
+    if: needs.build.outputs.browser_tests != '[]'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: verified-build-${{ github.sha }}
+          path: .verified-build
+      - name: Restore the exact tested build
+        run: |
+          cd .verified-build
+          sha256sum --check SHA256SUMS
+          test "$(cat SOURCE_SHA)" = "$GITHUB_SHA"
+          tar -xf dist.tar -C ..
+      - run: npx playwright install --with-deps webkit
+      - run: npx playwright install chrome
+      - name: Run the selected checks on Chrome and Safari-compatible WebKit
+        env:
+          BROWSER_TESTS_JSON: ${{ needs.build.outputs.browser_tests }}
+          BROWSER_REASON: ${{ needs.build.outputs.browser_reason }}
+        run: node scripts/run-reviewed-browsers.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser-evidence-focused-${{ github.sha }}
+          path: |
+            focused-test-results/
+            playwright-report/
+          if-no-files-found: warn
+          retention-days: 14
   browser:
+    if: github.event_name == 'workflow_dispatch' && inputs.full_browser
     name: browser-${{ matrix.lane }}
     needs: build
     runs-on: ubuntu-24.04
@@ -345,25 +398,37 @@ jobs:
           retention-days: 14
   verify:
     if: always()
-    needs: [build, browser]
+    needs: [build, focused_browser, browser]
     runs-on: ubuntu-24.04
     steps:
       - name: Require every build and browser gate to succeed
         env:
           BUILD_RESULT: ${{ needs.build.result }}
+          FOCUSED_RESULT: ${{ needs.focused_browser.result }}
+          BROWSER_TESTS: ${{ needs.build.outputs.browser_tests }}
+          FULL_REQUESTED: ${{ github.event_name == 'workflow_dispatch' && inputs.full_browser }}
           BROWSER_RESULT: ${{ needs.browser.result }}
         run: |
           test "$BUILD_RESULT" = success
-          test "$BROWSER_RESULT" = success
+          if [ "$BROWSER_TESTS" = '[]' ]; then
+            test "$FOCUSED_RESULT" = skipped
+          else
+            test "$FOCUSED_RESULT" = success
+          fi
+          if [ "$FULL_REQUESTED" = true ]; then
+            test "$BROWSER_RESULT" = success
+          else
+            test "$BROWSER_RESULT" = skipped
+          fi
       - name: Collect evidence without overwriting other lanes
-        if: always()
+        if: always() && (needs.focused_browser.result != 'skipped' || needs.browser.result != 'skipped')
         uses: actions/download-artifact@v4
         with:
-          pattern: browser-evidence-lane-*-${{ github.sha }}
+          pattern: browser-evidence-*-${{ github.sha }}
           path: browser-evidence
           merge-multiple: false
       - uses: actions/upload-artifact@v4
-        if: always()
+        if: always() && (needs.focused_browser.result != 'skipped' || needs.browser.result != 'skipped')
         with:
           name: browser-evidence-${{ github.sha }}
           path: browser-evidence/

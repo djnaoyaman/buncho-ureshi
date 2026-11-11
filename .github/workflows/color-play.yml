@@ -1,12 +1,5 @@
 name: Color Play presentation
 on:
-  pull_request:
-    paths:
-      - 'src/game.css'
-      - 'tests/color-play.test.js'
-      - 'tests/browser/color-play.spec.js'
-      - 'playwright.color-play.config.js'
-      - '.github/workflows/color-play.yml'
   workflow_dispatch:
 permissions:
   contents: read

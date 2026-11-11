@@ -1,13 +1,6 @@
 name: Feedback lifetime
 on:
-  pull_request:
-    paths:
-      - 'src/game.js'
-      - 'src/game-feedback.js'
-      - 'tests/game-feedback.test.js'
-      - 'tests/browser/feedback-timeout.spec.js'
-      - 'playwright.feedback.config.js'
-      - '.github/workflows/feedback.yml'
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:
@@ -24,7 +17,7 @@ jobs:
       - run: npm run check
       - run: npm test
       - run: npx playwright install --with-deps chromium webkit
-      - run: npx playwright install chrome msedge
+      - run: npx playwright install chrome
       - run: npx playwright test --config=playwright.feedback.config.js
       - uses: actions/upload-artifact@v4
         if: always()

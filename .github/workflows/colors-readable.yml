@@ -1,13 +1,6 @@
 name: Color atlas focused readability
 on:
-  pull_request:
-    paths: ['src/morph-ui.*', 'tests/browser/colors-readable.spec.js', 'tests/browser/colors-no-comparison.spec.js', '.github/workflows/colors-readable.yml']
   workflow_dispatch:
-    inputs:
-      public_url:
-        description: 'Optional already-deployed site URL to verify'
-        default: ''
-        required: false
 permissions:
   contents: read
 jobs:

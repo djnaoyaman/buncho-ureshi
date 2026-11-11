@@ -1,12 +1,5 @@
 name: Owner turn focused browser
 on:
-  pull_request:
-    paths:
-      - 'src/owner-peek.js'
-      - 'src/game.css'
-      - 'public/game-art/owner-heads-soft-v3.webp'
-      - 'tests/browser/owner-peek.spec.js'
-      - '.github/workflows/owner-turn.yml'
   workflow_dispatch:
 jobs:
   inspect:

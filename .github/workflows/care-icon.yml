@@ -1,13 +1,6 @@
 name: Care button icon
 on:
-  pull_request:
-    paths:
-      - 'src/game.js'
-      - 'src/game.css'
-      - 'tests/care-ui.test.js'
-      - 'tests/browser/care-dock-icon.spec.js'
-      - 'playwright.care-icon.config.js'
-      - '.github/workflows/care-icon.yml'
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:

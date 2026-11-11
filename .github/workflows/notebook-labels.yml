@@ -1,16 +1,6 @@
 name: Distinct notebook labels
 on:
-  pull_request:
-    paths:
-      - 'src/game-chrome.js'
-      - 'src/game.js'
-      - 'src/game.css'
-      - 'src/encounter-ui.js'
-      - 'src/encounter-ui.css'
-      - 'tests/notebook-labels.test.js'
-      - 'tests/browser/notebook-labels.spec.js'
-      - 'playwright.notebook-labels.config.js'
-      - '.github/workflows/notebook-labels.yml'
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:

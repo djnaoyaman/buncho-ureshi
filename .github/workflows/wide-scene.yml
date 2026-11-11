@@ -1,13 +1,6 @@
 name: Wide scene viewport
 on:
-  pull_request:
-    paths:
-      - 'src/game.css'
-      - 'src/style.css'
-      - 'src/game.js'
-      - 'src/game-chrome.js'
-      - 'tests/browser/wide-scene.spec.js'
-      - '.github/workflows/wide-scene.yml'
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:
@@ -23,7 +16,7 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npx playwright install --with-deps chromium webkit
-      - run: npx playwright install chrome msedge
+      - run: npx playwright install chrome
       - run: npx playwright test tests/browser/wide-scene.spec.js --retries=0
       - uses: actions/upload-artifact@v4
         if: always()

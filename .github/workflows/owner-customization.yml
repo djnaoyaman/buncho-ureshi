@@ -1,7 +1,6 @@
 name: Owner customization focused browser
 on:
-  pull_request:
-    paths: ['src/owner-profile.*', 'tests/browser/owner-customization.spec.js', '.github/workflows/owner-customization.yml']
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:

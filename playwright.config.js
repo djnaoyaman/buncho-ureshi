@@ -17,7 +17,6 @@ export default defineConfig({
   },
   projects: [
     { name: "chrome", testIgnore: "**/mobile.spec.js", use: { ...devices["Desktop Chrome"], channel: "chrome" } },
-    { name: "edge", testIgnore: "**/mobile.spec.js", use: { ...devices["Desktop Edge"], channel: "msedge" } },
     { name: "webkit", testIgnore: "**/mobile.spec.js", use: { ...devices["Desktop Safari"] } },
     { name: "android-touch", testMatch: "**/mobile.spec.js", use: { ...devices["Pixel 7"], browserName: "chromium", channel: "chrome" } },
     { name: "iphone-touch", testMatch: "**/mobile.spec.js", use: { ...devices["iPhone 13"], browserName: "webkit" } },

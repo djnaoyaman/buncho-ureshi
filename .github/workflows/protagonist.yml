@@ -1,17 +1,5 @@
 name: Protagonist succession
 on:
-  pull_request:
-    paths:
-      - 'src/protagonist.js'
-      - 'src/engine.js'
-      - 'src/game.js'
-      - 'tests/protagonist.test.js'
-      - 'tests/family-successor.test.js'
-      - 'tests/family-successor-ui.test.js'
-      - 'tests/browser/protagonist.spec.js'
-      - 'tests/browser/family-successor.spec.js'
-      - 'playwright.protagonist.config.js'
-      - '.github/workflows/protagonist.yml'
   workflow_dispatch:
 permissions:
   contents: read

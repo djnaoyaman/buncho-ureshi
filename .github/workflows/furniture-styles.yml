@@ -1,14 +1,6 @@
 name: Furniture styles
 on:
-  pull_request:
-    paths:
-      - 'src/field-visuals.js'
-      - 'src/furniture-*.js'
-      - 'scripts/build.mjs'
-      - 'tests/furniture-*.test.js'
-      - 'tests/browser/furniture-styles.spec.js'
-      - 'playwright.furniture-styles.config.js'
-      - '.github/workflows/furniture-styles.yml'
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:

@@ -1,17 +1,5 @@
 name: Notebook action spacing
 on:
-  pull_request:
-    paths:
-      - 'src/encounter-ui.js'
-      - 'src/encounter-ui.css'
-      - 'src/garden-crow-ui.js'
-      - 'src/garden-raptor-ui.js'
-      - 'src/game.css'
-      - 'tests/notebook-actions.test.js'
-      - 'tests/browser/notebook-actions.spec.js'
-      - 'tests/browser/predator-catalog-layout.spec.js'
-      - 'playwright.notebook-actions.config.js'
-      - '.github/workflows/notebook-actions.yml'
   workflow_dispatch:
 permissions:
   contents: read

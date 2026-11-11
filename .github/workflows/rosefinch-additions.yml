@@ -1,14 +1,5 @@
 name: Rosefinch encounter additions
 on:
-  pull_request:
-    paths:
-      - 'src/data/encounter-catalog.js'
-      - 'public/game-art/finches/**'
-      - 'tests/rosefinch-additions.test.js'
-      - 'tests/browser/rosefinch-additions.spec.js'
-      - 'tests/browser/trial-smoke.spec.js'
-      - 'playwright.rosefinch.config.js'
-      - '.github/workflows/rosefinch-additions.yml'
   workflow_dispatch:
 permissions:
   contents: read

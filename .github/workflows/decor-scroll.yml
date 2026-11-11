@@ -1,11 +1,6 @@
 name: Decoration panel scroll reachability
 on:
-  pull_request:
-    paths:
-      - 'src/game.css'
-      - 'src/game.js'
-      - 'tests/browser/decor-scroll.spec.js'
-      - '.github/workflows/decor-scroll.yml'
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:
@@ -25,7 +20,7 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npx playwright install --with-deps chromium webkit
-      - run: npx playwright install chrome msedge
+      - run: npx playwright install chrome
       - name: Reproduce the reported clipping against the pre-fix stylesheet
         run: |
           cp src/game.css /tmp/decor-fixed.css

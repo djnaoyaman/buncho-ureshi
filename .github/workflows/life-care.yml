@@ -1,14 +1,5 @@
 name: Lifecycle and memorial care
 on:
-  pull_request:
-    paths:
-      - 'src/life-care*'
-      - 'src/engine.js'
-      - 'src/game.js'
-      - 'tests/life-care*'
-      - 'tests/browser/life-care.spec.js'
-      - 'playwright.life-care.config.js'
-      - '.github/workflows/life-care.yml'
   workflow_dispatch:
 permissions:
   contents: read

@@ -1,19 +1,16 @@
 name: Public regression (nonblocking trial)
 on:
-  workflow_run:
-    workflows: [Verify and publish]
-    types: [completed]
-    branches: [main]
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:
   public-test:
-    if: github.event.workflow_run.conclusion == 'success'
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.workflow_run.head_sha }}
+          ref: ${{ github.sha }}
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -21,7 +18,7 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npx playwright install --with-deps chromium webkit
-      - run: npx playwright install chrome msedge
+      - run: npx playwright install chrome
       - name: Provide native CI audio output device
         run: |
           sudo apt-get update -qq

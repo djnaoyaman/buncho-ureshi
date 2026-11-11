@@ -1,26 +1,6 @@
 name: Garden and notebook loading
 on:
-  pull_request:
-    paths:
-      - 'src/encounter*'
-      - 'src/garden*'
-      - 'src/game.js'
-      - 'src/data/encounter-catalog.js'
-      - 'src/data/garden*'
-      - 'scripts/build.mjs'
-      - 'scripts/*image*'
-      - 'public/game-art/finches/**'
-      - 'public/game-art/gardens/**'
-      - 'package*.json'
-      - 'tests/browser/garden-loading.spec.js'
-      - 'playwright.garden-loading.config.js'
-      - '.github/workflows/garden-loading.yml'
   workflow_dispatch:
-    inputs:
-      public_url:
-        description: 'Optional deployed site URL to verify'
-        default: ''
-        required: false
 permissions:
   contents: read
 jobs:

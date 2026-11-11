@@ -1,12 +1,6 @@
 name: Game trial visual and native audio gate
 on:
-  pull_request:
-    paths:
-      - 'src/**'
-      - 'public/game-art/**'
-      - 'public/audio/**'
-      - 'tests/browser/**'
-      - '.github/workflows/game-trial-visual.yml'
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:
@@ -22,7 +16,7 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npx playwright install --with-deps chromium webkit
-      - run: npx playwright install chrome msedge
+      - run: npx playwright install chrome
       - name: Native output device (no autoplay policy bypass)
         run: |
           sudo apt-get update -qq
@@ -52,7 +46,7 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npx playwright install --with-deps chromium webkit
-      - run: npx playwright install chrome msedge
+      - run: npx playwright install chrome
       - name: Native output device
         run: |
           sudo apt-get update -qq

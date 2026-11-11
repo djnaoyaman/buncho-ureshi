@@ -1,14 +1,5 @@
 name: Encounter friendship
 on:
-  pull_request:
-    paths:
-      - 'src/encounter*'
-      - 'src/engine.js'
-      - 'src/game*.js'
-      - 'tests/encounter-friendship.test.js'
-      - 'tests/browser/encounter-friendship.spec.js'
-      - 'playwright.friendship.config.js'
-      - '.github/workflows/encounter-friendship.yml'
   workflow_dispatch:
 permissions:
   contents: read

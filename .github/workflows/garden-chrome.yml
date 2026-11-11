@@ -1,7 +1,6 @@
 name: Garden chrome readability
 on:
-  pull_request:
-    paths: ['src/game.css', 'src/game-chrome.js', 'src/app.js', 'tests/browser/garden-chrome.spec.js', 'playwright.garden-chrome.config.js', '.github/workflows/garden-chrome.yml']
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:

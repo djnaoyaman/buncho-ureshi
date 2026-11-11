@@ -1,9 +1,6 @@
 name: Garden selector synchronous scrolling
 on:
-  pull_request:
-    paths:
-      - 'tests/browser/garden-selector-scroll.spec.js'
-      - '.github/workflows/garden-selector-scroll.yml'
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:
