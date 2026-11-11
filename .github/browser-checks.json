@@ -1,7 +1,7 @@
 {
-  "base": "182e4bfe8efcf293b92e3536f48799157816358a",
+  "base": "b582166fa45053efbb516fd45bc8030d074181e9",
   "tests": [
-    "tests/browser/help-current-rules.spec.js"
+    "tests/browser/reading-scroll.spec.js"
   ],
-  "reason": "小学生向けのふりがな付き説明と手順図をChrome/WebKitで確認。320px・200%文字拡大・開閉・再読込と保存全体の一致を検査。ゲームの実行ルールと保存形式は変更しない。"
+  "reason": "メニューとガチャ説明のスクロールが背景更新で0に戻る事象を修正。Chrome/WebKitで実際のホイール操作、複数回の更新、ヘルプ・設定・健康・ケア画面の位置と保存全体の一致を確認する。"
 }

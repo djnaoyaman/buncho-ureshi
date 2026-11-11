@@ -447,11 +447,12 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     const urgent=sick.length>0,count=urgent?sick.length:dead.length,target=urgent?'health':'memorial',label=urgent?`${count}羽に体調の変化。病院へ`:`思い出の庭。${count}羽`;
     return `<div class="life-game-notice" role="status"><button type="button" data-game-panel="${target}" data-life-notice="${target}" aria-label="${label}" title="${label}"><span>${urgent?'病院へ':'思い出'}</span><small>${count}羽</small></button></div>`;
   }
+  function welcomeViewKey(){return world.offlineSummary||unreadAway(world).length?`${world.worldId}:${world.offlineSummary?.fromTick}:${world.offlineSummary?.toTick}:${awayViewKey(world)}`:null;}
   function welcomeCard(){
     const summary=world.offlineSummary,reports=unreadAway(world);if((!summary&&!reports.length)||panel!=='garden')return '';
     const reportList=reports.length?`<ul class="game-away-reports" data-away-reports>${reports.map(r=>`<li><time datetime="${r.day}">${r.day}</time><span>${escape(awayText(r))}</span></li>`).join('')}</ul>`:'';
     const elapsed=summary&&summary.ticks<24?`${summary.ticks}時間`:summary?`${Math.floor(summary.ticks/24)}日${summary.ticks%24?`と${summary.ticks%24}時間`:''}`:'';
-    return `<section class="game-welcome" role="dialog" aria-modal="false" aria-labelledby="game-welcome-title"><strong id="game-welcome-title">おかえりなさい</strong><p>${summary?.ticks?`留守のあいだに、庭の時間が${elapsed}進んだよ。`:'文鳥たちの様子を見てみよう。'}</p>${summary?.newBirds?`<p>${summary.newBirds}羽との出会いがあったよ。</p>`:''}${summary?.skipped?'<p>長いお休みのぶんは、ゆっくり待っていたよ。</p>':''}${reportList}<button id="game-welcome-close" data-game-action="dismiss-welcome" aria-label="おかえりメッセージをとじる">とじる</button></section>`;
+    return `<section class="game-welcome" data-welcome-view="${escape(welcomeViewKey())}" role="dialog" aria-modal="false" aria-labelledby="game-welcome-title"><strong id="game-welcome-title">おかえりなさい</strong><p>${summary?.ticks?`留守のあいだに、庭の時間が${elapsed}進んだよ。`:'文鳥たちの様子を見てみよう。'}</p>${summary?.newBirds?`<p>${summary.newBirds}羽との出会いがあったよ。</p>`:''}${summary?.skipped?'<p>長いお休みのぶんは、ゆっくり待っていたよ。</p>':''}${reportList}<button id="game-welcome-close" data-game-action="dismiss-welcome" aria-label="おかえりメッセージをとじる">とじる</button></section>`;
   }
   async function dismissWelcome(){const expected=world.worldId,throughDay=unreadAway(world).at(-1)?.day??null;const committed=await mutate(w=>{w.offlineSummary=null;acknowledgeAway(w,throughDay);},'',()=>world.worldId===expected);if(committed&&alive&&world.worldId===expected)(root.querySelector('button.game-room-bird.is-selected')||document.querySelector('.game-scene-controls-toggle'))?.focus({preventScroll:true});}
 
@@ -657,15 +658,25 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     if(careRub&&careRubCurrent(careRub)){refreshPending=true;return;}
     // A background refresh replaces the panel node. Keep the reader's place
     // only when the same panel remains open; navigation starts at the top.
-    const oldPanelScroll=root.querySelector('.game-app')?.dataset.panel===panel
-      ? root.querySelector('.game-panel-overlay[open] > .game-panel')?.scrollTop : undefined;
+    const oldApp=root.querySelector('.game-app');
+    const sameView=oldApp?.dataset.panel===panel&&oldApp.dataset.worldId===world.worldId;
+    const oldPanelScroll=sameView?root.querySelector('.game-panel-overlay[open] > .game-panel')?.scrollTop:undefined;
+    const oldOverlayScroll=sameView?root.querySelector('.game-panel-overlay[open]')?.scrollTop:undefined;
+    // Native disclosures can be independent scroll surfaces, including the life
+    // menu and the odds sheet. Reopen first, then restore after focus/layout.
+    const oldDisclosureScroll=new Map(sameView?[...root.querySelectorAll('details[open][data-game-details]')].map(d=>[d.dataset.gameDetails,{top:d.scrollTop,left:d.scrollLeft}]):[]);
+    const oldTabs=oldDisclosureScroll.has('navigation')?root.querySelector('.game-tabs'):null;
+    const oldTabsScroll=oldTabs?{top:oldTabs.scrollTop,left:oldTabs.scrollLeft}:null;
+    const oldWelcome=root.querySelector('.game-welcome');
+    const oldWelcomeScroll=sameView&&oldWelcome?.dataset.welcomeView===welcomeViewKey()?{top:oldWelcome.scrollTop,left:oldWelcome.scrollLeft}:null;
     document.dispatchEvent(new document.defaultView.CustomEvent('buncho-game-will-render'));
     if(!poseEnabled())poseClock.hold();
     refreshPending=false;
-    const oldFriendScroll=root.querySelector('.game-friend-houses')?.scrollLeft;
-    const oldFamilyScroll=root.querySelector('.game-family-pan')?.scrollLeft;
+    const oldFriendScroll=sameView?root.querySelector('.game-friend-houses')?.scrollLeft:undefined;
+    const familyPan=sameView?root.querySelector('.game-family-pan'):null;
+    const oldFamilyScroll=familyPan?{left:familyPan.scrollLeft,top:familyPan.scrollTop}:null;
     const decorSlots=root.querySelector('.game-decor-slots');
-    const oldDecorScroll=panel==='decorate'&&decorSlots?{
+    const oldDecorScroll=sameView&&panel==='decorate'&&decorSlots?{
       slots:decorSlots.scrollLeft,
       collection:decorSlots.querySelector('[aria-pressed=true]')?.dataset.decorSlot===decorSlot
         &&root.querySelector('[data-decor-tier][aria-pressed=true]')?.dataset.decorTier===decorTier
@@ -679,6 +690,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     const panels={health:()=>renderLifeCarePanel(world,{birdSvg}),memorial:()=>renderMemorialPanel(world),outdoors:()=>'<div data-encounter-slot></div>',notebook:()=>'<div data-encounter-slot></div>',garden:()=>garden(),decorate:()=>decorationRoom(),friends:()=>friendRooms(),profile:()=>profile(),relations,family,diary,roster,settings,help};
     if(!root.querySelector('.game-main'))root.innerHTML='<div class="game-app"><div class="game-main"></div><dialog class="game-panel-overlay" aria-label="文鳥ぐらしの遊び"></dialog><dialog class="game-bird-sheet" aria-labelledby="game-sheet-title"></dialog></div>';
     root.querySelector('.game-app').dataset.panel=panel;
+    root.querySelector('.game-app').dataset.worldId=world.worldId;
     root.querySelector('.game-main').inert=panel==='outdoors';
     root.querySelector('.game-app').dataset.careMotion=world.settings.motion&&!world.paused&&document.documentElement.dataset.motion!=='off'&&!globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches?'on':'off';
     root.querySelector('.game-main').innerHTML=`<header class="game-heading"><div class="game-status"><span>${day(world.tick)}</span><span>${world.paused?'おやすみ中':'のんびり進行中'}</span><button data-game-action="pause">${world.paused?'つづける':'一時停止'}</button></div></header>${store.mode==='memory'?'<p class="game-warning" role="alert">このブラウザでは端末保存が使えません。いまのタブだけで遊べます。閉じる前に設定から保存ファイルを書き出してください。</p>':''}${panel==='garden'?renderRaptorNotice(world):''}${lifeNotice()}${automaticGift()}${adoptionInvitation()}${welcomeCard()}<p class="game-message ${error?'is-error':''}" role="status">${escape(error||message)}</p><div class="${panel==='garden'?'game-panel':'game-scene-base'}">${garden(panel!=='garden')}</div>${panel==='garden'?sceneCaption():''}`;
@@ -709,14 +721,14 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     syncDrawResult();
     document.dispatchEvent(new document.defaultView.CustomEvent('buncho-game-panel',{detail:panel}));
     const sheet=root.querySelector('.game-bird-sheet'),opening=sheetOpen&&!sheet.open;
-    const oldSheetScroll=sheetOpen&&sheet.dataset.birdId===selected?sheet.scrollTop:0;
+    const oldSheetScroll=sameView&&sheetOpen&&sheet.dataset.birdId===selected?sheet.scrollTop:0;
     if(sheetOpen){sheet.dataset.birdId=selected;sheet.innerHTML=renderRaptorNotice(world)+birdSheet();if(opening)sheet.showModal();}else{if(sheet.open)sheet.close();sheet.innerHTML='';delete sheet.dataset.birdId;}
     for(const [id,value] of Object.entries(drafts.get(draftKey())||{})){const input=root.querySelector(`#${id}`);if(input)input.value=value;}
     root.querySelectorAll('details[data-game-details]').forEach(d=>{if(openDetails.has(d.dataset.gameDetails))d.open=true;});
     if(sheetOpen)sheet.scrollTop=oldSheetScroll;
     if(oldPanelScroll!==undefined&&panel!=='garden')overlay.querySelector(':scope > .game-panel').scrollTop=oldPanelScroll;
     if(oldFriendScroll!==undefined&&root.querySelector('.game-friend-houses'))root.querySelector('.game-friend-houses').scrollLeft=oldFriendScroll;
-    if(oldFamilyScroll!==undefined&&root.querySelector('.game-family-pan'))root.querySelector('.game-family-pan').scrollLeft=oldFamilyScroll;
+    if(oldFamilyScroll&&root.querySelector('.game-family-pan')){const pan=root.querySelector('.game-family-pan');pan.scrollLeft=oldFamilyScroll.left;pan.scrollTop=oldFamilyScroll.top;}
     // Replacing the decoration DOM must not move the next item under a finger.
     // Keep both scroll tracks across preview, equip and background refresh.
     if(panel==='decorate'){
@@ -762,7 +774,14 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     if(focusId){const el=root.querySelector(`#${focusId}`);if(el&&el.tagName===focus.tagName){if(focusValue!==null&&el.type!=='file')el.value=focusValue;el.focus({preventScroll:true});if(typeof selectionStart==='number'&&el.setSelectionRange)try{el.setSelectionRange(selectionStart,selectionEnd);}catch{}}}
     placeSceneCaption();
     if(opening)root.querySelector('#game-sheet-close')?.focus({preventScroll:true});
-    const welcome=root.querySelector('#game-welcome-close'),welcomeKey=world.offlineSummary||unreadAway(world).length?`${world.worldId}:${world.offlineSummary?.fromTick}:${world.offlineSummary?.toTick}:${awayViewKey(world)}`:null;if(welcome&&welcomeKey!==welcomeFocusKey&&panel==='garden'&&!sheetOpen){welcomeFocusKey=welcomeKey;welcome.focus({preventScroll:true});}
+    const welcome=root.querySelector('#game-welcome-close'),welcomeKey=welcomeViewKey();if(welcome&&welcomeKey!==welcomeFocusKey&&panel==='garden'&&!sheetOpen){welcomeFocusKey=welcomeKey;welcome.focus({preventScroll:true});}
+    // Focus restoration must not pull an open reading surface back to its top.
+    for(const d of root.querySelectorAll('details[open][data-game-details]')){const offset=oldDisclosureScroll.get(d.dataset.gameDetails);if(offset){d.scrollTop=offset.top;d.scrollLeft=offset.left;}}
+    const tabs=root.querySelector('.game-secondary-menu[open] .game-tabs');if(tabs&&oldTabsScroll){tabs.scrollTop=oldTabsScroll.top;tabs.scrollLeft=oldTabsScroll.left;}
+    const welcomePane=root.querySelector('.game-welcome');if(oldWelcomeScroll&&welcomePane?.dataset.welcomeView===welcomeKey){welcomePane.scrollTop=oldWelcomeScroll.top;welcomePane.scrollLeft=oldWelcomeScroll.left;}
+    if(oldPanelScroll!==undefined&&panel!=='garden')overlay.querySelector(':scope > .game-panel').scrollTop=oldPanelScroll;
+    if(oldOverlayScroll!==undefined)overlay.scrollTop=oldOverlayScroll;
+    if(sheetOpen)sheet.scrollTop=oldSheetScroll;
   }
   function artPayload(b, e) { const family=[b,...b.parents.map(id=>findBird(world,id)),...(b.partner?[findBird(world,b.partner)]:[])].filter(Boolean); return {title:e?eventText(world,e):`${b.name}の家族`,name:b.name,names:family.map(x=>x.name),birds:family.map(x=>({id:x.id,name:x.name,color:x.color,stage:x.stage})),date:day(e?.tick??world.tick),event:e?.kind||'family',source:'game',caption:'おもちの文鳥ぐらし・ゲームの記念カード'}; }
   // Only our captured poll may advance this gesture's token. Never adopt an
