@@ -75,7 +75,8 @@ export function protectAbsentCare(w,now){
   const life=w.lifecycle.birds.find(s=>s.birdId===b.id),s=relaxedBird(w,b.id);if(!life||life.death||b.home!=='resident')continue;
   const c=w.lifecycle.caretaker,covered=c&&c.fromAt<=now?Math.min(now,c.until):0;
   const deadline=Math.min(Math.max(life.lastCareAt,covered)+3*DAY,life.condition?.deadlineAt??Infinity);
-  if(Math.max(deadline,s.healthGraceUntil)<=now){s.healthGraceUntil=Math.min(MAX,now+DAY);changed=true;}
+  const target=Math.min(MAX,now+DAY);
+  if(Math.max(deadline,s.healthGraceUntil)<target||target===MAX&&deadline<=MAX&&s.healthGraceUntil!==MAX){s.healthGraceUntil=target;changed=true;}
  }
  return changed;
 }

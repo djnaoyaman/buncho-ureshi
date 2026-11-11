@@ -93,3 +93,9 @@ for(const days of [7,28])test(`actual engine fairness matrix for ${days} days: h
   assert.equal(base,days*30);assert.equal(extra,caretaker?0:days*10);assert.equal(w.decor.points,20+base+extra);assert.equal(w.economy.gold,caretaker?0:days*24);assert.equal(w.economy.household.lastClaimedDay,null);validateWorld(w);
  }
 });
+
+test('a return just before a known treatment deadline still provides a full day without rewriting diagnosis stamps',()=>{
+ const w=world(),s=w.lifecycle.birds[0];s.condition={kind:'injury',sinceAt:NOW,deadlineAt:NOW+DAY};const diagnosis=structuredClone(s.condition);
+ advanceTo(w,NOW+DAY-60000);assert.equal(s.death,null);assert.deepEqual(s.condition,diagnosis);assert.equal(w.careRules.birds[0].healthGraceUntil,NOW+2*DAY-60000);validateWorld(w);
+ const max=253402268399999,x=createWorld(max-2*DAY);x.paused=true;advanceTo(x,max);assert.equal(x.lifecycle.birds[0].death,null);validateWorld(x);
+});
