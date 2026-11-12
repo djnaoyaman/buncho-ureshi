@@ -13,7 +13,7 @@ function fixture(t,items=[{id:'a',name:'最初の庭'},{id:'b',name:'長い名�
 test('dial keyboard switches arrive immediately; center never repeats arrival',t=>{
  const f=fixture(t);f.key('ArrowUp');assert.equal(f.face.dataset.preview,'c');assert.deepEqual(f.arrivals,['c']);
  f.jog.refresh();f.key('Home');assert.equal(f.face.dataset.preview,'a');f.key('End');f.center.click();assert.deepEqual(f.arrivals,['c','a','c']);
- f.root.querySelector('[data-garden-scroll="next"]').click();assert.equal(f.face.dataset.preview,'a');assert.equal(f.arrivals.length,3);
+ f.root.querySelector('[data-garden-scroll="next"]').click();assert.equal(f.face.dataset.preview,'a');assert.deepEqual(f.arrivals,['c','a','c','a']);
 });
 test('drag arrives once after release, wheel after settling, cancel never arrives',async t=>{
  const f=fixture(t);f.win.matchMedia=()=>({matches:true});
@@ -31,4 +31,10 @@ test('drag and cancel suppress accidental click and release listeners on destruc
  const f=fixture(t),pointer=(type,y,target=f.face)=>target.dispatchEvent(new f.win.PointerEvent(type,{pointerId:1,clientY:y,button:0,bubbles:true,cancelable:true}));
  pointer('pointerdown',100);pointer('pointermove',50);pointer('pointercancel',50);f.center.click();assert.deepEqual(f.arrivals,[]);assert.equal(f.face.style.getPropertyValue('--jog-angle'),'0deg');
  f.jog.destroy();const before=f.face.dataset.preview;f.key('ArrowDown');assert.equal(f.face.dataset.preview,before);
+});
+
+test('both arrow directions arrive once and wrap without a center tap',t=>{
+ const f=fixture(t),next=f.root.querySelector('[data-garden-scroll="next"]'),previous=f.root.querySelector('[data-garden-scroll="previous"]');
+ previous.click();assert.deepEqual(f.arrivals,['c']);next.click();assert.deepEqual(f.arrivals,['c','a']);next.click();assert.deepEqual(f.arrivals,['c','a','b']);f.center.click();assert.equal(f.arrivals.length,3);
+ f.setBusy(true);previous.click();assert.equal(f.arrivals.length,3);
 });
