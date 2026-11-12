@@ -1,4 +1,4 @@
-/** Approved 35-garden plan. Not activated in gameplay by this foundation release. */
+/** Approved 35-garden plan. Backgrounds are connected; resident rules follow separately. */
 export const GARDEN35_PLAN=Object.freeze([
   {
     "number": 1,
@@ -7,12 +7,12 @@ export const GARDEN35_PLAN=Object.freeze([
     "birdId": "eurasian-tree-sparrow",
     "birdName": "スズメ",
     "name": "足立区梅島公園",
-    "description": "足立区梅島公園を舞台に、身近なスズメに会いに行く庭です。背景は実際の公園を確認してから作ります。",
+    "description": "淡いレンガ色の門と、木々に囲まれた広場。足立区の梅島公園をもとに描いた庭で、身近なスズメを訪ねます。",
     "musicStyle": "素朴なピアノと木琴",
-    "backgroundFile": null,
-    "width": null,
-    "height": null,
-    "backgroundStatus": "needs-park-reference"
+    "backgroundFile": "game-art/gardens35/bird-garden-01.webp",
+    "width": 941,
+    "height": 1672,
+    "backgroundStatus": "connected-trial"
   },
   {
     "number": 2,
@@ -26,7 +26,7 @@ export const GARDEN35_PLAN=Object.freeze([
     "backgroundFile": "assets/gardens/bird-garden-02.webp",
     "width": 941,
     "height": 1672,
-    "backgroundStatus": "received-not-integrated"
+    "backgroundStatus": "connected-trial"
   },
   {
     "number": 3,
@@ -40,7 +40,7 @@ export const GARDEN35_PLAN=Object.freeze([
     "backgroundFile": "assets/gardens/bird-garden-03.webp",
     "width": 941,
     "height": 1672,
-    "backgroundStatus": "received-not-integrated"
+    "backgroundStatus": "connected-trial"
   },
   {
     "number": 4,
@@ -54,7 +54,7 @@ export const GARDEN35_PLAN=Object.freeze([
     "backgroundFile": "assets/gardens/bird-garden-04.webp",
     "width": 941,
     "height": 1672,
-    "backgroundStatus": "received-not-integrated"
+    "backgroundStatus": "connected-trial"
   },
   {
     "number": 5,
@@ -68,7 +68,7 @@ export const GARDEN35_PLAN=Object.freeze([
     "backgroundFile": "assets/gardens/bird-garden-05.webp",
     "width": 941,
     "height": 1672,
-    "backgroundStatus": "received-not-integrated"
+    "backgroundStatus": "connected-trial"
   },
   {
     "number": 6,
@@ -82,7 +82,7 @@ export const GARDEN35_PLAN=Object.freeze([
     "backgroundFile": "assets/gardens/bird-garden-06.webp",
     "width": 941,
     "height": 1672,
-    "backgroundStatus": "received-not-integrated"
+    "backgroundStatus": "connected-trial"
   },
   {
     "number": 7,
@@ -96,7 +96,7 @@ export const GARDEN35_PLAN=Object.freeze([
     "backgroundFile": "assets/gardens/bird-garden-07.webp",
     "width": 941,
     "height": 1672,
-    "backgroundStatus": "received-not-integrated"
+    "backgroundStatus": "connected-trial"
   },
   {
     "number": 8,
@@ -110,7 +110,7 @@ export const GARDEN35_PLAN=Object.freeze([
     "backgroundFile": "assets/gardens/bird-garden-08.webp",
     "width": 941,
     "height": 1672,
-    "backgroundStatus": "received-not-integrated"
+    "backgroundStatus": "connected-trial"
   },
   {
     "number": 9,
@@ -124,7 +124,7 @@ export const GARDEN35_PLAN=Object.freeze([
     "backgroundFile": "assets/gardens/bird-garden-09.webp",
     "width": 941,
     "height": 1672,
-    "backgroundStatus": "received-not-integrated"
+    "backgroundStatus": "connected-trial"
   },
   {
     "number": 10,
@@ -138,7 +138,7 @@ export const GARDEN35_PLAN=Object.freeze([
     "backgroundFile": "assets/gardens/bird-garden-10.webp",
     "width": 941,
     "height": 1672,
-    "backgroundStatus": "received-not-integrated"
+    "backgroundStatus": "connected-trial"
   },
   {
     "number": 11,
@@ -152,7 +152,7 @@ export const GARDEN35_PLAN=Object.freeze([
     "backgroundFile": "assets/gardens/bird-garden-11.webp",
     "width": 1052,
     "height": 1495,
-    "backgroundStatus": "received-not-integrated"
+    "backgroundStatus": "connected-trial"
   },
   {
     "number": 12,
@@ -166,7 +166,7 @@ export const GARDEN35_PLAN=Object.freeze([
     "backgroundFile": "assets/gardens/bird-garden-12.webp",
     "width": 941,
     "height": 1672,
-    "backgroundStatus": "received-not-integrated"
+    "backgroundStatus": "connected-trial"
   },
   {
     "number": 13,
@@ -180,7 +180,7 @@ export const GARDEN35_PLAN=Object.freeze([
     "backgroundFile": "assets/gardens/bird-garden-13.webp",
     "width": 941,
     "height": 1672,
-    "backgroundStatus": "received-not-integrated"
+    "backgroundStatus": "connected-trial"
   },
   {
     "number": 14,
@@ -194,7 +194,7 @@ export const GARDEN35_PLAN=Object.freeze([
     "backgroundFile": "assets/gardens/bird-garden-14.webp",
     "width": 941,
     "height": 1672,
-    "backgroundStatus": "received-not-integrated"
+    "backgroundStatus": "connected-trial"
   },
   {
     "number": 15,
@@ -208,7 +208,7 @@ export const GARDEN35_PLAN=Object.freeze([
     "backgroundFile": "assets/gardens/bird-garden-15.webp",
     "width": 941,
     "height": 1672,
-    "backgroundStatus": "received-not-integrated"
+    "backgroundStatus": "connected-trial"
   },
   {
     "number": 16,
@@ -222,7 +222,7 @@ export const GARDEN35_PLAN=Object.freeze([
     "backgroundFile": "assets/gardens/bird-garden-16.webp",
     "width": 941,
     "height": 1672,
-    "backgroundStatus": "received-not-integrated"
+    "backgroundStatus": "connected-trial"
   },
   {
     "number": 17,
@@ -236,7 +236,7 @@ export const GARDEN35_PLAN=Object.freeze([
     "backgroundFile": "assets/gardens/bird-garden-17.webp",
     "width": 941,
     "height": 1672,
-    "backgroundStatus": "received-not-integrated"
+    "backgroundStatus": "connected-trial"
   },
   {
     "number": 18,
@@ -250,7 +250,7 @@ export const GARDEN35_PLAN=Object.freeze([
     "backgroundFile": "assets/gardens/bird-garden-18.webp",
     "width": 941,
     "height": 1672,
-    "backgroundStatus": "received-not-integrated"
+    "backgroundStatus": "connected-trial"
   },
   {
     "number": 19,
@@ -264,7 +264,7 @@ export const GARDEN35_PLAN=Object.freeze([
     "backgroundFile": "assets/gardens/bird-garden-19.webp",
     "width": 941,
     "height": 1672,
-    "backgroundStatus": "received-not-integrated"
+    "backgroundStatus": "connected-trial"
   },
   {
     "number": 20,
@@ -278,7 +278,7 @@ export const GARDEN35_PLAN=Object.freeze([
     "backgroundFile": "assets/gardens/bird-garden-20.webp",
     "width": 941,
     "height": 1672,
-    "backgroundStatus": "received-not-integrated"
+    "backgroundStatus": "connected-trial"
   },
   {
     "number": 21,
@@ -292,7 +292,7 @@ export const GARDEN35_PLAN=Object.freeze([
     "backgroundFile": "assets/gardens/bird-garden-21.webp",
     "width": 941,
     "height": 1672,
-    "backgroundStatus": "received-not-integrated"
+    "backgroundStatus": "connected-trial"
   },
   {
     "number": 22,
@@ -306,7 +306,7 @@ export const GARDEN35_PLAN=Object.freeze([
     "backgroundFile": "assets/gardens/bird-garden-22.webp",
     "width": 941,
     "height": 1672,
-    "backgroundStatus": "received-not-integrated"
+    "backgroundStatus": "connected-trial"
   },
   {
     "number": 23,
@@ -320,7 +320,7 @@ export const GARDEN35_PLAN=Object.freeze([
     "backgroundFile": "assets/gardens/bird-garden-23.webp",
     "width": 941,
     "height": 1672,
-    "backgroundStatus": "received-not-integrated"
+    "backgroundStatus": "connected-trial"
   },
   {
     "number": 24,
@@ -334,7 +334,7 @@ export const GARDEN35_PLAN=Object.freeze([
     "backgroundFile": "assets/gardens/bird-garden-24.webp",
     "width": 941,
     "height": 1672,
-    "backgroundStatus": "received-not-integrated"
+    "backgroundStatus": "connected-trial"
   },
   {
     "number": 25,
@@ -348,7 +348,7 @@ export const GARDEN35_PLAN=Object.freeze([
     "backgroundFile": "assets/gardens/bird-garden-25.webp",
     "width": 1051,
     "height": 1496,
-    "backgroundStatus": "received-not-integrated"
+    "backgroundStatus": "connected-trial"
   },
   {
     "number": 26,
@@ -362,7 +362,7 @@ export const GARDEN35_PLAN=Object.freeze([
     "backgroundFile": "assets/gardens/bird-garden-26.webp",
     "width": 941,
     "height": 1672,
-    "backgroundStatus": "received-not-integrated"
+    "backgroundStatus": "connected-trial"
   },
   {
     "number": 27,
@@ -376,7 +376,7 @@ export const GARDEN35_PLAN=Object.freeze([
     "backgroundFile": "assets/gardens/bird-garden-27.webp",
     "width": 941,
     "height": 1672,
-    "backgroundStatus": "received-not-integrated"
+    "backgroundStatus": "connected-trial"
   },
   {
     "number": 28,
@@ -390,7 +390,7 @@ export const GARDEN35_PLAN=Object.freeze([
     "backgroundFile": "assets/gardens/bird-garden-28.webp",
     "width": 1049,
     "height": 1499,
-    "backgroundStatus": "received-not-integrated"
+    "backgroundStatus": "connected-trial"
   },
   {
     "number": 29,
@@ -404,7 +404,7 @@ export const GARDEN35_PLAN=Object.freeze([
     "backgroundFile": "assets/gardens/bird-garden-29.webp",
     "width": 941,
     "height": 1672,
-    "backgroundStatus": "received-not-integrated"
+    "backgroundStatus": "connected-trial"
   },
   {
     "number": 30,
@@ -418,7 +418,7 @@ export const GARDEN35_PLAN=Object.freeze([
     "backgroundFile": "assets/gardens/bird-garden-30.webp",
     "width": 1051,
     "height": 1497,
-    "backgroundStatus": "received-not-integrated"
+    "backgroundStatus": "connected-trial"
   },
   {
     "number": 31,
@@ -432,7 +432,7 @@ export const GARDEN35_PLAN=Object.freeze([
     "backgroundFile": "assets/gardens/bird-garden-31.webp",
     "width": 1052,
     "height": 1495,
-    "backgroundStatus": "received-not-integrated"
+    "backgroundStatus": "connected-trial"
   },
   {
     "number": 32,
@@ -446,7 +446,7 @@ export const GARDEN35_PLAN=Object.freeze([
     "backgroundFile": "assets/gardens/bird-garden-32.webp",
     "width": 1024,
     "height": 1536,
-    "backgroundStatus": "received-not-integrated"
+    "backgroundStatus": "connected-trial"
   },
   {
     "number": 33,
@@ -460,7 +460,7 @@ export const GARDEN35_PLAN=Object.freeze([
     "backgroundFile": "assets/gardens/bird-garden-33.webp",
     "width": 1049,
     "height": 1499,
-    "backgroundStatus": "received-not-integrated"
+    "backgroundStatus": "connected-trial"
   },
   {
     "number": 34,
@@ -474,7 +474,7 @@ export const GARDEN35_PLAN=Object.freeze([
     "backgroundFile": "assets/gardens/bird-garden-34.webp",
     "width": 940,
     "height": 1672,
-    "backgroundStatus": "received-not-integrated"
+    "backgroundStatus": "connected-trial"
   },
   {
     "number": 35,
@@ -488,7 +488,7 @@ export const GARDEN35_PLAN=Object.freeze([
     "backgroundFile": "assets/gardens/bird-garden-35.webp",
     "width": 941,
     "height": 1672,
-    "backgroundStatus": "received-not-integrated"
+    "backgroundStatus": "connected-trial"
   }
 ].map(row=>Object.freeze(row)));
 export const GARDEN35_IDS=Object.freeze(GARDEN35_PLAN.map(row=>row.id));

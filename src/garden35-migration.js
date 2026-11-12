@@ -1,8 +1,8 @@
 import {GARDEN35_IDS,GARDEN35_LEGACY_IDS} from './data/garden35-plan.js';
 
-/** Planning foundation only. Does not open, migrate, persist or replace a world.
+/** Pure counter projection, called after legacy save validation. No persistence.
  * All twelve saved IDs survive; twenty-three new counters start at zero.
- * Activation must validate the old schema first and publish a new encounter version.
+ * Encounter version 14 marks activation; older engines reject this version.
  */
 export function prepareGarden35Visits(input){
  if(!input||typeof input!=='object'||Array.isArray(input)||Object.getPrototypeOf(input)!==Object.prototype)throw Error('庭の訪問記録が不正です。');

@@ -45,7 +45,7 @@ test('every hinted first-meeting garden and action is reachable; all other combi
    combinations++;
   }
  }
- assert.equal(combinations,32*12*5);
+ assert.equal(combinations,32*35*5);
 });
 
 test('cards keep long garden lists compact and detail shows every exact garden without revealing names',()=>{

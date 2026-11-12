@@ -34,4 +34,10 @@ test('rendering escapes names, keeps native disclosure and routes only through s
  win.document.body.innerHTML=renderNextEnjoyments(w);assert.equal(win.document.querySelector('details').open,false);assert.equal(win.document.querySelectorAll('[data-next-goal]').length,4);assert.equal(win.document.querySelectorAll('img,script,[data-game-panel]').length,0);assert.equal(win.document.querySelectorAll('[data-goal-panel]').length,4);assert.ok(win.document.body.textContent.includes(b.name));assert.deepEqual(w,before);
  }finally{win.happyDOM.abort();}
 });
-test('client cache version includes the suggestion source and versions its import',()=>{const build=readFileSync(new URL('../scripts/build.mjs',import.meta.url),'utf8');assert.ok(build.includes('["game-next-goals.js",'));assert.ok(build.includes('for (const name of ["game-next-goals.js",'));assert.ok(build.includes('.replaceAll("./game-next-goals.js", `./game-next-goals.js?v=${gameVersion}`)'));});
+test('built suggestion module and its dependencies share the current game cache version',()=>{
+ const game=readFileSync(new URL('../dist/src/game.js',import.meta.url),'utf8');
+ const goals=readFileSync(new URL('../dist/src/game-next-goals.js',import.meta.url),'utf8');
+ const version=game.match(/\.\/game-next-goals\.js\?v=([a-f0-9]{12})/);
+ assert.ok(version,'game imports the versioned suggestion module');
+ for(const module of ['engine','encounters'])assert.ok(goals.includes(`./${module}.js?v=${version[1]}`),`${module} uses the same cache version`);
+});

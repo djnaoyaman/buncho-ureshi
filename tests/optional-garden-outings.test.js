@@ -10,7 +10,7 @@ import {
 import {createEncounterSystem, encounterFriendship} from '../src/encounters.js';
 import {ENCOUNTER_CANDIDATES} from '../src/data/encounter-catalog.js';
 import {
-  GARDEN_IDS, gardenCompanionRoster, gardenFriendRoster, closeGardenAcquaintance,
+  GARDEN_IDS, OLD_GARDEN_IDS, gardenCompanionRoster, gardenFriendRoster, closeGardenAcquaintance,
 } from '../src/data/gardens.js';
 import {rememberGardenAcquaintances} from '../src/garden-friends.js';
 import {lifeStatus, accidentLifeBird} from '../src/life-care.js';
@@ -65,6 +65,7 @@ function accompany(w, ids=['b1']) {
 function legacyV11(w) {
   const old = clone(w);
   old.encounters.version = 11;
+  for(const id of Object.keys(old.encounters.garden.visits))if(!OLD_GARDEN_IDS.includes(id))delete old.encounters.garden.visits[id];
   old.encounters.gardenFriends.version = 1;
   for (const key of ['accompany', 'attendees', 'visits']) delete old.encounters.gardenFriends[key];
   return old;
@@ -95,7 +96,7 @@ async function raw(indexedDB, value) {
 
 test('new worlds leave every family bird home by default, even with a saved selection', () => {
   const w = fresh();
-  assert.equal(w.encounters.version, 13);
+  assert.equal(w.encounters.version, 14);
   assert.equal(w.encounters.gardenFriends.version, 2);
   assert.equal(w.encounters.gardenFriends.accompany, false);
   assert.deepEqual(w.encounters.gardenFriends.attendees, []);
@@ -461,7 +462,7 @@ test('v11 migration preserves every old bond and preference, defaults to solo, a
   accompany(w); select(w);
   const old = legacyV11(w), before = clone(old), migrated = readCompatibleWorld(old, NOW);
   assert.deepEqual(old, before);
-  assert.equal(migrated.encounters.version, 13);
+  assert.equal(migrated.encounters.version, 14);
   assert.equal(migrated.revision, old.revision);
   assert.equal(migrated.version,16);
   assert.deepEqual(migrated.encounters.gardenFriends, {
@@ -469,7 +470,9 @@ test('v11 migration preserves every old bond and preference, defaults to solo, a
   });
   assert.deepEqual(protectedState(migrated), protectedState(old));
   for (const key of Object.keys(old.encounters).filter(key => !['version', 'gardenFriends'].includes(key))) {
-    assert.deepEqual(migrated.encounters[key], old.encounters[key], key);
+    const expectedValue=structuredClone(old.encounters[key]);
+    if(key==='garden')expectedValue.visits=Object.fromEntries(GARDEN_IDS.map(id=>[id,expectedValue.visits[id]??0]));
+    assert.deepEqual(migrated.encounters[key], expectedValue, key);
   }
   assert.deepEqual(attendees(migrated), []);
   assert.deepEqual(parseSave(serializeWorld(migrated)), migrated);
@@ -642,7 +645,7 @@ test('two atomic stores durably migrate v11 once and stale preference/countdown 
   const one = await openGameStore({indexedDB}), two = await openGameStore({indexedDB});
   try {
     const [a, b] = await Promise.all([one.transact(x => x), two.transact(x => x)]);
-    assert.deepEqual(a, b); assert.equal(a.encounters.version, 13);
+    assert.deepEqual(a, b); assert.equal(a.encounters.version, 14);
     assert.equal(a.revision, old.revision); assert.equal(a.version, old.version);
     assert.deepEqual(await raw(indexedDB), a);
     assert.deepEqual(a.encounters.raptor, old.encounters.raptor);
@@ -681,7 +684,7 @@ test('locked local saves persist the solo migration and preserve an existing war
   const store = await openGameStore({localStorage, navigator:{locks:{request:async (_name, operation) => operation()}}});
   try {
     const current = await store.transact(x => x), persisted = JSON.parse(memory.get(STORAGE_KEY));
-    assert.equal(current.encounters.version, 13);
+    assert.equal(current.encounters.version, 14);
     assert.deepEqual(current.encounters.gardenFriends.attendees, []);
     assert.equal(current.encounters.gardenFriends.accompany, false);
     assert.deepEqual(current.encounters.raptor, old.encounters.raptor);

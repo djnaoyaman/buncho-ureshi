@@ -1,8 +1,10 @@
 import {allBirds} from '../world-birds.js';
 import {isAlive} from '../life-care.js';
+import {GARDEN35_PLAN} from './garden35-plan.js';
+import {GARDEN35_ASSETS} from './garden35-assets.js';
 import {GARDEN_ASSETS} from './garden-assets.js';
 /** Twelve fictional, always-open social gardens. No real-world arrival/season promises. */
-export const GARDENS=Object.freeze([
+export const OLD_GARDENS=Object.freeze([
  {id:'komorebi',ambience:'葉擦れ・木の椅子の小さな音',name:'こもれびの庭',scene:'quiet',landform:'森のくぼみ',description:'大きな木、苔の石、木の椅子。枝と地面に友達が集まる。',objects:['大きな木','苔の石','木の椅子'],spots:[{x:24,y:38,label:'低い枝'},{x:63,y:64,label:'木の椅子'},{x:38,y:79,label:'苔の石'}],actions:[['chat','木陰でおしゃべり'],['watch','木漏れ日を眺める'],['play','葉っぱを追う']],event:'葉っぱのおたより',music:{themeId:'garden-komorebi',concept:'木管と柔らかい撥弦、ゆっくり揺れる拍子',asset:null,releaseReady:false},background:{src:null,releaseReady:false}},
  {id:'mizukagami',ambience:'控えめな水滴・波紋',name:'みずかがみの庭',scene:'water',landform:'浅い池と飛び石',description:'浅い水面、飛び石、水草。左右の岸から友達の顔が見える。',objects:['浅い水面','飛び石','水草'],spots:[{x:18,y:68,label:'西の岸'},{x:52,y:55,label:'飛び石'},{x:83,y:73,label:'東の岸'}],actions:[['watch','水面を一緒に眺める'],['chat','飛び石でごあいさつ'],['play','波紋の絵あそび']],event:'水鏡のまねっこ',music:{themeId:'garden-mizukagami',concept:'ガラス音と静かなピアノ、ゆったりした波',asset:null,releaseReady:false},background:{src:null,releaseReady:false}},
  {id:'komugi',ambience:'穂の擦れる音・木柵',name:'こむぎの庭',scene:'grass',landform:'穂の間の一本道',description:'穂、低い木柵、曲がった小道。柵や草の間で小さな会話。',objects:['穂の群れ','低い木柵','曲がった小道'],spots:[{x:20,y:53,label:'木柵'},{x:56,y:76,label:'小道'},{x:79,y:48,label:'穂のそば'}],actions:[['play','穂の揺れをまねる'],['chat','柵でおしゃべり'],['watch','小道でひと休み']],event:'ゆれる穂のかくれんぼ',music:{themeId:'garden-komugi',concept:'素朴な弦と軽い手打ち、歩くテンポ',asset:null,releaseReady:false},background:{src:null,releaseReady:false}},
@@ -16,8 +18,17 @@ export const GARDENS=Object.freeze([
 {"id": "bali-terrace", "name": "バリ・みどりの棚田", "scene": "water", "landform": "海を望むバリの棚田の展望広場", "description": "青い海と棚田を見渡す、バリ島を思わせる創作の庭。花とヤシに囲まれた石の広場で友達と休む。", "objects": ["青い海", "緑の棚田", "石の広場", "ヤシの木"], "ambience": "細い水路とヤシの葉擦れ", "event": "水の段々のあいさつ", "music": {"concept": "金属打楽器の掛け合いと軽い木音。伝統曲ではなく独自のゲーム音楽", "themeId": "garden-bali-terrace", "asset": null, "releaseReady": false}, "spots": [{"x": 36, "y": 68, "label": "広場の左"}, {"x": 54, "y": 70, "label": "広場の中央"}, {"x": 72, "y": 69, "label": "広場の右"}], "actions": [["chat", "友達とおしゃべり"], ["watch", "風景を観察する"], ["play", "小道をチョンチョン"]], "background": {}},
 {"id": "paris-unrest", "name": "パリ・ざわめく街の庭", "scene": "quiet", "landform": "ノートルダムを望む石のテラス", "description": "ノートルダム大聖堂と、遠くの街路に暴動による炎や煙が見える架空のパリ。友達は火から離れた石のテラスで過ごす。実際の事件を再現するものではありません。", "objects": ["ノートルダム大聖堂", "遠い炎と煙", "セーヌ川", "石のテラス"], "ambience": "遠い街のざわめきと静かな中庭", "event": "中庭の待ち合わせ", "music": {"concept": "短調のピアノ、低い弦、控えめな打音のオリジナル曲", "themeId": "garden-paris-unrest", "asset": null, "releaseReady": false}, "spots": [{"x": 36, "y": 68, "label": "広場の左"}, {"x": 54, "y": 70, "label": "広場の中央"}, {"x": 72, "y": 69, "label": "広場の右"}], "actions": [["chat", "友達とおしゃべり"], ["watch", "風景を観察する"], ["play", "小道をチョンチョン"]], "background": {}},
 ].map(g=>Object.freeze({...g,background:{...g.background,...GARDEN_ASSETS[g.id].background},music:{...g.music,...GARDEN_ASSETS[g.id].music}})));
+export const OLD_GARDEN_IDS=Object.freeze(OLD_GARDENS.map(g=>g.id));
+export const LEGACY_GARDEN_IDS=Object.freeze(OLD_GARDEN_IDS.slice(0,9));
+export const GARDENS=Object.freeze(GARDEN35_PLAN.map(row=>{
+ const old=OLD_GARDENS.find(g=>g.id===row.id),bg=GARDEN35_ASSETS[row.id];
+ return Object.freeze({id:row.id,name:row.name,description:row.number===1?'淡いレンガ色の門と、木々に囲まれた広場。足立区の梅島公園をもとに描いた庭で、身近なスズメを訪ねます。':row.description,
+ residentBirdId:row.birdId,scene:old?.scene||'grass',landform:row.name+'のひろば',objects:['木かげ','ひろば','小道'],
+ spots:bg.friendFeet.map((p,i)=>({x:p.x*100,y:p.y*100,label:'ひろば '+(i+1)})),
+ actions:[['chat','友達とおしゃべり'],['watch','庭をよく見る'],['play','ひろばで遊ぶ']],event:row.name+'のおたより',ambience:'葉の音と静かな風',
+ background:{...bg},music:old?{...old.music}:{themeId:'garden-'+row.id,concept:row.musicStyle,asset:null,releaseReady:false}});
+}));
 export const GARDEN_IDS=Object.freeze(GARDENS.map(g=>g.id));
-export const LEGACY_GARDEN_IDS=Object.freeze(GARDEN_IDS.slice(0,9));
 export const gardenById=id=>GARDENS.find(g=>g.id===id)||null;
 /** Actual attendees are frozen at departure. A saved warning keeps its exact living
  * target present until the event ends, even after migration or preference changes. */

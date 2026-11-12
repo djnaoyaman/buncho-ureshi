@@ -1,4 +1,4 @@
-const legacyFriends=w=>{const f=w.encounters.gardenFriends;w.encounters.gardenFriends={version:1,regulars:f.regulars,references:f.references,companions:f.companions};};
+import {useLegacyGardenFriends as legacyFriends} from './fixtures/legacy-garden-friends.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {IDBFactory} from 'fake-indexeddb';
@@ -48,7 +48,7 @@ test('target identity never follows a replacement protagonist',()=>{
  const w=fixture();arrive(w);w.birds[0].home='departed';const b=createBird(w,{home:'resident'});assert.equal(raptorScene(w),null);advanceGardenRaptor(w,1000,NOW+1000,token(w));assert.equal(w.encounters.raptor.active,null);assert.equal(lifeStatus(w,b).death,null);
 });
 test('v7 migration is additive and all malformed or unknown raptor fields reject',()=>{
- const old=fixture();old.encounters.version=7;legacyFriends(old);delete old.encounters.gardenSessions;delete old.encounters.homeGoodbyes;for(const id of ["java-rice","bali-terrace","paris-unrest"])delete old.encounters.garden.visits[id];delete old.encounters.raptor;const before=structuredClone(old),w=readCompatibleWorld(old,NOW);assert.deepEqual(old,before);assert.equal(w.encounters.version,13);assert.deepEqual(w.encounters.raptor,initialRaptorState());w.encounters.gardenFriends.attendees=['b1'];arrive(w);
+ const old=fixture();old.encounters.version=7;legacyFriends(old);delete old.encounters.gardenSessions;delete old.encounters.homeGoodbyes;for(const id of ["java-rice","bali-terrace","paris-unrest"])delete old.encounters.garden.visits[id];delete old.encounters.raptor;const before=structuredClone(old),w=readCompatibleWorld(old,NOW);assert.deepEqual(old,before);assert.equal(w.encounters.version,14);assert.deepEqual(w.encounters.raptor,initialRaptorState());w.encounters.gardenFriends.attendees=['b1'];arrive(w);
  for(const alter of [s=>s.extra=1,s=>s.lastArrivalAt=-1,s=>s.active.extra=1,s=>s.active.targetBirdId='b999',s=>s.active.eventId='other',s=>s.active.lastProgressAt=NOW-1,s=>s.active.remainingMs=0,s=>s.active.remainingMs=60001,s=>s.active.hostile='yes',s=>s.active.hostile=false,s=>s.visits.push({...s.visits[0]}),s=>s.visits[0].petPoints=-1,s=>s.visits[0].petPoints=100,s=>s.active.speciesId='unknown']){const bad=structuredClone(w);alter(bad.encounters.raptor);assert.throws(()=>validateWorld(bad));}
 });
 test('clock is rare, continuous, garden-scoped, and excludes osprey away from water',()=>{

@@ -2,7 +2,7 @@ import {pathToFileURL} from 'node:url';
 export const root=process.env.BOOKLET_SOURCE_ROOT?pathToFileURL(process.env.BOOKLET_SOURCE_ROOT+'/'):new URL('../../',import.meta.url);
 export const load=path=>import(new URL('src/'+path,root));
 export const engine=await load('engine.js'),crow=await load('garden-crows.js'),raptor=await load('garden-raptors.js');
-export const {GARDENS}=await load('data/gardens.js');
+export const {GARDENS,OLD_GARDEN_IDS}=await load('data/gardens.js');
 export const NOW=Date.UTC(2026,10,8,9);
 export const cases=['solo','attending','other-family','departed','chick','egg','dead','crow-warning','crow-hostile','crow-targetless','crow-friendly','crow-cooldown','raptor-hostile','raptor-targetless','raptor-friendly','osprey','settings-after-warning','legacy-warning'];
 export function fixture(kind='solo',gardenId=GARDENS[0].id){
@@ -33,7 +33,7 @@ export function fixture(kind='solo',gardenId=GARDENS[0].id){
   if(!raptor.arriveGardenRaptor(w,kind==='osprey'?'osprey':'black-kite',NOW,token()).changed)throw Error('raptor arrival failed');
   if(kind==='raptor-friendly')for(let n=0;n<13;n++)raptor.petGardenRaptor(w,'black-kite',8,raptor.raptorToken(w));
   if(kind==='settings-after-warning')Object.assign(w.encounters.gardenFriends,{accompany:false,companions:[]});
-  if(kind==='legacy-warning'){w.encounters.version=12;w=engine.readCompatibleWorld(w,NOW);}
+  if(kind==='legacy-warning'){w.encounters.version=12;w.encounters.garden.visits=Object.fromEntries(OLD_GARDEN_IDS.map(id=>[id,w.encounters.garden.visits[id]]));w=engine.readCompatibleWorld(w,NOW);}
  }
  engine.validateWorld(w);if(engine.serializeWorld(engine.parseSave(engine.serializeWorld(w)))!==engine.serializeWorld(w))throw Error('round trip mismatch');return w;
 }

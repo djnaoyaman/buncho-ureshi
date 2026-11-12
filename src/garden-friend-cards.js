@@ -1,12 +1,16 @@
 import {gardenFriendCardArt} from './garden-friend-card-art.js';
 import {gardenFriendActionIllustrations} from './garden-friend-action-art.js';
-const illustrations=Object.freeze({...gardenFriendActionIllustrations,...gardenFriendCardArt});
+const genericArt={
+ watch:'<svg aria-hidden="true" focusable="false" viewBox="0 0 96 96" width="96" height="96"><circle cx="41" cy="38" r="23" fill="#e8eddd" stroke="#52604d" stroke-width="4"/><path d="M58 55L80 79" fill="none" stroke="#a9886d" stroke-width="9" stroke-linecap="round"/><path d="M29 41Q42 19 52 40Q40 55 29 41Z" fill="#bfcfb8" stroke="#52604d" stroke-width="2"/></svg>',
+ play:'<svg aria-hidden="true" focusable="false" viewBox="0 0 96 96" width="96" height="96"><path d="M15 81Q62 80 48 59T78 16" fill="none" stroke="#c0b197" stroke-width="8" stroke-linecap="round" stroke-dasharray="8 10"/><path d="M17 40Q13 13 42 14Q46 39 17 40Z" fill="#bfcfb8" stroke="#52604d" stroke-width="3"/><path d="M17 40L35 21" stroke="#52604d" stroke-width="2"/></svg>'
+};
+const illustrations=Object.freeze({...gardenFriendActionIllustrations,...gardenFriendCardArt,...genericArt});
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 /** Semantic artwork mapping only. Never substitute a windmill or wind pose in another garden. */
 export function gardenFriendActionArt(gardenId,kind){
  if(kind==='chat')return 'chat';
  if(gardenId==='kazaguruma')return kind==='watch'?'windmill':kind==='play'?'pose':null;
- return Object.hasOwn(gardenFriendActionIllustrations,`${gardenId}-${kind}`)?`${gardenId}-${kind}`:null;
+ return Object.hasOwn(gardenFriendActionIllustrations,`${gardenId}-${kind}`)?`${gardenId}-${kind}`:Object.hasOwn(genericArt,kind)?kind:null;
 }
 /** Pure presentation VM: existing caller supplies roster, sliced memories, action labels,
  * availability/reasons and portrait file derived from the actual bird. No world or clock. */
