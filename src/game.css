@@ -1756,3 +1756,21 @@ body[data-world="buncho"] .garden-jog [data-jog-count]{position:absolute;right:1
 body[data-world="buncho"] .finch-garden-selector-wrap .finch-garden-scroll{border-radius:50%;background:#f5f0df;color:#493e32;border:1px solid #b9c79f;box-shadow:none}
 body[data-world="buncho"] .garden-jog button:focus-visible{outline:2px solid #527a50;outline-offset:-2px}
 @media(prefers-reduced-motion:reduce){body[data-world="buncho"] .garden-jog-cylinder{transition:none;transform:none}}
+
+/* Give each notebook bird one readable row and one shared page scroll. */
+body[data-world="buncho"] .game-encounter-host .finch-notebook > .finch-catalog {
+ display:grid;grid-template-columns:minmax(0,1fr);gap:16px;max-height:none;overflow:visible;padding:4px 2px 16px;
+}
+body[data-world="buncho"] .game-encounter-host .finch-notebook > .finch-catalog > button.finch-card {
+ display:grid;grid-template-columns:clamp(76px,26vw,112px) minmax(0,1fr);grid-template-rows:auto auto 1fr;
+ align-items:start;box-sizing:border-box;width:100%;min-width:0;gap:5px 12px;padding:12px;text-align:left;border-radius:22px;
+}
+body[data-world="buncho"] .game-encounter-host .finch-notebook > .finch-catalog > button.finch-card > .finch-media {
+ grid-column:1;grid-row:1 / 4;align-self:center;width:100%;min-width:0;
+}
+body[data-world="buncho"] .game-encounter-host .finch-notebook > .finch-catalog > button.finch-card .finch-art {
+ width:100%;height:132px;margin:0;object-fit:contain;
+}
+body[data-world="buncho"] .game-encounter-host .finch-notebook > .finch-catalog > button.finch-card > .finch-number {grid-column:2;grid-row:1;font-size:12px;line-height:1.4;}
+body[data-world="buncho"] .game-encounter-host .finch-notebook > .finch-catalog > button.finch-card > strong {grid-column:2;grid-row:2;min-width:0;font-size:15px;line-height:1.5;overflow-wrap:anywhere;}
+body[data-world="buncho"] .game-encounter-host .finch-notebook > .finch-catalog > button.finch-card > small {grid-column:2;grid-row:3;min-width:0;font-size:13px;line-height:1.7;overflow-wrap:anywhere;}
