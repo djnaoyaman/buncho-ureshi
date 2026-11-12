@@ -81,8 +81,9 @@ export function createEncounterSystem(catalog=ENCOUNTER_CATALOG,{knownCatalog=ca
     const s=w.encounters,g=s.garden;
     if(!g.open||!catalog.length||s.active||s.queue.length||g.turn<g.nextTurn||w.tick<g.nextTick)return;
     const returning=new Set(s.gardenFriends.visits.find(v=>v.gardenId===g.id)?.returningIds||[]);
-    const eligible=catalog.filter(e=>!pendingGardenGuestLocation(s,e.id)&&!s.cageVisitors?.some(v=>v.id===e.id)&&(returning.has(e.id)||(!s.discoveries.some(d=>d.id===e.id)&&(e.gardenEvent?.gardenIds||[]).includes(g.id)&&(e.gardenEvent?.scene||'grass')===g.scene)));
-    // New local guests and the close friends selected for this visit share the draw.
+    const eligible=catalog.filter(e=>!pendingGardenGuestLocation(s,e.id)&&!s.cageVisitors?.some(v=>v.id===e.id)&&(returning.has(e.id)||((e.gardenEvent?.gardenIds||[]).includes(g.id)&&(e.gardenEvent?.scene||'grass')===g.scene)));
+    // One native species per garden can meet again at any friendship level.
+    // Close friends can still visit other gardens, respecting the departure snapshot.
     const unseen=eligible.filter(e=>!s.discoveries.some(d=>d.id===e.id));
     const close=eligible.filter(e=>returning.has(e.id)&&e.id!==g.lastGuest);
     const pool=unseen.length?[...unseen,...close]:eligible.filter(e=>e.id!==g.lastGuest);

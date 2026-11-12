@@ -1,3 +1,4 @@
+import {GARDEN35_PLAN} from './garden35-plan.js';
 /** Researched assets in an opt-in trial release. Layout review remains explicitly pending. */
 export const ENCOUNTER_CANDIDATES=Object.freeze([
   {
@@ -2567,12 +2568,278 @@ export const ENCOUNTER_CANDIDATES=Object.freeze([
         "shrine-grove"
       ]
     }
+  },
+  {
+    "id": "red-throated-parrotfinch",
+    "kind": "species",
+    "parentId": null,
+    "name": "ヒノマルチョウ",
+    "english": "Red-throated Parrotfinch",
+    "scientific": "Erythrura psittacea",
+    "family": "カエデチョウ科",
+    "aliases": [],
+    "releaseReady": false,
+    "scriptVersion": 1,
+    "hint": "葉のかげに、緑の羽と赤い顔。",
+    "searchClue": "緑の羽と赤い顔",
+    "eventTitle": "緑の葉に、赤いごあいさつ",
+    "steps": [
+      {
+        "action": "follow-leaf-gap",
+        "label": "葉のすきまを見る",
+        "text": "赤と緑の島庭の低い枝で、葉の色にとけこむ小さな影。そっと離れて眺めよう。"
+      },
+      {
+        "action": "notice-red-face",
+        "label": "赤い顔を見つける",
+        "text": "葉のすきまから、赤い顔と深い緑の羽が見えた。小さなお客さまの色を覚えよう。"
+      },
+      {
+        "action": "remember-green-guest",
+        "label": "出会いを残す",
+        "text": "静かな枝先で、ごあいさつ。今日見つけた姿を、図鑑の新しいページへ。"
+      }
+    ],
+    "revisit": "葉のかげから、赤い顔のお客さまがまた見えたね。",
+    "summary": "ニューカレドニアに自然分布する小さなカエデチョウ科の鳥。緑色の体に赤い顔とのど、赤い尾が映えます。林の縁や草のある開けた場所で、主に草の種子を食べます。雌雄はよく似ていますが、メスの赤色は控えめです。",
+    "appearance": "緑の体に赤い顔とのど、赤い尾をもつ成鳥の創作イラストです。資料写真の性別は原典に記載がなく特定していません。雌雄はよく似ています。青い顔の別種 Blue-faced Parrotfinch（Erythrura trichroa）とは区別します。",
+    "sources": [
+      {
+        "title": "AviList Core Team. 2026. The Global Avian Checklist v2026",
+        "url": "https://www.avilist.org/checklist/v2026/"
+      },
+      {
+        "title": "Cornell Lab eBird: Red-throated Parrotfinch",
+        "url": "https://ebird.org/species/retpar3"
+      },
+      {
+        "title": "Province Sud: Faune calédonienne, Les principaux oiseaux terrestres de Nouvelle Calédonie",
+        "url": "https://www.province-sud.nc/wp-content/publications/Environnement/Biodiversite/FauneCaledonienne/"
+      }
+    ],
+    "art": {
+      "src": "game-art/finches/red-throated-parrotfinch-adult.webp",
+      "width": 1254,
+      "height": 1254,
+      "alt": "ヒノマルチョウの成鳥の創作イラスト"
+    },
+    "photo": {
+      "src": "game-art/finches/photos/red-throated-parrotfinch-harrison.jpg",
+      "width": 2234,
+      "height": 1489,
+      "alt": "ヒノマルチョウ（写真の性別は原典に記載なし）",
+      "caption": "写真「Red-throated Parrotfinch 0A2A5145」。ヒノマルチョウ（写真の性別は原典に記載なし）。2022-09-28撮影。原典のカメラ位置はニューカレドニアです。ゲームの庭や当日の記録ではありません。",
+      "creator": "JJ Harrison",
+      "source": "https://commons.wikimedia.org/wiki/File:Red-throated_Parrotfinch_0A2A5145.jpg",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "modifications": "原版を変更せず収録",
+      "noDerivatives": false,
+      "canCrop": false,
+      "canColorFilter": false,
+      "display": "contain"
+    },
+    "gates": {
+      "identity": true,
+      "facts": true,
+      "photoLicense": true,
+      "photoVisual": true,
+      "illustration": true,
+      "layout": false
+    },
+    "gardenEvent": {
+      "scene": "branch",
+      "invitation": "葉のかげに、緑の羽と赤い顔。",
+      "fictional": true,
+      "gardenIds": [
+        "komorebi"
+      ]
+    }
+  },
+  {
+    "id": "masked-finch",
+    "kind": "species",
+    "parentId": null,
+    "name": "マスクフィンチ",
+    "english": "Masked Finch",
+    "scientific": "Poephila personata",
+    "family": "カエデチョウ科",
+    "aliases": [],
+    "releaseReady": false,
+    "scriptVersion": 1,
+    "searchClue": "黄色いくちばしと黒い顔",
+    "hint": "丘の草かげに、黄色いくちばしと黒いマスク。",
+    "eventTitle": "草かげの、黄色いくちばし",
+    "steps": [
+      {
+        "action": "watch-hill-grass",
+        "label": "草のゆれを見る",
+        "text": "かざぐるまの丘の草が、風に合わせてゆれている。ふもとの小さな影を探そう。"
+      },
+      {
+        "action": "notice-yellow-bill",
+        "label": "黄色いくちばしを見る",
+        "text": "茶色い羽のあいだに、黄色いくちばしと黒い顔の模様。近づきすぎず、見つめてみよう。"
+      },
+      {
+        "action": "greet-masked-finch",
+        "label": "静かにごあいさつ",
+        "text": "風がひと息つくと、お客さまもひと休み。この出会いを図鑑に残そう。"
+      }
+    ],
+    "revisit": "丘の草かげで、黄色いくちばしがまた見えたね。",
+    "summary": "オーストラリア北部の草原や開けた林にすむカエデチョウ科の鳥。淡い褐色の体に黒い仮面と黄色いくちばしが特徴で、主にイネ科の種子を食べます。雌雄はよく似ており、見た目だけでの判別は難しい鳥です。",
+    "appearance": "黄色いくちばし、顔の前側の黒い仮面、褐色の頭と体をもつ成鳥の創作イラストです。資料写真の性別は原典に記載がなく特定していません。雌雄はよく似ており、頭全体が黒い鳥ではありません。",
+    "sources": [
+      {
+        "title": "AviList Core Team. 2026. The Global Avian Checklist v2026",
+        "url": "https://www.avilist.org/checklist/v2026/"
+      },
+      {
+        "title": "Australian Bird Study Association: Masked Finch, Bird in the Hand 2nd ed., revised February 2020",
+        "url": "https://absa.asn.au/wp-content/uploads/2015/06/Masked-Finch-1.pdf"
+      },
+      {
+        "title": "Dostine & Franklin (2002): A comparison of the diet of three finch species in the Yinberrie Hills area, Northern Territory",
+        "url": "https://doi.org/10.1071/MU01034"
+      }
+    ],
+    "art": {
+      "src": "game-art/finches/masked-finch-adult.webp",
+      "width": 1254,
+      "height": 1254,
+      "alt": "マスクフィンチの成鳥の創作イラスト"
+    },
+    "photo": {
+      "src": "game-art/finches/photos/masked-finch-summerdrought.jpg",
+      "width": 1959,
+      "height": 1575,
+      "alt": "マスクフィンチ（写真の性別は原典に記載なし）",
+      "caption": "写真「Masked Finch 7355-2」。マスクフィンチ（写真の性別は原典に記載なし）。2018-06-11、オーストラリア北部クイーンズランド州のグレゴリー川で撮影。ゲームの庭や当日の記録ではありません。",
+      "creator": "Summerdrought",
+      "source": "https://commons.wikimedia.org/wiki/File:Masked_Finch_7355-2.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "modifications": "原版を変更せず収録",
+      "noDerivatives": false,
+      "canCrop": false,
+      "canColorFilter": false,
+      "display": "contain"
+    },
+    "gates": {
+      "identity": true,
+      "facts": true,
+      "photoLicense": true,
+      "photoVisual": true,
+      "illustration": true,
+      "layout": false
+    },
+    "gardenEvent": {
+      "scene": "grass",
+      "invitation": "丘の草かげに、黄色いくちばしと黒いマスク。",
+      "fictional": true,
+      "gardenIds": [
+        "kazaguruma"
+      ]
+    }
+  },
+  {
+    "id": "hooded-siskin",
+    "kind": "species",
+    "parentId": null,
+    "name": "ズグロヒワ",
+    "english": "Hooded Siskin",
+    "scientific": "Spinus magellanicus",
+    "family": "アトリ科",
+    "aliases": [],
+    "releaseReady": false,
+    "scriptVersion": 1,
+    "searchClue": "黒い頭と黄色い翼",
+    "hint": "果樹の枝に、黒い頭と翼の黄色。",
+    "eventTitle": "枝先で見つけた、黄色い帯",
+    "steps": [
+      {
+        "action": "follow-orchard-branch",
+        "label": "果樹の枝を見る",
+        "text": "金いろの高原窓の枝先に、小さなお客さま。木々のそばから、静かに見上げよう。"
+      },
+      {
+        "action": "notice-yellow-wing",
+        "label": "翼の黄色を見つける",
+        "text": "黒い頭と、翼にのぞく黄色。少し向きが変わるたび、羽の模様が見えてくる。"
+      },
+      {
+        "action": "greet-hooded-siskin",
+        "label": "出会いを覚える",
+        "text": "枝先のお客さまと、そっとごあいさつ。見つけた特徴を、図鑑で確かめよう。"
+      }
+    ],
+    "revisit": "果樹の枝で、黒い頭と黄色い翼のお客さまにまた会えたね。",
+    "summary": "南アメリカに広く分布するアトリ科の鳥。オスは黒い頭と黄色いおなか、翼の黄色い斑が目印です。メスは黒い頭巾がなく、全体に落ち着いた色。木が点在する草地や林で群れをつくり、種子などを食べます。",
+    "appearance": "黒い頭からのど、黄色いおなかと翼の斑をもつオスの創作イラストと実写真です。メスは黒い頭巾がなく、羽色も控えめです。写真の原典には亜種名 tucumanus がありますが、このページではズグロヒワという種を紹介します。",
+    "sources": [
+      {
+        "title": "AviList Core Team. 2026. The Global Avian Checklist v2026",
+        "url": "https://www.avilist.org/checklist/v2026/"
+      },
+      {
+        "title": "Cornell Lab eBird: Hooded Siskin",
+        "url": "https://ebird.org/species/hoosis1"
+      },
+      {
+        "title": "Universidad de Buenos Aires, Facultades de Agronomía y Ciencias Veterinarias: Cabecita Negra",
+        "url": "https://aves.agro.uba.ar/ave/cabecita-negra"
+      }
+    ],
+    "art": {
+      "src": "game-art/finches/hooded-siskin-male.webp",
+      "width": 1254,
+      "height": 1254,
+      "alt": "ズグロヒワのオスの創作イラスト"
+    },
+    "photo": {
+      "src": "game-art/finches/photos/hooded-siskin-hulsberg.jpg",
+      "width": 1451,
+      "height": 1577,
+      "alt": "ズグロヒワのオス",
+      "caption": "写真「Spinus magellanicus tucumanus, La Rioja」。ズグロヒワのオス。2018-11-15、アルゼンチン・ラリオハ州パガンシージョで撮影。ゲームの庭や当日の記録ではありません。",
+      "creator": "Hugo Hulsberg",
+      "source": "https://commons.wikimedia.org/wiki/File:Spinus_magellanicus_tucumanus,_La_Rioja.jpg",
+      "license": "CC0 1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "modifications": "原版を変更せず収録",
+      "noDerivatives": false,
+      "canCrop": false,
+      "canColorFilter": false,
+      "display": "contain"
+    },
+    "gates": {
+      "identity": true,
+      "facts": true,
+      "photoLicense": true,
+      "photoVisual": true,
+      "illustration": true,
+      "layout": false
+    },
+    "gardenEvent": {
+      "scene": "branch",
+      "invitation": "果樹の枝に、黒い頭と翼の黄色。",
+      "fictional": true,
+      "gardenIds": [
+        "yuyake"
+      ]
+    }
   }
-].map(Object.freeze));
+].map(entry=>{
+  // Keep species/individual IDs and scripts stable for saved discoveries and conversations.
+  const home=GARDEN35_PLAN.find(g=>g.birdId===entry.id);
+  return Object.freeze(home?{...entry,gardenEvent:{...entry.gardenEvent,gardenIds:[home.id]}}:entry);
+}));
 export const INITIAL_EIGHT=Object.freeze(ENCOUNTER_CANDIDATES.slice(0,8));
 export const NEXT_THIRTEEN=Object.freeze(ENCOUNTER_CANDIDATES.slice(8,21));
 export const FINAL_EIGHT=Object.freeze(ENCOUNTER_CANDIDATES.slice(21,29));
 export const ROSEFINCH_ADDITIONS=Object.freeze(ENCOUNTER_CANDIDATES.filter(entry=>['long-tailed-rosefinch','pallass-rosefinch'].includes(entry.id)));
+export const THREE_FINCH_ADDITIONS=Object.freeze(ENCOUNTER_CANDIDATES.filter(entry=>['red-throated-parrotfinch','masked-finch','hooded-siskin'].includes(entry.id)));
 export const TREE_SPARROW_CANDIDATE=ENCOUNTER_CANDIDATES.find(entry=>entry.id==='eurasian-tree-sparrow');
 export const JAVA_BASELINE=Object.freeze({
   "id": "java-sparrow",
