@@ -28,7 +28,7 @@ export function mountGardenJog(root,{items,getCommitted,isBusy=()=>false,onCommi
   const arrow=e.target.closest('[data-garden-scroll]'),center=e.target.closest('[data-jog-center]');
   if(!arrow&&!center)return;e.preventDefault();e.stopImmediatePropagation();
   if(isBusy()||Date.now()<suppressUntil)return;
-  if(arrow)step(arrow.dataset.gardenScroll==='next'?1:-1);
+  if(arrow){step(arrow.dataset.gardenScroll==='next'?1:-1);arrive();}
   else arrive();
  }
  function key(e){if(!e.target.closest('[data-garden-jog]')||pending||isBusy())return;
