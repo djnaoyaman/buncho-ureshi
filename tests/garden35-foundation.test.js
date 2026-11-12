@@ -16,7 +16,7 @@ test('approved plan has exactly one distinct resident in each of 35 gardens and 
  assert.ok(!GARDEN35_PLAN.some(g=>g.birdId==='java-sparrow'));assert.equal(GARDEN35_PLAN[20].name,'落ち葉の小径');
  assert.match(GARDEN35_PLAN[29].musicStyle,/フラメンコ/);assert.match(GARDEN35_PLAN[34].musicStyle,/ボサノヴァ/);
  const additions=GARDEN35_PLAN.filter(g=>!ENCOUNTER_CATALOG.some(e=>e.id===g.birdId));
- assert.deepEqual(additions.map(g=>g.birdId),['red-throated-parrotfinch','masked-finch','hooded-siskin']);
+ assert.deepEqual(additions,[]);
  for(const g of GARDEN35_PLAN){assert.ok(g.description.length>20);assert.ok(g.musicStyle);if(g.number!==1){assert.ok(g.backgroundFile.endsWith('.webp'));assert.ok(g.width>0&&g.height>0);}}
 });
 

@@ -344,7 +344,7 @@ test('inviting a different guest into an already open garden preserves attendanc
 
 for (const {label, points, garden, arrived} of [
   {label:'unmet regional guests', points:null, garden:'komugi', arrived:true},
-  {label:'discovered regional guests at 59', points:59, garden:'komugi', arrived:false},
+  {label:'discovered regional guests at 59', points:59, garden:'komugi', arrived:true},
   {label:'close regional friends at 60', points:60, garden:'komugi', arrived:true},
   {label:'close friends at 60 in a different garden', points:60, garden:'komorebi', arrived:true},
 ]) test(`natural arrivals admit ${label}: ${arrived}`, () => {

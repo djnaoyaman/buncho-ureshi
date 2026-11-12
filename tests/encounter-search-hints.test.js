@@ -13,7 +13,7 @@ const dom=html=>{const win=new Window();win.document.body.innerHTML=html;return 
 const actions={grass:'草をそっと観察',water:'水辺をそっと観察',branch:'枝を見上げ',song:'歌を聴',quiet:'ひとやすみ'};
 
 test('all 32 hidden birds have source-derived gardens, real observation actions and gentle appearance clues',()=>{
- assert.equal(ENCOUNTER_CANDIDATES.length,32);
+ assert.equal(ENCOUNTER_CANDIDATES.length,35);
  for(const entry of ENCOUNTER_CANDIDATES){
   assert.ok(entry.searchClue,entry.id);
   const hint=encounterSearchHint(entry),names=entry.gardenEvent.gardenIds.map(id=>gardenById(id).name);
@@ -45,7 +45,7 @@ test('every hinted first-meeting garden and action is reachable; all other combi
    combinations++;
   }
  }
- assert.equal(combinations,32*35*5);
+ assert.equal(combinations,35*35*5);
 });
 
 test('cards keep long garden lists compact and detail shows every exact garden without revealing names',()=>{
