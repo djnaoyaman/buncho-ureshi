@@ -33,11 +33,10 @@ export function mountGardenJog(root,{items,getCommitted,isBusy=()=>false,onCommi
  }
  function down(e){const face=e.target.closest('[data-garden-jog]');if(!face||isBusy()||e.button>0||items.length<2)return;
   drag={id:e.pointerId,y:e.clientY,last:e.clientY,time:Date.now(),velocity:0,moved:false,face};
-  face.setPointerCapture?.(e.pointerId);
  }
  function move(e){if(!drag||e.pointerId!==drag.id)return;
   const dy=e.clientY-drag.y;if(Math.abs(dy)<8&&!drag.moved)return;
-  e.preventDefault();drag.moved=true;
+  e.preventDefault();if(!drag.moved)drag.face.setPointerCapture?.(e.pointerId);drag.moved=true;
   const elapsed=Math.max(1,Date.now()-drag.time);drag.velocity=Math.max(-1,Math.min(1,(e.clientY-drag.last)/elapsed));drag.last=e.clientY;drag.time=Date.now();
   const steps=Math.trunc(dy/24);if(steps){step(-Math.max(-3,Math.min(3,steps)));drag.y=e.clientY;}
   const angle=win.matchMedia?.('(prefers-reduced-motion: reduce)').matches?0:Math.max(-18,Math.min(18,(e.clientY-drag.y)*.65));
