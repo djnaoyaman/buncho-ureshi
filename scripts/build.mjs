@@ -94,6 +94,7 @@ for (const name of ["game-next-goals.js", "care-schedule.js", "care-rules.js", "
     .replaceAll("./garden-visit-sessions.js", `./garden-visit-sessions.js?v=${gameVersion}`)
     .replaceAll("./encounters.js", `./encounters.js?v=${gameVersion}`)
     .replaceAll("./garden-jog.js", `./garden-jog.js?v=${gameVersion}`)
+    .replaceAll("./encounter-body-art.js", `./encounter-body-art.js?v=${gameVersion}`)
     .replaceAll("./encounter-controller.js", `./encounter-controller.js?v=${gameVersion}`)
     .replaceAll("./encounter-media.js", `./encounter-media.js?v=${gameVersion}`)
     .replaceAll("./garden-social-plan.js", `./garden-social-plan.js?v=${gameVersion}`)
