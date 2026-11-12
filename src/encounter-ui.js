@@ -24,7 +24,7 @@ const picture=(entry,base,hidden=false,thumbnail=false)=>`<span class="finch-med
 export function renderEncounterActorArt(entry,base='/buncho-ureshi/',loading=true){
  const body=encounterBodyArt(entry);
  if(!body)return picture(entry,base);
- return `<span class="finch-media finch-body-art" data-media-state="${loading?'pending':'ready'}" data-body-art="${esc(entry.id)}" style="position:relative;display:block;top:auto;max-width:none;width:100%;height:100%;overflow:visible"><img src="${asset(base,delivery(entry.art.src))}" data-media-src="${asset(base,delivery(entry.art.src))}" width="${entry.art.width}" height="${entry.art.height}" alt="${esc(entry.art.alt)}" draggable="false" decoding="async" class="finch-art" style="${body.style}">${loading?mediaStatus:''}</span>`;
+ return `<span class="finch-media finch-body-art" data-media-state="${loading?'pending':'ready'}" data-body-art="${esc(entry.id)}" style="position:relative;display:block;top:auto;max-width:none;width:100%;height:${loading?'100%':'auto'};aspect-ratio:7 / 8;overflow:visible"><img src="${asset(base,delivery(entry.art.src))}" data-media-src="${asset(base,delivery(entry.art.src))}" width="${entry.art.width}" height="${entry.art.height}" alt="${esc(entry.art.alt)}" draggable="false" decoding="async" class="finch-art" style="${body.style}">${loading?mediaStatus:''}</span>`;
 }
 /** Search text follows the actual first-meeting conditions, not arrival story text. */
 const observationHints=Object.freeze({
