@@ -26,7 +26,7 @@ test('garden menus stay open through refresh and friend actions, but honor close
  get('friends').open=false;panel.refresh();
  assert.equal(get('friends').open,false,'explicit close persists');
  get('companions').open=true;panel.refresh();assert.equal(get('companions').open,true);
- selectGarden(root,'mizukagami');await settle();
+ await selectGarden(root,'mizukagami');await settle();
  assert.equal(get('companions').open,false,'new garden starts closed');
 });
 
