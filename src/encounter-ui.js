@@ -1,3 +1,4 @@
+import {encounterBodyArt} from './encounter-body-art.js';
 import {renderGardenFriendCards} from './garden-friend-cards.js';
 import {renderGardenAboutBooklet} from './garden-about-booklet.js';
 import {renderCompanionSettings} from './garden-companion-ui.js';
@@ -19,6 +20,12 @@ const delivery=(path,thumbnail=false)=>/^game-art\/finches\/[a-z0-9_-]+\.png$/.t
 const mediaStatus='<span class="finch-media-status" aria-hidden="true"><span class="finch-loading-bird">♪</span><span data-media-label>読み込み中…</span></span>';
 const plainPicture=(entry,base)=>`<img src="${asset(base,delivery(entry.art.src))}" width="${entry.art.width}" height="${entry.art.height}" alt="${esc(entry.art.alt)}" draggable="false" decoding="async" class="finch-art">`;
 const picture=(entry,base,hidden=false,thumbnail=false)=>`<span class="finch-media" data-media-state="pending"><img ${thumbnail?'':'src="'+asset(base,delivery(entry.art.src))+'"'} data-media-src="${asset(base,delivery(entry.art.src,thumbnail))}" ${thumbnail?'data-media-lazy="true"':''} width="${entry.art.width}" height="${entry.art.height}" alt="${hidden?'':esc(entry.art.alt)}" draggable="false" decoding="async" class="finch-art${hidden?' is-silhouette':''}">${mediaStatus}</span>`;
+// Scene actors use head-to-feet height; notebook illustrations retain full-image fitting.
+export function renderEncounterActorArt(entry,base='/buncho-ureshi/',loading=true){
+ const body=encounterBodyArt(entry);
+ if(!body)return picture(entry,base);
+ return `<span class="finch-media finch-body-art" data-media-state="${loading?'pending':'ready'}" data-body-art="${esc(entry.id)}" style="position:relative;display:block;top:auto;max-width:none;width:100%;height:100%;overflow:visible"><img src="${asset(base,delivery(entry.art.src))}" data-media-src="${asset(base,delivery(entry.art.src))}" width="${entry.art.width}" height="${entry.art.height}" alt="${esc(entry.art.alt)}" draggable="false" decoding="async" class="finch-art" style="${body.style}">${loading?mediaStatus:''}</span>`;
+}
 /** Search text follows the actual first-meeting conditions, not arrival story text. */
 const observationHints=Object.freeze({
  grass:'草をそっと観察していたら',water:'水辺をそっと観察していたら',
@@ -36,7 +43,7 @@ export function renderEncounterFriendship(w,id,{system=encounterSystem}={}){
  return `<section class="finch-friendship" aria-label="親しみの記録" data-finch-friendship><div class="finch-bond-heading"><strong>${esc(s.level)}</strong><span>会った回数 <b data-finch-visits>${s.visits}</b> 回</span></div><label>親しみ <output data-finch-points>${s.points}</output> ポイント<meter min="0" max="100" value="${Math.min(100,s.points)}">${Math.min(100,s.points)} / 100</meter></label><p>${s.canVisit?'大のなかよし！ おうちにも遊びに来てくれるよ。':`おうちに呼べるまで あと ${FRIENDSHIP_RULES.cagePoints-s.points} ポイント`}</p><div class="finch-friendship-actions"><button type="button" data-encounter-invite-garden="${esc(id)}">庭に呼ぶ</button>${s.inCage?`<button type="button" data-finch-go-home>おうちを見に行く</button><button type="button" data-encounter-dismiss-cage="${esc(id)}" data-goodbye-world="${esc(w.worldId)}" data-goodbye-revision="${w.revision}" aria-label="${esc(system.catalog.find(e=>e.id===id)?.name||'友達')}とお別れする。自分のおうちへ帰ってもらう">お別れする</button>`:`<button type="button" data-encounter-invite-cage="${esc(id)}" ${s.canVisit&&!full?'':'disabled'}>おうちに呼ぶ${!s.canVisit?' · 100ポイントから':full?' · お客さま6羽':''}</button>`}</div></section>`;
 }
 export function encounterCageActors(w,{system=encounterSystem}={}){return (w.encounters.cageVisitors||[]).map(v=>system.catalog.find(e=>e.id===v.id)).filter(Boolean).map(e=>({id:`encounter-${e.id}`,stage:'adult',action:{kind:'visit',target:null,startedTick:0},entry:e}));}
-export function renderEncounterCageGuest(entry,{base='/buncho-ureshi/',style=''}={}){return `<button type="button" class="game-room-bird finch-cage-guest" data-cage-guest="${esc(entry.id)}" style="${esc(style)}" aria-label="${esc(entry.name)}。おうちに遊びに来た友達。庭の鳥図鑑をひらく">${plainPicture(entry,base)}<span>${esc(entry.name)}</span></button>`;}
+export function renderEncounterCageGuest(entry,{base='/buncho-ureshi/',style=''}={}){return `<button type="button" class="game-room-bird finch-cage-guest" data-cage-guest="${esc(entry.id)}" style="${esc(style)}" aria-label="${esc(entry.name)}。おうちに遊びに来た友達。庭の鳥図鑑をひらく">${encounterBodyArt(entry)?renderEncounterActorArt(entry,base,false):plainPicture(entry,base)}<span>${esc(entry.name)}</span></button>`;}
 export function renderEncounterClues(w,{system=encounterSystem,base='/buncho-ureshi/'}={}){
   if(!system.catalog.length)return '';
   if(w.encounters.garden.guestGardenId!==w.encounters.garden.id)return '';
@@ -112,7 +119,7 @@ export function renderGardenStage(w,{system=encounterSystem,base='/buncho-ureshi
  const bird=(f,index)=>{const color=['white','sakura','silver','cinnamon'].includes(f.color)?f.color:'white';return `<button type="button" class="finch-garden-friend" style="${position(index)}" data-garden-friend="${esc(f.friendId)}" data-garden-friend-action="chat" aria-label="${esc(f.name)}と庭でおしゃべり">${renderGardenBirdSprite(color,f.friendId,{base})}<span class="finch-friend-name">${esc(f.name)}</span></button>`;};
  const friendMarkup=friends.map(bird).join('');
  const household=householdBirds.map(b=>`<button type="button" class="finch-garden-household" data-garden-household="${esc(b.birdId)}" aria-label="${esc(b.name)}とふれあう" style="${position(b.birdId===lead?.id?4:free.shift())}">${renderGardenBirdSprite(b.color,b.birdId,{base})}<span class="finch-friend-name">${esc(b.name)}</span></button>`).join('');
- const visitor=guest?`<button type="button" class="finch-garden-visitor" ${waiting?`data-encounter-open="${esc(guest.id)}"`:`data-encounter-page="${esc(guest.id)}"`} aria-label="${waiting?'庭に来たお客さまに会う':'庭の鳥図鑑でお客さまを見る'}" style="${position(5)}">${picture(guest,base)}<span>お客さま</span></button>`:'';
+ const visitor=guest?`<button type="button" class="finch-garden-visitor" ${waiting?`data-encounter-open="${esc(guest.id)}"`:`data-encounter-page="${esc(guest.id)}"`} aria-label="${waiting?'庭に来たお客さまに会う':'庭の鳥図鑑でお客さまを見る'}" style="${position(5)}">${renderEncounterActorArt(guest,base)}<span>お客さま</span></button>`:'';
  return `<div class="finch-garden-scenery finch-garden-stage" data-scene-state="loading" data-garden-id="${place.id}" data-garden-count="${count}" data-garden-density="${compact?'compact':'regular'}" data-garden-fit="cover" aria-label="${esc(place.description)}"><div class="finch-garden-carousel"><div class="finch-garden-slide"><div class="finch-garden-image-plane" style="--garden-image-ratio:${ratio};--garden-anchor-x:${anchor.x};--garden-anchor-y:${anchor.y}" data-image-width="${bg.width}" data-image-height="${bg.height}">${backdrop()}${friendMarkup}${household}${visitor}</div></div></div>${renderCrowScene(w,{base,warning:crowWarning,now})}${renderRaptorScene(w,{base})}<div class="finch-garden-loading" role="status"><span class="finch-loading-bird" aria-hidden="true">♪</span><span data-media-label>小鳥たちが庭を準備しているよ…</span><button type="button" data-media-retry hidden>もう一度読み込む</button></div></div>`;
 }
 
