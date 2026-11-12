@@ -1,3 +1,4 @@
+import {GARDEN_IDS,OLD_GARDEN_IDS} from '../src/data/gardens.js';
 import {stripGrowthPace} from './fixtures/growth-legacy.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -74,7 +75,11 @@ test('cooldown, insufficient Gems and invalid category never spend or advance pr
 test('frozen v10 migration adds only zero counters and preserves all former data without mutation',()=>{
  const old=JSON.parse(readFileSync(new URL('./fixtures/v10-gacha-world.json',import.meta.url))),before=clone(old);
  const w=readCompatibleWorld(old,now+86400000),projection=clone(w);assert.equal(w.version,16);assert.deepEqual(w.decor.duplicateStreaks,Object.fromEntries(DECOR_SLOTS.map(s=>[s.id,0])));
- projection.version=10;stripGrowthPace(projection);if(projection.economy){projection.economy.version=1;delete projection.economy.household;}for(const k of ['clock','archive','journal'])delete projection[k];for(const e of projection.events)e.at=projection.epoch+e.tick*15000;delete projection.decor.duplicateStreaks;assert.equal(projection.encounters.version,14);projection.encounters.version=old.encounters.version;assert.deepEqual(projection,old);assert.deepEqual(old,before);
+ projection.version=10;stripGrowthPace(projection);if(projection.economy){projection.economy.version=1;delete projection.economy.household;}for(const k of ['clock','archive','journal'])delete projection[k];for(const e of projection.events)e.at=projection.epoch+e.tick*15000;delete projection.decor.duplicateStreaks;assert.equal(projection.encounters.version,14);projection.encounters.version=old.encounters.version;
+ // New counters are the only permitted addition; every legacy field still compares exactly.
+ assert.deepEqual(Object.keys(projection.encounters.garden.visits).sort(),[...GARDEN_IDS].sort());
+ for(const id of GARDEN_IDS.filter(id=>!OLD_GARDEN_IDS.includes(id))){assert.equal(projection.encounters.garden.visits[id],0);delete projection.encounters.garden.visits[id];}
+ assert.deepEqual(projection,old);assert.deepEqual(old,before);
  assert.deepEqual(readCompatibleWorld(w),w);assert.deepEqual(parseSave(serializeWorld(w)),w);
  const forged=clone(old);forged.decor.duplicateStreaks=clone(w.decor.duplicateStreaks);assert.throws(()=>readCompatibleWorld(forged));
 });

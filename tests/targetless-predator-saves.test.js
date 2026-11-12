@@ -4,11 +4,23 @@ import {IDBFactory} from 'fake-indexeddb';
 import {createWorld,createBird,readCompatibleWorld,validateWorld,serializeWorld,parseSave,advanceGardenRaptor} from '../src/engine.js';
 import {arriveGardenCrow,crowScene,crowCoolingDown} from '../src/garden-crows.js';
 import {arriveGardenRaptor,raptorScene,raptorTarget,raptorToken,raptorCoolingDown} from '../src/garden-raptors.js';
-import {gardenCompanionRoster} from '../src/data/gardens.js';
+import {createEncounterSystem as oldEncounterSystem} from './fixtures/pre-garden35/encounters.js';
+import {GARDEN_IDS,OLD_GARDEN_IDS,gardenCompanionRoster} from '../src/data/gardens.js';
 import {lifeStatus,accidentLifeBird} from '../src/life-care.js';
 import {openGameStore,DB_NAME,STORAGE_KEY} from '../src/game-store.js';
 
 const NOW=Date.UTC(2026,10,7),clone=structuredClone;
+const oldSystem=oldEncounterSystem();
+function asV12(w){
+ w.encounters.version=12;
+ w.encounters.garden.visits=Object.fromEntries(OLD_GARDEN_IDS.map(id=>[id,w.encounters.garden.visits[id]]));
+ return w;
+}
+function expectedUpgrade(old){
+ const result=clone(old);result.encounters.version=14;
+ result.encounters.garden.visits=Object.fromEntries(GARDEN_IDS.map(id=>[id,old.encounters.garden.visits[id]??0]));
+ return result;
+}
 const fresh=()=>{const w=createWorld(NOW,42);w.encounters.garden.open=true;return w;};
 const token=w=>({...raptorToken(w),gardenId:w.encounters.garden.id});
 const protectedState=w=>{const result=clone(w);delete result.revision;delete result.encounters.crow;delete result.encounters.raptor;return result;};
@@ -63,11 +75,11 @@ test('targetless crow keeps its saved target and phases when the protagonist joi
   assert.deepEqual(parseSave(serializeWorld(w)),w);
 });
 
-test('v12 migration changes only the encounter version and preserves a pinned warning exactly',()=>{
+test('v12 migration adds only the new garden counters and preserves a pinned warning exactly',()=>{
   for(const withWarning of [false,true]){
     const old=fresh();old.encounters.gardenFriends.attendees=['b1'];
     if(withWarning){arrive(old,'raptor');advanceGardenRaptor(old,1000,NOW+1000,token(old));}
-    old.encounters.version=12;const before=clone(old),expected=clone(old);expected.encounters.version=14;
+    asV12(old);oldSystem.validate(old.encounters,old.tick);const before=clone(old),expected=expectedUpgrade(old);
     const migrated=readCompatibleWorld(old,NOW+1000);
     assert.deepEqual(old,before);assert.deepEqual(migrated,expected);
     assert.equal(migrated.version,16);assert.equal(migrated.encounters.gardenFriends.version,2);
@@ -77,7 +89,7 @@ test('v12 migration changes only the encounter version and preserves a pinned wa
 
 test('strict v12 schemas still reject null arrivals before any migration',()=>{
   for(const kind of ['crow','raptor']){
-    const w=fresh();arrive(w,kind);w.encounters.version=12;const before=clone(w);
+    const w=fresh();arrive(w,kind);asV12(w);const before=clone(w);
     assert.throws(()=>readCompatibleWorld(w));assert.deepEqual(w,before);
   }
 });
@@ -102,8 +114,8 @@ async function raw(indexedDB,value){
   try{return await new Promise((resolve,reject)=>{const tx=db.transaction('world',value===undefined?'readonly':'readwrite'),r=value===undefined?tx.objectStore('world').get('current'):tx.objectStore('world').put(value,'current');tx.oncomplete=()=>resolve(r.result);tx.onerror=tx.onabort=()=>reject(tx.error);});}finally{db.close();}
 }
 test('atomic and locked local stores durably migrate v12 without touching warnings or currencies',async()=>{
-  const old=fresh();old.encounters.gardenFriends.attendees=['b1'];arrive(old,'raptor');old.encounters.version=12;
-  const expected=clone(old);expected.encounters.version=14;
+  const old=fresh();old.encounters.gardenFriends.attendees=['b1'];arrive(old,'raptor');asV12(old);oldSystem.validate(old.encounters,old.tick);
+  const expected=expectedUpgrade(old);
   const indexedDB=new IDBFactory();await raw(indexedDB,old);
   const a=await openGameStore({indexedDB}),b=await openGameStore({indexedDB});
   try{const results=await Promise.all([a,b].map(store=>store.transact(w=>w)));assert.deepEqual(results,[expected,expected]);assert.deepEqual(await raw(indexedDB),expected);}finally{a.close();b.close();}
