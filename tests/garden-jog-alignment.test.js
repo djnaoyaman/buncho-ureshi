@@ -1,0 +1,50 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {Window} from 'happy-dom';
+import {mountGardenJog} from '../src/garden-jog.js';
+
+test('full garden styles reset legacy offsets and selected-button decoration; taps retain their target', t => {
+ const win = new Window();
+ t.after(() => win.happyDOM.close());
+ const doc = win.document;
+ doc.body.dataset.world = 'buncho';
+ for (const file of ['encounter-ui.css', 'game.css']) {
+  const style = doc.createElement('style');
+  style.textContent = readFileSync(new URL(`../src/${file}`, import.meta.url), 'utf8');
+  doc.head.append(style);
+ }
+ doc.body.innerHTML = '<main class="game-app"><div class="finch-garden"><div class="finch-garden-selector-wrap"><nav class="finch-garden-selector garden-jog" data-garden-jog><div class="garden-jog-cylinder"><span data-jog-before></span><button data-jog-center aria-current="page"></button><span data-jog-after></span></div><small data-jog-count></small></nav></div></div></main>';
+ const face = doc.querySelector('nav'), center = doc.querySelector('button');
+ const navStyle = win.getComputedStyle(face), buttonStyle = win.getComputedStyle(center);
+ for (const side of ['top', 'right', 'bottom', 'left']) assert.equal(navStyle[side], 'auto', side);
+ assert.equal(buttonStyle.backgroundColor, 'transparent');
+ assert.equal(buttonStyle.textDecoration, 'none');
+ assert.equal(buttonStyle.top, '50%');
+ assert.equal(buttonStyle.left, '0px');
+ assert.equal(buttonStyle.width, '100%');
+ assert.equal(buttonStyle.minHeight, '0');
+ let captures = 0;
+ face.setPointerCapture = () => captures++;
+ const arrivals = [];
+ const jog = mountGardenJog(doc.body, {items:[{id:'a',name:'庭A'},{id:'b',name:'庭B'}],getCommitted:()=> 'a',onCommit:id=>arrivals.push(id)});
+ t.after(() => jog.destroy());
+ jog.refresh();
+ center.dispatchEvent(new win.KeyboardEvent('keydown',{key:'ArrowDown',bubbles:true}));
+ const pointer = (type,y) => center.dispatchEvent(new win.PointerEvent(type,{pointerId:1,clientY:y,button:0,bubbles:true,cancelable:true}));
+ pointer('pointerdown',100);
+ assert.equal(captures,0);
+ pointer('pointermove',105);
+ assert.equal(captures,0);
+ pointer('pointerup',105);
+ center.click();
+ assert.deepEqual(arrivals,['b']);
+ pointer('pointerdown',100);
+ pointer('pointermove',80);
+ assert.equal(captures,1);
+ pointer('pointermove',70);
+ assert.equal(captures,1);
+ pointer('pointercancel',70);
+ center.click();
+ assert.deepEqual(arrivals,['b']);
+});
