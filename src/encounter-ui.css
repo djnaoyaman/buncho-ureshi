@@ -341,3 +341,15 @@ body[data-world="buncho"] .finch-mystery-postcard .finch-mystery-note{font-size:
 body[data-world="buncho"] .finch-mystery-postcard .finch-page-actions{gap:14px;flex-direction:column}
 body[data-world="buncho"] .finch-mystery-postcard .finch-page-actions>button{flex:0 1 auto;width:100%;background:#fffcf5;border:1px solid #627765;border-radius:999px;box-shadow:none;color:#304f45}
 body[data-world="buncho"] .finch-mystery-postcard .finch-page-actions>button:first-child{background:#f4c9b7;font-weight:700}
+
+/* Match Java-sparrow frames without shrinking tap targets. Tail reserve is
+   measured below standing feet, separate from body proportions. */
+.finch-garden-stage{--encounter-frame-width:70px;--encounter-frame-height:80px}
+.finch-garden-stage[data-garden-density=regular]{--encounter-frame-width:clamp(64px,18cqw,100px);--encounter-frame-height:clamp(75px,21.18cqw,117.65px)}
+@media(max-height:500px){.finch-garden-stage[data-garden-density=regular]{--encounter-frame-width:64px;--encounter-frame-height:75.3px}}
+.finch-garden-stage[data-garden-density=regular][data-garden-id=mizukagami]{--encounter-frame-width:60px;--encounter-frame-height:70.6px}
+.finch-garden-stage[data-garden-density=compact]{--encounter-frame-width:44px;--encounter-frame-height:52px}
+.finch-garden-stage .finch-garden-visitor{width:var(--encounter-frame-width);height:var(--encounter-frame-height)}
+.finch-garden-image-plane{--garden-tail-reserve:0px}
+.finch-garden-image-plane:has([data-body-art="pin-tailed-whydah"]){--garden-tail-reserve:calc(var(--encounter-frame-height) * .38)}
+.finch-garden-image-plane:has([data-body-art="long-tailed-paradise-whydah"]){--garden-tail-reserve:calc(var(--encounter-frame-height) * .754)}
