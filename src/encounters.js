@@ -1,10 +1,11 @@
+import {prepareGarden35Visits} from './garden35-migration.js';
 import {isAlive} from './life-care.js';
 import {initializeGardenVisitSessions,switchGardenVisitSession,pendingGardenGuestLocation,clearCompletedGardenGuest,gardenVisitSessionFields} from './garden-visit-sessions.js';
 import {initialRaptorState,validateRaptorState} from './garden-raptors.js';
 import {initialCrowState,validateCrowState} from './garden-crows.js';
 import {initialGardenFriends,validateGardenFriends,setGardenCompanions,bondGardenFriend,beginGardenOuting,recordGardenVisit} from './garden-friends.js';
 /** Pure encounter state. Other species never enter Java Sparrow birds[] or consume its PRNG. */
-import {GARDEN_IDS,LEGACY_GARDEN_IDS,gardenById,gardenFriendRoster,shuffleGardenPool} from './data/gardens.js';
+import {GARDEN_IDS,OLD_GARDEN_IDS,LEGACY_GARDEN_IDS,gardenById,gardenFriendRoster,shuffleGardenPool} from './data/gardens.js';
 import { ENCOUNTER_CATALOG, ENCOUNTER_CANDIDATES } from './data/encounter-catalog.js';
 export const ENCOUNTER_LIMITS=Object.freeze({catalog:160,queue:1,activity:1000000,visits:1000000});
 export const FRIENDSHIP_RULES=Object.freeze({meetingPoints:10,cagePoints:100,petPoints:1000000,visitors:6,visitTicks:96});
@@ -16,7 +17,7 @@ export function encounterFriendship(w,id){
 }
 export function cageVisitorCount(w){return w.birds.filter(b=>b.home==='visitor').length+(w.encounters?.cageVisitors?.length||0);}
 /** Called only after the legacy state has passed full schema validation. */
-export function upgradeEncounterState(state){if(state.version===4){state.version=5;state.friendship=[];state.cageVisitors=[];}if(state.version===5){state.version=6;state.homeClosedUntil=0;}if(state.version===6){state.version=7;state.crow=initialCrowState();}if(state.version===7){state.version=8;state.raptor=initialRaptorState();}if(state.version===8){state.version=9;for(const id of GARDEN_IDS)if(!Object.hasOwn(state.garden.visits,id))state.garden.visits[id]=0;}if(state.version===9){state.version=10;state.homeGoodbyes=[];}if(state.version===10){initializeGardenVisitSessions(state);state.version=11;}if(state.version===11){state.gardenFriends={...state.gardenFriends,version:2,accompany:false,attendees:[],visits:[]};state.version=12;}if(state.version===12)state.version=13;return state;}
+export function upgradeEncounterState(state){if(state.version===4){state.version=5;state.friendship=[];state.cageVisitors=[];}if(state.version===5){state.version=6;state.homeClosedUntil=0;}if(state.version===6){state.version=7;state.crow=initialCrowState();}if(state.version===7){state.version=8;state.raptor=initialRaptorState();}if(state.version===8){state.version=9;for(const id of OLD_GARDEN_IDS)if(!Object.hasOwn(state.garden.visits,id))state.garden.visits[id]=0;}if(state.version===9){state.version=10;state.homeGoodbyes=[];}if(state.version===10){initializeGardenVisitSessions(state);state.version=11;}if(state.version===11){state.gardenFriends={...state.gardenFriends,version:2,accompany:false,attendees:[],visits:[]};state.version=12;}if(state.version===12)state.version=13;if(state.version===13){state.garden.visits=prepareGarden35Visits(state.garden.visits);state.version=14;}return state;}
 export function expireEncounterVisitors(w){if(w.encounters.cageVisitors)w.encounters.cageVisitors=w.encounters.cageVisitors.filter(v=>w.tick-v.arrivedTick<=FRIENDSHIP_RULES.visitTicks);}
 const ACTIVITIES=['park','talk','decorate','friend','read','garden'];
 export const GARDEN_SCENES=Object.freeze(['grass','water','branch','song','quiet']);
@@ -25,7 +26,7 @@ const own=(x,k)=>Object.prototype.hasOwnProperty.call(x,k);
 const shape=(x,keys)=>x&&typeof x==='object'&&!Array.isArray(x)&&Object.keys(x).length===keys.length&&keys.every(k=>own(x,k));
 const integer=(x,min=0,max=Number.MAX_SAFE_INTEGER)=>Number.isSafeInteger(x)&&x>=min&&x<=max;
 const bump=w=>{w.revision=w.revision===Number.MAX_SAFE_INTEGER?0:w.revision+1;};
-export function initialEncounterState(){return {version:13,gardenSessions:[],homeGoodbyes:[],raptor:initialRaptorState(),crow:initialCrowState(),homeClosedUntil:0,gardenFriends:initialGardenFriends(),garden:initialGardenState(),nextId:1,cursor:0,activities:Object.fromEntries(ACTIVITIES.map(k=>[k,0])),queue:[],active:null,discoveries:[],friendship:[],cageVisitors:[]};}
+export function initialEncounterState(){return {version:14,gardenSessions:[],homeGoodbyes:[],raptor:initialRaptorState(),crow:initialCrowState(),homeClosedUntil:0,gardenFriends:initialGardenFriends(),garden:initialGardenState(),nextId:1,cursor:0,activities:Object.fromEntries(ACTIVITIES.map(k=>[k,0])),queue:[],active:null,discoveries:[],friendship:[],cageVisitors:[]};}
 export function createEncounterSystem(catalog=ENCOUNTER_CATALOG,{knownCatalog=catalog}={}){
   if(!Array.isArray(catalog)||catalog.length>ENCOUNTER_LIMITS.catalog)throw new Error('出会いの図鑑が不正です。');
   const byId=new Map();
@@ -38,13 +39,14 @@ export function createEncounterSystem(catalog=ENCOUNTER_CATALOG,{knownCatalog=ca
   const stale=()=>({changed:false,reason:'stale',message:'庭が変わったよ。もう一度ひらいてね。'});
   function validate(state,tick){
     const fail=()=>{throw new Error('出会いの記録が不正です。');};
-    if(!integer(tick)||!shape(state,['version','gardenFriends','garden','nextId','cursor','activities','queue','active','discoveries',...(state.version>=5?['friendship','cageVisitors']:[]),...(state.version>=6?['homeClosedUntil']:[]),...(state.version>=7?['crow']:[]),...(state.version>=8?['raptor']:[]),...(state.version>=10?['homeGoodbyes']:[]),...(state.version>=11?['gardenSessions']:[])])||![4,5,6,7,8,9,10,11,12,13].includes(state.version)||!integer(state.nextId,1)||!integer(state.cursor,0,ENCOUNTER_LIMITS.catalog)||!shape(state.activities,ACTIVITIES)||ACTIVITIES.some(k=>!integer(state.activities[k],0,ENCOUNTER_LIMITS.activity))||!Array.isArray(state.queue)||state.queue.length>1||new Set(state.queue).size!==state.queue.length||state.queue.some(id=>!knownById.has(id))||!Array.isArray(state.discoveries)||state.discoveries.length>knownCatalog.length)fail();
+    const stateGardenIds=state.version>=14?GARDEN_IDS:OLD_GARDEN_IDS;
+    if(!integer(tick)||!shape(state,['version','gardenFriends','garden','nextId','cursor','activities','queue','active','discoveries',...(state.version>=5?['friendship','cageVisitors']:[]),...(state.version>=6?['homeClosedUntil']:[]),...(state.version>=7?['crow']:[]),...(state.version>=8?['raptor']:[]),...(state.version>=10?['homeGoodbyes']:[]),...(state.version>=11?['gardenSessions']:[])])||![4,5,6,7,8,9,10,11,12,13,14].includes(state.version)||!integer(state.nextId,1)||!integer(state.cursor,0,ENCOUNTER_LIMITS.catalog)||!shape(state.activities,ACTIVITIES)||ACTIVITIES.some(k=>!integer(state.activities[k],0,ENCOUNTER_LIMITS.activity))||!Array.isArray(state.queue)||state.queue.length>1||new Set(state.queue).size!==state.queue.length||state.queue.some(id=>!knownById.has(id))||!Array.isArray(state.discoveries)||state.discoveries.length>knownCatalog.length)fail();
     if(state.version>=6&&!integer(state.homeClosedUntil,0,8640000000000000))fail();
     if(state.version>=10&&(!Array.isArray(state.homeGoodbyes)||state.homeGoodbyes.length>128||new Set(state.homeGoodbyes.map(g=>g?.birdId)).size!==state.homeGoodbyes.length||state.homeGoodbyes.some(g=>!shape(g,['birdId','until'])||typeof g.birdId!=='string'||!/^b[1-9]\d{0,8}$/.test(g.birdId)||!integer(g.until,1,8640000000000000))))fail();
-    if(state.version>=8)validateRaptorState(state.raptor,tick,GARDEN_IDS,state.version);
-    if(state.version>=7)validateCrowState(state.crow,tick,GARDEN_IDS,state.version);
-    validateGardenFriends(state.gardenFriends,tick,state.version);
-    const allowedGardens=state.version>=9?GARDEN_IDS:LEGACY_GARDEN_IDS;const g=state.garden;if(!shape(g,['open','id','scene','turn','nextTurn','nextTick','lastGuest','guestGardenId','visits','moments'])||!(g.guestGardenId===null||GARDEN_IDS.includes(g.guestGardenId))||((state.queue.length||state.active)&&g.guestGardenId===null)||typeof g.open!=='boolean'||!allowedGardens.includes(g.id)||!shape(g.visits,allowedGardens)||allowedGardens.some(id=>!integer(g.visits[id],0,ENCOUNTER_LIMITS.visits))||!Array.isArray(g.moments)||g.moments.length>64||g.moments.some(m=>!shape(m,['gardenId','birdId','kind','tick'])||!GARDEN_IDS.includes(m.gardenId)||!/^b[1-9][0-9]*$/.test(m.birdId)||!['chat','watch','play'].includes(m.kind)||!integer(m.tick,0,tick))||!GARDEN_SCENES.includes(g.scene)||!integer(g.turn,0,ENCOUNTER_LIMITS.activity)||!integer(g.nextTurn,1,ENCOUNTER_LIMITS.activity)||!integer(g.nextTick)||!(g.lastGuest===null||knownById.has(g.lastGuest))||(state.active&&state.queue.length))fail();
+    if(state.version>=8)validateRaptorState(state.raptor,tick,stateGardenIds,state.version);
+    if(state.version>=7)validateCrowState(state.crow,tick,stateGardenIds,state.version);
+    validateGardenFriends(state.gardenFriends,tick,state.version,stateGardenIds);
+    const allowedGardens=state.version>=9?stateGardenIds:LEGACY_GARDEN_IDS;const g=state.garden;if(!shape(g,['open','id','scene','turn','nextTurn','nextTick','lastGuest','guestGardenId','visits','moments'])||!(g.guestGardenId===null||stateGardenIds.includes(g.guestGardenId))||((state.queue.length||state.active)&&g.guestGardenId===null)||typeof g.open!=='boolean'||!allowedGardens.includes(g.id)||!shape(g.visits,allowedGardens)||allowedGardens.some(id=>!integer(g.visits[id],0,ENCOUNTER_LIMITS.visits))||!Array.isArray(g.moments)||g.moments.length>64||g.moments.some(m=>!shape(m,['gardenId','birdId','kind','tick'])||!stateGardenIds.includes(m.gardenId)||!/^b[1-9][0-9]*$/.test(m.birdId)||!['chat','watch','play'].includes(m.kind)||!integer(m.tick,0,tick))||!GARDEN_SCENES.includes(g.scene)||!integer(g.turn,0,ENCOUNTER_LIMITS.activity)||!integer(g.nextTurn,1,ENCOUNTER_LIMITS.activity)||!integer(g.nextTick)||!(g.lastGuest===null||knownById.has(g.lastGuest))||(state.active&&state.queue.length))fail();
     const seen=new Set(), instances=new Set();
     for(const d of state.discoveries){if(!shape(d,['id','firstTick','lastTick','visits','instanceId'])||!knownById.has(d.id)||seen.has(d.id)||instances.has(d.instanceId)||!integer(d.firstTick,0,tick)||!integer(d.lastTick,d.firstTick,tick)||!integer(d.visits,1,ENCOUNTER_LIMITS.visits)||!integer(d.instanceId,1,state.nextId-1))fail();seen.add(d.id);instances.add(d.instanceId);}
     // Invitations and script instance IDs are unique across every garden.
@@ -59,10 +61,10 @@ export function createEncounterSystem(catalog=ENCOUNTER_CATALOG,{knownCatalog=ca
     }
     validateVisit(g,state.queue,state.active,g.id);
     if(state.version>=11){
-      if(!Array.isArray(state.gardenSessions)||state.gardenSessions.length>GARDEN_IDS.length-1)fail();
+      if(!Array.isArray(state.gardenSessions)||state.gardenSessions.length>stateGardenIds.length-1)fail();
       const gardens=new Set([g.id]);
       for(const visit of state.gardenSessions){
-        if(!shape(visit,gardenVisitSessionFields())||!GARDEN_IDS.includes(visit.gardenId)||gardens.has(visit.gardenId)||!GARDEN_SCENES.includes(visit.scene)||!integer(visit.turn,0,ENCOUNTER_LIMITS.activity)||!integer(visit.nextTurn,1,ENCOUNTER_LIMITS.activity)||!integer(visit.nextTick)||!(visit.lastGuest===null||knownById.has(visit.lastGuest)))fail();
+        if(!shape(visit,gardenVisitSessionFields())||!stateGardenIds.includes(visit.gardenId)||gardens.has(visit.gardenId)||!GARDEN_SCENES.includes(visit.scene)||!integer(visit.turn,0,ENCOUNTER_LIMITS.activity)||!integer(visit.nextTurn,1,ENCOUNTER_LIMITS.activity)||!integer(visit.nextTick)||!(visit.lastGuest===null||knownById.has(visit.lastGuest)))fail();
         gardens.add(visit.gardenId);validateVisit(visit,visit.queue,visit.active,visit.gardenId);
       }
     }

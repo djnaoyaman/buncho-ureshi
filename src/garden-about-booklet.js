@@ -7,7 +7,7 @@ import {CROW_RULES} from './garden-crows.js';
 import {RAPTOR_RULES} from './garden-raptors.js';
 const duration=ms=>ms%60000===0?`${ms/60000}分`:`${ms/1000}秒`;
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const localArt=src=>typeof src==='string'&&/^\/(?:[A-Za-z0-9_-]+\/)*game-art\/gardens\/[A-Za-z0-9_/-]+(?:\.screen)?\.(?:png|webp)(?:\?v=[a-f0-9]+)?$/.test(src)&&!src.includes('..');
+const localArt=src=>typeof src==='string'&&/^\/(?:[A-Za-z0-9_-]+\/)*game-art\/gardens(?:35)?\/[A-Za-z0-9_/-]+(?:\.screen)?\.(?:png|webp)(?:\?v=[a-f0-9]+)?$/.test(src)&&!src.includes('..');
 const dimension=n=>Number.isSafeInteger(n)&&n>0?n:1;
 export function renderGardenAboutBooklet({name,description,landform,art=null}){
  const figure=art&&localArt(art.src)?`<figure class="garden-about-booklet__figure"><img src="${esc(art.src)}" width="${dimension(art.width)}" height="${dimension(art.height)}" alt="${esc(art.alt??description)}" loading="lazy" decoding="async" draggable="false">${landform?`<figcaption>${esc(landform)}</figcaption>`:''}</figure>`:'';

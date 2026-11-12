@@ -5,7 +5,7 @@ import sharp from 'sharp';
 import {Window} from 'happy-dom';
 import {gardenFriendActionIllustrations} from '../src/garden-friend-action-art.js';
 import {gardenFriendActionArt,renderGardenFriendCards} from '../src/garden-friend-cards.js';
-import {GARDENS} from '../src/data/gardens.js';
+import {OLD_GARDENS as GARDENS} from '../src/data/gardens.js';
 test('22 new implementation SVGs exactly match their fixtures, safe geometry contracts and 48/76px clear padding',async()=>{
  assert.equal(Object.keys(gardenFriendActionIllustrations).length,22);
  for(const [key,svg] of Object.entries(gardenFriendActionIllustrations)){

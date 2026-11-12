@@ -1,9 +1,10 @@
+import {createEncounterSystem as oldEncounterSystem} from './fixtures/pre-garden35/encounters.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {GARDEN35_PLAN,GARDEN35_IDS,GARDEN35_LEGACY_IDS} from '../src/data/garden35-plan.js';
 import {prepareGarden35Visits} from '../src/garden35-migration.js';
-import {GARDEN_IDS} from '../src/data/gardens.js';
+import {OLD_GARDEN_IDS as GARDEN_IDS} from '../src/data/gardens.js';
 import {ENCOUNTER_CATALOG} from '../src/data/encounter-catalog.js';
 import {createWorld,serializeWorld,parseSave} from '../src/engine.js';
 import {encounterSystem} from '../src/encounters.js';
@@ -11,7 +12,7 @@ import {encounterSystem} from '../src/encounters.js';
 test('approved plan has exactly one distinct resident in each of 35 gardens and keeps all old IDs',()=>{
  assert.equal(GARDEN35_PLAN.length,35);assert.equal(new Set(GARDEN35_IDS).size,35);assert.equal(new Set(GARDEN35_PLAN.map(g=>g.birdId)).size,35);
  assert.deepEqual(new Set(GARDEN35_LEGACY_IDS),new Set(GARDEN_IDS));
- assert.equal(GARDEN35_PLAN[0].birdId,'eurasian-tree-sparrow');assert.equal(GARDEN35_PLAN[0].name,'足立区梅島公園');assert.equal(GARDEN35_PLAN[0].backgroundFile,null);
+ assert.equal(GARDEN35_PLAN[0].birdId,'eurasian-tree-sparrow');assert.equal(GARDEN35_PLAN[0].name,'足立区梅島公園');assert.equal(GARDEN35_PLAN[0].backgroundFile,'game-art/gardens35/bird-garden-01.webp');
  assert.ok(!GARDEN35_PLAN.some(g=>g.birdId==='java-sparrow'));assert.equal(GARDEN35_PLAN[20].name,'落ち葉の小径');
  assert.match(GARDEN35_PLAN[29].musicStyle,/フラメンコ/);assert.match(GARDEN35_PLAN[34].musicStyle,/ボサノヴァ/);
  const additions=GARDEN35_PLAN.filter(g=>!ENCOUNTER_CATALOG.some(e=>e.id===g.birdId));
@@ -46,7 +47,7 @@ test('invalid, missing and accessor counters fail closed without reading getters
 test('previous published engine rejects future visit keys rather than overwriting them, while review page is storage-free',()=>{
  const w=createWorld(1000,42),before=serializeWorld(w),future=structuredClone(w);
  future.encounters.garden.visits=prepareGarden35Visits(future.encounters.garden.visits);
- assert.throws(()=>parseSave(JSON.stringify(future)));assert.equal(serializeWorld(w),before);
+ assert.throws(()=>oldEncounterSystem().validate(future.encounters,future.tick));assert.equal(serializeWorld(w),before);
  const html=readFileSync(new URL('../public/garden35-plan/index.html',import.meta.url),'utf8');
- assert.equal((html.match(/<li>/g)||[]).length,35);assert.ok(!/<script\b|localStorage|indexedDB/i.test(html));assert.match(html,/ゲームはまだ旧12庭/);
+ assert.equal((html.match(/<li>/g)||[]).length,35);assert.ok(!/<script\b|localStorage|indexedDB/i.test(html));assert.match(html,/35庭の背景と紹介をゲームに接続/);
 });

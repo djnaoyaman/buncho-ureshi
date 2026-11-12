@@ -67,7 +67,7 @@ test('v12 migration changes only the encounter version and preserves a pinned wa
   for(const withWarning of [false,true]){
     const old=fresh();old.encounters.gardenFriends.attendees=['b1'];
     if(withWarning){arrive(old,'raptor');advanceGardenRaptor(old,1000,NOW+1000,token(old));}
-    old.encounters.version=12;const before=clone(old),expected=clone(old);expected.encounters.version=13;
+    old.encounters.version=12;const before=clone(old),expected=clone(old);expected.encounters.version=14;
     const migrated=readCompatibleWorld(old,NOW+1000);
     assert.deepEqual(old,before);assert.deepEqual(migrated,expected);
     assert.equal(migrated.version,16);assert.equal(migrated.encounters.gardenFriends.version,2);
@@ -103,7 +103,7 @@ async function raw(indexedDB,value){
 }
 test('atomic and locked local stores durably migrate v12 without touching warnings or currencies',async()=>{
   const old=fresh();old.encounters.gardenFriends.attendees=['b1'];arrive(old,'raptor');old.encounters.version=12;
-  const expected=clone(old);expected.encounters.version=13;
+  const expected=clone(old);expected.encounters.version=14;
   const indexedDB=new IDBFactory();await raw(indexedDB,old);
   const a=await openGameStore({indexedDB}),b=await openGameStore({indexedDB});
   try{const results=await Promise.all([a,b].map(store=>store.transact(w=>w)));assert.deepEqual(results,[expected,expected]);assert.deepEqual(await raw(indexedDB),expected);}finally{a.close();b.close();}
