@@ -1,3 +1,4 @@
+import {selectGarden} from './fixtures/select-garden-jog.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {Window} from 'happy-dom';
@@ -25,7 +26,7 @@ test('garden menus stay open through refresh and friend actions, but honor close
  get('friends').open=false;panel.refresh();
  assert.equal(get('friends').open,false,'explicit close persists');
  get('companions').open=true;panel.refresh();assert.equal(get('companions').open,true);
- root.querySelector('[data-garden-select="mizukagami"]').click();await settle();
+ selectGarden(root,'mizukagami');await settle();
  assert.equal(get('companions').open,false,'new garden starts closed');
 });
 

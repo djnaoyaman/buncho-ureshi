@@ -1,5 +1,6 @@
 import {createCompanionDraft,eligibleCompanions} from './garden-companion-ui.js';
-import {gardenSelectorOffset} from './data/gardens.js';
+import {GARDENS,gardenSelectorOffset} from './data/gardens.js';
+import {mountGardenJog} from './garden-jog.js';
 import {petGardenRaptor} from './garden-raptors.js';
 import {renderRaptorNotebook,renderRaptorFriendship} from './garden-raptor-ui.js';
 import {createGardenCrowClock,arriveGardenCrow,crowCoolingDown,crowScene,petGardenCrow,crowTarget} from './garden-crows.js';
@@ -48,6 +49,7 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
   };
   doc.addEventListener('buncho-game-will-render',rememberCatalog);
   const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const jog=mountGardenJog(root,{items:GARDENS,getCommitted:()=>getWorld().encounters.garden.id,isBusy:()=>busy,onCommit:id=>garden(id)});
   function render({focus=false}={}){
     if(!alive)return;const w=getWorld();syncCrowContext(w);
     if(companionDraft&&(mode!=='garden'||companionDraft.worldId!==w.worldId||companionDraft.gardenId!==w.encounters.garden.id))discardCompanions();
@@ -63,6 +65,7 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
       &&hostGardenScroll.gardenId===w.encounters.garden.id?hostGardenScroll:null;
     hostGardenScroll=null;
     const oldDetails=savedGarden?.details||new Map(oldGarden?[...oldGarden.querySelectorAll('details[data-garden-details][open]')].map(d=>[d.dataset.gardenDetails,d.scrollTop]):[]);
+    const jogFocus=doc.activeElement?.matches?.('[data-jog-center]');
     const oldSelector=root.querySelector('.finch-garden-selector');
     const oldScroll=oldSelector?.scrollLeft, oldSelected=oldSelector?.querySelector('[aria-current=page]')?.dataset.gardenSelect;
     const sameBooklet=oldGarden?.dataset.gardenWorld===w.worldId&&oldSelected===w.encounters.garden.id;
@@ -106,11 +109,13 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
     if(savedReading){for(const detail of root.querySelectorAll('details[data-notebook-reading]'))detail.open=savedReading.open.includes(detail.dataset.notebookReading);if(!focus&&savedReading.focused)for(const detail of root.querySelectorAll('details[data-notebook-reading]'))if(detail.dataset.notebookReading===savedReading.focused.section){const remembered=savedReading.focused,links=[...detail.querySelectorAll('a[href]')],target=remembered.summary?detail.querySelector('summary'):links[remembered.index]?.getAttribute('href')===remembered.href?links[remembered.index]:links.find(a=>a.getAttribute('href')===remembered.href);target?.focus({preventScroll:true});}}
     root.scrollTop=savedReading?.scroll??oldEntryScroll;
     const catalog=root.querySelector('.finch-catalog');if(catalog)catalog.scrollTop=oldCatalogScroll||0;
+    jog.refresh();
     media.refresh();
     root.setAttribute('aria-busy',String(busy));
     if(busy)for(const button of root.querySelectorAll('button'))button.disabled=true;
     doc.dispatchEvent(new win.CustomEvent('buncho-game-encounter-view',{detail:{mode}}));
     if(focus)root.querySelector('h3')?.focus({preventScroll:true});
+    else if(jogFocus)root.querySelector('[data-jog-center]')?.focus({preventScroll:true});
     else if(bookletFocus&&mode==='garden')root.querySelector('[data-garden-details='+bookletFocus+'] > summary')?.focus({preventScroll:true});
     else if(companionFocus){const [attribute,value]=companionFocus;const target=[...root.querySelectorAll(`[${attribute}]`)].find(el=>value===null||el.getAttribute(attribute)===value);if(!target?.disabled)target?.focus({preventScroll:true});}
   }
@@ -315,5 +320,5 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
   crowTimer=win.setTimeout(pollCrow,1000);
   root.classList.add('finch-overlay-content');root.addEventListener('click',click);root.addEventListener('pointerdown',startRub);root.addEventListener('keydown',keyRub);doc.addEventListener('pointermove',moveRub,{passive:false});doc.addEventListener('pointerup',endRub);doc.addEventListener('pointercancel',endRub);render();
   const motion=mountGardenBirdMotion(root,{enabled:()=>alive&&!getWorld().paused&&getWorld().settings.motion});
-  return {canStartCrowWarning,startCrowWarning,hasCrowPending:()=>alive&&(!!crowClock.warning||crowFlight),open,garden,entry(id){generation++;rub=null;busy=false;mode='entry';pageId=id;showPhoto=false;notice='';render({focus:true});},notebook(){rub=null;generation++;busy=false;mode='notebook';pageId=null;notice='';render({focus:true});},refresh(){render();},destroy(){stopCrow();crowModalObserver?.disconnect();win.clearTimeout(crowTimer);doc.removeEventListener('visibilitychange',crowInterrupted);doc.removeEventListener('buncho-game-view-visibility',viewVisibility);win.removeEventListener('offline',crowInterrupted);win.removeEventListener('pagehide',crowInterrupted);doc.removeEventListener('buncho-game-will-render',rememberCatalog);media.destroy();motion();alive=false;generation++;rub=null;clearTimeout(petTimer);root.removeEventListener('pointerdown',startRub);root.removeEventListener('keydown',keyRub);doc.removeEventListener('pointermove',moveRub);doc.removeEventListener('pointerup',endRub);doc.removeEventListener('pointercancel',endRub);root.removeEventListener('click',click);root.removeEventListener('toggle',companionToggle,true);discardCompanions();root.removeAttribute('aria-busy');root.classList.remove('finch-overlay-content');}};
+  return {canStartCrowWarning,startCrowWarning,hasCrowPending:()=>alive&&(!!crowClock.warning||crowFlight),open,garden,entry(id){generation++;rub=null;busy=false;mode='entry';pageId=id;showPhoto=false;notice='';render({focus:true});},notebook(){rub=null;generation++;busy=false;mode='notebook';pageId=null;notice='';render({focus:true});},refresh(){render();},destroy(){jog.destroy();stopCrow();crowModalObserver?.disconnect();win.clearTimeout(crowTimer);doc.removeEventListener('visibilitychange',crowInterrupted);doc.removeEventListener('buncho-game-view-visibility',viewVisibility);win.removeEventListener('offline',crowInterrupted);win.removeEventListener('pagehide',crowInterrupted);doc.removeEventListener('buncho-game-will-render',rememberCatalog);media.destroy();motion();alive=false;generation++;rub=null;clearTimeout(petTimer);root.removeEventListener('pointerdown',startRub);root.removeEventListener('keydown',keyRub);doc.removeEventListener('pointermove',moveRub);doc.removeEventListener('pointerup',endRub);doc.removeEventListener('pointercancel',endRub);root.removeEventListener('click',click);root.removeEventListener('toggle',companionToggle,true);discardCompanions();root.removeAttribute('aria-busy');root.classList.remove('finch-overlay-content');}};
 }

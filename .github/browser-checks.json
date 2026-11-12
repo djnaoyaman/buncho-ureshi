@@ -1,9 +1,5 @@
 {
-  "base": "338e962bc94e9ac1726f3923abe232d963c146ea",
-  "tests": [
-    "tests/browser/care-approved.spec.js",
-    "tests/browser/care-break.spec.js",
-    "tests/browser/reading-scroll.spec.js"
-  ],
-  "reason": "承認された実時間30/日・下限40、家庭30 Gemsと追加10上限、不在時の非致死保護と保存16移行を一体で変更。Chrome/WebKitで旧保存の病気持ち復帰、基礎とGoldの分離、個別/一括の上限、再読込24/48時間、2タブ、文字拡大、満タンの反応と保存案内、スクロール保持を確認する。"
+  "base": "3e1ddc88da88ca3830a47f3719884536f69372b4",
+  "tests": [],
+  "reason": "今回の依頼では実ブラウザ確認を本人が担当する。庭選択候補と確定の分離、上下操作、キャンセル、0/1件、保存とBGMを変更しないことをNode/DOMで検査する。実機での回転感と表示は未確認。"
 }

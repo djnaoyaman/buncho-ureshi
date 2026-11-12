@@ -12,7 +12,7 @@ test('completed guest remains in its garden through notebook and save until the 
  assert.equal(w.encounters.garden.guestGardenId,'komugi');assert.equal(w.encounters.garden.lastGuest,id);
  system.leaveGarden(w,guard(w));let restored=JSON.parse(JSON.stringify(w));validateWorld(restored);
  system.selectGarden(restored,'komugi',guard(restored));let html=renderFinchGarden(restored,{system});assert.match(html,new RegExp(`data-encounter-page="${id}"`));assert.equal(restored.encounters.discoveries[0].visits,1);
- system.selectGarden(restored,'mizukagami',guard(restored));html=renderFinchGarden(restored,{system});assert.doesNotMatch(html,new RegExp(`data-encounter-page="${id}"`));assert.doesNotMatch(html,/のお客さまへ/);assert.match(html,/data-garden-select="komugi"/);
+ system.selectGarden(restored,'mizukagami',guard(restored));html=renderFinchGarden(restored,{system});assert.doesNotMatch(html,new RegExp(`data-encounter-page="${id}"`));assert.doesNotMatch(html,/のお客さまへ/);assert.match(html,/data-garden-select="mizukagami"/);
  system.selectGarden(restored,'komugi',guard(restored));advanceTicks(restored,deadline-restored.tick);html=renderFinchGarden(restored,{system});assert.match(html,new RegExp(`data-encounter-page="${id}"`));for(let i=0;i<3;i++)system.observeGarden(restored,'grass',guard(restored));assert.notEqual(restored.encounters.queue[0],id);html=renderFinchGarden(restored,{system});assert.doesNotMatch(html,new RegExp(`data-encounter-page="${id}"`));validateWorld(restored);
 });
 
