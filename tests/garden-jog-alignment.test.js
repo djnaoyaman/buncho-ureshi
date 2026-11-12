@@ -26,8 +26,8 @@ test('full garden styles reset legacy offsets and selected-button decoration; ta
  assert.equal(buttonStyle.minHeight, '0');
  let captures = 0;
  face.setPointerCapture = () => captures++;
- const arrivals = [];
- const jog = mountGardenJog(doc.body, {items:[{id:'a',name:'庭A'},{id:'b',name:'庭B'}],getCommitted:()=> 'a',onCommit:id=>arrivals.push(id)});
+ const arrivals = [];let current='a';
+ const jog = mountGardenJog(doc.body, {items:[{id:'a',name:'庭A'},{id:'b',name:'庭B'}],getCommitted:()=>current,onCommit:id=>{arrivals.push(id);current=id;}});
  t.after(() => jog.destroy());
  jog.refresh();
  center.dispatchEvent(new win.KeyboardEvent('keydown',{key:'ArrowDown',bubbles:true}));

@@ -1,7 +1,7 @@
-/** Candidate-only control. Arrival remains owned by the existing transaction controller. */
+/** Settle the dial before arriving through the existing transaction controller. */
 export function mountGardenJog(root,{items,getCommitted,isBusy=()=>false,onCommit}){
  const doc=root.ownerDocument,win=doc.defaultView;
- let preview=null,committed=null,drag=null,suppressUntil=0,timer=null,disposed=false;
+ let preview=null,committed=null,drag=null,suppressUntil=0,timer=null,disposed=false,pending=false;
  const wrap=n=>items.length?((n%items.length)+items.length)%items.length:0;
  const index=()=>Math.max(0,items.findIndex(x=>x.id===preview));
  function paint(){
@@ -13,25 +13,30 @@ export function mountGardenJog(root,{items,getCommitted,isBusy=()=>false,onCommi
   center.disabled=isBusy();center.dataset.gardenSelect=current;
   center.setAttribute('aria-current','page');
   center.textContent=item.name;
-  center.setAttribute('aria-label',`${item.name}、${n+1} / ${items.length}。${preview===current?'現在の庭':'Enterまたはタップでこの庭へ'}`);
+  center.setAttribute('aria-label',`${item.name}、${n+1} / ${items.length}。${preview===current?'現在の庭':'この庭へ移動'}`);
   for(const [key,delta] of [['before',-1],['after',1]])face.querySelector(`[data-jog-${key}]`).textContent=items.length>1?items[wrap(n+delta)].name:'';
   face.querySelector('[data-jog-count]').textContent=`${n+1} / ${items.length}`;
   face.dataset.preview=preview;
  }
- function step(delta){if(disposed||isBusy()||items.length<2)return;preview=items[wrap(index()+delta)].id;paint();}
+ function step(delta){if(disposed||pending||isBusy()||items.length<2)return;preview=items[wrap(index()+delta)].id;paint();}
+ function arrive(){
+  if(disposed||pending||isBusy()||!preview||preview===getCommitted())return;
+  try{const result=onCommit(preview);if(result&&typeof result.then==='function'){pending=true;Promise.resolve(result).then(ok=>{if(ok===false&&!disposed){preview=getCommitted();paint();}},()=>{if(!disposed){preview=getCommitted();paint();}}).finally(()=>{pending=false;});}else paint();}
+  catch{preview=getCommitted();paint();}
+ }
  function click(e){const wrapEl=e.target.closest('.finch-garden-selector-wrap');if(!wrapEl||!root.contains(wrapEl))return;
   const arrow=e.target.closest('[data-garden-scroll]'),center=e.target.closest('[data-jog-center]');
   if(!arrow&&!center)return;e.preventDefault();e.stopImmediatePropagation();
   if(isBusy()||Date.now()<suppressUntil)return;
   if(arrow)step(arrow.dataset.gardenScroll==='next'?1:-1);
-  else if(preview&&preview!==getCommitted())onCommit(preview);
+  else arrive();
  }
- function key(e){if(!e.target.closest('[data-garden-jog]')||isBusy())return;
+ function key(e){if(!e.target.closest('[data-garden-jog]')||pending||isBusy())return;
   const delta={ArrowUp:-1,ArrowDown:1,ArrowLeft:-1,ArrowRight:1,PageUp:-1,PageDown:1}[e.key];
-  if(delta){e.preventDefault();step(delta);}
-  else if(e.key==='Home'||e.key==='End'){e.preventDefault();preview=items[e.key==='Home'?0:items.length-1]?.id;paint();}
+  if(delta){e.preventDefault();step(delta);arrive();}
+  else if(e.key==='Home'||e.key==='End'){e.preventDefault();preview=items[e.key==='Home'?0:items.length-1]?.id;paint();arrive();}
  }
- function down(e){const face=e.target.closest('[data-garden-jog]');if(!face||isBusy()||e.button>0||items.length<2)return;
+ function down(e){const face=e.target.closest('[data-garden-jog]');if(!face||pending||isBusy()||e.button>0||items.length<2)return;
   drag={id:e.pointerId,y:e.clientY,last:e.clientY,time:Date.now(),velocity:0,moved:false,face};
  }
  function move(e){if(!drag||e.pointerId!==drag.id)return;
@@ -45,11 +50,13 @@ export function mountGardenJog(root,{items,getCommitted,isBusy=()=>false,onCommi
  function stop(e){if(!drag||(e?.pointerId!=null&&e.pointerId!==drag.id))return;
   const previous=drag;drag=null;previous.face.style.setProperty('--jog-angle','0deg');
   if(previous.moved){suppressUntil=Date.now()+350;
-   if(e?.type==='pointerup'&&Math.abs(previous.velocity)>.6&&!win.matchMedia?.('(prefers-reduced-motion: reduce)').matches){clearTimeout(timer);timer=win.setTimeout(()=>{timer=null;if(!disposed&&previous.face.isConnected)step(previous.velocity>0?-1:1);},70);}
+   if(e?.type==='pointerup'&&Math.abs(previous.velocity)>.6&&!win.matchMedia?.('(prefers-reduced-motion: reduce)').matches){clearTimeout(timer);timer=win.setTimeout(()=>{timer=null;if(!disposed&&previous.face.isConnected){step(previous.velocity>0?-1:1);arrive();}},70);}
+   else if(e?.type==='pointerup')arrive();
+   else {preview=getCommitted();paint();}
   }
  }
  function cancel(){stop();clearTimeout(timer);timer=null;}
- function wheel(e){if(!e.target.closest('[data-garden-jog]')||isBusy()||items.length<2)return;e.preventDefault();if(timer)return;step(e.deltaY>0?1:-1);timer=win.setTimeout(()=>{timer=null;},120);}
+ function wheel(e){if(!e.target.closest('[data-garden-jog]')||pending||isBusy()||items.length<2)return;e.preventDefault();if(timer)return;step(e.deltaY>0?1:-1);timer=win.setTimeout(()=>{timer=null;arrive();},120);}
  root.addEventListener('click',click,true);root.addEventListener('keydown',key);root.addEventListener('pointerdown',down);
  doc.addEventListener('pointermove',move,{passive:false});doc.addEventListener('pointerup',stop);doc.addEventListener('pointercancel',stop);
  root.addEventListener('wheel',wheel,{passive:false});win.addEventListener('blur',cancel);win.addEventListener('pagehide',cancel);doc.addEventListener('visibilitychange',cancel);
