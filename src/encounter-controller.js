@@ -188,7 +188,7 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
     // Reading the notebook is still the same visit. The host closes the session on actual home/overlay exits.
     if(button.hasAttribute('data-encounter-back')||button.hasAttribute('data-encounter-close')){generation++;stopCrow();mode='notebook';pageId=null;showPhoto=false;notice='';render({focus:true});return;}
     if(button.hasAttribute('data-encounter-view')){showPhoto=button.dataset.encounterView==='photo';render();root.querySelector(`[data-encounter-view="${showPhoto?'photo':'art'}"]`)?.focus({preventScroll:true});return;}
-    if(button.hasAttribute('data-finch-go-garden')){await garden();return;}
+    if(button.hasAttribute('data-finch-go-garden')){await garden(button.dataset.finchGoGarden||undefined);return;}
     if(button.hasAttribute('data-garden-select')){await garden(button.dataset.gardenSelect);return;}
     if(button.hasAttribute('data-garden-accompany')||button.hasAttribute('data-garden-companion')){
       companionDraft ||= createCompanionDraft(getWorld());
