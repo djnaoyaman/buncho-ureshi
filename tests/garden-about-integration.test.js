@@ -18,7 +18,7 @@ for(const kind of cases)test('strict saved fixture + mounted app DOM: '+kind,asy
  assert.equal(doc.querySelectorAll('.finch-garden-dock > [data-garden-details=about]').length,1);
  const about=doc.querySelector('[data-garden-details=about]');
  for(const sel of [':scope > summary','h4','img','[data-garden-details=about-rules] > summary','.garden-about-booklet__warning'])assert.equal(about.querySelectorAll(sel).length,1,sel);
- assert.equal(doc.querySelectorAll('[data-garden-select]').length,12);
+ assert.equal(doc.querySelectorAll('[data-garden-select]').length,1);
  assert.equal(about.querySelectorAll('[data-raptor-notice],[data-crow-phase]').length,0);
  if(['raptor-hostile','legacy-warning','settings-after-warning'].includes(kind)){
   assert.equal(doc.querySelector('.game-panel-overlay > [data-raptor-notice]').dataset.raptorPhase,'warning');assert.equal(raptor.raptorTarget(w).id,'b1');

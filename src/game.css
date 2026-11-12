@@ -1744,3 +1744,15 @@ body[data-world="buncho"] .game-draw-result-actions [data-draw-result-preview] {
 
 /* A saved-care receipt uses one full row beside the existing cleaning controls. */
 .game-garden-care [data-care-receipt] { grid-column: 1 / -1; }
+
+/* A shallow horizontal cylinder, contained within the existing garden strip. */
+body[data-world="buncho"] .finch-garden-selector-wrap .garden-jog{display:block;position:relative;overflow:hidden;height:62px;padding:0;perspective:420px;border:1px solid #b9c79f;border-radius:999px;background:linear-gradient(#d2d8bd,#f5f0df 28%,#f8e9c5 50%,#f5f0df 73%,#c9d0b6);box-shadow:inset 0 2px 5px #493e3220;touch-action:pan-x;scrollbar-width:none}
+body[data-world="buncho"] .garden-jog-cylinder{position:relative;height:100%;transform-style:preserve-3d;transform:rotateX(var(--jog-angle,0deg));transition:transform 100ms ease-out}
+body[data-world="buncho"] .garden-jog [data-jog-before],body[data-world="buncho"] .garden-jog [data-jog-after]{position:absolute;inset-inline:12px;text-align:center;font-size:10px;color:#615c48;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none;backface-visibility:hidden}
+body[data-world="buncho"] .garden-jog [data-jog-before]{top:1px;transform:rotateX(52deg) scale(.86);transform-origin:center bottom}
+body[data-world="buncho"] .garden-jog [data-jog-after]{bottom:2px;transform:rotateX(-52deg) scale(.86);transform-origin:center top}
+body[data-world="buncho"] .finch-garden .garden-jog [data-jog-center]{position:absolute;inset:15px 30px 16px 12px;width:calc(100% - 42px);min-height:0;height:31px;margin:0;padding:2px 4px;font:inherit;font-size:13px;font-weight:700;color:#493e32;background:transparent;border:0;border-radius:16px;box-shadow:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transform:translateZ(10px)}
+body[data-world="buncho"] .garden-jog [data-jog-count]{position:absolute;right:8px;top:25px;font-size:9px;color:#615c48;pointer-events:none}
+body[data-world="buncho"] .finch-garden-selector-wrap .finch-garden-scroll{border-radius:50%;background:#f5f0df;color:#493e32;border:1px solid #b9c79f;box-shadow:none}
+body[data-world="buncho"] .garden-jog button:focus-visible{outline:2px solid #527a50;outline-offset:-2px}
+@media(prefers-reduced-motion:reduce){body[data-world="buncho"] .garden-jog-cylinder{transition:none;transform:none}}
