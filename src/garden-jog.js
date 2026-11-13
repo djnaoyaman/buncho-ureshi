@@ -1,5 +1,5 @@
 /** Settle the dial before arriving through the existing transaction controller. */
-export function mountGardenJog(root,{items,getCommitted,isBusy=()=>false,onCommit}){
+export function mountGardenJog(root,{items,getCommitted,isBusy=()=>false,onCommit,onGesture=()=>{},onStep=()=>{},onSettled=()=>{},onCancel=()=>{}}){
  const doc=root.ownerDocument,win=doc.defaultView;
  let preview=null,committed=null,drag=null,suppressUntil=0,timer=null,disposed=false,pending=false;
  const wrap=n=>items.length?((n%items.length)+items.length)%items.length:0;
@@ -18,26 +18,28 @@ export function mountGardenJog(root,{items,getCommitted,isBusy=()=>false,onCommi
   face.querySelector('[data-jog-count]').textContent=`${n+1} / ${items.length}`;
   face.dataset.preview=preview;
  }
- function step(delta){if(disposed||pending||isBusy()||items.length<2)return;preview=items[wrap(index()+delta)].id;paint();}
+ function select(id){if(!items.some(item=>item.id===id)||id===preview)return;preview=id;paint();onStep();}
+ function step(delta){if(disposed||pending||isBusy()||items.length<2)return;select(items[wrap(index()+delta)].id);}
  function arrive(){
   if(disposed||pending||isBusy()||!preview||preview===getCommitted())return;
-  try{const result=onCommit(preview);if(result&&typeof result.then==='function'){pending=true;Promise.resolve(result).then(ok=>{if(ok===false&&!disposed){preview=getCommitted();paint();}},()=>{if(!disposed){preview=getCommitted();paint();}}).finally(()=>{pending=false;});}else paint();}
+  const target=preview;const settled=()=>{if(!disposed&&root.isConnected&&getCommitted()===target)onSettled();};
+  try{const result=onCommit(target);if(result&&typeof result.then==='function'){pending=true;Promise.resolve(result).then(ok=>{if(ok===false&&!disposed){preview=getCommitted();paint();}else if(ok!==false)settled();},()=>{if(!disposed){preview=getCommitted();paint();}}).finally(()=>{pending=false;});}else {paint();if(result!==false)settled();}}
   catch{preview=getCommitted();paint();}
  }
  function click(e){const wrapEl=e.target.closest('.finch-garden-selector-wrap');if(!wrapEl||!root.contains(wrapEl))return;
   const arrow=e.target.closest('[data-garden-scroll]'),center=e.target.closest('[data-jog-center]');
   if(!arrow&&!center)return;e.preventDefault();e.stopImmediatePropagation();
-  if(isBusy()||Date.now()<suppressUntil)return;
+  if(pending||isBusy()||Date.now()<suppressUntil)return;onGesture(e);
   if(arrow){step(arrow.dataset.gardenScroll==='next'?1:-1);arrive();}
   else arrive();
  }
  function key(e){if(!e.target.closest('[data-garden-jog]')||pending||isBusy())return;
   const delta={ArrowUp:-1,ArrowDown:1,ArrowLeft:-1,ArrowRight:1,PageUp:-1,PageDown:1}[e.key];
-  if(delta){e.preventDefault();step(delta);arrive();}
-  else if(e.key==='Home'||e.key==='End'){e.preventDefault();preview=items[e.key==='Home'?0:items.length-1]?.id;paint();arrive();}
+  if(delta){e.preventDefault();onGesture(e);step(delta);arrive();}
+  else if(e.key==='Home'||e.key==='End'){e.preventDefault();onGesture(e);select(items[e.key==='Home'?0:items.length-1]?.id);arrive();}
  }
  function down(e){const face=e.target.closest('[data-garden-jog]');if(!face||pending||isBusy()||e.button>0||items.length<2)return;
-  drag={id:e.pointerId,y:e.clientY,last:e.clientY,time:Date.now(),velocity:0,moved:false,face};
+  onGesture(e);drag={id:e.pointerId,y:e.clientY,last:e.clientY,time:Date.now(),velocity:0,moved:false,face};
  }
  function move(e){if(!drag||e.pointerId!==drag.id)return;
   const dy=e.clientY-drag.y;if(Math.abs(dy)<8&&!drag.moved)return;
@@ -52,13 +54,13 @@ export function mountGardenJog(root,{items,getCommitted,isBusy=()=>false,onCommi
   if(previous.moved){suppressUntil=Date.now()+350;
    if(e?.type==='pointerup'&&Math.abs(previous.velocity)>.6&&!win.matchMedia?.('(prefers-reduced-motion: reduce)').matches){clearTimeout(timer);timer=win.setTimeout(()=>{timer=null;if(!disposed&&previous.face.isConnected){step(previous.velocity>0?-1:1);arrive();}},70);}
    else if(e?.type==='pointerup')arrive();
-   else {preview=getCommitted();paint();}
+   else {preview=getCommitted();paint();onCancel();}
   }
  }
- function cancel(){stop();clearTimeout(timer);timer=null;}
- function wheel(e){if(!e.target.closest('[data-garden-jog]')||pending||isBusy()||items.length<2)return;e.preventDefault();if(timer)return;step(e.deltaY>0?1:-1);timer=win.setTimeout(()=>{timer=null;arrive();},120);}
+ function cancel(){stop();clearTimeout(timer);timer=null;onCancel();}
+ function wheel(e){if(!e.target.closest('[data-garden-jog]')||pending||isBusy()||items.length<2)return;e.preventDefault();if(timer||!e.deltaY)return;onGesture(e);step(e.deltaY>0?1:-1);timer=win.setTimeout(()=>{timer=null;arrive();},120);}
  root.addEventListener('click',click,true);root.addEventListener('keydown',key);root.addEventListener('pointerdown',down);
  doc.addEventListener('pointermove',move,{passive:false});doc.addEventListener('pointerup',stop);doc.addEventListener('pointercancel',stop);
  root.addEventListener('wheel',wheel,{passive:false});win.addEventListener('blur',cancel);win.addEventListener('pagehide',cancel);doc.addEventListener('visibilitychange',cancel);
- return {refresh(){cancel();paint();},destroy(){disposed=true;cancel();root.removeEventListener('click',click,true);root.removeEventListener('keydown',key);root.removeEventListener('pointerdown',down);doc.removeEventListener('pointermove',move);doc.removeEventListener('pointerup',stop);doc.removeEventListener('pointercancel',stop);root.removeEventListener('wheel',wheel);win.removeEventListener('blur',cancel);win.removeEventListener('pagehide',cancel);doc.removeEventListener('visibilitychange',cancel);}};
+ return {refresh(){stop();clearTimeout(timer);timer=null;paint();},destroy(){disposed=true;cancel();root.removeEventListener('click',click,true);root.removeEventListener('keydown',key);root.removeEventListener('pointerdown',down);doc.removeEventListener('pointermove',move);doc.removeEventListener('pointerup',stop);doc.removeEventListener('pointercancel',stop);root.removeEventListener('wheel',wheel);win.removeEventListener('blur',cancel);win.removeEventListener('pagehide',cancel);doc.removeEventListener('visibilitychange',cancel);}};
 }
