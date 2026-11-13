@@ -1,4 +1,4 @@
-import {startExpedition,completeExpedition} from './garden-expedition.js';
+import {startExpedition,chooseExpedition,completeExpedition} from './garden-expedition.js';
 import {startLeafEvent,chooseLeafEvent,completeLeafEvent,setLeafKeepsakeDisplay} from './garden-leaf-event.js';
 import {createGardenJogFeedback} from './garden-jog-feedback.js';
 import {createPettingClock} from './petting-clock.js';
@@ -14,12 +14,13 @@ import {mountGardenBirdMotion} from './garden-bird-motion.js';
 import {encounterSystem} from './encounters.js';
 import {renderEncounterNotebook,renderEncounterPage,renderEncounterScene,renderFinchGarden,renderEncounterFriendship} from './encounter-ui.js';
 /** Host injects its single existing transaction store. Never creates a second save/backend. */
-export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()=>null,onHouseholdBird=()=>{},onGarden=async()=>{},onGardenChanged=()=>{},onHome=()=>{},onReward=()=>{},meetFriend=null,completeEncounter=null,system=encounterSystem,initialMode='notebook',base='/buncho-ureshi/',crowRandom=Math.random,sharedPredatorClock=false,petNow=()=>performance.now(),getSound=()=>true}={}){
+export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()=>null,onHouseholdBird=()=>{},onGarden=async()=>{},onGardenChanged=()=>{},onHome=()=>{},onDiary=()=>{},onReward=()=>{},meetFriend=null,completeEncounter=null,system=encounterSystem,initialMode='notebook',base='/buncho-ureshi/',crowRandom=Math.random,sharedPredatorClock=false,petNow=()=>performance.now(),getSound=()=>true}={}){
   if(typeof getWorld!=='function'||typeof transact!=='function')throw new Error('図鑑の保存先が必要です。');
   let alive=true,busy=false,mode=initialMode==='garden'?'garden':'notebook',pageId=null,showPhoto=false,generation=0,notice='',worldId=getWorld().worldId,revealGardenId=null,renderedView=null;
   let rub=null,petFlight=false,petTimer=null;
   // Earn at most one point per second of active input, never idle time.
   const petClock=createPettingClock(petNow);
+  let expeditionCelebration=null;
   let companionDraft=null,companionMessage='';
   const discardCompanions=()=>{companionDraft=null;companionMessage='';};
  const crowClock=createGardenCrowClock({random:crowRandom});
@@ -79,14 +80,14 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
     const sameBooklet=oldGarden?.dataset.gardenWorld===w.worldId&&oldSelected===w.encounters.garden.id;
     const outsideBookletFocus=doc.activeElement!==doc.body&&doc.activeElement!==doc.documentElement&&!bookletSummaryFocus();
     const bookletFocus=sameBooklet&&!outsideBookletFocus?(savedGarden?.bookletFocus??bookletSummaryFocus()):null;
-    if(w.worldId!==worldId){worldId=w.worldId;generation++;busy=false;mode='notebook';pageId=null;notice='';}
+    if(w.worldId!==worldId){worldId=w.worldId;expeditionCelebration=null;generation++;busy=false;mode='notebook';pageId=null;notice='';}
     const focused=doc.activeElement,companionFocus=focused?.closest?.('.finch-companion-settings')?(focused.hasAttribute('data-garden-companion')?['data-garden-companion',focused.dataset.gardenCompanion]:focused.hasAttribute('data-garden-accompany')?['data-garden-accompany',focused.dataset.gardenAccompany]:focused.hasAttribute('data-garden-companions-save')?['data-garden-companions-save',null]:focused.hasAttribute('data-companion-summary')?['data-companion-summary',null]:null):null;
     const nextReadingKey=['entry','raptors','crows'].includes(mode)&&pageId?`${w.worldId}:${mode}:${pageId}`:null,priorReading=hostEntryReading||entryReading();
     const savedReading=priorReading?.key===nextReadingKey?priorReading:null;hostEntryReading=null;renderedReadingKey=nextReadingKey;
     const expeditionActors=sameBooklet?(savedGarden?.expeditionActors||[...root.querySelectorAll('[data-expedition-actor]')].map(n=>n.value)):[];
     const expeditionFocus=focused?.dataset?.expeditionActor;
     media.preserve();
-    root.innerHTML=(mode==='raptors'?renderRaptorNotebook(w,{base,id:pageId}):mode==='crows'?renderCrowNotebook(w,{base,id:pageId}):mode==='event'?renderEncounterScene(w,{system,base}):mode==='garden'?renderFinchGarden(w,{system,base,selectedBirdId:getSelectedBirdId(),crowWarning:crowClock.warning,companionDraft,companionMessage}):mode==='entry'?renderEncounterPage(w,pageId,{system,base,showPhoto}):renderEncounterNotebook(w,{system,base}))+`<p class="finch-notice" role="status">${escape(notice)}</p><button type="button" class="finch-media-retry" data-media-retry hidden>絵をもう一度読み込む</button>`;
+    root.innerHTML=(mode==='raptors'?renderRaptorNotebook(w,{base,id:pageId}):mode==='crows'?renderCrowNotebook(w,{base,id:pageId}):mode==='event'?renderEncounterScene(w,{system,base}):mode==='garden'?renderFinchGarden(w,{system,base,selectedBirdId:getSelectedBirdId(),crowWarning:crowClock.warning,companionDraft,companionMessage,expeditionCelebration}):mode==='entry'?renderEncounterPage(w,pageId,{system,base,showPhoto}):renderEncounterNotebook(w,{system,base}))+`<p class="finch-notice" role="status">${escape(notice)}</p><button type="button" class="finch-media-retry" data-media-retry hidden>絵をもう一度読み込む</button>`;
     root.querySelectorAll('[data-expedition-actor]').forEach((select,i)=>{if([...select.options].some(o=>o.value===expeditionActors[i]))select.value=expeditionActors[i];if(expeditionFocus===select.dataset.expeditionActor)select.focus({preventScroll:true});});
     const selector=root.querySelector('.finch-garden-selector');
     if(selector){
@@ -185,12 +186,16 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
     if(summary?.parentElement?.matches('.finch-companion-settings')&&busy){event.preventDefault();return;}
     const button=event.target.closest('button');if(!button||!root.contains(button)||busy)return;
     if(rub){rub=null;clearTimeout(petTimer);generation++;}
-    if(button.matches('[data-expedition-start],[data-expedition-complete],[data-expedition-later],[data-expedition-go-garden]')){
+    if(button.matches('[data-expedition-start],[data-expedition-choice],[data-expedition-complete],[data-expedition-later],[data-expedition-go-garden],[data-expedition-diary],[data-expedition-next]')){
       const card=button.closest('[data-expedition-world]');if(!card||mode!=='garden')return;
+      if(button.hasAttribute('data-expedition-diary')){onDiary();return;}
+      if(button.hasAttribute('data-expedition-next')){expeditionCelebration=null;render();const d=root.querySelector('[data-garden-details=expedition]');if(d){d.open=getWorld().expedition.entries.length<3;d.querySelector('summary')?.focus({preventScroll:true});}return;}
       if(button.hasAttribute('data-expedition-go-garden')){await garden(button.dataset.expeditionGoGarden);return;}
       if(button.hasAttribute('data-expedition-later')){card.open=false;card.querySelector('summary')?.focus({preventScroll:true});return;}
       const expected={worldId:card.dataset.expeditionWorld,revision:Number(card.dataset.expeditionRevision)},actors=[...card.querySelectorAll('[data-expedition-actor]')].map(n=>n.value),path=button.dataset.expeditionStart,token=++generation;
-      const result=await mutate(w=>path?startExpedition(w,path,actors,expected):completeExpedition(w,expected),token);
+      const entryId=getWorld().expedition.entries.find(e=>e.completedTick===null)?.id;
+      const result=await mutate(w=>path?startExpedition(w,path,actors,expected):button.dataset.expeditionChoice?chooseExpedition(w,button.dataset.expeditionChoice,expected):completeExpedition(w,expected),token);
+      if(result?.changed&&button.hasAttribute('data-expedition-complete'))expeditionCelebration=entryId;
       if(!alive||token!==generation)return;
       if(result)notice=result.changed?'':result.reason==='stale'?'べつの がめんで ようすが かわったよ。もういちど みてみよう。':'ちがう ともだちを ふたり えらんでね。いまは ほかの おはなしの とちゅうかもしれないよ。';
       render();const details=root.querySelector('[data-garden-details="expedition"]');if(details){details.open=true;details.querySelector('summary')?.focus({preventScroll:true});}return;

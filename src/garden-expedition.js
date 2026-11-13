@@ -22,7 +22,9 @@ export function validateExpedition(w){
  if(!shape(s,['version','entries'])||s.version!==1||!Array.isArray(s.entries)||s.entries.length>3)fail();
  const paths=new Set();let lastTick=0,active=false;
  for(const e of s.entries){
-  if(!shape(e,['id','path','gardenId','actorIds','startedTick','completedTick','discovery','leafMemory','goldAward'])||!EXPEDITION_PATHS.includes(e.path)||e.id!==`expedition-${e.path}`||paths.has(e.path)||!GARDEN_IDS.includes(e.gardenId)||!Array.isArray(e.actorIds)||e.actorIds.length!==2||new Set(e.actorIds).size!==2||e.actorIds.some(id=>!definition(id))||!int(e.startedTick,lastTick,w.tick)||active||e.discovery!==discoveryFor(e.path,e.actorIds)||![null,'deliver','display'].includes(e.leafMemory)||!int(e.goldAward,0,EXPEDITION_REWARDS.gold))fail();
+  if(!shape(e,['id','path','gardenId','actorIds','startedTick','completedTick','discovery','leafMemory','goldAward',...(Object.hasOwn(e,'approach')?['approach']:[])])||!EXPEDITION_PATHS.includes(e.path)||e.id!==`expedition-${e.path}`||paths.has(e.path)||!GARDEN_IDS.includes(e.gardenId)||!Array.isArray(e.actorIds)||e.actorIds.length!==2||new Set(e.actorIds).size!==2||e.actorIds.some(id=>!definition(id))||!int(e.startedTick,lastTick,w.tick)||active||e.discovery!==discoveryFor(e.path,e.actorIds)||![null,'deliver','display'].includes(e.leafMemory)||!int(e.goldAward,0,EXPEDITION_REWARDS.gold))fail();
+  if(Object.hasOwn(e,'approach')&&![null,'listen','look'].includes(e.approach))fail();
+  if(e.completedTick!==null&&e.approach===null)fail();
   if(e.leafMemory!==null&&e.leafMemory!==leafFor(w,e.actorIds))fail();
   if(e.completedTick===null){if(e.goldAward!==0)fail();active=true;lastTick=e.startedTick;}
   else {if(!int(e.completedTick,e.startedTick,w.tick))fail();lastTick=e.completedTick;}
@@ -42,13 +44,19 @@ export function startExpedition(w,path,actorIds,token){
  if(s.phase!=='available'||!s.remaining.includes(path))return {changed:false,reason:'unavailable'};
  if(!Array.isArray(actorIds)||actorIds.length!==2||new Set(actorIds).size!==2||actorIds.some(id=>!s.known.some(r=>r.id===id)))return {changed:false,reason:'friends'};
  const ids=[...actorIds];
- w.expedition.entries.push({id:`expedition-${path}`,path,gardenId:w.encounters.garden.id,actorIds:ids,startedTick:w.tick,completedTick:null,discovery:discoveryFor(path,ids),leafMemory:leafFor(w,ids),goldAward:0});
+ w.expedition.entries.push({id:`expedition-${path}`,path,gardenId:w.encounters.garden.id,actorIds:ids,startedTick:w.tick,completedTick:null,discovery:discoveryFor(path,ids),leafMemory:leafFor(w,ids),goldAward:0,approach:null});
  bump(w);return {changed:true};
+}
+export function chooseExpedition(w,choice,token){
+ if(!current(w,token))return {changed:false,reason:'stale'};
+ const s=expeditionStatus(w),e=s.entry;
+ if(s.phase!=='active'||!s.safe||e.gardenId!==w.encounters.garden.id||e.approach!==null||!['listen','look'].includes(choice))return {changed:false,reason:'unavailable'};
+ e.approach=choice;bump(w);return {changed:true};
 }
 export function completeExpedition(w,token){
  if(!current(w,token))return {changed:false,reason:'stale'};
  const s=expeditionStatus(w),e=s.entry;
- if(s.phase!=='active'||!s.safe||e.gardenId!==w.encounters.garden.id)return {changed:false,reason:'unavailable'};
+ if(s.phase!=='active'||!s.safe||e.gardenId!==w.encounters.garden.id||e.approach===null)return {changed:false,reason:'unavailable'};
  const actors=e.actorIds.map(id=>w.encounters.gardenFriends.regulars.find(r=>r.id===id));
  if(actors.some(r=>!r||r.lastInteractionTick===null))return {changed:false,reason:'friends'};
  e.goldAward=Math.max(0,Math.min(EXPEDITION_REWARDS.gold,1000000000-w.economy.gold,1000000000-w.economy.lifetimeGold));
