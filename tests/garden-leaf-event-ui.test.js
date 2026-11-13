@@ -36,8 +36,8 @@ test('different personality branches and both choices leave different memories',
  assert.equal(new Set(texts).size,3);assert.notEqual(leafGiftNarrative(s),leafGiftNarrative({...s,entry:{...s.entry,choice:'display'}}));
 });
 test('different garden, active encounter and pause do not offer competing leaf actions',()=>{
- const w=fixture();startLeafEvent(w,leafEventToken(w));w.paused=true;assert.equal(renderLeafGift(w),'');w.paused=false;
- encounterSystem.selectGarden(w,'mizukagami',leafEventToken(w));assert.equal(renderLeafGift(w),'');assert.notEqual(renderLeafDiary(w),'');assert.equal(renderLeafKeepsake(w),'');
+ const w=fixture();startLeafEvent(w,leafEventToken(w));w.paused=true;assert.match(renderLeafGift(w),/data-leaf-unavailable/);assert.doesNotMatch(renderLeafGift(w),/data-leaf-choice=/);w.paused=false;
+ encounterSystem.selectGarden(w,'mizukagami',leafEventToken(w));assert.match(renderLeafGift(w),/data-leaf-unavailable/);assert.doesNotMatch(renderLeafGift(w),/data-leaf-choice=/);assert.notEqual(renderLeafDiary(w),'');assert.equal(renderLeafKeepsake(w),'');
 });
 test('failed transaction does not pretend to progress; navigation preserves deferred choice',async()=>{
  const w=fixture(),win=new Window();win.document.body.innerHTML='<div id="root"></div>';const root=win.document.querySelector('#root'),before=structuredClone(w);

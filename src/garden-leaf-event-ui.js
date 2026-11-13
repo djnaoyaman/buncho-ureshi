@@ -1,3 +1,4 @@
+import {gardenById} from './data/gardens.js';
 import {leafEventStatus,LEAF_EVENT_ENABLED} from './garden-leaf-event.js';
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const title='<ruby>落<rt>お</rt></ruby>ち<ruby>葉<rt>ば</rt></ruby>のおくりもの';
@@ -12,15 +13,22 @@ export function leafGiftNarrative(status,{thanks=false}={}){
  return thanks?`${b}が、かざった はっぱを みつけてくれた。${kind==='play'?'そのそばで、かげを おいかけて あそんでいたよ。':kind==='chat'?'「すてきな はっぱだね」と、${a}に あいさつしてくれた。'.replace('${a}',a):'となりに ちいさな はっぱを そえてくれたよ。'} じぶんの ペースで まっていた ${a}も、うれしそう。`:`${a}と、はっぱを にわに かざった。むりに こえを かけなくても だいじょうぶ。${b}が みつけてくれるのを、のんびり まとう。`;
 }
 export function renderLeafGift(w,{base='/buncho-ureshi/'}={}){
- const s=leafEventStatus(w);if(!LEAF_EVENT_ENABLED||!s.safe||s.phase==='unavailable'||s.entry&&s.entry.gardenId!==w.encounters.garden.id||w.paused||w.encounters.raptor?.active||w.encounters.active||w.encounters.crow?.active)return '';
+ const s=leafEventStatus(w);if(!LEAF_EVENT_ENABLED||!w.encounters.garden.open)return '';
+ // Keep a visible explanation instead of silently removing the story entrance.
+ const blocked=w.paused?'いまは おやすみちゅう。さいかいしたら おはなしできるよ。':
+ w.encounters.raptor?.active||w.encounters.crow?.active?'いまは ほかの とりが きているよ。おちついたら おはなしを みよう。':
+ w.encounters.active?'まずは おきゃくさまとの おはなしを おえてから、ここへ もどってね。':
+ s.entry&&s.entry.gardenId!==w.encounters.garden.id?`この おはなしは「${esc(gardenById(s.entry.gardenId)?.name||'もとの にわ')}」で つづくよ。にっきから その にわへ いけるよ。`:
+ s.phase==='unavailable'?'いまは はっぱを みつける ともだちが いないみたい。べつの にわへ あそびに いってみよう。':'';
  const waiting=s.phase==='waiting',complete=s.phase==='complete';
  let body='';
- if(s.phase==='available')body='<p>はっぱを みつけた ともだちがいるよ。</p><button type="button" data-leaf-start>そっと よってみる</button>';
+ if(blocked)body=`<p data-leaf-unavailable>${blocked}</p>`;
+ else if(s.phase==='available')body='<p>はっぱを みつけた ともだちがいるよ。</p><button type="button" data-leaf-start>そっと よってみる</button>';
  else if(s.phase==='choice')body=scene(s,base)+`<p>${leafGiftNarrative(s)}</p><div class="leaf-gift-choices"><button type="button" data-leaf-choice="deliver"><ruby>一緒<rt>いっしょ</rt></ruby>に<ruby>届<rt>とど</rt></ruby>ける<small>そばで ゆうきを わけよう</small></button><button type="button" data-leaf-choice="display"><ruby>庭<rt>にわ</rt></ruby>に<ruby>飾<rt>かざ</rt></ruby>って<ruby>待<rt>ま</rt></ruby>つ<small>そのこの ペースを だいじに</small></button><button type="button" data-leaf-choice="later">あとで<ruby>考<rt>かんが</rt></ruby>える</button></div><p class="leaf-gift-note">いつ きめても だいじょうぶ。どちらを えらんでも、おれいは おなじだよ。</p>`;
  else if(waiting)body=scene(s,base)+`<p>${leafGiftNarrative(s)}</p><p>また このにわに あそびにきたら、つづきを みてみよう。いそがなくて いいよ。</p>`;
  else if(s.phase==='ready')body=scene(s,base)+`<p>はっぱの おはなしに、つづきが あるみたい。</p><button type="button" data-leaf-complete>ともだちの ようすを みる</button>`;
  else if(complete)body=scene(s,base)+`<p>${leafGiftNarrative(s,{thanks:true})}</p><p>はっぱの しおりが、おもいでに なったよ。</p><p class="leaf-gift-note">おれいの ${s.entry.goldAward} Gold と、にわの なかよし +2 は いちどだけ。にっきにも のこしたよ。</p><button type="button" data-leaf-display="${!s.entry.displayed}" aria-pressed="${s.entry.displayed}">${s.entry.displayed?'しおりを しまう':'しおりを にわに かざる'}</button>`;
- return `<details class="leaf-gift" data-garden-details="leaf-gift" data-leaf-world="${esc(w.worldId)}" data-leaf-revision="${w.revision}"><summary>${leafArt()}<span>${title}<small>${complete?'おもいで':waiting?'つづきは またこんど':'にわの ちいさな おはなし'}</small></span></summary><div class="leaf-gift-content">${body}</div></details>`;
+ return `<details class="leaf-gift" data-garden-details="leaf-gift" data-leaf-world="${esc(w.worldId)}" data-leaf-revision="${w.revision}"><summary>${leafArt()}<span>${title}<small>${blocked?'いまの ようす':complete?'おもいで':waiting?'つづきは またこんど':'タップして おはなしを みる'}</small></span></summary><div class="leaf-gift-content">${body}</div></details>`;
 }
 export function renderLeafKeepsake(w){
  const e=w.leafEvent?.entry;
