@@ -23,14 +23,14 @@ export function raptorFriendship(w,id){const v=w.encounters?.raptor?.visits.find
 export function raptorCoolingDown(w,now=Date.now()){const at=w.encounters?.raptor?.lastArrivalAt;return at!=null&&now-at<RAPTOR_RULES.dailyCooldownMs;}
 export function raptorToken(w){const a=w.encounters?.raptor?.active;return {worldId:w.worldId,revision:w.revision,eventId:a?.eventId??null,remainingMs:a?.remainingMs??null,lastProgressAt:a?.lastProgressAt??null};}
 const activeCurrent=(w,t)=>{const a=w.encounters?.raptor?.active;return current(w,t)&&a&&t.eventId===a.eventId&&t.remainingMs===a.remainingMs&&t.lastProgressAt===a.lastProgressAt;};
-export function validateRaptorState(s,tick,gardenIds,encounterVersion=13){
+export function validateRaptorState(s,tick,gardenIds,encounterVersion=15){
  const fail=()=>{throw new Error('猛禽との出会いの記録が不正です。');};
  if(!shape(s,['lastArrivalAt','active','visits'])||!Array.isArray(s.visits)||s.visits.length>RAPTOR_SPECIES.length||new Set(s.visits.map(v=>v?.id)).size!==s.visits.length)fail();
  if(s.lastArrivalAt===null){if(s.active!==null||s.visits.length)fail();}else if(!int(s.lastArrivalAt,0,MAX_TIME)||!s.visits.length)fail();
  for(const v of s.visits)if(!shape(v,['id','firstTick','lastTick','count','petPoints'])||!raptorSpecies(v.id)||!int(v.firstTick,0,tick)||!int(v.lastTick,v.firstTick,tick)||!int(v.count,1,1000000)||!int(v.petPoints,0,RAPTOR_RULES.maxPetPoints))fail();
  const a=s.active;if(a!==null){const species=raptorSpecies(a.speciesId),visit=s.visits.find(v=>v.id===a.speciesId);
   const targetless=encounterVersion>=13&&a.targetBirdId===null;
-  if(!shape(a,['eventId','speciesId','gardenId','targetBirdId','hostile','remainingMs','lastProgressAt'])||!species||!visit||!gardenIds.includes(a.gardenId)||(!targetless&&!/^b[1-9][0-9]*$/.test(a.targetBirdId))||a.eventId!==`${a.speciesId}:${s.lastArrivalAt}:${targetless?'none':a.targetBirdId}`||typeof a.hostile!=='boolean'||!int(a.remainingMs,1,a.hostile?RAPTOR_RULES.warningMs:RAPTOR_RULES.visitMs)||!int(a.lastProgressAt,s.lastArrivalAt,MAX_TIME)||(species.waterOnly&&a.gardenId!=='mizukagami')||(a.hostile!==(!targetless&&!species.harmless&&visit.petPoints<RAPTOR_RULES.friendPoints)))fail();
+  if(!shape(a,['eventId','speciesId','gardenId','targetBirdId','hostile','remainingMs','lastProgressAt',...(encounterVersion>=15?['returnChoicePending']:[])])||(encounterVersion>=15&&typeof a.returnChoicePending!=='boolean')||!species||!visit||!gardenIds.includes(a.gardenId)||(!targetless&&!/^b[1-9][0-9]*$/.test(a.targetBirdId))||a.eventId!==`${a.speciesId}:${s.lastArrivalAt}:${targetless?'none':a.targetBirdId}`||typeof a.hostile!=='boolean'||!int(a.remainingMs,1,a.hostile?RAPTOR_RULES.warningMs:RAPTOR_RULES.visitMs)||!int(a.lastProgressAt,s.lastArrivalAt,MAX_TIME)||(species.waterOnly&&a.gardenId!=='mizukagami')||(a.hostile!==(!targetless&&!species.harmless&&visit.petPoints<RAPTOR_RULES.friendPoints)))fail();
  }
  return s;
 }
@@ -42,7 +42,7 @@ export function arriveGardenRaptor(w,id,now,expected){
  if(crowScene(w,now))return {changed:false,reason:'busy'};
  if(s.active||raptorCoolingDown(w,now))return {changed:false,reason:'cooldown'};
  const targetBirdId=b?.id??null,hostile=!!b&&!species.harmless&&!raptorFriendship(w,id).friendly;
- s.lastArrivalAt=now;s.active={eventId:`${id}:${now}:${targetBirdId??'none'}`,speciesId:id,gardenId:g.id,targetBirdId,hostile,remainingMs:hostile?RAPTOR_RULES.warningMs:RAPTOR_RULES.visitMs,lastProgressAt:now};
+ s.lastArrivalAt=now;s.active={eventId:`${id}:${now}:${targetBirdId??'none'}`,speciesId:id,gardenId:g.id,targetBirdId,hostile,returnChoicePending:hostile,remainingMs:hostile?RAPTOR_RULES.warningMs:RAPTOR_RULES.visitMs,lastProgressAt:now};
  const v=s.visits.find(v=>v.id===id);if(v){v.lastTick=w.tick;v.count=Math.min(1000000,v.count+1);}else s.visits.push({id,firstTick:w.tick,lastTick:w.tick,count:1,petPoints:0});
  bump(w);return {changed:true,id,hostile,message:hostile?`${species.name}が近づいています。1分以内におうちへ帰ってね。`:`${species.name}が遊びに来たよ。安心して眺められるよ。`};
 }
@@ -59,6 +59,16 @@ export function petGardenRaptor(w,id,amount,expected){
  if(friendly&&s.active?.speciesId===id){s.active.hostile=false;s.active.remainingMs=Math.min(s.active.remainingMs,RAPTOR_RULES.visitMs);}
  bump(w);return {changed:true,points:v.petPoints,friendly,message:friendly?'なかよしになったよ。もう文鳥を襲わないよ。':`親しみ +${gain} ♪`};
 }
+/** Choosing to remain is saved atomically. Legacy warnings are migrated to a
+ * pending choice without changing their remaining time or target. */
+export function remainWithGardenRaptor(w,now,expected){
+ if(!activeCurrent(w,expected))return {changed:false,reason:'stale'};
+ const a=w.encounters.raptor.active;
+ if(!a.hostile||!a.returnChoicePending||!int(now,0,MAX_TIME))return {changed:false,reason:'inactive'};
+ a.returnChoicePending=false;a.lastProgressAt=Math.max(a.lastProgressAt,now);bump(w);
+ return {changed:true,remainingMs:a.remainingMs};
+}
+export const raptorReturnChoicePending=w=>!!raptorScene(w)?.hostile&&w.encounters.raptor.active.returnChoicePending!==false;
 /** Internal state step. Engine wrapper resolves accident and succession in the same transaction.
  * elapsed is a continuous visible sample, not wall-clock catch-up. The wall interval
  * intersection prevents overlapping samples from two tabs from counting twice. */
@@ -66,7 +76,7 @@ export function advanceRaptorState(w,elapsed,now,expected){
  if(!activeCurrent(w,expected))return {changed:false,reason:'stale'};
  const s=w.encounters.raptor,a=s.active;
  if(a.targetBirdId!==null&&raptorTarget(w)?.id!==a.targetBirdId){s.active=null;bump(w);return {changed:true,ended:true};}
- if(w.paused||!int(elapsed,1,RAPTOR_RULES.maxSampleGapMs)||!int(now,0,MAX_TIME)||now<=a.lastProgressAt)return {changed:false,reason:'inactive'};
+ if((a.hostile&&a.returnChoicePending!==false)||w.paused||!int(elapsed,1,RAPTOR_RULES.maxSampleGapMs)||!int(now,0,MAX_TIME)||now<=a.lastProgressAt)return {changed:false,reason:'inactive'};
  const used=Math.min(elapsed,now-a.lastProgressAt);a.lastProgressAt=now;a.remainingMs=Math.max(0,a.remainingMs-used);
  const due=a.remainingMs===0,deathBirdId=due&&a.hostile?a.targetBirdId:null;
  if(due)s.active=null;bump(w);return {changed:true,remainingMs:a.remainingMs,ended:due,deathBirdId};

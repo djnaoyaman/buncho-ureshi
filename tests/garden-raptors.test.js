@@ -7,11 +7,12 @@ import {lifeStatus} from '../src/life-care.js';
 import {renderMemorialPanel} from '../src/life-care-ui.js';
 import {openGameStore} from '../src/game-store.js';
 import {arriveGardenCrow} from '../src/garden-crows.js';
-import {RAPTOR_SPECIES,RAPTOR_RULES,initialRaptorState,raptorToken,arriveGardenRaptor,escapeGardenRaptor,petGardenRaptor,raptorFriendship,raptorCoolingDown,raptorScene,createGardenRaptorClock} from '../src/garden-raptors.js';
+import {RAPTOR_SPECIES,RAPTOR_RULES,initialRaptorState,raptorToken,arriveGardenRaptor,escapeGardenRaptor,petGardenRaptor,raptorFriendship,raptorCoolingDown,raptorScene,createGardenRaptorClock,remainWithGardenRaptor} from '../src/garden-raptors.js';
 const NOW=Date.UTC(2026,10,4),id='black-kite';
 const token=w=>({...raptorToken(w),gardenId:w.encounters.garden.id});
 function fixture(){const w=createWorld(NOW,42);w.encounters.garden.open=true;w.encounters.gardenFriends.attendees=['b1'];w.field.place='park';return w;}
-function arrive(w,id='black-kite',now=NOW){return arriveGardenRaptor(w,id,now,token(w));}
+// Existing countdown tests explicitly choose to remain; prompt coverage is separate.
+function arrive(w,id='black-kite',now=NOW){const result=arriveGardenRaptor(w,id,now,token(w));if(result.changed&&result.hostile)remainWithGardenRaptor(w,now,token(w));return result;}
 function run(w,start=NOW,count=60){for(let i=1;i<=count;i++)advanceGardenRaptor(w,1000,start+i*1000,token(w));}
 test('arrival records nine separate species without world randomness, damage or economy changes',()=>{
  const w=fixture(),before=structuredClone(w);assert.equal(RAPTOR_SPECIES.length,9);assert.equal(arrive(w).hostile,true);
@@ -48,7 +49,7 @@ test('target identity never follows a replacement protagonist',()=>{
  const w=fixture();arrive(w);w.birds[0].home='departed';const b=createBird(w,{home:'resident'});assert.equal(raptorScene(w),null);advanceGardenRaptor(w,1000,NOW+1000,token(w));assert.equal(w.encounters.raptor.active,null);assert.equal(lifeStatus(w,b).death,null);
 });
 test('v7 migration is additive and all malformed or unknown raptor fields reject',()=>{
- const old=fixture();old.encounters.version=7;legacyFriends(old);delete old.encounters.gardenSessions;delete old.encounters.homeGoodbyes;for(const id of ["java-rice","bali-terrace","paris-unrest"])delete old.encounters.garden.visits[id];delete old.encounters.raptor;const before=structuredClone(old),w=readCompatibleWorld(old,NOW);assert.deepEqual(old,before);assert.equal(w.encounters.version,14);assert.deepEqual(w.encounters.raptor,initialRaptorState());w.encounters.gardenFriends.attendees=['b1'];arrive(w);
+ const old=fixture();old.encounters.version=7;legacyFriends(old);delete old.encounters.gardenSessions;delete old.encounters.homeGoodbyes;for(const id of ["java-rice","bali-terrace","paris-unrest"])delete old.encounters.garden.visits[id];delete old.encounters.raptor;const before=structuredClone(old),w=readCompatibleWorld(old,NOW);assert.deepEqual(old,before);assert.equal(w.encounters.version,15);assert.deepEqual(w.encounters.raptor,initialRaptorState());w.encounters.gardenFriends.attendees=['b1'];arrive(w);
  for(const alter of [s=>s.extra=1,s=>s.lastArrivalAt=-1,s=>s.active.extra=1,s=>s.active.targetBirdId='b999',s=>s.active.eventId='other',s=>s.active.lastProgressAt=NOW-1,s=>s.active.remainingMs=0,s=>s.active.remainingMs=60001,s=>s.active.hostile='yes',s=>s.active.hostile=false,s=>s.visits.push({...s.visits[0]}),s=>s.visits[0].petPoints=-1,s=>s.visits[0].petPoints=100,s=>s.active.speciesId='unknown']){const bad=structuredClone(w);alter(bad.encounters.raptor);assert.throws(()=>validateWorld(bad));}
 });
 test('clock is rare, continuous, garden-scoped, and excludes osprey away from water',()=>{

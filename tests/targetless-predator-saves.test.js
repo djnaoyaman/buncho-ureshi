@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {IDBFactory} from 'fake-indexeddb';
 import {createWorld,createBird,readCompatibleWorld,validateWorld,serializeWorld,parseSave,advanceGardenRaptor} from '../src/engine.js';
 import {arriveGardenCrow,crowScene,crowCoolingDown} from '../src/garden-crows.js';
-import {arriveGardenRaptor,raptorScene,raptorTarget,raptorToken,raptorCoolingDown} from '../src/garden-raptors.js';
+import {arriveGardenRaptor,raptorScene,raptorTarget,raptorToken,raptorCoolingDown,remainWithGardenRaptor} from '../src/garden-raptors.js';
 import {createEncounterSystem as oldEncounterSystem} from './fixtures/pre-garden35/encounters.js';
 import {GARDEN_IDS,OLD_GARDEN_IDS,gardenCompanionRoster} from '../src/data/gardens.js';
 import {lifeStatus,accidentLifeBird} from '../src/life-care.js';
@@ -13,11 +13,13 @@ const NOW=Date.UTC(2026,10,7),clone=structuredClone;
 const oldSystem=oldEncounterSystem();
 function asV12(w){
  w.encounters.version=12;
+ if(w.encounters.raptor.active)delete w.encounters.raptor.active.returnChoicePending;
  w.encounters.garden.visits=Object.fromEntries(OLD_GARDEN_IDS.map(id=>[id,w.encounters.garden.visits[id]]));
  return w;
 }
 function expectedUpgrade(old){
- const result=clone(old);result.encounters.version=14;
+ const result=clone(old);result.encounters.version=15;
+ if(result.encounters.raptor.active)result.encounters.raptor.active.returnChoicePending=result.encounters.raptor.active.hostile;
  result.encounters.garden.visits=Object.fromEntries(GARDEN_IDS.map(id=>[id,old.encounters.garden.visits[id]??0]));
  return result;
 }
@@ -78,7 +80,7 @@ test('targetless crow keeps its saved target and phases when the protagonist joi
 test('v12 migration adds only the new garden counters and preserves a pinned warning exactly',()=>{
   for(const withWarning of [false,true]){
     const old=fresh();old.encounters.gardenFriends.attendees=['b1'];
-    if(withWarning){arrive(old,'raptor');advanceGardenRaptor(old,1000,NOW+1000,token(old));}
+    if(withWarning){arrive(old,'raptor');remainWithGardenRaptor(old,NOW,token(old));advanceGardenRaptor(old,1000,NOW+1000,token(old));}
     asV12(old);oldSystem.validate(old.encounters,old.tick);const before=clone(old),expected=expectedUpgrade(old);
     const migrated=readCompatibleWorld(old,NOW+1000);
     assert.deepEqual(old,before);assert.deepEqual(migrated,expected);
