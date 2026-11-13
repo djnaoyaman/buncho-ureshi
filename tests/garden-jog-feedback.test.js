@@ -33,3 +33,15 @@ test('missing or denied browser audio and vibration never throw or hold selectio
 test('late resume never queues an old detent or plays on its own',async()=>{
  const f=fixture({held:true});f.feedback.gesture();f.feedback.step();assert.equal(f.rig.starts,0);f.feedback.cancel();f.rig.gate.resolve();await Promise.resolve();f.settle();assert.equal(f.rig.starts,0);f.feedback.close();
 });
+test('touch-release retries activation and plays only the latest fresh pending detent',async()=>{
+ const f=fixture({held:true});f.feedback.gesture();f.feedback.step();assert.equal(f.rig.starts,0);
+ f.advance(90);f.feedback.step();f.feedback.gesture({release:true});assert.equal(f.rig.contexts[0].resumes,2);
+ f.rig.gate.resolve();await Promise.resolve();await Promise.resolve();assert.equal(f.rig.starts,2);f.feedback.close();
+});
+test('release keeps the pending settled tone and no stale or muted audio plays after resume',async()=>{
+ const f=fixture();f.feedback.gesture();await Promise.resolve();f.feedback.settled();f.feedback.gesture({release:true});assert.equal(f.timers.size,1);f.settle();assert.equal(f.rig.starts,2);f.feedback.close();
+ for(const kind of ['old','mute','hide','cancel','close']){const x=fixture({held:true});x.feedback.gesture();x.feedback.step();
+  if(kind==='old')x.advance(251);else if(kind==='mute'||kind==='hide')x[kind]();else x.feedback[kind]();
+  x.rig.gate.resolve();await Promise.resolve();await Promise.resolve();assert.equal(x.rig.starts,0,kind);x.feedback.close();
+ }
+});

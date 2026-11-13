@@ -22,7 +22,7 @@ test('review: canceled, hidden, muted and destroyed settle callbacks stay silent
 });
 test('review: delayed audio activation does not replay historical step',async()=>{
  const r=rig({held:true});r.feedback.gesture();r.feedback.step();assert.equal(r.audio.starts,0);
- r.audio.gate.resolve();await Promise.resolve();await Promise.resolve();assert.equal(r.audio.starts,0);r.feedback.close();
+ r.time=251;r.audio.gate.resolve();await Promise.resolve();await Promise.resolve();assert.equal(r.audio.starts,0);r.feedback.close();
 });
 test('review: unsupported or denied hardware does not throw',()=>{
  const r=createGardenJogFeedback({Context:undefined,navigator:{vibrate(){throw Error('denied');}}});

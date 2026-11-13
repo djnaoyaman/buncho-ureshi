@@ -54,7 +54,7 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
   doc.addEventListener('buncho-game-will-render',rememberCatalog);
   const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const jogFeedback=createGardenJogFeedback({Context:win.AudioContext||win.webkitAudioContext,navigator:win.navigator,getSound,isActive:()=>alive&&root.isConnected&&mode==='garden'&&doc.visibilityState!=='hidden'&&!Array.from(doc.querySelectorAll('dialog[open]')).some(dialog=>!dialog.contains(root))});
-  const jog=mountGardenJog(root,{items:GARDENS,getCommitted:()=>getWorld().encounters.garden.id,isBusy:()=>busy,onCommit:id=>garden(id),onGesture:e=>{if(e.isTrusted)jogFeedback.gesture();},onStep:()=>jogFeedback.step(),onSettled:()=>jogFeedback.settled(),onCancel:()=>jogFeedback.cancel()});
+  const jog=mountGardenJog(root,{items:GARDENS,getCommitted:()=>getWorld().encounters.garden.id,isBusy:()=>busy,onCommit:id=>garden(id),onGesture:e=>{if(e.isTrusted)jogFeedback.gesture({release:e.type==='pointerup'||e.type==='touchend'});},onStep:()=>jogFeedback.step(),onSettled:()=>jogFeedback.settled(),onCancel:()=>jogFeedback.cancel()});
   function render({focus=false}={}){
     if(!alive)return;const w=getWorld();syncCrowContext(w);if(mode!=='garden'||w.worldId!==worldId)jogFeedback.cancel();
     if(companionDraft&&(mode!=='garden'||companionDraft.worldId!==w.worldId||companionDraft.gardenId!==w.encounters.garden.id))discardCompanions();
