@@ -1,3 +1,4 @@
+import {leafFriendRecollection} from './garden-friends.js';
 import {renderLeafGift,renderLeafKeepsake} from './garden-leaf-event-ui.js';
 import {encounterBodyArt} from './encounter-body-art.js';
 import {renderGardenFriendCards} from './garden-friend-cards.js';
@@ -155,6 +156,7 @@ export function renderFinchGarden(w,{system=encounterSystem,base='/buncho-ureshi
     personality: f.personality,
     portraitFile: `${f.birdId && w.birds.find(b => b.id === f.birdId)?.stage === 'juvenile' ? 'juvenile-' : ''}${f.color}.webp`,
     memories: f.memories.slice(-3),
+    recollection: leafFriendRecollection(w,f.friendId),
     actions: place.actions.map(([kind, label]) => ({kind, label, disabled: false, disabledReason: ''}))
   }))
 })}${renderCompanionSettings(w,{draft:companionDraft,message:companionMessage,base})}${renderGardenAboutBooklet({name:place.name,description:place.description,landform:place.landform,art:(place.background.releaseReady||place.background.trialAvailable)?(()=>{const a=place.background.landscape||place.background;return {src:new URL(base,'https://booklet.invalid/').pathname+a.src.replace(/\.png$/,'.screen.webp')+'?v='+a.sha256.slice(0,12),width:a.width,height:a.height,alt:place.description};})():null})}</div></section>`;
