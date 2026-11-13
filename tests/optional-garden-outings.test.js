@@ -317,7 +317,7 @@ for (const resumeLastGuest of [false, true]) test(`inviting ${resumeLastGuest ? 
   assert.equal(snapshot(w).visit, previous.visit+1);
   assert.notDeepEqual(snapshot(w).friendIds, previous.friendIds);
   assert.deepEqual(new Set(snapshot(w).returningIds), new Set(ids));
-  assert.equal(encounterFriendship(w, ids[0]).visits, meetings+(resumeLastGuest ? 0 : 1));
+  assert.equal(encounterFriendship(w, ids[0]).visits, meetings);
   assert.deepEqual(protectedState(w), before);
   const exact = clone(w);
   assert.equal(system.inviteGarden(w, ids[0], guard(w)).resumed, true);
@@ -346,7 +346,7 @@ for (const {label, points, garden, arrived} of [
   {label:'unmet regional guests', points:null, garden:'komugi', arrived:true},
   {label:'discovered regional guests at 59', points:59, garden:'komugi', arrived:true},
   {label:'close regional friends at 60', points:60, garden:'komugi', arrived:true},
-  {label:'close friends at 60 in a different garden', points:60, garden:'komorebi', arrived:true},
+  {label:'close friends at 60 in a different garden', points:60, garden:'komorebi', arrived:false},
 ]) test(`natural arrivals admit ${label}: ${arrived}`, () => {
   const w = fresh(), entry = {...ENCOUNTER_CANDIDATES[0], gardenEvent:{gardenIds:['komugi'], scene:'grass'}};
   const s = createEncounterSystem([entry], {knownCatalog:ENCOUNTER_CANDIDATES});
@@ -393,11 +393,9 @@ test('cross-garden returning guests require discovered 60 points at departure, w
   assert.equal(s.observeGarden(w, 'quiet', guard(w)).arrived, false, 'new friendship cannot change this outing');
   leave(w, s); select(w, 'komorebi', s);
   assert.deepEqual(snapshot(w).returningIds, [entry.id]);
-  assert.equal(s.observeGarden(w, 'quiet', guard(w)).arrived, true);
-  assert.deepEqual(w.encounters.queue, [entry.id]);
+  assert.equal(s.observeGarden(w, 'quiet', guard(w)).arrived, false, 'visiting friends do not compete for the native conversation');
+  assert.deepEqual(w.encounters.queue, []);
   assert.deepEqual(parseSave(serializeWorld(w)), w);
-  s.open(w, entry.id, guard(w));
-  for (const step of entry.steps) s.act(w, w.encounters.active.instanceId, step.action, guard(w));
   while (encounterFriendship(w, entry.id).points < 100) {
     s.pet(w, entry.id, Math.min(8, 100-encounterFriendship(w, entry.id).points), guard(w));
   }

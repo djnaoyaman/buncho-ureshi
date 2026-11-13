@@ -15,6 +15,32 @@ export function encounterFriendship(w,id){
   const level=points>=100?'大のなかよし':points>=60?'なかよし':points>=30?'顔なじみ':'はじめまして';
   return {visits:d?.visits||0,points,level,canVisit:!!d&&points>=FRIENDSHIP_RULES.cagePoints,inCage:!!w.encounters.cageVisitors?.some(v=>v.id===id)};
 }
+// Availability never mutates saves or rolls again during redraws.
+export const GARDEN_VISIT_RULES=Object.freeze({friendChance:0.3,meetingRewardTicks:8});
+export function getGardenVisitingBird(w){
+  const s=w.encounters,g=s.garden;
+  if(!g.open)return null;
+  const visit=s.gardenFriends.visits.find(v=>v.gardenId===g.id);
+  if(!visit)return null;
+  let hash=2166136261;
+  for(const c of `${w.worldId}:${g.id}:${visit.visit}:visiting-friend`){hash^=c.charCodeAt(0);hash=Math.imul(hash,16777619);}
+  if((hash>>>0)/4294967296>=GARDEN_VISIT_RULES.friendChance)return null;
+  const pool=visit.returningIds.filter(id=>!ENCOUNTER_CATALOG.find(e=>e.id===id)?.gardenEvent.gardenIds.includes(g.id));
+  const id=shuffleGardenPool(pool,`${w.worldId}:${g.id}:${visit.visit}:friend-choice`)[0];
+  // Pick once from the departure snapshot; unavailable friends do not cause a reroll.
+  if(!id||pendingGardenGuestLocation(s,id)||s.cageVisitors.some(v=>v.id===id)||g.lastGuest===id)return null;
+  return ENCOUNTER_CATALOG.find(e=>e.id===id)||null;
+}
+export function getGardenEncounterAvailability(w){
+  const s=w.encounters,g=s.garden,bird=ENCOUNTER_CATALOG.find(e=>e.gardenEvent.gardenIds.includes(g.id));
+  if(!bird)return null;
+  const location=pendingGardenGuestLocation(s,bird.id);
+  const base={bird,gardenId:g.id,scene:bird.gardenEvent.scene};
+  if(location)return {...base,reason:location===g.id?'pending-here':'pending-elsewhere',gardenId:location};
+  if(s.cageVisitors.some(v=>v.id===bird.id))return {...base,reason:'at-home'};
+  if(s.active||s.queue.length)return {...base,reason:'pending-here'};
+  return {...base,reason:'ready'};
+}
 export function cageVisitorCount(w){return w.birds.filter(b=>b.home==='visitor').length+(w.encounters?.cageVisitors?.length||0);}
 /** Called only after the legacy state has passed full schema validation. */
 export function upgradeEncounterState(state){if(state.version===4){state.version=5;state.friendship=[];state.cageVisitors=[];}if(state.version===5){state.version=6;state.homeClosedUntil=0;}if(state.version===6){state.version=7;state.crow=initialCrowState();}if(state.version===7){state.version=8;state.raptor=initialRaptorState();}if(state.version===8){state.version=9;for(const id of OLD_GARDEN_IDS)if(!Object.hasOwn(state.garden.visits,id))state.garden.visits[id]=0;}if(state.version===9){state.version=10;state.homeGoodbyes=[];}if(state.version===10){initializeGardenVisitSessions(state);state.version=11;}if(state.version===11){state.gardenFriends={...state.gardenFriends,version:2,accompany:false,attendees:[],visits:[]};state.version=12;}if(state.version===12)state.version=13;if(state.version===13){state.garden.visits=prepareGarden35Visits(state.garden.visits);state.version=14;}return state;}
@@ -79,15 +105,10 @@ export function createEncounterSystem(catalog=ENCOUNTER_CATALOG,{knownCatalog=ca
   }
   function fillQueue(w){
     const s=w.encounters,g=s.garden;
-    if(!g.open||!catalog.length||s.active||s.queue.length||g.turn<g.nextTurn||w.tick<g.nextTick)return;
-    const returning=new Set(s.gardenFriends.visits.find(v=>v.gardenId===g.id)?.returningIds||[]);
-    const eligible=catalog.filter(e=>!pendingGardenGuestLocation(s,e.id)&&!s.cageVisitors?.some(v=>v.id===e.id)&&(returning.has(e.id)||((e.gardenEvent?.gardenIds||[]).includes(g.id)&&(e.gardenEvent?.scene||'grass')===g.scene)));
-    // One native species per garden can meet again at any friendship level.
-    // Close friends can still visit other gardens, respecting the departure snapshot.
-    const unseen=eligible.filter(e=>!s.discoveries.some(d=>d.id===e.id));
-    const close=eligible.filter(e=>returning.has(e.id)&&e.id!==g.lastGuest);
-    const pool=unseen.length?[...unseen,...close]:eligible.filter(e=>e.id!==g.lastGuest);
-    const entry=shuffleGardenPool(pool,`${w.worldId}:${g.id}:${g.visits[g.id]}:${g.turn}`)[0]||(!unseen.length?eligible[0]:null);
+    if(!g.open||!catalog.length||s.active||s.queue.length)return;
+    // Native encounters never compete with visiting friends. Correct observation
+    // always meets the native bird, except when it is already busy elsewhere.
+    const entry=catalog.find(e=>!pendingGardenGuestLocation(s,e.id)&&!s.cageVisitors?.some(v=>v.id===e.id)&&(e.gardenEvent?.gardenIds||[]).includes(g.id)&&(e.gardenEvent?.scene||'grass')===g.scene);
     if(entry){clearCompletedGardenGuest(s,entry.id);s.queue.push(entry.id);g.guestGardenId=g.id;}
   }
   function recordVisit(w){
@@ -173,8 +194,8 @@ export function createEncounterSystem(catalog=ENCOUNTER_CATALOG,{knownCatalog=ca
     if(!s.garden.open||s.garden.guestGardenId!==s.garden.id)return {changed:false,reason:'place'};
     if(a.step<e.steps.length-1){a.step++;bump(w);return {changed:true,revealed:false,step:a.step};}
     const old=s.discoveries.find(d=>d.id===a.id),first=!old;
-    if(old){old.lastTick=w.tick;old.visits=Math.min(ENCOUNTER_LIMITS.visits,old.visits+1);}else s.discoveries.push({id:a.id,firstTick:w.tick,lastTick:w.tick,visits:1,instanceId:a.instanceId});
-    s.cursor=(catalog.findIndex(e=>e.id===a.id)+1)%Math.max(1,catalog.length);const id=a.id;s.active=null;s.garden.lastGuest=id;s.garden.nextTurn=Math.min(ENCOUNTER_LIMITS.activity,s.garden.turn+3);s.garden.nextTick=w.tick+8;bump(w);
+    if(old){if(w.tick-old.lastTick>=GARDEN_VISIT_RULES.meetingRewardTicks){old.lastTick=w.tick;old.visits=Math.min(ENCOUNTER_LIMITS.visits,old.visits+1);}}else s.discoveries.push({id:a.id,firstTick:w.tick,lastTick:w.tick,visits:1,instanceId:a.instanceId});
+    s.cursor=(catalog.findIndex(e=>e.id===a.id)+1)%Math.max(1,catalog.length);const id=a.id;s.active=null;s.garden.lastGuest=id;s.garden.nextTurn=Math.min(ENCOUNTER_LIMITS.activity,s.garden.turn+1);s.garden.nextTick=w.tick;bump(w);
     return {changed:true,revealed:true,first,id,message:first?`${e.name}との出会いを、図鑑に記録したよ。`:'また会えたね。'};
   }
   function pet(w,id,amount,expected){
@@ -191,7 +212,7 @@ export function createEncounterSystem(catalog=ENCOUNTER_CATALOG,{knownCatalog=ca
     if(pendingGardenGuestLocation(s,id)||s.active||s.queue.length)return {changed:false,reason:'guest',message:'今のお客さまとの出会いを終えてから呼ぼう。'};
     if(g.lastGuest===id&&g.guestGardenId===g.id){if(!g.open){beginVisit(w);bump(w);return {changed:true,resumed:true};}return {changed:false,resumed:true,message:'もう庭で待っているよ。'};}
     upgradeEncounterState(s);clearCompletedGardenGuest(s,id);s.cageVisitors=s.cageVisitors.filter(v=>v.id!==id);if(!g.open)beginVisit(w);g.open=true;g.lastGuest=id;g.guestGardenId=g.id;
-    d.visits=Math.min(ENCOUNTER_LIMITS.visits,d.visits+1);d.lastTick=w.tick;bump(w);return {changed:true,message:`${byId.get(id).name}が庭に来てくれたよ。`};
+    if(w.tick-d.lastTick>=GARDEN_VISIT_RULES.meetingRewardTicks){d.visits=Math.min(ENCOUNTER_LIMITS.visits,d.visits+1);d.lastTick=w.tick;}bump(w);return {changed:true,message:`${byId.get(id).name}が庭に来てくれたよ。`};
   }
   function inviteCage(w,id,expected){
     if(!guard(w,expected))return stale();validate(w.encounters,w.tick);const s=w.encounters;
