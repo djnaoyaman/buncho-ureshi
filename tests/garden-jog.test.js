@@ -38,3 +38,13 @@ test('both arrow directions arrive once and wrap without a center tap',t=>{
  previous.click();assert.deepEqual(f.arrivals,['c']);next.click();assert.deepEqual(f.arrivals,['c','a']);next.click();assert.deepEqual(f.arrivals,['c','a','b']);f.center.click();assert.equal(f.arrivals.length,3);
  f.setBusy(true);previous.click();assert.equal(f.arrivals.length,3);
 });
+test('touch gestures retry audio activation on pointer release and touchend, but not cancel',t=>{
+ const win=new Window(),root=win.document.body;root.innerHTML='<nav data-garden-jog></nav>';const face=root.firstChild,gestures=[];
+ const jog=mountGardenJog(root,{items:[{id:'a'},{id:'b'}],getCommitted:()=> 'a',onCommit:()=>{},onGesture:e=>gestures.push(e.type)});
+ t.after(()=>{jog.destroy();win.happyDOM.close();});
+ const pointer=type=>face.dispatchEvent(new win.PointerEvent(type,{pointerId:1,clientY:100,bubbles:true}));
+ pointer('pointerdown');pointer('pointerup');face.dispatchEvent(new win.Event('touchend',{bubbles:true}));
+ assert.deepEqual(gestures,['pointerdown','pointerup','touchend']);
+ pointer('pointerdown');pointer('pointercancel');assert.deepEqual(gestures,['pointerdown','pointerup','touchend','pointerdown']);
+ jog.destroy();face.dispatchEvent(new win.Event('touchend',{bubbles:true}));assert.equal(gestures.length,4);
+});

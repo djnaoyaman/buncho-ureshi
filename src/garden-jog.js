@@ -50,6 +50,7 @@ export function mountGardenJog(root,{items,getCommitted,isBusy=()=>false,onCommi
   drag.face.style.setProperty('--jog-angle',`${angle}deg`);
  }
  function stop(e){if(!drag||(e?.pointerId!=null&&e.pointerId!==drag.id))return;
+  if(e?.type==='pointerup')onGesture(e); // iOS touch activation is granted on release, not pointerdown.
   const previous=drag;drag=null;previous.face.style.setProperty('--jog-angle','0deg');
   if(previous.moved){suppressUntil=Date.now()+350;
    if(e?.type==='pointerup'&&Math.abs(previous.velocity)>.6&&!win.matchMedia?.('(prefers-reduced-motion: reduce)').matches){clearTimeout(timer);timer=win.setTimeout(()=>{timer=null;if(!disposed&&previous.face.isConnected){step(previous.velocity>0?-1:1);arrive();}},70);}
@@ -57,10 +58,11 @@ export function mountGardenJog(root,{items,getCommitted,isBusy=()=>false,onCommi
    else {preview=getCommitted();paint();onCancel();}
   }
  }
+ function touchEnd(e){if(!disposed&&e.target.closest?.('[data-garden-jog]'))onGesture(e);}
  function cancel(){stop();clearTimeout(timer);timer=null;onCancel();}
  function wheel(e){if(!e.target.closest('[data-garden-jog]')||pending||isBusy()||items.length<2)return;e.preventDefault();if(timer||!e.deltaY)return;onGesture(e);step(e.deltaY>0?1:-1);timer=win.setTimeout(()=>{timer=null;arrive();},120);}
  root.addEventListener('click',click,true);root.addEventListener('keydown',key);root.addEventListener('pointerdown',down);
  doc.addEventListener('pointermove',move,{passive:false});doc.addEventListener('pointerup',stop);doc.addEventListener('pointercancel',stop);
- root.addEventListener('wheel',wheel,{passive:false});win.addEventListener('blur',cancel);win.addEventListener('pagehide',cancel);doc.addEventListener('visibilitychange',cancel);
- return {refresh(){stop();clearTimeout(timer);timer=null;paint();},destroy(){disposed=true;cancel();root.removeEventListener('click',click,true);root.removeEventListener('keydown',key);root.removeEventListener('pointerdown',down);doc.removeEventListener('pointermove',move);doc.removeEventListener('pointerup',stop);doc.removeEventListener('pointercancel',stop);root.removeEventListener('wheel',wheel);win.removeEventListener('blur',cancel);win.removeEventListener('pagehide',cancel);doc.removeEventListener('visibilitychange',cancel);}};
+ root.addEventListener('touchend',touchEnd,{passive:true});root.addEventListener('wheel',wheel,{passive:false});win.addEventListener('blur',cancel);win.addEventListener('pagehide',cancel);doc.addEventListener('visibilitychange',cancel);
+ return {refresh(){stop();clearTimeout(timer);timer=null;paint();},destroy(){disposed=true;cancel();root.removeEventListener('click',click,true);root.removeEventListener('keydown',key);root.removeEventListener('pointerdown',down);doc.removeEventListener('pointermove',move);doc.removeEventListener('pointerup',stop);doc.removeEventListener('pointercancel',stop);root.removeEventListener('touchend',touchEnd);root.removeEventListener('wheel',wheel);win.removeEventListener('blur',cancel);win.removeEventListener('pagehide',cancel);doc.removeEventListener('visibilitychange',cancel);}};
 }
