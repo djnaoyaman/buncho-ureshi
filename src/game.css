@@ -1791,9 +1791,23 @@ body[data-world="buncho"] .game-raptor-return-dialog{box-sizing:border-box;width
 .game-ending-diary{padding:1rem;margin:1rem 0;border:2px solid #345845;border-radius:18px;background:#fff9eb;color:#243b31}
 .game-ending-diary h3{margin:0 0 .5rem}.game-ending-diary>div{display:grid;gap:.6rem}
 .game-ending-diary button{min-height:48px;text-align:left;background:#fff;border:1px solid #345845;border-radius:10px;padding:.8rem;font:inherit}
-.game-ending-dialog{box-sizing:border-box;width:min(96vw,540px);max-height:96dvh;padding:12px;border:2px solid #345845;border-radius:18px;background:#fff9eb;color:#243b31;overflow:auto}
-.game-ending-dialog::backdrop{background:rgba(15,27,23,.9)}
-.game-ending-dialog header{display:flex;align-items:center;justify-content:space-between;gap:8px}.game-ending-dialog h2{font-size:1rem;line-height:1.8;margin:.2rem 0}
-.game-ending-dialog video{display:block;width:100%;height:min(65dvh,680px);object-fit:contain;background:#111;border-radius:8px;margin:10px 0}
-.game-ending-dialog button{min-height:44px;padding:.5rem .8rem;border:1px solid #345845;border-radius:8px;font:inherit;background:white;color:#243b31}
-.game-ending-actions{display:flex;gap:8px;flex-wrap:wrap}.game-ending-dialog [data-ending-play]{background:#345845;color:#fff}.game-ending-dialog [role=status]{font-size:.85rem;line-height:1.6}.game-ending-dialog button:focus-visible,.game-ending-dialog video:focus-visible{outline:3px solid #d98238;outline-offset:3px}
+/* The movie fills the visual viewport, including portrait/landscape and iOS safe areas.
+   Contain preserves the complete authored frame instead of cropping the ending text. */
+body[data-game-ending-active]{overflow:hidden}
+.game-ending-dialog{box-sizing:border-box;position:fixed;inset:0;width:100%;height:100vh;height:100dvh;max-width:none;max-height:none;margin:0;padding:0;border:0;border-radius:0;background:#000;color:#fff;overflow:hidden;overscroll-behavior:contain}
+.game-ending-dialog::backdrop{background:#000}
+.game-ending-screen{position:absolute;inset:0;width:100%;height:100%;background:#000}
+.game-ending-screen:fullscreen{width:100%;height:100%;max-width:none;max-height:none}
+.game-ending-dialog video{display:block;position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;border-radius:0;margin:0}
+.game-ending-dialog header{position:absolute;inset:0 0 auto;z-index:2;display:flex;justify-content:flex-end;padding:calc(env(safe-area-inset-top,0px) + 8px) calc(env(safe-area-inset-right,0px) + 8px) 0 calc(env(safe-area-inset-left,0px) + 8px);pointer-events:none}
+.game-ending-dialog h2{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.game-ending-dialog button{min-height:44px;padding:.5rem .8rem;border:1px solid #fff8;border-radius:8px;font:inherit;background:#111d;color:#fff;pointer-events:auto}
+.game-ending-actions{position:absolute;z-index:2;bottom:calc(env(safe-area-inset-bottom,0px) + 64px);left:calc(env(safe-area-inset-left,0px) + 12px);right:calc(env(safe-area-inset-right,0px) + 12px);display:flex;justify-content:center;gap:8px;flex-wrap:wrap}
+.game-ending-dialog[data-playing] .game-ending-actions{opacity:0;pointer-events:none}
+.game-ending-dialog[data-playing] .game-ending-actions button{pointer-events:none}
+.game-ending-dialog[data-playing] .game-ending-actions:focus-within{opacity:1;pointer-events:auto}
+.game-ending-dialog[data-playing] .game-ending-actions:focus-within button{pointer-events:auto}
+.game-ending-dialog [data-ending-play]{background:#345845;color:#fff}
+.game-ending-dialog [role=status]{position:absolute;z-index:2;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 130px);margin:0;padding:8px;background:#111e;text-align:center;font-size:.85rem;line-height:1.6}
+.game-ending-dialog [role=status]:empty{display:none}
+.game-ending-dialog button:focus-visible,.game-ending-dialog video:focus-visible{outline:3px solid #eab46c;outline-offset:-3px}
