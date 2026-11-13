@@ -1,3 +1,6 @@
+import {syncCollectionEndings} from './collection-endings.js';
+import {mountCollectionEndingPlayer,renderEndingDiary} from './collection-ending-player.js';
+import {crowScene} from './garden-crows.js';
 import {mountRaptorReturnPrompt} from './garden-raptor-return-prompt.js';
 import {renderHomeScene} from './home-scene.js';
 import {renderNextEnjoyments} from './game-next-goals.js';
@@ -93,7 +96,7 @@ export function careFloorOpacity(cleanliness) {
   return Math.min(.22, Math.max(0, (100 - value) / 100 * .22));
 }
 export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () => {}, goArt = () => {}, audioFactory = createCareAudio, raptorRandom = Math.random, predatorRandom = Math.random } = {}) {
-  let raptorReturnPrompt=null;
+  let raptorReturnPrompt=null,endingPlayer=null;
   let sheetOpen=false, sheetReturn=null, welcomeFocusKey=null;
   let adoptionDialogToken=null,adoptionBusy=false;
   let independenceDialogToken=null,independenceBusy=false;
@@ -116,7 +119,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     if(!error)for(const node of root.querySelectorAll('.game-message,.game-overlay-message,.game-sheet-message,.game-name-feedback')){node.textContent='';node.hidden=true;}
   });
   function setMessage(text,options){message=text||'';feedbackTimer.set(message,options);}
-  try { store=await openGameStore();world=await store.transact(w=>{advanceObservedWorld(w,Date.now(),{returning:true});const desired=explicitSound??true;if(w.settings.careSound!==desired){w.settings.careSound=desired;bumpRevision(w);}return w;}); } catch(e){store?.close();if(!root.isConnected)return()=>{};root.innerHTML=`<div role="alert"><h2>保存を開けませんでした</h2><p>${escape(e.message)}</p><p>いまの保存は削除していません。ほかのタブを閉じて、再読み込みしてください。</p></div>`;return()=>{};}
+  try { store=await openGameStore();world=await store.transact(w=>{advanceObservedWorld(w,Date.now(),{returning:true});syncCollectionEndings(w);const desired=explicitSound??true;if(w.settings.careSound!==desired){w.settings.careSound=desired;bumpRevision(w);}return w;}); } catch(e){store?.close();if(!root.isConnected)return()=>{};root.innerHTML=`<div role="alert"><h2>保存を開けませんでした</h2><p>${escape(e.message)}</p><p>いまの保存は削除していません。ほかのタブを閉じて、再読み込みしてください。</p></div>`;return()=>{};}
   if(!alive||!root.isConnected){store.close();return()=>{};}
   selected=getProtagonistId(world);
   if(world.encounters.raptor?.active)panel='outdoors';
@@ -226,7 +229,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     let committed=false;
     const expectedWorldId=world.worldId;
     busy++;error='';
-    try { latest(await store.transact(w=>{if(!guard())return w;if(w.worldId!==expectedWorldId)throw new Error('別のタブで別の庭が読み込まれました。画面の更新を待ってから、もう一度選んでください。');if(advanceCurrent&&(!w.paused||advancePaused))advanceTo(w,Date.now(),{present:!document.hidden});const next=fn(w)||w;if(bump)bumpRevision(next);return next;})); committed=true;if(alive&&guard()){if(success)setMessage(success);channel?.postMessage({revision:world.revision});} }
+    try { latest(await store.transact(w=>{if(!guard())return w;if(w.worldId!==expectedWorldId)throw new Error('別のタブで別の庭が読み込まれました。画面の更新を待ってから、もう一度選んでください。');if(advanceCurrent&&(!w.paused||advancePaused))advanceTo(w,Date.now(),{present:!document.hidden});const next=fn(w)||w;syncCollectionEndings(next);if(bump)bumpRevision(next);return next;})); committed=true;if(alive&&guard()){if(success)setMessage(success);channel?.postMessage({revision:world.revision});} }
     catch(e){error=e.message||'保存できませんでした。もう一度試してください。';}
     finally{busy--;if(alive&&renderAfter)render();}
     return committed;
@@ -642,7 +645,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
   function resizeFamily(){if(panel==='family'){render();centerFamily();}else if(panel==='garden'&&!interactionActive())render();}
   function centerFamily(){const pan=root.querySelector('.game-family-pan'),canvas=root.querySelector('.game-family-canvas');if(pan&&canvas)pan.scrollLeft=Math.max(0,parseFloat(canvas.style.width)*familyZoom/2-pan.clientWidth/2);}
   function diary() {
-    return renderDiaryPaper(world, {portrait:b=>`<span class="game-mini-bird">${birdSvg(b.color,b.stage,'left')}</span>`})+(world.away.reports.length?`<details class="game-away-history" data-game-details="away-history"><summary>留守の小さな記録（直近7日）</summary><ul class="game-away-reports">${world.away.reports.map(r=>`<li><time datetime="${r.day}">${r.day}</time><span>${escape(awayText(r))}</span></li>`).join('')}</ul></details>`:'');
+    return renderEndingDiary(world)+renderDiaryPaper(world, {portrait:b=>`<span class="game-mini-bird">${birdSvg(b.color,b.stage,'left')}</span>`})+(world.away.reports.length?`<details class="game-away-history" data-game-details="away-history"><summary>留守の小さな記録（直近7日）</summary><ul class="game-away-reports">${world.away.reports.map(r=>`<li><time datetime="${r.day}">${r.day}</time><span>${escape(awayText(r))}</span></li>`).join('')}</ul></details>`:'');
   }
   function roster() {
     const current=chosen();
@@ -790,6 +793,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     if(oldOverlayScroll!==undefined)overlay.scrollTop=oldOverlayScroll;
     if(sheetOpen)sheet.scrollTop=oldSheetScroll;
     raptorReturnPrompt?.sync();
+    endingPlayer?.sync();
   }
   function artPayload(b, e) { const family=[b,...b.parents.map(id=>findBird(world,id)),...(b.partner?[findBird(world,b.partner)]:[])].filter(Boolean); return {title:e?eventText(world,e):`${b.name}の家族`,name:b.name,names:family.map(x=>x.name),birds:family.map(x=>({id:x.id,name:x.name,color:x.color,stage:x.stage})),date:day(e?.tick??world.tick),event:e?.kind||'family',source:'game',caption:'おもちの文鳥ぐらし・ゲームの記念カード'}; }
   // Only our captured poll may advance this gesture's token. Never adopt an
@@ -897,6 +901,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     finally{lifeBusy=false;if(button.isConnected)button.disabled=false;}
   }
   async function click(ev) {
+    const endingButton=ev.target.closest?.('[data-ending-replay]');if(endingButton){ev.preventDefault();void endingPlayer?.open(endingButton.dataset.endingReplay);return;}
     const suggestionButton=ev.target.closest?.('[data-game-name-suggest],[data-game-name-cancel]');
     if(suggestionButton){
       const b=chosen(),input=root.querySelector('#game-name');
@@ -1054,11 +1059,18 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
   async function poll(returning=false){
     if(returning===true)awayReturnRequest={at:Date.now()};
     if(!alive||busy||document.hidden)return;
+    if(endingPlayer?.active()){
+      busy++;
+      try{const next=await store.transact(w=>w);if(alive){const replaced=next.worldId!==world.worldId;latest(next);endingPlayer.sync();if(replaced)render();}}
+      catch(e){if(alive)error=e.message;}
+      finally{busy--;}
+      return;
+    }
     const request=awayReturnRequest,observedAt=request?.at??Date.now();
     busy++;const flight={before:null,after:null,promise:null};pollFlight=flight;
     flight.promise=(async()=>{
       try{
-        const next=await store.transact(w=>{flight.before=economyToken(w);return advanceObservedWorld(w,Date.now(),{returning:!!request,active:Date.now()-lastInteractionAt<=300000,advance:!independenceDialogToken&&!successorDialogToken,observedAt});});
+        const next=await store.transact(w=>{flight.before=economyToken(w);advanceObservedWorld(w,Date.now(),{returning:!!request,active:Date.now()-lastInteractionAt<=300000,advance:!independenceDialogToken&&!successorDialogToken,observedAt});syncCollectionEndings(w);return w;});
         if(awayReturnRequest===request)awayReturnRequest=null;
         flight.after=economyToken(next);
         const replaced=next.worldId!==world.worldId,changed=replaced||next.revision!==world.revision||next.paused!==world.paused||awayViewKey(next)!==awayViewKey(world)||refreshPending;
@@ -1067,7 +1079,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
       }catch(e){if(alive){error=e.message;render();}}
       finally{busy--;if(pollFlight===flight)pollFlight=null;}
     })();
-    await flight.promise;
+    await flight.promise;endingPlayer?.sync();
   }
   function rememberPresence(){if(!alive)return;const expected=world.worldId,at=Date.now();void store.transact(w=>{if(w.worldId===expected)notePresence(w,at);return w;}).catch(()=>{});}
   function observeVisibility(){if(document.hidden)rememberPresence();else void poll(true);}
@@ -1082,8 +1094,11 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     const committed=await mutate(w=>{result=remainWithGardenRaptor(w,Date.now(),{...expected,revision:w.revision});return w;},'にわに残るよ。危なくなる前に、おうちへ帰ってね。',current,{bump:false,advanceCurrent:false});
     return committed&&result?.changed;
   }});
+  endingPlayer=mountCollectionEndingPlayer(root,{getWorld:()=>world,transact:async fn=>{
+    const committed=await mutate(fn,'',()=>alive,{bump:false,advanceCurrent:false,renderAfter:false});if(!committed)throw new Error('保存できませんでした。');return world;
+  },canPresent:()=>!busy&&!document.hidden&&!sheetOpen&&!adoptionDialogToken&&!independenceDialogToken&&!successorDialogToken&&!resetPending&&!drawResult&&!world.encounters.raptor?.active&&!crowScene(world)&&!world.encounters.active&&!world.encounters.queue.length&&!['loading','shown'].includes(document.body.dataset.gameIntro),onActive:value=>{if(value)cancelCareEffects();},onClose:()=>{if(alive)render();}});
   timer=setInterval(poll,3000);render();document.dispatchEvent(new document.defaultView.CustomEvent('buncho-game-ready'));
-  const raptorController=mountGardenRaptors(root,{getWorld:()=>world,random:raptorRandom,predatorRandom,canStartCrowWarning:()=>encounterController?.canStartCrowWarning()||false,startCrowWarning:id=>encounterController?.startCrowWarning(id)||false,isAvailable:()=>!busy,hasCrowPending:()=>encounterController?.hasCrowPending()||false,transact:async operation=>{
+  const raptorController=mountGardenRaptors(root,{getWorld:()=>world,random:raptorRandom,predatorRandom,canStartCrowWarning:()=>encounterController?.canStartCrowWarning()||false,startCrowWarning:id=>encounterController?.startCrowWarning(id)||false,isAvailable:()=>!busy&&!endingPlayer?.active(),hasCrowPending:()=>encounterController?.hasCrowPending()||false,transact:async operation=>{
     const committed=await mutate(operation,'',()=>alive,{bump:false,advanceCurrent:false,renderAfter:false});if(!committed)throw new Error('保存できませんでした。');return world;
   },onChange:({result,structural,error:raptorError})=>{
     if(raptorError){error='猛禽との記録を保存できませんでした。残り時間と保存を保持しています。おうちへ戻ってもう一度試してください。';render();return;}
@@ -1092,6 +1107,6 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
   const poseTimer=setInterval(updatePoses,600);
   root.ownerDocument.defaultView.addEventListener('resize',resizeFamily);
   document.addEventListener('visibilitychange',holdPoses);reducedMotion?.addEventListener?.('change',holdPoses);poseLayout?.addEventListener?.('change',reframePoses);compactLayout?.addEventListener?.('change',reframeCompact);
-  return ()=>{document.removeEventListener('visibilitychange',observeVisibility);root.ownerDocument.defaultView.removeEventListener('pagehide',rememberPresence);root.ownerDocument.defaultView.removeEventListener('pageshow',observePageShow);pendingGachaAudio?.close()?.catch(()=>{});drawMotion?.destroy();feedbackTimer.destroy();raptorController.destroy();raptorReturnPrompt.destroy();captionObserver.disconnect();const resultDialog=root.querySelector('.game-draw-result');if(resultDialog?.open)resultDialog.close();resultDialog?.remove();closeAdoptionDialog(false);closeIndependenceDialog(false);closeSuccessorDialog(false);encounterController?.destroy();encounterController=null;encounterRoot=null;document.dispatchEvent(new document.defaultView.CustomEvent('buncho-game-garden',{detail:{gardenId:null,worldId:world.worldId}}));closeResetDialog(false);document.removeEventListener('buncho-world-action',worldAction);disposeRelations();root.ownerDocument.defaultView.removeEventListener('storage',syncCarePreference);document.removeEventListener('click',unlockCareCapture,true);root.ownerDocument.defaultView.removeEventListener('pagehide',cancelCareEffects);alive=false;importRequest++;soundRequest++;cancelCareEffects();audio.close();clearInterval(timer);clearInterval(poseTimer);root.ownerDocument.defaultView.removeEventListener('resize',resizeFamily);document.removeEventListener('visibilitychange',holdPoses);reducedMotion?.removeEventListener?.('change',holdPoses);poseLayout?.removeEventListener?.('change',reframePoses);compactLayout?.removeEventListener?.('change',reframeCompact);channel?.close();store.close();root.querySelector('.game-bird-sheet')?.close();for(const type of ['click','keydown','input'])root.removeEventListener(type,noteInteraction,true);root.removeEventListener('cancel',sheetCancel,true);root.removeEventListener('keydown',menuKeydown);root.removeEventListener('click',click);root.removeEventListener('submit',submit);root.removeEventListener('change',change);root.removeEventListener('input',rememberDraft);root.removeEventListener('pointerdown',pointerStart);root.removeEventListener('keydown',careRubKey);root.removeEventListener('lostpointercapture',lostCareRub);root.ownerDocument.defaultView.removeEventListener('blur',blurCareRub);document.removeEventListener('pointermove',moveCareRub);document.removeEventListener('pointerup',pointerEnd);document.removeEventListener('pointercancel',pointerEnd);clearTimeout(releaseTimer);pressedPointers.clear();drafts.clear();};
+  return ()=>{endingPlayer?.destroy();document.removeEventListener('visibilitychange',observeVisibility);root.ownerDocument.defaultView.removeEventListener('pagehide',rememberPresence);root.ownerDocument.defaultView.removeEventListener('pageshow',observePageShow);pendingGachaAudio?.close()?.catch(()=>{});drawMotion?.destroy();feedbackTimer.destroy();raptorController.destroy();raptorReturnPrompt.destroy();captionObserver.disconnect();const resultDialog=root.querySelector('.game-draw-result');if(resultDialog?.open)resultDialog.close();resultDialog?.remove();closeAdoptionDialog(false);closeIndependenceDialog(false);closeSuccessorDialog(false);encounterController?.destroy();encounterController=null;encounterRoot=null;document.dispatchEvent(new document.defaultView.CustomEvent('buncho-game-garden',{detail:{gardenId:null,worldId:world.worldId}}));closeResetDialog(false);document.removeEventListener('buncho-world-action',worldAction);disposeRelations();root.ownerDocument.defaultView.removeEventListener('storage',syncCarePreference);document.removeEventListener('click',unlockCareCapture,true);root.ownerDocument.defaultView.removeEventListener('pagehide',cancelCareEffects);alive=false;importRequest++;soundRequest++;cancelCareEffects();audio.close();clearInterval(timer);clearInterval(poseTimer);root.ownerDocument.defaultView.removeEventListener('resize',resizeFamily);document.removeEventListener('visibilitychange',holdPoses);reducedMotion?.removeEventListener?.('change',holdPoses);poseLayout?.removeEventListener?.('change',reframePoses);compactLayout?.removeEventListener?.('change',reframeCompact);channel?.close();store.close();root.querySelector('.game-bird-sheet')?.close();for(const type of ['click','keydown','input'])root.removeEventListener(type,noteInteraction,true);root.removeEventListener('cancel',sheetCancel,true);root.removeEventListener('keydown',menuKeydown);root.removeEventListener('click',click);root.removeEventListener('submit',submit);root.removeEventListener('change',change);root.removeEventListener('input',rememberDraft);root.removeEventListener('pointerdown',pointerStart);root.removeEventListener('keydown',careRubKey);root.removeEventListener('lostpointercapture',lostCareRub);root.ownerDocument.defaultView.removeEventListener('blur',blurCareRub);document.removeEventListener('pointermove',moveCareRub);document.removeEventListener('pointerup',pointerEnd);document.removeEventListener('pointercancel',pointerEnd);clearTimeout(releaseTimer);pressedPointers.clear();drafts.clear();};
 }
 

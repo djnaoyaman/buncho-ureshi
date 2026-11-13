@@ -1786,3 +1786,14 @@ body[data-world="buncho"] .game-raptor-return-dialog{box-sizing:border-box;width
 .game-raptor-return-actions [data-raptor-choice="home"]{min-height:56px;background:#f6d36c;border-color:#755d31;font-size:1.1rem;box-shadow:0 3px 0 #755d31}
 .game-raptor-return-actions button:focus-visible{outline:3px solid #225b87;outline-offset:3px}
 .game-raptor-return-actions button:disabled{opacity:.65}.game-raptor-return-error{font-size:.9rem;color:#913f36}
+
+/* Collection endings: quiet, persistent cinema; media is loaded only on demand. */
+.game-ending-diary{padding:1rem;margin:1rem 0;border:2px solid #345845;border-radius:18px;background:#fff9eb;color:#243b31}
+.game-ending-diary h3{margin:0 0 .5rem}.game-ending-diary>div{display:grid;gap:.6rem}
+.game-ending-diary button{min-height:48px;text-align:left;background:#fff;border:1px solid #345845;border-radius:10px;padding:.8rem;font:inherit}
+.game-ending-dialog{box-sizing:border-box;width:min(96vw,540px);max-height:96dvh;padding:12px;border:2px solid #345845;border-radius:18px;background:#fff9eb;color:#243b31;overflow:auto}
+.game-ending-dialog::backdrop{background:rgba(15,27,23,.9)}
+.game-ending-dialog header{display:flex;align-items:center;justify-content:space-between;gap:8px}.game-ending-dialog h2{font-size:1rem;line-height:1.8;margin:.2rem 0}
+.game-ending-dialog video{display:block;width:100%;height:min(65dvh,680px);object-fit:contain;background:#111;border-radius:8px;margin:10px 0}
+.game-ending-dialog button{min-height:44px;padding:.5rem .8rem;border:1px solid #345845;border-radius:8px;font:inherit;background:white;color:#243b31}
+.game-ending-actions{display:flex;gap:8px;flex-wrap:wrap}.game-ending-dialog [data-ending-play]{background:#345845;color:#fff}.game-ending-dialog [role=status]{font-size:.85rem;line-height:1.6}.game-ending-dialog button:focus-visible,.game-ending-dialog video:focus-visible{outline:3px solid #d98238;outline-offset:3px}

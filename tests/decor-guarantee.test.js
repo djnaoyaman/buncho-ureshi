@@ -74,7 +74,7 @@ test('cooldown, insufficient Gems and invalid category never spend or advance pr
 
 test('frozen v10 migration adds only zero counters and preserves all former data without mutation',()=>{
  const old=JSON.parse(readFileSync(new URL('./fixtures/v10-gacha-world.json',import.meta.url))),before=clone(old);
- const w=readCompatibleWorld(old,now+86400000),projection=clone(w);assert.equal(w.version,16);assert.deepEqual(w.decor.duplicateStreaks,Object.fromEntries(DECOR_SLOTS.map(s=>[s.id,0])));
+ const w=readCompatibleWorld(old,now+86400000),projection=clone(w);assert.equal(w.version,17);assert.deepEqual(w.decor.duplicateStreaks,Object.fromEntries(DECOR_SLOTS.map(s=>[s.id,0])));
  projection.version=10;stripGrowthPace(projection);if(projection.economy){projection.economy.version=1;delete projection.economy.household;}for(const k of ['clock','archive','journal'])delete projection[k];for(const e of projection.events)e.at=projection.epoch+e.tick*15000;delete projection.decor.duplicateStreaks;assert.equal(projection.encounters.version,15);projection.encounters.version=old.encounters.version;
  // New counters are the only permitted addition; every legacy field still compares exactly.
  assert.deepEqual(Object.keys(projection.encounters.garden.visits).sort(),[...GARDEN_IDS].sort());
@@ -100,7 +100,7 @@ test('two tabs commit one guaranteed draw and preserve the same durable outcome'
 
 test('v10 no-op store read persists its additive migration exactly once',async()=>{
  const indexedDB=new IDBFactory(),old=JSON.parse(readFileSync(new URL('./fixtures/v10-gacha-world.json',import.meta.url)));await raw(indexedDB,old);const store=await openGameStore({indexedDB});
- try{const first=await store.transact(w=>w),persisted=await raw(indexedDB);assert.deepEqual(first,persisted);assert.equal(persisted.version,16);assert.equal(persisted.revision,old.revision);assert.deepEqual(await store.transact(w=>w),persisted);}finally{store.close();}
+ try{const first=await store.transact(w=>w),persisted=await raw(indexedDB);assert.deepEqual(first,persisted);assert.equal(persisted.version,17);assert.equal(persisted.revision,old.revision);assert.deepEqual(await store.transact(w=>w),persisted);}finally{store.close();}
 });
 
 test('the previous published v10 store rejects the new save before any write callback',async()=>{

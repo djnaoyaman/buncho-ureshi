@@ -1,3 +1,4 @@
+import {initialCollectionEndings,validateCollectionEndings,syncCollectionEndings} from './collection-endings.js';
 import {initializeRelaxedCare,registerRelaxedBird,validateRelaxedCare,protectAbsentCare,rebaseRelaxedCare,careBaseStatus,takeCareBase,awardCareExtra,careDropUnits} from './care-rules.js';
 export {careBaseStatus};
 import {initialAway,validateAway} from './away-reports.js';
@@ -11,7 +12,7 @@ import {initialEconomy,validateEconomy,syncEconomy,reserveAutomaticGems,awardHou
 /** A deterministic, offline story simulation with fictional lifecycle rules. No real husbandry advice. */
 import { initializeCareSchedule, validateCareSchedule, syncCareSchedule, applyScheduledCare, reconcileImportedCare, careWindow, careDay } from './care-schedule.js';
 import { directLineNameFields, newDefaultNameFields, automaticNaming, manualNaming, legacyNaming, isValidNaming } from './bird-names.js';
-export const SAVE_VERSION = 16;
+export const SAVE_VERSION = 17;
 const careTime = now => Math.max(0, Math.min(253402268399999, now));
 export { reconcileImportedCare, careWindow };
 export const TICK_MS = 60000;
@@ -317,7 +318,7 @@ export function honorBird(w,birdId,kind,token,now=Date.now()){
  const result=honorLifeBird(w,birdId,kind,economyToken(w),careTime(now));if(result.changed)bumpRevision(w);return result;
 }
 export function createWorld(now = Date.now(), seed = 842911) {
-  const w = { away:initialAway(careTime(now)), version: SAVE_VERSION, revision: 0, worldId: `garden-${now}-${seed}`, epoch: now, clock:{version:2,originTick:0,originAt:now,legacyEventMax:0},archive:[],journal:[], lastUpdated: now, seed: seed >>> 0, tick: 0, nextId: 1, nextEvent: 1, paused: false, settings: { motion: true, careSound: true, adoptionMode:'ask' }, care: { cleanliness: 100, lastCleanTick: null }, birds: [], events: [], offlineSummary: null, field: initialField(), decor: initialDecor(), gems: {droppings:[],nextDropId:1}, encounters:initialEncounterState(), economy:initialEconomy(careTime(now)), adoption:{pending:null,dismissed:[]} };
+  const w = { collectionEndings:initialCollectionEndings(), away:initialAway(careTime(now)), version: SAVE_VERSION, revision: 0, worldId: `garden-${now}-${seed}`, epoch: now, clock:{version:2,originTick:0,originAt:now,legacyEventMax:0},archive:[],journal:[], lastUpdated: now, seed: seed >>> 0, tick: 0, nextId: 1, nextEvent: 1, paused: false, settings: { motion: true, careSound: true, adoptionMode:'ask' }, care: { cleanliness: 100, lastCleanTick: null }, birds: [], events: [], offlineSummary: null, field: initialField(), decor: initialDecor(), gems: {droppings:[],nextDropId:1}, encounters:initialEncounterState(), economy:initialEconomy(careTime(now)), adoption:{pending:null,dismissed:[]} };
   initializeCareSchedule(w,careTime(now)); initializeLifecycle(w,careTime(now));initializeRelaxedCare(w,careTime(now));
   const b = createBird(w, { name: 'エド', automaticName:true, sex: 'female', color: 'white', home: 'resident' });
   initializeProtagonist(w);
@@ -724,7 +725,7 @@ function validateVersion(input, version) {
   const fail = msg => { throw new Error(`保存データを読み込めません：${msg}`); };
   if (!input || typeof input !== 'object' || Array.isArray(input)) fail('形式が違います。');
   const shape = (value, keys) => value !== null && typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length === keys.length && keys.every(key => Object.hasOwn(value, key));
-  const worldKeys = ['version','revision','worldId','epoch','lastUpdated','seed','tick','nextId','nextEvent','paused','settings','birds','events','offlineSummary', ...(version >= 2 ? ['care'] : []), ...(version >= 3 ? ['field','decor'] : []), ...(version >= 4 ? ['gems'] : []), ...(version >= 5 ? ['careSchedule'] : []), ...(version >= 6 ? ['encounters'] : []), ...(version >= 7 ? ['economy','adoption'] : []), ...(version >= 8 ? ['lifecycle'] : []), ...(version >= 9 ? ['protagonist'] : []),...(version>=12?['clock','archive','journal']:[]),...(version>=15?['away']:[]),...(version>=16?['careRules']:[])];
+  const worldKeys = ['version','revision','worldId','epoch','lastUpdated','seed','tick','nextId','nextEvent','paused','settings','birds','events','offlineSummary', ...(version >= 2 ? ['care'] : []), ...(version >= 3 ? ['field','decor'] : []), ...(version >= 4 ? ['gems'] : []), ...(version >= 5 ? ['careSchedule'] : []), ...(version >= 6 ? ['encounters'] : []), ...(version >= 7 ? ['economy','adoption'] : []), ...(version >= 8 ? ['lifecycle'] : []), ...(version >= 9 ? ['protagonist'] : []),...(version>=12?['clock','archive','journal']:[]),...(version>=15?['away']:[]),...(version>=16?['careRules']:[]),...(version>=17?['collectionEndings']:[])];
   if (!shape(input, worldKeys)) fail('保存の項目が不正です。');
   // Check bounded input before JSON cloning, including direct IndexedDB values.
   // Descriptors avoid invoking getters/toJSON on malformed non-JSON objects.
@@ -859,6 +860,7 @@ function validateVersion(input, version) {
   }
   if(version>=15)validateAway(w);
   if(version>=16)validateRelaxedCare(w);
+  if(version>=17)validateCollectionEndings(w);
   return w;
 }
 /** Strict current-version validator for transactions; use compatibility only at read boundaries. */
@@ -923,7 +925,8 @@ export function migrateV13ToV14(input,now=Date.now()){
 }
 /** First observation establishes presence; never backfill pre-update absence. */
 export function migrateV14ToV15(input,now=Date.now()){const w=validateVersion(input,14);w.version=15;w.away=initialAway();return migrateV15ToV16(w,now);}
-export function migrateV15ToV16(input,now=Date.now()){const w=validateVersion(input,15);w.version=16;initializeRelaxedCare(w,careTime(Math.max(now,w.careSchedule.seenAt,w.lifecycle.seenAt,w.economy.seenAt)));return validateWorld(w);}
+export function migrateV15ToV16(input,now=Date.now()){const w=validateVersion(input,15);w.version=16;initializeRelaxedCare(w,careTime(Math.max(now,w.careSchedule.seenAt,w.lifecycle.seenAt,w.economy.seenAt)));return migrateV16ToV17(w,now);}
+export function migrateV16ToV17(input,now=Date.now()){const w=validateVersion(input,16);w.version=17;w.collectionEndings=initialCollectionEndings();syncCollectionEndings(w);return validateWorld(w);}
 export function readCompatibleWorld(input, now=Date.now()) {
   // Do not execute an accessor even to discover the version of an untrusted object.
   const descriptor = input && typeof input === 'object' ? Object.getOwnPropertyDescriptor(input, 'version') : null;
@@ -943,6 +946,7 @@ export function readCompatibleWorld(input, now=Date.now()) {
   if (descriptor.value === 13) return migrateV13ToV14(input,now);
   if (descriptor.value === 14) return migrateV14ToV15(input,now);
   if (descriptor.value === 15) return migrateV15ToV16(input,now);
+  if (descriptor.value === 16) return migrateV16ToV17(input,now);
   if (descriptor.value === SAVE_VERSION) return validateWorld(input);
   throw new Error('保存データを読み込めません：対応していない版です。元の保存はそのままです。');
 }

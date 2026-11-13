@@ -32,7 +32,7 @@ test('render and draw are byte-pure and remain stable after rename, offers, orde
  const ids=selected(w),before=serializeWorld(w),seed=w.seed;renderMemorialPanel(w);for(let i=0;i<3;i++)w.birds.forEach(b=>memorialDesignForBird(w,b));assert.equal(serializeWorld(w),before);assert.equal(w.seed,seed);
  renameBird(w,'b1','ずっとおもち');honorBird(w,'b1','incense',economyToken(w),NOW);honorBird(w,'b1','prayer',economyToken(w),NOW);w.birds.reverse();w.lifecycle.birds.reverse();assert.deepEqual(selected(w),ids);
  const reloaded=parseSave(serializeWorld(w)),imported=prepareWorldReplacement(createWorld(NOW+1000),reloaded,NOW+1000,'garden-memorial-import');
- assert.notEqual(imported.worldId,w.worldId);assert.deepEqual(selected(reloaded),ids);assert.deepEqual(selected(imported),ids);assert.equal(imported.version,16);assert.equal(imported.lifecycle.version,1);assert.equal(lifeStatus(imported,'b1').incenseCount,1);assert.equal(lifeStatus(imported,'b1').prayerCount,1);
+ assert.notEqual(imported.worldId,w.worldId);assert.deepEqual(selected(reloaded),ids);assert.deepEqual(selected(imported),ids);assert.equal(imported.version,17);assert.equal(imported.lifecycle.version,1);assert.equal(lifeStatus(imported,'b1').incenseCount,1);assert.equal(lifeStatus(imported,'b1').prayerCount,1);
 });
 test('restoring a pre-death backup and later death keeps the same individual draw',()=>{
  const living=createWorld(NOW,42),first=structuredClone(living);accidentLifeBird(first,'b1',NOW);
@@ -44,7 +44,7 @@ for(const mode of ['idb','local','memory'])test(`${mode}: fixed artwork survives
  const s=await openGameStore(platform);try{
   const original=await s.transact(()=>grave()),ids=selected(original),raw=serializeWorld(original);renderMemorialPanel(original);assert.equal(serializeWorld(await s.transact(w=>w)),raw);
   const fresh=await s.resetWorld(original.worldId),restored=await s.restoreResetBackup(fresh.worldId);assert.notEqual(restored.worldId,original.worldId);assert.deepEqual(selected(restored),ids);
-  const imported=await s.replaceWorld(restored.worldId,parseSave(raw),restored.lastUpdated);assert.deepEqual(selected(imported),ids);assert.equal(imported.version,16);assert.equal(imported.lifecycle.version,1);assert.deepEqual(Object.keys(lifeStatus(imported,'b1').death).sort(),['at','cause','tick']);
+  const imported=await s.replaceWorld(restored.worldId,parseSave(raw),restored.lastUpdated);assert.deepEqual(selected(imported),ids);assert.equal(imported.version,17);assert.equal(imported.lifecycle.version,1);assert.deepEqual(Object.keys(lifeStatus(imported,'b1').death).sort(),['at','cause','tick']);
  }finally{s.close();}
 });
 test('every death cause gets a grave; living departed friends do not',()=>{

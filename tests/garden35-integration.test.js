@@ -11,10 +11,11 @@ import {createEncounterSystem as oldEncounterSystem} from './fixtures/pre-garden
 import {renderGardenStage} from '../src/encounter-ui.js';
 const original=()=>JSON.parse(readFileSync(new URL('./fixtures/pre-garden35/world-v16-enc13.json',import.meta.url),'utf8'));
 
-test('frozen published save upgrades only encounter version and 23 zero counters, preserving active conversation and all 11 parked sessions',()=>{
+test('frozen published save adds ending state and 23 zero counters, preserving active conversation and all 11 parked sessions',()=>{
  const old=original(),before=structuredClone(old);
  oldEncounterSystem().validate(old.encounters,old.tick);
  const upgraded=readCompatibleWorld(structuredClone(old),1000),expected=structuredClone(old);
+ expected.version=17;expected.collectionEndings={version:1,entries:[]};
  expected.encounters.version=15;expected.encounters.garden.visits=Object.fromEntries(GARDEN_IDS.map(id=>[id,old.encounters.garden.visits[id]??0]));
  assert.deepEqual(upgraded,expected);assert.deepEqual(old,before);
  assert.equal(upgraded.encounters.gardenSessions.length,11);

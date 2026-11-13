@@ -8,7 +8,7 @@ export function mountGardenRaptors(root,{getWorld,transact,onChange=()=>{},isAva
  const doc=root.ownerDocument,win=doc.defaultView,clock=createGardenRaptorClock({random}),entryClock=createGardenPredatorClock({random:predatorRandom});
  let alive=true,flight=false,timer=null,last=null,epoch=0,lastWorld=getWorld().worldId,lastPanel=root.querySelector('.game-app')?.dataset.panel,lastGarden=getWorld().encounters.garden.id;
  let renderedScene=sceneKey(getWorld());
- const visible=()=>alive&&root.isConnected&&!['loading','shown'].includes(doc.body.dataset.gameIntro)&&doc.visibilityState!=='hidden'&&!doc.body.hasAttribute('data-game-view-blocked')&&win.navigator?.onLine!==false&&!getWorld().paused;
+ const visible=()=>alive&&root.isConnected&&!['loading','shown'].includes(doc.body.dataset.gameIntro)&&doc.visibilityState!=='hidden'&&!doc.body.hasAttribute('data-game-view-blocked')&&win.navigator?.onLine!==false&&!getWorld().paused&&!doc.body.hasAttribute('data-game-ending-active');
  const interrupt=()=>{last=null;clock.reset();entryClock.reset();epoch++;};
  function sceneKey(w){const s=raptorScene(w);return s?`${s.species.id}:${s.phase}:${s.hostile}:${s.returnChoicePending}`:'';}
  async function poll(){
