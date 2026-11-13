@@ -24,7 +24,7 @@ test('dock fitting changes layout margins only, preserving motion ownership and 
     assert.ok(plane); assert.ok(actors);
     assert.equal(plane.style.getPropertyValue('--garden-plane-top'), 'clamp(calc(100cqh - var(--draw-h)),calc(65cqh - var(--garden-anchor-y) * var(--draw-h)),0px)');
     assert.equal(plane.style.getPropertyValue('--garden-lowest-foot'), 'calc(var(--garden-plane-top) + var(--garden-anchor-y) * var(--draw-h) + var(--garden-lower-row) * min(17cqh,110px))');
-    assert.equal(plane.style.getPropertyValue('--garden-controls-rise'), 'max(0px,calc(var(--garden-lowest-foot) + 27px + var(--garden-dock-reserve) + env(safe-area-inset-bottom,0px) - 100cqh))');
+    assert.equal(plane.style.getPropertyValue('--garden-controls-rise'), 'max(0px,calc(var(--garden-lowest-foot) + max(27px,calc(var(--garden-tail-reserve,0px) + 6px)) + var(--garden-dock-reserve) + env(safe-area-inset-bottom,0px) - 100cqh))');
     assert.equal(actors.style.cssText, 'margin-block-start: calc(0px - var(--garden-controls-rise));');
     assert.equal(list.find(rule => rule.selectorText === scope).style.getPropertyValue('--garden-dock-reserve'), '68px');
     assert.equal(list.find(rule => rule.selectorText === scope).style.getPropertyValue('--garden-lower-row'), '.75');

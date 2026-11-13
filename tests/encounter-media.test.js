@@ -58,7 +58,7 @@ test('delivery copies reduce bytes while preserving full-size dimensions; origin
 
 test('cage visitors are visible without an encounter panel loader',()=>{
  const win=new Window();win.document.body.innerHTML=renderEncounterCageGuest(encounterSystem.catalog[0]);
- assert.equal(win.document.querySelector('.finch-media'),null);const img=win.document.querySelector('img');assert.match(img.getAttribute('src'),/\.screen\.webp$/);assert.ok(img.alt);
+ assert.equal(win.document.querySelector('.finch-media').dataset.mediaState,'ready');assert.equal(win.document.querySelector('.finch-media-status'),null);const img=win.document.querySelector('img');assert.match(img.getAttribute('src'),/\.screen\.webp$/);assert.ok(img.alt);
 });
 test('all catalog photographs retain exact original URLs, unaltered styles and license credits',()=>{
  const win=new Window(),world=createWorld(1000,42),before=JSON.stringify(world),base='/buncho-ureshi/';
