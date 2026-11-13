@@ -14,6 +14,8 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
   if(typeof getWorld!=='function'||typeof transact!=='function')throw new Error('図鑑の保存先が必要です。');
   let alive=true,busy=false,mode=initialMode==='garden'?'garden':'notebook',pageId=null,showPhoto=false,generation=0,notice='',worldId=getWorld().worldId,revealGardenId=null,renderedView=null;
   let rub=null,petFlight=false,petTimer=null;
+  // Same one-third gain for pointer and keyboard; earned save values stay intact.
+  const petDistance=72,keyboardPetRemainders=new Map();
   let companionDraft=null,companionMessage='';
   const discardCompanions=()=>{companionDraft=null;companionMessage='';};
  const crowClock=createGardenCrowClock({random:crowRandom});
@@ -150,14 +152,17 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
     const distance=Math.hypot(event.clientX-rub.x,event.clientY-rub.y);rub.x=event.clientX;rub.y=event.clientY;
     if(!box||event.clientX<box.left||event.clientX>box.right||event.clientY<box.top||event.clientY>box.bottom){rub.distance=0;return;}
     event.preventDefault();rub.distance+=Math.min(distance,96);
-    const strokes=Math.floor(rub.distance/24);rub.distance%=24;
+    const strokes=Math.floor(rub.distance/petDistance);rub.distance%=petDistance;
     if(strokes){rub.pending=Math.min(32,rub.pending+strokes);if(!petFlight)flushPet();}
   }
   function endRub(event){if(!rub||event.pointerId!==rub.pointerId)return;rub.active=false;if(!petFlight&&rub.pending)flushPet();else if(!petFlight){rub=null;render();}}
   function keyRub(event){
     const target=event.target.closest('[data-encounter-rub]');
     if(!target||!root.contains(target)||!['Enter',' '].includes(event.key)||event.repeat||busy||petFlight||rub)return;
-    event.preventDefault();const w=getWorld();rub={id:target.dataset.encounterRub,worldId:w.worldId,generation,pending:1,active:false,keyboard:true};flushPet();
+    event.preventDefault();const w=getWorld(),key=JSON.stringify([w.worldId,mode,target.dataset.encounterRub]);
+    const presses=(keyboardPetRemainders.get(key)||0)+1;keyboardPetRemainders.set(key,presses%3);
+    if(presses<3)return;
+    rub={id:target.dataset.encounterRub,worldId:w.worldId,generation,pending:1,active:false,keyboard:true};flushPet();
   }
   async function mutate(operation,token){
     busy=true;render();let feedback;

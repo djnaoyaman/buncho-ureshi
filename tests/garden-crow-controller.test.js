@@ -19,16 +19,16 @@ function setup(w,{entry=false,...options}={}){
  return {win,root,panel,ready,tick,run,timers,close};
 }
 test('crow notebook keyboard petting updates and preserves keyboard focus',async()=>{
- const w=fixture(true),s=setup(w,{entry:true});try{const target=s.root.querySelector('[data-encounter-rub]');target.focus();target.dispatchEvent(new s.win.KeyboardEvent('keydown',{key:'Enter',bubbles:true}));await sleep(5);assert.equal(crowFriendship(w,id).points,1);assert.equal(s.root.querySelector('[data-crow-points]').textContent,'1');assert.equal(s.win.document.activeElement,s.root.querySelector('[data-encounter-rub]'));validateWorld(w);}finally{s.close();}
+ const w=fixture(true),s=setup(w,{entry:true});try{const target=s.root.querySelector('[data-encounter-rub]');target.focus();for(let press=0;press<3;press++)target.dispatchEvent(new s.win.KeyboardEvent('keydown',{key:'Enter',bubbles:true}));await sleep(5);assert.equal(crowFriendship(w,id).points,1);assert.equal(s.root.querySelector('[data-crow-points]').textContent,'1');assert.equal(s.win.document.activeElement,s.root.querySelector('[data-encounter-rub]'));validateWorld(w);}finally{s.close();}
 });
 test('crow continuous pointer rubbing preserves image while in flight and grants friendship',async()=>{
  const w=fixture(true),s=setup(w,{entry:true});try{const target=s.root.querySelector('[data-encounter-rub]');target.getBoundingClientRect=()=>({left:0,top:0,right:300,bottom:300});target.dispatchEvent(new s.win.PointerEvent('pointerdown',{bubbles:true,button:0,isPrimary:true,pointerId:1,clientX:50,clientY:50}));
  for(let i=0;i<12;i++){s.win.document.dispatchEvent(new s.win.PointerEvent('pointermove',{pointerId:1,clientX:i%2?50:100,clientY:50}));await sleep(2);}
- assert.equal(s.root.querySelector('[data-encounter-rub]'),target);s.win.document.dispatchEvent(new s.win.PointerEvent('pointerup',{pointerId:1}));await sleep(130);assert.ok(crowFriendship(w,id).points>=20);validateWorld(w);}finally{s.close();}
+ assert.equal(s.root.querySelector('[data-encounter-rub]'),target);s.win.document.dispatchEvent(new s.win.PointerEvent('pointerup',{pointerId:1}));await sleep(130);assert.equal(crowFriendship(w,id).points,8);validateWorld(w);}finally{s.close();}
 });
 test('pending crow petting cannot mutate after notebook navigation, destroy or world replacement',async()=>{
  for(const change of ['notebook','destroy','world']){let current=fixture(true),release;const old=current,s=setup(current,{entry:true,getWorld:()=>current,transact:fn=>new Promise(resolve=>{release=()=>resolve(fn(current));})});try{
- s.root.querySelector('[data-encounter-rub]').dispatchEvent(new s.win.KeyboardEvent('keydown',{key:' ',bubbles:true}));if(change==='world'){current=fixture(true);current.worldId+='new';s.panel.refresh();}else s.panel[change]();release();await sleep(5);assert.equal(crowFriendship(current,id).points,0);assert.equal(crowFriendship(old,id).points,0);
+ for(let press=0;press<3;press++)s.root.querySelector('[data-encounter-rub]').dispatchEvent(new s.win.KeyboardEvent('keydown',{key:' ',bubbles:true}));if(change==='world'){current=fixture(true);current.worldId+='new';s.panel.refresh();}else s.panel[change]();release();await sleep(5);assert.equal(crowFriendship(current,id).points,0);assert.equal(crowFriendship(old,id).points,0);
  }finally{s.close();}}
 });
 test('visible ready garden warns only after continuous120s and applies arrival six seconds later',async()=>{
@@ -51,7 +51,7 @@ test('failed arrival transaction leaves state unchanged and reports failure, des
  const w=fixture(),before=structuredClone(w),s=setup(w,{transact:async()=>{throw new Error('disk full');}});try{await s.run(127);assert.deepEqual(w,before);assert.match(s.root.textContent,/保存できなかった/);s.panel.destroy();assert.equal([...s.timers.values()].filter(v=>v.fn.name==='pollCrow').length,0);s.win.dispatchEvent(new s.win.Event('offline'));assert.equal([...s.timers.values()].filter(v=>v.fn.name==='pollCrow').length,0);}finally{s.close();}
 });
 test('rejected keyboard pet transaction reports failure without granting friendship or losing controls',async()=>{
- const w=fixture(true),before=structuredClone(w),s=setup(w,{entry:true,transact:async()=>{throw new Error('disk full');}});try{s.root.querySelector('[data-encounter-rub]').dispatchEvent(new s.win.KeyboardEvent('keydown',{key:'Enter',bubbles:true}));await sleep(5);assert.deepEqual(w,before);assert.match(s.root.textContent,/記録できなかった/);assert.equal(s.root.getAttribute('aria-busy'),'false');assert.ok(s.root.querySelector('[data-encounter-rub]'));}finally{s.close();}
+ const w=fixture(true),before=structuredClone(w),s=setup(w,{entry:true,transact:async()=>{throw new Error('disk full');}});try{for(let press=0;press<3;press++)s.root.querySelector('[data-encounter-rub]').dispatchEvent(new s.win.KeyboardEvent('keydown',{key:'Enter',bubbles:true}));await sleep(5);assert.deepEqual(w,before);assert.match(s.root.textContent,/記録できなかった/);assert.equal(s.root.getAttribute('aria-busy'),'false');assert.ok(s.root.querySelector('[data-encounter-rub]'));}finally{s.close();}
 });
 test('destroy during queued arrival prevents mutation and never reschedules timer',async()=>{
  const w=fixture();let release;const s=setup(w,{transact:fn=>new Promise(resolve=>{release=()=>resolve(fn(w));})});try{await s.run(126);const {flight}=await s.tick();s.panel.destroy();release();await flight;assert.equal(w.encounters.crow.visits.length,0);assert.equal([...s.timers.values()].filter(v=>v.fn.name==='pollCrow').length,0);}finally{s.close();}
