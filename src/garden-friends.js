@@ -42,5 +42,20 @@ export function recordGardenVisit(world,returningIds=[]){
  const visit={gardenId:g.id,visit:g.visits[g.id],friendIds:drawGardenFriendIds(world,g.id),returningIds:[...returningIds]};
  state.visits=state.visits.filter(v=>v.gardenId!==g.id);state.visits.push(visit);
 }
+/** The saved story is the durable memory, including saves completed before this UI.
+ * Pure projection: never migrate, append rewards, advance RNG or overwrite older memories. */
+export function leafFriendRecollection(world,friendId,kind='chat'){
+ const e=world.leafEvent?.entry;
+ if(!e||e.completedTick===null||!['deliver','display'].includes(e.choice))return '';
+ const source=friendId===e.sourceId,recipient=friendId===e.recipientId;
+ if(!source&&!recipient)return '';
+ if(source){
+  if(e.choice==='deliver')return kind==='watch'?'あのとき いっしょに とどけた はっぱ。きょうも すてきな かたちを さがしているよ。':kind==='play'?'あの はっぱを とどけたときみたいに、きょうも いっしょなら ゆうきが わくよ。':'「いっしょに とどけてくれて ありがとう。あのとき、どきどきが ちいさくなったんだ」';
+  return kind==='watch'?'はっぱを かざして まった あのばしょを、なつかしそうに ながめているよ。':kind==='play'?'あのとき かざった はっぱのように、きょうも そっと あそびの じゅんびをしているよ。':'「はっぱを かざって、いっしょに まってくれたね。じぶんの ペースで ごあいさつできたよ」';
+ }
+ const memory=e.choice==='deliver'?'とどけてくれた はっぱ':'かざってくれた はっぱ';
+ const reaction=e.branch==='play'?'あの はっぱの かげ、また いっしょに おいかけたいな。':e.branch==='watch'?'あの はっぱの すじ、いまも おぼえているよ。':'あの はっぱから おしゃべりが はじまったね。また おはなししよう。';
+ return kind==='chat'?`「${memory}、うれしかったよ。${reaction}」`:kind==='watch'?`${memory}を おもいだして、となりで はっぱの かたちを ながめているよ。`:`${memory}の おもいでを あそびにして、はっぱの かげを たどっているよ。`;
+}
 /** Affinity is garden-only, bounded and once per friend per story tick; no currency. */
-export function bondGardenFriend(world,friendId,kind){const state=world.encounters.gardenFriends,r=[...state.regulars,...state.references].find(x=>x.id===friendId);if(!r||!['chat','watch','play'].includes(kind))return {changed:false,reason:'friend'};if(r.lastInteractionTick===world.tick)return {changed:false,reason:'repeat'};const delta=Math.min(100-r.affinity,r.favorite===kind?2:1);r.affinity+=delta;r.lastInteractionTick=world.tick;const place=gardenById(world.encounters.garden.id),label=place.actions.find(([action])=>action===kind)?.[1]||'一緒に過ごす';const text=r.favorite===kind?r.preferredMemory:`${place.name}で「${label}」を一緒に楽しんだ`;r.memories.push({kind,tick:world.tick,gardenId:world.encounters.garden.id,text});r.memories=r.memories.slice(-12);return {changed:true,affinityDelta:delta,affinity:r.affinity,message:text+'よ。'};}
+export function bondGardenFriend(world,friendId,kind){const state=world.encounters.gardenFriends,r=[...state.regulars,...state.references].find(x=>x.id===friendId);if(!r||!['chat','watch','play'].includes(kind))return {changed:false,reason:'friend'};if(r.lastInteractionTick===world.tick)return {changed:false,reason:'repeat'};const delta=Math.min(100-r.affinity,r.favorite===kind?2:1);r.affinity+=delta;r.lastInteractionTick=world.tick;const place=gardenById(world.encounters.garden.id),label=place.actions.find(([action])=>action===kind)?.[1]||'一緒に過ごす';const usual=r.favorite===kind?r.preferredMemory:`${place.name}で「${label}」を一緒に楽しんだ`;const remembered=leafFriendRecollection(world,friendId,kind);const recollection=r.memories.at(-1)?.text===remembered?'':remembered;const text=recollection||usual;r.memories.push({kind,tick:world.tick,gardenId:world.encounters.garden.id,text});r.memories=r.memories.slice(-12);return {changed:true,affinityDelta:delta,affinity:r.affinity,message:usual+'よ。'+(recollection?' '+recollection:'')};}
