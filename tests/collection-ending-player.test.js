@@ -64,3 +64,21 @@ test('manual replay with another tab lease closes without consuming their automa
  b.root.querySelector('[data-ending-close]').click();await until(()=>!b.p.active());assert.equal(a.holder.world.collectionEndings.entries[0].acknowledged,false);assert.ok(a.p.active());
  a.root.querySelector('[data-ending-close]').click();await until(()=>!a.p.active());assert.equal(a.holder.world.collectionEndings.entries[0].acknowledged,true);
 });
+test('fullscreen play requests the dialog fullscreen directly from a button and close exits',async t=>{
+ const h=fixture(t);await h.p.open('garden');const d=h.root.querySelector('dialog');let enters=0,exits=0;
+ d.querySelector('.game-ending-screen').requestFullscreen=()=>{enters++;Object.defineProperty(h.doc,'fullscreenElement',{configurable:true,value:d.querySelector('.game-ending-screen')});return Promise.resolve();};
+ h.doc.exitFullscreen=()=>{exits++;return Promise.resolve();};h.allowPlay();h.root.querySelector('[data-ending-play]').click();
+ await until(()=>d.hasAttribute('data-playing'));assert.equal(enters,1);assert.equal(h.doc.activeElement,h.root.querySelector('video'));
+ h.root.querySelector('[data-ending-close]').click();await until(()=>!h.p.active());assert.equal(exits,1);
+});
+test('iOS video fullscreen fallback is requested on explicit tap and exited when closing',async t=>{
+ const h=fixture(t);await h.p.open('garden');const d=h.root.querySelector('dialog'),v=h.root.querySelector('video');let enters=0,exits=0;
+ d.querySelector('.game-ending-screen').requestFullscreen=undefined;v.webkitEnterFullscreen=()=>{enters++;v.webkitDisplayingFullscreen=true;};v.webkitExitFullscreen=()=>{exits++;};
+ h.root.querySelector('[data-ending-fullscreen]').click();assert.equal(enters,1);h.root.querySelector('[data-ending-close]').click();await until(()=>!h.p.active());assert.equal(exits,1);
+});
+test('denied or unavailable native fullscreen leaves the full viewport dialog playable',async t=>{
+ const h=fixture(t);await h.p.open('garden');const d=h.root.querySelector('dialog');d.querySelector('.game-ending-screen').requestFullscreen=()=>Promise.reject(Error('NotAllowedError'));
+ h.allowPlay();h.root.querySelector('[data-ending-play]').click();await until(()=>d.hasAttribute('data-playing'));await sleep();assert.ok(d.open);
+ h.root.querySelector('video').dispatchEvent(new h.window.Event('pause'));assert.equal(d.hasAttribute('data-playing'),false);
+ h.root.querySelector('[data-ending-close]').click();await until(()=>!h.p.active());
+});
