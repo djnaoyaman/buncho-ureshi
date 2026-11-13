@@ -1,0 +1,295 @@
+{
+  "decodePassed": 32,
+  "uniqueEventPatterns": 32,
+  "auditoryEvaluation": "User approved garden 1 prototype; remaining tracks not human-listened",
+  "tracks": [
+    {
+      "number": 1,
+      "seconds": 45.714285714285715,
+      "rmsDb": -21.2,
+      "peakDb": -9.0,
+      "boundaryJump": 0.00013029621914029121,
+      "maxUsualStep": 0.02557855099439621,
+      "bytes": 479697
+    },
+    {
+      "number": 2,
+      "seconds": 41.73913832199546,
+      "rmsDb": -21.2,
+      "peakDb": -10.1,
+      "boundaryJump": 0.0018566269427537918,
+      "maxUsualStep": 0.02666601538658142,
+      "bytes": 460974
+    },
+    {
+      "number": 3,
+      "seconds": 43.636371882086166,
+      "rmsDb": -21.2,
+      "peakDb": -7.85,
+      "boundaryJump": 0.0012799538671970367,
+      "maxUsualStep": 0.024485629051923752,
+      "bytes": 449471
+    },
+    {
+      "number": 4,
+      "seconds": 30.0,
+      "rmsDb": -21.2,
+      "peakDb": -9.68,
+      "boundaryJump": 0.0017822757363319397,
+      "maxUsualStep": 0.023016326129436493,
+      "bytes": 331602
+    },
+    {
+      "number": 5,
+      "seconds": 50.526326530612245,
+      "rmsDb": -21.2,
+      "peakDb": -9.23,
+      "boundaryJump": 0.0002890489995479584,
+      "maxUsualStep": 0.01760256290435791,
+      "bytes": 488648
+    },
+    {
+      "number": 6,
+      "seconds": 48.0,
+      "rmsDb": -21.2,
+      "peakDb": -11.07,
+      "boundaryJump": 0.0035520903766155243,
+      "maxUsualStep": 0.01756724901497364,
+      "bytes": 464118
+    },
+    {
+      "number": 7,
+      "seconds": 36.92308390022676,
+      "rmsDb": -21.2,
+      "peakDb": -9.56,
+      "boundaryJump": 0.0005744905211031437,
+      "maxUsualStep": 0.02329060062766075,
+      "bytes": 398510
+    },
+    {
+      "number": 8,
+      "seconds": 51.8918820861678,
+      "rmsDb": -21.2,
+      "peakDb": -11.4,
+      "boundaryJump": 0.00042951107025146484,
+      "maxUsualStep": 0.015105104073882103,
+      "bytes": 471163
+    },
+    {
+      "number": 9,
+      "seconds": 46.82927437641723,
+      "rmsDb": -21.2,
+      "peakDb": -7.98,
+      "boundaryJump": 0.000615390483289957,
+      "maxUsualStep": 0.013581778854131699,
+      "bytes": 399229
+    },
+    {
+      "number": 10,
+      "seconds": 36.92308390022676,
+      "rmsDb": -21.2,
+      "peakDb": -10.38,
+      "boundaryJump": 0.0024297423660755157,
+      "maxUsualStep": 0.022178657352924347,
+      "bytes": 384992
+    },
+    {
+      "number": 11,
+      "seconds": 38.4,
+      "rmsDb": -21.2,
+      "peakDb": -10.17,
+      "boundaryJump": 0.004556380212306976,
+      "maxUsualStep": 0.024200234562158585,
+      "bytes": 418508
+    },
+    {
+      "number": 12,
+      "seconds": 33.48836734693877,
+      "rmsDb": -21.2,
+      "peakDb": -11.41,
+      "boundaryJump": 0.00696670264005661,
+      "maxUsualStep": 0.021082229912281036,
+      "bytes": 346564
+    },
+    {
+      "number": 13,
+      "seconds": 43.636371882086166,
+      "rmsDb": -21.2,
+      "peakDb": -10.86,
+      "boundaryJump": 0.001513071358203888,
+      "maxUsualStep": 0.02919682115316391,
+      "bytes": 473187
+    },
+    {
+      "number": 14,
+      "seconds": 42.35294784580499,
+      "rmsDb": -21.2,
+      "peakDb": -9.21,
+      "boundaryJump": 0.0008403453975915909,
+      "maxUsualStep": 0.03354669734835625,
+      "bytes": 454921
+    },
+    {
+      "number": 15,
+      "seconds": 45.714285714285715,
+      "rmsDb": -21.2,
+      "peakDb": -12.66,
+      "boundaryJump": 0.0033824630081653595,
+      "maxUsualStep": 0.013136196881532669,
+      "bytes": 424150
+    },
+    {
+      "number": 16,
+      "seconds": 53.333333333333336,
+      "rmsDb": -21.2,
+      "peakDb": -11.78,
+      "boundaryJump": 0.0011399127542972565,
+      "maxUsualStep": 0.012809395790100098,
+      "bytes": 474961
+    },
+    {
+      "number": 17,
+      "seconds": 28.235283446712018,
+      "rmsDb": -21.2,
+      "peakDb": -10.53,
+      "boundaryJump": 0.004376250319182873,
+      "maxUsualStep": 0.04166782274842262,
+      "bytes": 309454
+    },
+    {
+      "number": 18,
+      "seconds": 54.857142857142854,
+      "rmsDb": -21.2,
+      "peakDb": -10.47,
+      "boundaryJump": 0.0005355756729841232,
+      "maxUsualStep": 0.018527600914239883,
+      "bytes": 521003
+    },
+    {
+      "number": 19,
+      "seconds": 58.18181405895692,
+      "rmsDb": -21.2,
+      "peakDb": -9.68,
+      "boundaryJump": 0.00041196425445377827,
+      "maxUsualStep": 0.011466626077890396,
+      "bytes": 426898
+    },
+    {
+      "number": 20,
+      "seconds": 48.0,
+      "rmsDb": -21.2,
+      "peakDb": -9.67,
+      "boundaryJump": 0.00074810441583395,
+      "maxUsualStep": 0.016935154795646667,
+      "bytes": 440877
+    },
+    {
+      "number": 21,
+      "seconds": 36.92308390022676,
+      "rmsDb": -21.2,
+      "peakDb": -9.67,
+      "boundaryJump": 0.0018454715609550476,
+      "maxUsualStep": 0.02051767334342003,
+      "bytes": 377677
+    },
+    {
+      "number": 22,
+      "seconds": 42.666666666666664,
+      "rmsDb": -21.2,
+      "peakDb": -7.29,
+      "boundaryJump": 0.0020207464694976807,
+      "maxUsualStep": 0.01985531859099865,
+      "bytes": 409832
+    },
+    {
+      "number": 23,
+      "seconds": 40.85106575963719,
+      "rmsDb": -21.2,
+      "peakDb": -9.64,
+      "boundaryJump": 0.0011258609592914581,
+      "maxUsualStep": 0.03872905671596527,
+      "bytes": 459652
+    },
+    {
+      "number": 24,
+      "seconds": 33.48836734693877,
+      "rmsDb": -21.2,
+      "peakDb": -11.19,
+      "boundaryJump": 0.00431688129901886,
+      "maxUsualStep": 0.026920314878225327,
+      "bytes": 370999
+    },
+    {
+      "number": 25,
+      "seconds": 60.0,
+      "rmsDb": -21.2,
+      "peakDb": -9.36,
+      "boundaryJump": 0.00038367509841918945,
+      "maxUsualStep": 0.015425685793161392,
+      "bytes": 525273
+    },
+    {
+      "number": 27,
+      "seconds": 54.857142857142854,
+      "rmsDb": -21.2,
+      "peakDb": -11.45,
+      "boundaryJump": 0.0002814345061779022,
+      "maxUsualStep": 0.021205924451351166,
+      "bytes": 558030
+    },
+    {
+      "number": 28,
+      "seconds": 37.89473922902494,
+      "rmsDb": -21.2,
+      "peakDb": -11.45,
+      "boundaryJump": 0.0031067971140146255,
+      "maxUsualStep": 0.0179427620023489,
+      "bytes": 376737
+    },
+    {
+      "number": 29,
+      "seconds": 56.470589569161,
+      "rmsDb": -21.2,
+      "peakDb": -9.16,
+      "boundaryJump": 0.0032454505562782288,
+      "maxUsualStep": 0.02102297730743885,
+      "bytes": 562796
+    },
+    {
+      "number": 31,
+      "seconds": 32.0,
+      "rmsDb": -21.2,
+      "peakDb": -9.27,
+      "boundaryJump": 0.0003873426467180252,
+      "maxUsualStep": 0.029039915651082993,
+      "bytes": 369762
+    },
+    {
+      "number": 32,
+      "seconds": 46.82927437641723,
+      "rmsDb": -21.2,
+      "peakDb": -8.08,
+      "boundaryJump": 0.0019112266600131989,
+      "maxUsualStep": 0.023112883791327477,
+      "bytes": 460848
+    },
+    {
+      "number": 33,
+      "seconds": 40.0,
+      "rmsDb": -21.2,
+      "peakDb": -8.29,
+      "boundaryJump": 0.0013973158784210682,
+      "maxUsualStep": 0.020931214094161987,
+      "bytes": 408025
+    },
+    {
+      "number": 34,
+      "seconds": 50.526326530612245,
+      "rmsDb": -21.2,
+      "peakDb": -10.91,
+      "boundaryJump": 0.0004423826467245817,
+      "maxUsualStep": 0.013409053906798363,
+      "bytes": 442379
+    }
+  ]
+}

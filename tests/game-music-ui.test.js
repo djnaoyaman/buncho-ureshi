@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {Window} from 'happy-dom';
 import {mountGameMusic} from '../src/game-music-ui.js';
-import {GARDEN_ASSETS} from '../src/data/garden-assets.js';
+import {GARDEN_MUSIC_ASSETS as GARDEN_ASSETS} from '../src/data/garden35-music.js';
 function setup(gardenAssets={komorebi:{music:{themeId:'garden-komorebi',asset:'audio/gardens/komorebi.mp3',releaseReady:true,loopEndSeconds:11,loopStartSeconds:0}}},extraOptions={}){
  const window=new Window({url:'https://example.test/buncho-ureshi/game/'}),document=window.document;
  document.body.innerHTML='<div data-game-title-slot></div><div id="game-root"><button id="care">ふれあう</button><div data-settings-music></div></div>';
@@ -59,11 +59,11 @@ test('settings repaint retains open chooser and focused song; exit clears stale 
  f.dispose();f.window.happyDOM.abort();
 });
 
-test('production catalogue retains all sixteen choices in the collapsed chooser',()=>{
+test('production catalogue retains all 39 choices in the collapsed chooser',()=>{
  const f=setup(GARDEN_ASSETS);f.emit('buncho-game-panel','settings');
- assert.equal(f.document.querySelectorAll('[data-music]').length,16);
+ assert.equal(f.document.querySelectorAll('[data-music]').length,39);
  assert.equal(f.document.querySelector('.game-music-tracks').hidden,true);
- f.trustedShell('[data-music-choose]');assert.equal(f.document.querySelectorAll('[data-music]').length,16);
+ f.trustedShell('[data-music-choose]');assert.equal(f.document.querySelectorAll('[data-music]').length,39);
  f.dispose();f.window.happyDOM.abort();
 });
 

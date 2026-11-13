@@ -1,3 +1,4 @@
+import {GARDEN35_MUSIC} from './garden35-music.js';
 import {allBirds} from '../world-birds.js';
 import {isAlive} from '../life-care.js';
 import {GARDEN35_PLAN} from './garden35-plan.js';
@@ -26,7 +27,7 @@ export const GARDENS=Object.freeze(GARDEN35_PLAN.map(row=>{
  residentBirdId:row.birdId,scene:old?.scene||'grass',landform:row.name+'のひろば',objects:['木かげ','ひろば','小道'],
  spots:bg.friendFeet.map((p,i)=>({x:p.x*100,y:p.y*100,label:'ひろば '+(i+1)})),
  actions:[['chat','友達とおしゃべり'],['watch','庭をよく見る'],['play','ひろばで遊ぶ']],event:row.name+'のおたより',ambience:'葉の音と静かな風',
- background:{...bg},music:old?{...old.music}:{themeId:'garden-'+row.id,concept:row.musicStyle,asset:null,releaseReady:false}});
+ background:{...bg},music:GARDEN35_MUSIC[row.id]|| (old?{...old.music}:{themeId:'garden-'+row.id,concept:row.musicStyle,asset:null,releaseReady:false})});
 }));
 export const GARDEN_IDS=Object.freeze(GARDENS.map(g=>g.id));
 export const gardenById=id=>GARDENS.find(g=>g.id===id)||null;
