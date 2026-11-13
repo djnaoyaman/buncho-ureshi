@@ -66,10 +66,10 @@ test('Gold purchases and level unlocks keep saved protection without granting a 
  const r=drawDecoration(w,'perch');assert.equal(r.item.tier,'lovely');assert.equal(w.decor.points,0);assert.equal(w.decor.duplicateStreaks.perch,0);validateWorld(w);
 });
 
-test('cooldown, insufficient Gems and invalid category never spend or advance protection',()=>{
+test('stale offer, insufficient Gems and invalid category never spend or advance protection',()=>{
  const w=lateWorld();w.decor.duplicateStreaks.perch=2;w.decor.points=19;const before=clone(w);
  assert.throws(()=>drawDecoration(w,'perch'));assert.deepEqual(w,before);assert.throws(()=>drawDecoration(w,'missing'));assert.deepEqual(w,before);
- w.decor.points=20;w.decor.lastDrawTick=w.tick;const same=clone(w);assert.equal(drawDecoration(w,'perch').changed,false);assert.deepEqual(w,same);
+ w.decor.points=20;w.decor.lastDrawTick=w.tick;const same=clone(w);assert.equal(drawDecoration(w,'perch','house',{...economyToken(w),revision:w.revision+1}).changed,false);assert.deepEqual(w,same);
 });
 
 test('frozen v10 migration adds only zero counters and preserves all former data without mutation',()=>{
@@ -93,7 +93,7 @@ test('missing, extra, malformed and future protection states fail closed without
 test('two tabs commit one guaranteed draw and preserve the same durable outcome',async()=>{
  const indexedDB=new IDBFactory(),w=lateWorld();w.decor.duplicateStreaks.perch=2;await raw(indexedDB,w);
  const a=await openGameStore({indexedDB}),b=await openGameStore({indexedDB});const results=[];
- try{await Promise.all([a,b].map(store=>store.transact(current=>{results.push(drawDecoration(current,'perch'));return current;})));
+ try{await Promise.all([a,b].map(store=>store.transact(current=>{results.push(drawDecoration(current,'perch','house',economyToken(w)));return current;})));
  const saved=validateWorld(await raw(indexedDB));assert.equal(results.filter(r=>r.changed).length,1);assert.equal(saved.decor.draws,1);assert.equal(saved.decor.points,w.decor.points-20);assert.equal(saved.decor.duplicateStreaks.perch,0);assert.equal(saved.decor.inventory.filter(i=>i.id==='perch-aqua-special').length,1);
  }finally{a.close();b.close();}
 });
@@ -114,7 +114,7 @@ test('locked local tabs serialize the guaranteed draw and the old tab cannot era
  const w=lateWorld();w.decor.duplicateStreaks.perch=2;const data=new Map([['buncho-ureshi-world-v1',JSON.stringify(w)]]);let tail=Promise.resolve();
  const platform={localStorage:{getItem:k=>data.get(k)??null,setItem:(k,v)=>data.set(k,v)},navigator:{locks:{request(_name,callback){const task=tail.then(callback);tail=task.catch(()=>{});return task;}}}};
  const a=await openGameStore(platform),b=await openGameStore(platform),old=await openOld(platform),results=[];
- try{await Promise.all([a,b].map(store=>store.transact(current=>{results.push(drawDecoration(current,'perch'));return current;})));assert.equal(results.filter(r=>r.changed).length,1);
+ try{await Promise.all([a,b].map(store=>store.transact(current=>{results.push(drawDecoration(current,'perch','house',economyToken(w)));return current;})));assert.equal(results.filter(r=>r.changed).length,1);
  const saved=await a.transact(w=>w);assert.equal(saved.decor.points,w.decor.points-20);assert.equal(saved.decor.draws,1);assert.equal(saved.decor.duplicateStreaks.perch,0);const before=data.get('buncho-ureshi-world-v1');let called=false;await assert.rejects(old.transact(w=>{called=true;return w;}));assert.equal(called,false);assert.equal(data.get('buncho-ureshi-world-v1'),before);
  }finally{a.close();b.close();old.close();}
 });

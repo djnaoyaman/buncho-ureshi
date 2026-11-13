@@ -167,11 +167,12 @@ export function decorDrawStatus(w,slot='perch',machineId='house') {
   const nextTier=DECOR_TIERS.find(tier=>tier.level>decorLevel(w))||null;
   return {remaining,duplicateStreak,complete,guaranteed,tiers,probabilities,nextTier};
 }
-export function drawDecoration(w,slot='perch',machineId='house') {
+export function drawDecoration(w,slot='perch',machineId='house',expectedToken=null) {
+  // A displayed offer can be consumed once, across tabs, without a time cooldown.
+  if(expectedToken&&!currentToken(w,expectedToken))return {changed:false,reason:'stale',message:'お飾りの状態が変わったよ。もう一度選んでね。'};
   const machine=gachaMachine(machineId),status=decorDrawStatus(w,slot,machineId);
   if(decorLevel(w)<machine.level)return {changed:false,reason:'locked',message:`Lv.${machine.level}から選べるよ。`};
   if(status.complete)return {changed:false,complete:true,message:status.nextTier?`いま出会える${SLOT_LABELS[slot]}はコンプリート！次はLv.${status.nextTier.level}で新しい仕上げが開くよ。Gemsは使っていないよ。`:`${SLOT_LABELS[slot]}は全24種類コンプリート！Gemsは使っていないよ。`};
-  if(w.decor.lastDrawTick===w.tick)return {changed:false,message:'さっきのお飾りを楽しもう。次のゲーム時間にまた引けるよ。'};
   if(w.decor.points<machine.cost)throw new Error(`${machine.cost} Gemsで1回。友達との交流や家族の成長を見守ろう。`);
   const roll=random(w);
   let tier,color;

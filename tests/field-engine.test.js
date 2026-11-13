@@ -22,9 +22,9 @@ test('departed friends can be visited and invited once without duplicating birds
  const w=createWorld(100);advanceTicks(w,1);const b=w.birds[1];b.home='departed';travelTo(w,'friend',b.id);const n=w.birds.length;assert.ok(fieldBirds(w).includes(b));
  assert.equal(inviteFriend(w,b.id).changed,true);const arrived=b.arrivedTick;assert.equal(inviteFriend(w,b.id).changed,false);assert.equal(b.arrivedTick,arrived);assert.equal(w.birds.length,n);travelTo(w,'home');validateWorld(w);
 });
-test('selected-slot draw has deterministic finite outcomes, cooldown and atomic insufficient-points failure',()=>{
- const a=createWorld(100),b=clone(a);const r=drawDecoration(a,'swing');assert.deepEqual(drawDecoration(b,'swing'),r);assert.equal(r.item.slot,'swing');assert.deepEqual(a,b);
- const snapshot=clone(a);assert.equal(drawDecoration(a,'toy').changed,false);assert.deepEqual(a,snapshot);
+test('selected-slot draw has deterministic finite outcomes, stale offer and atomic insufficient-points failure',()=>{
+ const a=createWorld(100),b=clone(a);const token=economyToken(a),r=drawDecoration(a,'swing','house',token);assert.deepEqual(drawDecoration(b,'swing'),r);assert.equal(r.item.slot,'swing');assert.deepEqual(a,b);
+ const snapshot=clone(a);assert.equal(drawDecoration(a,'toy','house',token).changed,false);assert.deepEqual(a,snapshot);
  advanceTicks(a,1);const poor=clone(a);poor.decor.points=0;const before=clone(poor);assert.throws(()=>drawDecoration(poor,'toy'));assert.deepEqual(poor,before);
  assert.throws(()=>drawDecoration(a,'bad'));assert.equal(equipDecoration(a,r.item.id).changed,r.item.id!==snapshot.decor.equipped.swing);assert.equal(equipDecoration(a,r.item.id).changed,false);assert.throws(()=>equipDecoration(a,'bad'));validateWorld(a);
 });

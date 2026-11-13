@@ -1,12 +1,12 @@
 import test from 'node:test';import assert from 'node:assert/strict';
 import {Window} from 'happy-dom';
-import {createWorld,drawDecoration,decorDrawStatus,DECOR_SLOTS,DECOR_COLORS,DECOR_TIERS,validateWorld,serializeWorld} from '../src/engine.js';
+import {createWorld,drawDecoration,decorDrawStatus,DECOR_SLOTS,DECOR_COLORS,DECOR_TIERS,validateWorld,serializeWorld,economyToken} from '../src/engine.js';
 import {GACHA_MACHINES} from '../src/gacha-machines.js';
 import {mountGachaMotion} from '../src/gacha-motion.js';
 const now=1794182400000;
 const ready=()=>{const w=createWorld(now);w.decor.points=w.decor.lifetimePoints=1000;return w;};
 for(const machine of GACHA_MACHINES){
- test(`${machine.name}: cost, actual odds and repeated-click protection`,()=>{const w=ready(),odds=decorDrawStatus(w,'perch',machine.id).probabilities;assert.ok(Math.abs(odds.reduce((s,o)=>s+o.probability,0)-1)<1e-12);const r=drawDecoration(w,'perch',machine.id);assert.equal(w.decor.points,1000-machine.cost+(r.duplicate?machine.refund:0));assert.equal(r.cost,machine.cost);const after=serializeWorld(w);assert.equal(drawDecoration(w,'perch',machine.id).changed,false);assert.equal(serializeWorld(w),after);validateWorld(w);});
+ test(`${machine.name}: cost, actual odds and repeated-click protection`,()=>{const w=ready(),odds=decorDrawStatus(w,'perch',machine.id).probabilities;assert.ok(Math.abs(odds.reduce((s,o)=>s+o.probability,0)-1)<1e-12);const token=economyToken(w),r=drawDecoration(w,'perch',machine.id,token);assert.equal(w.decor.points,1000-machine.cost+(r.duplicate?machine.refund:0));assert.equal(r.cost,machine.cost);const after=serializeWorld(w);assert.equal(drawDecoration(w,'perch',machine.id,token).changed,false);assert.equal(serializeWorld(w),after);validateWorld(w);});
  test(`${machine.name}: two duplicates refund correctly, then guarantee new`,()=>{const w=ready(),target='perch-sky-special';w.decor.inventory=DECOR_SLOTS.flatMap(s=>DECOR_COLORS.flatMap(c=>DECOR_TIERS.map(t=>({id:`${s.id}-${c.id}-${t.id}`,slot:s.id,color:c.id,tier:t.id})))).filter(i=>i.id!==target);w.seed=0;
   let paid=0;for(let i=0;i<2;i++){// Seed zero's first tier roll is ordinary for every machine except the round machine.
    // Make the sole missing variant a color that this deterministic draw cannot select.
