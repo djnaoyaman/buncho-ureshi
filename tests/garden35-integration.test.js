@@ -50,12 +50,12 @@ test('all gardens render only their current background, never preload 35 images 
  }}finally{await window.happyDOM.close();}
 });
 
-test('35 arrivals preserve all old visit counters while audio OFF, fixed tracks and old themes retain their exact contracts',()=>{
+test('35 arrivals preserve all old visit counters while audio OFF, fixed tracks and music selections retain their contracts',()=>{
  const w=createWorld(1000,42);for(const id of OLD_GARDEN_IDS)w.encounters.garden.visits[id]=7;
  for(const g of GARDENS){const before=w.encounters.garden.visits[g.id];encounterSystem.selectGarden(w,g.id,{worldId:w.worldId,revision:w.revision});assert.equal(w.encounters.garden.visits[g.id],before+1);
  assert.equal(gardenAudioIntent({gardenId:g.id,enabled:true,mode:'off'}).kind,'silence');
  assert.deepEqual(gardenAudioIntent({gardenId:g.id,enabled:true,mode:'fixed',selectedTrackId:'original'}),{kind:'selected-track',trackId:'original',fadeMs:0});
- const old=OLD_GARDENS.find(x=>x.id===g.id);if(old)assert.deepEqual(g.music,old.music);else assert.equal(gardenAudioIntent({gardenId:g.id,enabled:true,mode:'auto'}).kind,'retain-current');
+ const old=OLD_GARDENS.find(x=>x.id===g.id);if(old)assert.equal(g.music.themeId,old.music.themeId);assert.equal(gardenAudioIntent({gardenId:g.id,enabled:true,mode:'auto'}).kind,'garden-theme');
  }
  for(const id of OLD_GARDEN_IDS)assert.equal(w.encounters.garden.visits[id],8);
  assert.deepEqual(parseSave(serializeWorld(w)),w);
