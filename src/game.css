@@ -1884,3 +1884,22 @@ body[data-world="buncho"] .game-encounter-host .finch-garden > .expedition-gift>
 .expedition-gift label{display:block;margin:8px 0}.expedition-gift fieldset{min-width:0;margin:0;padding:8px;border:1px solid #c8bba3;border-radius:10px}
 .expedition-gift select:focus-visible{outline:3px solid #627d61;outline-offset:2px}
 @media(max-height:400px){body[data-world="buncho"] .game-encounter-host .finch-garden>.expedition-gift{bottom:64px;max-height:calc(100% - 108px)}}
+
+/* A small illustrated memory, rather than a reward dialog to dismiss. */
+.expedition-keepsake{display:flex;justify-content:center;margin:12px auto 4px}
+.expedition-keepsake-art{display:block;width:128px;height:auto;max-width:100%;flex:0 1 128px}
+.expedition-discovery{border:1px solid #d5c9ad;border-radius:14px;background:#fffdf5;padding:8px 12px;margin:14px 0;text-align:center;overflow-wrap:anywhere}
+.expedition-discovery p{margin:8px 0;line-height:1.7}
+.expedition-conversation{display:grid;gap:9px;margin:12px 0}
+.expedition-conversation p{position:relative;margin:0;padding:10px 12px;background:#edf1e5;border-radius:13px 13px 13px 3px;line-height:1.75;overflow-wrap:anywhere}
+.expedition-conversation p:nth-child(2){background:#f5eadc;border-radius:13px 13px 3px 13px;margin-left:16px}
+.expedition-conversation strong{display:block;font-size:.85em;color:#63745b;margin-bottom:3px}
+.expedition-step{font-size:.76em;letter-spacing:.08em;color:#64745b;text-align:center;margin:8px 0}
+.expedition-question{font-weight:700;line-height:1.7}
+.expedition-choice-memory{border-left:3px solid #b3bc8a;padding:8px 12px;background:#f5f2e6;border-radius:0 8px 8px 0;line-height:1.75}
+.expedition-celebration h4{text-align:center;font-size:1.1em;margin:8px 0;color:#4f6953}
+.expedition-gift button,.expedition-diary button{min-height:48px;white-space:normal;overflow-wrap:anywhere}
+.expedition-gift .leaf-gift-choices button small{display:block;font-weight:400;line-height:1.5;margin-top:3px}
+.expedition-diary li{list-style:none;margin:0 0 24px;padding:0 0 20px;border-bottom:1px dashed #d2c7b3}
+.expedition-diary ol{padding:0}
+@media(max-width:360px){.expedition-conversation p:nth-child(2){margin-left:8px}.expedition-discovery{padding:8px}.expedition-keepsake-art{width:112px}.expedition-gift .leaf-gift-choices{grid-template-columns:1fr}}
