@@ -1,3 +1,4 @@
+import {renderLeafDiary} from './garden-leaf-event-ui.js';
 import { trackEvent } from './analytics.js';
 import {syncCollectionEndings} from './collection-endings.js';
 import {mountCollectionEndingPlayer,renderEndingDiary} from './collection-ending-player.js';
@@ -648,7 +649,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
   function resizeFamily(){if(panel==='family'){render();centerFamily();}else if(panel==='garden'&&!interactionActive())render();}
   function centerFamily(){const pan=root.querySelector('.game-family-pan'),canvas=root.querySelector('.game-family-canvas');if(pan&&canvas)pan.scrollLeft=Math.max(0,parseFloat(canvas.style.width)*familyZoom/2-pan.clientWidth/2);}
   function diary() {
-    return renderEndingDiary(world)+renderDiaryPaper(world, {portrait:b=>`<span class="game-mini-bird">${birdSvg(b.color,b.stage,'left')}</span>`})+(world.away.reports.length?`<details class="game-away-history" data-game-details="away-history"><summary>留守の小さな記録（直近7日）</summary><ul class="game-away-reports">${world.away.reports.map(r=>`<li><time datetime="${r.day}">${r.day}</time><span>${escape(awayText(r))}</span></li>`).join('')}</ul></details>`:'');
+    return renderEndingDiary(world)+renderLeafDiary(world)+renderDiaryPaper(world, {portrait:b=>`<span class="game-mini-bird">${birdSvg(b.color,b.stage,'left')}</span>`})+(world.away.reports.length?`<details class="game-away-history" data-game-details="away-history"><summary>留守の小さな記録（直近7日）</summary><ul class="game-away-reports">${world.away.reports.map(r=>`<li><time datetime="${r.day}">${r.day}</time><span>${escape(awayText(r))}</span></li>`).join('')}</ul></details>`:'');
   }
   function roster() {
     const current=chosen();
@@ -905,6 +906,13 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     finally{lifeBusy=false;if(button.isConnected)button.disabled=false;}
   }
   async function click(ev) {
+    const leafDestination=ev.target.closest?.('[data-leaf-go-garden]');
+    if(leafDestination){
+      if(busy||world.encounters.raptor?.active||world.paused||leafDestination.dataset.leafWorld!==world.worldId)return;
+      const expected={worldId:world.worldId,revision:world.revision},gardenId=leafDestination.dataset.leafGoGarden;let result;
+      const committed=await mutate(w=>{if(w.leafEvent?.entry?.gardenId!==gardenId||w.encounters.raptor?.active||w.paused)return w;result=encounterSystem.selectGarden(w,gardenId,expected);return w;},'',()=>alive,{bump:false,advanceCurrent:false});
+      if(committed&&(result?.changed||result?.resumed)){sheetOpen=false;fieldViewRequest++;cancelCareEffects();panel='outdoors';render();focusPanel();}return;
+    }
     const endingButton=ev.target.closest?.('[data-ending-replay]');if(endingButton){ev.preventDefault();void endingPlayer?.open(endingButton.dataset.endingReplay);return;}
     const suggestionButton=ev.target.closest?.('[data-game-name-suggest],[data-game-name-cancel]');
     if(suggestionButton){

@@ -1,3 +1,4 @@
+import {startLeafEvent,chooseLeafEvent,completeLeafEvent,setLeafKeepsakeDisplay} from './garden-leaf-event.js';
 import {createGardenJogFeedback} from './garden-jog-feedback.js';
 import {createPettingClock} from './petting-clock.js';
 import {createCompanionDraft,eligibleCompanions} from './garden-companion-ui.js';
@@ -179,6 +180,14 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
     if(summary?.parentElement?.matches('.finch-companion-settings')&&busy){event.preventDefault();return;}
     const button=event.target.closest('button');if(!button||!root.contains(button)||busy)return;
     if(rub){rub=null;clearTimeout(petTimer);generation++;}
+    if(button.matches('[data-leaf-start],[data-leaf-choice],[data-leaf-complete],[data-leaf-display]')){
+      const card=button.closest('[data-leaf-world]');if(!card||mode!=='garden')return;
+      const expected={worldId:card.dataset.leafWorld,revision:Number(card.dataset.leafRevision)},token=++generation;
+      const result=await mutate(w=>button.hasAttribute('data-leaf-start')?startLeafEvent(w,expected):button.hasAttribute('data-leaf-choice')?chooseLeafEvent(w,button.dataset.leafChoice,expected):button.hasAttribute('data-leaf-complete')?completeLeafEvent(w,expected):setLeafKeepsakeDisplay(w,button.dataset.leafDisplay==='true',expected),token);
+      if(!alive||token!==generation)return;
+      if(result)notice=result.changed?'':result.reason==='stale'?'べつの がめんで ようすが かわったよ。もういちど みてみよう。':'';
+      render();const details=root.querySelector('[data-garden-details="leaf-gift"]');if(details){details.open=button.dataset.leafChoice!=='later';details.querySelector('summary')?.focus({preventScroll:true});}return;
+    }
     if(button.hasAttribute('data-finch-go-home')){const token=++generation,originalWorld=getWorld().worldId,isCurrent=()=>alive&&token===generation&&getWorld().worldId===originalWorld;busy=true;render();try{await onHome(isCurrent);}catch{if(isCurrent())notice='おうちをひらけなかったよ。もう一度試してね。';}finally{if(isCurrent()){busy=false;render();}}return;}
     if(button.hasAttribute('data-encounter-invite-garden')||button.hasAttribute('data-encounter-invite-cage')||button.hasAttribute('data-encounter-dismiss-cage')){
       const token=++generation,w=getWorld(),expected=button.hasAttribute('data-encounter-dismiss-cage')?{worldId:button.dataset.goodbyeWorld,revision:Number(button.dataset.goodbyeRevision)}:{worldId:w.worldId,revision:w.revision};
