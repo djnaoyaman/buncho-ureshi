@@ -1838,7 +1838,7 @@ body:not([data-world="buncho"]) .site-footer{margin-top:64px;padding-block:28px 
 .site-footer .page-tools{border-color:var(--line);margin-top:16px;padding-top:16px}
 .site-footer .page-tools button{color:var(--ink);border-color:var(--line);background:transparent}
 .site-footer .page-tools :is(p,label){color:var(--muted)}
-.art-cover,.art-index,.art-feature,.art-atlas-section,.art-challenge{max-width:1360px;padding-inline:clamp(20px,5vw,72px);margin-inline:auto}
+.art-cover,.art-game,.art-index,.art-feature,.art-atlas-section,.art-challenge{max-width:1360px;padding-inline:clamp(20px,5vw,72px);margin-inline:auto}
 .art-cover{padding-top:22px;padding-bottom:48px}
 .art-cover-meta,.art-section-label{display:flex;justify-content:space-between;gap:16px;font-size:.67rem;letter-spacing:.1em;font-weight:650;line-height:1.5}
 .art-cover-meta{margin-bottom:28px}
@@ -2142,4 +2142,19 @@ body:not([data-world="buncho"]) .header-menu nav { margin-bottom: 0; }
 /* Flex children must be allowed to shrink around enlarged ruby text in Safari. */
 @media (max-width: 900px) {
   .morph-discovery-link > span { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
+}
+
+/* The game has its own entry before the editorial EXPLORE index. */
+.art-game{padding-block:12px 30px}
+.art-game-content{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:center;gap:clamp(20px,4vw,48px);padding-block:8px 20px}
+.art-game-content h2{margin:0;min-width:0}
+.art-game-logo{display:block;width:min(100%,480px);height:auto}
+.art-game-copy{min-width:0}
+.art-game-copy p{font-size:.9rem;line-height:1.9;margin:0 0 16px;overflow-wrap:anywhere}
+.art-game-link{max-width:100%;min-height:48px}
+@media(max-width:600px){
+ .art-game{padding-block:8px 24px}
+ .art-game-content{grid-template-columns:minmax(0,1fr);gap:16px;padding-block:12px}
+ .art-game-logo{width:min(100%,360px)}
+ .art-game-copy p{font-size:.85rem}
 }
