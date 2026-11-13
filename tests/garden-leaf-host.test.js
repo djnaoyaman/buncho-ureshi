@@ -27,9 +27,9 @@ async function host(t,{danger=false}={}){
   globals.set(key,Object.getOwnPropertyDescriptor(globalThis,key));Object.defineProperty(globalThis,key,{value,configurable:true,writable:true});
  }
  t.after(async()=>{dispose?.();await window.happyDOM.abort();await window.happyDOM.close();for(const[key,descriptor]of globals){if(descriptor)Object.defineProperty(globalThis,key,descriptor);else delete globalThis[key];}});
- const world=createWorld(Date.now(),301);world.field.place='park';world.encounters.garden.open=true;world.encounters.gardenFriends.attendees=['b1'];
+ const world=createWorld(Date.now(),842911);world.worldId=`garden-${Date.UTC(2026,10,14,8)}-842911`;
  if(danger)assert.equal(arriveGardenRaptor(world,'black-kite',Date.now(),{...raptorToken(world),gardenId:world.encounters.garden.id}).changed,true);
- encounterSystem.selectGarden(world,'komorebi',leafEventToken(world));startLeafEvent(world,leafEventToken(world));chooseLeafEvent(world,'display',leafEventToken(world));encounterSystem.leaveGarden(world,leafEventToken(world));
+ encounterSystem.selectGarden(world,'komorebi',leafEventToken(world));assert.equal(startLeafEvent(world,leafEventToken(world)).changed,true,'fixture has leaf observers');assert.equal(chooseLeafEvent(world,'display',leafEventToken(world)).changed,true);encounterSystem.leaveGarden(world,leafEventToken(world));
  window.HTMLMediaElement.prototype.play=function(){return Promise.reject(Error('NotAllowedError'));};
  window.HTMLMediaElement.prototype.pause=function(){};window.HTMLMediaElement.prototype.load=function(){};
  await saved(indexedDB,world);
