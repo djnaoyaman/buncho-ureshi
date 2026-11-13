@@ -96,3 +96,15 @@ test('slow save never banks active input for a burst after it finishes',async()=
   assert.equal(encounterFriendship(w,id).points,12);
  }finally{panel.destroy();}
 });
+test('navigation during a save cannot bypass the completed-save time limit for the same bird',async()=>{
+ const w=createWorld(now);meet(w,id);let time=0,release,transactions=0;
+ const {win,root,panel}=panelFor(w,{petNow:()=>time,transact:fn=>{transactions++;fn(w);return new Promise(resolve=>{release=resolve;});}});
+ const press=()=>root.querySelector('[data-encounter-rub]').dispatchEvent(new win.KeyboardEvent('keydown',{key:'Enter',bubbles:true}));
+ try{
+  press();time=1000;press();assert.equal(encounterFriendship(w,id).points,11);
+  panel.notebook();time=3990;release();await Promise.resolve();await Promise.resolve();
+  panel.entry(id);time=4000;press();assert.equal(transactions,1);
+  time=4990;press();assert.equal(transactions,2);release();await Promise.resolve();await Promise.resolve();
+  assert.equal(encounterFriendship(w,id).points,12);
+ }finally{panel.destroy();}
+});

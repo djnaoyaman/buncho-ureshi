@@ -138,13 +138,13 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
       feedback=(mode==='raptors'?petGardenRaptor:mode==='crows'?petGardenCrow:system.pet)(w,session.id,amount,{worldId:w.worldId,revision:w.revision});return w;
     },{gesture:true});if(alive&&session.generation===generation){notice=feedback?.message||'';refreshBond();}}
     catch{if(alive&&session.generation===generation){notice='記録できなかったよ。もう一度なでてね。';refreshBond();}}
-    finally{petFlight=false;if(rub===session){petClock.settle(JSON.stringify([session.worldId,mode,session.id]));if(session.pending)petTimer=setTimeout(flushPet,100);else if(!session.active){rub=null;render();if(session.keyboard)root.querySelector('[data-encounter-rub]')?.focus({preventScroll:true});}}}
+    finally{petFlight=false;if(alive)petClock.settle(session.petKey);if(rub===session){if(session.pending)petTimer=setTimeout(flushPet,100);else if(!session.active){rub=null;render();if(session.keyboard)root.querySelector('[data-encounter-rub]')?.focus({preventScroll:true});}}}
   }
   function startRub(event){
     const target=event.target.closest('[data-encounter-rub]');
     if(!target||!root.contains(target)||busy||petFlight||rub||event.isPrimary===false||event.button!==0)return;
     event.preventDefault();const w=getWorld();
-    rub={id:target.dataset.encounterRub,worldId:w.worldId,generation,pointerId:event.pointerId,x:event.clientX,y:event.clientY,distance:0,pending:0,active:true};
+    rub={id:target.dataset.encounterRub,worldId:w.worldId,petKey:JSON.stringify([w.worldId,mode,target.dataset.encounterRub]),generation,pointerId:event.pointerId,x:event.clientX,y:event.clientY,distance:0,pending:0,active:true};
   }
   function moveRub(event){
     if(!rub||!rub.active||event.pointerId!==rub.pointerId)return;
@@ -164,7 +164,7 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
     event.preventDefault();const w=getWorld(),key=JSON.stringify([w.worldId,mode,target.dataset.encounterRub]);
     notice='なでなで ♪';const petNotice=root.querySelector('.finch-notice');if(petNotice)petNotice.textContent=notice;
     if(petFlight||rub||!petClock.input(key))return;
-    rub={id:target.dataset.encounterRub,worldId:w.worldId,generation,pending:1,active:false,keyboard:true};flushPet();
+    rub={id:target.dataset.encounterRub,worldId:w.worldId,petKey:key,generation,pending:1,active:false,keyboard:true};flushPet();
   }
   async function mutate(operation,token){
     busy=true;render();let feedback;
