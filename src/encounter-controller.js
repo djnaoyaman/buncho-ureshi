@@ -1,3 +1,4 @@
+import {startExpedition,completeExpedition} from './garden-expedition.js';
 import {startLeafEvent,chooseLeafEvent,completeLeafEvent,setLeafKeepsakeDisplay} from './garden-leaf-event.js';
 import {createGardenJogFeedback} from './garden-jog-feedback.js';
 import {createPettingClock} from './petting-clock.js';
@@ -49,6 +50,7 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
       view:renderedView,world:garden.dataset.gardenWorld,
       gardenId:garden.querySelector('[aria-current=page]')?.dataset.gardenSelect,
       bookletFocus:bookletSummaryFocus(),
+      expeditionActors:[...garden.querySelectorAll("[data-expedition-actor]")].map(n=>n.value),
       details:new Map([...garden.querySelectorAll('details[data-garden-details][open]')].map(d=>[d.dataset.gardenDetails,d.scrollTop])),
     }:null;
   };
@@ -81,8 +83,11 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
     const focused=doc.activeElement,companionFocus=focused?.closest?.('.finch-companion-settings')?(focused.hasAttribute('data-garden-companion')?['data-garden-companion',focused.dataset.gardenCompanion]:focused.hasAttribute('data-garden-accompany')?['data-garden-accompany',focused.dataset.gardenAccompany]:focused.hasAttribute('data-garden-companions-save')?['data-garden-companions-save',null]:focused.hasAttribute('data-companion-summary')?['data-companion-summary',null]:null):null;
     const nextReadingKey=['entry','raptors','crows'].includes(mode)&&pageId?`${w.worldId}:${mode}:${pageId}`:null,priorReading=hostEntryReading||entryReading();
     const savedReading=priorReading?.key===nextReadingKey?priorReading:null;hostEntryReading=null;renderedReadingKey=nextReadingKey;
+    const expeditionActors=sameBooklet?(savedGarden?.expeditionActors||[...root.querySelectorAll('[data-expedition-actor]')].map(n=>n.value)):[];
+    const expeditionFocus=focused?.dataset?.expeditionActor;
     media.preserve();
     root.innerHTML=(mode==='raptors'?renderRaptorNotebook(w,{base,id:pageId}):mode==='crows'?renderCrowNotebook(w,{base,id:pageId}):mode==='event'?renderEncounterScene(w,{system,base}):mode==='garden'?renderFinchGarden(w,{system,base,selectedBirdId:getSelectedBirdId(),crowWarning:crowClock.warning,companionDraft,companionMessage}):mode==='entry'?renderEncounterPage(w,pageId,{system,base,showPhoto}):renderEncounterNotebook(w,{system,base}))+`<p class="finch-notice" role="status">${escape(notice)}</p><button type="button" class="finch-media-retry" data-media-retry hidden>絵をもう一度読み込む</button>`;
+    root.querySelectorAll('[data-expedition-actor]').forEach((select,i)=>{if([...select.options].some(o=>o.value===expeditionActors[i]))select.value=expeditionActors[i];if(expeditionFocus===select.dataset.expeditionActor)select.focus({preventScroll:true});});
     const selector=root.querySelector('.finch-garden-selector');
     if(selector){
       const selected=selector.querySelector('[aria-current=page]');
@@ -180,6 +185,16 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
     if(summary?.parentElement?.matches('.finch-companion-settings')&&busy){event.preventDefault();return;}
     const button=event.target.closest('button');if(!button||!root.contains(button)||busy)return;
     if(rub){rub=null;clearTimeout(petTimer);generation++;}
+    if(button.matches('[data-expedition-start],[data-expedition-complete],[data-expedition-later],[data-expedition-go-garden]')){
+      const card=button.closest('[data-expedition-world]');if(!card||mode!=='garden')return;
+      if(button.hasAttribute('data-expedition-go-garden')){await garden(button.dataset.expeditionGoGarden);return;}
+      if(button.hasAttribute('data-expedition-later')){card.open=false;card.querySelector('summary')?.focus({preventScroll:true});return;}
+      const expected={worldId:card.dataset.expeditionWorld,revision:Number(card.dataset.expeditionRevision)},actors=[...card.querySelectorAll('[data-expedition-actor]')].map(n=>n.value),path=button.dataset.expeditionStart,token=++generation;
+      const result=await mutate(w=>path?startExpedition(w,path,actors,expected):completeExpedition(w,expected),token);
+      if(!alive||token!==generation)return;
+      if(result)notice=result.changed?'':result.reason==='stale'?'べつの がめんで ようすが かわったよ。もういちど みてみよう。':'ちがう ともだちを ふたり えらんでね。いまは ほかの おはなしの とちゅうかもしれないよ。';
+      render();const details=root.querySelector('[data-garden-details="expedition"]');if(details){details.open=true;details.querySelector('summary')?.focus({preventScroll:true});}return;
+    }
     if(button.matches('[data-leaf-start],[data-leaf-choice],[data-leaf-complete],[data-leaf-display]')){
       const card=button.closest('[data-leaf-world]');if(!card||mode!=='garden')return;
       const expected={worldId:card.dataset.leafWorld,revision:Number(card.dataset.leafRevision)},token=++generation;
