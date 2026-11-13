@@ -23,17 +23,20 @@ export function mountGameMusic(host,{base='',document=globalThis.document,window
   function input(e){if(e.target===range)player.setVolume(Number(range.value)/100);}
   // Default-on means armed, never autoplay: unlock only in a real game tap.
   function firstGameTap(e){
+    if(document.body.hasAttribute('data-game-ending-active'))return;
     if(!e.isTrusted||!e.target.closest('#game-root,[data-game-title-slot],[data-game-world-control]'))return;
     if(e.target.closest('[data-music-off],[data-music],[data-music-auto]'))return;
     if(player.needsGesture())void player.playCurrentFromGesture();
   }
-  function gardenChanged(e){const d=e.detail;if(!d||!(d.gardenId===null||typeof d.gardenId==='string')||typeof d.worldId!=='string')return;void player.setGarden(d.gardenId,d.worldId);}
+  function gardenChanged(e){if(document.body.hasAttribute('data-game-ending-active'))return;const d=e.detail;if(!d||!(d.gardenId===null||typeof d.gardenId==='string')||typeof d.worldId!=='string')return;void player.setGarden(d.gardenId,d.worldId);}
   document.addEventListener('buncho-game-garden',gardenChanged);
+  function endingChanged(e){if(e.detail?.active)player.pause();}
+  document.addEventListener('buncho-game-ending',endingChanged);
   function hidden(){if(document.hidden)player.pause();}
   function pagehide(){player.pause();}
   function viewHidden(){if(document.body.hasAttribute('data-game-view-blocked'))player.pause();}
   function keydown(e){if(e.key==='Escape'&&!choices.hidden){e.preventDefault();e.stopPropagation();closeChoices(true);return;}if(e.key==='Escape'&&shell.open&&!shell.closest('[data-settings-music]')){shell.open=false;shell.querySelector('summary').focus();}}
   let musicFocus=null;const beforeRender=()=>{musicFocus=shell.contains(document.activeElement)?document.activeElement:null;host.append(shell);shell.hidden=true;};const panelChanged=e=>{const slot=document.querySelector('[data-settings-music]');if(e.detail==='settings'&&slot){slot.append(shell);shell.hidden=false;shell.open=true;musicFocus?.focus({preventScroll:true});musicFocus=null;}else{musicFocus=null;closeChoices();shell.hidden=true;shell.open=false;}};document.addEventListener('buncho-game-will-render',beforeRender);document.addEventListener('buncho-game-panel',panelChanged);
   shell.addEventListener('click',click);shell.addEventListener('input',input);shell.addEventListener('keydown',keydown);document.addEventListener('click',firstGameTap,true);document.addEventListener('visibilitychange',hidden);document.addEventListener('buncho-game-view-visibility',viewHidden);window.addEventListener('pagehide',pagehide);
-  return ()=>{document.removeEventListener('buncho-game-garden',gardenChanged);document.removeEventListener('buncho-game-will-render',beforeRender);document.removeEventListener('buncho-game-panel',panelChanged);player.dispose();shell.removeEventListener('click',click);shell.removeEventListener('input',input);shell.removeEventListener('keydown',keydown);document.removeEventListener('click',firstGameTap,true);document.removeEventListener('visibilitychange',hidden);document.removeEventListener('buncho-game-view-visibility',viewHidden);window.removeEventListener('pagehide',pagehide);shell.remove();};
+  return ()=>{document.removeEventListener('buncho-game-ending',endingChanged);document.removeEventListener('buncho-game-garden',gardenChanged);document.removeEventListener('buncho-game-will-render',beforeRender);document.removeEventListener('buncho-game-panel',panelChanged);player.dispose();shell.removeEventListener('click',click);shell.removeEventListener('input',input);shell.removeEventListener('keydown',keydown);document.removeEventListener('click',firstGameTap,true);document.removeEventListener('visibilitychange',hidden);document.removeEventListener('buncho-game-view-visibility',viewHidden);window.removeEventListener('pagehide',pagehide);shell.remove();};
 }

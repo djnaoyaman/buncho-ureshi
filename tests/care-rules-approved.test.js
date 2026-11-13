@@ -46,7 +46,7 @@ test('absence protects healthy, already ill and contract-expired birds, preserve
  const active=world();advanceTo(active,NOW+3*DAY,{present:true});assert.equal(active.lifecycle.birds[0].death.cause,'neglect');const grave=structuredClone(active.lifecycle.birds[0]);advanceTo(active,NOW+8*DAY);assert.deepEqual(active.lifecycle.birds[0],grave);
 });
 test('migration happens once from its actual timestamp, keeps values and known deadlines, and rejects malformed/future data',()=>{
- const old=world();delete old.careRules;old.version=15;const before=structuredClone(old);const w=readCompatibleWorld(old,NOW+DAY);assert.deepEqual(old,before);assert.equal(w.version,16);assert.equal(w.careRules.startedAt,NOW+DAY);assert.deepEqual(w.birds,old.birds);assert.deepEqual(w.lifecycle,old.lifecycle);assert.equal(w.decor.points,old.decor.points);assert.deepEqual(readCompatibleWorld(w,NOW+2*DAY),w);
+ const old=world();delete old.careRules;old.version=15;delete old.collectionEndings;const before=structuredClone(old);const w=readCompatibleWorld(old,NOW+DAY);assert.deepEqual(old,before);assert.equal(w.version,17);assert.equal(w.careRules.startedAt,NOW+DAY);assert.deepEqual(w.birds,old.birds);assert.deepEqual(w.lifecycle,old.lifecycle);assert.equal(w.decor.points,old.decor.points);assert.deepEqual(readCompatibleWorld(w,NOW+2*DAY),w);
  const broken=structuredClone(w);broken.careRules.birds[0].foodRemainder=DAY;assert.throws(()=>validateWorld(broken));const future=structuredClone(w);future.careRules.version=2;assert.throws(()=>validateWorld(future));
 });
 test('same-world stale import cannot reopen rewards and different worlds keep their own ledgers',()=>{
@@ -60,10 +60,10 @@ test('clock rollback neither refills nor reopens receipts; huge future jump is b
 });
 
 test('v15 originals are backed up independently and failed migration writes leave original bytes intact',async()=>{
- const raw=world();raw.version=15;delete raw.careRules;
+ const raw=world();raw.version=15;delete raw.collectionEndings;delete raw.careRules;
  const indexedDB=new IDBFactory();const db=await new Promise((resolve,reject)=>{const q=indexedDB.open('buncho-ureshi-garden-v1',1);q.onupgradeneeded=()=>q.result.createObjectStore('world');q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error);});
  await new Promise((resolve,reject)=>{const tx=db.transaction('world','readwrite');tx.objectStore('world').put(raw,'current');tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});db.close();
- const store=await openGameStore({indexedDB});try{await assert.rejects(store.transact(()=>{throw Error('abort');}));assert.equal(await store.migrationBackup(15),null);const next=await store.transact(w=>w);assert.equal(next.version,16);assert.deepEqual(await store.migrationBackup(15),raw);}finally{store.close();}
+ const store=await openGameStore({indexedDB});try{await assert.rejects(store.transact(()=>{throw Error('abort');}));assert.equal(await store.migrationBackup(15),null);const next=await store.transact(w=>w);assert.equal(next.version,17);assert.deepEqual(await store.migrationBackup(15),raw);}finally{store.close();}
  const bytes=JSON.stringify(raw),values=new Map([['buncho-ureshi-world-v1',bytes]]);let fail=true;
  const storage={getItem:k=>values.get(k)??null,setItem:(k,v)=>{if(fail&&k==='buncho-ureshi-world-v1')throw Error('quota');values.set(k,v);},removeItem:k=>values.delete(k)};
  const local=await openGameStore({localStorage:storage,navigator:{locks:{request:async(_key,fn)=>fn()}}});try{await assert.rejects(local.transact(w=>w),/quota/);assert.equal(values.get('buncho-ureshi-world-v1'),bytes);fail=false;await local.transact(w=>w);assert.deepEqual(await local.migrationBackup(15),raw);}finally{local.close();}

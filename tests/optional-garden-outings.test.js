@@ -463,7 +463,7 @@ test('v11 migration preserves every old bond and preference, defaults to solo, a
   assert.deepEqual(old, before);
   assert.equal(migrated.encounters.version, 15);
   assert.equal(migrated.revision, old.revision);
-  assert.equal(migrated.version,16);
+  assert.equal(migrated.version,17);
   assert.deepEqual(migrated.encounters.gardenFriends, {
     ...old.encounters.gardenFriends, version:2, accompany:false, attendees:[], visits:[],
   });
