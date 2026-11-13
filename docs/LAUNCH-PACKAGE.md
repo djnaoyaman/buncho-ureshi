@@ -6,7 +6,7 @@
 
 下の30項目表は05:52 UTCの履歴です。初期Launch対応はPR 2（main `3f3e41d39bebb9eff83afa209618cd306f839108`）で公開し、その時点の本番ブラウザ検査は139合格・失敗0・flaky0・意図した参照スキップ3でした。羽色ずかんの追加により、現在の静的ルート・canonical・sitemapは **53件**（専用404は別）です。7つの追加ルートにもメタデータ、JSON-LD、LLM資料と直接アクセス検査を適用します。
 
-最新のゲーム変更を含む exact-commit / 公開後結果は [Actions](https://github.com/djnaoyaman/buncho-ureshi/actions) と納品の `RELEASE-VERIFICATION.json` を参照してください。実装・テスト登録だけを合格とは扱いません。GA ID未提供のため解析タグなし、実SNSキャッシュ・実機ホーム画面・フィールド性能・Search Console登録は未検証のままです。ホスト直下robotsは本リポジトリの管理外です。ロゴは、その後ユーザーが最終選択した refined 04 に更新しています（詳細は BRAND-04.md）。
+最新のゲーム変更を含む exact-commit / 公開後結果は [Actions](https://github.com/djnaoyaman/buncho-ureshi/actions) と納品の `RELEASE-VERIFICATION.json` を参照してください。実装・テスト登録だけを合格とは扱いません。GA設置後の仕様は [ANALYTICS.md](ANALYTICS.md) を参照。実SNSキャッシュ・実機ホーム画面・フィールド性能・Search Console登録は未検証のままです。ホスト直下robotsは本リポジトリの管理外です。ロゴは、その後ユーザーが最終選択した refined 04 に更新しています（詳細は BRAND-04.md）。
 
 ## 判定の読み方
 
@@ -46,7 +46,7 @@
 | 24 | performance・画像・error handling | 画像寸法で領域確保、主画像 eager/high、他は lazy/async。OGP 200KB 未満、生成 HTML 180KB 未満を検査。既存安全な保存・画像失敗処理を維持。 | 実ユーザー LCP / CLS / INP、低速回線の評価は未実施。速度スコアを捏造しない。 |
 | 25 | 日本語・正確性・独創性・統一 | 正式名と実在おもちの既知事実を統一。事実出典・画像ライセンス・確認日を継承。語義のない外国語クレジットを勝手に翻訳しない。 | 全学術情報の新規再調査ではない。ロゴは refined 04 の採用が確定。 |
 | 26 | 音楽 Premium 案内 | **N/A**。配信音楽サービス・YouTube 埋め込みなし。合成 BGM と利用許可された鳥の声資料のみ。 | Premium 契約を勧める必要はない。 |
-| 27 | GA 設置（受信と分離） | **意図的に未設置**。GA ID、解析 SDK、広告トラッカーを追加していないことを静的検査。 | 承認された測定目的・ID・プライバシー方針・同意要件を確定するまで保留。稼働・送信・受信済みと主張しない。 |
+| 27 | GA 設置（受信と分離） | GTM-W9SQSCBTと公開コンテナで確認したGA4 G-VVFMFGKXNLを使用。仕様はANALYTICS.md参照。 | サイト側のイベント発火とGAへの送信を検査。GA管理画面の受信は別途確認。 |
 | 28 | CSP・referrer・外部 link | self 基準の meta CSP、object-src none、base-uri self、form-action self。CSS の inline 値は既存編集 UI のため許可。strict-origin-when-cross-origin、外部 blank の noopener/noreferrer。既知 CC URL を HTTPS 化。 | Pages の独自 HTTP ヘッダは設定していない。meta で無効な frame-ancestors は入れない。全外部ページの生存・安全性は未検査。 |
 | 29 | 実公開・画面・主要操作 | 変更を exact-commit CI と本番ブラウザテストに渡す。既存図鑑・アート・ゲーム回帰を減らさない。 | **本変更の公開は担当親エージェント待ち**。この文書は公開完了証明ではない。 |
 | 30 | 完了 / 未確認 / N/A 明示 | 本台帳とテストで実装・ローカル・ブラウザ・公開を区別。広告・Premium は適用外、GA は意図的保留。 | 最終 CI と本番の SHA / run URL / 残件は親担当が追記する。 |

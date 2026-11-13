@@ -1,3 +1,4 @@
+import { trackEvent } from './analytics.js';
 import {syncCollectionEndings} from './collection-endings.js';
 import {mountCollectionEndingPlayer,renderEndingDiary} from './collection-ending-player.js';
 import {crowScene} from './garden-crows.js';
@@ -507,6 +508,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
         else if(button.dataset.decorDraw)feedback=drawDecoration(w,button.dataset.decorDraw,drawMachine,{worldId:button.dataset.drawWorld,revision:Number(button.dataset.drawRevision)});
         else feedback=equipDecoration(w,button.dataset.decorEquip);
       },'',()=>alive&&world.worldId===expectedWorld,{bump:false,advanceCurrent:!button.dataset.decorDraw});
+      if(committed&&feedback?.changed){trackEvent(button.dataset.decorDraw?'game_gacha':button.hasAttribute('data-field-travel')?'game_travel':button.dataset.fieldInvite?'game_friend_invite':'game_decorate',{site_area:'game',action:button.dataset.decorDraw?'draw':button.hasAttribute('data-field-travel')?'travel':'equip',machine:button.dataset.decorDraw?drawMachine:undefined,tier:feedback.item?.tier});}
       if(committed&&feedback&&request===fieldViewRequest){setMessage(button.hasAttribute('data-field-travel')?'':feedback.message);if(button.hasAttribute('data-field-travel')){cancelCareEffects();panel='garden';previewItem=null;drawResult=null;}if(button.dataset.decorDraw&&feedback.changed){drawResult=feedback;decorTier=feedback.item?.tier||decorTier;previewItem=feedback.item.id;}if(button.dataset.decorEquip)previewItem=null;}
     }finally{if(!drawResult&&pendingGachaAudio){pendingGachaAudio.close()?.catch(()=>{});pendingGachaAudio=null;}fieldPending=false;if(alive){render();if(button.hasAttribute('data-field-travel')&&request===fieldViewRequest)focusPanel();}}
   }
@@ -832,6 +834,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
       releaseCareIntent(intent);
       if(!committed||!feedback||!current())return;
       if(!feedback.birdId&&feedback.kind!=='clean'&&feedback.message){setMessage(feedback.message);render();return;}
+      if(feedback.changed)trackEvent('game_care',{site_area:'game',action:kind});
       careFeedback={...feedback,saved:store.mode!=='memory',worldId:expectedWorldId,revision:world.revision};setMessage('');
       if(['pet','feed'].includes(kind)&&(feedback.changed||kind==='pet'&&feedback.reason==='full')){
         careGesture={birdId,worldId:expectedWorldId,kind};clearTimeout(gestureTimer);

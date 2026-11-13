@@ -1,3 +1,4 @@
+import { trackEvent } from './analytics.js';
 import { BRAND_ASSET, BRAND_SIZE } from './visuals.js';
 /* Original browser-local Java sparrow atelier. No service calls or image uploads. */
 // Muting is an immediate state change, not an asymptotic automation target.
@@ -156,6 +157,9 @@ export function mountStudio(root,{photos=[],birdSvg,seed}={}){
  root.querySelectorAll('.studio-steps a').forEach(a=>a.setAttribute('href',location.pathname+location.search+a.getAttribute('href')));
  const canvas=el('canvas'),ctx=canvas.getContext('2d');
  if(!ctx){root.textContent='この環境では画像を描く機能が使えません。別のブラウザで工房を開いてください。';return()=>{};}
+ trackEvent('studio_open',{site_area:'studio',source:seed?'game':'direct'});
+ let editTracked=false;
+ const noteEdit=()=>{if(!editTracked){editTracked=true;trackEvent('studio_edit_start',{site_area:'studio'});}};
  const tell=t=>{if(!destroyed)el('status').textContent=t;},current=()=>state.items.find(o=>o.id===selected);
  const artBackgroundImages=new Map();
  function getArtBackground(index){
@@ -172,7 +176,7 @@ export function mountStudio(root,{photos=[],birdSvg,seed}={}){
  function persist(){if(invalidSaved)return;try{localStorage.setItem(STORE,JSON.stringify(state));}catch{tell('この端末では自動保存できません。「画像をつくる・保存」で残してください。');}}
  function remember(){undo.push(clone(state));if(undo.length>HISTORY)undo.shift();redo=[];}
  function invalidate(){revision++;prepared=null;el('export-panel').hidden=true;if(exportURL){URL.revokeObjectURL(exportURL);exportURL=null;}}
- function edit(fn,msg='作品を変えました。'){if(drag)finishDrag({pointerId:drag.pointer});remember();fn();invalidate();refresh();persist();tone('change');tell(msg);}
+ function edit(fn,msg='作品を変えました。'){if(drag)finishDrag({pointerId:drag.pointer});remember();fn();noteEdit();invalidate();refresh();persist();tone('change');tell(msg);}
  function label(o){if(o.kind==='photo')return photoMap.get(o.photoId)?.alt||'文鳥の写真';if(o.kind==='text')return 'ことば「'+o.text+'」';return {bird:(o.birdName?o.birdName+' · ':'')+({white:'白文鳥',sakura:'桜文鳥',silver:'シルバー文鳥',cinnamon:'シナモン文鳥',juvenile:'幼鳥'}[o.birdColor]||'文鳥')+' · '+({egg:'卵',chick:'ひな',juvenile:'幼鳥',adult:'成鳥'}[o.birdStage||'adult'])+'のイラスト',branch:'葉の枝',leaf:'ひとひらの葉',flower:'花',ribbon:'曲線の帯',medallion:'花のメダリオン',egg:'たまご',nest:'巣'}[o.kind]||'素材';}
  function getImage(pid){if(images.has(pid))return images.get(pid);const p=photoMap.get(pid);if(!p)return null;const img=new Image();img.decoding='async';img.onload=()=>{if(!destroyed)draw();};img.onerror=()=>{if(!destroyed)tell('読み込めない写真があります。通信を確かめて、もう一度開いてください。');};img.src=p.src;images.set(pid,img);return img;}
  function creditLines(c){
@@ -210,7 +214,7 @@ export function mountStudio(root,{photos=[],birdSvg,seed}={}){
  function add(o){
   if(state.items.length>=MAX_ITEMS){tell('そざいは36個まで。いらないものを消してから入れてね。');return;}
   if(o.kind==='photo'&&!state.items.some(x=>x.photoId===o.photoId)&&new Set(state.items.filter(x=>x.kind==='photo').map(x=>x.photoId)).size>=MAX_PHOTOS){tell('写真は6種類まで。クレジットを読みやすく残すための上限です。');return;}
-  edit(()=>{state.items.push(o);selected=o.id;},label(o)+'を追加しました。');tone('add');
+  edit(()=>{state.items.push(o);selected=o.id;},label(o)+'を追加しました。');tone('add');trackEvent('studio_material_add',{site_area:'studio',material_type:o.kind});
  }
  STUDIO_TEMPLATES.forEach((name,i)=>{
   const b=document.createElement('button');b.type='button';b.className='studio-template';b.dataset.template=String(i);const mini=document.createElement('canvas');mini.width=160;mini.height=160;mini.setAttribute('aria-hidden','true');const saved=state;state=makeStudioTemplate(i);const mc=mini.getContext('2d');mc.scale(.16,.16);background(mc,state.background,STUDIO_PALETTES[state.palette],1000);mc.translate(500,510);mc.scale(2.6,2.6);drawBird(mc,i===2?'sakura':'white');state=saved;
@@ -245,7 +249,7 @@ export function mountStudio(root,{photos=[],birdSvg,seed}={}){
  function hit(p){const L=layout();return [...state.items].reverse().find(o=>{const d=position(o,L),a=-o.r*Math.PI/180,x=p.x-d.x,y=p.y-d.y;return Math.abs(x*Math.cos(a)-y*Math.sin(a))<=d.w/2+12&&Math.abs(x*Math.sin(a)+y*Math.cos(a))<=d.h/2+12;});}
  on(canvas,'pointerdown',e=>{if(e.button>0||drag)return;const p=point(e),o=hit(p);if(!o){selected=null;refresh();return;}selected=o.id;if(o.kind==='text')el('text').value=o.text;refresh();const L=layout(),pos=position(o,L);drag={pointer:e.pointerId,itemId:o.id,start:clone(state),x:p.x,y:p.y,ox:pos.x/1000,oy:(pos.y-L.top)/L.height,moved:false};canvas.setPointerCapture(e.pointerId);canvas.focus({preventScroll:true});e.preventDefault();});
  on(canvas,'pointermove',e=>{if(!drag||drag.pointer!==e.pointerId)return;const o=state.items.find(o=>o.id===drag.itemId);if(!o)return;const p=point(e),L=layout();if(Math.hypot(p.x-drag.x,p.y-drag.y)<=3&&!drag.moved)return;const x=clamp(drag.ox+(p.x-drag.x)/1000,0,1),y=clamp(drag.oy+(p.y-drag.y)/L.height,0,1);if(o.x===x&&o.y===y)return;drag.moved=true;o.x=x;o.y=y;invalidate();draw();});
- function finishDrag(e,cancel=false){if(!drag||e.pointerId!==drag.pointer)return;const finished=drag;drag=null;if(cancel){state=finished.start;invalidate();refresh();tell('移動を取り消しました。');}else if(finished.moved){undo.push(finished.start);if(undo.length>HISTORY)undo.shift();redo=[];invalidate();refresh();persist();tone('move');tell('素材を動かしました。');}if(canvas.hasPointerCapture?.(finished.pointer))canvas.releasePointerCapture(finished.pointer);}
+ function finishDrag(e,cancel=false){if(!drag||e.pointerId!==drag.pointer)return;const finished=drag;drag=null;if(cancel){state=finished.start;invalidate();refresh();tell('移動を取り消しました。');}else if(finished.moved){noteEdit();undo.push(finished.start);if(undo.length>HISTORY)undo.shift();redo=[];invalidate();refresh();persist();tone('move');tell('素材を動かしました。');}if(canvas.hasPointerCapture?.(finished.pointer))canvas.releasePointerCapture(finished.pointer);}
  on(canvas,'pointerup',e=>finishDrag(e));on(canvas,'pointercancel',e=>finishDrag(e,true));on(canvas,'lostpointercapture',e=>{if(drag)finishDrag(e,true);});
  on(canvas,'keydown',e=>{const map={ArrowLeft:'left',ArrowRight:'right',ArrowUp:'up',ArrowDown:'down',Delete:'delete',Backspace:'delete'};if(map[e.key]){e.preventDefault();btn(map[e.key]).click();}if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();btn(e.shiftKey?'redo':'undo').click();}});
  async function loadNeeded(){await Promise.all([brandImage,...(state.background>=8?[getArtBackground(state.background)]:[]),...[...new Set(state.items.filter(o=>o.kind==='photo').map(o=>o.photoId))].map(getImage)].map(img=>new Promise((resolve,reject)=>{if(!img){reject(new Error('photo'));return;}let timer,settled=false;const finish=error=>{if(settled)return;settled=true;clearTimeout(timer);img.removeEventListener('load',loaded);img.removeEventListener('error',failed);signal.removeEventListener('abort',cancelled);error?reject(new Error(img===brandImage&&error==='photo'?'brand':error)):resolve();},loaded=()=>{if(!img.naturalWidth){finish('photo');return;}try{Promise.resolve(typeof img.decode==='function'?img.decode():undefined).then(()=>finish(),()=>finish('photo'));}catch{finish('photo');}},failed=()=>finish('photo'),cancelled=()=>finish('cancelled');timer=setTimeout(()=>finish('timeout'),15000);signal.addEventListener('abort',cancelled,{once:true});if(signal.aborted){cancelled();return;}if(img.complete)loaded();else{img.addEventListener('load',loaded,{once:true});img.addEventListener('error',failed,{once:true});}})));}
@@ -256,11 +260,13 @@ export function mountStudio(root,{photos=[],birdSvg,seed}={}){
    const blob=await new Promise((resolve,reject)=>out.toBlob(b=>b?resolve(b):reject(new Error('encode')),'image/png'));if(destroyed)return;if(ticket!==revision)throw new Error('changed');
    if(exportURL)URL.revokeObjectURL(exportURL);prepared=blob;exportURL=URL.createObjectURL(blob);el('export-preview').src=exportURL;el('download').href=exportURL;el('download').download='buncho-'+state.format+'.png';el('export-panel').hidden=false;
    let share=false;try{share=!!navigator.canShare?.({files:[new File([blob],'buncho-art.png',{type:'image/png'})]});}catch{}btn('share').hidden=!share;el('share-help').textContent=share?'共有先は次の画面でえらべます。':'このブラウザでは直接共有に対応していません。「PNG画像を保存」で保存してから共有してね。';
+   trackEvent('studio_export',{site_area:'studio',format:state.format});
    tell('画像ができました。クレジットまで入っています。「PNG画像を保存」を押してね。');tone('save');
   }catch(e){tell(e.message==='changed'?'作品が変わりました。もう一度「画像をつくる・保存」を押してください。':e.message==='credits'?'写真のクレジットが長すぎて、読みやすく入りません。写真を減らすか、縦長にして保存してください。':e.message==='brand'?'採用ロゴを読み込めず、画像を作れませんでした。通信を確かめて、もう一度開いてください。':'写真をすべて読み込めず、画像を作れませんでした。通信を確かめるか、読み込めない写真を消してやりなおしてください。');}
   finally{if(!destroyed)btn('export').disabled=false;}
  });
- on(btn('share'),'click',async()=>{if(!prepared)return;try{await navigator.share({files:[new File([prepared],'buncho-art.png',{type:'image/png'})],title:state.title||'文鳥アート工房'});tell('共有画面を閉じました。');}catch(e){tell(e.name==='AbortError'?'共有を取り消しました。作品はそのままです。':'この環境では共有できません。「PNG画像を保存」を使ってください。');}});
+ on(el('download'),'click',()=>{if(prepared)trackEvent('studio_download',{site_area:'studio',format:state.format});});
+ on(btn('share'),'click',async()=>{if(!prepared)return;try{await navigator.share({files:[new File([prepared],'buncho-art.png',{type:'image/png'})],title:state.title||'文鳥アート工房'});trackEvent('studio_share',{site_area:'studio',format:state.format});tell('共有画面を閉じました。');}catch(e){tell(e.name==='AbortError'?'共有を取り消しました。作品はそのままです。':'この環境では共有できません。「PNG画像を保存」を使ってください。');}});
  let audio=null,master=null,musicTimer=null,noteIndex=0,muted=false,sfx=false,volume=.25;const oscillators=new Set();
  function audioReady(){try{if(!audio){const AC=globalThis.AudioContext||globalThis.webkitAudioContext;if(!AC)throw new Error('no audio');audio=new AC();master=audio.createGain();applyStudioMasterGain(master,audio,muted,volume);master.connect(audio.destination);}if(audio.state==='suspended')audio.resume().catch(()=>{});return true;}catch{el('audio-status').textContent='この環境は音の再生に対応していません。作品づくりは使えます。';return false;}}
  function playNote(freq,duration=.3,delay=0,type='sine',gain=.25){if(!audio||!master)return;const t=audio.currentTime+delay,o=audio.createOscillator(),g=audio.createGain();o.type=type;o.frequency.value=freq;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(gain,t+.025);g.gain.exponentialRampToValueAtTime(.0001,t+duration);o.connect(g);g.connect(master);oscillators.add(o);o.start(t);o.stop(t+duration+.05);o.onended=()=>{oscillators.delete(o);o.disconnect();g.disconnect();};}

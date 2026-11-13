@@ -128,7 +128,8 @@ test('Launch Package explicit social cards, structured data, security and image 
       for(const img of d.querySelectorAll('img')){assert.ok(Number(img.getAttribute('width'))>0);assert.ok(Number(img.getAttribute('height'))>0);assert.ok(img.getAttribute('alt'));}
       for(const a of d.querySelectorAll('a[target="_blank"]')){assert.ok(a.rel.includes('noopener'));assert.ok(a.rel.includes('noreferrer'));}
       assert.equal(d.querySelectorAll('a[href^="http:"]').length,0);
-      assert.doesNotMatch(html,/googletagmanager\.com|google-analytics\.com|gtag\(|G-[A-Z0-9]{8,}/);
+      assert.equal(d.querySelectorAll('script[src^="src/analytics-loader.js"]').length,1);
+      assert.match(csp,/https:\/\/www\.googletagmanager\.com/);
       assert.ok(Buffer.byteLength(html)<180000,'static HTML budget: '+route);
     }finally{await window.happyDOM.close();}
   }
@@ -158,7 +159,7 @@ test('Launch Package sitemap and LLM files reflect actual current articles witho
   assert.equal(urls.length,PAGE_CATALOG.length);assert.equal(new Set(urls).size,urls.length);
   assert.ok(urls.every(u=>u.startsWith(origin+base)&&!u.includes('?')&&!u.includes('404')));
   assert.equal([...sitemap.matchAll(/<lastmod>\d{4}-\d{2}-\d{2}<\/lastmod>/g)].length,urls.length);
-  for(const text of [short,full]){assert.ok(text.startsWith('# '+SITE_NAME));assert.match(text,/ご家族が提供した、おもち本人の写真を掲載しています/);assert.match(text,/GAなどの解析タグは未設置/);assert.match(text,/保証しません/);assert.doesNotMatch(text,/<ruby>|<rt>/);}
+  for(const text of [short,full]){assert.ok(text.startsWith('# '+SITE_NAME));assert.match(text,/ご家族が提供した、おもち本人の写真を掲載しています/);assert.match(text,/Google Analyticsでページ閲覧と操作の利用状況を計測/);assert.match(text,/保証しません/);assert.doesNotMatch(text,/<ruby>|<rt>/);}
   for(const a of articles){assert.ok(short.includes(`${origin+base}encyclopedia/${a.id}/`));assert.ok(full.includes('## '+a.title));assert.ok(full.includes('情報確認日: '+a.checkedAt));for(const source of a.sources)assert.ok(full.includes(source.title));}
   assert.match(robots,/host root/);assert.match(robots,/Sitemap: https:\/\/djnaoyaman.github.io\/buncho-ureshi\/sitemap.xml/);
   assert.equal(routeMetadata('',{query:'保存'}).robots,'noindex, follow');assert.equal(routeMetadata('',{query:'保存'}).canonical,origin+base);

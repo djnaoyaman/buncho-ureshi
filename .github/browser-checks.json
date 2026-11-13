@@ -1,5 +1,7 @@
 {
-  "base": "6e7fe0b036e3b060902a8e9cf9353ce25b6a95dc",
-  "tests": [],
-  "reason": "iPhoneで庭ジョグ音が鳴らない報告への修正。touchend/pointerupでAudioContextを再開し、直近250ms以内の音だけ再開後再生。Node/DOMで解除遅延・取消・消音・背景・連続入力・イベント順を検査。実ブラウザ操作はユーザー指示により行わない。"
+  "base": "4d1b6898dd6768cd763298004b49827ad1434477",
+  "tests": [
+    "tests/browser/analytics.spec.js"
+  ],
+  "reason": "GTM読み込み、SPA分類、ゲーム起動とパネル重複抑制、工房編集とPNG生成・保存イベントをChrome/WebKitで検査。Nodeでパラメーター許可リストとタグの一度だけの初期化を検査。"
 }
