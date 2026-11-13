@@ -7,7 +7,7 @@ import {allBirds} from '../src/world-birds.js';
 import {openGameStore,DB_NAME,STORAGE_KEY} from '../src/game-store.js';
 const NOW=Date.parse('2026-11-10T12:00:00+09:00'),MINUTE=60000;
 function family(engine){const w=engine.createWorld(NOW);const father=engine.createBird(w,{home:'resident',sex:'male'}),child=engine.createBird(w,{home:'resident',sex:'male',stage:'egg',parents:['b1',father.id],generation:1});return {w,child};}
-function protectedWorld(w){const result=structuredClone(w);result.version=13;delete result.collectionEndings;delete result.away;delete result.careRules;for(const b of allBirds(result))delete b.growthPace;return result;}
+function protectedWorld(w){const result=structuredClone(w);result.version=13;delete result.collectionEndings;delete result.leafEvent;delete result.away;delete result.careRules;for(const b of allBirds(result))delete b.growthPace;return result;}
 function paid(w){w.economy.gold=w.economy.lifetimeGold=1000;hireCaretaker(w,7,economyToken(w),NOW);}
 test('new eggs follow336/1008/5376 minute boundaries and keep exact stage event dates',()=>{
  const {w,child}=family({createWorld,createBird});paid(w);
@@ -17,7 +17,7 @@ test('new eggs follow336/1008/5376 minute boundaries and keep exact stage event 
 });
 test('migrating13 adds pace only, keeps all archive and wallet history, and old readers reject14',()=>{
  const {w}=family(old);for(let i=0;i<140;i++)old.createBird(w,{home:'departed'});old.advanceTicks(w,5,NOW);w.economy.gold=w.economy.lifetimeGold=321;
- const before=structuredClone(w),next=readCompatibleWorld(w,NOW+MINUTE);assert.deepEqual(w,before);assert.equal(next.version,17);assert(allBirds(next).every(b=>b.growthPace==='legacy'));assert(next.archive.length>0);assert.deepEqual(protectedWorld(next),before);assert.throws(()=>old.readCompatibleWorld(next,NOW));
+ const before=structuredClone(w),next=readCompatibleWorld(w,NOW+MINUTE);assert.deepEqual(w,before);assert.equal(next.version,18);assert(allBirds(next).every(b=>b.growthPace==='legacy'));assert(next.archive.length>0);assert.deepEqual(protectedWorld(next),before);assert.throws(()=>old.readCompatibleWorld(next,NOW));
 });
 test('existing eggs, chicks and juveniles finish at their original pace without changing prior stage times',()=>{
  for(const elapsed of [5,15,40]){const {w,child}=family(old);old.advanceTo(w,NOW+elapsed*MINUTE);const prior=structuredClone(w),next=readCompatibleWorld(w,NOW+elapsed*MINUTE);assert.deepEqual(protectedWorld(next),prior);advanceTo(next,NOW+84*MINUTE);assert.equal(next.birds.find(b=>b.id===child.id).stage,'adult');assert.deepEqual(next.journal.filter(e=>e.ids[0]===child.id&&['hatch','grow'].includes(e.kind)).map(e=>e.tick),[12,36,84]);validateWorld(next);}
@@ -44,10 +44,10 @@ test('two IDB readers migrate once and retain the exact13 original independent o
  const indexedDB=new IDBFactory(),before=family(old).w;await seed(indexedDB,before);const a=await openGameStore({indexedDB}),b=await openGameStore({indexedDB});const [one,two]=await Promise.all([a.transact(w=>w),b.transact(w=>w)]);assert.deepEqual(one,two);assert.deepEqual(await a.migrationBackup(13),before);assert.equal(await a.migrationBackup(12),null);await a.resetWorld(one.worldId);assert.deepEqual(await a.migrationBackup(13),before);assert.equal(await a.hasResetBackup(),true);a.close();b.close();
 });
 test('failed IDB migration preserves the raw13 save and allows a later complete retry',async()=>{
- const indexedDB=new IDBFactory(),before=family(old).w;await seed(indexedDB,before);const s=await openGameStore({indexedDB});await assert.rejects(s.transact(()=>{throw Error('cancel');}),/cancel/);assert.equal(await s.migrationBackup(13),null);const next=await s.transact(w=>w);assert.equal(next.version,17);assert.deepEqual(await s.migrationBackup(13),before);s.close();
+ const indexedDB=new IDBFactory(),before=family(old).w;await seed(indexedDB,before);const s=await openGameStore({indexedDB});await assert.rejects(s.transact(()=>{throw Error('cancel');}),/cancel/);assert.equal(await s.migrationBackup(13),null);const next=await s.transact(w=>w);assert.equal(next.version,18);assert.deepEqual(await s.migrationBackup(13),before);s.close();
 });
 test('locked local migration preserves raw wrapper, prior originals, wallet and reset backup atomically',async()=>{
  const before=family(old).w,raw=JSON.stringify({format:'buncho-world-with-reset-backup-v1',current:before,backup:old.createWorld(NOW)}),values=new Map([[STORAGE_KEY,raw],[STORAGE_KEY+'-migration-v12','{"keep":12}']]);let fail=false;
  const storage={getItem:k=>values.get(k)??null,setItem:(k,v)=>{if(fail&&k===STORAGE_KEY)throw Error('quota');values.set(k,v);},removeItem:k=>values.delete(k)};
- const s=await openGameStore({localStorage:storage,navigator:{locks:{request:async(k,fn)=>fn()}}});fail=true;await assert.rejects(s.transact(w=>w),/quota/);assert.equal(values.get(STORAGE_KEY),raw);fail=false;const next=await s.transact(w=>w);assert.equal(next.version,17);assert.equal(values.get(STORAGE_KEY+'-migration-v13'),raw);assert.equal(values.get(STORAGE_KEY+'-migration-v12'),'{"keep":12}');assert.deepEqual(await s.migrationBackup(13),before);assert.equal(await s.hasResetBackup(),true);s.close();
+ const s=await openGameStore({localStorage:storage,navigator:{locks:{request:async(k,fn)=>fn()}}});fail=true;await assert.rejects(s.transact(w=>w),/quota/);assert.equal(values.get(STORAGE_KEY),raw);fail=false;const next=await s.transact(w=>w);assert.equal(next.version,18);assert.equal(values.get(STORAGE_KEY+'-migration-v13'),raw);assert.equal(values.get(STORAGE_KEY+'-migration-v12'),'{"keep":12}');assert.deepEqual(await s.migrationBackup(13),before);assert.equal(await s.hasResetBackup(),true);s.close();
 });

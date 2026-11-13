@@ -1832,3 +1832,20 @@ body[data-world="buncho"] .game-encounter-host .finch-garden > header [data-enco
  min-width: 64px; min-height: 48px; padding: 5px 8px; font-family: var(--game-font); font-size: var(--game-text-control); font-weight: 700; line-height: 1.35;
 }
 body[data-world="buncho"] .game-encounter-host .finch-garden > header [data-encounter-back] > span { display: block; width: 100%; text-align: center; white-space: nowrap; }
+
+/* A quiet paper keepsake, not a reward popup. Uses the existing garden palette. */
+.leaf-gift{margin:14px 0;border:1px solid #c8bba3;border-radius:16px;background:#fffaf0;color:#514835;overflow-wrap:anywhere;max-width:100%;font-size:1rem;line-height:1.8}
+.leaf-gift>summary{display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;min-height:48px;list-style:revert}
+.leaf-gift>summary .leaf-gift-art{width:40px;height:40px;flex:none}
+.leaf-gift small{display:block;font-size:.8em;font-weight:400;color:#625b4b}
+.leaf-gift-content,.leaf-gift-diary{padding:16px}
+.leaf-gift-content p{margin:12px 0}.leaf-gift rt{font-size:.55em}
+.leaf-gift button{min-height:48px;max-width:100%;padding:12px 16px;border:1px solid #a6ad91;border-radius:12px;background:#f1f3e7;color:#3d4a39;font:inherit;line-height:1.6;cursor:pointer;white-space:normal}
+.leaf-gift button:focus-visible{outline:3px solid #627d61;outline-offset:3px}
+.leaf-gift-choices{display:grid;gap:10px}.leaf-gift-choices button:last-child{background:transparent;border-color:#c8bba3}
+.leaf-gift-vignette{display:flex;align-items:center;justify-content:center;gap:8px;max-width:360px;margin:auto;background:linear-gradient(0deg,#e9e9da,transparent 60%);border-radius:50% 50% 16px 16px}
+.leaf-gift-bird{margin:0;flex:1;min-width:0;text-align:center;font-size:.88em}.leaf-gift-bird img{display:block;max-width:100%;height:100px;object-fit:contain;margin:auto}.leaf-gift-right img{transform:scaleX(-1)}
+.leaf-gift-art{width:64px;height:64px;flex:none}.leaf-gift-note{font-size:.85em;color:#625b4b}
+.leaf-gift-keepsake{position:absolute;bottom:8px;left:8px;z-index:3;pointer-events:none;display:flex;align-items:center;gap:4px;background:#fffaf0e8;border-radius:8px;padding:4px 8px;font-size:11px;color:#514835}.leaf-gift-keepsake .leaf-gift-art{width:28px;height:28px}
+.leaf-gift-diary-keepsake{display:flex;align-items:center;gap:16px}.leaf-gift-diary h3{font-size:1.05rem}
+@media(max-width:375px){.leaf-gift-content,.leaf-gift-diary{padding:12px}.leaf-gift-vignette{gap:2px}.leaf-gift-bird img{height:80px}.leaf-gift-vignette>.leaf-gift-art{width:42px;height:42px}}

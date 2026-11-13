@@ -1,7 +1,5 @@
 {
-  "base": "4d1b6898dd6768cd763298004b49827ad1434477",
-  "tests": [
-    "tests/browser/analytics.spec.js"
-  ],
-  "reason": "GTM読み込み、SPA分類、ゲーム起動とパネル重複抑制、工房編集とPNG生成・保存イベントをChrome/WebKitで検査。Nodeでパラメーター許可リストとタグの一度だけの初期化を検査。"
+  "base": "bfde42a811cbb738184800e0383bdb9eca3a25f7",
+  "tests": [],
+  "reason": "ユーザー指定により実ブラウザ操作は行わない。第1回落ち葉イベントの保存移行・二重付与防止・別タブ・再訪・分岐・日記・装飾切替をNodeおよびDOM検査で検証。既存Chrome/WebKit検査は削除せず保持し、iPhone実機の見た目はユーザー確認とする。"
 }
