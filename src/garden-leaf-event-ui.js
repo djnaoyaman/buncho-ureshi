@@ -29,7 +29,7 @@ export function renderLeafGift(w,{base='/buncho-ureshi/'}={}){
  else if(s.phase==='ready')body=scene(s,base)+`<p>はっぱの おはなしに、つづきが あるみたい。</p><button type="button" data-leaf-complete>ともだちの ようすを みる</button>`;
  else if(complete&&s.entry.gardenId!==w.encounters.garden.id)body='<p>この おはなしは おわって、おもいでに なったよ。にっきで よみかえせるよ。ふたりに また あったら、いつもの おはなしも してみてね。</p>';
  else if(complete)body=scene(s,base)+`<p>${leafGiftNarrative(s,{thanks:true})}</p><p>はっぱの しおりが、おもいでに なったよ。ふたりに また あったら、いつもの おはなしも してみてね。</p><p class="leaf-gift-note">おれいの ${s.entry.goldAward} Gold と、にわの なかよし +2 は いちどだけ。にっきにも のこしたよ。</p><button type="button" data-leaf-display="${!s.entry.displayed}" aria-pressed="${s.entry.displayed}">${s.entry.displayed?'しおりを しまう':'しおりを にわに かざる'}</button>`;
- return `<details class="leaf-gift" data-garden-details="leaf-gift" data-leaf-world="${esc(w.worldId)}" data-leaf-revision="${w.revision}"><summary>${leafArt()}<span>${title}<small>${blocked?'いまの ようす':complete?'おもいで':waiting?'つづきは またこんど':'タップして おはなしを みる'}</small></span></summary><div class="leaf-gift-content">${body}</div></details>`;
+ return `<details name="garden-story" class="leaf-gift" data-garden-details="leaf-gift" data-leaf-world="${esc(w.worldId)}" data-leaf-revision="${w.revision}"><summary>${leafArt()}<span>${title}<small>${blocked?'いまの ようす':complete?'おもいで':waiting?'つづきは またこんど':'タップして おはなしを みる'}</small></span></summary><div class="leaf-gift-content">${body}</div></details>`;
 }
 export function renderLeafKeepsake(w){
  const e=w.leafEvent?.entry;

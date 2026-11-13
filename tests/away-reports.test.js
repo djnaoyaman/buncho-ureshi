@@ -7,7 +7,7 @@ import {openGameStore,DB_NAME,STORAGE_KEY} from '../src/game-store.js';
 import {IDBFactory} from 'fake-indexeddb';
 const NOW=Date.parse('2026-11-11T03:00:00Z'),MIN=60000,DAY=86400000;
 const clone=structuredClone;
-function project(w){const n=clone(w);delete n.away;delete n.careRules;n.version=14;delete n.collectionEndings;delete n.leafEvent;return n;}
+function project(w){const n=clone(w);delete n.away;delete n.careRules;n.version=14;delete n.collectionEndings;delete n.leafEvent;delete n.expedition;return n;}
 function report(w,at){return finishAway(w,captureAway(w),at);}
 test('v14 migration adds empty presence only; no pre-update absence is invented',()=>{const before=old.createWorld(NOW),next=readCompatibleWorld(before,NOW+3*DAY);assert.deepEqual(project(next),before);assert.deepEqual(next.away,initialAway());advanceObservedWorld(next,NOW+3*DAY,{returning:true});assert.equal(next.away.seenAt,NOW+3*DAY);assert.deepEqual(next.away.reports,[]);assert.throws(()=>old.readCompatibleWorld(next));assert.deepEqual(before,old.createWorld(NOW));});
 test('29:59 is too short; exactly 30 minutes produces one daily report',()=>{const w=createWorld(NOW);report(w,NOW+30*MIN-1);assert.equal(w.away.reports.length,0);w.away.seenAt=NOW;report(w,NOW+30*MIN);assert.equal(w.away.reports.length,1);assert.equal(w.away.reports[0].day,'2026-11-11');validateWorld(w);});

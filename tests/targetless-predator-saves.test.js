@@ -84,7 +84,7 @@ test('v12 migration adds only the new garden counters and preserves a pinned war
     asV12(old);oldSystem.validate(old.encounters,old.tick);const before=clone(old),expected=expectedUpgrade(old);
     const migrated=readCompatibleWorld(old,NOW+1000);
     assert.deepEqual(old,before);assert.deepEqual(migrated,expected);
-    assert.equal(migrated.version,18);assert.equal(migrated.encounters.gardenFriends.version,2);
+    assert.equal(migrated.version,19);assert.equal(migrated.encounters.gardenFriends.version,2);
     if(withWarning){assert.equal(migrated.encounters.raptor.active.targetBirdId,'b1');assert.equal(migrated.encounters.raptor.active.remainingMs,59000);}
   }
 });

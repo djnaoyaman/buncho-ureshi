@@ -1868,3 +1868,19 @@ body[data-world="buncho"] .game-encounter-host .finch-garden > .leaf-gift[open] 
 @media(max-height:400px) {
  body[data-world="buncho"] .game-encounter-host .finch-garden > .leaf-gift { bottom: 68px; max-height: calc(100% - 122px); }
 }
+
+/* Two compact story entrances share the foreground without hiding the dock.
+   Open paper expands within the garden, never under its isolated background. */
+body[data-world="buncho"] .game-encounter-host .finch-garden > .expedition-gift {
+ position:absolute;z-index:7;right:max(12px,env(safe-area-inset-right,0px));left:auto;
+ bottom:calc(78px + env(safe-area-inset-bottom,0px));margin:0;box-sizing:border-box;
+ width:calc(50% - 18px);max-height:calc(100% - 174px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));overflow:auto;overscroll-behavior:contain;touch-action:pan-y;
+}
+body[data-world="buncho"] .game-encounter-host .finch-garden > .leaf-gift:not(.expedition-gift):not([open]){width:calc(50% - 18px)}
+body[data-world="buncho"] .game-encounter-host .finch-garden > .expedition-gift[open],
+body[data-world="buncho"] .game-encounter-host .finch-garden > .leaf-gift[open]{width:calc(100% - 24px);z-index:8}
+body[data-world="buncho"] .game-encounter-host .finch-garden > .expedition-gift>summary{position:sticky;top:0;z-index:1;background:#fffaf0;padding:8px;min-height:48px;box-sizing:border-box;font-size:.82rem;line-height:1.4}
+.expedition-gift select{box-sizing:border-box;width:100%;min-height:48px;font:inherit;border:1px solid #a6ad91;border-radius:10px;background:#fff;color:#3d4a39;padding:8px}
+.expedition-gift label{display:block;margin:8px 0}.expedition-gift fieldset{min-width:0;margin:0;padding:8px;border:1px solid #c8bba3;border-radius:10px}
+.expedition-gift select:focus-visible{outline:3px solid #627d61;outline-offset:2px}
+@media(max-height:400px){body[data-world="buncho"] .game-encounter-host .finch-garden>.expedition-gift{bottom:64px;max-height:calc(100% - 108px)}}

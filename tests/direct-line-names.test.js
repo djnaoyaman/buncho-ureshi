@@ -10,7 +10,7 @@ test('only a newly created founder is Ed, with unchanged identity and naming sch
  const w=createWorld(1000,842911);
  assert.equal(w.birds[0].name,'エド');
  assert.deepEqual(w.birds[0].naming,{version:1,source:'automatic',assignedName:'エド'});
- assert.equal(SAVE_VERSION,18);assert.equal(w.birds[0].id,'b1');
+ assert.equal(SAVE_VERSION,19);assert.equal(w.birds[0].id,'b1');
  assert.deepEqual(w.protagonist.lineage,['b1']);
  assert.deepEqual(parseSave(serializeWorld(w)),w);
 });
