@@ -5,14 +5,14 @@ import {createWorld} from '../src/engine.js';
 import {mountEncounterPanel} from '../src/encounter-controller.js';
 import {mountGardenRaptors} from '../src/garden-raptor-controller.js';
 const NOW=Date.UTC(2026,10,5),sleep=()=>new Promise(r=>setTimeout(r,1));
-async function setup({random=()=>0,reverse=false,attends=true}={}){
+async function setup({random=()=>0,reverse=false,attends=true,legacyRandom=()=>1}={}){
  const w=createWorld(NOW);w.encounters.garden.open=true;w.encounters.gardenFriends.attendees=attends?['b1']:[];w.field.place='park';
  const win=new Window();win.document.body.innerHTML='<main id="root"><div class="game-app" data-panel="outdoors"><div id="panel"></div></div></main>';
  const root=win.document.querySelector('#root');let panel,elapsed=0,n=0;const timers=new Map(),originalNow=Date.now;Date.now=()=>NOW+elapsed;
  Object.defineProperty(win.performance,'now',{value:()=>elapsed,configurable:true});win.setTimeout=(fn,delay)=>{timers.set(++n,{fn,delay});return n;};win.clearTimeout=id=>timers.delete(id);
- const mount=()=>{panel=mountEncounterPanel(root.querySelector('#panel'),{getWorld:()=>w,initialMode:'garden',crowRandom:()=>1,transact:async fn=>fn(w)});};mount();
+ const mount=()=>{panel=mountEncounterPanel(root.querySelector('#panel'),{getWorld:()=>w,initialMode:'garden',sharedPredatorClock:true,crowRandom:legacyRandom,transact:async fn=>fn(w)});};mount();
  const ready=async()=>{const stage=root.querySelector('.finch-garden-stage');if(stage)stage.dataset.sceneState='ready';await sleep();};await ready();
- const controller=mountGardenRaptors(root,{getWorld:()=>w,random:()=>1,predatorRandom:random,canStartCrowWarning:()=>panel?.canStartCrowWarning()||false,startCrowWarning:id=>panel?.startCrowWarning(id)||false,hasCrowPending:()=>panel?.hasCrowPending()||false,transact:async fn=>fn(w)});
+ const controller=mountGardenRaptors(root,{getWorld:()=>w,random:legacyRandom,predatorRandom:random,canStartCrowWarning:()=>panel?.canStartCrowWarning()||false,startCrowWarning:id=>panel?.startCrowWarning(id)||false,hasCrowPending:()=>panel?.hasCrowPending()||false,transact:async fn=>fn(w)});
  const tick=async()=>{await ready();elapsed+=1000;const due=[...timers].filter(([,t])=>['poll','pollCrow'].includes(t.fn.name));if(reverse)due.reverse();for(const [id,t]of due){if(!timers.has(id))continue;timers.delete(id);await t.fn();}await sleep();};
  const run=async n=>{for(let i=0;i<n;i++)await tick();};
  const remount=async()=>{panel.destroy();root.querySelector('#panel').remove();const p=win.document.createElement('div');p.id='panel';root.querySelector('.game-app').append(p);win.document.dispatchEvent(new win.CustomEvent('buncho-game-panel',{detail:'garden'}));mount();win.document.dispatchEvent(new win.CustomEvent('buncho-game-panel',{detail:'outdoors'}));await ready();};
@@ -46,3 +46,12 @@ for(const reverse of [false,true])for(const kind of ['crow','raptor'])test(`shar
   assert.deepEqual(s.w.encounters.gardenFriends.attendees,[]);
  }finally{s.close();}
 });
+
+ test('real shared host never uses the old family lotteries after two minutes',async()=>{
+ let calls=0;const s=await setup({attends:false,random:()=>{calls++;return 1;},legacyRandom:()=>0});
+ try{await s.run(245);assert.equal(calls,3);assert.equal(s.w.encounters.crow.visits.length,0);assert.equal(s.w.encounters.raptor.visits.length,0);}finally{s.close();}
+ });
+ test('same mounted garden allows a second crow after its ten-minute cap',async()=>{
+ const s=await setup({attends:false,random:()=>Date.now()<NOW+10000||Date.now()>=NOW+620000?0:1});
+ try{await s.run(9);assert.equal(s.w.encounters.crow.visits[0].count,1);await s.run(600);assert.equal(s.w.encounters.crow.visits[0].count,1);await s.run(120);assert.equal(s.w.encounters.crow.visits[0].count,2);assert.equal(s.w.encounters.raptor.visits.length,0);}finally{s.close();}
+ });

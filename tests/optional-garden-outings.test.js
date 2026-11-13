@@ -64,7 +64,7 @@ function accompany(w, ids=['b1']) {
 }
 function legacyV11(w) {
   const old = clone(w);
-  old.encounters.version = 11;
+  old.encounters.version = 11;delete old.encounters.raptor.lastThreatAt;
   if(old.encounters.raptor.active)delete old.encounters.raptor.active.returnChoicePending;
   for(const id of Object.keys(old.encounters.garden.visits))if(!OLD_GARDEN_IDS.includes(id))delete old.encounters.garden.visits[id];
   old.encounters.gardenFriends.version = 1;
@@ -97,7 +97,7 @@ async function raw(indexedDB, value) {
 
 test('new worlds leave every family bird home by default, even with a saved selection', () => {
   const w = fresh();
-  assert.equal(w.encounters.version, 15);
+  assert.equal(w.encounters.version, 16);
   assert.equal(w.encounters.gardenFriends.version, 2);
   assert.equal(w.encounters.gardenFriends.accompany, false);
   assert.deepEqual(w.encounters.gardenFriends.attendees, []);
@@ -461,7 +461,7 @@ test('v11 migration preserves every old bond and preference, defaults to solo, a
   accompany(w); select(w);
   const old = legacyV11(w), before = clone(old), migrated = readCompatibleWorld(old, NOW);
   assert.deepEqual(old, before);
-  assert.equal(migrated.encounters.version, 15);
+  assert.equal(migrated.encounters.version, 16);
   assert.equal(migrated.revision, old.revision);
   assert.equal(migrated.version,18);
   assert.deepEqual(migrated.encounters.gardenFriends, {
@@ -470,6 +470,7 @@ test('v11 migration preserves every old bond and preference, defaults to solo, a
   assert.deepEqual(protectedState(migrated), protectedState(old));
   for (const key of Object.keys(old.encounters).filter(key => !['version', 'gardenFriends'].includes(key))) {
     const expectedValue=structuredClone(old.encounters[key]);
+    if(key==='raptor')expectedValue.lastThreatAt=expectedValue.lastArrivalAt;
     if(key==='garden')expectedValue.visits=Object.fromEntries(GARDEN_IDS.map(id=>[id,expectedValue.visits[id]??0]));
     assert.deepEqual(migrated.encounters[key], expectedValue, key);
   }
@@ -487,7 +488,7 @@ test('migrated warning retains exact target, remaining time, progress and identi
   remainWithGardenRaptor(w,NOW,raptorToken(w));
   advanceGardenRaptor(w, 1000, NOW+1000, predatorGuard(w));
   const old = legacyV11(w), before = clone(old), warning = clone(old.encounters.raptor);
-  warning.active.returnChoicePending=true;
+  warning.active.returnChoicePending=true;warning.lastThreatAt=warning.lastArrivalAt;
   let loaded = readCompatibleWorld(old, NOW+DAY);
   assert.deepEqual(old, before);
   assert.deepEqual(loaded.encounters.raptor, warning);
@@ -651,10 +652,10 @@ test('two atomic stores durably migrate v11 once and stale preference/countdown 
   const one = await openGameStore({indexedDB}), two = await openGameStore({indexedDB});
   try {
     const [a, b] = await Promise.all([one.transact(x => x), two.transact(x => x)]);
-    assert.deepEqual(a, b); assert.equal(a.encounters.version, 15);
+    assert.deepEqual(a, b); assert.equal(a.encounters.version, 16);
     assert.equal(a.revision, old.revision); assert.equal(a.version, old.version);
     assert.deepEqual(await raw(indexedDB), a);
-    assert.deepEqual(a.encounters.raptor, {...old.encounters.raptor,active:{...old.encounters.raptor.active,returnChoicePending:true}});
+    assert.deepEqual(a.encounters.raptor, {...old.encounters.raptor,lastThreatAt:old.encounters.raptor.lastArrivalAt,active:{...old.encounters.raptor.active,returnChoicePending:true}});
     const stale = guard(a), staleWarning = predatorGuard(a);
     await one.transact(x => {system.chooseAccompaniment(x, true, guard(x)); return x;});
     let preference, countdown;
@@ -691,10 +692,10 @@ test('locked local saves persist the solo migration and preserve an existing war
   const store = await openGameStore({localStorage, navigator:{locks:{request:async (_name, operation) => operation()}}});
   try {
     const current = await store.transact(x => x), persisted = JSON.parse(memory.get(STORAGE_KEY));
-    assert.equal(current.encounters.version, 15);
+    assert.equal(current.encounters.version, 16);
     assert.deepEqual(current.encounters.gardenFriends.attendees, []);
     assert.equal(current.encounters.gardenFriends.accompany, false);
-    assert.deepEqual(current.encounters.raptor, {...old.encounters.raptor,active:{...old.encounters.raptor.active,returnChoicePending:true}});
+    assert.deepEqual(current.encounters.raptor, {...old.encounters.raptor,lastThreatAt:old.encounters.raptor.lastArrivalAt,active:{...old.encounters.raptor.active,returnChoicePending:true}});
     assert.deepEqual(persisted, current);
     assert.deepEqual(attendees(current), ['b1']);
   } finally { store.close(); }

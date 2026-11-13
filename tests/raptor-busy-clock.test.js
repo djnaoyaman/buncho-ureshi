@@ -65,7 +65,7 @@ test('a due draw still uses the exact one-percent boundary and fires only once',
   assert.equal(RAPTOR_RULES.dwellMs,120000);
   assert.equal(RAPTOR_RULES.checkMs,60000);
   assert.equal(RAPTOR_RULES.chance,.01);
-  assert.equal(RAPTOR_RULES.dailyCooldownMs,86400000);
+  assert.equal(RAPTOR_RULES.visitCooldownMs,120000);
 });
 
 async function mounted({arrives=false}={}){

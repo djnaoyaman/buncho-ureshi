@@ -22,8 +22,8 @@ for(const place of GARDENS)test(`${place.id}: three chapters preserve actual ide
  const rules=doc.querySelector('[data-garden-details=about-rules]');assert.equal(rules.getAttribute('name'),null);assert.equal(rules.open,false);outer.open=true;rules.open=true;outer.open=false;outer.open=true;assert.equal(rules.open,true);
  window.happyDOM.close();
 });
-test('all old explanatory sentences are retained, with targetless distinction',()=>{
- const original=originalAbout;
+test('explanatory sentences retain safety and targetless distinction with updated frequency',()=>{
+ const original=originalAbout.replace('庭に続けて2分いると、カラスが来ることがあります','カラスが来た後は、次のカラスまで10分あけます').replace('まれに猛禽類も来訪します','猛禽類も来訪します').replace('猛禽の警告が出たら1分以内におうちへ','猛禽の警告で「残る」を選んだら1分以内におうちへ');
  const oldText=original.replace(/<[^>]+>/g,'').replace('${esc(place.description)}','').replace('庭のこと','');
  const window=new Window();window.document.body.innerHTML=renderGardenAboutBooklet(vm(GARDENS[0]));
  const text=window.document.body.textContent.replace(/\s/g,'');

@@ -19,8 +19,8 @@ test('saved pending choice pauses all countdown paths, reloads, and old warnings
  let w=world();w.encounters.raptor.active.remainingMs=21000;
  for(let i=1;i<=600;i++)assert.equal(advanceGardenRaptor(w,1000,NOW+i*1000,raptorToken(w)).changed,false);
  w=parseSave(serializeWorld(w));assert.equal(w.encounters.raptor.active.returnChoicePending,true);assert.equal(w.encounters.raptor.active.remainingMs,21000);
- const old=structuredClone(w);old.encounters.version=14;delete old.encounters.raptor.active.returnChoicePending;const before=structuredClone(old);w=readCompatibleWorld(old,NOW);assert.deepEqual(old,before);assert.equal(w.encounters.version,15);assert.equal(w.encounters.raptor.active.returnChoicePending,true);assert.equal(w.encounters.raptor.active.remainingMs,21000);
- const projected=structuredClone(w);projected.encounters.version=14;delete projected.encounters.raptor.active.returnChoicePending;assert.deepEqual(projected,old);validateWorld(w);
+ const old=structuredClone(w);old.encounters.version=14;delete old.encounters.raptor.lastThreatAt;delete old.encounters.raptor.active.returnChoicePending;const before=structuredClone(old);w=readCompatibleWorld(old,NOW);assert.deepEqual(old,before);assert.equal(w.encounters.version,16);assert.equal(w.encounters.raptor.active.returnChoicePending,true);assert.equal(w.encounters.raptor.active.remainingMs,21000);
+ const projected=structuredClone(w);projected.encounters.version=14;delete projected.encounters.raptor.lastThreatAt;delete projected.encounters.raptor.active.returnChoicePending;assert.deepEqual(projected,old);validateWorld(w);
 });
 test('remain resumes the remaining visible time only, saves the choice, and rejects duplicate/stale actions',()=>{
  let w=world();w.encounters.raptor.active.remainingMs=17000;const t=raptorToken(w);

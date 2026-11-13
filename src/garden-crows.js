@@ -74,12 +74,12 @@ export function arriveGardenCrow(world,id,now,expected){
 export function createGardenCrowClock({random=Math.random}={}){
  let key=null,last=null,elapsed=0,nextCheck=CROW_RULES.dwellMs,warning=null,fired=false;
  const reset=()=>{key=null;last=null;elapsed=0;nextCheck=CROW_RULES.dwellMs;warning=null;fired=false;};
- return {reset,startWarning(id,now){
-   if(!crowSpecies(id)||!Number.isFinite(now)||warning||fired)return false;
+ return {reset,startWarning(id,now,{repeat=false}={}){
+   if(!crowSpecies(id)||!Number.isFinite(now)||warning||(fired&&!repeat))return false;
    // The shared entry clock has already qualified the visible garden. Anchor
    // this warning now, including when its regular clock has not sampled yet.
-   last=now;warning={id,at:elapsed};return true;
- },holdWarning(now){if(warning&&Number.isFinite(now))last=now;},get warning(){return warning?.id||null;},get elapsed(){return elapsed;},sample({key:nextKey,now,eligible,available=true}){
+   fired=false;last=now;warning={id,at:elapsed};return true;
+ },holdWarning(now){if(warning&&Number.isFinite(now))last=now;},get warning(){return warning?.id||null;},get elapsed(){return elapsed;},sample({key:nextKey,now,eligible,available=true,allowLottery=true}){
    if(!eligible||!Number.isFinite(now)){reset();return null;}
    if(nextKey!==key||last===null){reset();key=nextKey;last=now;return null;}
    const delta=now-last;last=now;
@@ -89,7 +89,7 @@ export function createGardenCrowClock({random=Math.random}={}){
    if(fired)return null;
    if(!available){warning=null;nextCheck=Math.max(nextCheck,elapsed+CROW_RULES.checkMs);return null;}
    if(warning){if(elapsed-warning.at>=CROW_RULES.warningMs){const id=warning.id;warning=null;fired=true;return {kind:'arrive',id};}return null;}
-   if(elapsed<nextCheck)return null;
+   if(!allowLottery||elapsed<nextCheck)return null;
    nextCheck=elapsed+CROW_RULES.checkMs;
    if(random()>=CROW_RULES.chance)return null;
    const id=CROW_SPECIES[Math.min(CROW_SPECIES.length-1,Math.max(0,Math.floor(random()*CROW_SPECIES.length)))].id;
