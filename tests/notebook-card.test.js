@@ -41,7 +41,7 @@ test('active pet refresh retains rules disclosure and illustration node',async t
  const w=seed(),win=new Window(),root=win.document.createElement('div');win.document.body.append(root);
  const panel=mountEncounterPanel(root,{system,getWorld:()=>w,transact:async fn=>fn(w)});t.after(()=>panel.destroy());panel.entry(entry.id);
  const rules=root.querySelector('.finch-friendship-rules'),art=root.querySelector('[data-encounter-rub]');rules.open=true;
- art.getBoundingClientRect=()=>({left:0,top:0,right:300,bottom:300});art.dispatchEvent(new win.PointerEvent('pointerdown',{bubbles:true,button:0,isPrimary:true,pointerId:1,clientX:50,clientY:50}));win.document.dispatchEvent(new win.PointerEvent('pointermove',{bubbles:true,pointerId:1,clientX:100,clientY:50}));await new Promise(r=>setTimeout(r,20));
+ art.getBoundingClientRect=()=>({left:0,top:0,right:300,bottom:300});art.dispatchEvent(new win.PointerEvent('pointerdown',{bubbles:true,button:0,isPrimary:true,pointerId:1,clientX:50,clientY:50}));win.document.dispatchEvent(new win.PointerEvent('pointermove',{bubbles:true,pointerId:1,clientX:122,clientY:50}));await new Promise(r=>setTimeout(r,20));
  assert.equal(root.querySelector('[data-encounter-rub]'),art);assert.equal(root.querySelector('.finch-friendship-rules'),rules);assert.equal(rules.open,true);
  assert.ok(Number(root.querySelector('[data-finch-points]').textContent)>10);
 });
@@ -53,7 +53,7 @@ test('reading survives same-bird refresh, photo toggle, host replacement and key
  open();w.revision++;panel.refresh();check();assert.equal(win.document.activeElement.parentElement.dataset.notebookReading,'description');
  root.querySelector('[data-encounter-view=photo]').click();check();
  open();win.document.dispatchEvent(new win.CustomEvent('buncho-game-will-render'));root.replaceChildren();panel.refresh();check();assert.equal(win.document.activeElement.parentElement.dataset.notebookReading,'description');
- root.querySelector('[data-encounter-rub]').dispatchEvent(new win.KeyboardEvent('keydown',{key:'Enter',bubbles:true}));await new Promise(r=>setTimeout(r,20));check();
+ for(let press=0;press<3;press++)root.querySelector('[data-encounter-rub]').dispatchEvent(new win.KeyboardEvent('keydown',{key:'Enter',bubbles:true}));await new Promise(r=>setTimeout(r,20));check();
  panel.entry(system.catalog[1].id);assert.equal(root.querySelector('[data-notebook-reading]'),null);panel.entry(entry.id);assert.ok([...root.querySelectorAll('[data-notebook-reading]')].every(d=>!d.open));
  open();w=createWorld(now+1);panel.refresh();assert.equal(root.querySelector('.finch-record-card'),null);panel.destroy();
 });

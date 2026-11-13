@@ -102,7 +102,7 @@ test('pending original photo keeps its wrapper keyboard control and records one 
   assert.equal(img.getAttribute('src'),'/buncho-ureshi/'+entry.photo.src);assert.equal(img.getAttribute('style'),'object-fit:contain;object-position:center;filter:none;clip-path:none;transform:none;border-radius:0;opacity:1');
   assert.deepEqual([...figure.children].map(child=>child.tagName),['SPAN','FIGCAPTION']);assert.deepEqual([...control.children].map(child=>child.tagName),['IMG','SPAN']);assert.ok(figure.querySelector('figcaption').textContent.includes(entry.photo.creator));
   assert.equal(encounterSystem.status(world,entry.id).points,10);control.focus();assert.equal(win.document.activeElement,control);
-  control.dispatchEvent(new win.KeyboardEvent('keydown',{key:'Enter',bubbles:true}));await Promise.resolve();await Promise.resolve();
+  for(let press=0;press<3;press++)control.dispatchEvent(new win.KeyboardEvent('keydown',{key:'Enter',bubbles:true}));await Promise.resolve();await Promise.resolve();
   assert.equal(encounterSystem.status(world,entry.id).points,11);assert.equal(root.querySelector('[data-finch-points]').textContent,'11');assert.equal(win.document.activeElement,root.querySelector('.finch-photo [data-encounter-rub]'));
  }finally{controller.destroy();if(complete)Object.defineProperty(imagePrototype,'complete',complete);else delete imagePrototype.complete;await win.happyDOM.abort();}
 });
