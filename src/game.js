@@ -711,7 +711,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     const encounterScroll=encounterRoot?.scrollTop;
     const gardenSelectorScroll=encounterRoot?.querySelector('.finch-garden-selector')?.scrollLeft;
     if(panel!=='garden'){
-      overlay.innerHTML=`${renderRaptorNotice(world)}<div class="game-overlay-head"><button data-game-close-panel>${panelCloseText()}</button></div><div class="game-panel">${error||message?`<p class="game-overlay-message" role="status">${escape(error||message)}</p>`:''}${panels[panel]()}</div>`;
+      overlay.innerHTML=`${renderRaptorNotice(world)}<div class="game-overlay-head"><button data-game-close-panel${panelCloseText()==='おうちへ'?' data-home-icon aria-label="おうちへ" title="おうちへ"':''}>${panelCloseText()==='おうちへ'?'<span class="game-route-label">おうちへ</span>':panelCloseText()}</button></div><div class="game-panel">${error||message?`<p class="game-overlay-message" role="status">${escape(error||message)}</p>`:''}${panels[panel]()}</div>`;
       const fullScene=panel==='outdoors';if(overlay.open&&overlay.dataset.scene!==String(fullScene))overlay.close();overlay.dataset.scene=String(fullScene);if(!overlay.open){if(fullScene)overlay.show();else overlay.showModal();}
     }else{if(overlay.open)overlay.close();overlay.innerHTML='';}
     if(['outdoors','notebook'].includes(panel)){

@@ -1294,12 +1294,12 @@ body[data-world="buncho"] .game-world-title img.game-brand-logo {
 }
 /* Familiar route pictograms supplement the existing accessible link names. */
 body[data-world="buncho"] .site-header .game-world-exit,
-body[data-world="buncho"] .game-app[data-panel="outdoors"] .game-overlay-head [data-game-close-panel] {
+body[data-world="buncho"] .game-app .game-overlay-head [data-game-close-panel][data-home-icon] {
  display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
  min-width: 52px; min-height: 48px; padding: 4px 6px!important; font-size: 10px!important; line-height: 1.1; white-space: nowrap;
 }
 body[data-world="buncho"] .site-header .game-world-exit::before,
-body[data-world="buncho"] .game-app[data-panel="outdoors"] .game-overlay-head [data-game-close-panel]::before {
+body[data-world="buncho"] .game-app .game-overlay-head [data-game-close-panel][data-home-icon]::before {
  content: ""; display: block; flex: 0 0 24px; width: 24px; height: 24px; background: currentColor;
  mask: var(--game-route-icon) center / contain no-repeat; -webkit-mask: var(--game-route-icon) center / contain no-repeat;
 }
@@ -1307,7 +1307,7 @@ body[data-world="buncho"] .site-header .game-world-exit {
  height: auto!important; width: calc(4em + 16px)!important; gap: 0; padding: 2px 6px!important;
  --game-route-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' fill='none' stroke='black' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M16 7C12 4 7 4 3 5v21c4-1 9-1 13 2 4-3 9-3 13-2V5c-4-1-9-1-13 2Zm0 0v21M7 10h5M7 15h5M20 10h5M20 15h5'/%3E%3C/svg%3E");
 }
-body[data-world="buncho"] .game-app[data-panel="outdoors"] .game-overlay-head [data-game-close-panel] {
+body[data-world="buncho"] .game-app .game-overlay-head [data-game-close-panel][data-home-icon] {
  --game-route-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' fill='none' stroke='black' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m3 14 13-11 13 11M6 12v16h20V12M12 28V18h8v10'/%3E%3C/svg%3E");
 }
 body[data-world="buncho"] .site-header .game-world-exit::before { flex-basis: 22px; width: 22px; height: 22px; }
@@ -1811,3 +1811,24 @@ body[data-game-ending-active]{overflow:hidden}
 .game-ending-dialog [role=status]{position:absolute;z-index:2;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 130px);margin:0;padding:8px;background:#111e;text-align:center;font-size:.85rem;line-height:1.6}
 .game-ending-dialog [role=status]:empty{display:none}
 .game-ending-dialog button:focus-visible,.game-ending-dialog video:focus-visible{outline:3px solid #eab46c;outline-offset:-3px}
+
+/* Typography and route controls: retain OMOCHI POP, no external font download. */
+body[data-world="buncho"] {
+ --game-font: "Hiragino Maru Gothic ProN", "Noto Sans JP", "Noto Sans CJK JP", "Yu Gothic", sans-serif;
+ --game-text-body: 1rem;
+ --game-text-control: .875rem;
+ --game-text-note: .8125rem;
+}
+body[data-world="buncho"] .game-app { font-family: var(--game-font); }
+body[data-world="buncho"] .game-app :is(button, input, select, textarea) { font-family: var(--game-font); }
+body[data-world="buncho"] .game-app :is(.game-help, .finch-record-description) { font-size: var(--game-text-body); line-height: 1.8; overflow-wrap: anywhere; }
+body[data-world="buncho"] .game-route-label { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+body[data-world="buncho"] .site-header .game-world-exit,
+body[data-world="buncho"] .game-app .game-overlay-head [data-game-close-panel][data-home-icon] {
+ box-sizing: border-box; width: 48px!important; min-width: 48px; max-width: none; height: 48px!important; min-height: 48px; padding: 10px!important; gap: 0;
+}
+body[data-world="buncho"] .game-encounter-host .finch-garden > header [data-encounter-back] {
+ display: inline-flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+ min-width: 64px; min-height: 48px; padding: 5px 8px; font-family: var(--game-font); font-size: var(--game-text-control); font-weight: 700; line-height: 1.35;
+}
+body[data-world="buncho"] .game-encounter-host .finch-garden > header [data-encounter-back] > span { display: block; width: 100%; text-align: center; white-space: nowrap; }
