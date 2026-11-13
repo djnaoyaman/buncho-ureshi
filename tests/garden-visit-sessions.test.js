@@ -48,12 +48,14 @@ test('two independent active conversations preserve exact instance, step and rew
   assert.equal(w.encounters.discoveries.length,2);assert.ok(w.encounters.discoveries.every(d=>d.visits===1));validateWorld(w);
 });
 
-test('completed guest and cooldown stay in its own garden; same-place reopen cannot skip the wait',()=>{
+test('completed guest stays in its own garden and reunion is immediate without extra meeting credit',()=>{
   const w=fresh(),a=arrive(w);start(w,a);finish(w);const original=clone(w.encounters.garden);
-  system.leaveGarden(w,economyToken(w));select(w,'komugi');assert.equal(w.encounters.garden.scene,original.scene);assert.equal(observe(w,'grass').arrived,false);
-  const b=arrive(w,'mizukagami','water');assert.ok(b);select(w,'komugi');assert.equal(w.encounters.garden.lastGuest,a);assert.equal(w.encounters.garden.nextTick,original.nextTick);
-  observe(w,'grass');observe(w,'grass');assert.deepEqual(w.encounters.queue,[]);assert.equal(w.tick,0);
-  advanceTicks(w,8,NOW);assert.equal(observe(w,'grass').arrived,true);validateWorld(w);
+  system.leaveGarden(w,economyToken(w));select(w,'komugi');assert.equal(w.encounters.garden.scene,original.scene);
+  const b=arrive(w,'mizukagami','water');assert.ok(b);select(w,'komugi');assert.equal(w.encounters.garden.lastGuest,a);
+  assert.equal(observe(w,'grass').arrived,true);start(w,a);finish(w);
+  assert.equal(w.encounters.discoveries.find(d=>d.id===a).visits,1);assert.equal(w.tick,0);
+  advanceTicks(w,8,NOW);assert.equal(observe(w,'grass').arrived,true);start(w,a);finish(w);
+  assert.equal(w.encounters.discoveries.find(d=>d.id===a).visits,2);validateWorld(w);
 });
 
 for(const kind of ['queue','active','completed'])test(`legacy switched-away ${kind} is migrated to its origin without altering player data`,()=>{
@@ -113,8 +115,8 @@ test('a waiting guest cannot be duplicated by arrival or invitation in another g
 test('moving a completed invited friend clears its old display, without changing history or cancelling other pending scripts',()=>{
   const w=fresh(),a=arrive(w);start(w,a);finish(w);select(w,'mizukagami');
   assert.equal(system.inviteGarden(w,a,economyToken(w)).changed,true);assert.equal(parked(w).lastGuest,null);assert.equal(w.encounters.garden.lastGuest,a);
-  for(let i=0;i<10;i++)system.pet(w,a,8,economyToken(w));assert.equal(system.inviteCage(w,a,economyToken(w)).changed,true);assert.equal(w.encounters.garden.lastGuest,null);
-  assert.equal(w.encounters.discoveries[0].visits,2);validateWorld(w);
+  for(let i=0;i<12;i++)system.pet(w,a,8,economyToken(w));assert.equal(system.inviteCage(w,a,economyToken(w)).changed,true);assert.equal(w.encounters.garden.lastGuest,null);
+  assert.equal(w.encounters.discoveries[0].visits,1);validateWorld(w);
 });
 
 test('withheld catalog preserves inactive scripts but cannot make them runnable',()=>{
