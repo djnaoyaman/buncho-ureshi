@@ -1849,3 +1849,22 @@ body[data-world="buncho"] .game-encounter-host .finch-garden > header [data-enco
 .leaf-gift-keepsake{position:absolute;bottom:8px;left:8px;z-index:3;pointer-events:none;display:flex;align-items:center;gap:4px;background:#fffaf0e8;border-radius:8px;padding:4px 8px;font-size:11px;color:#514835}.leaf-gift-keepsake .leaf-gift-art{width:28px;height:28px}
 .leaf-gift-diary-keepsake{display:flex;align-items:center;gap:16px}.leaf-gift-diary h3{font-size:1.05rem}
 @media(max-width:375px){.leaf-gift-content,.leaf-gift-diary{padding:12px}.leaf-gift-vignette{gap:2px}.leaf-gift-bird img{height:80px}.leaf-gift-vignette>.leaf-gift-art{width:42px;height:42px}}
+
+/* The story entrance must paint above the full-viewport garden stage. The
+   original static details lived underneath that isolated stacking context. */
+body[data-world="buncho"] .game-encounter-host .finch-garden > .leaf-gift {
+ position: absolute; z-index: 6; left: max(12px,env(safe-area-inset-left,0px));
+ bottom: calc(78px + env(safe-area-inset-bottom,0px)); margin: 0;
+ width: min(300px,calc(100% - 24px)); box-sizing: border-box;
+ max-height: calc(100% - 174px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));
+ overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y;
+ box-shadow: 0 3px 12px #604b3d33;
+}
+body[data-world="buncho"] .game-encounter-host .finch-garden > .leaf-gift > summary {
+ padding: 8px 12px; min-height: 48px; box-sizing: border-box; gap: 8px;
+}
+body[data-world="buncho"] .game-encounter-host .finch-garden > .leaf-gift > summary .leaf-gift-art { width: 28px; height: 28px; }
+body[data-world="buncho"] .game-encounter-host .finch-garden > .leaf-gift[open] > summary { position: sticky; top: 0; background: #fffaf0; z-index: 1; }
+@media(max-height:400px) {
+ body[data-world="buncho"] .game-encounter-host .finch-garden > .leaf-gift { bottom: 68px; max-height: calc(100% - 122px); }
+}
