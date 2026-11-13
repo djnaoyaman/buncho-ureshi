@@ -1,3 +1,4 @@
+import {createPettingClock} from './petting-clock.js';
 import {createCompanionDraft,eligibleCompanions} from './garden-companion-ui.js';
 import {GARDENS,gardenSelectorOffset} from './data/gardens.js';
 import {mountGardenJog} from './garden-jog.js';
@@ -10,12 +11,12 @@ import {mountGardenBirdMotion} from './garden-bird-motion.js';
 import {encounterSystem} from './encounters.js';
 import {renderEncounterNotebook,renderEncounterPage,renderEncounterScene,renderFinchGarden,renderEncounterFriendship} from './encounter-ui.js';
 /** Host injects its single existing transaction store. Never creates a second save/backend. */
-export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()=>null,onHouseholdBird=()=>{},onGarden=async()=>{},onGardenChanged=()=>{},onHome=()=>{},onReward=()=>{},meetFriend=null,completeEncounter=null,system=encounterSystem,initialMode='notebook',base='/buncho-ureshi/',crowRandom=Math.random}={}){
+export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()=>null,onHouseholdBird=()=>{},onGarden=async()=>{},onGardenChanged=()=>{},onHome=()=>{},onReward=()=>{},meetFriend=null,completeEncounter=null,system=encounterSystem,initialMode='notebook',base='/buncho-ureshi/',crowRandom=Math.random,petNow=()=>performance.now()}={}){
   if(typeof getWorld!=='function'||typeof transact!=='function')throw new Error('図鑑の保存先が必要です。');
   let alive=true,busy=false,mode=initialMode==='garden'?'garden':'notebook',pageId=null,showPhoto=false,generation=0,notice='',worldId=getWorld().worldId,revealGardenId=null,renderedView=null;
   let rub=null,petFlight=false,petTimer=null;
-  // Same one-third gain for pointer and keyboard; earned save values stay intact.
-  const petDistance=72,keyboardPetRemainders=new Map();
+  // Earn at most one point per second of active input, never idle time.
+  const petClock=createPettingClock(petNow);
   let companionDraft=null,companionMessage='';
   const discardCompanions=()=>{companionDraft=null;companionMessage='';};
  const crowClock=createGardenCrowClock({random:crowRandom});
@@ -57,7 +58,7 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
     if(companionDraft&&(mode!=='garden'||companionDraft.worldId!==w.worldId||companionDraft.gardenId!==w.encounters.garden.id))discardCompanions();
     if(mode!=='garden'||w.paused||w.worldId!==worldId||doc.querySelector('.game-bird-sheet[open]'))stopCrow();
     if(w.worldId===worldId&&rub&&rub.generation===generation&&['entry','crows','raptors'].includes(mode)&&pageId===rub.id){refreshBond();return;}
-    if(w.worldId!==worldId){rub=null;clearTimeout(petTimer);}
+    if(w.worldId!==worldId){rub=null;petClock.reset();clearTimeout(petTimer);}
     const view=`${w.worldId}:${mode}:${pageId}:${showPhoto}`,oldEntryScroll=view===renderedView?root.scrollTop:0;
     const oldCatalogScroll=view===renderedView?(hostCatalogScroll?.view===view?hostCatalogScroll.top:root.querySelector('.finch-catalog')?.scrollTop):0;
     hostCatalogScroll=null;
@@ -131,19 +132,19 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
   }
   async function flushPet(){
     if(petFlight||!rub||!rub.pending||!alive)return;
-    const session=rub,amount=Math.min(8,session.pending);session.pending-=amount;petFlight=true;let feedback;
+    const session=rub,amount=Math.min(1,session.pending);session.pending-=amount;petFlight=true;let feedback;
     try{await transact(w=>{
       if(!alive||session.generation!==generation||session.worldId!==w.worldId||!['entry','crows','raptors'].includes(mode)||pageId!==session.id)return w;
       feedback=(mode==='raptors'?petGardenRaptor:mode==='crows'?petGardenCrow:system.pet)(w,session.id,amount,{worldId:w.worldId,revision:w.revision});return w;
     },{gesture:true});if(alive&&session.generation===generation){notice=feedback?.message||'';refreshBond();}}
     catch{if(alive&&session.generation===generation){notice='記録できなかったよ。もう一度なでてね。';refreshBond();}}
-    finally{petFlight=false;if(rub===session){if(session.pending)petTimer=setTimeout(flushPet,100);else if(!session.active){rub=null;render();if(session.keyboard)root.querySelector('[data-encounter-rub]')?.focus({preventScroll:true});}}}
+    finally{petFlight=false;if(alive)petClock.settle(session.petKey);if(rub===session){if(session.pending)petTimer=setTimeout(flushPet,100);else if(!session.active){rub=null;render();if(session.keyboard)root.querySelector('[data-encounter-rub]')?.focus({preventScroll:true});}}}
   }
   function startRub(event){
     const target=event.target.closest('[data-encounter-rub]');
     if(!target||!root.contains(target)||busy||petFlight||rub||event.isPrimary===false||event.button!==0)return;
     event.preventDefault();const w=getWorld();
-    rub={id:target.dataset.encounterRub,worldId:w.worldId,generation,pointerId:event.pointerId,x:event.clientX,y:event.clientY,distance:0,pending:0,active:true};
+    rub={id:target.dataset.encounterRub,worldId:w.worldId,petKey:JSON.stringify([w.worldId,mode,target.dataset.encounterRub]),generation,pointerId:event.pointerId,x:event.clientX,y:event.clientY,distance:0,pending:0,active:true};
   }
   function moveRub(event){
     if(!rub||!rub.active||event.pointerId!==rub.pointerId)return;
@@ -151,18 +152,19 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
     const target=root.querySelector('[data-encounter-rub]'),box=target?.getBoundingClientRect();
     const distance=Math.hypot(event.clientX-rub.x,event.clientY-rub.y);rub.x=event.clientX;rub.y=event.clientY;
     if(!box||event.clientX<box.left||event.clientX>box.right||event.clientY<box.top||event.clientY>box.bottom){rub.distance=0;return;}
-    event.preventDefault();rub.distance+=Math.min(distance,96);
-    const strokes=Math.floor(rub.distance/petDistance);rub.distance%=petDistance;
-    if(strokes){rub.pending=Math.min(32,rub.pending+strokes);if(!petFlight)flushPet();}
+    if(distance<=0)return;
+    event.preventDefault();notice='なでなで ♪';const petNotice=root.querySelector('.finch-notice');if(petNotice)petNotice.textContent=notice;
+    const key=JSON.stringify([rub.worldId,mode,rub.id]);
+    if(petClock.input(key,{pointer:true})&&!petFlight){rub.pending=1;flushPet();}
   }
   function endRub(event){if(!rub||event.pointerId!==rub.pointerId)return;rub.active=false;if(!petFlight&&rub.pending)flushPet();else if(!petFlight){rub=null;render();}}
   function keyRub(event){
     const target=event.target.closest('[data-encounter-rub]');
-    if(!target||!root.contains(target)||!['Enter',' '].includes(event.key)||event.repeat||busy||petFlight||rub)return;
+    if(!target||!root.contains(target)||!['Enter',' '].includes(event.key)||event.repeat||busy)return;
     event.preventDefault();const w=getWorld(),key=JSON.stringify([w.worldId,mode,target.dataset.encounterRub]);
-    const presses=(keyboardPetRemainders.get(key)||0)+1;keyboardPetRemainders.set(key,presses%3);
-    if(presses<3)return;
-    rub={id:target.dataset.encounterRub,worldId:w.worldId,generation,pending:1,active:false,keyboard:true};flushPet();
+    notice='なでなで ♪';const petNotice=root.querySelector('.finch-notice');if(petNotice)petNotice.textContent=notice;
+    if(petFlight||rub||!petClock.input(key))return;
+    rub={id:target.dataset.encounterRub,worldId:w.worldId,petKey:key,generation,pending:1,active:false,keyboard:true};flushPet();
   }
   async function mutate(operation,token){
     busy=true;render();let feedback;
@@ -325,5 +327,5 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
   crowTimer=win.setTimeout(pollCrow,1000);
   root.classList.add('finch-overlay-content');root.addEventListener('click',click);root.addEventListener('pointerdown',startRub);root.addEventListener('keydown',keyRub);doc.addEventListener('pointermove',moveRub,{passive:false});doc.addEventListener('pointerup',endRub);doc.addEventListener('pointercancel',endRub);render();
   const motion=mountGardenBirdMotion(root,{enabled:()=>alive&&!getWorld().paused&&getWorld().settings.motion});
-  return {canStartCrowWarning,startCrowWarning,hasCrowPending:()=>alive&&(!!crowClock.warning||crowFlight),open,garden,entry(id){generation++;rub=null;busy=false;mode='entry';pageId=id;showPhoto=false;notice='';render({focus:true});},notebook(){rub=null;generation++;busy=false;mode='notebook';pageId=null;notice='';render({focus:true});},refresh(){render();},destroy(){jog.destroy();stopCrow();crowModalObserver?.disconnect();win.clearTimeout(crowTimer);doc.removeEventListener('visibilitychange',crowInterrupted);doc.removeEventListener('buncho-game-view-visibility',viewVisibility);win.removeEventListener('offline',crowInterrupted);win.removeEventListener('pagehide',crowInterrupted);doc.removeEventListener('buncho-game-will-render',rememberCatalog);media.destroy();motion();alive=false;generation++;rub=null;clearTimeout(petTimer);root.removeEventListener('pointerdown',startRub);root.removeEventListener('keydown',keyRub);doc.removeEventListener('pointermove',moveRub);doc.removeEventListener('pointerup',endRub);doc.removeEventListener('pointercancel',endRub);root.removeEventListener('click',click);root.removeEventListener('toggle',companionToggle,true);discardCompanions();root.removeAttribute('aria-busy');root.classList.remove('finch-overlay-content');}};
+  return {canStartCrowWarning,startCrowWarning,hasCrowPending:()=>alive&&(!!crowClock.warning||crowFlight),open,garden,entry(id){generation++;rub=null;busy=false;mode='entry';pageId=id;showPhoto=false;notice='';render({focus:true});},notebook(){rub=null;generation++;busy=false;mode='notebook';pageId=null;notice='';render({focus:true});},refresh(){render();},destroy(){jog.destroy();stopCrow();crowModalObserver?.disconnect();win.clearTimeout(crowTimer);doc.removeEventListener('visibilitychange',crowInterrupted);doc.removeEventListener('buncho-game-view-visibility',viewVisibility);win.removeEventListener('offline',crowInterrupted);win.removeEventListener('pagehide',crowInterrupted);doc.removeEventListener('buncho-game-will-render',rememberCatalog);media.destroy();motion();petClock.reset();alive=false;generation++;rub=null;clearTimeout(petTimer);root.removeEventListener('pointerdown',startRub);root.removeEventListener('keydown',keyRub);doc.removeEventListener('pointermove',moveRub);doc.removeEventListener('pointerup',endRub);doc.removeEventListener('pointercancel',endRub);root.removeEventListener('click',click);root.removeEventListener('toggle',companionToggle,true);discardCompanions();root.removeAttribute('aria-busy');root.classList.remove('finch-overlay-content');}};
 }

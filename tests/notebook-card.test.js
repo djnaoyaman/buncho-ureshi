@@ -39,28 +39,28 @@ test('unknown entries stay hidden and baseline species does not gain fictional f
 });
 test('active pet refresh retains rules disclosure and illustration node',async t=>{
  const w=seed(),win=new Window(),root=win.document.createElement('div');win.document.body.append(root);
- const panel=mountEncounterPanel(root,{system,getWorld:()=>w,transact:async fn=>fn(w)});t.after(()=>panel.destroy());panel.entry(entry.id);
+ const panel=mountEncounterPanel(root,{petNow:(()=>{let n=0;return()=>n+=250;})(),system,getWorld:()=>w,transact:async fn=>fn(w)});t.after(()=>panel.destroy());panel.entry(entry.id);
  const rules=root.querySelector('.finch-friendship-rules'),art=root.querySelector('[data-encounter-rub]');rules.open=true;
- art.getBoundingClientRect=()=>({left:0,top:0,right:300,bottom:300});art.dispatchEvent(new win.PointerEvent('pointerdown',{bubbles:true,button:0,isPrimary:true,pointerId:1,clientX:50,clientY:50}));win.document.dispatchEvent(new win.PointerEvent('pointermove',{bubbles:true,pointerId:1,clientX:122,clientY:50}));await new Promise(r=>setTimeout(r,20));
+ art.getBoundingClientRect=()=>({left:0,top:0,right:300,bottom:300});art.dispatchEvent(new win.PointerEvent('pointerdown',{bubbles:true,button:0,isPrimary:true,pointerId:1,clientX:50,clientY:50}));for(let i=0;i<5;i++)win.document.dispatchEvent(new win.PointerEvent('pointermove',{bubbles:true,pointerId:1,clientX:i%2?50:122,clientY:50}));await new Promise(r=>setTimeout(r,20));
  assert.equal(root.querySelector('[data-encounter-rub]'),art);assert.equal(root.querySelector('.finch-friendship-rules'),rules);assert.equal(rules.open,true);
  assert.ok(Number(root.querySelector('[data-finch-points]').textContent)>10);
 });
 test('reading survives same-bird refresh, photo toggle, host replacement and keyboard pet; never another entry or world',async t=>{
  let w=seed();const win=new Window(),root=win.document.createElement('div');win.document.body.append(root);
- const panel=mountEncounterPanel(root,{system,getWorld:()=>w,transact:async fn=>fn(w)});t.after(()=>panel.destroy());panel.entry(entry.id);
+ const panel=mountEncounterPanel(root,{petNow:(()=>{let n=0;return()=>n+=250;})(),system,getWorld:()=>w,transact:async fn=>fn(w)});t.after(()=>panel.destroy());panel.entry(entry.id);
  const open=()=>{for(const d of root.querySelectorAll('[data-notebook-reading]'))d.open=true;root.querySelector('[data-notebook-reading=description]>summary').focus();};
  const check=()=>{assert.ok([...root.querySelectorAll('[data-notebook-reading]')].every(d=>d.open));assert.equal(root.querySelectorAll('[data-notebook-reading]').length,3);};
  open();w.revision++;panel.refresh();check();assert.equal(win.document.activeElement.parentElement.dataset.notebookReading,'description');
  root.querySelector('[data-encounter-view=photo]').click();check();
  open();win.document.dispatchEvent(new win.CustomEvent('buncho-game-will-render'));root.replaceChildren();panel.refresh();check();assert.equal(win.document.activeElement.parentElement.dataset.notebookReading,'description');
- for(let press=0;press<3;press++)root.querySelector('[data-encounter-rub]').dispatchEvent(new win.KeyboardEvent('keydown',{key:'Enter',bubbles:true}));await new Promise(r=>setTimeout(r,20));check();
+ for(let press=0;press<5;press++)root.querySelector('[data-encounter-rub]').dispatchEvent(new win.KeyboardEvent('keydown',{key:'Enter',bubbles:true}));await new Promise(r=>setTimeout(r,20));check();
  panel.entry(system.catalog[1].id);assert.equal(root.querySelector('[data-notebook-reading]'),null);panel.entry(entry.id);assert.ok([...root.querySelectorAll('[data-notebook-reading]')].every(d=>!d.open));
  open();w=createWorld(now+1);panel.refresh();assert.equal(root.querySelector('.finch-record-card'),null);panel.destroy();
 });
 
 test('same-bird source links retain keyboard focus and scroll after refresh and host replacement',t=>{
  const w=seed(),win=new Window(),root=win.document.createElement('div');win.document.body.append(root);
- const panel=mountEncounterPanel(root,{system,getWorld:()=>w,transact:async fn=>fn(w)});t.after(()=>panel.destroy());panel.entry(entry.id);
+ const panel=mountEncounterPanel(root,{petNow:(()=>{let n=0;return()=>n+=250;})(),system,getWorld:()=>w,transact:async fn=>fn(w)});t.after(()=>panel.destroy());panel.entry(entry.id);
  const sources=root.querySelector('[data-notebook-reading=sources]');sources.open=true;const link=sources.querySelector('a[href]'),href=link.getAttribute('href');link.focus();root.scrollTop=100;
  w.revision++;panel.refresh();assert.equal(win.document.activeElement.getAttribute('href'),href);assert.equal(root.scrollTop,100);assert.equal(root.querySelector('[data-notebook-reading=sources]').open,true);
  win.document.dispatchEvent(new win.CustomEvent('buncho-game-will-render'));root.replaceChildren();panel.refresh();assert.equal(win.document.activeElement.getAttribute('href'),href);assert.equal(root.scrollTop,100);

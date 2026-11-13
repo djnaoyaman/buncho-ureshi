@@ -93,7 +93,7 @@ test('pending original photo keeps its wrapper keyboard control and records one 
  inviteFixture(encounterSystem,world,entry.id);encounterSystem.open(world,entry.id,token());for(const step of entry.steps)encounterSystem.act(world,world.encounters.active.instanceId,step.action,token());
  // Keep image responses pending in the DOM fixture while exercising the real keyboard handler.
  const imagePrototype=win.HTMLImageElement.prototype,complete=Object.getOwnPropertyDescriptor(imagePrototype,'complete');Object.defineProperty(imagePrototype,'complete',{configurable:true,get:()=>false});
- const controller=mountEncounterPanel(root,{getWorld:()=>world,transact:async operation=>operation(world)});
+ const controller=mountEncounterPanel(root,{petNow:(()=>{let n=0;return()=>n+=250;})(),getWorld:()=>world,transact:async operation=>operation(world)});
  try{
   controller.entry(entry.id);root.querySelector('[data-encounter-view=photo]').click();
   const figure=root.querySelector('.finch-photo'),control=figure.querySelector('[data-encounter-rub]'),img=figure.querySelector('img');
@@ -102,7 +102,7 @@ test('pending original photo keeps its wrapper keyboard control and records one 
   assert.equal(img.getAttribute('src'),'/buncho-ureshi/'+entry.photo.src);assert.equal(img.getAttribute('style'),'object-fit:contain;object-position:center;filter:none;clip-path:none;transform:none;border-radius:0;opacity:1');
   assert.deepEqual([...figure.children].map(child=>child.tagName),['SPAN','FIGCAPTION']);assert.deepEqual([...control.children].map(child=>child.tagName),['IMG','SPAN']);assert.ok(figure.querySelector('figcaption').textContent.includes(entry.photo.creator));
   assert.equal(encounterSystem.status(world,entry.id).points,10);control.focus();assert.equal(win.document.activeElement,control);
-  for(let press=0;press<3;press++)control.dispatchEvent(new win.KeyboardEvent('keydown',{key:'Enter',bubbles:true}));await Promise.resolve();await Promise.resolve();
+  for(let press=0;press<5;press++)control.dispatchEvent(new win.KeyboardEvent('keydown',{key:'Enter',bubbles:true}));await Promise.resolve();await Promise.resolve();
   assert.equal(encounterSystem.status(world,entry.id).points,11);assert.equal(root.querySelector('[data-finch-points]').textContent,'11');assert.equal(win.document.activeElement,root.querySelector('.finch-photo [data-encounter-rub]'));
  }finally{controller.destroy();if(complete)Object.defineProperty(imagePrototype,'complete',complete);else delete imagePrototype.complete;await win.happyDOM.abort();}
 });
