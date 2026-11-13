@@ -17,7 +17,7 @@ import {lifeStatus, accidentLifeBird} from '../src/life-care.js';
 import {getProtagonistId} from '../src/protagonist.js';
 import {arriveGardenCrow, crowTarget, crowScene} from '../src/garden-crows.js';
 import {
-  arriveGardenRaptor, raptorToken, raptorTarget, raptorScene, escapeGardenRaptor,
+  arriveGardenRaptor, raptorToken, raptorTarget, raptorScene, escapeGardenRaptor, remainWithGardenRaptor,
 } from '../src/garden-raptors.js';
 import {openGameStore, DB_NAME, STORAGE_KEY} from '../src/game-store.js';
 
@@ -65,6 +65,7 @@ function accompany(w, ids=['b1']) {
 function legacyV11(w) {
   const old = clone(w);
   old.encounters.version = 11;
+  if(old.encounters.raptor.active)delete old.encounters.raptor.active.returnChoicePending;
   for(const id of Object.keys(old.encounters.garden.visits))if(!OLD_GARDEN_IDS.includes(id))delete old.encounters.garden.visits[id];
   old.encounters.gardenFriends.version = 1;
   for (const key of ['accompany', 'attendees', 'visits']) delete old.encounters.gardenFriends[key];
@@ -96,7 +97,7 @@ async function raw(indexedDB, value) {
 
 test('new worlds leave every family bird home by default, even with a saved selection', () => {
   const w = fresh();
-  assert.equal(w.encounters.version, 14);
+  assert.equal(w.encounters.version, 15);
   assert.equal(w.encounters.gardenFriends.version, 2);
   assert.equal(w.encounters.gardenFriends.accompany, false);
   assert.deepEqual(w.encounters.gardenFriends.attendees, []);
@@ -460,7 +461,7 @@ test('v11 migration preserves every old bond and preference, defaults to solo, a
   accompany(w); select(w);
   const old = legacyV11(w), before = clone(old), migrated = readCompatibleWorld(old, NOW);
   assert.deepEqual(old, before);
-  assert.equal(migrated.encounters.version, 14);
+  assert.equal(migrated.encounters.version, 15);
   assert.equal(migrated.revision, old.revision);
   assert.equal(migrated.version,16);
   assert.deepEqual(migrated.encounters.gardenFriends, {
@@ -483,8 +484,10 @@ test('migrated warning retains exact target, remaining time, progress and identi
   const w = fresh(), other = createBird(w, {home:'resident'});
   accompany(w); select(w);
   assert.equal(arriveGardenRaptor(w, 'black-kite', NOW, predatorGuard(w)).changed, true);
+  remainWithGardenRaptor(w,NOW,raptorToken(w));
   advanceGardenRaptor(w, 1000, NOW+1000, predatorGuard(w));
   const old = legacyV11(w), before = clone(old), warning = clone(old.encounters.raptor);
+  warning.active.returnChoicePending=true;
   let loaded = readCompatibleWorld(old, NOW+DAY);
   assert.deepEqual(old, before);
   assert.deepEqual(loaded.encounters.raptor, warning);
@@ -500,6 +503,7 @@ test('migrated warning retains exact target, remaining time, progress and identi
   assert.deepEqual(loaded.encounters.raptor, warning);
   assert.equal(raptorTarget(loaded).id, 'b1');
   assert.deepEqual(protectedState(loaded), protectedState(old));
+  remainWithGardenRaptor(loaded,NOW+1000,raptorToken(loaded));
   const stale = predatorGuard(loaded);
   advanceGardenRaptor(loaded, 1000, NOW+2000, stale);
   const progressed = clone(loaded);
@@ -517,6 +521,7 @@ test('succession during an existing warning ends that target rather than harming
   const child = createBird(w, {home:'resident', stage:'adult', parents:['b1', father.id], generation:1});
   accompany(w); select(w);
   arriveGardenRaptor(w, 'black-kite', NOW, predatorGuard(w));
+  remainWithGardenRaptor(w,NOW,raptorToken(w));
   const target = w.encounters.raptor.active.targetBirdId;
   w.paused = true;
   lifeStatus(w, 'b1').condition = {kind:'injury', sinceAt:NOW, deadlineAt:NOW+DAY};
@@ -542,6 +547,7 @@ test('a migrated nearly expired warning can affect only its pinned original targ
   const w = fresh(), other = createBird(w, {home:'resident'});
   accompany(w); select(w);
   arriveGardenRaptor(w, 'black-kite', NOW, predatorGuard(w));
+  remainWithGardenRaptor(w,NOW,raptorToken(w));
   for (let i=1; i<=59; i++) advanceGardenRaptor(w, 1000, NOW+i*1000, predatorGuard(w));
   const loaded = readCompatibleWorld(legacyV11(w), NOW+59000);
   assert.equal(loaded.encounters.raptor.active.remainingMs, 1000);
@@ -550,6 +556,7 @@ test('a migrated nearly expired warning can affect only its pinned original targ
   system.chooseCompanions(loaded, [other.id], guard(loaded));
   const originalOther = clone(loaded.birds.find(b => b.id === other.id));
   const originalEconomy = clone({economy:loaded.economy, decor:loaded.decor});
+  remainWithGardenRaptor(loaded,NOW+59000,raptorToken(loaded));
   const seed = loaded.seed, ids = loaded.birds.map(b => b.id), stale = predatorGuard(loaded);
   assert.equal(advanceGardenRaptor(loaded, 1000, NOW+60000, stale).death, true);
   assert.equal(lifeStatus(loaded, 'b1').death.cause, 'accident');
@@ -638,15 +645,16 @@ test('v2 attendance and snapshot validation rejects malformed identities, duplic
 test('two atomic stores durably migrate v11 once and stale preference/countdown callbacks cannot overwrite newer state', async () => {
   const indexedDB = new IDBFactory(), w = fresh(); accompany(w); select(w);
   arriveGardenRaptor(w, 'black-kite', NOW, predatorGuard(w));
+  remainWithGardenRaptor(w,NOW,raptorToken(w));
   advanceGardenRaptor(w, 1000, NOW+1000, predatorGuard(w));
   const old = legacyV11(w); await raw(indexedDB, old);
   const one = await openGameStore({indexedDB}), two = await openGameStore({indexedDB});
   try {
     const [a, b] = await Promise.all([one.transact(x => x), two.transact(x => x)]);
-    assert.deepEqual(a, b); assert.equal(a.encounters.version, 14);
+    assert.deepEqual(a, b); assert.equal(a.encounters.version, 15);
     assert.equal(a.revision, old.revision); assert.equal(a.version, old.version);
     assert.deepEqual(await raw(indexedDB), a);
-    assert.deepEqual(a.encounters.raptor, old.encounters.raptor);
+    assert.deepEqual(a.encounters.raptor, {...old.encounters.raptor,active:{...old.encounters.raptor.active,returnChoicePending:true}});
     const stale = guard(a), staleWarning = predatorGuard(a);
     await one.transact(x => {system.chooseAccompaniment(x, true, guard(x)); return x;});
     let preference, countdown;
@@ -657,7 +665,7 @@ test('two atomic stores durably migrate v11 once and stale preference/countdown 
     });
     assert.equal(preference.reason, 'stale'); assert.equal(countdown.reason, 'stale');
     await Promise.all([one, two].map(store => store.transact(x => {
-      advanceGardenRaptor(x, 1000, NOW+2000, predatorGuard(x)); return x;
+      remainWithGardenRaptor(x,NOW+1000,raptorToken(x));advanceGardenRaptor(x, 1000, NOW+2000, predatorGuard(x)); return x;
     })));
     const current = await two.transact(x => x);
     assert.equal(current.encounters.raptor.active.remainingMs, 58000);
@@ -673,6 +681,7 @@ test('two atomic stores durably migrate v11 once and stale preference/countdown 
 test('locked local saves persist the solo migration and preserve an existing warning exactly', async () => {
   const w = fresh(); accompany(w); select(w);
   arriveGardenRaptor(w, 'black-kite', NOW, predatorGuard(w));
+  remainWithGardenRaptor(w,NOW,raptorToken(w));
   const old = legacyV11(w), memory = new Map([[STORAGE_KEY, JSON.stringify(old)]]);
   const localStorage = {
     getItem:key => memory.get(key) ?? null,
@@ -682,10 +691,10 @@ test('locked local saves persist the solo migration and preserve an existing war
   const store = await openGameStore({localStorage, navigator:{locks:{request:async (_name, operation) => operation()}}});
   try {
     const current = await store.transact(x => x), persisted = JSON.parse(memory.get(STORAGE_KEY));
-    assert.equal(current.encounters.version, 14);
+    assert.equal(current.encounters.version, 15);
     assert.deepEqual(current.encounters.gardenFriends.attendees, []);
     assert.equal(current.encounters.gardenFriends.accompany, false);
-    assert.deepEqual(current.encounters.raptor, old.encounters.raptor);
+    assert.deepEqual(current.encounters.raptor, {...old.encounters.raptor,active:{...old.encounters.raptor.active,returnChoicePending:true}});
     assert.deepEqual(persisted, current);
     assert.deepEqual(attendees(current), ['b1']);
   } finally { store.close(); }

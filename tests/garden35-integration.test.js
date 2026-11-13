@@ -15,7 +15,7 @@ test('frozen published save upgrades only encounter version and 23 zero counters
  const old=original(),before=structuredClone(old);
  oldEncounterSystem().validate(old.encounters,old.tick);
  const upgraded=readCompatibleWorld(structuredClone(old),1000),expected=structuredClone(old);
- expected.encounters.version=14;expected.encounters.garden.visits=Object.fromEntries(GARDEN_IDS.map(id=>[id,old.encounters.garden.visits[id]??0]));
+ expected.encounters.version=15;expected.encounters.garden.visits=Object.fromEntries(GARDEN_IDS.map(id=>[id,old.encounters.garden.visits[id]??0]));
  assert.deepEqual(upgraded,expected);assert.deepEqual(old,before);
  assert.equal(upgraded.encounters.gardenSessions.length,11);
  const active=[upgraded.encounters,...upgraded.encounters.gardenSessions].map(s=>s.active).find(Boolean);assert.ok(active);assert.equal(active.step,1);

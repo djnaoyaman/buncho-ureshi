@@ -3,12 +3,12 @@ import assert from 'node:assert/strict';
 import {Window} from 'happy-dom';
 import {createWorld,validateWorld,serializeWorld,parseSave} from '../src/engine.js';
 import {mountGardenRaptors} from '../src/garden-raptor-controller.js';
-import {arriveGardenRaptor,raptorToken,escapeGardenRaptor,petGardenRaptor} from '../src/garden-raptors.js';
+import {arriveGardenRaptor,raptorToken,escapeGardenRaptor,petGardenRaptor,remainWithGardenRaptor} from '../src/garden-raptors.js';
 import {lifeStatus} from '../src/life-care.js';
 import {renderRaptorNotice,renderRaptorCatalog,renderRaptorNotebook} from '../src/garden-raptor-ui.js';
 import {mountEncounterPanel} from '../src/encounter-controller.js';
 const NOW=Date.UTC(2026,10,4,9),sleep=ms=>new Promise(r=>setTimeout(r,ms));
-function fixture(active=false){const w=createWorld(NOW);w.field.place='park';w.encounters.garden.open=true;w.encounters.gardenFriends.attendees=['b1'];if(active)arriveGardenRaptor(w,'black-kite',NOW,{...raptorToken(w),gardenId:w.encounters.garden.id});return w;}
+function fixture(active=false){const w=createWorld(NOW);w.field.place='park';w.encounters.garden.open=true;w.encounters.gardenFriends.attendees=['b1'];if(active){arriveGardenRaptor(w,'black-kite',NOW,{...raptorToken(w),gardenId:w.encounters.garden.id});remainWithGardenRaptor(w,NOW,raptorToken(w));}return w;}
 function setup(w=fixture(),options={}){
  const win=new Window();win.document.body.innerHTML='<main id="root"><div class="finch-garden-stage" data-scene-state="ready"></div></main>';const root=win.document.querySelector('#root');
  let elapsed=0,n=0;const timers=new Map(),originalNow=Date.now;Date.now=()=>NOW+elapsed;win.setTimeout=fn=>{timers.set(++n,fn);return n;};win.clearTimeout=n=>timers.delete(n);Object.defineProperty(win.performance,'now',{value:()=>elapsed,configurable:true});
@@ -18,7 +18,7 @@ function setup(w=fixture(),options={}){
  const close=()=>{controller.destroy();Date.now=originalNow;win.happyDOM.abort();};return {win,root,controller,tick,run,close,timers,changes,world:w};
 }
 test('visible ready dwell commits one warning at 2min then exactly one accident after 60s',async()=>{
- const w=fixture(),s=setup(w);try{await s.run(120);assert.equal(w.encounters.raptor.active,null);await s.run(1);assert.equal(w.encounters.raptor.active.remainingMs,60000);await s.run(59);assert.equal(lifeStatus(w,'b1').death,null);await s.run(1);assert.equal(lifeStatus(w,'b1').death.cause,'accident');assert.equal(w.events.filter(e=>e.kind==='death').length,1);assert.equal(s.changes.filter(x=>x.structural).length,2);validateWorld(w);}finally{s.close();}
+ const w=fixture(),s=setup(w);try{await s.run(120);assert.equal(w.encounters.raptor.active,null);await s.run(1);assert.equal(w.encounters.raptor.active.remainingMs,60000);remainWithGardenRaptor(w,Date.now(),raptorToken(w));await s.run(59);assert.equal(lifeStatus(w,'b1').death,null);await s.run(1);assert.equal(lifeStatus(w,'b1').death.cause,'accident');assert.equal(w.events.filter(e=>e.kind==='death').length,1);assert.equal(s.changes.filter(x=>x.structural).length,3);validateWorld(w);}finally{s.close();}
 });
 test('hidden, offline, paused and suspended time never consumes the saved warning',async()=>{
  for(const kind of ['hidden','offline','paused','suspended']){const w=fixture(true),s=setup(w);try{await s.run(10);const before=w.encounters.raptor.active.remainingMs;
@@ -69,7 +69,7 @@ test('pending crow save retains priority even after its warning DOM is replaced'
 });
 
 test('early entry still grants the full minute to escape',async()=>{
- const w=fixture(),s=setup(w,{earlyPredatorVisits:true,predatorRandom:()=>0});try{await s.run(2);assert.equal(w.encounters.raptor.active,null);await s.run(1);assert.equal(w.encounters.raptor.active.remainingMs,60000);await s.run(59);assert.equal(lifeStatus(w,'b1').death,null);escapeGardenRaptor(w,raptorToken(w));await s.run(2);assert.equal(lifeStatus(w,'b1').death,null);}finally{s.close();}
+ const w=fixture(),s=setup(w,{earlyPredatorVisits:true,predatorRandom:()=>0});try{await s.run(2);assert.equal(w.encounters.raptor.active,null);await s.run(1);assert.equal(w.encounters.raptor.active.remainingMs,60000);remainWithGardenRaptor(w,Date.now(),raptorToken(w));await s.run(59);assert.equal(lifeStatus(w,'b1').death,null);escapeGardenRaptor(w,raptorToken(w));await s.run(2);assert.equal(lifeStatus(w,'b1').death,null);}finally{s.close();}
 });
 
 test('portrait notice holds the exact saved warning and invalidates a queued hidden countdown',async()=>{

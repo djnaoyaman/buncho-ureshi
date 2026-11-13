@@ -1,4 +1,4 @@
-import {createGardenRaptorClock,arriveGardenRaptor,raptorTarget,raptorToken,raptorCoolingDown,raptorScene} from './garden-raptors.js';
+import {createGardenRaptorClock,arriveGardenRaptor,raptorTarget,raptorToken,raptorCoolingDown,raptorScene,raptorReturnChoicePending} from './garden-raptors.js';
 import {advanceGardenRaptor} from './engine.js';
 import {createGardenPredatorClock} from './garden-predator-clock.js';
 import {crowScene} from './garden-crows.js';
@@ -10,14 +10,14 @@ export function mountGardenRaptors(root,{getWorld,transact,onChange=()=>{},isAva
  let renderedScene=sceneKey(getWorld());
  const visible=()=>alive&&root.isConnected&&!['loading','shown'].includes(doc.body.dataset.gameIntro)&&doc.visibilityState!=='hidden'&&!doc.body.hasAttribute('data-game-view-blocked')&&win.navigator?.onLine!==false&&!getWorld().paused;
  const interrupt=()=>{last=null;clock.reset();entryClock.reset();epoch++;};
- function sceneKey(w){const s=raptorScene(w);return s?`${s.species.id}:${s.phase}:${s.hostile}`:'';}
+ function sceneKey(w){const s=raptorScene(w);return s?`${s.species.id}:${s.phase}:${s.hostile}:${s.returnChoicePending}`:'';}
  async function poll(){
   if(!alive)return;
   const now=win.performance.now(),w=getWorld();
   if(w.worldId!==lastWorld){lastWorld=w.worldId;interrupt();}
   if(renderedScene!==sceneKey(w)){renderedScene=sceneKey(w);onChange({structural:true,world:w});}
   const delta=last===null?0:Math.floor(now-last);last=now;
-  if(!visible()){interrupt();schedule();return;}
+  if(!visible()||raptorReturnChoicePending(w)){interrupt();schedule();return;}
   if(flight){schedule();return;}
   const active=w.encounters.raptor?.active;
   const stage=root.querySelector('.finch-garden-stage');

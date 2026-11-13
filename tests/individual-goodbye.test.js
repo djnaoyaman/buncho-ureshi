@@ -132,7 +132,7 @@ test('legacy encounter schemas 4–9 migrate additively with empty cooldowns and
   if(version<9)for(const id of GARDEN_IDS.filter(id=>!LEGACY_GARDEN_IDS.includes(id)))delete w.encounters.garden.visits[id];
   if(version<8)delete w.encounters.raptor;if(version<7)delete w.encounters.crow;if(version<6)delete w.encounters.homeClosedUntil;
   if(version<5){delete w.encounters.friendship;delete w.encounters.cageVisitors;}
-  const before=clone(w),next=readCompatibleWorld(w,now);assert.deepEqual(w,before);assert.equal(next.version,16);assert.equal(next.encounters.version,14);assert.deepEqual(next.encounters.homeGoodbyes,[]);
+  const before=clone(w),next=readCompatibleWorld(w,now);assert.deepEqual(w,before);assert.equal(next.version,16);assert.equal(next.encounters.version,15);assert.deepEqual(next.encounters.homeGoodbyes,[]);
   assert.deepEqual(next.encounters.gardenFriends,{...before.encounters.gardenFriends,version:2,accompany:false,attendees:[],visits:[]});
   assert.deepEqual(next.birds,w.birds);assert.deepEqual(next.events,w.events);assert.equal(next.revision,w.revision);assert.deepEqual(parseSave(serializeWorld(next)),next);
   const projected=clone(next);projected.encounters=before.encounters;assert.deepEqual(projected,before);
@@ -141,12 +141,12 @@ test('legacy encounter schemas 4–9 migrate additively with empty cooldowns and
 
 test('schema 9 migration is durably stored without changing world revision or existing closure',async()=>{
  const indexedDB=new IDBFactory(),w=createWorld(now);w.encounters.version=9;useLegacyGardenFriends(w);delete w.encounters.gardenSessions;delete w.encounters.homeGoodbyes;w.encounters.homeClosedUntil=midnight;const before=clone(w);
- await raw(indexedDB,w);const store=await openGameStore({indexedDB});try{const result=await store.transact(x=>x);assert.equal(result.encounters.version,14);assert.equal(result.revision,w.revision);assert.equal(result.encounters.homeClosedUntil,midnight);assert.deepEqual((await raw(indexedDB)).encounters,result.encounters);assert.deepEqual(w,before);}finally{store.close();}
+ await raw(indexedDB,w);const store=await openGameStore({indexedDB});try{const result=await store.transact(x=>x);assert.equal(result.encounters.version,15);assert.equal(result.revision,w.revision);assert.equal(result.encounters.homeClosedUntil,midnight);assert.deepEqual((await raw(indexedDB)).encounters,result.encounters);assert.deepEqual(w,before);}finally{store.close();}
 });
 
 test('cooldown schema rejects duplicates, unknown birds, malformed fields, invalid dates and excessive rows',()=>{
  const {w,friend}=fixture();dismissHomeFriend(w,friend.id,economyToken(w),now);
- const changes=[x=>delete x.encounters.homeGoodbyes,x=>x.encounters.homeGoodbyes=null,x=>x.encounters.homeGoodbyes.push(clone(x.encounters.homeGoodbyes[0])),x=>x.encounters.homeGoodbyes[0].birdId='b999',x=>x.encounters.homeGoodbyes[0].birdId=3,x=>x.encounters.homeGoodbyes[0].extra=true,x=>delete x.encounters.homeGoodbyes[0].until,x=>x.encounters.homeGoodbyes.push(null),x=>x.encounters.homeGoodbyes=Array.from({length:129},(_,i)=>({birdId:`b${i+1}`,until:midnight})),x=>x.encounters.version=15,x=>x.encounters.version=9];
+ const changes=[x=>delete x.encounters.homeGoodbyes,x=>x.encounters.homeGoodbyes=null,x=>x.encounters.homeGoodbyes.push(clone(x.encounters.homeGoodbyes[0])),x=>x.encounters.homeGoodbyes[0].birdId='b999',x=>x.encounters.homeGoodbyes[0].birdId=3,x=>x.encounters.homeGoodbyes[0].extra=true,x=>delete x.encounters.homeGoodbyes[0].until,x=>x.encounters.homeGoodbyes.push(null),x=>x.encounters.homeGoodbyes=Array.from({length:129},(_,i)=>({birdId:`b${i+1}`,until:midnight})),x=>x.encounters.version=16,x=>x.encounters.version=9];
  for(const date of [-1,0,NaN,Infinity,1.5,'tomorrow',8640000000000001])changes.push(x=>{x.encounters.homeGoodbyes[0].until=date;});
  for(const change of changes){const bad=clone(w);change(bad);const before=clone(bad);assert.throws(()=>validateWorld(bad));assert.deepEqual(bad,before);}
  let accessed=false;const bad=clone(w);Object.defineProperty(bad.encounters.homeGoodbyes[0],'until',{enumerable:true,get(){accessed=true;return midnight;}});assert.throws(()=>validateWorld(bad));assert.equal(accessed,false);

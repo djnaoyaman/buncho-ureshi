@@ -33,7 +33,7 @@ export function fixture(kind='solo',gardenId=GARDENS[0].id){
   if(!raptor.arriveGardenRaptor(w,kind==='osprey'?'osprey':'black-kite',NOW,token()).changed)throw Error('raptor arrival failed');
   if(kind==='raptor-friendly')for(let n=0;n<13;n++)raptor.petGardenRaptor(w,'black-kite',8,raptor.raptorToken(w));
   if(kind==='settings-after-warning')Object.assign(w.encounters.gardenFriends,{accompany:false,companions:[]});
-  if(kind==='legacy-warning'){w.encounters.version=12;w.encounters.garden.visits=Object.fromEntries(OLD_GARDEN_IDS.map(id=>[id,w.encounters.garden.visits[id]]));w=engine.readCompatibleWorld(w,NOW);}
+  if(kind==='legacy-warning'){delete w.encounters.raptor.active.returnChoicePending;w.encounters.version=12;w.encounters.garden.visits=Object.fromEntries(OLD_GARDEN_IDS.map(id=>[id,w.encounters.garden.visits[id]]));w=engine.readCompatibleWorld(w,NOW);}
  }
  engine.validateWorld(w);if(engine.serializeWorld(engine.parseSave(engine.serializeWorld(w)))!==engine.serializeWorld(w))throw Error('round trip mismatch');return w;
 }

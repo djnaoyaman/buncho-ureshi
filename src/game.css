@@ -1774,3 +1774,15 @@ body[data-world="buncho"] .game-encounter-host .finch-notebook > .finch-catalog 
 body[data-world="buncho"] .game-encounter-host .finch-notebook > .finch-catalog > button.finch-card > .finch-number {grid-column:2;grid-row:1;font-size:12px;line-height:1.4;}
 body[data-world="buncho"] .game-encounter-host .finch-notebook > .finch-catalog > button.finch-card > strong {grid-column:2;grid-row:2;min-width:0;font-size:15px;line-height:1.5;overflow-wrap:anywhere;}
 body[data-world="buncho"] .game-encounter-host .finch-notebook > .finch-catalog > button.finch-card > small {grid-column:2;grid-row:3;min-width:0;font-size:13px;line-height:1.7;overflow-wrap:anywhere;}
+
+/* Omochi Pop return choice: calm, readable, and safe action first. */
+body[data-world="buncho"] .game-raptor-return-dialog{box-sizing:border-box;width:min(90vw,27rem);max-height:calc(var(--game-viewport-height,100dvh) - 32px);overflow:auto;border:3px solid #80664e;border-radius:28px;background:#fff9e9;color:#453c31;padding:clamp(18px,5vw,28px);text-align:center;box-shadow:0 7px 0 #80664e33;font-family:inherit}
+.game-raptor-return-dialog::backdrop{background:#604b3d88}
+.game-raptor-return-eyebrow{font-size:.85rem;letter-spacing:.08em;color:#745b43;margin:0 0 .6rem}
+.game-raptor-return-dialog h2{font-size:clamp(1.25rem,5vw,1.6rem);line-height:1.5;margin:.5rem 0}
+.game-raptor-return-dialog p{line-height:1.8}.game-raptor-return-dialog small{display:block;font-size:.85rem;margin-top:.6rem}
+.game-raptor-return-actions{display:grid;gap:12px;margin-top:18px}
+.game-raptor-return-actions button{min-height:48px;padding:12px 16px;border:2px solid #8c7359;border-radius:16px;background:#fffdf5;color:#453c31;font:inherit;font-weight:700}
+.game-raptor-return-actions [data-raptor-choice="home"]{min-height:56px;background:#f6d36c;border-color:#755d31;font-size:1.1rem;box-shadow:0 3px 0 #755d31}
+.game-raptor-return-actions button:focus-visible{outline:3px solid #225b87;outline-offset:3px}
+.game-raptor-return-actions button:disabled{opacity:.65}.game-raptor-return-error{font-size:.9rem;color:#913f36}
