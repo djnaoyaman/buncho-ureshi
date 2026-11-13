@@ -15,7 +15,7 @@ const system=createEncounterSystem(ENCOUNTER_CANDIDATES),token=w=>({worldId:w.wo
 function meet(w,id){inviteFixture(system,w,id);system.open(w,id,token(w));for(const step of system.catalog.find(e=>e.id===id).steps)system.act(w,w.encounters.active.instanceId,step.action,token(w));}
 function closeFriend(w,id){meet(w,id);for(let i=0;i<12;i++)system.pet(w,id,8,token(w));}
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-function panelFor(w,extra={}){const win=new Window();win.document.body.innerHTML='<div id="root"></div>';const root=win.document.querySelector('#root');const panel=mountEncounterPanel(root,{system,getWorld:()=>w,transact:async fn=>fn(w),...extra});panel.entry(id);return {win,root,panel};}
+function panelFor(w,extra={}){const win=new Window();win.document.body.innerHTML='<div id="root"></div>';const root=win.document.querySelector('#root');const panel=mountEncounterPanel(root,{petNow:(()=>{let n=0;return()=>n+=250;})(),system,getWorld:()=>w,transact:async fn=>fn(w),...extra});panel.entry(id);return {win,root,panel};}
 test('old v4 save preserves all encounter histories and migrates without mutating input',()=>{const w=createWorld(now);meet(w,id);const before=structuredClone(w);w.encounters.version=4;useLegacyGardenFriends(w);delete w.encounters.gardenSessions;delete w.encounters.homeGoodbyes;for(const id of ["java-rice","bali-terrace","paris-unrest"])delete w.encounters.garden.visits[id];delete w.encounters.friendship;delete w.encounters.cageVisitors;delete w.encounters.homeClosedUntil;delete w.encounters.crow;delete w.encounters.raptor;const raw=structuredClone(w),m=readCompatibleWorld(w);assert.deepEqual(w,raw);assert.equal(m.encounters.version,14);assert.deepEqual(m.encounters.discoveries,before.encounters.discoveries);assert.deepEqual(m.birds,w.birds);assert.deepEqual(m.careSchedule,w.careSchedule);assert.equal(m.seed,w.seed);assert.equal(m.revision,w.revision);assert.deepEqual(parseSave(serializeWorld(m)),m);assert.equal(encounterFriendship(m,id).points,10);});
 test('v4 migration is durably saved even when world revision/version do not change',async()=>{const indexedDB=new IDBFactory(),w=createWorld(now);meet(w,id);w.encounters.version=4;useLegacyGardenFriends(w);delete w.encounters.gardenSessions;delete w.encounters.homeGoodbyes;for(const id of ["java-rice","bali-terrace","paris-unrest"])delete w.encounters.garden.visits[id];delete w.encounters.friendship;delete w.encounters.cageVisitors;delete w.encounters.homeClosedUntil;delete w.encounters.crow;delete w.encounters.raptor;const db=await new Promise(r=>{const req=indexedDB.open(DB_NAME,1);req.onupgradeneeded=()=>req.result.createObjectStore('world');req.onsuccess=()=>r(req.result);});await new Promise(r=>{const tx=db.transaction('world','readwrite');tx.objectStore('world').put(w,'current');tx.oncomplete=r;});db.close();const store=await openGameStore({indexedDB});await store.transact(x=>x);store.close();const db2=await new Promise(r=>{const req=indexedDB.open(DB_NAME,1);req.onsuccess=()=>r(req.result);});const persisted=await new Promise(r=>{const req=db2.transaction('world').objectStore('world').get('current');req.onsuccess=()=>r(req.result);});db2.close();assert.equal(persisted.encounters.version,14);assert.equal(persisted.revision,w.revision);});
 test('undiscovered birds cannot be rubbed or invited to garden/cage',()=>{const w=createWorld(now),before=structuredClone(w);assert.equal(system.pet(w,id,1,token(w)).changed,false);assert.equal(system.inviteGarden(w,id,token(w)).changed,false);assert.equal(system.inviteCage(w,id,token(w)).changed,false);assert.deepEqual(w,before);});
@@ -30,10 +30,10 @@ test('cage guests expire after 96 story ticks and can be called back with friend
 test('calling a cage guest to garden relocates it and releases capacity',()=>{const w=createWorld(now);closeFriend(w,id);system.inviteCage(w,id,token(w));assert.equal(w.encounters.garden.lastGuest,null);assert.equal(system.inviteGarden(w,id,token(w)).changed,true);assert.equal(w.encounters.cageVisitors.length,0);assert.equal(w.encounters.garden.lastGuest,id);validateWorld(w);});
 test('new malformed friendship state, duplicate guests and combined overflow are rejected',()=>{for(const change of [w=>w.encounters.friendship.push({id:'unknown',petPoints:5}),w=>w.encounters.friendship[0].petPoints=-1,w=>w.encounters.friendship.push({...w.encounters.friendship[0]}),w=>w.encounters.cageVisitors.push({id:id2,arrivedTick:0}),w=>w.encounters.cageVisitors.push({...w.encounters.cageVisitors[0]}),w=>w.encounters.cageVisitors[0].arrivedTick=1,w=>{for(let i=0;i<6;i++)createBird(w,{home:'visitor'});},w=>w.encounters.version=15]){const w=createWorld(now);closeFriend(w,id);system.inviteCage(w,id,token(w));change(w);assert.throws(()=>validateWorld(w));}});
 test('photo and illustration both expose rub target and count, while undiscovered page does not',()=>{const w=createWorld(now);meet(w,id);for(const showPhoto of [false,true]){const html=renderEncounterPage(w,id,{system,showPhoto});assert.match(html,/data-encounter-rub/);assert.match(html,/仲よくなった回数/);assert.match(html,/data-finch-points>10</);assert.match(html,/庭に呼ぶ/);}assert.doesNotMatch(renderEncounterPage(w,id2,{system}),/data-encounter-rub|data-finch-points/);});
-test('continuous pointer rubbing persists across async transactions without replacing active image',async t=>{const w=createWorld(now);meet(w,id);const {win,root,panel}=panelFor(w);t.after(()=>panel.destroy());const target=root.querySelector('[data-encounter-rub]');target.getBoundingClientRect=()=>({left:0,top:0,right:300,bottom:300});target.dispatchEvent(new win.PointerEvent('pointerdown',{bubbles:true,button:0,isPrimary:true,pointerId:1,clientX:50,clientY:50}));for(let i=0;i<12;i++){win.document.dispatchEvent(new win.PointerEvent('pointermove',{bubbles:true,pointerId:1,clientX:i%2?50:100,clientY:50}));await sleep(2);}assert.equal(root.querySelector('[data-encounter-rub]'),target);win.document.dispatchEvent(new win.PointerEvent('pointerup',{pointerId:1}));await sleep(130);assert.equal(encounterFriendship(w,id).points,18);assert.match(root.querySelector('[data-finch-friendship]').textContent,/はじめまして/);validateWorld(w);panel.destroy();});
+test('continuous pointer rubbing persists across async transactions without replacing active image',async t=>{const w=createWorld(now);meet(w,id);const {win,root,panel}=panelFor(w);t.after(()=>panel.destroy());const target=root.querySelector('[data-encounter-rub]');target.getBoundingClientRect=()=>({left:0,top:0,right:300,bottom:300});target.dispatchEvent(new win.PointerEvent('pointerdown',{bubbles:true,button:0,isPrimary:true,pointerId:1,clientX:50,clientY:50}));for(let i=0;i<12;i++){win.document.dispatchEvent(new win.PointerEvent('pointermove',{bubbles:true,pointerId:1,clientX:i%2?50:100,clientY:50}));await sleep(2);}assert.equal(root.querySelector('[data-encounter-rub]'),target);win.document.dispatchEvent(new win.PointerEvent('pointerup',{pointerId:1}));await sleep(130);assert.equal(encounterFriendship(w,id).points,12);assert.match(root.querySelector('[data-finch-friendship]').textContent,/はじめまして/);validateWorld(w);panel.destroy();});
 test('plain tap/hold, secondary pointers and outside motion do not grant rub points',async()=>{const w=createWorld(now);meet(w,id);const {win,root,panel}=panelFor(w),target=root.querySelector('[data-encounter-rub]');target.getBoundingClientRect=()=>({left:0,top:0,right:100,bottom:100});target.dispatchEvent(new win.PointerEvent('pointerdown',{bubbles:true,button:0,isPrimary:true,pointerId:1,clientX:50,clientY:50}));win.document.dispatchEvent(new win.PointerEvent('pointermove',{pointerId:2,clientX:90,clientY:50}));win.document.dispatchEvent(new win.PointerEvent('pointermove',{pointerId:1,clientX:300,clientY:50}));win.document.dispatchEvent(new win.PointerEvent('pointerup',{pointerId:1}));await sleep(5);assert.equal(encounterFriendship(w,id).points,10);panel.destroy();});
-test('keyboard petting works and queued callback after destruction cannot mutate',async()=>{const w=createWorld(now);meet(w,id);let release;const {win,root,panel}=panelFor(w,{transact:fn=>new Promise(r=>release=()=>r(fn(w)))});for(let press=0;press<3;press++)root.querySelector('[data-encounter-rub]').dispatchEvent(new win.KeyboardEvent('keydown',{key:'Enter',bubbles:true}));panel.destroy();release();await sleep(5);assert.equal(encounterFriendship(w,id).points,10);const next=panelFor(w);for(let press=0;press<3;press++)next.root.querySelector('[data-encounter-rub]').dispatchEvent(new next.win.KeyboardEvent('keydown',{key:' ',bubbles:true}));await sleep(5);assert.equal(encounterFriendship(w,id).points,11);next.panel.destroy();});
-test('world replacement while stroke waits cannot apply points to new world',async()=>{let current=createWorld(now);meet(current,id);const old=current;let release;const {win,root,panel}=panelFor(current,{getWorld:()=>current,transact:fn=>new Promise(r=>release=()=>r(fn(current)))});for(let press=0;press<3;press++)root.querySelector('[data-encounter-rub]').dispatchEvent(new win.KeyboardEvent('keydown',{key:'Enter',bubbles:true}));current=createWorld(now+1);meet(current,id);panel.refresh();release();await sleep(5);assert.equal(encounterFriendship(current,id).points,10);assert.equal(encounterFriendship(old,id).points,10);panel.destroy();});
+test('keyboard petting works and queued callback after destruction cannot mutate',async()=>{const w=createWorld(now);meet(w,id);let release;const {win,root,panel}=panelFor(w,{transact:fn=>new Promise(r=>release=()=>r(fn(w)))});for(let press=0;press<5;press++)root.querySelector('[data-encounter-rub]').dispatchEvent(new win.KeyboardEvent('keydown',{key:'Enter',bubbles:true}));panel.destroy();release();await sleep(5);assert.equal(encounterFriendship(w,id).points,10);const next=panelFor(w);for(let press=0;press<5;press++)next.root.querySelector('[data-encounter-rub]').dispatchEvent(new next.win.KeyboardEvent('keydown',{key:' ',bubbles:true}));await sleep(5);assert.equal(encounterFriendship(w,id).points,11);next.panel.destroy();});
+test('world replacement while stroke waits cannot apply points to new world',async()=>{let current=createWorld(now);meet(current,id);const old=current;let release;const {win,root,panel}=panelFor(current,{getWorld:()=>current,transact:fn=>new Promise(r=>release=()=>r(fn(current)))});for(let press=0;press<5;press++)root.querySelector('[data-encounter-rub]').dispatchEvent(new win.KeyboardEvent('keydown',{key:'Enter',bubbles:true}));current=createWorld(now+1);meet(current,id);panel.refresh();release();await sleep(5);assert.equal(encounterFriendship(current,id).points,10);assert.equal(encounterFriendship(old,id).points,10);panel.destroy();});
 
 test('late go-home callback is invalidated by notebook navigation and destruction',async()=>{
  for(const action of ['notebook','destroy']){const w=createWorld(now);closeFriend(w,id);system.inviteCage(w,id,token(w));let release,current;const {root,panel}=panelFor(w,{onHome:guard=>new Promise(resolve=>{current=guard;release=resolve;})});root.querySelector('[data-finch-go-home]').click();assert.equal(current(),true);panel[action]();assert.equal(current(),false);release();await sleep(5);if(action==='notebook'){assert.ok(root.querySelector('.finch-notebook'));assert.equal(root.getAttribute('aria-busy'),'false');panel.destroy();}}
@@ -48,45 +48,51 @@ test('rendered foreign goodbye token and queued navigation protect a later visit
  let release;const next=panelFor(w,{transact:fn=>new Promise(resolve=>{release=()=>resolve(fn(w));})});next.root.querySelector('[data-encounter-dismiss-cage]').click();next.panel.notebook();release();await sleep(10);assert.deepEqual(w,before);next.panel.destroy();
 });
 
-test('72 pixels earn one point, exactly a third of the former 24 pixel gain, without changing family state',async()=>{
+test('real controller limits fast rubbing to one per second, preserves earned and family values, and responds immediately',async()=>{
  const w=createWorld(now);meet(w,id);system.pet(w,id,5,token(w));
- const preserved=structuredClone({birds:w.birds,care:w.careSchedule,economy:w.economy,seed:w.seed,tick:w.tick});
- const {win,root,panel}=panelFor(w),target=root.querySelector('[data-encounter-rub]');
+ const before=structuredClone({birds:w.birds,care:w.careSchedule,economy:w.economy,seed:w.seed,tick:w.tick});
+ let time=0;const {win,root,panel}=panelFor(w,{petNow:()=>time}),target=root.querySelector('[data-encounter-rub]');
  try{
-  assert.equal(encounterFriendship(w,id).points,15);
   target.getBoundingClientRect=()=>({left:0,top:0,right:300,bottom:300});
   target.dispatchEvent(new win.PointerEvent('pointerdown',{bubbles:true,button:0,isPrimary:true,pointerId:1,clientX:50,clientY:50}));
-  const move=async x=>{win.document.dispatchEvent(new win.PointerEvent('pointermove',{pointerId:1,clientX:x,clientY:50}));await sleep(5);};
-  await move(74);await move(98);assert.equal(encounterFriendship(w,id).points,15);
-  await move(122);assert.equal(encounterFriendship(w,id).points,16);
-  await move(194);await move(266);assert.equal(encounterFriendship(w,id).points,18);
-  win.document.dispatchEvent(new win.PointerEvent('pointerup',{pointerId:1}));
-  assert.deepEqual({birds:w.birds,care:w.careSchedule,economy:w.economy,seed:w.seed,tick:w.tick},preserved);
+  for(let t=0;t<=90000;t+=100){
+   time=t;win.document.dispatchEvent(new win.PointerEvent('pointermove',{pointerId:1,clientX:t%200?50:150,clientY:50}));
+   await Promise.resolve();await Promise.resolve();
+   if(t===0){assert.equal(encounterFriendship(w,id).points,15);assert.match(root.querySelector('.finch-notice').textContent,/なでなで/);}
+   if(t===9000)assert.equal(encounterFriendship(w,id).points,24);
+  }
+  assert.equal(encounterFriendship(w,id).points,105);
+  time+=60000;win.document.dispatchEvent(new win.PointerEvent('pointermove',{pointerId:1,clientX:50,clientY:50}));
+  await Promise.resolve();assert.equal(encounterFriendship(w,id).points,105);
+  assert.deepEqual({birds:w.birds,care:w.careSchedule,economy:w.economy,seed:w.seed,tick:w.tick},before);
   validateWorld(w);
  }finally{panel.destroy();}
 });
-
-test('keyboard earns one point per three deliberate presses with no timer or daily cap',async()=>{
- const w=createWorld(now);meet(w,id);const {win,root,panel}=panelFor(w);
- const press=async(key='Enter',repeat=false)=>{root.querySelector('[data-encounter-rub]').dispatchEvent(new win.KeyboardEvent('keydown',{key,repeat,bubbles:true}));await sleep(2);};
+test('keyboard repeat and immediate reopen cannot accelerate active-time petting',async()=>{
+ const w=createWorld(now);meet(w,id);let time=0;
+ let mounted=panelFor(w,{petNow:()=>time});
+ const press=(repeat=false)=>mounted.root.querySelector('[data-encounter-rub]').dispatchEvent(new mounted.win.KeyboardEvent('keydown',{key:'Enter',repeat,bubbles:true}));
  try{
-  await press();await press(' ');assert.equal(encounterFriendship(w,id).points,10);
-  await press('Enter',true);await press('Escape');assert.equal(encounterFriendship(w,id).points,10);
-  await press();assert.equal(encounterFriendship(w,id).points,11);
-  for(let i=0;i<36;i++)await press(i%2?' ':'Enter');
-  assert.equal(encounterFriendship(w,id).points,23);validateWorld(w);
- }finally{panel.destroy();}
+  press();time=1000;press(true);await Promise.resolve();assert.equal(encounterFriendship(w,id).points,10);
+  press();await Promise.resolve();await Promise.resolve();assert.equal(encounterFriendship(w,id).points,11);
+  mounted.panel.destroy();mounted=panelFor(w,{petNow:()=>time});press();await Promise.resolve();
+  assert.equal(encounterFriendship(w,id).points,11);
+ }finally{mounted.panel.destroy();}
 });
-
-test('keyboard partial strokes belong to their bird and world, not the next notebook entry',async()=>{
- let current=createWorld(now);meet(current,id);meet(current,id2);
- const {win,root,panel}=panelFor(current,{getWorld:()=>current});
- const press=()=>root.querySelector('[data-encounter-rub]').dispatchEvent(new win.KeyboardEvent('keydown',{key:'Enter',bubbles:true}));
+test('slow save never banks active input for a burst after it finishes',async()=>{
+ const w=createWorld(now);meet(w,id);let time=0,release,transactions=0;
+ const {win,root,panel}=panelFor(w,{petNow:()=>time,transact:fn=>new Promise(resolve=>{transactions++;release=()=>resolve(fn(w));})});
+ const target=root.querySelector('[data-encounter-rub]');target.getBoundingClientRect=()=>({left:0,top:0,right:300,bottom:300});
+ const move=t=>{time=t;win.document.dispatchEvent(new win.PointerEvent('pointermove',{pointerId:1,clientX:t%200?50:150,clientY:50}));};
  try{
-  press();press();panel.entry(id2);press();await sleep(2);
-  assert.equal(encounterFriendship(current,id2).points,10);
-  panel.entry(id);press();await sleep(2);assert.equal(encounterFriendship(current,id).points,11);
-  press();press();current=createWorld(now+1);meet(current,id);panel.refresh();panel.entry(id);press();await sleep(2);
-  assert.equal(encounterFriendship(current,id).points,10);
+  target.dispatchEvent(new win.PointerEvent('pointerdown',{bubbles:true,button:0,isPrimary:true,pointerId:1,clientX:50,clientY:50}));
+  for(let t=0;t<=4000;t+=100)move(t);
+  assert.equal(transactions,1);assert.equal(encounterFriendship(w,id).points,10);
+  release();await Promise.resolve();await Promise.resolve();
+  assert.equal(encounterFriendship(w,id).points,11);
+  move(4100);assert.equal(transactions,1);
+  for(let t=4200;t<=5000;t+=100)move(t);
+  assert.equal(transactions,2);release();await Promise.resolve();await Promise.resolve();
+  assert.equal(encounterFriendship(w,id).points,12);
  }finally{panel.destroy();}
 });
