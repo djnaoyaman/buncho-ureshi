@@ -13,7 +13,7 @@ import {mountGardenBirdMotion} from './garden-bird-motion.js';
 import {encounterSystem} from './encounters.js';
 import {renderEncounterNotebook,renderEncounterPage,renderEncounterScene,renderFinchGarden,renderEncounterFriendship} from './encounter-ui.js';
 /** Host injects its single existing transaction store. Never creates a second save/backend. */
-export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()=>null,onHouseholdBird=()=>{},onGarden=async()=>{},onGardenChanged=()=>{},onHome=()=>{},onReward=()=>{},meetFriend=null,completeEncounter=null,system=encounterSystem,initialMode='notebook',base='/buncho-ureshi/',crowRandom=Math.random,petNow=()=>performance.now(),getSound=()=>true}={}){
+export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()=>null,onHouseholdBird=()=>{},onGarden=async()=>{},onGardenChanged=()=>{},onHome=()=>{},onReward=()=>{},meetFriend=null,completeEncounter=null,system=encounterSystem,initialMode='notebook',base='/buncho-ureshi/',crowRandom=Math.random,sharedPredatorClock=false,petNow=()=>performance.now(),getSound=()=>true}={}){
   if(typeof getWorld!=='function'||typeof transact!=='function')throw new Error('図鑑の保存先が必要です。');
   let alive=true,busy=false,mode=initialMode==='garden'?'garden':'notebook',pageId=null,showPhoto=false,generation=0,notice='',worldId=getWorld().worldId,revealGardenId=null,renderedView=null;
   let rub=null,petFlight=false,petTimer=null;
@@ -289,7 +289,7 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
     if(!canStartCrowWarning())return false;
     const w=getWorld(),now=win.performance.now();
     crowClock.sample({key:syncCrowContext(w),now,eligible:true,available:false});
-    if(!crowClock.startWarning(id,now))return false;
+    if(!crowClock.startWarning(id,now,{repeat:sharedPredatorClock}))return false;
     render();return true;
   }
   async function pollCrow(){
@@ -306,7 +306,7 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
       crowClock.holdWarning(win.performance.now());
       if(alive)crowTimer=win.setTimeout(pollCrow,1000);return;
     }
-    const event=crowClock.sample({key:syncCrowContext(w),now:win.performance.now(),eligible:crowEligible(),available:!busy&&!crowFlight&&!crowCoolingDown(w,now)});
+    const event=crowClock.sample({key:syncCrowContext(w),now:win.performance.now(),eligible:crowEligible(),available:!busy&&!crowFlight&&!crowCoolingDown(w,now),allowLottery:!sharedPredatorClock});
     if(event?.kind!=='arrive'&&(phase!==crowPhase||event?.kind==='warning'||priorWarning!==crowClock.warning)){crowPhase=phase;render();}
     if(event?.kind==='arrive'){
       const originalWorld=w.worldId,originalBird=crowTarget(w)?.id,gardenId=w.encounters.garden.id,token=generation,session=crowEpoch;

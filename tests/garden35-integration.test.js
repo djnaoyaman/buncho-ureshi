@@ -16,7 +16,7 @@ test('frozen published save adds ending state and 23 zero counters, preserving a
  oldEncounterSystem().validate(old.encounters,old.tick);
  const upgraded=readCompatibleWorld(structuredClone(old),1000),expected=structuredClone(old);
  expected.version=18;expected.leafEvent={version:1,entry:null};expected.collectionEndings={version:1,entries:[]};
- expected.encounters.version=15;expected.encounters.garden.visits=Object.fromEntries(GARDEN_IDS.map(id=>[id,old.encounters.garden.visits[id]??0]));
+ expected.encounters.version=16;expected.encounters.raptor.lastThreatAt=expected.encounters.raptor.lastArrivalAt;expected.encounters.garden.visits=Object.fromEntries(GARDEN_IDS.map(id=>[id,old.encounters.garden.visits[id]??0]));
  assert.deepEqual(upgraded,expected);assert.deepEqual(old,before);
  assert.equal(upgraded.encounters.gardenSessions.length,11);
  const active=[upgraded.encounters,...upgraded.encounters.gardenSessions].map(s=>s.active).find(Boolean);assert.ok(active);assert.equal(active.step,1);

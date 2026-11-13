@@ -2,9 +2,10 @@
 const GARDEN_IDS=["komorebi","mizukagami","komugi","hanadokei","kazaguruma","yuyake","tsukiakari","shrine-grove","onsen","java-rice","bali-terrace","paris-unrest"],LEGACY_GARDEN_IDS=GARDEN_IDS.slice(0,9);
 import {isAlive} from '../../../src/life-care.js';
 import {initializeGardenVisitSessions,switchGardenVisitSession,pendingGardenGuestLocation,clearCompletedGardenGuest,gardenVisitSessionFields} from '../../../src/garden-visit-sessions.js';
-import {initialRaptorState,validateRaptorState} from '../../../src/garden-raptors.js';
+import {initialRaptorState as currentInitialRaptorState,validateRaptorState} from '../../../src/garden-raptors.js';
 import {initialCrowState,validateCrowState} from '../../../src/garden-crows.js';
 import {initialGardenFriends,validateGardenFriends,setGardenCompanions,bondGardenFriend,beginGardenOuting,recordGardenVisit} from '../../../src/garden-friends.js';
+const initialRaptorState=()=>{const s=currentInitialRaptorState();delete s.lastThreatAt;return s;};
 /** Pure encounter state. Other species never enter Java Sparrow birds[] or consume its PRNG. */
 import {gardenById,gardenFriendRoster,shuffleGardenPool} from '../../../src/data/gardens.js';
 import { ENCOUNTER_CATALOG, ENCOUNTER_CANDIDATES } from '../../../src/data/encounter-catalog.js';

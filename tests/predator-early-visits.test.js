@@ -42,5 +42,5 @@ test('water-only harmless species remains restricted to its garden',()=>{
 test('legacy family clocks have no20s draw and preserve the sustained2min rules',()=>{
  for(const [create,rules,kind] of [[createGardenCrowClock,CROW_RULES,'warning'],[createGardenRaptorClock,RAPTOR_RULES,'arrive']]){let calls=0;const c=create({random:()=>{calls++;return 0;}});assert.equal(run(c,0,119000),undefined);assert.equal(calls,0);assert.equal(sample(c,120000)?.kind,kind);assert.equal(rules.dwellMs,120000);}
  assert.equal(CROW_RULES.warningMs,6000);assert.equal(RAPTOR_RULES.warningMs,60000);assert.equal(PREDATOR_ENTRY_RULES.retryMs,120000);
- assert.equal(CROW_RULES.cooldownMs,600000);assert.equal(RAPTOR_RULES.dailyCooldownMs,86400000);
+ assert.equal(CROW_RULES.cooldownMs,600000);assert.equal(RAPTOR_RULES.visitCooldownMs,120000);
 });

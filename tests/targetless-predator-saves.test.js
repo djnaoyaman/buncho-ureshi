@@ -12,13 +12,13 @@ import {openGameStore,DB_NAME,STORAGE_KEY} from '../src/game-store.js';
 const NOW=Date.UTC(2026,10,7),clone=structuredClone;
 const oldSystem=oldEncounterSystem();
 function asV12(w){
- w.encounters.version=12;
+ w.encounters.version=12;delete w.encounters.raptor.lastThreatAt;
  if(w.encounters.raptor.active)delete w.encounters.raptor.active.returnChoicePending;
  w.encounters.garden.visits=Object.fromEntries(OLD_GARDEN_IDS.map(id=>[id,w.encounters.garden.visits[id]]));
  return w;
 }
 function expectedUpgrade(old){
- const result=clone(old);result.encounters.version=15;
+ const result=clone(old);result.encounters.version=16;result.encounters.raptor.lastThreatAt=result.encounters.raptor.lastArrivalAt;
  if(result.encounters.raptor.active)result.encounters.raptor.active.returnChoicePending=result.encounters.raptor.active.hostile;
  result.encounters.garden.visits=Object.fromEntries(GARDEN_IDS.map(id=>[id,old.encounters.garden.visits[id]??0]));
  return result;

@@ -29,8 +29,8 @@ test('remaining permits friendship, friendly later visits retain the record with
  assert.match(renderRaptorNotice(w),/もうなかよしだから、襲わないよ/);
  assert.equal(escapeGardenRaptor(w,raptorToken(w)).changed,true);
  w=parseSave(serializeWorld(w));garden(w);
- assert.equal(arrive(w,'black-kite',NOW+RAPTOR_RULES.dailyCooldownMs-1).reason,'cooldown');
- assert.equal(arrive(w,'black-kite',NOW+RAPTOR_RULES.dailyCooldownMs).changed,true);
+ assert.equal(arrive(w,'black-kite',NOW+RAPTOR_RULES.visitCooldownMs-1).reason,'cooldown');
+ assert.equal(arrive(w,'black-kite',NOW+RAPTOR_RULES.visitCooldownMs).changed,true);
  assert.equal(w.encounters.raptor.visits.length,1);assert.equal(w.encounters.raptor.visits[0].count,2);assert.equal(w.encounters.raptor.visits[0].petPoints,104);
  assert.equal(raptorScene(w).hostile,false);assert.equal(raptorReturnChoicePending(w),false);validateWorld(w);
 });

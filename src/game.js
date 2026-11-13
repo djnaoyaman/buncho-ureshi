@@ -720,7 +720,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     if(['outdoors','notebook'].includes(panel)){
       if(!encounterRoot){
         encounterRoot=document.createElement('div');encounterRoot.className='game-encounter-host';
-        encounterController=mountEncounterPanel(encounterRoot,{initialMode:panel==='outdoors'?'garden':'notebook',getSound:careSoundEnabled,getWorld:()=>world,getSelectedBirdId:()=>selected,onHouseholdBird:id=>openBirdSheet(id),meetFriend:(w,id,action,token)=>meetGardenFriendReward(w,id,action,token),completeEncounter:(w,id,action,token)=>completeEncounterReward(w,id,action,token),onReward:amount=>showGemReward(amount),onHome:returnRaptorHome,base:new URL('../',GAME_ART).href,transact:async (operation,options={})=>{
+        encounterController=mountEncounterPanel(encounterRoot,{sharedPredatorClock:true,initialMode:panel==='outdoors'?'garden':'notebook',getSound:careSoundEnabled,getWorld:()=>world,getSelectedBirdId:()=>selected,onHouseholdBird:id=>openBirdSheet(id),meetFriend:(w,id,action,token)=>meetGardenFriendReward(w,id,action,token),completeEncounter:(w,id,action,token)=>completeEncounterReward(w,id,action,token),onReward:amount=>showGemReward(amount),onHome:returnRaptorHome,base:new URL('../',GAME_ART).href,transact:async (operation,options={})=>{
           const committed=await mutate(operation,'',()=>alive,{bump:false,advanceCurrent:false,renderAfter:!options.gesture});
           if(!committed)throw new Error('記録できませんでした。');return world;
         },onGardenChanged:({gardenId,worldId})=>document.dispatchEvent(new document.defaultView.CustomEvent('buncho-game-garden',{detail:{gardenId,worldId}}))});

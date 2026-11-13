@@ -41,7 +41,7 @@ export function renderRaptorFriendship(w,id){
 export function renderRaptorCatalog(w,{base='/buncho-ureshi/'}={}){
  const cards=harmless=>RAPTOR_SPECIES.filter(s=>s.harmless===harmless).map((s,i)=>{const known=raptorFriendship(w,s.id).discovered;return `<button type="button" class="finch-card finch-raptor-card" data-raptor-entry="${s.id}" ${known?'':'disabled'}><img class="finch-art${known?'':' is-silhouette'}" src="${image(s.id,base)}" alt="${known?s.name:'まだ出会っていない鳥の影'}" draggable="false"><strong>${known?s.name:`まだ出会っていない鳥 ${i+1}`}</strong>${known?`<small>${s.harmless?'襲わない水辺の仲間':raptorFriendship(w,s.id).friendly?'なかよし · 襲わない':'天敵'}</small>`:''}</button>`;}).join('');
  const seen=w.encounters.raptor?.visits?.length||0;
- return `<section class="finch-raptor-catalog"><h4>猛禽類の記録</h4><p>出会い ${seen} / ${RAPTOR_SPECIES.length} 種類</p><p>庭で3秒過ごすと、カラスと猛禽をあわせて25%の抽選。その後は2分過ごしてから、1分ごとに1%の抽選。来訪は全種類・全庭あわせて24時間に1回まで。危険な来訪では、帰るかどうかをえらぶ間は時間が止まります。「にわに のこる」を選んだら、残り時間以内におうちへ戻ってね。</p><div class="finch-catalog">${cards(false)}</div><h4>水辺の仲間 · 襲わない鳥</h4><div class="finch-catalog">${cards(true)}</div></section>`;
+ return `<section class="finch-raptor-catalog"><h4>猛禽類の記録</h4><p>出会い ${seen} / ${RAPTOR_SPECIES.length} 種類</p><p>庭で3秒過ごすと、カラスと猛禽をあわせて25%の抽選。その後も2分ごとに25%の抽選。次の猛禽との出会いは2分後から抽選できます。危険な来訪だけは全種類・全庭あわせて24時間に1回まで。その間も安全な来訪で図鑑を増やせます。危険な来訪では、帰るかどうかをえらぶ間は時間が止まります。「にわに のこる」を選んだら、残り時間以内におうちへ戻ってね。</p><div class="finch-catalog">${cards(false)}</div><h4>水辺の仲間 · 襲わない鳥</h4><div class="finch-catalog">${cards(true)}</div></section>`;
 }
 export function renderRaptorNotebook(w,{base='/buncho-ureshi/',id=null}={}){
  const s=RAPTOR_SPECIES.find(s=>s.id===id),visit=w.encounters.raptor?.visits.find(v=>v.id===id);
