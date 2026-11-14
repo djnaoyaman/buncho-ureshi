@@ -470,6 +470,9 @@ function render(route) {
   if (installIconLink && installIconLink.getAttribute("href") !== metadata.installIcon) {
     installIconLink.setAttribute("href", metadata.installIcon);
   }
+  for (const link of document.querySelectorAll("link[data-brand-icon]")) {
+    link.setAttribute("href", metadata.faviconPrefix + link.dataset.brandIcon);
+  }
   const manifestLink = document.querySelector('link[rel="manifest"]');
   if (manifestLink.getAttribute("href") !== metadata.installManifest) {
     manifestLink.setAttribute("href", metadata.installManifest);

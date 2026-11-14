@@ -5,7 +5,7 @@ import { morphPhotos } from "./data/morph-photos.js";
 import { SITE_NAME } from "./visuals.js";
 export const PRODUCTION_ORIGIN = "https://djnaoyaman.github.io";
 export const BASE_PATH = "/buncho-ureshi/";
-export const IMAGE_ALT = `${SITE_NAME} — おもちと学ぶ文鳥図鑑。赤いくちばしの白文鳥と深緑の文字を配した採用ロゴ。`;
+export const IMAGE_ALT = `${SITE_NAME} — おもちと学ぶ文鳥図鑑。赤いくちばしの白文鳥と深緑の文字を配した採用ロゴ。生成りに草花と桃色・黄色の色面を添えたアートポスター。`;
 export const GAME_INSTALL_ICON = "game-icons/apple-touch-icon-v1.png";
 export const GAME_IMAGE_ALT = "おもちの文鳥ぐらし。白文鳥と緑の葉をあしらったゲームタイトルと、お世話・模様替えを楽しむブラウザゲームの案内。";
 const GAME_IMAGE = "game-ogp-v1.png";
@@ -96,15 +96,16 @@ export function routeMetadata(route = "", { query = null, notFound = false } = {
   const article = !isSearch && !missing ? entry[3] : undefined;
   const morph = !isSearch && !missing ? entry[4] : undefined;
   const isGame = !isSearch && !missing && route === "game/";
-  const imageURL = PRODUCTION_ORIGIN + BASE_PATH + (isGame ? GAME_IMAGE : "ogp.png");
+  const imageURL = PRODUCTION_ORIGIN + BASE_PATH + (isGame ? GAME_IMAGE : "site-brand-v1/ogp-artposter.png");
   const imageAlt = isGame ? GAME_IMAGE_ALT : IMAGE_ALT;
   return {
     title, description, canonical: PRODUCTION_ORIGIN + BASE_PATH + canonicalRoute,
     robots: isSearch || missing ? "noindex, follow" : "index, follow, max-image-preview:large",
     imageAlt, imageURL,
+    faviconPrefix: route === "game/" && !missing ? "" : "site-brand-v1/",
     installManifest: route === "game/" && !missing ? "game.webmanifest" : "manifest.webmanifest",
     installName: route === "game/" && !missing ? "文鳥ぐらし" : SITE_NAME,
-    installIcon: route === "game/" && !missing ? GAME_INSTALL_ICON : "apple-touch-icon.png",
+    installIcon: route === "game/" && !missing ? GAME_INSTALL_ICON : "site-brand-v1/apple-touch-icon.png",
     ogType: article || morph ? "article" : "website",
     structuredData: structuredData(canonicalRoute, description, title, article, morph, imageURL, imageAlt),
   };
