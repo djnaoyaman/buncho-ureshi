@@ -1,6 +1,6 @@
 import {test,expect} from '@playwright/test';
 // Candidate for tests/browser/renewal-stage2.spec.js. Real built app, not mock DOM.
-const routes=[['encyclopedia/','#article-grid .article-card'],['encyclopedia/beak/','.article-body'],['encyclopedia/health/','.article-body'],['encyclopedia/voice/','.bird-video'],['colors/','.morph-filterbar'],['colors/white/','.morph-profile-title'],['body/','.body-diagram'],['omochi/','#observation-form']];
+const routes=[['encyclopedia/','#article-grid .article-card'],['encyclopedia/beak/','.article-body'],['encyclopedia/health/','.article-body'],['encyclopedia/voice/','.bird-video'],['colors/','.morph-intro'],['colors/white/','.morph-profile-title'],['body/','.body-diagram'],['omochi/','#observation-form']];
 for(const width of [320,390,768,1440])for(const [route,ready] of routes){
  test(`reading room ${route} ${width}`,async({page},info)=>{
   await page.setViewportSize({width,height:844});const errors=[];page.on('pageerror',error=>errors.push(error.message));
@@ -10,7 +10,7 @@ for(const width of [320,390,768,1440])for(const [route,ready] of routes){
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
   const image=page.locator('#main img').first();
   if(await image.count()){await image.scrollIntoViewIfNeeded();expect(await image.evaluate(async i=>{await i.decode();return i.naturalWidth>0;})).toBe(true);}
-  if(route==='colors/'){await expect(page.locator('.morph-image-wrap').first()).toHaveCSS('border-top-left-radius','3px');}
+  if(route==='colors/'){await page.locator('.morph-search-panel>summary').click();await expect(page.locator('.morph-filterbar')).toBeVisible();await page.locator('.morph-search-panel>summary').click();await expect(page.locator('.morph-image-wrap').first()).toHaveCSS('border-top-left-radius','3px');}
   await page.evaluate(()=>scrollTo(0,0));await page.screenshot({path:info.outputPath(`reading-${route.replaceAll('/','-')}-${width}.png`),fullPage:true});
   expect(errors).toEqual([]);
  });

@@ -102,7 +102,8 @@ html[data-site-renewal] .page-heading{margin:20px 0 48px;padding-bottom:30px;bor
 html[data-site-renewal] .page-heading h1{font-size:clamp(28px,3.8vw,44px);line-height:1.7;max-width:22em;margin-bottom:20px}
 html[data-site-renewal] .page-heading .lede{max-width:46em;font-size:15px;line-height:2;color:#596352}
 html[data-site-renewal] .breadcrumb{font-size:12px;line-height:1.8;margin-bottom:22px}
-html[data-site-renewal] .encyclopedia-tools{gap:20px;padding-block:0 24px}
+html[data-site-renewal] .encyclopedia-tools{grid-template-columns:minmax(0,1fr);gap:20px;padding-block:0 24px}
+html[data-site-renewal] .encyclopedia-tools>*{min-width:0;max-width:100%}
 html[data-site-renewal] .search-field input{font-size:16px;min-height:46px;border:1px solid var(--renewal-line);background:#fffdf8;border-radius:3px}
 html[data-site-renewal] .filter-chips{gap:8px}
 html[data-site-renewal] .chip{min-height:44px;border:1px solid var(--renewal-line);border-radius:3px;padding:9px 14px;background:transparent;color:var(--renewal-ink)}
