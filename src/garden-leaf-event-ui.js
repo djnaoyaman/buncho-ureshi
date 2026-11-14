@@ -31,11 +31,12 @@ export function renderLeafGift(w,{base='/buncho-ureshi/'}={}){
  else if(complete)body=scene(s,base)+`<p>${leafGiftNarrative(s,{thanks:true})}</p><p>はっぱの しおりが、おもいでに なったよ。ふたりに また あったら、いつもの おはなしも してみてね。</p><p class="leaf-gift-note">おれいの ${s.entry.goldAward} Gold と、にわの なかよし +2 は いちどだけ。にっきにも のこしたよ。</p><button type="button" data-leaf-display="${!s.entry.displayed}" aria-pressed="${s.entry.displayed}">${s.entry.displayed?'しおりを しまう':'しおりを にわに かざる'}</button>`;
  return `<details name="garden-story" class="leaf-gift" data-garden-details="leaf-gift" data-leaf-world="${esc(w.worldId)}" data-leaf-revision="${w.revision}"><summary aria-label="落ち葉のおくりものをひらく" title="落ち葉のおくりもの">${leafArt()}</summary><div class="leaf-gift-content"><header class="garden-story-header"><h3 class="garden-story-title">${title}</h3><button type="button" class="garden-story-close" data-garden-story-close aria-label="落ち葉のおくりものを閉じる"><span aria-hidden="true">×</span><span>とじる</span></button></header>${body}</div></details>`;
 }
-export function renderLeafKeepsake(w){
+const bookmarkArt=(base)=>`<img class="leaf-bookmark-object" src="${esc(base)}game-art/keepsakes/pressed-leaf.webp" alt="" draggable="false" decoding="async">`;
+export function renderLeafKeepsake(w,{base='/buncho-ureshi/'}={}){
  const e=w.leafEvent?.entry;
- return LEAF_EVENT_ENABLED&&e?.displayed&&e?.gardenId===w.encounters.garden.id?`<div class="leaf-gift-keepsake" aria-label="おもいでの はっぱの しおり">${leafArt()}<span>おもいでの しおり</span></div>`:'';
+ return LEAF_EVENT_ENABLED&&e?.displayed&&e?.gardenId===w.encounters.garden.id?`<div class="leaf-gift-keepsake" data-garden-bookmark hidden role="img" aria-label="おもいでの はっぱの しおり"><span class="leaf-bookmark-stand" aria-hidden="true"></span>${bookmarkArt(base)}</div>`:'';
 }
-export function renderLeafDiary(w){
+export function renderLeafDiary(w,{base='/buncho-ureshi/'}={}){
  const s=leafEventStatus(w);if(!s.entry)return '';
- return `<section class="leaf-gift leaf-gift-diary"><h3>${title}</h3><button type="button" data-leaf-go-garden="${esc(s.entry.gardenId)}" data-leaf-world="${esc(w.worldId)}">この おはなしの にわへ</button><ol>${s.entry.diary.map(d=>`<li>${d.kind==='found'?'はっぱを みつけた ともだち。どうしようか、ゆっくり かんがえよう。':leafGiftNarrative(s,{thanks:d.kind==='thanks'})}</li>`).join('')}</ol>${s.phase==='complete'?`<div class="leaf-gift-diary-keepsake">${leafArt()}<p>はっぱの しおり<br>あのときの やさしさを、ずっと。</p></div>`:''}</section>`;
+ return `<section class="leaf-gift leaf-gift-diary"><h3>${title}</h3><button type="button" data-leaf-go-garden="${esc(s.entry.gardenId)}" data-leaf-world="${esc(w.worldId)}">この おはなしの にわへ</button><ol>${s.entry.diary.map(d=>`<li>${d.kind==='found'?'はっぱを みつけた ともだち。どうしようか、ゆっくり かんがえよう。':leafGiftNarrative(s,{thanks:d.kind==='thanks'})}</li>`).join('')}</ol>${s.phase==='complete'?`<div class="leaf-gift-diary-keepsake">${bookmarkArt(base)}<p>はっぱの しおり<br>あのときの やさしさを、ずっと。</p></div>`:''}</section>`;
 }
