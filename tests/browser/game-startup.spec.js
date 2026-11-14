@@ -58,7 +58,10 @@ test('no JavaScript still explains how to open the game; site stays readable', a
   const page = await context.newPage();
   await page.goto(new URL('game/', baseURL).href);
   await checkPending(page);
-  await expect(page.locator('.game-startup')).toContainText('JavaScriptを有効にするとあそべます');
+  // Assert the rendered noscript child directly: Playwright's aggregate text
+  // matcher deliberately skips NOSCRIPT elements.
+  await expect(page.locator('.game-startup noscript p')).toBeVisible();
+  await expect(page.locator('.game-startup noscript p')).toHaveText('JavaScriptを有効にするとあそべます。');
   await page.goto(new URL('encyclopedia/', baseURL).href);
   await expect(page.locator('.site-header')).toBeVisible();
   await context.close();
