@@ -8,9 +8,9 @@ async function noOverflow(page){
  expect(size.page,JSON.stringify(size)).toBeLessThanOrEqual(size.screen+1);
 }
 async function decodedImages(page,root){
- for(const img of await page.locator(`${root} img`).all()){
+ for(const img of await page.locator(`${root} img, ${root} svg image`).all()){
   await img.scrollIntoViewIfNeeded();
-  expect(await img.evaluate(async i=>{await i.decode();return i.naturalWidth>0&&i.naturalHeight>0;})).toBe(true);
+  expect(await img.evaluate(async i=>{const image=i.tagName.toLowerCase()==='image'?Object.assign(new Image(),{src:i.getAttribute('href')}):i;await image.decode();return image.naturalWidth>0&&image.naturalHeight>0;})).toBe(true);
  }
 }
 for(const width of [320,390,768,1440])test(`editorial encyclopedia photographs and six chapters at ${width}`,async({page},info)=>{
