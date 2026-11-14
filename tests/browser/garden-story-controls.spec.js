@@ -13,7 +13,7 @@ for(const size of [{width:320,height:568},{width:375,height:667}])test(`event ic
   window.eventBefore=JSON.stringify(w);window.eventWorld=w;
   window.eventPanel=mountEncounterPanel(document.querySelector('#event-test'),{getWorld:()=>w,initialMode:'garden',transact:async fn=>fn(w)});
  });
- const boxes=await page.locator('.finch-garden > details[name="garden-story"] > summary').evaluateAll(ns=>ns.map(n=>{const r=n.getBoundingClientRect();return {y:r.y,b:r.bottom}}));expect(boxes).toHaveLength(2);expect(boxes[0].b).toBeLessThanOrEqual(boxes[1].y);
+ const boxes=await page.locator('.finch-garden > details[name="garden-story"] > summary').evaluateAll(ns=>ns.map(n=>{const r=n.getBoundingClientRect();return {x:r.x,y:r.y,r:r.right,b:r.bottom}}));expect(boxes).toHaveLength(2);expect(Math.abs(boxes[0].y-boxes[1].y)).toBeLessThan(1);expect(boxes[0].r).toBeLessThanOrEqual(boxes[1].x);
  for(const name of ['leaf-gift','expedition']){
   const card=page.locator(`[data-garden-details="${name}"]`),summary=card.locator(':scope > summary');
   await expect(summary).toBeVisible();await expect(summary).toHaveText('');

@@ -1,7 +1,9 @@
 {
-  "base": "fe7f5398b5be5bba49dbd5085ca9a7701b44bca0",
+  "base": "cc35d995ef81fc1ff5059cd09d8eb978d529706b",
   "tests": [
+    "tests/browser/garden-event-position.spec.js",
+    "tests/browser/garden-story-controls.spec.js",
     "tests/browser/scene-mode-icons.spec.js"
   ],
-  "reason": "承認済みの虫めがね/手サンプルを同一切替ボタンに適用。既存操作と読み上げ名をNodeで保持検査。320/375pxの実ゲームのおうち/庭で52pxタップ領域・文字なしSVG・状態切替・フォーカスをChrome/WebKit限定検査する。"
+  "reason": "承認された庭イベント入口の右上・ジョグ下横並び。旧下部操作と採用済みアイコンを保持、320/375と横画面のタップ・開閉・保存を確認。"
 }

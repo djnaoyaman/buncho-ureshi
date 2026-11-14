@@ -1983,3 +1983,36 @@ body[data-world="buncho"][data-scene-controls]:has(.finch-garden) .game-scene-co
 body[data-world="buncho"][data-scene-controls="closed"] .game-scene-controls-toggle[aria-expanded="false"] {background:#f8e0d4;}
 body[data-world="buncho"][data-scene-controls] .game-scene-controls-toggle[hidden] {display:none;}
 .game-scene-mode-icon {display:block;width:32px;height:32px;margin:auto;pointer-events:none;}
+/* Keep the two story tokens just below the jog, away from the garden floor.
+   The jog and tokens share measurements so responsive/safe-area offsets agree. */
+body[data-world="buncho"] .game-encounter-host .finch-garden {
+ --garden-jog-top:calc(62px + env(safe-area-inset-top,0px));
+ --garden-jog-height:62px;
+ --garden-story-gap:12px;
+ --garden-story-right:max(12px,env(safe-area-inset-right,0px));
+}
+body[data-world="buncho"] .game-encounter-host .finch-garden > .finch-garden-selector-wrap {
+ top:var(--garden-jog-top);
+}
+body[data-world="buncho"] .game-encounter-host .finch-garden > .finch-garden-selector-wrap .finch-garden-selector[data-garden-jog] {
+ height:var(--garden-jog-height); min-height:var(--garden-jog-height);
+}
+body[data-world="buncho"] .game-encounter-host .finch-garden > .leaf-gift:not(.leaf-gift-diary):not([open]) {
+ box-sizing:border-box; top:calc(var(--garden-jog-top) + var(--garden-jog-height) + var(--garden-story-gap));
+ bottom:auto; left:auto; right:calc(var(--garden-story-right) + 62px);
+ width:52px; height:52px;
+}
+body[data-world="buncho"] .game-encounter-host .finch-garden > .expedition-gift:not(.leaf-gift-diary):not([open]) {
+ right:var(--garden-story-right);
+}
+/* Closed story tokens are chrome too; looking at birds must really clear the scene. */
+body[data-world="buncho"][data-scene-controls="closed"] .game-encounter-host .finch-garden > .leaf-gift:not(.leaf-gift-diary):not([open]) {
+ display:none;
+}
+@media(max-height:400px) {
+ body[data-world="buncho"] .game-encounter-host .finch-garden {
+  --garden-jog-top:calc(54px + env(safe-area-inset-top,0px));
+  --garden-jog-height:52px;
+  --garden-story-gap:8px;
+ }
+}
