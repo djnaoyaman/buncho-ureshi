@@ -1,9 +1,10 @@
 {
-  "base": "435d36d81b557e8acb3db7d17acc40a6bff89415",
+  "base": "89a01bdb0ccdb54cf28f4309972358b6697bb07d",
   "tests": [
     "tests/browser/site-renewal.spec.js",
     "tests/browser/game-install.spec.js",
-    "tests/browser/game-startup.spec.js"
+    "tests/browser/game-startup.spec.js",
+    "tests/browser/renewal-stage2.spec.js"
   ],
-  "reason": "非ゲーム刷新第1回。専用JS/CSSによるトップと共通案内。320〜1440の画像・メニュー・横溢れ、ゲーム往復/保存保持をChrome/WebKitで検査。既存ゲームHTMLと共有資産553件はハッシュ完全一致をNodeゲートで必須化。"
+  "reason": "非ゲーム刷新第2回。図鑑/記事/羽色/からだ/観察室の写真と余白・明朝・細線を統一。320/390/768/1440描画、検索・分類・お気に入り・部位・観察保存を検査。第1回/game起動/実保存往復と553資産完全一致も継続。"
 }
