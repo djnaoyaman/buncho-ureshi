@@ -8,7 +8,7 @@ html[data-site-renewal] .omochi-room p {line-height:1.9}
 html[data-site-renewal] .omochi-opening {position:relative;padding:22px 48px 28px 0;border-top:1px solid var(--omochi-rule)}
 html[data-site-renewal] .omochi-kicker {font-size:11px;letter-spacing:.13em;margin:0 0 10px;color:#616c58}
 html[data-site-renewal] .omochi-opening h1 {font-size:clamp(34px,4.8vw,60px);line-height:1.4;margin:0}
-html[data-site-renewal] .omochi-room-name {position:absolute;right:0;top:25px;writing-mode:vertical-rl;text-orientation:upright;white-space:nowrap;inline-size:max-content;letter-spacing:.22em;border-block:1px solid var(--omochi-rule);padding:15px 0;font-family:"Yu Mincho","Noto Serif CJK JP",serif;font-size:15px;margin:0}
+html[data-site-renewal] .omochi-room-name {position:absolute;right:0;top:25px;width:24px;text-align:center;letter-spacing:0;border-inline:1px solid var(--omochi-rule);padding:15px 0;font-family:"Yu Mincho","Noto Serif CJK JP",serif;font-size:15px;margin:0}
 html[data-site-renewal] .omochi-cover {margin:0}
 html[data-site-renewal] .omochi-cover>img {display:block;width:100%;height:auto;max-height:none;object-fit:contain;background:#e8dfcf;border-radius:0}
 html[data-site-renewal] .omochi-room figcaption {font-size:11px;letter-spacing:.03em;line-height:1.7;margin-top:8px}
@@ -86,3 +86,6 @@ html[data-site-renewal] .omochi-next a {display:inline-flex;align-items:center;m
 
 html[data-site-renewal] .omochi-look h2 span {white-space:nowrap}
 @media(max-width:350px){html[data-site-renewal] .omochi-look h2 {font-size:21px;letter-spacing:.02em}}
+
+html[data-site-renewal] .omochi-name-stack {display:grid;gap:.2em}
+html[data-site-renewal] .omochi-name-stack>span {display:block;line-height:1.1}

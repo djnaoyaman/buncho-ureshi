@@ -5,7 +5,7 @@ export function renderOmochi({url,cssVersion='',interactive=true}) {
   <header class="omochi-opening">
    <p class="omochi-kicker">OMOCHI / OBSERVATION ROOM</p>
    <h1 id="omochi-title">この一羽を、<br>もっと知りたい。</h1>
-   <p class="omochi-room-name">おもち観察室</p>
+   <p class="omochi-room-name"><span class="sr-only">おもち観察室</span><span class="omochi-name-stack" aria-hidden="true"><span>お</span><span>も</span><span>ち</span><span>観</span><span>察</span><span>室</span></span></p>
   </header>
   <figure class="omochi-cover omochi-real-portrait">
    <img src="${url('omochi/omochi-original.jpeg')}" alt="指にとまる白文鳥のおもち本人" width="925" height="1536" fetchpriority="high">
