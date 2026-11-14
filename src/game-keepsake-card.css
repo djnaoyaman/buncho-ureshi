@@ -1,5 +1,5 @@
 /* Collectible illustrated paper, not a status icon. All participants are saved IDs. */
-body[data-world="buncho"] .finch-garden .expedition-discovery,.expedition-diary .expedition-discovery{background:none;border:0;padding:0}
+body[data-world="buncho"] .finch-garden .expedition-gift .expedition-discovery,.expedition-diary .expedition-discovery{background:none;border:0;padding:0}
 .expedition-keepsake{margin:18px auto 12px;display:flex;justify-content:center}
 .expedition-keepsake>.expedition-keepsake-art{position:relative;display:block;isolation:isolate;width:min(100%,380px);max-width:100%;aspect-ratio:1;flex:0 1 380px;container-type:inline-size;overflow:hidden;border-radius:5%;filter:drop-shadow(0 5px 7px #654a2a20)}
 .keepsake-paper{display:block;width:100%;height:100%;object-fit:contain}
