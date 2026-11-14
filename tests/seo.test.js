@@ -52,7 +52,8 @@ test('article body, deeper explanations, source links and dates are visible stat
       assert.ok(content,article.id);
       assert.ok(content.textContent.includes(textOf(d,article.body)),article.id+' body');
       assert.ok(content.textContent.includes(textOf(d,article.deep)),article.id+' deep');
-      assert.ok(content.textContent.includes(article.checkedAt),article.id+' date');
+      if(article.id==='omochi')assert.equal(content.querySelector('#sources'),null,'personal introduction omits editorial source metadata');
+      else assert.ok(content.textContent.includes(article.checkedAt),article.id+' date');
       for(const source of article.sources){
         assert.ok(content.textContent.includes(source.title),article.id+' source title');
         if(source.url)assert.ok([...content.querySelectorAll('a')].some(a=>a.getAttribute('href')===source.url),article.id+' source URL');

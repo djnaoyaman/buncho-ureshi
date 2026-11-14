@@ -52,7 +52,7 @@ function videoBlock() {
 }
 
 
-  return `<nav class="breadcrumb" aria-label="現在の場所"><a href="${url("encyclopedia/")}">図鑑</a><span aria-hidden="true">/</span>${esc(a.category)}</nav>${heading(esc(a.category), esc(a.title))}<div class="article-actions"><button id="favorite" aria-pressed="${favorites.includes(a.id)}">${favorites.includes(a.id) ? "♥ お気に入り" : "♡ お気に入りにする"}</button><button id="speak">解説をきく</button><button id="stop-speak">読み上げをとめる</button></div><nav class="article-toc" aria-label="この記事の目次"><a href="#first">まず見る</a><a href="#basic">基本を知る</a><a href="#deep">もっと調べる</a><a href="#sources">出典</a></nav><article class="article-body"><section id="first"><p class="eyebrow">01　まず見る</p><p class="article-summary">${a.summary}</p>${a.photos?.length ? `<figure class="article-hero">${image(a.photos[0], "", true)}<figcaption>${esc(photos.find((p) => p.id === a.photos[0])?.alt || "")}</figcaption></figure>` : `${birdSvg()}<p class="quiet">${birdPhotoCredit()}</p>`}</section>${["voice", "courtship"].includes(a.id) ? videoBlock() : ""}<section id="basic"><p class="eyebrow">02　基本を知る</p><h2>しくみを見てみよう</h2><div class="prose">${paragraphs(a.body)}</div></section><section id="deep"><p class="eyebrow">03　もっと調べる</p><h2>もう一歩、その先へ。</h2><div class="prose">${paragraphs(a.deep)}</div>${a.terms?.length ? `<dl class="glossary">${a.terms.map((t) => `<div><dt><ruby>${esc(t.term)}<rt>${esc(t.reading)}</rt></ruby></dt><dd>${esc(t.meaning)}</dd></div>`).join("")}</dl>` : ""}</section>${
+  const html = `<nav class="breadcrumb" aria-label="現在の場所"><a href="${url("encyclopedia/")}">図鑑</a><span aria-hidden="true">/</span>${esc(a.category)}</nav>${heading(esc(a.category), esc(a.title))}<div class="article-actions"><button id="favorite" aria-pressed="${favorites.includes(a.id)}">${favorites.includes(a.id) ? "♥ お気に入り" : "♡ お気に入りにする"}</button><button id="speak">解説をきく</button><button id="stop-speak">読み上げをとめる</button></div><nav class="article-toc" aria-label="この記事の目次"><a href="#first">まず見る</a><a href="#basic">基本を知る</a><a href="#deep">もっと調べる</a><a href="#sources">出典</a></nav><article class="article-body"><section id="first"><p class="eyebrow">01　まず見る</p><p class="article-summary">${a.summary}</p>${a.photos?.length ? `<figure class="article-hero">${image(a.photos[0], "", true)}<figcaption>${esc(photos.find((p) => p.id === a.photos[0])?.alt || "")}</figcaption></figure>` : `${birdSvg()}<p class="quiet">${birdPhotoCredit()}</p>`}</section>${["voice", "courtship"].includes(a.id) ? videoBlock() : ""}<section id="basic"><p class="eyebrow">02　基本を知る</p><h2>しくみを見てみよう</h2><div class="prose">${paragraphs(a.body)}</div></section><section id="deep"><p class="eyebrow">03　もっと調べる</p><h2>もう一歩、その先へ。</h2><div class="prose">${paragraphs(a.deep)}</div>${a.terms?.length ? `<dl class="glossary">${a.terms.map((t) => `<div><dt><ruby>${esc(t.term)}<rt>${esc(t.reading)}</rt></ruby></dt><dd>${esc(t.meaning)}</dd></div>`).join("")}</dl>` : ""}</section>${
     a.photos?.length > 1
       ? `<div class="photo-row">${a.photos
           .slice(1)
@@ -71,4 +71,13 @@ function videoBlock() {
       (x) => `<a href="${url(`encyclopedia/${x.id}/`)}">${esc(x.title)} →</a>`,
     )
     .join("")}</div></article>`;
+  // A personal introduction is not a research article. Do not display empty
+  // editorial scaffolding or internal production notes to readers.
+  if(a.id==='omochi')return html
+    .replace(/<a href="#deep">.*?<\/a>/,'')
+    .replace(/<a href="#sources">.*?<\/a>/,'')
+    .replace(/<section id="deep">[\s\S]*?<\/section>/,'')
+    .replace(/<details id="sources"[\s\S]*?<\/details>/,'')
+    .replace('<h2>しくみを見てみよう</h2>','<h2>おもちのこと</h2>');
+  return html;
 }
