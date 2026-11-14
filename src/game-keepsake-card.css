@@ -1,15 +1,15 @@
 /* Collectible illustrated paper, not a status icon. All participants are saved IDs. */
-.expedition-gift .expedition-discovery,.expedition-diary .expedition-discovery{background:none;border:0;padding:0}
+body[data-world="buncho"] .finch-garden .expedition-discovery,.expedition-diary .expedition-discovery{background:none;border:0;padding:0}
 .expedition-keepsake{margin:18px auto 12px;display:flex;justify-content:center}
 .expedition-keepsake>.expedition-keepsake-art{position:relative;display:block;isolation:isolate;width:min(100%,380px);max-width:100%;aspect-ratio:1;flex:0 1 380px;container-type:inline-size;overflow:hidden;border-radius:5%;filter:drop-shadow(0 5px 7px #654a2a20)}
 .keepsake-paper{display:block;width:100%;height:100%;object-fit:contain}
 .keepsake-scene{position:absolute;inset:0;overflow:hidden;border-radius:8%;pointer-events:none}
-.keepsake-bird{position:absolute;left:13%;top:14%;width:32%;height:39%;z-index:1;transform-origin:50% 94%;filter:drop-shadow(0 3px 2px #493c2f2d)}
+.keepsake-bird{position:absolute;left:13%;top:6%;width:32%;height:39%;z-index:1;transform-origin:50% 94%;filter:drop-shadow(0 3px 2px #493c2f2d)}
 .keepsake-bird-1{left:55%;transform:scaleX(-1)}
 .keepsake-bird>img:not(.keepsake-reflection){width:100%;height:100%;object-fit:contain;display:block}
 .keepsake-reflection{position:absolute;left:0;top:103%;width:100%;height:67%;object-fit:fill;transform:scaleY(-1);opacity:.23;filter:blur(.6px);mask-image:linear-gradient(to top,#0008,transparent 90%)}
-[data-keepsake-place=grove] .keepsake-bird{top:12%;width:30%;height:37%}
-[data-keepsake-place=flower] .keepsake-bird{top:14%;width:31%;height:38%}
+[data-keepsake-place=grove] .keepsake-bird{top:7%;width:30%;height:37%}
+[data-keepsake-place=flower] .keepsake-bird{top:8%;width:31%;height:38%}
 /* Gentle still poses distinguish the 6 existing discoveries in each landscape. */
 [data-keepsake-pose=conversation] .keepsake-bird-0{transform:rotate(3deg)}
 [data-keepsake-pose=conversation] .keepsake-bird-1{transform:scaleX(-1) rotate(3deg)}
@@ -21,7 +21,7 @@
 [data-keepsake-pose=wonder] .keepsake-bird-1{transform:scaleX(-1) rotate(7deg)}
 .keepsake-lettering{position:absolute;left:17%;right:17%;top:78%;height:14%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;text-align:center;color:#40522c;font-family:"Noto Serif JP","Yu Mincho",serif;line-height:1.35}
 .keepsake-title{font-weight:700;font-size:clamp(14px,5cqw,21px);text-wrap:balance}
-.keepsake-signature{font-size:clamp(10px,3.1cqw,13px);letter-spacing:.025em}
+.keepsake-signature{font-size:clamp(11px,3.1cqw,13px);letter-spacing:.025em;overflow-wrap:anywhere}
 .expedition-diary .expedition-keepsake{margin-block:18px}
-@media(max-width:360px){.expedition-gift .expedition-discovery,.expedition-diary .expedition-discovery{padding:0}.expedition-keepsake>.expedition-keepsake-art{width:100%}.keepsake-lettering{left:16%;right:16%;gap:2px}.keepsake-title{font-size:4.6cqw}.keepsake-signature{font-size:3.1cqw}}
+@media(max-width:360px){.expedition-gift .expedition-discovery,.expedition-diary .expedition-discovery{padding:0}.expedition-keepsake>.expedition-keepsake-art{width:100%}.keepsake-lettering{left:16%;right:16%;gap:2px}.keepsake-title{font-size:clamp(13px,4.6cqw,17px)}.keepsake-signature{font-size:11px}}
 @media(prefers-reduced-motion:reduce){.expedition-keepsake-art *{animation:none;transition:none}}

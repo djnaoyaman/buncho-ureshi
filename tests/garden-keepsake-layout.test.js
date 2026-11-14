@@ -39,3 +39,17 @@ test('375px portrait keeps all gardens visible beside a crowded left bird lane w
   assert.equal(p.source.y,bookmarkPlacement(garden.id).y,'same surveyed contact row, not floating higher');
  }
 });
+
+test('844x390 landscape keeps a cropped portrait garden souvenir on the existing terrain-contact row',()=>{
+ const width=844,height=390;
+ for(const garden of GARDENS){
+  const obstacles=[{left:0,right:width,top:0,bottom:100},{left:0,right:width,top:height-60,bottom:height},{left:105,right:width,top:100,bottom:height-60}];
+  const p=planGardenBookmark({gardenId:garden.id,width,height,obstacles});
+  assert.ok(p,`${garden.id}: visible landscape ground candidate`);
+  assert.equal(p.mode,'standing');assert.ok(p.rect.top>=108&&p.rect.bottom<=height-68);
+  assert.ok(p.rect.right+8<=105);
+  const survey=bookmarkPlacement(garden.id),g=gardenStageGeometry(garden.id,width,height);
+  const sourceAnchor=(g.friends[g.selectedIndex].y-g.offsetY)/g.drawHeight;
+  assert.ok([survey.y,survey.y+.04,survey.y+.08,sourceAnchor].some(y=>Math.abs(y-p.source.y)<1e-9));
+ }
+});

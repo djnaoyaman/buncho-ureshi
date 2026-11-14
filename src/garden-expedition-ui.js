@@ -40,7 +40,7 @@ function trailConversation(e){
 /** Art is a pure projection of the original participants; no save/reward changes. */
 export function expeditionKeepsakeArt(e,base='/buncho-ureshi/'){
  const path=['brook','grove','flower'].includes(e.path)?e.path:'grove';
- const name=expeditionDiscovery(e)[0];
+ const name=expeditionDiscovery(e)[0],artTitle=name.replace(/(?:の)? スケッチ$|カード$/,'').trim();
  const actors=(e.actorIds||[]).map(bird).filter(Boolean);
  const pair=e.discovery.slice(path.length+1);
  const pose={'chat-chat':'conversation','chat-play':'rhythm','chat-watch':'discovery','play-play':'play','play-watch':'wonder','watch-watch':'quiet'}[pair]||'quiet';
@@ -49,7 +49,7 @@ export function expeditionKeepsakeArt(e,base='/buncho-ureshi/'){
   const src=`${esc(base)}game-art/${color}.webp`;
   return `<span class="keepsake-bird keepsake-bird-${i}" data-keepsake-actor="${esc(b.id)}" data-keepsake-color="${color}"><img src="${src}" alt="" width="1160" height="1359" loading="lazy" draggable="false">${path==='brook'?`<img class="keepsake-reflection" src="${src}" alt="" width="1160" height="1359" loading="lazy" draggable="false">`:''}</span>`;
  }).join('');
- return `<div class="expedition-keepsake-art" data-expedition-art="${esc(e.discovery)}" data-keepsake-place="${path}" data-keepsake-pose="${pose}" role="img" aria-label="${esc(name)}の え${actors.length?'。'+actors.map(b=>esc(b.name)).join(' と '):''}"><img class="keepsake-paper" src="${esc(base)}game-art/keepsakes/${path}.webp" width="960" height="960" alt="" loading="lazy" draggable="false"><span class="keepsake-scene">${portraits}</span><span class="keepsake-lettering"><span class="keepsake-title">${esc(name)}</span><span class="keepsake-signature">${actors.map(b=>esc(b.name)).join(' と ')}${actors.length?' の おもいで':'ふたりの おもいで'}</span></span></div>`;
+ return `<div class="expedition-keepsake-art" data-expedition-art="${esc(e.discovery)}" data-keepsake-place="${path}" data-keepsake-pose="${pose}" role="img" aria-label="${esc(name)}の え${actors.length?'。'+actors.map(b=>esc(b.name)).join(' と '):''}"><img class="keepsake-paper" src="${esc(base)}game-art/keepsakes/${path}.webp" width="960" height="960" alt="" loading="lazy" draggable="false"><span class="keepsake-scene">${portraits}</span><span class="keepsake-lettering"><span class="keepsake-title">${esc(artTitle)}</span><span class="keepsake-signature">${actors.map(b=>esc(b.name)).join(' と ')}${actors.length?' の おもいで':'ふたりの おもいで'}</span></span></div>`;
 }
 const discoveryLabel=e=>esc(expeditionDiscovery(e)[0]);
 const result=(e,base)=>`<div class="expedition-discovery"><div class="expedition-keepsake">${expeditionKeepsakeArt(e,base)}</div><p><strong>ふたりの はっけん：${discoveryLabel(e)}</strong><br>${esc(expeditionDiscovery(e)[1])}</p></div>`;

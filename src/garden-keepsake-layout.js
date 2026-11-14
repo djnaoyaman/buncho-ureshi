@@ -20,7 +20,12 @@ export function planGardenBookmark({gardenId,width,height,obstacles=[]}){
  // Preserve the surveyed ground row when birds occupy the usual 12% lane.
  // The last candidate has exactly 8px breathing room from the visible edge.
  const leftLanes=[sourceX(width*.12),sourceX(width*.08),sourceX(8+w/2)];
- for(const y of [p.y,p.y+.04,p.y+.08])for(const x of [p.x,...leftLanes]){
+ // Wide crops may remove the surveyed distant ground entirely. The existing
+ // bird-foot anchor is an art-authored terrain contact point, not an arbitrary
+ // screen height. Use that ground row only as a landscape fallback.
+ const terrainY=(g.friends[g.selectedIndex].y-g.offsetY)/g.drawHeight;
+ const rows=[p.y,p.y+.04,p.y+.08,...(width>=height?[terrainY]:[])];
+ for(const y of rows)for(const x of [p.x,...leftLanes]){
   if(x<.04||x>.30||y>.82)continue;const a=attempt('standing',x,y);if(a)return a;
  }
  return null;
