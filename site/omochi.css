@@ -1,0 +1,82 @@
+/* Every rule belongs to the real observation room, including SPA visits. */
+html[data-site-renewal] body:not([data-world]) #main.page-content:has(.omochi-room),
+html[data-site-renewal] #main.page-content:has(.omochi-room) {max-width:1120px;padding:12px 40px 56px}
+html[data-site-renewal] #main>.page-content:has(.omochi-room) {max-width:1120px;margin:auto;padding:12px 40px 56px}
+html[data-site-renewal] .omochi-room {--omochi-coral:#a94e3c;--omochi-rule:#b9bbae;color:#27382e}
+html[data-site-renewal] .omochi-room :is(h1,h2,h3) {font-family:"Hiragino Mincho ProN","Yu Mincho","Noto Serif CJK JP",serif;font-weight:500;letter-spacing:.04em}
+html[data-site-renewal] .omochi-room p {line-height:1.9}
+html[data-site-renewal] .omochi-opening {position:relative;padding:22px 48px 28px 0;border-top:1px solid var(--omochi-rule)}
+html[data-site-renewal] .omochi-kicker {font-size:11px;letter-spacing:.13em;margin:0 0 10px;color:#616c58}
+html[data-site-renewal] .omochi-opening h1 {font-size:clamp(34px,4.8vw,60px);line-height:1.4;margin:0}
+html[data-site-renewal] .omochi-room-name {position:absolute;right:0;top:25px;writing-mode:vertical-rl;letter-spacing:.22em;border-block:1px solid var(--omochi-rule);padding:15px 0;font-family:"Yu Mincho",serif;font-size:15px;margin:0}
+html[data-site-renewal] .omochi-cover {margin:0}
+html[data-site-renewal] .omochi-cover>img {display:block;width:100%;height:auto;max-height:850px;object-fit:contain;background:#e8dfcf;border-radius:0}
+html[data-site-renewal] .omochi-room figcaption {font-size:11px;letter-spacing:.03em;line-height:1.7;margin-top:8px}
+html[data-site-renewal] .omochi-pages {max-width:720px;margin:36px auto 0}
+html[data-site-renewal] .omochi-number {color:var(--omochi-coral);font-size:13px;letter-spacing:.12em;margin:0 0 7px}
+html[data-site-renewal] .omochi-number span {margin-left:8px}
+html[data-site-renewal] .omochi-room h2 {font-size:clamp(25px,3.2vw,36px);line-height:1.5;margin:0 0 12px}
+html[data-site-renewal] .omochi-look {display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.8fr);align-items:start;gap:32px;padding-bottom:28px;border-bottom:1px solid var(--omochi-rule)}
+html[data-site-renewal] .omochi-look p:not(.omochi-number) {font-size:14px;margin:8px 0 0;max-width:23em}
+html[data-site-renewal] .omochi-detail {margin:0}
+html[data-site-renewal] .omochi-detail>div {aspect-ratio:1.35;overflow:hidden;position:relative}
+html[data-site-renewal] .omochi-detail img {position:absolute;width:120%;height:auto;max-width:none;left:-10%;bottom:-14%;border-radius:0}
+html[data-site-renewal] .omochi-detail figcaption {text-align:right}
+html[data-site-renewal] .omochi-about {padding:28px 0 32px}
+html[data-site-renewal] .omochi-about dl {display:grid;grid-template-columns:1fr 1fr;border-block:1px solid var(--omochi-rule);margin:16px 0 12px;padding:12px 0}
+html[data-site-renewal] .omochi-about dl>div {text-align:center}
+html[data-site-renewal] .omochi-about dl>div+div {border-left:1px solid var(--omochi-rule)}
+html[data-site-renewal] .omochi-about dt {font-size:11px;color:#596452;margin-bottom:2px}
+html[data-site-renewal] .omochi-about dd {font:24px/1.5 "Yu Mincho",serif;margin:0}
+html[data-site-renewal] .omochi-about p:not(.omochi-number) {font-size:13px;margin:10px 0 0}
+html[data-site-renewal] .omochi-about .omochi-context {color:#596452;padding-top:8px}
+html[data-site-renewal] .omochi-notebook {background:#eceee2;border:0;border-radius:0;padding:30px;margin:0;max-width:none;box-shadow:none}
+html[data-site-renewal] .omochi-notebook .omochi-note-intro {font-size:13px;margin:0 0 22px}
+html[data-site-renewal] .omochi-notebook #observation-form {display:grid;grid-template-columns:minmax(0,1fr);gap:18px;margin:0}
+html[data-site-renewal] .omochi-notebook #observation-form label {display:grid;gap:6px;min-width:0;font-size:13px}
+html[data-site-renewal] .omochi-notebook :is(input,textarea) {display:block;width:100%;min-width:0;max-width:100%;box-sizing:border-box;border:1px solid #969e8d;border-radius:2px;background:#fcfbf7;color:#27382e;padding:12px;font:16px/1.7 sans-serif;min-height:48px}
+html[data-site-renewal] .omochi-notebook input {max-width:240px}
+html[data-site-renewal] .omochi-notebook textarea {resize:vertical;min-height:110px}
+html[data-site-renewal] .omochi-notebook #observation-form .button {justify-self:end;background:transparent;color:var(--omochi-coral);border:0;border-bottom:1px solid currentColor;border-radius:0;box-shadow:none;padding:8px 0;min-height:48px;font-size:15px;letter-spacing:.04em;white-space:normal}
+html[data-site-renewal] .omochi-notebook .button span {margin-left:12px}
+html[data-site-renewal] .omochi-private {font-size:12px;margin:18px 0 0}
+html[data-site-renewal] .omochi-records-title {font-size:20px;border-top:1px solid #c6cbba;margin:26px 0 0;padding-top:20px}
+html[data-site-renewal] .omochi-notebook .observation {padding:18px 0;border-bottom:1px solid #c6cbba;overflow-wrap:anywhere}
+html[data-site-renewal] .omochi-notebook .observation .eyebrow {font-size:11px;letter-spacing:.02em}
+html[data-site-renewal] .omochi-notebook .observation p:not(.eyebrow) {font-size:15px;white-space:pre-wrap}
+html[data-site-renewal] .omochi-notebook .observation button {border:0;border-bottom:1px solid #8b9582;border-radius:0;background:transparent;min-height:44px;padding:8px 0;font-size:12px;color:#465641}
+html[data-site-renewal] .omochi-notebook .empty-note {font-size:13px;margin-bottom:0}
+html[data-site-renewal] .omochi-seeds {margin-top:44px;padding:24px 0;border-top:1px solid var(--omochi-rule)}
+html[data-site-renewal] .omochi-seeds h2 {font-size:24px}
+html[data-site-renewal] .omochi-seeds ul {padding-left:1.2em;font-size:14px;line-height:2}
+html[data-site-renewal] .omochi-seeds li {margin-bottom:10px}
+html[data-site-renewal] .omochi-seeds>p:last-child {font-size:12px;color:#596452}
+@media(min-width:800px){
+ html[data-site-renewal] .omochi-room {display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);column-gap:56px;align-items:start}
+ html[data-site-renewal] .omochi-opening {grid-column:1/-1}
+ html[data-site-renewal] .omochi-cover {position:sticky;top:24px}
+ html[data-site-renewal] .omochi-pages {margin:0;max-width:none}
+ html[data-site-renewal] .omochi-look {gap:20px}
+ html[data-site-renewal] .omochi-room h2 {font-size:28px}
+}
+@media(max-width:700px){
+ html[data-site-renewal] #main.page-content:has(.omochi-room),html[data-site-renewal] body:not([data-world]) #main.page-content:has(.omochi-room),html[data-site-renewal] #main>.page-content:has(.omochi-room) {padding:4px 18px 32px}
+ html[data-site-renewal] .omochi-opening {padding:14px 32px 18px}
+ html[data-site-renewal] .omochi-opening {padding-left:0}
+ html[data-site-renewal] .omochi-opening h1 {font-size:clamp(29px,8.4vw,42px);letter-spacing:.025em}
+ html[data-site-renewal] .omochi-kicker {font-size:9px;letter-spacing:.08em}
+ html[data-site-renewal] .omochi-room-name {right:-5px;top:15px;font-size:12px;padding:12px 0}
+ html[data-site-renewal] .omochi-cover {margin-left:-18px;margin-right:12px}
+ html[data-site-renewal] .omochi-cover>img {max-height:none}
+ html[data-site-renewal] .omochi-cover figcaption {padding-left:18px;font-size:10px}
+ html[data-site-renewal] .omochi-pages {margin-top:26px}
+ html[data-site-renewal] .omochi-look {gap:16px;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);padding-bottom:24px}
+ html[data-site-renewal] .omochi-look h2 {font-size:clamp(23px,6.2vw,30px)}
+ html[data-site-renewal] .omochi-look p:not(.omochi-number) {font-size:13px}
+ html[data-site-renewal] .omochi-detail {padding-top:4px}
+ html[data-site-renewal] .omochi-detail figcaption {font-size:9px;letter-spacing:0}
+ html[data-site-renewal] .omochi-about {padding:22px 0 26px}
+ html[data-site-renewal] .omochi-notebook {margin-inline:-8px;padding:22px 16px}
+ html[data-site-renewal] .omochi-notebook h2 {font-size:clamp(22px,6.1vw,29px);letter-spacing:0}
+}
+@media(prefers-reduced-motion:reduce){html[data-site-renewal] .omochi-cover {position:static}}
