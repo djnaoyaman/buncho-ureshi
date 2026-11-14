@@ -88,3 +88,10 @@ html[data-site-renewal] .art-challenge h2 {font-size:32px;line-height:1.8}
  html[data-site-renewal] .footer-top {gap:24px}
 }
 @media(prefers-reduced-motion:reduce){html[data-site-renewal] .renewal-door-art img{transition:none}}
+/* Preserve deliberate two-line headings and the quiet palette at phone widths. */
+html[data-site-renewal] .renewal-hero h1{white-space:nowrap;text-wrap:initial}
+html[data-site-renewal] .renewal-hero-copy{min-width:0}
+html[data-site-renewal] .renewal-door-art img[src*="bird-05"],html[data-site-renewal] .renewal-game-bird{border-radius:50%}
+html[data-site-renewal] .morph-discovery-link{background:#efefe5;border:1px solid var(--renewal-line);border-radius:3px;box-shadow:none;color:var(--renewal-ink)}
+html[data-site-renewal] .art-challenge h2{text-wrap:initial;word-break:keep-all;font-size:clamp(22px,5.9vw,32px)}
+@media(max-width:700px){html[data-site-renewal] .renewal-hero-copy{width:86%;max-width:none}html[data-site-renewal] .renewal-hero h1{font-size:clamp(23px,6.5vw,36px)}}
