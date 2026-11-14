@@ -1,9 +1,9 @@
 {
-  "base": "cc35d995ef81fc1ff5059cd09d8eb978d529706b",
+  "base": "54e33a49ad498f528abe250334543c3984ec65e4",
   "tests": [
-    "tests/browser/garden-event-position.spec.js",
-    "tests/browser/garden-story-controls.spec.js",
-    "tests/browser/scene-mode-icons.spec.js"
+    "tests/browser/home-compact-layout.spec.js",
+    "tests/browser/scene-mode-icons.spec.js",
+    "tests/browser/garden-event-position.spec.js"
   ],
-  "reason": "承認された庭イベント入口の右上・ジョグ下横並び。旧下部操作と採用済みアイコンを保持、320/375と横画面のタップ・開閉・保存を確認。"
+  "reason": "承認済みおうち画面の透過・幅統一・おそうじ数値と4操作への整理。既存お開きはメニューに保持。320/375/390pxで選択・掃除・メニュー・庭の最新版保持をChrome/WebKitで確認。"
 }
