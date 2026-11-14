@@ -1969,3 +1969,17 @@ body[data-world="buncho"] .finch-garden .expedition-discovery { border-radius:28
  body[data-world="buncho"] .game-encounter-host .finch-garden > .leaf-gift:not(.leaf-gift-diary):not([open]) { bottom:120px; }
  body[data-world="buncho"] .game-encounter-host .finch-garden > .expedition-gift:not(.leaf-gift-diary):not([open]) { bottom:62px; }
 }
+
+/* Approved watch/touch pictograms: one stable, bird-safe button, no visible words. */
+body[data-world="buncho"]:has(.finch-garden) { --garden-toggle-width:52px; }
+body[data-world="buncho"][data-scene-controls] .game-scene-controls-toggle,
+body[data-world="buncho"][data-scene-controls]:not(:has(.finch-garden)) .game-scene-controls-toggle,
+body[data-world="buncho"][data-scene-controls]:has(.finch-garden) .game-scene-controls-toggle {
+ box-sizing:border-box;
+ width:52px;min-width:52px;height:52px;min-height:52px;padding:8px;
+ border:1.5px solid #dfceb6;border-radius:13px;color:#625142;
+ background:#faefd3;box-shadow:0 2px 5px #604b3d12;
+}
+body[data-world="buncho"][data-scene-controls="closed"] .game-scene-controls-toggle[aria-expanded="false"] {background:#f8e0d4;}
+body[data-world="buncho"][data-scene-controls] .game-scene-controls-toggle[hidden] {display:none;}
+.game-scene-mode-icon {display:block;width:32px;height:32px;margin:auto;pointer-events:none;}
