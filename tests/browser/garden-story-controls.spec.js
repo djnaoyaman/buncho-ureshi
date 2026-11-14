@@ -7,8 +7,8 @@ for(const size of [{width:320,height:568},{width:375,height:667}])test(`event ic
   const {expeditionToken}=await import('/buncho-ureshi/src/garden-expedition.js');
   const {mountEncounterPanel}=await import('/buncho-ureshi/src/encounter-controller.js');
   document.head.insertAdjacentHTML('beforeend','<link rel="stylesheet" href="/buncho-ureshi/src/game.css">');
-  document.body.innerHTML='<main class="game-world"><div id="event-test" style="position:fixed;inset:0"></div></main>';
-  document.body.dataset.sceneControls='open';
+  document.body.innerHTML='<main class="game-world"><div id="event-test" class="game-encounter-host" style="position:fixed;inset:0"></div></main>';
+  document.body.dataset.world='buncho';document.body.dataset.sceneControls='open';
   const w=createWorld(Date.UTC(2026,10,14,8));encounterSystem.selectGarden(w,'komorebi',expeditionToken(w));
   window.eventBefore=JSON.stringify(w);window.eventWorld=w;
   window.eventPanel=mountEncounterPanel(document.querySelector('#event-test'),{getWorld:()=>w,initialMode:'garden',transact:async fn=>fn(w)});
