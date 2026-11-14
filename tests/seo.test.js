@@ -68,8 +68,17 @@ test('main-route static introductions are specific, linked and truthful before J
     const {window,document:d}=await page(route);
     try {
       const content=d.querySelector('[data-static-content]');
-      assert.ok(content.textContent.includes(terms[route]),route);
-      assert.ok(content.querySelectorAll('a').length>=3,route);
+      if (route === 'game/') {
+        // Game entry now intentionally presents its startup shell, not a site
+        // introduction. Keep the static title and a usable recovery action.
+        assert.equal(content.querySelector('h1 img').alt,'おもちの文鳥ぐらし');
+        assert.ok(content.querySelector('[role=status]').textContent.includes('ひらいています'));
+        assert.equal(content.querySelector('.game-startup a').getAttribute('href'),base+'game/');
+        assert.ok(content.querySelector('noscript').textContent.includes('JavaScript'));
+      } else {
+        assert.ok(content.textContent.includes(terms[route]),route);
+        assert.ok(content.querySelectorAll('a').length>=3,route);
+      }
       assert.equal(content.closest('noscript'),null,route);
     }finally{await window.happyDOM.close();}
   }
