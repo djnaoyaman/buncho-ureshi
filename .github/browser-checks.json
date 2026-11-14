@@ -1,5 +1,5 @@
 {
-  "base": "c1b7160ef846b45482b5b144afd415fd4fdfbba4",
+  "base": "435d36d81b557e8acb3db7d17acc40a6bff89415",
   "tests": [
     "tests/browser/site-renewal.spec.js",
     "tests/browser/game-install.spec.js",
