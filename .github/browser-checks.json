@@ -1,5 +1,1 @@
-{
- "base":"5939e7513ede7000b41f1f5ef965fed68adff2cd",
- "tests":["tests/browser/site-renewal.spec.js","tests/browser/game-install.spec.js","tests/browser/game-startup.spec.js","tests/browser/renewal-stage2.spec.js","tests/browser/renewal-stage3.spec.js","tests/browser/studio.spec.js"],
- "reason":"第3回非ゲーム刷新。接続修正 #203 を保持。320/390/768/1440、検索・クイズ・工房保存/PNG/undo/再読込、ゲーム起動と保存互換を両エンジンで再検査。"
-}
+{"base":"cffcb388266f80840a7686d55820c4b223ef592b","tests":["tests/browser/encyclopedia-editorial.spec.js","tests/browser/renewal-stage2.spec.js","tests/browser/site-renewal.spec.js","tests/browser/site-search.spec.js","tests/browser/game-startup.spec.js"],"reason":"図鑑一覧と全37記事のみの写真編集改修。4幅の構図・全記事本文出典・検索/分類/保存/履歴をChrome/WebKitで確認。トップ・検索・ゲーム起動も非退行検査。ゲーム/shared554出力のハッシュ一致を必須とする。"}
