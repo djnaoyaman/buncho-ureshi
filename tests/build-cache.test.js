@@ -18,6 +18,7 @@ test('every reachable built module import carries a cache version and resolves',
     }
   }
   await visit(path.resolve('dist/src/app.js'));
+  await visit(path.resolve('dist/src/site-app.js'));
   assert.ok(visited.size > 40, 'walk the actual site and game dependency graph');
 });
 

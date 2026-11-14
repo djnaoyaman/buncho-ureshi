@@ -49,7 +49,8 @@ test('all page shells request the exact current logo-fit stylesheet version',asy
 
 test('brand module URL changes propagate from HTML through app and studio imports',async()=>{
   const version=hash(await read('src/visuals.js')).slice(0,12);
-  assert.ok((await read('dist/index.html')).toString().includes(`src="src/app.js?v=${version}-`));
-  for(const file of ['app.js','studio.js','metadata.js'])assert.ok((await read('dist/src/'+file)).toString().includes(`./visuals.js?v=${version}`),file);
+  assert.ok((await read('dist/index.html')).toString().includes(`src="src/site-app.js?v=${version}-`));
+  assert.ok((await read('dist/game/index.html')).toString().includes(`src="src/app.js?v=${version}-`));
+  for(const file of ['app.js','site-app.js','studio.js','metadata.js'])assert.ok((await read('dist/src/'+file)).toString().includes(`./visuals.js?v=${version}`),file);
   assert.ok((await read('dist/src/app.js')).toString().includes(`./studio.js?v=${version}`));
 });
