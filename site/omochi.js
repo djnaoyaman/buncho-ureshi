@@ -14,7 +14,7 @@ export function renderOmochi({url,cssVersion='',interactive=true}) {
   <div class="omochi-pages">
    <section class="omochi-look" aria-labelledby="omochi-look-title">
     <div><p class="omochi-number">01 <span>見つめる</span></p>
-     <h2 id="omochi-look-title">指をつかむ、<br>小さな足。</h2>
+     <h2 id="omochi-look-title"><span>指をつかむ、</span><br>小さな足。</h2>
      <p>写真の中で、どんなところに目がとまりますか。</p>
     </div>
     <figure class="omochi-detail"><div><img src="${url('omochi/omochi-original.jpeg')}" alt="同じ写真に写る、おもちの足と指をつかむ爪の部分拡大" width="925" height="1536" loading="lazy"></div><figcaption>同じ写真の部分拡大</figcaption></figure>

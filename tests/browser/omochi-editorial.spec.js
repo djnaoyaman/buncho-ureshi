@@ -14,6 +14,8 @@ for(const width of [320,375,390,768,1440])test(`real observation room at ${width
  await expect(page.getByText('白文鳥',{exact:true})).toBeVisible();await expect(page.getByText('女の子',{exact:true})).toBeVisible();
  await page.locator('.omochi-notebook').scrollIntoViewIfNeeded();
  const date=page.locator('input[name="date"]');expect((await date.boundingBox()).width).toBeLessThan(width);
+ await page.evaluate(()=>window.scrollTo({top:0,behavior:"instant"}));
+ await expect.poll(()=>page.evaluate(()=>scrollY)).toBe(0);
  await page.screenshot({path:testInfo.outputPath(`omochi-${width}.png`),fullPage:true});
 });
 test('legacy observations, date, addition, reload, deletion and navigation preserve saves',async({page})=>{
