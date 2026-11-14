@@ -137,3 +137,25 @@ for (const [id,label] of lifeMenuItems) test(`approved life menu ${id} preserves
   assert.deepEqual(await rawWorld(f.indexedDB),before,'decorative icons and navigation never mutate the saved world');
 });
 
+
+
+test('home closing remains reachable separately from the ten navigation destinations', async t => {
+  const f=await fixture(t);await f.mount();
+  const before=await rawWorld(f.indexedDB);
+  f.root.querySelector('[data-game-open-menu]').click();
+  const menu=f.root.querySelector('.game-secondary-menu');
+  assert.equal(menu.open,true);
+  const closeHome=menu.querySelector('.game-menu-home-actions > [data-home-close]');
+  assert.ok(closeHome);assert.equal(closeHome.type,'button');
+  assert.equal(closeHome.textContent.trim(),'今日はお開き');
+  assert.equal(closeHome.disabled,false);
+  assert.match(closeHome.title,/家族や思い出は残ります/);
+  assert.equal(closeHome.closest('.game-tabs'),null);
+  assert.equal(f.root.querySelectorAll('[data-home-close]').length,1);
+  assert.equal(f.root.querySelector('.game-bottom-dock [data-home-close]'),null);
+  assert.deepEqual([...menu.querySelectorAll('.game-tabs > button')].map(b=>[b.dataset.gamePanel,b.textContent.trim()]),lifeMenuItems);
+  f.root.querySelector('[data-game-close-menu]').click();
+  assert.equal(menu.open,false);
+  assert.equal(f.window.document.activeElement,f.root.querySelector('[data-game-open-menu]'));
+  assert.deepEqual(await rawWorld(f.indexedDB),before);
+});

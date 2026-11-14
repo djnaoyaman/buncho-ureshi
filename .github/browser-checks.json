@@ -1,5 +1,5 @@
 {
-  "base": "222a073c512a6921a18f0e1b6aa340a380baa801",
+  "base": "54e33a49ad498f528abe250334543c3984ec65e4",
   "tests": [
     "tests/browser/home-compact-layout.spec.js",
     "tests/browser/scene-mode-icons.spec.js",

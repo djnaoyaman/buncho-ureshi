@@ -456,7 +456,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     return `<button type="button" id="game-home-close" data-home-close title="来客全員を見送り、翌日0時（日本時間）まで自動来訪をお休みします。家族や思い出は残ります。" ${closing?'disabled':''}>今日はお開き</button>`;
   }
   function secondaryMenu(){
-    return `<details class="game-secondary-menu" data-game-details="navigation"><summary id="game-nav-summary">文鳥のこと・家族・記録</summary><div class="game-menu-heading"><strong>暮らしのメニュー</strong><button class="game-menu-close" data-game-close-menu aria-label="メニューをとじる">とじる</button></div>${householdIncome()}${renderNextEnjoyments(world)}<nav class="game-tabs" aria-label="文鳥ぐらしのメニュー">${LIFE_MENU_ITEMS.map(([id,label])=>`<button id="game-menu-${id}" data-game-panel="${id}" aria-pressed="${panel===id}">${renderLifeMenuIcon(id)}<span>${label}</span></button>`).join('')}${homeCloseControl()}</nav></details>`;
+    return `<details class="game-secondary-menu" data-game-details="navigation"><summary id="game-nav-summary">文鳥のこと・家族・記録</summary><div class="game-menu-heading"><strong>暮らしのメニュー</strong><button class="game-menu-close" data-game-close-menu aria-label="メニューをとじる">とじる</button></div>${householdIncome()}${renderNextEnjoyments(world)}<nav class="game-tabs" aria-label="文鳥ぐらしのメニュー">${LIFE_MENU_ITEMS.map(([id,label])=>`<button id="game-menu-${id}" data-game-panel="${id}" aria-pressed="${panel===id}">${renderLifeMenuIcon(id)}<span>${label}</span></button>`).join('')}</nav><div class="game-menu-home-actions">${homeCloseControl()}</div></details>`;
   }
   function lifeNotice(){
     const sick=allBirds(world).filter(b=>b.home==='resident'&&lifeStatus(world,b)?.condition),dead=world.lifecycle.birds.filter(s=>s.death);
