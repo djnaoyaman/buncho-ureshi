@@ -168,7 +168,7 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
   }
   function endRub(event){if(!rub||event.pointerId!==rub.pointerId)return;rub.active=false;if(!petFlight&&rub.pending)flushPet();else if(!petFlight){rub=null;render();}}
   function keyRub(event){
-    if(event.key==='Escape'&&mode==='garden'){const story=event.target.closest('details[name=garden-story][open]');if(story&&root.contains(story)){event.preventDefault();story.open=false;story.querySelector('summary')?.focus({preventScroll:true});return;}}
+    if(event.key==='Escape'&&mode==='garden'){const story=event.target.closest('details[name=garden-story][open]');if(story&&root.contains(story)){event.preventDefault();event.stopPropagation();story.open=false;story.querySelector('summary')?.focus({preventScroll:true});return;}}
     const target=event.target.closest('[data-encounter-rub]');
     if(!target||!root.contains(target)||!['Enter',' '].includes(event.key)||event.repeat||busy)return;
     event.preventDefault();const w=getWorld(),key=JSON.stringify([w.worldId,mode,target.dataset.encounterRub]);
