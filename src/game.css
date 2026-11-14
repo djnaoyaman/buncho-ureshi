@@ -1,3 +1,5 @@
+@import url('./game-keepsake-card.css');
+@import url('./game-keepsake-bookmark.css');
 /* The natural scene stays bounded while the full family remains accessible. */
 /* The garden shares the site's ivory / sage palette; every rule is scoped. */
 .game-app{--game-ink:#244738;--game-sage:#718b68;--game-paper:#fcf8ed;--game-rose:#cf817a;color:var(--game-ink);max-width:1200px;margin:0 auto;padding-bottom:3rem;font-family:inherit}

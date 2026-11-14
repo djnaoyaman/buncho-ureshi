@@ -1,0 +1,11 @@
+/* The souvenir is a physical garden object, not a notification label. */
+.finch-garden-stage .leaf-gift-keepsake{position:absolute;inset:auto;display:block;padding:0;background:none;border:0;border-radius:0;box-shadow:none;pointer-events:none;z-index:1;line-height:0}
+.finch-garden-stage .leaf-gift-keepsake[hidden]{display:none!important}
+.finch-garden-stage:not([data-scene-state=ready]) .leaf-gift-keepsake{visibility:hidden}
+.leaf-gift-keepsake .leaf-bookmark-object{position:absolute;inset:auto;left:-55%;top:-6%;display:block;width:210%;height:113%;object-fit:fill;max-width:none;filter:drop-shadow(1px 2px 2px #3e352d35)}
+.leaf-gift-keepsake .leaf-bookmark-stand{display:none}
+.leaf-gift-keepsake[data-bookmark-mount=standing] .leaf-bookmark-stand{display:block;position:absolute;left:3%;right:3%;bottom:0;height:7%;border-radius:35% 35% 20% 20%;background:linear-gradient(0deg,#775035,#bc9263 55%,#e0c09b);box-shadow:0 2px 2px #332c3540}
+.leaf-gift-keepsake[data-bookmark-mount=standing] .leaf-bookmark-object{height:107%;top:-5%}
+.leaf-gift .leaf-gift-diary-keepsake{justify-content:center;gap:24px;padding:20px 12px;background:radial-gradient(ellipse,#f4e8c9aa,transparent 72%)}
+.leaf-gift .leaf-gift-diary-keepsake .leaf-bookmark-object{display:block;width:clamp(140px,40vw,180px);max-height:360px;object-fit:contain;filter:drop-shadow(2px 5px 4px #634a3025)}
+@media(prefers-reduced-motion:reduce){.leaf-gift-keepsake{animation:none;transition:none}}
