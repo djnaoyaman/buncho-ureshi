@@ -1,11 +1,33 @@
 import {test,expect} from '@playwright/test';
 // Candidate tests/browser/renewal-stage3.spec.js. Desktop browser viewport checks,
 // not iPhone hardware, native share-sheet, audio listening or PDF verification.
+// Playwright helper, call after ready selector and before screenshot height calculation.
+// Do not open closed details, start video/audio, or change game/storage state.
+async function settleReadingImages(page, expect) {
+  const images = page.locator('main img');
+  for (let i=0;i<await images.count();i++) {
+    const img=images.nth(i);
+    // isVisible checks layout, not viewport. It excludes closed details/hidden menus.
+    if (!await img.isVisible()) continue;
+    await img.scrollIntoViewIfNeeded();
+    await expect.poll(async()=>img.evaluate(i=>i.complete&&i.naturalWidth>0),
+      {timeout:15000,message:`reading image ${i} should load`}).toBe(true);
+    await img.evaluate(i=>i.decode());
+  }
+  await page.evaluate(()=>document.fonts.ready);
+  await page.evaluate(()=>scrollTo({top:0,behavior:'instant'}));
+  await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+}
+
 const routes=[['challenge/','.quiz-choices'],['studio/','[data-studio="canvas"]'],['help/','.help-layout'],['credits/','.credits-grid'],['?q=文鳥','#search-results-form'],['404.html','.page-heading']];
 for(const width of [320,390,768,1440])for(const [route,ready] of routes)test(`renewal activity ${route} ${width}`,async({page},info)=>{
- await page.setViewportSize({width,height:844});const errors=[];page.on('pageerror',error=>errors.push(error.message));await page.goto(route);await expect(page.locator(ready)).toBeVisible();
- await page.evaluate(()=>document.fonts.ready);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
- await page.screenshot({path:info.outputPath(`activity-${route.replace(/[^a-z0-9]/gi,'-')}-${width}.png`),fullPage:true,scale:"css"});expect(errors).toEqual([]);
+ test.setTimeout(90000);await page.setViewportSize({width,height:844});const errors=[];page.on('pageerror',error=>errors.push(error.message));await page.goto(route);await expect(page.locator(ready)).toBeVisible();
+ await settleReadingImages(page,expect);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+ const label=`activity-${route.replace(/[^a-z0-9]/gi,'-')}-${width}`;
+ const height=await page.evaluate(()=>document.documentElement.scrollHeight);
+ if(height<=15000){await page.screenshot({path:info.outputPath(`${label}.png`),fullPage:true,scale:'css'});}
+ else{for(let y=0;y<height;y+=744){await page.evaluate(y=>scrollTo(0,y),y);await page.screenshot({path:info.outputPath(`${label}-${y}.png`),fullPage:false,scale:'css'});}}
+ expect(errors).toEqual([]);
 });
 test('site search links, empty results and browser back remain usable',async({page})=>{
  await page.goto('');await page.locator('#menu-toggle').click();await page.locator('#global-query').fill('アート');await page.locator('#site-search button').click();

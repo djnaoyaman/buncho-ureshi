@@ -246,3 +246,29 @@ html[data-site-renewal] .page-content>.button{min-height:44px;display:inline-fle
  html[data-site-renewal] .site-search-form input{flex:1 1 170px;width:100%}
  html[data-site-renewal] .search-empty{padding:18px}
 }
+/* Append after stage 3. Isolated non-game chrome; no canvas geometry or palette changes. */
+html[data-site-renewal] #search-article-results .article-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:36px 28px}
+html[data-site-renewal] #search-article-results .article-card{min-width:0}
+html[data-site-renewal] #search-article-results .article-cover-frame{padding:0;background:transparent;border-radius:0;overflow:visible;margin-block:10px 18px}
+html[data-site-renewal] #search-article-results .article-cover-window{overflow:hidden;border-radius:0}
+html[data-site-renewal] #search-article-results .article-cover-frame img{display:block;width:100%;height:auto;aspect-ratio:var(--photo-source-ratio,4/3);object-fit:contain!important;border-radius:0}
+html[data-site-renewal] #search-article-results .article-cover-credit{margin:10px 0 16px;font-size:11px;line-height:1.7;color:var(--renewal-ink);opacity:.8}
+/* Remove only redundant spacing, retain every heading, instruction and audio control. */
+html[data-site-renewal] .studio-intro{margin-bottom:16px;padding-bottom:16px}
+html[data-site-renewal] .studio-intro h2{font-size:28px;margin:0 0 8px;line-height:1.5}
+html[data-site-renewal] .studio-intro p{margin-block:6px;line-height:1.7}
+html[data-site-renewal] .studio-music-intro{margin-block:16px;padding:18px;gap:16px}
+@media(max-width:900px){html[data-site-renewal] #search-article-results .article-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){
+ html[data-site-renewal] #search-article-results .article-grid{grid-template-columns:minmax(0,1fr);gap:30px}
+ html[data-site-renewal] .studio-intro{padding-bottom:12px;margin-bottom:12px}
+ html[data-site-renewal] .studio-intro h2{font-size:22px}
+ html[data-site-renewal] .studio-kicker{font-size:10px;letter-spacing:.12em}
+ html[data-site-renewal] .studio-music-intro{padding:14px;gap:10px;margin-block:12px}
+ html[data-site-renewal] .studio-music-intro h3{font-size:17px;line-height:1.6;margin:0 0 6px}
+ html[data-site-renewal] .studio-music-intro p{font-size:14px;line-height:1.7;margin-block:6px}
+ html[data-site-renewal] .studio-music-intro .studio-small{font-size:12px}
+ html[data-site-renewal] .studio-music-controls label{margin-block:6px}
+ html[data-site-renewal] .studio-music-controls .studio-edit-row{margin-block:8px;gap:8px}
+ html[data-site-renewal] .studio-music-controls button{min-height:44px;padding:8px}
+}

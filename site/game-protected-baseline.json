@@ -67,7 +67,7 @@
     "favicon.ico": "fd09310e1a90c36397d68c3d987c828c5d89f3cb35c2d188fd31f6eb6c5e7ddb",
     "favicon.png": "681457c9616c111ee5bd5a4b4ffcd1d1e323eb6cb5465feff310d3434fa819ef",
     "favicon.svg": "f81fc13dcbbe8948b251d81976bcba91752018e4eaf3cfcf3cda05c676ae8592",
-    "game/index.html": "796f6df005d18c0349caf404e2dd110cf94300a5ed0490e79c39e2ccac9fb7a8",
+    "game/index.html": "d4212b3bcb3ddcc2606b37ec6d83d4b85f0e17616c0cc2eec073667f7fad16de",
     "game-art/care-illustrations/chick.webp": "658aacbeac61d7524d9f7f476e32f45859e05f6cbc08c4cbc633eb2bd10a2528",
     "game-art/care-illustrations/cinnamon-adult.webp": "8936468f2c0fc5da46fe8dca443a6cbccd7c1f65a04a67f82aebebcf03fa4b9a",
     "game-art/care-illustrations/cinnamon-juvenile.webp": "a318128dda44b7b87e54bf1f23d92c93895b76ec47d100ea28df6efe68422fd0",
@@ -436,7 +436,7 @@
     "sitemap.xml": "f31934b2499be5c3df4ea52210fabde0b28e59282688d422b91e2f713b6946b9",
     "src/analytics-loader.js": "3dc6c6df29065c06c08c730d67366035eb4ec099be476fdbe5e95ee0ac628611",
     "src/analytics.js": "ab1548447a53e9914b462805de7384a2979ea7a0827631776feda01c2a94e163",
-    "src/app.js": "e2e408bf262bed1247a83bf64fefb63ba253cd6132340b71908b8399612ca1b8",
+    "src/app.js": "092ad87ae97ab4ea5171eba5b133907a8a77c5f991ccecb4e7eda5fcdb681c00",
     "src/away-reports.js": "a6be3b69c4d355b97e452534bcec01efc1e8f7282cf8b7e25c3351c508ecbc25",
     "src/away-session.js": "ddebd6680201cbe24ca637112564656e5eeff1adf908149ac694bae29ab4269f",
     "src/bird-names.js": "c5253c363f2f99cb95686f6a40b06c6b0eef986615d41606dd02855555986668",
@@ -468,7 +468,7 @@
     "src/diary-paper.css": "6b5f85997af46c983348d3cc78a199f48a740ab33bef42bad81d7c81bbf7586f",
     "src/diary-paper.js": "f26b3534f1dc9537d283fb5c7587900b7953c049e446c24c596c39ea7d41d7fc",
     "src/economy.js": "80fb0db05aee1d0e6d06924a40f72475f126ead324bae3a81a19c1954dcd5cf9",
-    "src/editorial-parallax.js": "78d6d5d32d2ea88a15fa95473ea75f27edc1cb52f3c3ab2b170c77773a1de0e2",
+    "src/editorial-parallax.js": "f42bbd06dfa8c8d1305eadcefe161acfe44d3759fdc2bb7873d2bab26ab9e37d",
     "src/editorial-photo-focus.js": "1580a99aab4973e1f9485c89af5cf6804388d8cbae0bc2bd8c1f1ec5510adc84",
     "src/encounter-body-art.js": "a8966d45d6be74aeb929bcfce202e11e7b7c57ae884b10be76e9b7224a1a3943",
     "src/encounter-controller.js": "577a71a08fd0eddab840b8b59a53aa4e142a5f917655d6cc46d3afb22ae891cb",
@@ -498,7 +498,7 @@
     "src/game-next-goals.js": "99d64c28c51b0665942b47fc6a9a8ca6e3aac4a404341fac0440eba0c43e23c2",
     "src/game-store.js": "12c36836bccd4b36a2549a1f771b51f559d6f1f3c1ba70c1c78bd90abaa322b2",
     "src/game.css": "8d53e493afceebae17510ddc8e28be2e41715d49192d98a033c39fa8003d356f",
-    "src/game.js": "bdfe9a06a5e6972358871fd58a344c2afe782ebbb69987dead95cdaebed22b2d",
+    "src/game.js": "50f36e19c3ccd665ac089ecf0c42fada0faab0887ec70f289db5c64e2dca48c6",
     "src/garden-about-booklet.css": "3cf04172004469db16db2eacc35356eaededcfc3b2467ab7d7efc7184e8cfa0a",
     "src/garden-about-booklet.js": "eee10f4ad2baf6f65ea3b8e40f8c51355fbd4208ffa22a024cf60e9189d134a8",
     "src/garden-bird-motion.js": "78c7e8049a01cb9830636afc9c64ad10807d74e9bda83f9c9e7a00b7eb003d52",
@@ -534,7 +534,7 @@
     "src/life-menu-icons.js": "2b2abb625cb5dfb4058fb9eeee39dbde36b1e3413cae6a830d4d5cdd5f02d11e",
     "src/memorial-designs.js": "24e25e662030818b877aa729eec7a5187f44d5c8339eadb04cb3b768f55eb0b7",
     "src/memorial.css": "7ebfc2a808ba12866ff242ddc99ce522716f95a23b30321e244c8efcc2acb9e5",
-    "src/metadata.js": "2092461635491ea1ec9f826e3bd5d011d20f40dddc4b5f49ceefd0fae561d70e",
+    "src/metadata.js": "dcd6e2c74d81211fb583c9d0fb35f09245dfa90b6dfc67164397283528ad49b6",
     "src/morph-ui.css": "5e64b7e128192af213206b1b123fb31da794a2ff555c8887d8f780f8719dc3a4",
     "src/morph-ui.js": "3bba66e8c12211b34878ffb1fe1366e153ad8734e2c183d2e35756950d116692",
     "src/owner-peek.js": "c87114157754e2359a039481d66662351c492dd04b1cc73d1bff8586ac0b3be5",
@@ -547,12 +547,24 @@
     "src/relationship-map.js": "becd6c0c32c4112967eefc34360df9dc0698c440fc51cf141aa05a8c0be30a33",
     "src/storage.js": "96bb67a0ab4af4954899f1a86c47cc31a39b2c6428a760ca4882740b1e856c66",
     "src/studio.css": "2d204aaeb49fc49320a7a8c9d5fa7aa58e8b01e62eb7b53ca97d05ce07bebf82",
-    "src/studio.js": "7854e3a615e97c9ff3afd68187fe92b673ec553ec763cc594e27d848f78368a3",
+    "src/studio.js": "567a8b94e60fff733ff3b95a8b94cf01f8a94b501a3cae003f9aa66871a47d59",
     "src/style.css": "bef0311721d26b5df514252957f16f1060455927aea7a605fe8bc40b07fe942e",
     "src/visuals.js": "1b96e53f2393e3d246841f2761374c7f369e78c9f0db2a33f108d95688d4c634",
     "src/world-birds.js": "9ae92d4c8108af757aafb3785d5747f6fe2249189c029e6786868ff3574b92cc",
     "studio-backgrounds/art-nouveau.png": "db32e49d59d834f3542d8a3cf4fa4d67cf661906a18ceac23fe8ee65b2b7d5c2",
     "studio-backgrounds/bauhaus.png": "aa11a662fb110f558ee245aaa483f0d91b14db5372d280cdff1892cf61e1b230",
-    "studio-backgrounds/rinpa.png": "5b0193b7730d5d7dc3ece661926437b06715b0076d3970e3d0881e1ee3b75a82"
+    "studio-backgrounds/rinpa.png": "5b0193b7730d5d7dc3ece661926437b06715b0076d3970e3d0881e1ee3b75a82",
+    "src/studio-transfer.js": "25eb37ab8acce90391d193edf2074865d2ee362898501c139c105f97c1a67348"
+  },
+  "authorizedConnectionFix": {
+    "reason": "User separately approved game-to-studio session handoff. Game HTML/app plus cache-query-only updates in four emitted modules; game logic and saves unchanged.",
+    "updatedFiles": [
+      "game/index.html",
+      "src/app.js",
+      "src/editorial-parallax.js",
+      "src/game.js",
+      "src/metadata.js",
+      "src/studio.js"
+    ]
   }
 }

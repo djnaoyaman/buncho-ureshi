@@ -11,6 +11,7 @@ import { SITE_NAME, esc, birdSvg, birdPhotoCredit, logoSvg, flourish } from "./v
 import { readLocal, writeLocal } from "./storage.js";
 import { mountGame, gameBirdSvg } from "./game.js";
 import { mountStudio } from "./studio.js";
+import { stageStudioTransfer, takeStudioTransfer } from "./studio-transfer.js?v=25eb37ab8acc";
 import { routeMetadata } from "./metadata.js";
 import { morphAtlas } from "./data/morphs.js";
 import { morphPhotos, newMorphPhotos } from "./data/morph-photos.js";
@@ -565,7 +566,7 @@ function render(route) {
       mountStudio(document.querySelector("#studio-root"), {
         photos: photos.map((p) => ({ ...p, src: photoUrl(p) })),
         birdSvg,
-        seed: studioSeed,
+        seed: studioSeed || (() => { try { return takeStudioTransfer(sessionStorage, BASE); } catch { return null; } })(),
       }) || (() => {});
     studioSeed = null;
   } else if (route === "game/") {
@@ -589,7 +590,13 @@ function render(route) {
             navigate(`encyclopedia/${a.id}/`);
           },
           goArt: (seed) => {
-            studioSeed = seed;
+            // A full document navigation is required to preserve install identity.
+            let transferred = false;
+            try { transferred = stageStudioTransfer(sessionStorage, BASE, seed); } catch {}
+            if (!transferred) {
+              announce("記念カードを渡せませんでした。ブラウザの保存設定を確認して、もう一度お試しください。");
+              return;
+            }
             navigate("studio/");
           },
         }),

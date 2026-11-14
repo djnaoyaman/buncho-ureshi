@@ -1,12 +1,5 @@
 {
-  "base": "03b59121282e64601077c91dc319f4b90d6f6171",
-  "tests": [
-    "tests/browser/site-renewal.spec.js",
-    "tests/browser/game-install.spec.js",
-    "tests/browser/game-startup.spec.js",
-    "tests/browser/renewal-stage2.spec.js",
-    "tests/browser/renewal-stage3.spec.js",
-    "tests/browser/studio.spec.js"
-  ],
-  "reason": "非ゲーム刷新第3回。クイズ・工房・ヘルプ・出典・検索・404を統一。320/390/768/1440、検索履歴、クイズ回答、工房保存PNG画素・ドラッグ・再読込、既存第1/2回・ゲーム起動/保存互換を継続。"
+ "base":"5939e7513ede7000b41f1f5ef965fed68adff2cd",
+ "tests":["tests/browser/site-renewal.spec.js","tests/browser/game-install.spec.js","tests/browser/game-startup.spec.js","tests/browser/renewal-stage2.spec.js","tests/browser/renewal-stage3.spec.js","tests/browser/studio.spec.js"],
+ "reason":"第3回非ゲーム刷新。接続修正 #203 を保持。320/390/768/1440、検索・クイズ・工房保存/PNG/undo/再読込、ゲーム起動と保存互換を両エンジンで再検査。"
 }
