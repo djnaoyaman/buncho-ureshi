@@ -1,0 +1,46 @@
+import {test,expect} from '@playwright/test';
+const legacy=[{date:'2026-10-18',note:'以前の観察。足を見た。'},{date:'2026-10-19',note:'<b>文字のまま残す</b>'}];
+for(const width of [320,375,390,768,1440])test(`real observation room at ${width}px`,async({page},testInfo)=>{
+ await page.setViewportSize({width,height:900});
+ await page.goto('omochi/');
+ await expect(page.locator('#omochi-title')).toHaveText('この一羽を、もっと知りたい。');
+ const photo=page.locator('.omochi-cover>img');await expect(photo).toBeVisible();
+ await expect.poll(()=>photo.evaluate(i=>i.complete&&i.naturalWidth===925)).toBe(true);
+ expect(await photo.evaluate(i=>getComputedStyle(i).borderRadius)).toBe('0px');
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+ const bounds=await photo.boundingBox();if(width<700)expect(bounds.width).toBeGreaterThan(width*.88);
+ await expect(page.locator('.omochi-detail img')).toHaveAttribute('src',await photo.getAttribute('src'));
+ await expect(page.getByText('同じ写真の部分拡大',{exact:true})).toBeVisible();
+ await expect(page.getByText('白文鳥',{exact:true})).toBeVisible();await expect(page.getByText('女の子',{exact:true})).toBeVisible();
+ await page.locator('.omochi-notebook').scrollIntoViewIfNeeded();
+ const date=page.locator('input[name="date"]');expect((await date.boundingBox()).width).toBeLessThan(width);
+ await page.evaluate(()=>window.scrollTo({top:0,behavior:"instant"}));
+ await expect.poll(()=>page.evaluate(()=>scrollY)).toBe(0);
+ await page.screenshot({path:testInfo.outputPath(`omochi-${width}.png`),fullPage:true});
+});
+test('legacy observations, date, addition, reload, deletion and navigation preserve saves',async({page})=>{
+ await page.goto('omochi/');
+ await page.evaluate(notes=>{localStorage.setItem('buncho-observations',JSON.stringify(notes));localStorage.setItem('omochi-unrelated-sentinel','keep');},legacy);
+ await page.reload();
+ await expect(page.locator('.observation')).toHaveCount(2);
+ await expect(page.locator('.observation').nth(1)).toContainText('<b>文字のまま残す</b>');
+ await expect(page.locator('.observation b')).toHaveCount(0);
+ await page.getByLabel('観察した日').fill('2026-11-13');
+ await page.getByLabel('見たこと・気になったこと').fill('指に足をかけていた。\nもう一度見たい。');
+ await page.getByRole('button',{name:'ノートに記録する'}).click();
+ await expect(page.locator('.observation')).toHaveCount(3);
+ await expect(page.locator('.observation').first()).toContainText('2026-11-13');
+ await page.reload();await expect(page.locator('.observation')).toHaveCount(3);
+ await page.locator('[data-delete-note="0"]').click();await page.reload();
+ await expect(page.locator('.observation')).toHaveCount(2);
+ expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('buncho-observations')))).toEqual(legacy);
+ expect(await page.evaluate(()=>localStorage.getItem('omochi-unrelated-sentinel'))).toBe('keep');
+ await page.locator('#brand').click();await expect(page.locator('.omochi-room')).toHaveCount(0);
+ await page.goBack();await expect(page.locator('.observation')).toHaveCount(2);
+});
+test('static room retains the real photo without exposing an inactive form',async({browser,baseURL})=>{
+ const context=await browser.newContext({javaScriptEnabled:false});const page=await context.newPage();
+ await page.goto(new URL('omochi/',baseURL).href);await expect(page.locator('#omochi-title')).toBeVisible();
+ await expect(page.locator('.omochi-cover>img')).toBeVisible();await expect(page.locator('#observation-form')).toHaveCount(0);
+ await context.close();
+});

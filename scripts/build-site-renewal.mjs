@@ -8,13 +8,14 @@ import {articles} from '../src/data/articles.js';
 import {quizzes} from '../src/data/quizzes.js';
 import {esc} from '../src/visuals.js';
 import {renderHome} from '../site/home.js';
+import {renderOmochi} from '../site/omochi.js';
 import {renderEncyclopedia,renderEncyclopediaChapters,renderArticleBase,renderEditorialArticle} from '../site/encyclopedia.js';
 const hash=b=>createHash('sha256').update(b).digest('hex');
 const baseline=JSON.parse(await readFile('site/game-protected-baseline.json','utf8'));
 async function assertGame(){for(const [path,expected]of Object.entries(baseline.files)){if(hash(await readFile('dist/'+path))!==expected)throw Error('Protected game/shared output changed: '+path);}}
 await assertGame();
 await mkdir('dist/site',{recursive:true});
-for(const file of ['home.js','renewal.css','hero.webp','feather.svg','brush.svg','encyclopedia.js','encyclopedia.css'])await cp('site/'+file,'dist/site/'+file);
+for(const file of ['home.js','renewal.css','hero.webp','feather.svg','brush.svg','encyclopedia.js','encyclopedia.css','omochi.js','omochi.css'])await cp('site/'+file,'dist/site/'+file);
 const assetVersions=Object.fromEntries(await Promise.all(['hero.webp','feather.svg','brush.svg'].map(async file=>[file,hash(await readFile('site/'+file)).slice(0,12)])));
 const versionAssets=html=>html.replace(/site\/(hero\.webp|feather\.svg|brush\.svg)(?![?\w])/g,(_,file)=>`site/${file}?v=${assetVersions[file]}`);
 const css=await readFile('site/renewal.css'),home=await readFile('site/home.js');
@@ -29,6 +30,9 @@ app=app.replace('view = encyclopedia();','view = renderEncyclopedia({articles,ph
 app=app.replace('view = article(a);','view = renderEditorialArticle(a,renderArticleBase(a,{articles,photos,url,esc,birdVideo,favorites}),{articles,photos,url,esc});');
 app=app.replace('filtered.map(articleCard).join("") ||', '(category === "all" && !q.trim() ? renderEncyclopediaChapters({articles,photos,url,esc}) : filtered.map(articleCard).join("")) ||');
 app=app.replace('document.querySelector("#article-grid").innerHTML =','document.querySelector("#article-grid").classList.toggle("article-grid", category !== "all" || !!q.trim());\n    document.querySelector("#article-grid").innerHTML =');
+const omochiVersion=hash((await readFile('site/omochi.js','utf8'))+(await readFile('site/omochi.css','utf8'))).slice(0,12);
+app=`import {renderOmochi} from "../site/omochi.js?v=${omochiVersion}";\n`+app;
+app=app.replace('view = omochi();',`view = renderOmochi({url,cssVersion:'${omochiVersion}'});`);
 await writeFile('dist/src/site-app.js',app);
 const legacyHomeVersion=hash(await readFile('dist/src/home.js')).slice(0,12);
 await writeFile('dist/site/home.js',versionAssets(home.toString().replace('../src/home.js',`../src/home.js?v=${legacyHomeVersion}`)));
@@ -38,12 +42,13 @@ const original=await readFile('dist/index.html','utf8');
 const atlas=original.match(/<section class="section art-atlas-section"[^>]*>([\s\S]*?)<\/section>/)?.[1]||'';
 for(const route of [...PAGE_CATALOG.map(p=>p[0]),'404.html'].filter(p=>p!=='game/')){
  const path='dist/'+(route.endsWith('.html')?route:route+'index.html');let html=await readFile(path,'utf8');
- html=html.replace('<html lang="ja"','<html data-site-renewal="1" lang="ja"').replace('</head>',`<link rel="stylesheet" href="site/renewal.css?v=${version}"><link rel="stylesheet" href="site/encyclopedia.css?v=${encyclopediaVersion}"></head>`).replace(/src="src\/app\.js\?([^\"]*)"/,(_,query)=>`src="src/site-app.js?${query}-${version}-${encyclopediaVersion}"`);
+ html=html.replace('<html lang="ja"','<html data-site-renewal="1" lang="ja"').replace('</head>',`<link rel="stylesheet" href="site/renewal.css?v=${version}"><link rel="stylesheet" href="site/encyclopedia.css?v=${encyclopediaVersion}"></head>`).replace(/src="src\/app\.js\?([^\"]*)"/,(_,query)=>`src="src/site-app.js?${query}-${version}-${encyclopediaVersion}-${omochiVersion}"`);
  if(route==='')html=html.replace(/(<div class="art-static-home" data-static-content>)[\s\S]*?(<\/div><noscript>)/,`$1${renderHome({photos,articles,quizzes,url,image,atlasDoor:()=>atlas,esc})}$2`);
  if(route==='encyclopedia/'){
   const editorial=renderEncyclopedia({articles,photos,url,esc}).replace('<div id="article-grid"></div>',`<div id="article-grid">${renderEncyclopediaChapters({articles,photos,url,esc})}</div>`);
   html=html.replace(/(<div class="page-content" data-static-content>)[\s\S]*?(<\/div><noscript>)/,`$1${editorial}$2`);
  }
+ if(route==='omochi/')html=html.replace(/(<div class="page-content" data-static-content>)[\s\S]*?(<\/div><noscript>)/,`$1${renderOmochi({url,cssVersion:omochiVersion,interactive:false})}$2`);
  const articleData=articles.find(a=>route===`encyclopedia/${a.id}/`);
  if(articleData){const ctx={articles,photos,url,esc,birdVideo};const editorial=renderEditorialArticle(articleData,renderArticleBase(articleData,ctx),ctx);html=html.replace(/(<div class="page-content" data-static-content>)[\s\S]*?(<\/div><noscript>)/,`$1${editorial}$2`);}
  await writeFile(path,versionAssets(html));
