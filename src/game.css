@@ -2000,7 +2000,7 @@ body[data-world="buncho"] .game-encounter-host .finch-garden > .finch-garden-sel
 body[data-world="buncho"] .game-encounter-host .finch-garden > .leaf-gift:not(.leaf-gift-diary):not([open]) {
  box-sizing:border-box; top:calc(var(--garden-jog-top) + var(--garden-jog-height) + var(--garden-story-gap));
  bottom:auto; left:auto; right:calc(var(--garden-story-right) + 62px);
- width:52px; height:52px; z-index:7;
+ width:52px; height:52px;
 }
 body[data-world="buncho"] .game-encounter-host .finch-garden > .expedition-gift:not(.leaf-gift-diary):not([open]) {
  right:var(--garden-story-right);
