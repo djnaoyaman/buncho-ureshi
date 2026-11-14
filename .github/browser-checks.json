@@ -1,5 +1,7 @@
 {
-  "base": "0cd551f55715f81e9491934a8d712d6e174643cc",
-  "tests": [],
-  "reason": "探検の保存済み分岐・旧v19互換・二重報酬・中断再開・完了画面・日記直通をNodeとHappy DOMの実コントローラで検査。既存描画とCSSを局所拡張し全Node・構文・buildを実施。iPhone実機の操作感は未検証。"
+  "base": "e5f3d4fc65bd6add7fc72f1a30b5ae34373791fc",
+  "tests": [
+    "tests/browser/garden-story-controls.spec.js"
+  ],
+  "reason": "落ち葉/探検の入口と開閉を変更。保存不変・Esc・フォーカスをNode/Happy DOMで検査し、320/375pxのアイコン寸法・開閉・閉じる表示をChrome/WebKitの限定検査で確認。ローカルChromiumは環境socket制約で起動できずCIで補完。Safari実機は未検証。"
 }
