@@ -1,6 +1,6 @@
 import {test,expect} from '@playwright/test';
 // Candidate for tests/browser/renewal-stage2.spec.js. Real built app, not mock DOM.
-const routes=[['encyclopedia/','#article-grid .article-card'],['encyclopedia/beak/','.article-body'],['encyclopedia/health/','.article-body'],['encyclopedia/voice/','.bird-video'],['colors/','.morph-intro'],['colors/white/','.morph-profile-title'],['body/','.body-diagram'],['omochi/','#observation-form']];
+const routes=[['encyclopedia/','.encyclopedia-editorial'],['encyclopedia/beak/','.article-body'],['encyclopedia/health/','.article-body'],['encyclopedia/voice/','.bird-video'],['colors/','.morph-intro'],['colors/white/','.morph-profile-title'],['body/','.body-diagram'],['omochi/','#observation-form']];
 for(const width of [320,390,768,1440])for(const [route,ready] of routes){
  test(`reading room ${route} ${width}`,async({page},info)=>{
   await page.setViewportSize({width,height:844});const errors=[];page.on('pageerror',error=>errors.push(error.message));
@@ -16,7 +16,7 @@ for(const width of [320,390,768,1440])for(const [route,ready] of routes){
  });
 }
 test('encyclopedia search, filters and article sources still work',async({page})=>{
- await page.goto('encyclopedia/');const cards=page.locator('#article-grid .article-card');await expect(cards.first()).toBeVisible();const total=await cards.count();expect(total).toBeGreaterThan(5);
+ await page.goto('encyclopedia/');const cards=page.locator('#article-grid .article-card');await expect(page.locator('.encyclopedia-editorial')).toBeVisible();const total=37;
  await page.locator('#article-search').fill('くちばし');await expect.poll(()=>cards.count()).toBeGreaterThan(0);await expect.poll(()=>cards.count()).toBeLessThan(total);
  await page.locator('#article-search').fill('zzzz-no-matching-bird');await expect(cards).toHaveCount(0);await expect(page.locator('#result-count')).toContainText('0');
  await page.locator('#article-search').fill('');await page.locator('[data-category="からだ探検"]').click();await expect(page.locator('[data-category="からだ探検"]')).toHaveClass(/active/);expect(await cards.count()).toBeLessThan(total);
