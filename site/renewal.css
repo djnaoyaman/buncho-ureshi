@@ -131,7 +131,7 @@ html[data-site-renewal] .morph-atlas h1{font-size:clamp(28px,3.8vw,44px);line-he
 html[data-site-renewal] .morph-intro{padding-bottom:30px;margin-bottom:36px;border-bottom:1px solid var(--renewal-line)}
 html[data-site-renewal] .morph-cards{gap:48px 36px}
 html[data-site-renewal] .morph-card-body{border-top:1px solid var(--renewal-line);padding-top:20px;margin-top:18px}
-html[data-site-renewal] .morph-image-wrap{background:#f0f0e7;border-radius:3px}
+html[data-site-renewal] .morph-image-wrap,html[data-site-renewal] .morph-card:nth-child(2n) .morph-image-wrap{background:#f0f0e7;border-radius:3px!important}
 html[data-site-renewal] .morph-notice{background:#f1f1e7;border-left:2px solid var(--renewal-gold);border-radius:0;padding:20px 24px}
 html[data-site-renewal] .morph-section{padding-block:44px}
 html[data-site-renewal] .morph-toc{border-color:var(--renewal-line);gap:10px 24px}

@@ -10,6 +10,7 @@ for(const width of [320,390,768,1440])for(const [route,ready] of routes){
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
   const image=page.locator('#main img').first();
   if(await image.count()){await image.scrollIntoViewIfNeeded();expect(await image.evaluate(async i=>{await i.decode();return i.naturalWidth>0;})).toBe(true);}
+  if(route==='colors/'){await expect(page.locator('.morph-image-wrap').first()).toHaveCSS('border-top-left-radius','3px');}
   await page.evaluate(()=>scrollTo(0,0));await page.screenshot({path:info.outputPath(`reading-${route.replaceAll('/','-')}-${width}.png`),fullPage:true});
   expect(errors).toEqual([]);
  });
