@@ -5,7 +5,7 @@ import {PAGE_CATALOG,routeMetadata} from '../src/metadata.js';
 import {spawn} from 'node:child_process';
 import {once} from 'node:events';
 import {Window} from 'happy-dom';
-import {articles} from '../src/data/articles.js';
+import {articles} from '../site/articles.js';
 import {SITE_NAME} from '../src/visuals.js';
 
 const origin='https://djnaoyaman.github.io',base='/buncho-ureshi/';
