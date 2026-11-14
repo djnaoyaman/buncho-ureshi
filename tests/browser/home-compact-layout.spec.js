@@ -1,7 +1,7 @@
 import {test,expect} from '@playwright/test';
 import {createWorld,createBird} from '../../src/engine.js';
 const NOW=Date.UTC(2026,10,14,8);
-for(const size of [{width:320,height:568},{width:375,height:667},{width:390,height:844}])test(`home compact aligned controls ${size.width}`,async({page},info)=>{
+for(const size of [{width:320,height:568},{width:375,height:667},{width:390,height:844},{width:900,height:700}])test(`home compact aligned controls ${size.width}`,async({page},info)=>{
  await page.setViewportSize(size);
  await page.addInitScript(now=>{Date.now=()=>now;localStorage.setItem('buncho.music.v1',JSON.stringify({enabled:false}));localStorage.setItem('buncho.care-sound-choice.v1',JSON.stringify({explicit:true,enabled:false}));},NOW);
  await page.goto('');const world=createWorld(NOW);world.paused=true;world.care.cleanliness=40;createBird(world,{home:'resident',name:'こはな'});
