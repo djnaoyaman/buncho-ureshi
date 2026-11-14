@@ -96,3 +96,86 @@ html[data-site-renewal] .morph-discovery-link{background:#efefe5;border:1px soli
 html[data-site-renewal] .art-challenge h2{text-wrap:initial;word-break:keep-all;font-size:clamp(22px,5.9vw,32px)}
 @media(max-width:700px){html[data-site-renewal] .renewal-hero-copy{width:86%;max-width:none}html[data-site-renewal] .renewal-hero h1{font-size:clamp(23px,6.5vw,36px)}}
 @media(max-width:700px){html[data-site-renewal] .brand{max-width:calc(100% - 96px)}html[data-site-renewal] .header-controls{flex:0 0 auto}html[data-site-renewal] #menu-toggle{min-width:76px;white-space:nowrap;padding:8px 4px;gap:6px}}
+/* Stage 2: reading rooms. Append after stage 1; never load in /game/. */
+html[data-site-renewal] .page-content{max-width:1240px;padding:32px 40px 64px;margin-inline:auto}
+html[data-site-renewal] .page-heading{margin:20px 0 48px;padding-bottom:30px;border-bottom:1px solid var(--renewal-line)}
+html[data-site-renewal] .page-heading h1{font-size:clamp(28px,3.8vw,44px);line-height:1.7;max-width:22em;margin-bottom:20px}
+html[data-site-renewal] .page-heading .lede{max-width:46em;font-size:15px;line-height:2;color:#596352}
+html[data-site-renewal] .breadcrumb{font-size:12px;line-height:1.8;margin-bottom:22px}
+html[data-site-renewal] .encyclopedia-tools{gap:20px;padding-block:0 24px}
+html[data-site-renewal] .search-field input{font-size:16px;min-height:46px;border:1px solid var(--renewal-line);background:#fffdf8;border-radius:3px}
+html[data-site-renewal] .filter-chips{gap:8px}
+html[data-site-renewal] .chip{min-height:44px;border:1px solid var(--renewal-line);border-radius:3px;padding:9px 14px;background:transparent;color:var(--renewal-ink)}
+html[data-site-renewal] .chip.active{background:#455b3d;color:#fff;border-color:#455b3d}
+html[data-site-renewal] .article-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:42px 30px;margin-block:28px 52px}
+html[data-site-renewal] .article-card{border-bottom:1px solid var(--renewal-line);padding-bottom:24px;background:transparent}
+html[data-site-renewal] .article-card>img{aspect-ratio:4/3;border-radius:3px;margin-bottom:22px}
+html[data-site-renewal] .article-card h3{font-size:21px;line-height:1.7;font-weight:500;letter-spacing:.06em}
+html[data-site-renewal] .article-card p{font-size:14px;line-height:1.95}
+html[data-site-renewal] .article-actions{gap:10px;flex-wrap:wrap}
+html[data-site-renewal] .article-actions button{min-height:44px;font-size:13px;border:1px solid var(--renewal-line);border-radius:3px;background:transparent;color:var(--renewal-ink)}
+html[data-site-renewal] .article-toc{gap:12px 24px;padding-block:18px;border-color:var(--renewal-line);flex-wrap:wrap}
+html[data-site-renewal] .article-toc a{display:inline-flex;align-items:center;min-height:44px}
+html[data-site-renewal] .article-body{max-width:800px;margin:44px auto}
+html[data-site-renewal] .article-body section{margin-block:52px}
+html[data-site-renewal] .article-summary{font-size:20px;font-weight:400;line-height:2}
+html[data-site-renewal] .article-hero img{max-height:760px;object-fit:contain;background:transparent;border-radius:3px}
+html[data-site-renewal] .article-body h2{font-size:27px;line-height:1.8}
+html[data-site-renewal] .article-body .prose{font-size:16px;line-height:2;max-width:46em}
+html[data-site-renewal] :is(.source-box,.glossary){background:transparent;border:1px solid var(--renewal-line);border-radius:3px;padding:24px}
+html[data-site-renewal] .article-body .mission{background:#f1f1e7;border:0;border-left:2px solid var(--renewal-gold);border-radius:0;padding:22px 24px}
+html[data-site-renewal] .related-links a{min-height:44px;border-color:var(--renewal-line)}
+html[data-site-renewal] .morph-atlas{--morph-ink:var(--renewal-ink);--morph-paper:var(--renewal-paper);--morph-line:var(--renewal-line)}
+html[data-site-renewal] .morph-atlas :is(h1,h2,h3){font-family:"Hiragino Mincho ProN","Yu Mincho",serif;font-weight:500;letter-spacing:.06em}
+html[data-site-renewal] .morph-atlas h1{font-size:clamp(28px,3.8vw,44px);line-height:1.7}
+html[data-site-renewal] .morph-intro{padding-bottom:30px;margin-bottom:36px;border-bottom:1px solid var(--renewal-line)}
+html[data-site-renewal] .morph-cards{gap:48px 36px}
+html[data-site-renewal] .morph-card-body{border-top:1px solid var(--renewal-line);padding-top:20px;margin-top:18px}
+html[data-site-renewal] .morph-image-wrap{background:#f0f0e7;border-radius:3px}
+html[data-site-renewal] .morph-notice{background:#f1f1e7;border-left:2px solid var(--renewal-gold);border-radius:0;padding:20px 24px}
+html[data-site-renewal] .morph-section{padding-block:44px}
+html[data-site-renewal] .morph-toc{border-color:var(--renewal-line);gap:10px 24px}
+html[data-site-renewal] .morph-atlas :is(input,select){font-size:16px;border-radius:3px}
+html[data-site-renewal] .body-explorer{gap:44px;align-items:start;margin-block:32px 48px}
+/* Preserve the diagram's padding/aspect/coordinates so hotspots still map to anatomy. */
+html[data-site-renewal] .body-diagram{background:#f0f1e8;box-shadow:none}
+html[data-site-renewal] .body-diagram button{min-height:44px;border-radius:4px;box-shadow:none}
+html[data-site-renewal] #part-detail{background:transparent;border:0;padding:0;min-width:0}
+html[data-site-renewal] :is(.part-zoom,.part-context-image){border-radius:3px;background:transparent}
+html[data-site-renewal] .body-topic-link{padding-block:20px;border-bottom:1px solid var(--renewal-line);background:transparent}
+html[data-site-renewal] .omochi-profile{grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);gap:56px;align-items:center;margin-block:32px 64px}
+html[data-site-renewal] .omochi-real-portrait{border:0;background:transparent;border-radius:3px}
+html[data-site-renewal] .omochi-real-portrait img{height:auto;width:100%;object-fit:contain}
+html[data-site-renewal] .omochi-profile h2{font-size:36px;line-height:1.8}
+html[data-site-renewal] .profile-list>div{padding-block:16px;border-color:var(--renewal-line)}
+html[data-site-renewal] .learning-steps{border-color:var(--renewal-line);padding-block:28px}
+html[data-site-renewal] .observation-notebook{padding:32px;background:#f5f4ec;border:1px solid var(--renewal-line);border-radius:3px}
+html[data-site-renewal] #observation-form :is(input,textarea){font-size:16px;max-width:100%;min-width:0;background:#fffdf8;border-color:var(--renewal-line);border-radius:3px}
+html[data-site-renewal] #observation-form button{min-height:44px}
+html[data-site-renewal] .observation{border-color:var(--renewal-line);padding-block:20px}
+@media(max-width:900px){
+ html[data-site-renewal] .article-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ html[data-site-renewal] .omochi-profile{gap:30px}
+}
+@media(max-width:600px){
+ html[data-site-renewal] .page-content{padding:16px 22px 44px}
+ html[data-site-renewal] .page-heading{margin:16px 0 32px;padding-bottom:24px}
+ html[data-site-renewal] .page-heading h1{font-size:28px;line-height:1.75}
+ html[data-site-renewal] .page-heading .lede{font-size:14px}
+ html[data-site-renewal] .article-grid{grid-template-columns:minmax(0,1fr);gap:32px}
+ html[data-site-renewal] .search-field input{width:100%;min-width:0;flex-basis:100%}
+ html[data-site-renewal] .article-body{margin-block:32px}
+ html[data-site-renewal] .article-summary{font-size:18px}
+ html[data-site-renewal] .article-body section{margin-block:38px}
+ html[data-site-renewal] .article-body h2{font-size:24px}
+ html[data-site-renewal] :is(.source-box,.glossary){padding:18px}
+ html[data-site-renewal] .morph-cards{grid-template-columns:minmax(0,1fr);gap:36px}
+ html[data-site-renewal] .morph-card:nth-child(5):last-child{display:block;grid-column:auto}
+ html[data-site-renewal] .morph-section{padding-block:32px}
+ html[data-site-renewal] .morph-notice{padding:18px}
+ html[data-site-renewal] .body-explorer{grid-template-columns:minmax(0,1fr);gap:30px}
+ html[data-site-renewal] .omochi-profile{grid-template-columns:minmax(0,1fr);gap:28px;margin-bottom:44px}
+ html[data-site-renewal] .omochi-real-portrait{max-width:360px;margin-inline:auto}
+ html[data-site-renewal] .omochi-profile h2{font-size:30px}
+ html[data-site-renewal] .observation-notebook{padding:20px 16px}
+}
