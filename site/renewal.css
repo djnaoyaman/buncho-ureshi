@@ -181,3 +181,68 @@ html[data-site-renewal] .observation{border-color:var(--renewal-line);padding-bl
  html[data-site-renewal] .omochi-profile h2{font-size:30px}
  html[data-site-renewal] .observation-notebook{padding:20px 16px}
 }
+/* Stage 3, non-game only. Preserve canvas pixels, palette swatches, touch and file behavior. */
+html[data-site-renewal] .quiz-root{max-width:800px;background:transparent;padding:28px 24px;border:1px solid var(--renewal-line);border-radius:3px;margin:32px auto}
+html[data-site-renewal] .quiz-root h2{font-size:26px;line-height:1.8;letter-spacing:.05em}
+html[data-site-renewal] .quiz-progress{gap:18px;margin-bottom:28px;color:#526148}
+html[data-site-renewal] .quiz-learning{padding-block:16px;border-block:1px solid var(--renewal-line);background:transparent}
+html[data-site-renewal] .quiz-root>figure{max-width:620px;margin:28px auto}
+html[data-site-renewal] .quiz-choices{gap:12px}
+html[data-site-renewal] .quiz-choices button{min-height:48px;padding:14px 18px;background:#fffdf8;border:1px solid var(--renewal-line);border-radius:3px;color:var(--renewal-ink);line-height:1.8}
+html[data-site-renewal] .quiz-choices .correct{background:#e6eddf;border-color:#617b50;opacity:1}
+html[data-site-renewal] #quiz-feedback{margin-top:28px;line-height:2}
+html[data-site-renewal] #quiz-feedback h3{font-size:23px}
+html[data-site-renewal] #quiz-feedback .mission{background:#f1f1e7;border:0;border-left:2px solid var(--renewal-gold);padding:18px;border-radius:0}
+html[data-site-renewal] .studio{--studio-ink:var(--renewal-ink);--studio-line:var(--renewal-line)}
+/* Do not override --studio-paper: it is also used as canvas fallback background. */
+html[data-site-renewal] .studio :is(h2,h3){font-family:"Hiragino Mincho ProN","Yu Mincho",serif;font-weight:500;letter-spacing:.06em}
+html[data-site-renewal] .studio-intro{padding-bottom:28px;margin-bottom:32px;border-color:var(--renewal-line)}
+html[data-site-renewal] .studio-intro h2{font-size:clamp(28px,3.8vw,44px);line-height:1.7}
+html[data-site-renewal] .studio-layout{gap:40px}
+html[data-site-renewal] .studio-canvas-wrap{padding:14px;background:#f0f0e6;border:1px solid var(--renewal-line);border-radius:3px}
+html[data-site-renewal] .studio-canvas-wrap canvas{box-shadow:0 3px 14px #28332812}
+html[data-site-renewal] .studio-options>section,html[data-site-renewal] .studio-tools,html[data-site-renewal] .studio-save{padding-block:28px;border-color:var(--renewal-line)}
+html[data-site-renewal] .studio-status{background:#f1f1e7;border-left:2px solid var(--renewal-gold);padding:16px 18px}
+html[data-site-renewal] .studio-music-intro{padding:24px;background:transparent;border:1px solid var(--renewal-line);border-radius:3px}
+html[data-site-renewal] .studio button.studio-primary{background:#455b3d;border-color:#455b3d;color:#fffdf8}
+html[data-site-renewal] .studio :is(input[type=text],select){font-size:16px;background:#fffdf8;border-color:var(--renewal-line);border-radius:3px}
+html[data-site-renewal] .help-layout{max-width:800px;margin:32px auto}
+html[data-site-renewal] .help-layout .prose{max-width:none;font-size:16px;line-height:2}
+html[data-site-renewal] .help-layout section{padding-block:28px;border-top:1px solid var(--renewal-line);margin-block:20px}
+html[data-site-renewal] .help-layout h2{font-size:26px;line-height:1.8}
+html[data-site-renewal] .setting-line{min-height:44px;align-items:center;gap:12px}
+html[data-site-renewal] .credits-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:40px 28px;margin-block:28px 56px}
+html[data-site-renewal] .credits-grid figure{margin:0;padding-bottom:24px;border-bottom:1px solid var(--renewal-line);min-width:0}
+html[data-site-renewal] .credits-grid img{border-radius:3px}
+html[data-site-renewal] .credits-grid figcaption{font-size:14px;line-height:1.9;overflow-wrap:anywhere;padding-top:16px}
+html[data-site-renewal] .credit-metadata{font-size:13px}
+html[data-site-renewal] .source-list{font-size:15px;line-height:2;overflow-wrap:anywhere}
+html[data-site-renewal] .source-list li{margin-bottom:14px}
+html[data-site-renewal] .bird-video{max-width:800px;margin:36px auto}
+html[data-site-renewal] .bird-video figcaption{font-size:13px;line-height:1.9}
+html[data-site-renewal] .site-search-form{max-width:800px;padding:22px 0;margin-block:20px 30px;background:transparent;border-block:1px solid var(--renewal-line)}
+html[data-site-renewal] .site-search-form input{font-size:16px;min-height:46px;background:#fffdf8;border:1px solid var(--renewal-line);border-radius:3px;min-width:0}
+html[data-site-renewal] .site-search-form button{min-height:46px;background:#455b3d;color:#fffdf8;border-radius:3px}
+html[data-site-renewal] .section-search-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:24px 36px}
+html[data-site-renewal] .section-result{padding:24px 0;border:0;border-bottom:1px solid var(--renewal-line);border-radius:0;background:transparent}
+html[data-site-renewal] .section-result h3{font-size:22px;line-height:1.8}
+html[data-site-renewal] .section-result p{font-size:15px;line-height:1.9}
+html[data-site-renewal] .search-empty{padding:24px;background:#f1f1e7;border-left:2px solid var(--renewal-gold)}
+/* Progressive enhancement fallback and 404 retain readable content before app boot. */
+html[data-site-renewal] [data-static-content]>h1{font-size:clamp(28px,3.8vw,44px);line-height:1.7;margin-block:24px}
+html[data-site-renewal] [data-static-content]>p{max-width:48em;line-height:2}
+html[data-site-renewal] .page-content>.button{min-height:44px;display:inline-flex;align-items:center;border:1px solid #617451;background:transparent;color:var(--renewal-ink);border-radius:3px}
+@media(max-width:900px){html[data-site-renewal] .credits-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){
+ html[data-site-renewal] .quiz-root{padding:20px 16px;margin-block:24px}
+ html[data-site-renewal] .quiz-root h2{font-size:23px}
+ html[data-site-renewal] .studio-layout{grid-template-columns:minmax(0,1fr);gap:28px}
+ html[data-site-renewal] .studio-canvas-wrap{padding:8px}
+ html[data-site-renewal] .studio-music-intro{grid-template-columns:minmax(0,1fr);padding:18px;gap:18px}
+ html[data-site-renewal] .help-layout section{padding-block:22px}
+ html[data-site-renewal] .help-layout h2{font-size:24px}
+ html[data-site-renewal] .credits-grid,html[data-site-renewal] .section-search-grid{grid-template-columns:minmax(0,1fr)}
+ html[data-site-renewal] .site-search-form>div{display:flex;flex-wrap:wrap;gap:10px}
+ html[data-site-renewal] .site-search-form input{flex:1 1 170px;width:100%}
+ html[data-site-renewal] .search-empty{padding:18px}
+}

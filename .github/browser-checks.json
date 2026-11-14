@@ -1,10 +1,12 @@
 {
-  "base": "89a01bdb0ccdb54cf28f4309972358b6697bb07d",
+  "base": "03b59121282e64601077c91dc319f4b90d6f6171",
   "tests": [
     "tests/browser/site-renewal.spec.js",
     "tests/browser/game-install.spec.js",
     "tests/browser/game-startup.spec.js",
-    "tests/browser/renewal-stage2.spec.js"
+    "tests/browser/renewal-stage2.spec.js",
+    "tests/browser/renewal-stage3.spec.js",
+    "tests/browser/studio.spec.js"
   ],
-  "reason": "非ゲーム刷新第2回。図鑑/記事/羽色/からだ/観察室の写真と余白・明朝・細線を統一。320/390/768/1440描画、検索・分類・お気に入り・部位・観察保存を検査。第1回/game起動/実保存往復と553資産完全一致も継続。"
+  "reason": "非ゲーム刷新第3回。クイズ・工房・ヘルプ・出典・検索・404を統一。320/390/768/1440、検索履歴、クイズ回答、工房保存PNG画素・ドラッグ・再読込、既存第1/2回・ゲーム起動/保存互換を継続。"
 }
