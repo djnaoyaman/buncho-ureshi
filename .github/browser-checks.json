@@ -1,8 +1,9 @@
 {
-  "base": "f0f0770c154b2f50ed727b72c01c1f4fac852d46",
+  "base": "435d36d81b557e8acb3db7d17acc40a6bff89415",
   "tests": [
-    "tests/browser/game-startup.spec.js",
-    "tests/browser/game-install.spec.js"
+    "tests/browser/site-renewal.spec.js",
+    "tests/browser/game-install.spec.js",
+    "tests/browser/game-startup.spec.js"
   ],
-  "reason": "ゲーム初期HTMLのみ起動シェルに変更。Chrome/WebKitでサイトからの遷移・読込遅延・再読込・戻る進む・失敗後の再試行・JS無効・保存値保持を確認。ゲーム内容と保存ロジックは無変更。"
+  "reason": "非ゲーム刷新第1回。専用JS/CSSによるトップと共通案内。320〜1440の画像・メニュー・横溢れ、ゲーム往復/保存保持をChrome/WebKitで検査。既存ゲームHTMLと共有資産553件はハッシュ完全一致をNodeゲートで必須化。"
 }

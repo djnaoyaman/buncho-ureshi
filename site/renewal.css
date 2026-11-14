@@ -1,0 +1,98 @@
+/* This stylesheet is loaded by non-game documents only. Never attach it to /game/. */
+html[data-site-renewal] {--renewal-paper:#faf9f5;--renewal-ink:#283328;--renewal-line:#c7c8bb;--renewal-gold:#b59b60;background:var(--renewal-paper)}
+html[data-site-renewal] body {background:var(--renewal-paper);color:var(--renewal-ink);font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;}
+html[data-site-renewal] :is(h1,h2,h3) {font-family:"Hiragino Mincho ProN","Yu Mincho",serif;font-weight:500;letter-spacing:.08em;text-wrap:pretty}
+html[data-site-renewal] :is(a,button):focus-visible {outline:2px solid #526943;outline-offset:5px}
+html[data-site-renewal] .site-header {position:relative;z-index:30;max-width:1320px;margin:auto;padding:24px 40px;min-height:100px;border:0;background:transparent;box-shadow:none;display:flex;align-items:center;justify-content:space-between;gap:24px}
+html[data-site-renewal] .brand {width:240px;max-width:55%;flex:none}
+html[data-site-renewal] .header-logo {width:100%;height:auto;max-height:80px;object-fit:contain}
+html[data-site-renewal] .desktop-nav {gap:32px}
+html[data-site-renewal] .desktop-nav a {font-size:12px;letter-spacing:.13em;border-bottom:1px solid transparent;padding:12px 0}
+html[data-site-renewal] #menu-toggle {border:0;background:transparent;box-shadow:none;border-radius:0;min-width:48px;min-height:48px;color:#3e5135;padding:10px;font-size:10px}
+html[data-site-renewal] .header-menu {top:calc(100% - 4px);left:24px;right:24px;max-height:var(--site-menu-max-height,calc(100dvh - 130px));overflow:auto;padding:28px;border:1px solid var(--renewal-line);border-radius:2px;background:#faf9f5f7;box-shadow:0 16px 40px #30352712;backdrop-filter:blur(16px)}
+html[data-site-renewal] .header-menu nav a {border:0;border-bottom:1px solid #d9dacf;background:transparent;border-radius:0;padding:18px 10px}
+html[data-site-renewal] .header-menu nav strong {font-family:"Yu Mincho",serif;font-weight:500;font-size:18px}
+html[data-site-renewal] .header-menu nav span {font-size:12px;color:#606855}
+html[data-site-renewal] .site-footer {max-width:1240px;margin:100px auto 0;background:transparent;border-top:1px solid var(--renewal-line);padding:44px 24px 28px;box-shadow:none;color:#4b5645}
+html[data-site-renewal] .site-footer h2 {font-size:20px}.site-footer .footer-bottom{font-size:11px}
+html[data-site-renewal] .art-cover {padding:0;max-width:1240px;margin:0 auto;background:transparent;border:0;overflow:hidden}
+html[data-site-renewal] .renewal-hero {position:relative;min-height:590px;display:grid;grid-template-columns:1.2fr 1fr;align-items:center}
+html[data-site-renewal] .renewal-hero>img {width:100%;height:590px;object-fit:contain;object-position:center 58%;display:block;border:0;border-radius:0;mix-blend-mode:multiply}
+html[data-site-renewal] .renewal-hero-copy {padding:20px 45px 30px 48px;z-index:1}
+html[data-site-renewal] .renewal-hero h1 {font-size:clamp(30px,3.2vw,49px);line-height:1.9;margin:12px 0 26px;color:#202b20;letter-spacing:.12em;font-weight:500}
+html[data-site-renewal] .renewal-hero rt {font-family:sans-serif;font-size:9px;letter-spacing:.1em;font-weight:400;color:#5a6354}
+html[data-site-renewal] .renewal-intro {font-size:14px;line-height:2.2;letter-spacing:.07em}
+html[data-site-renewal] .renewal-hero .eyebrow {font-size:10px;letter-spacing:.16em}
+html[data-site-renewal] .renewal-image-note {margin:4px 24px 16px;text-align:right;font-size:10px;color:#73776c;letter-spacing:.04em}
+html[data-site-renewal] :is(.art-game,.art-index,.art-feature,.art-atlas-section,.art-challenge) {max-width:1160px;padding:0;margin:56px auto;background:transparent;border-radius:0;box-shadow:none;border:0}
+html[data-site-renewal] .art-game {border-block:1px solid var(--renewal-line);padding:22px 12px 26px;margin-top:20px}
+html[data-site-renewal] .art-game .art-section-label {margin:0 0 6px;padding:0;border:0;font-size:10px;letter-spacing:.18em;color:#4b613e}
+html[data-site-renewal] .renewal-game-content {display:grid;grid-template-columns:100px 1fr auto;align-items:center;gap:24px}
+html[data-site-renewal] .renewal-game-bird {width:100px;height:100px;object-fit:contain;mix-blend-mode:multiply}
+html[data-site-renewal] .art-game-logo {max-width:320px;width:100%;max-height:96px;object-fit:contain;display:block}
+html[data-site-renewal] .art-game-copy p {font-size:12px;max-width:25em;line-height:1.9}
+html[data-site-renewal] .art-game-link {display:inline-flex;border:1px solid #5e714e;background:transparent;padding:12px 20px;border-radius:4px;font-size:13px;min-height:46px;align-items:center;gap:20px;color:#3b5230}
+html[data-site-renewal] .art-section-label {border:0;font-size:10px;letter-spacing:.18em;color:#68735c;margin-bottom:28px;padding:0}
+html[data-site-renewal] .art-doors {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:36px}
+html[data-site-renewal] .art-door {display:flex;align-items:center;flex-direction:column;border:0;background:transparent;box-shadow:none;border-radius:0;padding:0 16px 22px;min-height:0;text-align:center;color:var(--renewal-ink)}
+html[data-site-renewal] .renewal-door-art {width:min(100%,150px);aspect-ratio:1;position:relative;display:block;margin-bottom:20px}
+html[data-site-renewal] .renewal-door-art:before {content:"";position:absolute;inset:8%;border:1px solid var(--renewal-gold);border-bottom-color:transparent;border-right-color:transparent;border-radius:50%;transform:rotate(20deg)}
+html[data-site-renewal] .renewal-door-art img {width:100%;height:100%;object-fit:contain;position:relative;mix-blend-mode:multiply;transition:transform .25s}
+html[data-site-renewal] .art-door:hover img {transform:translateY(-4px)}
+html[data-site-renewal] .art-door h2 {font-size:24px;margin:0 0 18px;line-height:1.5}
+html[data-site-renewal] .art-door h2:after {content:"";display:block;width:20px;height:1px;background:#4b613e;margin:12px auto 0}
+html[data-site-renewal] .art-door h3 {font:inherit;font-size:12px;letter-spacing:.04em;margin:0 0 8px}
+html[data-site-renewal] .art-door p {font-size:12px;line-height:1.9;color:#69715f;margin:0;max-width:17em}
+html[data-site-renewal] .art-door-arrow {display:none}
+html[data-site-renewal] .art-feature-grid {gap:52px;align-items:center}
+html[data-site-renewal] .art-feature figure img {border-radius:3px;aspect-ratio:4/3;object-fit:cover}
+html[data-site-renewal] .art-feature h2 {font-size:30px;line-height:1.7}
+html[data-site-renewal] .art-field-note {border:0;border-left:1px solid var(--renewal-gold);background:transparent;border-radius:0;padding:4px 0 4px 22px;margin-top:30px}
+html[data-site-renewal] .art-challenge {border-top:1px solid var(--renewal-line);padding-top:38px}
+html[data-site-renewal] .art-challenge h2 {font-size:32px;line-height:1.8}
+@media(max-width:1200px){html[data-site-renewal] :is(.art-game,.art-index,.art-feature,.art-atlas-section,.art-challenge){margin-left:32px;margin-right:32px}}
+@media(max-width:700px){
+ html[data-site-renewal] .site-header {padding:18px 18px 10px;min-height:90px;gap:12px}
+ html[data-site-renewal] .brand {width:245px;max-width:calc(100% - 64px)}
+ html[data-site-renewal] .header-logo {max-height:68px}
+ html[data-site-renewal] .desktop-nav {display:none}
+ html[data-site-renewal] .header-menu {left:12px;right:12px;padding:20px;max-height:var(--site-menu-max-height,calc(100dvh - 115px))}
+ html[data-site-renewal] .renewal-hero {display:block;min-height:0}
+ html[data-site-renewal] .renewal-hero>img {width:100%;height:auto;aspect-ratio:4/5;object-fit:cover}
+ html[data-site-renewal] .renewal-hero-copy {position:absolute;top:23%;left:7%;padding:0;max-width:88%}
+ html[data-site-renewal] .renewal-hero h1 {font-size:clamp(25px,6.9vw,40px);line-height:1.85;letter-spacing:.08em;margin:0}
+ html[data-site-renewal] .renewal-hero :is(.eyebrow,.renewal-intro) {display:none}
+ html[data-site-renewal] .renewal-image-note {font-size:9px;margin:3px 16px 22px}
+ html[data-site-renewal] :is(.art-game,.art-index,.art-feature,.art-atlas-section,.art-challenge) {margin:36px 22px}
+ html[data-site-renewal] .art-game {padding:16px 0 22px;margin-top:0}
+ html[data-site-renewal] .renewal-game-content {grid-template-columns:66px minmax(0,1fr);gap:10px 16px}
+ html[data-site-renewal] .renewal-game-bird {width:66px;height:66px;grid-row:1/3}
+ html[data-site-renewal] .art-game-content h2 {margin:0}
+ html[data-site-renewal] .art-game-logo {max-height:68px;width:100%;max-width:250px}
+ html[data-site-renewal] .art-game-copy {grid-column:2;display:block}
+ html[data-site-renewal] .art-game-copy p {display:none}
+ html[data-site-renewal] .art-game-link {font-size:12px;padding:9px 12px;min-height:44px;gap:10px;width:100%;justify-content:space-between}
+ html[data-site-renewal] .art-game .art-section-label {margin:0 0 10px}
+ html[data-site-renewal] .art-game .art-section-label>span:last-child {display:none}
+ html[data-site-renewal] .art-doors {gap:8px}
+ html[data-site-renewal] .art-door {padding:0 0 16px}
+ html[data-site-renewal] .renewal-door-art {margin-bottom:10px;width:100%;max-width:120px}
+ html[data-site-renewal] .art-door h2 {font-size:clamp(16px,4.6vw,22px);letter-spacing:.02em;margin-bottom:10px;white-space:nowrap}
+ html[data-site-renewal] .art-door h3 {font-size:10px}
+ html[data-site-renewal] .art-door p {display:none}
+ html[data-site-renewal] .art-feature-grid {display:block}
+ html[data-site-renewal] .art-feature h2 {font-size:25px}
+ html[data-site-renewal] .art-feature figure {margin-bottom:28px}
+ html[data-site-renewal] .art-challenge h2 {font-size:27px}
+ html[data-site-renewal] .site-footer {margin-top:60px;padding:32px 22px 24px}
+ html[data-site-renewal] .footer-top {gap:24px}
+}
+@media(prefers-reduced-motion:reduce){html[data-site-renewal] .renewal-door-art img{transition:none}}
+/* Preserve deliberate two-line headings and the quiet palette at phone widths. */
+html[data-site-renewal] .renewal-hero h1{white-space:nowrap;text-wrap:initial}
+html[data-site-renewal] .renewal-hero-copy{min-width:0}
+html[data-site-renewal] .renewal-door-art img[src*="bird-05"],html[data-site-renewal] .renewal-game-bird{border-radius:50%}
+html[data-site-renewal] .morph-discovery-link{background:#efefe5;border:1px solid var(--renewal-line);border-radius:3px;box-shadow:none;color:var(--renewal-ink)}
+html[data-site-renewal] .art-challenge h2{text-wrap:initial;word-break:keep-all;font-size:clamp(22px,5.9vw,32px)}
+@media(max-width:700px){html[data-site-renewal] .renewal-hero-copy{width:86%;max-width:none}html[data-site-renewal] .renewal-hero h1{font-size:clamp(23px,6.5vw,36px)}}
+@media(max-width:700px){html[data-site-renewal] .brand{max-width:calc(100% - 96px)}html[data-site-renewal] .header-controls{flex:0 0 auto}html[data-site-renewal] #menu-toggle{min-width:76px;white-space:nowrap;padding:8px 4px;gap:6px}}
