@@ -114,7 +114,11 @@ test('approved install artwork remains visible at phone icon sizes and under a c
 
 test('site icon 05 and art-poster 03 decode at small sizes without changing game branding', async ({page,request},testInfo)=>{
  await page.goto('');const {manifest,manifestURL}=await checkInstall(page,request,false);
- const og=await page.locator('meta[property="og:image"]').getAttribute('content');
+ const ogCanonical=await page.locator('meta[property="og:image"]').getAttribute('content');
+ // Metadata must advertise production; preview the same path on this tested build before publication.
+ const og=new URL(new URL(ogCanonical).pathname,manifestURL).href;
+ const ogResponse=await request.get(og);expect(ogResponse.status()).toBe(200);
+ expect((await ogResponse.body()).subarray(1,4).toString()).toBe('PNG');
  const touch=new URL('site-brand-v1/apple-touch-icon.png',manifestURL).href;
  const masked=new URL(manifest.icons.find(i=>i.purpose==='maskable').src,manifestURL).href;
  await page.setContent(`<body style="background:#eee;font:16px sans-serif"><h1>Approved site icon 05 and OGP 03</h1>${[32,60,120,180].map(n=>`<img alt="site icon ${n}" width="${n}" height="${n}" src="${touch}" style="border-radius:20%;margin:12px">`).join('')}<img alt="maskable" width="180" height="180" style="border-radius:50%" src="${masked}"><p><img alt="art poster" width="600" src="${og}"></p></body>`);
