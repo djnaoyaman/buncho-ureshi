@@ -1912,7 +1912,7 @@ body[data-world="buncho"] .game-encounter-host .finch-garden > .leaf-gift:not(.l
  border:1.5px solid var(--play-line,#c8b99e); border-radius:50%;
  background:var(--play-yellow,#f8df9d); box-shadow:0 3px 0 #bda47a,0 4px 12px #604b3d20;
 }
-body[data-world="buncho"] .game-encounter-host .finch-garden > .expedition-gift:not([open]) {
+body[data-world="buncho"] .game-encounter-host .finch-garden > .expedition-gift:not(.leaf-gift-diary):not([open]) {
  bottom:calc(78px + env(safe-area-inset-bottom,0px)); background:var(--play-mint,#dfe6d3);
 }
 body[data-world="buncho"] .game-encounter-host .finch-garden > .leaf-gift > summary {
@@ -1967,5 +1967,5 @@ body[data-world="buncho"] .finch-garden .expedition-discovery { border-radius:28
 @media(max-height:400px) {
  body[data-world="buncho"] .game-encounter-host .finch-garden > .leaf-gift[open] { bottom:64px; max-height:calc(100% - 116px); }
  body[data-world="buncho"] .game-encounter-host .finch-garden > .leaf-gift:not(.leaf-gift-diary):not([open]) { bottom:120px; }
- body[data-world="buncho"] .game-encounter-host .finch-garden > .expedition-gift:not([open]) { bottom:62px; }
+ body[data-world="buncho"] .game-encounter-host .finch-garden > .expedition-gift:not(.leaf-gift-diary):not([open]) { bottom:62px; }
 }
