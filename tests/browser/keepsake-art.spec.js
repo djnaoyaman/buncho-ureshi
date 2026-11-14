@@ -20,6 +20,11 @@ for(const size of [{width:320,height:568},{width:375,height:667},{width:844,heig
  await art.scrollIntoViewIfNeeded();await expect.poll(()=>art.locator('img').evaluateAll(ns=>ns.every(n=>n.complete&&n.naturalWidth>0))).toBe(true);
  const b=await art.boundingBox();expect(b.width).toBeGreaterThan(200);expect(b.x).toBeGreaterThanOrEqual(0);expect(b.x+b.width).toBeLessThanOrEqual(size.width+1);
  await page.screenshot({path:info.outputPath(`keepsake-card-${size.width}.png`)});
+ for(const path of ['grove','flower']){
+  await art.evaluate(async(n,path)=>{const {expeditionKeepsakeArt}=await import('/buncho-ureshi/src/garden-expedition-ui.js');const e=ks.w.expedition.entries[0];n.outerHTML=expeditionKeepsakeArt({...e,path,discovery:path+e.discovery.slice(e.path.length)});},path);
+  await expect.poll(()=>art.locator('img').evaluateAll(ns=>ns.every(n=>n.complete&&n.naturalWidth>0))).toBe(true);
+  await page.screenshot({path:info.outputPath(`keepsake-card-${path}-${size.width}.png`)});
+ }
  await event.locator('[data-garden-story-close]').click();expect(await page.evaluate(()=>JSON.stringify(ks.w)===ks.before)).toBe(true);
  const hidden=[];const ids=await page.evaluate(()=>ks.GARDENS.map(g=>g.id));
  for(let i=0;i<ids.length;i++){

@@ -53,3 +53,14 @@ test('844x390 landscape keeps a cropped portrait garden souvenir on the existing
   assert.ok([survey.y,survey.y+.04,survey.y+.08,sourceAnchor].some(y=>Math.abs(y-p.source.y)<1e-9));
  }
 });
+
+test('320px portrait can use the opposite edge on identical ground when left birds block every lane',()=>{
+ const width=320,height=568;
+ for(const id of ['bird-scaly-breasted-munia','bird-pine-grosbeak','paris-unrest','hanadokei']){
+  const p=planGardenBookmark({gardenId:id,width,height,obstacles:[{left:0,right:265,top:0,bottom:height},{left:265,right:width,top:0,bottom:170}]});
+  assert.ok(p,`${id}: right ground remains usable`);
+  assert.equal(p.mode,'standing');assert.ok(p.rect.left>=273);assert.ok(p.rect.right<=width-8);
+  const y=bookmarkPlacement(id).y;assert.ok([y,y+.04,y+.08].includes(p.source.y));
+  assert.equal(planGardenBookmark({gardenId:id,width,height,obstacles:[{left:0,right:265,top:0,bottom:height},{left:265,right:width,top:0,bottom:height}]}),null,'both edges blocked: do not cover the birds');
+ }
+});

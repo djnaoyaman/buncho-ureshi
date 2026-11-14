@@ -28,6 +28,12 @@ export function planGardenBookmark({gardenId,width,height,obstacles=[]}){
  for(const y of rows)for(const x of [p.x,...leftLanes]){
   if(x<.04||x>.30||y>.82)continue;const a=attempt('standing',x,y);if(a)return a;
  }
+ // A crowded narrow screen may use the opposite edge, but only on the same
+ // surveyed/terrain-contact rows. UI and birds remain hard obstacles.
+ const rightLanes=[sourceX(width*.92),sourceX(width-8-w/2)];
+ for(const y of rows)for(const x of rightLanes){
+  if(x<.70||x>.98||y>.82)continue;const a=attempt('standing',x,y);if(a)return a;
+ }
  return null;
 }
 export function syncGardenKeepsakeLayout(root){
