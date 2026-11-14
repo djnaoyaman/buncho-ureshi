@@ -45,7 +45,7 @@ export function renderArticleBase(a,ctx) {
  const secureLicenseUrl=value=>value?.replace(/^http:\/\/creativecommons\.org\//,'https://creativecommons.org/');
  const paragraphs=s=>s?.includes('<p>')?s:(s||'').split('\n').filter(Boolean).map(p=>`<p>${p}</p>`).join('');
  const photoCredits=ids=>ids.map(id=>photos.find(p=>p.id===id)).filter(Boolean).map(p=>`<li><a href="${esc(p.source)}" target="_blank" rel="noopener noreferrer">${esc(p.alt)}</a> — ${esc(p.author)} / <a href="${esc(secureLicenseUrl(p.licenseUrl))}" target="_blank" rel="noopener noreferrer">${esc(p.license)}</a></li>`).join('');
- const articleCoverOverrides={};
+ const articleCoverOverrides={conservation:"photo-03",beak:"photo-14",eyes:"photo-43",tail:"photo-26",observation:"photo-27",resting:"photo-21",voice:"photo-19",sleep:null,clean:"photo-11",molt:"photo-37",health:null};
  const birdSvg=()=>'';const birdPhotoCredit=()=>'';
 function videoBlock() {
   return `<figure class="bird-video"><video controls playsinline preload="none" aria-label="${esc(birdVideo.alt)}" ><source src="${url("photos/cinnamon-song.mp4")}" type="video/mp4"><source src="${url(birdVideo.src.replace(/^\//, ""))}" type="video/webm">この端末で映像を再生できない場合も、下の説明と図鑑を読めます。</video><figcaption>${esc(birdVideo.alt)}<br>実際の文鳥の録音を含む12秒の映像。再生すると音が出ます。MP4版は形式変換のみ（CC BY-SA 3.0）。<br>${esc(birdVideo.credit)} · <a href="${esc(birdVideo.source)}" target="_blank" rel="noopener noreferrer">元の映像</a> · <a href="${esc(secureLicenseUrl(birdVideo.licenseUrl))}" target="_blank" rel="noopener noreferrer">利用条件</a></figcaption><div class="video-buttons"><button data-video-play>声をきく</button><button data-video-stop>再生を止める</button><button data-video-mute aria-pressed="false">音を消す</button></div></figure>`;
