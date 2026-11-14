@@ -3,11 +3,11 @@ import { readFileSync } from 'node:fs';
 
 const builtHTML = readFileSync(new URL('../../dist/index.html', import.meta.url), 'utf8');
 const expectedStyle = builtHTML.match(/href="(src\/style\.css\?v=[^"]+)"/)[1];
-const expectedApp = builtHTML.match(/src="(src\/app\.js\?v=[^"]+)"/)[1];
+const expectedApp = builtHTML.match(/src="(src\/site-app\.js\?v=[^"]+)"/)[1];
 async function openPage(page, route) {
   await page.goto(route);
   await expect(page.locator('link[href*="src/style.css"]')).toHaveAttribute('href', expectedStyle);
-  await expect(page.locator('script[type="module"][src*="src/app.js"]')).toHaveAttribute('src', expectedApp);
+  await expect(page.locator('script[type="module"][src*="src/site-app.js"]')).toHaveAttribute('src', expectedApp);
 }
 
 
