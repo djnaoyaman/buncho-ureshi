@@ -27,13 +27,13 @@ test('every editorial article preserves original text, glossary, research source
  for(const a of articles){
   const doc=parse(render(a));assert.equal(doc.querySelector('.encyclopedia-story').dataset.story,a.id);
   assert.equal(doc.querySelectorAll('h1').length,1);assert.equal(doc.querySelector('h1').textContent,a.title);
-  for(const id of ['favorite','speak','stop-speak','first','basic','deep','sources'])assert.equal(doc.querySelectorAll(`#${id}`).length,1,`${a.id}/${id}`);
-  for(const [id,html] of [['basic',a.body],['deep',a.deep]])assert.ok(normalize(doc.querySelector(`#${id}`).textContent).includes(text(html)),`${a.id}/${id} retains prose`);
+  for(const id of ['favorite','speak','stop-speak','first','basic',...(a.id==='omochi'?[]:['deep','sources'])])assert.equal(doc.querySelectorAll(`#${id}`).length,1,`${a.id}/${id}`);
+  for(const [id,html] of [['basic',a.body],...(a.id==='omochi'?[]:[['deep',a.deep]])])assert.ok(normalize(doc.querySelector(`#${id}`).textContent).includes(text(html)),`${a.id}/${id} retains prose`);
   assert.ok(normalize(doc.querySelector('#first').textContent).includes(text(a.summary)),a.id);
   for(const term of a.terms||[]){assert.ok(doc.querySelector('.glossary').textContent.includes(term.term));assert.ok(doc.querySelector('.glossary').textContent.includes(term.reading));assert.ok(doc.querySelector('.glossary').textContent.includes(term.meaning));}
   for(const s of a.sources){assert.ok(doc.querySelector('#sources').textContent.includes(s.title));if(s.url)assert.ok([...doc.querySelectorAll('#sources a')].some(el=>el.getAttribute('href')===s.url),`${a.id}: ${s.url}`);}
   for(const id of a.related||[])assert.ok(doc.querySelector(`.related-links a[href="${ctx.url(`encyclopedia/${id}/`)}"]`),`${a.id}: related ${id}`);
-  assert.ok(doc.querySelector('#sources').textContent.includes(a.checkedAt||'2026-11-02'));
+  if(a.id==='omochi'){assert.equal(doc.querySelector('#sources'),null);assert.equal(doc.querySelector('#deep'),null);}else assert.ok(doc.querySelector('#sources').textContent.includes(a.checkedAt||'2026-11-02'));
   if(['voice','courtship'].includes(a.id))assert.equal(doc.querySelectorAll('video source').length,2);
  }
 });
@@ -58,8 +58,8 @@ test('crop photos retain original source coordinates, attribution and a direct l
 test('Omochi uses the family photograph and is never presented as an unrelated stock bird',()=>{
  const article=articles.find(a=>a.id==='omochi'),doc=parse(render(article));
  assert.ok(doc.querySelector('img[src$="omochi/omochi-original.jpeg"]'));
- assert.match(doc.querySelector('#sources').textContent,/おもち本人の写真/);
- assert.doesNotMatch(doc.querySelector('#sources').textContent,/おもち本人ではありません/);
+ assert.equal(doc.querySelector('#sources'),null);
+ assert.doesNotMatch(doc.body.textContent,/おもち本人ではありません|制作依頼書/);
  assert.match(doc.querySelector('figcaption').textContent,/ご家族の提供写真/);
 });
 
