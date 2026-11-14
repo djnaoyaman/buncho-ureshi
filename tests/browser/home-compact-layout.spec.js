@@ -13,6 +13,8 @@ for(const size of [{width:320,height:568},{width:375,height:667},{width:390,heig
  for(const sel of ['meter','output']){const b=await page.locator('.game-garden-care '+sel).boundingBox();expect(b.x).toBeGreaterThanOrEqual(clean.x);expect(b.x+b.width).toBeLessThanOrEqual(clean.x+clean.width+1);}
  await page.locator('[data-game-care="clean"]').click();await expect(page.locator('[data-game-cleanliness-value]')).toHaveText('100 / 100');
  const notes=await page.locator('.game-garden-care .game-care-feedback,.game-garden-care [data-care-receipt]').all();
+ for(const note of notes){const n=await note.boundingBox();if(n){expect(n.y).toBeGreaterThanOrEqual(clean.y+clean.height);expect(n.x).toBeGreaterThanOrEqual(0);expect(n.x+n.width).toBeLessThanOrEqual(size.width);}}
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(size.width);
  if(notes.length>1){const a=await notes[0].boundingBox(),b=await notes[1].boundingBox();if(a&&b)expect(a.y+a.height).toBeLessThanOrEqual(b.y+1);}
  const dock=page.locator('.game-bottom-dock');await expect(dock.locator(':scope > button')).toHaveCount(4);await expect(dock.locator('[data-home-close]')).toHaveCount(0);
  for(const button of await page.locator('.game-field-nav button,.game-bottom-dock button,.game-bird-carousel [data-bird-step],.game-garden-care button,.game-status button').all()){

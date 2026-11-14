@@ -2031,7 +2031,7 @@ body[data-world="buncho"] .game-app[data-panel="garden"] .game-bird-carousel-fac
 body[data-world="buncho"] .game-app[data-panel="garden"] .game-bird-carousel-face>div{min-width:0}
 body[data-world="buncho"] .game-app[data-panel="garden"] .game-bird-carousel-face strong{font-size:14px;max-width:100%}
 body[data-world="buncho"] .game-app[data-panel="garden"] .game-scene-toolbar [data-bird-step]{background:#fae3c4;border:1px solid #e3c5a0;color:#82613f;width:44px;height:44px;box-shadow:0 1px 2px #74552b15}
-body[data-world="buncho"] .game-app[data-panel="garden"] .game-scene-toolbar .game-garden-care{position:relative;inset:auto;grid-column:3;width:100%;max-width:none;box-sizing:border-box;height:64px;display:grid;grid-template-columns:1fr;grid-template-rows:30px 18px 6px;gap:0;padding:4px 5px;background:#fffcf5ce;border:1px solid #e3c5a0;border-radius:16px;box-shadow:0 2px 3px #74552b15}
+body[data-world="buncho"] .game-app[data-panel="garden"] .game-scene-toolbar .game-garden-care{position:relative;inset:auto;grid-column:3;width:100%;max-width:none;box-sizing:border-box;height:64px;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:30px 18px 6px;gap:0;padding:4px 5px;background:#fffcf5ce;border:1px solid #e3c5a0;border-radius:16px;box-shadow:0 2px 3px #74552b15}
 body[data-world="buncho"] .game-app[data-panel="garden"] .game-garden-care button{position:absolute;inset:0;min-width:0;width:100%;height:100%;min-height:44px;display:flex;align-items:flex-start;justify-content:center;gap:3px;padding:7px 3px;background:transparent;border:0;border-radius:16px;box-shadow:none;font-size:13px;color:#82613f}
 body[data-world="buncho"] .game-clean-icon{width:20px;height:22px;flex:none}
 body[data-world="buncho"] .game-app[data-panel="garden"] .game-garden-care output{display:block;grid-column:1;grid-row:2;font-size:12px;text-align:center;pointer-events:none;color:#725b43}
@@ -2056,3 +2056,9 @@ body[data-world="buncho"][data-scene-controls="open"]:has(.game-app[data-panel="
 
 @media(max-width:400px) and (min-height:501px){body[data-world="buncho"] .game-app[data-panel="garden"] .game-field-bar .game-wallet strong{font-size:14px}body[data-world="buncho"] .game-app[data-panel="garden"] .game-field-bar .game-wallet small{font-size:10px}}
 .game-menu-home-actions{padding:12px 0 0}.game-menu-home-actions [data-home-close]{min-height:44px;width:100%}
+
+@media(min-height:501px){
+body[data-world="buncho"] .game-app[data-panel="garden"] .game-garden-care .game-clean-guidance{grid-row:4}
+body[data-world="buncho"] .game-app[data-panel="garden"] .game-garden-care .game-care-feedback{grid-row:5}
+body[data-world="buncho"] .game-app[data-panel="garden"] .game-garden-care [data-care-receipt]{grid-row:6}
+}
