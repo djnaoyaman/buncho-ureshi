@@ -7,7 +7,9 @@ async function checkInstall(page, request, game) {
   const filename = game ? 'game.webmanifest' : 'manifest.webmanifest';
   await expect(page.locator('link[rel="manifest"]')).toHaveAttribute('href', filename);
   const name = game ? '文鳥ぐらし' : SITE_NAME;
-  const iconPath = game ? 'game-icons/apple-touch-icon-v1.png' : 'apple-touch-icon.png';
+  await expect(page.locator('link[rel="icon"][type="image/svg+xml"]')).toHaveAttribute('href', game ? 'favicon.svg' : 'site-brand-v1/favicon.svg');
+  await expect(page.locator('meta[property="og:image"]')).toHaveAttribute('content', new RegExp(game ? 'game-ogp-v1.png$' : 'site-brand-v1/ogp-artposter.png$'));
+  const iconPath = game ? 'game-icons/apple-touch-icon-v1.png' : 'site-brand-v1/apple-touch-icon.png';
   await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveAttribute('href', iconPath);
   const iconURL = await page.locator('link[rel="apple-touch-icon"]').evaluate(link => link.href);
   const iconResponse = await request.get(iconURL);
@@ -108,4 +110,14 @@ test('approved install artwork remains visible at phone icon sizes and under a c
   const path = testInfo.outputPath('install-icons-small-and-masked.png');
   await page.screenshot({ path, fullPage: true });
   await testInfo.attach('install-icons-small-and-masked', { path, contentType: 'image/png' });
+});
+
+test('site icon 05 and art-poster 03 decode at small sizes without changing game branding', async ({page,request},testInfo)=>{
+ await page.goto('');const {manifest,manifestURL}=await checkInstall(page,request,false);
+ const og=await page.locator('meta[property="og:image"]').getAttribute('content');
+ const touch=new URL('site-brand-v1/apple-touch-icon.png',manifestURL).href;
+ const masked=new URL(manifest.icons.find(i=>i.purpose==='maskable').src,manifestURL).href;
+ await page.setContent(`<body style="background:#eee;font:16px sans-serif"><h1>Approved site icon 05 and OGP 03</h1>${[32,60,120,180].map(n=>`<img alt="site icon ${n}" width="${n}" height="${n}" src="${touch}" style="border-radius:20%;margin:12px">`).join('')}<img alt="maskable" width="180" height="180" style="border-radius:50%" src="${masked}"><p><img alt="art poster" width="600" src="${og}"></p></body>`);
+ await page.locator('img').evaluateAll(images=>Promise.all(images.map(i=>i.decode())));
+ const path=testInfo.outputPath('site-brand-small-icons-ogp.png');await page.screenshot({path,fullPage:true});await testInfo.attach('site-brand-artwork',{path,contentType:'image/png'});
 });

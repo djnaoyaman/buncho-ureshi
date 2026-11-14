@@ -47,7 +47,7 @@ test('every static route has the right install metadata even without JavaScript'
       const d = window.document, isGame = route === 'game/';
       const name = isGame ? '文鳥ぐらし' : SITE_NAME;
       assert.equal(d.querySelectorAll('link[rel="apple-touch-icon"]').length, 1);
-      assert.equal(d.querySelector('link[rel="apple-touch-icon"]').getAttribute('href'), isGame ? GAME_INSTALL_ICON : 'apple-touch-icon.png');
+      assert.equal(d.querySelector('link[rel="apple-touch-icon"]').getAttribute('href'), isGame ? GAME_INSTALL_ICON : 'site-brand-v1/apple-touch-icon.png');
       assert.equal(d.querySelectorAll('link[rel="manifest"]').length, 1);
       const documentBase = new URL(d.querySelector('base').getAttribute('href'), base + route);
       assert.equal(new URL(d.querySelector('link[rel="manifest"]').getAttribute('href'), documentBase).href, base + (isGame ? 'game.webmanifest' : 'manifest.webmanifest'));
@@ -65,6 +65,6 @@ test('search, missing routes and ordinary site pages do not inherit the game ins
   for (const metadata of [routeMetadata(''), routeMetadata('help/'), routeMetadata('game/', { notFound: true }), routeMetadata('game/not-real/')]) {
     assert.equal(metadata.installManifest, 'manifest.webmanifest');
     assert.equal(metadata.installName, SITE_NAME);
-    assert.equal(metadata.installIcon, 'apple-touch-icon.png');
+    assert.equal(metadata.installIcon, 'site-brand-v1/apple-touch-icon.png');
   }
 });

@@ -35,7 +35,7 @@ test('header and home use the approved bitmap with full accessible name and expl
     const html=(await read(path)).toString();assert.ok(html.includes(markup),path);
     assert.ok(html.includes(path === 'dist/game/index.html' ? 'ゲームタイトル' : '採用ロゴ'),path);
   }
-  assert.match(IMAGE_ALT,/赤いくちばしの白文鳥と深緑/);assert.doesNotMatch(IMAGE_ALT,/植物/);
+  assert.match(IMAGE_ALT,/赤いくちばしの白文鳥と深緑/);assert.match(IMAGE_ALT,/アートポスター/);
 });
 
 

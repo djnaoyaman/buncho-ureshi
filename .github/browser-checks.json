@@ -1,5 +1,7 @@
 {
-  "base": "f1458875766b70743b174be76ad428bd07616a1c",
-  "tests": ["tests/browser/keepsake-art.spec.js", "tests/browser/garden-story-controls.spec.js", "tests/browser/garden-event-position.spec.js", "tests/browser/home-compact-layout.spec.js"],
-  "reason": "承認済み絵札と押し葉しおり。実参加鳥、35庭cover位置・表示、320/375と横画面、既存イベント開閉/下部ボタン/先行おうちUIをChrome/WebKitで照合。保存と報酬は全Node検査で保護。"
+  "base": "e134b6d6fccd0a8b8d971f3983d5c79a4997b6d0",
+  "tests": [
+    "tests/browser/game-install.spec.js"
+  ],
+  "reason": "非ゲーム専用アイコン⑤・OGP③。全ページ静的メタデータ、画像寸法と既存ロゴをNode検査し、Chrome/WebKitでサイト/ゲーム間の直接起動・戻る進む・再読込・保存維持と各参照を検査。ゲーム素材は無変更。"
 }

@@ -17,7 +17,7 @@ test('only the game route receives the game card, including structured data', ()
   assert.deepEqual(image, { '@type': 'ImageObject', url: game.imageURL, width: 1200, height: 630, caption: GAME_IMAGE_ALT });
   for (const [route, options] of [['', {}], ['studio/', {}], ['encyclopedia/', {}], ['missing/', {}], ['game/', {query:'文鳥'}], ['game/', {notFound:true}]]) {
     const meta = routeMetadata(route, options);
-    assert.equal(meta.imageURL, PRODUCTION_ORIGIN + BASE_PATH + 'ogp.png');
+    assert.equal(meta.imageURL, PRODUCTION_ORIGIN + BASE_PATH + 'site-brand-v1/ogp-artposter.png');
     assert.equal(meta.imageAlt, IMAGE_ALT);
   }
 });
