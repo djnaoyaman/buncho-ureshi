@@ -11,7 +11,7 @@ import { SITE_NAME, esc, birdSvg, birdPhotoCredit, logoSvg, flourish } from "./v
 import { readLocal, writeLocal } from "./storage.js";
 import { mountGame, gameBirdSvg } from "./game.js";
 import { mountStudio } from "./studio.js";
-import { stageStudioTransfer, takeStudioTransfer } from "./studio-transfer.js";
+import { stageStudioTransfer, takeStudioTransfer } from "./studio-transfer.js?v=25eb37ab8acc";
 import { routeMetadata } from "./metadata.js";
 import { morphAtlas } from "./data/morphs.js";
 import { morphPhotos, newMorphPhotos } from "./data/morph-photos.js";

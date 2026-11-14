@@ -7,3 +7,5 @@ test('expired, future, invalid and oversized payloads are not applied',()=>{for(
 test('unavailable storage fails safely without touching persistent game or studio data',()=>{const s={getItem(){throw Error('denied')},setItem(){throw Error('denied')},removeItem(){throw Error('denied')}};assert.equal(stageStudioTransfer(s,'/',{name:'x'}),false);assert.equal(takeStudioTransfer(s,'/'),null)});
 
 test('invalid replacement clears stale handoff',()=>{const s=storage();stageStudioTransfer(s,'/',{name:'old'});assert.equal(stageStudioTransfer(s,'/',null),false);assert.equal(takeStudioTransfer(s,'/'),null)});
+
+test('handoff import version matches helper content',async()=>{const {readFile}=await import('node:fs/promises');const{createHash}=await import('node:crypto');const hash=createHash('sha256').update(await readFile('src/studio-transfer.js')).digest('hex').slice(0,12);assert.ok((await readFile('src/app.js','utf8')).includes('./studio-transfer.js?v='+hash));});
