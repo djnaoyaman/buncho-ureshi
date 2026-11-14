@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {Window} from 'happy-dom';
-import {articles} from '../src/data/articles.js';
+import {articles} from '../site/articles.js';
 import {photos,birdVideo} from '../src/data/photos.js';
 import {BASE_PATH} from '../src/metadata.js';
 import {esc} from '../src/visuals.js';

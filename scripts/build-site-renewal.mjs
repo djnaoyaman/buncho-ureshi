@@ -22,6 +22,8 @@ const css=await readFile('site/renewal.css'),home=await readFile('site/home.js')
 const version=hash(Buffer.concat([css,home,await readFile('site/hero.webp')])).slice(0,12);
 let app=await readFile('dist/src/app.js','utf8');
 const articleVersion=hash(await readFile('site/articles.js')).slice(0,12);
+const originalArticlesVersion=hash(await readFile('dist/src/data/articles.js')).slice(0,12);
+await writeFile('dist/site/articles.js',(await readFile('site/articles.js','utf8')).replace('../src/data/articles.js',`../src/data/articles.js?v=${originalArticlesVersion}`));
 app=app.replace(/from ["']\.\/data\/articles\.js(?:\?[^"']*)?["']/,`from "../site/articles.js?v=${articleVersion}"`);
 app=app.replace(/from ["']\.\/home\.js(?:\?[^"']*)?["']/,`from "../site/home.js?v=${version}"`);
 const encyclopediaModule=await readFile('site/encyclopedia.js','utf8');
