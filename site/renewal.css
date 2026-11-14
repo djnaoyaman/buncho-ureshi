@@ -164,7 +164,8 @@ html[data-site-renewal] .observation{border-color:var(--renewal-line);padding-bl
  html[data-site-renewal] .page-heading h1{font-size:28px;line-height:1.75}
  html[data-site-renewal] .page-heading .lede{font-size:14px}
  html[data-site-renewal] .article-grid{grid-template-columns:minmax(0,1fr);gap:32px}
- html[data-site-renewal] .search-field input{width:100%;min-width:0;flex-basis:100%}
+ html[data-site-renewal] .search-field{display:grid;grid-template-columns:minmax(0,1fr);width:100%;gap:8px}
+ html[data-site-renewal] .search-field input{width:100%;min-width:0;max-width:100%;flex:none}
  html[data-site-renewal] .article-body{margin-block:32px}
  html[data-site-renewal] .article-summary{font-size:18px}
  html[data-site-renewal] .article-body section{margin-block:38px}

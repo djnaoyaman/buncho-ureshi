@@ -7,7 +7,8 @@ for(const width of [320,390,768,1440])for(const [route,ready] of routes){
   await page.goto(route);await expect(page.locator(ready).first()).toBeVisible();
   await expect(page.locator('html')).toHaveAttribute('data-site-renewal','1');
   await page.evaluate(()=>document.fonts.ready);
-  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+  const overflow=await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth,elements:[...document.querySelectorAll('#main *')].filter(e=>e.getBoundingClientRect().right>innerWidth+1&&getComputedStyle(e).position!=='absolute').slice(0,12).map(e=>({tag:e.tagName,cls:e.className,right:e.getBoundingClientRect().right}))}));
+  expect(overflow.scroll,JSON.stringify(overflow)).toBeLessThanOrEqual(width+1);
   for(const image of await page.locator('#main img:visible').all()){await image.scrollIntoViewIfNeeded();expect(await image.evaluate(async i=>{await i.decode();return i.naturalWidth>0;})).toBe(true);}
   if(route==='colors/'){await page.locator('.morph-search-panel>summary').click();await expect(page.locator('.morph-filterbar')).toBeVisible();await page.locator('.morph-search-panel>summary').click();await expect(page.locator('.morph-image-wrap').first()).toHaveCSS('border-top-left-radius','3px');}
   await page.evaluate(()=>scrollTo(0,0));await page.screenshot({path:info.outputPath(`reading-${route.replaceAll('/','-')}-${width}.png`),fullPage:true});
@@ -29,7 +30,8 @@ test('anatomy hotspots keep real photo crop and source context',async({page})=>{
   await expect(page.locator('#part-detail .part-zoom image')).toHaveCount(1);await expect(page.locator('.part-credit a[href^="http"]').first()).toBeVisible();
   await page.locator('.part-context>summary').click();await expect(page.locator('.part-context-image')).toBeVisible();
   if(id==='ear')await expect(page.locator('.part-photo figcaption')).toContainText('耳の穴は羽毛の下');
-  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+  const overflow=await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth,elements:[...document.querySelectorAll('#main *')].filter(e=>e.getBoundingClientRect().right>innerWidth+1&&getComputedStyle(e).position!=='absolute').slice(0,12).map(e=>({tag:e.tagName,cls:e.className,right:e.getBoundingClientRect().right}))}));
+  expect(overflow.scroll,JSON.stringify(overflow)).toBeLessThanOrEqual(width+1);
  }
 });
 test('observation notebook saves, reloads and deletes only its test note',async({page})=>{
