@@ -80,3 +80,6 @@ html[data-site-renewal] .omochi-seeds>p:last-child {font-size:12px;color:#596452
  html[data-site-renewal] .omochi-notebook h2 {font-size:clamp(22px,6.1vw,29px);letter-spacing:0}
 }
 @media(prefers-reduced-motion:reduce){html[data-site-renewal] .omochi-cover {position:static}}
+
+html[data-site-renewal] .omochi-next {display:flex;flex-wrap:wrap;gap:8px 24px;font-size:12px;border-top:1px solid var(--omochi-rule);padding-top:12px}
+html[data-site-renewal] .omochi-next a {display:inline-flex;align-items:center;min-height:44px;color:#465641;text-underline-offset:5px}

@@ -7,9 +7,9 @@ export function renderOmochi({url,cssVersion='',interactive=true}) {
    <h1 id="omochi-title">この一羽を、<br>もっと知りたい。</h1>
    <p class="omochi-room-name">おもち観察室</p>
   </header>
-  <figure class="omochi-cover">
+  <figure class="omochi-cover omochi-real-portrait">
    <img src="${url('omochi/omochi-original.jpeg')}" alt="指にとまる白文鳥のおもち本人" width="925" height="1536" fetchpriority="high">
-   <figcaption>おもち本人 <span aria-hidden="true">｜</span> ご家族からの提供写真</figcaption>
+   <figcaption>${interactive?'おもち本人 <span aria-hidden="true">｜</span> ご家族からの提供写真':'ご家族が提供した、おもち本人の写真を掲載しています。'}</figcaption>
   </figure>
   <div class="omochi-pages">
    <section class="omochi-look" aria-labelledby="omochi-look-title">
@@ -31,6 +31,7 @@ export function renderOmochi({url,cssVersion='',interactive=true}) {
     ${interactive?`<form id="observation-form"><label>観察した日<input type="date" name="date" value="${new Date().toISOString().slice(0,10)}" required></label><label>見たこと・気になったこと<textarea name="note" maxlength="600" rows="3" placeholder="今日、実際に見たこと。" required></textarea></label><button class="button">ノートに記録する <span aria-hidden="true">→</span></button></form><p class="omochi-private">この端末だけに保存され、サイトには投稿されません。</p><h3 class="omochi-records-title">これまでの記録</h3><div id="observations"></div>`:`<p>日付を選んで、見たことを記録できます。ノートを使うにはJavaScriptを有効にしてください。</p><p>この端末だけに保存され、サイトには投稿されません。</p>`}
    </section>
    <aside class="omochi-seeds" aria-labelledby="omochi-seeds-title"><p class="omochi-kicker">もう少し、見てみよう</p><h2 id="omochi-seeds-title">観察のたね</h2><ul><li>休んでいるとき、足はどうなっている？</li><li>水浴びの前と後で、羽はどう変わった？</li><li>「うれしそう」だけでなく、見えた動きを書いてみよう。</li></ul><p>しぐさだけで気持ちを決めつけず、見えたことから少しずつ。</p></aside>
+   <nav class="omochi-next" aria-label="観察の続き"><a href="${url('encyclopedia/')}">文鳥図鑑へ</a><a href="${url('body/')}">からだ探検へ</a><a href="${url('help/')}">保存の手引き</a></nav>
   </div>
  </article>`;
 }
