@@ -3,11 +3,12 @@
 import {cp,readFile,writeFile,mkdir} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {PAGE_CATALOG,BASE_PATH} from '../src/metadata.js';
-import {photos} from '../src/data/photos.js';
+import {photos,birdVideo} from '../src/data/photos.js';
 import {articles} from '../src/data/articles.js';
 import {quizzes} from '../src/data/quizzes.js';
 import {esc} from '../src/visuals.js';
 import {renderHome} from '../site/home.js';
+import {renderEncyclopedia,renderEncyclopediaChapters,renderArticleBase,renderEditorialArticle} from '../site/encyclopedia.js';
 const hash=b=>createHash('sha256').update(b).digest('hex');
 const baseline=JSON.parse(await readFile('site/game-protected-baseline.json','utf8'));
 async function assertGame(){for(const [path,expected]of Object.entries(baseline.files)){if(hash(await readFile('dist/'+path))!==expected)throw Error('Protected game/shared output changed: '+path);}}
@@ -23,9 +24,9 @@ app=app.replace(/from ["']\.\/home\.js(?:\?[^"']*)?["']/,`from "../site/home.js?
 const encyclopediaModule=await readFile('site/encyclopedia.js','utf8');
 const encyclopediaCSS=await readFile('site/encyclopedia.css','utf8');
 const encyclopediaVersion=hash(encyclopediaModule+encyclopediaCSS).slice(0,12);
-app=`import {renderEncyclopedia,renderEncyclopediaChapters,renderEditorialArticle} from "../site/encyclopedia.js?v=${encyclopediaVersion}";\n`+app;
+app=`import {renderEncyclopedia,renderEncyclopediaChapters,renderArticleBase,renderEditorialArticle} from "../site/encyclopedia.js?v=${encyclopediaVersion}";\n`+app;
 app=app.replace('view = encyclopedia();','view = renderEncyclopedia({articles,photos,url,esc});');
-app=app.replace('view = article(a);','view = renderEditorialArticle(a,article(a),{articles,photos,url,esc});');
+app=app.replace('view = article(a);','view = renderEditorialArticle(a,renderArticleBase(a,{articles,photos,url,esc,birdVideo,favorites}),{articles,photos,url,esc});');
 app=app.replace('filtered.map(articleCard).join("") ||', '(category === "all" && !q.trim() ? renderEncyclopediaChapters({articles,photos,url,esc}) : filtered.map(articleCard).join("")) ||');
 app=app.replace('document.querySelector("#article-grid").innerHTML =','document.querySelector("#article-grid").classList.toggle("article-grid", category !== "all" || !!q.trim());\n    document.querySelector("#article-grid").innerHTML =');
 await writeFile('dist/src/site-app.js',app);
@@ -39,6 +40,12 @@ for(const route of [...PAGE_CATALOG.map(p=>p[0]),'404.html'].filter(p=>p!=='game
  const path='dist/'+(route.endsWith('.html')?route:route+'index.html');let html=await readFile(path,'utf8');
  html=html.replace('<html lang="ja"','<html data-site-renewal="1" lang="ja"').replace('</head>',`<link rel="stylesheet" href="site/renewal.css?v=${version}"><link rel="stylesheet" href="site/encyclopedia.css?v=${encyclopediaVersion}"></head>`).replace(/src="src\/app\.js\?([^\"]*)"/,(_,query)=>`src="src/site-app.js?${query}-${version}-${encyclopediaVersion}"`);
  if(route==='')html=html.replace(/(<div class="art-static-home" data-static-content>)[\s\S]*?(<\/div><noscript>)/,`$1${renderHome({photos,articles,quizzes,url,image,atlasDoor:()=>atlas,esc})}$2`);
+ if(route==='encyclopedia/'){
+  const editorial=renderEncyclopedia({articles,photos,url,esc}).replace('<div id="article-grid"></div>',`<div id="article-grid">${renderEncyclopediaChapters({articles,photos,url,esc})}</div>`);
+  html=html.replace(/(<div class="page-content" data-static-content>)[\s\S]*?(<\/div><noscript>)/,`$1${editorial}$2`);
+ }
+ const articleData=articles.find(a=>route===`encyclopedia/${a.id}/`);
+ if(articleData){const ctx={articles,photos,url,esc,birdVideo};const editorial=renderEditorialArticle(articleData,renderArticleBase(articleData,ctx),ctx);html=html.replace(/(<div class="page-content" data-static-content>)[\s\S]*?(<\/div><noscript>)/,`$1${editorial}$2`);}
  await writeFile(path,versionAssets(html));
 }
 await assertGame();
