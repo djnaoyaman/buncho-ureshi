@@ -14,8 +14,8 @@ test('real garden DOM and CSS place the story above the stage with contained scr
  win.document.head.innerHTML='<style>'+readFileSync('src/encounter-ui.css','utf8')+readFileSync('src/game.css','utf8')+'</style>';
  win.document.body.dataset.world='buncho';win.document.body.innerHTML='<div class="game-encounter-host">'+renderFinchGarden(w)+'</div>';
  const card=win.document.querySelector('.finch-garden > .leaf-gift'),style=win.getComputedStyle(card),stage=win.getComputedStyle(win.document.querySelector('.finch-garden-stage'));
- assert.equal(stage.position,'absolute');assert.equal(style.position,'absolute');assert.equal(style.zIndex,'6');assert.equal(style.overflowY,'auto');assert.equal(style.touchAction,'pan-y');
- assert.ok(card.querySelector('[data-leaf-start]'));assert.equal(card.open,false);card.open=true;assert.equal(win.getComputedStyle(card.querySelector('summary')).position,'sticky');
+ assert.equal(stage.position,'absolute');assert.equal(style.position,'absolute');assert.equal(style.zIndex,'6');assert.equal(style.overflowY,'visible');assert.equal(style.touchAction,'pan-y');
+ assert.ok(card.querySelector('[data-leaf-start]'));assert.equal(card.open,false);card.open=true;assert.equal(win.getComputedStyle(card.querySelector('.garden-story-header')).position,'sticky');
  // DOM/CSS regression only: no browser layout or real-device acceptance claimed.
  win.happyDOM.abort();
 });

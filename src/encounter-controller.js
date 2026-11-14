@@ -128,7 +128,7 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
     doc.dispatchEvent(new win.CustomEvent('buncho-game-encounter-view',{detail:{mode}}));
     if(focus)root.querySelector('h3')?.focus({preventScroll:true});
     else if(jogFocus)root.querySelector('[data-jog-center]')?.focus({preventScroll:true});
-    else if(bookletFocus&&mode==='garden')root.querySelector('[data-garden-details='+bookletFocus+'] > summary')?.focus({preventScroll:true});
+    else if(bookletFocus&&mode==='garden'){const d=root.querySelector('[data-garden-details='+bookletFocus+']');d?.querySelector(d.open&&d.matches('[name=garden-story]')?'[data-garden-story-close]':':scope > summary')?.focus({preventScroll:true});}
     else if(companionFocus){const [attribute,value]=companionFocus;const target=[...root.querySelectorAll(`[${attribute}]`)].find(el=>value===null||el.getAttribute(attribute)===value);if(!target?.disabled)target?.focus({preventScroll:true});}
   }
   function refreshBond(){
@@ -168,6 +168,7 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
   }
   function endRub(event){if(!rub||event.pointerId!==rub.pointerId)return;rub.active=false;if(!petFlight&&rub.pending)flushPet();else if(!petFlight){rub=null;render();}}
   function keyRub(event){
+    if(event.key==='Escape'&&mode==='garden'){const story=event.target.closest('details[name=garden-story][open]');if(story&&root.contains(story)){event.preventDefault();event.stopPropagation();story.open=false;story.querySelector('summary')?.focus({preventScroll:true});return;}}
     const target=event.target.closest('[data-encounter-rub]');
     if(!target||!root.contains(target)||!['Enter',' '].includes(event.key)||event.repeat||busy)return;
     event.preventDefault();const w=getWorld(),key=JSON.stringify([w.worldId,mode,target.dataset.encounterRub]);
@@ -185,11 +186,12 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
     const summary=event.target.closest('summary');
     if(summary?.parentElement?.matches('.finch-companion-settings')&&busy){event.preventDefault();return;}
     const button=event.target.closest('button');if(!button||!root.contains(button)||busy)return;
+    if(button.hasAttribute('data-garden-story-close')){const card=button.closest('details[name=garden-story]');if(card){card.open=false;card.querySelector('summary')?.focus({preventScroll:true});}return;}
     if(rub){rub=null;clearTimeout(petTimer);generation++;}
     if(button.matches('[data-expedition-start],[data-expedition-choice],[data-expedition-complete],[data-expedition-later],[data-expedition-go-garden],[data-expedition-diary],[data-expedition-next]')){
       const card=button.closest('[data-expedition-world]');if(!card||mode!=='garden')return;
       if(button.hasAttribute('data-expedition-diary')){onDiary();return;}
-      if(button.hasAttribute('data-expedition-next')){expeditionCelebration=null;render();const d=root.querySelector('[data-garden-details=expedition]');if(d){d.open=getWorld().expedition.entries.length<3;d.querySelector('summary')?.focus({preventScroll:true});}return;}
+      if(button.hasAttribute('data-expedition-next')){expeditionCelebration=null;render();const d=root.querySelector('[data-garden-details=expedition]');if(d){d.open=getWorld().expedition.entries.length<3;d.querySelector(d.open?'[data-garden-story-close]':'summary')?.focus({preventScroll:true});}return;}
       if(button.hasAttribute('data-expedition-go-garden')){await garden(button.dataset.expeditionGoGarden);return;}
       if(button.hasAttribute('data-expedition-later')){card.open=false;card.querySelector('summary')?.focus({preventScroll:true});return;}
       const expected={worldId:card.dataset.expeditionWorld,revision:Number(card.dataset.expeditionRevision)},actors=[...card.querySelectorAll('[data-expedition-actor]')].map(n=>n.value),path=button.dataset.expeditionStart,token=++generation;
@@ -198,7 +200,7 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
       if(result?.changed&&button.hasAttribute('data-expedition-complete'))expeditionCelebration=entryId;
       if(!alive||token!==generation)return;
       if(result)notice=result.changed?'':result.reason==='stale'?'べつの がめんで ようすが かわったよ。もういちど みてみよう。':'ちがう ともだちを ふたり えらんでね。いまは ほかの おはなしの とちゅうかもしれないよ。';
-      render();const details=root.querySelector('[data-garden-details="expedition"]');if(details){details.open=true;details.querySelector('summary')?.focus({preventScroll:true});}return;
+      render();const details=root.querySelector('[data-garden-details="expedition"]');if(details){details.open=true;details.querySelector(details.open?'[data-garden-story-close]':'summary')?.focus({preventScroll:true});}return;
     }
     if(button.matches('[data-leaf-start],[data-leaf-choice],[data-leaf-complete],[data-leaf-display]')){
       const card=button.closest('[data-leaf-world]');if(!card||mode!=='garden')return;
@@ -206,7 +208,7 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
       const result=await mutate(w=>button.hasAttribute('data-leaf-start')?startLeafEvent(w,expected):button.hasAttribute('data-leaf-choice')?chooseLeafEvent(w,button.dataset.leafChoice,expected):button.hasAttribute('data-leaf-complete')?completeLeafEvent(w,expected):setLeafKeepsakeDisplay(w,button.dataset.leafDisplay==='true',expected),token);
       if(!alive||token!==generation)return;
       if(result)notice=result.changed?'':result.reason==='stale'?'べつの がめんで ようすが かわったよ。もういちど みてみよう。':'';
-      render();const details=root.querySelector('[data-garden-details="leaf-gift"]');if(details){details.open=button.dataset.leafChoice!=='later';details.querySelector('summary')?.focus({preventScroll:true});}return;
+      render();const details=root.querySelector('[data-garden-details="leaf-gift"]');if(details){details.open=button.dataset.leafChoice!=='later';details.querySelector(details.open?'[data-garden-story-close]':'summary')?.focus({preventScroll:true});}return;
     }
     if(button.hasAttribute('data-finch-go-home')){const token=++generation,originalWorld=getWorld().worldId,isCurrent=()=>alive&&token===generation&&getWorld().worldId===originalWorld;busy=true;render();try{await onHome(isCurrent);}catch{if(isCurrent())notice='おうちをひらけなかったよ。もう一度試してね。';}finally{if(isCurrent()){busy=false;render();}}return;}
     if(button.hasAttribute('data-encounter-invite-garden')||button.hasAttribute('data-encounter-invite-cage')||button.hasAttribute('data-encounter-dismiss-cage')){
@@ -346,6 +348,8 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
     if(!detail.open){const restoreFocus=detail.contains(doc.activeElement);discardCompanions();render();if(restoreFocus)root.querySelector('[data-companion-summary]')?.focus({preventScroll:true});return;}
     if(!companionDraft){companionDraft=createCompanionDraft(getWorld());companionMessage='';}
   };
+  const storyToggle=event=>{const d=event.target;if(d.matches?.('details[name=garden-story]')&&d.open&&root.contains(d)&&d.querySelector('summary')===doc.activeElement)d.querySelector('[data-garden-story-close]')?.focus({preventScroll:true});};
+  root.addEventListener('toggle',storyToggle,true);
   root.addEventListener('toggle',companionToggle,true);
   const crowInterrupted=()=>{stopCrow();if(alive&&mode==='garden')render();};
   const crowModalObserver=win.MutationObserver?new win.MutationObserver(records=>{if(records.some(r=>r.target.matches?.('.game-bird-sheet')))stopCrow();}):null;
@@ -358,5 +362,5 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
   crowTimer=win.setTimeout(pollCrow,1000);
   root.classList.add('finch-overlay-content');root.addEventListener('click',click);root.addEventListener('pointerdown',startRub);root.addEventListener('keydown',keyRub);doc.addEventListener('pointermove',moveRub,{passive:false});doc.addEventListener('pointerup',endRub);doc.addEventListener('pointercancel',endRub);render();
   const motion=mountGardenBirdMotion(root,{enabled:()=>alive&&!getWorld().paused&&getWorld().settings.motion});
-  return {canStartCrowWarning,startCrowWarning,hasCrowPending:()=>alive&&(!!crowClock.warning||crowFlight),open,garden,entry(id){generation++;rub=null;busy=false;mode='entry';pageId=id;showPhoto=false;notice='';render({focus:true});},notebook(){rub=null;generation++;busy=false;mode='notebook';pageId=null;notice='';render({focus:true});},refresh(){render();},destroy(){jog.destroy();jogFeedback.close();stopCrow();crowModalObserver?.disconnect();win.clearTimeout(crowTimer);doc.removeEventListener('visibilitychange',crowInterrupted);doc.removeEventListener('buncho-game-view-visibility',viewVisibility);win.removeEventListener('offline',crowInterrupted);win.removeEventListener('pagehide',crowInterrupted);doc.removeEventListener('buncho-game-will-render',rememberCatalog);media.destroy();motion();petClock.reset();alive=false;generation++;rub=null;clearTimeout(petTimer);root.removeEventListener('pointerdown',startRub);root.removeEventListener('keydown',keyRub);doc.removeEventListener('pointermove',moveRub);doc.removeEventListener('pointerup',endRub);doc.removeEventListener('pointercancel',endRub);root.removeEventListener('click',click);root.removeEventListener('toggle',companionToggle,true);discardCompanions();root.removeAttribute('aria-busy');root.classList.remove('finch-overlay-content');}};
+  return {canStartCrowWarning,startCrowWarning,hasCrowPending:()=>alive&&(!!crowClock.warning||crowFlight),open,garden,entry(id){generation++;rub=null;busy=false;mode='entry';pageId=id;showPhoto=false;notice='';render({focus:true});},notebook(){rub=null;generation++;busy=false;mode='notebook';pageId=null;notice='';render({focus:true});},refresh(){render();},destroy(){jog.destroy();jogFeedback.close();stopCrow();crowModalObserver?.disconnect();win.clearTimeout(crowTimer);doc.removeEventListener('visibilitychange',crowInterrupted);doc.removeEventListener('buncho-game-view-visibility',viewVisibility);win.removeEventListener('offline',crowInterrupted);win.removeEventListener('pagehide',crowInterrupted);doc.removeEventListener('buncho-game-will-render',rememberCatalog);media.destroy();motion();petClock.reset();alive=false;generation++;rub=null;clearTimeout(petTimer);root.removeEventListener('pointerdown',startRub);root.removeEventListener('keydown',keyRub);doc.removeEventListener('pointermove',moveRub);doc.removeEventListener('pointerup',endRub);doc.removeEventListener('pointercancel',endRub);root.removeEventListener('click',click);root.removeEventListener('toggle',storyToggle,true);root.removeEventListener('toggle',companionToggle,true);discardCompanions();root.removeAttribute('aria-busy');root.classList.remove('finch-overlay-content');}};
 }
