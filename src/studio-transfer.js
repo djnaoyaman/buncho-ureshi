@@ -5,6 +5,7 @@ const MAX_AGE = 5 * 60 * 1000;
 const key = base => `buncho-studio-transfer:${base}`;
 export function stageStudioTransfer(storage, base, seed, now = Date.now()) {
   try {
+    storage.removeItem(key(base));
     if (!seed || typeof seed !== 'object' || Array.isArray(seed)) return false;
     const value = JSON.stringify({ seed, at: now });
     if (value.length > MAX_CHARS) return false;

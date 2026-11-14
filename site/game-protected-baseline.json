@@ -554,7 +554,7 @@
     "studio-backgrounds/art-nouveau.png": "db32e49d59d834f3542d8a3cf4fa4d67cf661906a18ceac23fe8ee65b2b7d5c2",
     "studio-backgrounds/bauhaus.png": "aa11a662fb110f558ee245aaa483f0d91b14db5372d280cdff1892cf61e1b230",
     "studio-backgrounds/rinpa.png": "5b0193b7730d5d7dc3ece661926437b06715b0076d3970e3d0881e1ee3b75a82",
-    "src/studio-transfer.js": "043e4242cb87d1163c8c62aad40cb2665adb3d352d4d7be2b5fb43f63b492f20"
+    "src/studio-transfer.js": "25eb37ab8acce90391d193edf2074865d2ee362898501c139c105f97c1a67348"
   },
   "authorizedConnectionFix": {
     "reason": "User separately approved game-to-studio session handoff. Game HTML/app plus cache-query-only updates in four emitted modules; game logic and saves unchanged.",

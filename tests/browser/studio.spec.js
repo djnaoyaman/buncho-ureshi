@@ -390,6 +390,9 @@ test('game memorial uses real game name labels and undo restores the preceding s
   expect((await page.evaluate(() => window.__studioAudit.text)).join('')).toContain('エド');
   await action(page, 'undo').click();
   expect(await saved(page)).toEqual(before);
+  await page.reload();
+  await expect(control(page, 'title')).toHaveValue('さっきまでの作品');
+  expect(await saved(page)).toEqual(before);
 });
 
 test('three requested art backgrounds are selectable, persist and appear in exported pixels',async({page},info)=>{
