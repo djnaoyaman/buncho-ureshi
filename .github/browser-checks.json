@@ -1,7 +1,8 @@
 {
-  "base": "e134b6d6fccd0a8b8d971f3983d5c79a4997b6d0",
+  "base": "f0f0770c154b2f50ed727b72c01c1f4fac852d46",
   "tests": [
+    "tests/browser/game-startup.spec.js",
     "tests/browser/game-install.spec.js"
   ],
-  "reason": "非ゲーム専用アイコン⑤・OGP③。全ページ静的メタデータ、画像寸法と既存ロゴをNode検査し、Chrome/WebKitでサイト/ゲーム間の直接起動・戻る進む・再読込・保存維持と各参照を検査。ゲーム素材は無変更。"
+  "reason": "ゲーム初期HTMLのみ起動シェルに変更。Chrome/WebKitでサイトからの遷移・読込遅延・再読込・戻る進む・失敗後の再試行・JS無効・保存値保持を確認。ゲーム内容と保存ロジックは無変更。"
 }

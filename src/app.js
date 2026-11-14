@@ -449,6 +449,9 @@ function render(route) {
       `<p>この場所にはページがありません。</p><a class="button" href="${url()}">トップへ戻る</a>`;
   }
   main.innerHTML = view;
+  // The initial game-only shell is replaced synchronously, never exposing the
+  // general site introduction while the module graph is still loading.
+  document.documentElement.removeAttribute("data-game-startup");
   const metadata = routeMetadata(route, { query, notFound });
   document.title = metadata.title;
   trackContentView(route);
