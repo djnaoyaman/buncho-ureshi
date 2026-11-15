@@ -23,7 +23,7 @@ test('free showcase, optional shop, interruption and replay on a small phone',as
  await card.locator('[data-showcase-item]').selectOption('bell');
  for(const theme of ['song','discovery','style']){
   await card.locator(`[data-showcase-start=${theme}]`).click();await expect(card.locator('[data-showcase-complete]')).toBeVisible();
-  await page.screenshot({path:info.outputPath(`showcase-${theme}.png`)});
+  await expect(card.locator('.showcase-stage')).toBeInViewport();expect(await card.evaluate(n=>n.scrollTop)).toBe(0);await page.screenshot({path:info.outputPath(`showcase-${theme}.png`)});
   if(theme==='song'){await card.locator('.garden-story-header [data-garden-story-close]').click();await expect(card).not.toHaveAttribute('open','');await card.locator(':scope > summary').click();}
   await card.locator('[data-showcase-complete]').click();await expect(card.locator('[data-showcase-diary]')).toBeVisible();await card.locator('[data-showcase-next]').click();
  }

@@ -217,7 +217,7 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
       if(result?.changed&&button.hasAttribute('data-showcase-complete'))showcaseCelebration=result.entry;
       if(result?.changed&&button.hasAttribute('data-showcase-start'))showcaseCelebration=null;
       if(result)notice=result.changed?'':result.reason==='stale'?'べつの がめんで ようすが かわったよ。もういちど みてみよう。':'いまの もちものと ともだちを かくにんしてね。';
-      render();const d=root.querySelector('[data-garden-details=showcase]');if(d){d.open=true;d.querySelector('[data-garden-story-close]')?.focus({preventScroll:true});}return;
+      render();const d=root.querySelector('[data-garden-details=showcase]');if(d){d.open=true;if(result?.changed&&(button.hasAttribute('data-showcase-start')||button.hasAttribute('data-showcase-complete')))d.scrollTop=0;d.querySelector('[data-garden-story-close]')?.focus({preventScroll:true});}return;
     }
     if(button.matches('[data-expedition-start],[data-expedition-choice],[data-expedition-complete],[data-expedition-later],[data-expedition-go-garden],[data-expedition-diary],[data-expedition-next]')){
       const card=button.closest('[data-expedition-world]');if(!card||mode!=='garden')return;
