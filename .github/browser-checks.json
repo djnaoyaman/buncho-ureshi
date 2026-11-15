@@ -1,1 +1,8 @@
-{"base": "b86601a8c052123faeb7e805c87e2cfaba05f9f2", "tests": [], "reason": "おもち紹介の内部説明と空の関連記事枠のみ削除。静的HTML・動的共通レンダラの単体検査、全Node検査、ゲーム保護資産の一致で確認。ゲームや操作処理は変更なし。"}
+{
+  "base": "3773665fc99091ce3bcff5aa5ae63d707035b983",
+  "tests": [
+    "tests/browser/garden-event-position.spec.js",
+    "tests/browser/garden-showcase.spec.js"
+  ],
+  "reason": "第3回の発表会・お店を追加。320/375/横画面の入口・閉じる操作と無料の発表、購入、再演をChrome/WebKitで確認。保存互換・同時タブ・二重取得はNode検査。"
+}

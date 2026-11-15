@@ -1,0 +1,32 @@
+/* The third garden story is a single compact ticket, never a banner over birds. */
+body[data-world="buncho"] .game-encounter-host .finch-garden:has(.showcase-gift) > .showcase-gift:not(.leaf-gift-diary):not([open]){right:var(--garden-story-right);background:var(--play-peach-wash,#f3dfd3);position:absolute;z-index:7;touch-action:pan-y}
+body[data-world="buncho"] .finch-garden .showcase-gift .garden-story-header{background:var(--play-peach-wash,#f3dfd3)}
+.showcase-gift .showcase-intro,.showcase-diary .showcase-intro{font-size:.95em;line-height:1.8}
+.showcase-gift h4,.showcase-diary h4{margin:16px 0 8px;color:var(--play-ink,#304b42)}
+.showcase-stage{position:relative;isolation:isolate;aspect-ratio:1.5;max-width:440px;margin:14px auto 22px;overflow:hidden;border-radius:48% 48% 22px 24px;background:radial-gradient(ellipse at 50% 34%,#fff9df 10%,#e8edda 70%);border-bottom:9px solid #ba9470}
+.showcase-stage::before{content:'';position:absolute;inset:auto 0 0;height:26%;background:linear-gradient(#d8bd8b,#efdcb4);border-radius:50% 50% 0 0;z-index:-1}
+.showcase-stage::after{content:'♪';position:absolute;top:10%;left:46%;font-size:34px;color:#8b765a}
+.showcase-stage[data-theme="discovery"]::after{content:'✧';color:#78896d}
+.showcase-stage[data-theme="style"]::after{content:'✿';color:#bc917f}
+.showcase-performer{position:absolute;bottom:5%;width:31%;height:70%;margin:0;display:flex;align-items:center;justify-content:end;flex-direction:column}
+.showcase-performer img{width:100%;height:calc(100% - 27px);object-fit:contain;filter:drop-shadow(0 5px 2px #6b573229)}
+.showcase-performer figcaption{font-size:clamp(12px,3.6vw,16px);font-weight:700;background:#fffcf5d9;padding:2px 10px;border-radius:20px}
+.showcase-performer:first-child{left:12%}.showcase-performer:nth-child(2){right:10%;height:66%}.showcase-performer:nth-child(2) img{transform:scaleX(-1)}
+.showcase-ribbon{position:absolute;left:9%;right:9%;top:18%;border-top:2px solid #927c62;display:flex;justify-content:space-around;z-index:-1}
+.showcase-ribbon i{width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:17px solid #dcaa91}.showcase-ribbon i:nth-child(even){border-top-color:#aebd91}
+.showcase-stage[data-decor="none"] .showcase-ribbon{display:none}
+.showcase-form{padding:12px;border-radius:20px;background:var(--play-cream,#f8efdb);display:grid;gap:8px}
+.showcase-form label{font-size:.9em;font-weight:700}.showcase-form select{box-sizing:border-box;width:100%;min-width:0;min-height:48px;font:inherit;color:var(--play-ink,#304b42);background:#fffcf5;border:1px solid #c8b99e;border-radius:18px;padding:8px 12px}
+.showcase-themes{display:grid;gap:10px;margin:14px 0}.showcase-themes button{padding:12px;text-align:left}.showcase-themes button small{display:block;line-height:1.7;margin-top:5px}
+.showcase-progress{display:flex;flex-wrap:wrap;gap:6px;padding:0;list-style:none}.showcase-progress li{padding:5px 9px;border-radius:20px;background:#eee9dd;font-size:.8em}.showcase-progress li[data-complete="true"]{background:#dfe6d3}
+.showcase-dialogue{display:grid;gap:10px;margin:14px 0}.showcase-dialogue p{margin:0;padding:13px 15px;line-height:1.8;border-radius:22px 25px 23px 6px;background:#dfe6d3}.showcase-dialogue p:nth-child(even){margin-left:15px;border-radius:23px 22px 6px 25px;background:#f3dfd3}.showcase-dialogue strong{display:block;font-size:.85em;margin-bottom:3px}
+.showcase-memory{padding:12px 16px;border-left:3px solid #b0bb91;border-radius:0 16px 16px 0;background:#f5f0df;line-height:1.8}
+.showcase-shop{margin-top:24px;padding-top:8px;border-top:1px dashed #c8b99e}.showcase-stock{display:grid;gap:12px;padding:0;list-style:none}.showcase-stock li{display:grid;grid-template-columns:56px minmax(0,1fr);gap:7px 12px;background:#f8f0df;border-radius:22px;padding:14px}.showcase-stock li>.showcase-item-icon{grid-row:1/3;align-self:start;display:grid;place-items:center;width:52px;height:52px;border-radius:50%;background:#fffcf5;color:#927654;font-size:29px}.showcase-stock h5{margin:0;font-size:1em}.showcase-stock p{grid-column:2;margin:0;font-size:.87em;line-height:1.7}.showcase-stock .showcase-buy-options{grid-column:1/-1;display:grid;gap:8px;margin-top:5px}.showcase-buy-options button{padding:10px}.showcase-buy-options button:disabled{opacity:.6;box-shadow:none!important;cursor:not-allowed}.showcase-owned{font-weight:700;color:#4b6951}.showcase-diary ol{list-style:none;padding:0}.showcase-diary li{margin-bottom:24px;padding-bottom:18px;border-bottom:1px dashed #c8b99e}.showcase-diary .showcase-stage{max-width:360px}
+.showcase-gift :is(button,select):focus-visible{outline:3px solid #627d61;outline-offset:3px}
+@media(max-width:360px){.showcase-stock li{padding:12px;gap:6px 9px;grid-template-columns:44px minmax(0,1fr)}.showcase-stock li>.showcase-item-icon{width:42px;height:42px;font-size:25px}.showcase-stage{aspect-ratio:1.35}.showcase-dialogue p:nth-child(even){margin-left:8px}}
+@media(prefers-reduced-motion:reduce){.showcase-gift *{transition:none;animation:none}}
+
+body[data-world="buncho"] .game-encounter-host .finch-garden:has(.showcase-gift) > .leaf-gift:not(.leaf-gift-diary):not(.expedition-gift):not(.showcase-gift):not([open]){right:calc(var(--garden-story-right) + 124px)}
+body[data-world="buncho"] .game-encounter-host .finch-garden:has(.showcase-gift) > .expedition-gift:not(.leaf-gift-diary):not([open]){right:calc(var(--garden-story-right) + 62px)}
+
+.showcase-prop{position:absolute;left:43%;top:43%;width:14%;aspect-ratio:1;display:grid;place-items:center;font-size:clamp(20px,6vw,32px);color:#8a7250;background:#ead39b;border:2px solid #a78958;border-radius:45% 45% 12% 12%;box-shadow:0 4px 4px #72582b20}.showcase-prop-frame{border:6px solid #b9926c;border-radius:5px;background:#fff9df;color:#8c9e70}

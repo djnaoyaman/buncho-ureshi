@@ -1,3 +1,4 @@
+import {startShowcase,completeShowcase,buyShowcaseItem} from './garden-showcase.js';
 import {syncGardenKeepsakeLayout} from './garden-keepsake-layout.js';
 import {startExpedition,chooseExpedition,completeExpedition} from './garden-expedition.js';
 import {startLeafEvent,chooseLeafEvent,completeLeafEvent,setLeafKeepsakeDisplay} from './garden-leaf-event.js';
@@ -21,7 +22,7 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
   let rub=null,petFlight=false,petTimer=null;
   // Earn at most one point per second of active input, never idle time.
   const petClock=createPettingClock(petNow);
-  let expeditionCelebration=null;
+  let expeditionCelebration=null,showcaseCelebration=null;
   let companionDraft=null,companionMessage='';
   const discardCompanions=()=>{companionDraft=null;companionMessage='';};
  const crowClock=createGardenCrowClock({random:crowRandom});
@@ -64,6 +65,7 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
       gardenId:garden.querySelector('[aria-current=page]')?.dataset.gardenSelect,
       bookletFocus:bookletSummaryFocus(),
       expeditionActors:[...garden.querySelectorAll("[data-expedition-actor]")].map(n=>n.value),
+      showcaseSelection:[...garden.querySelectorAll('[data-showcase-actor],[data-showcase-item]')].map(n=>n.value),
       details:new Map([...garden.querySelectorAll('details[data-garden-details][open]')].map(d=>[d.dataset.gardenDetails,d.scrollTop])),
     }:null;
   };
@@ -92,15 +94,18 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
     const sameBooklet=oldGarden?.dataset.gardenWorld===w.worldId&&oldSelected===w.encounters.garden.id;
     const outsideBookletFocus=doc.activeElement!==doc.body&&doc.activeElement!==doc.documentElement&&!bookletSummaryFocus();
     const bookletFocus=sameBooklet&&!outsideBookletFocus?(savedGarden?.bookletFocus??bookletSummaryFocus()):null;
-    if(w.worldId!==worldId){worldId=w.worldId;expeditionCelebration=null;generation++;busy=false;mode='notebook';pageId=null;notice='';}
+    if(w.worldId!==worldId){worldId=w.worldId;expeditionCelebration=null;showcaseCelebration=null;generation++;busy=false;mode='notebook';pageId=null;notice='';}
     const focused=doc.activeElement,companionFocus=focused?.closest?.('.finch-companion-settings')?(focused.hasAttribute('data-garden-companion')?['data-garden-companion',focused.dataset.gardenCompanion]:focused.hasAttribute('data-garden-accompany')?['data-garden-accompany',focused.dataset.gardenAccompany]:focused.hasAttribute('data-garden-companions-save')?['data-garden-companions-save',null]:focused.hasAttribute('data-companion-summary')?['data-companion-summary',null]:null):null;
     const nextReadingKey=['entry','raptors','crows'].includes(mode)&&pageId?`${w.worldId}:${mode}:${pageId}`:null,priorReading=hostEntryReading||entryReading();
     const savedReading=priorReading?.key===nextReadingKey?priorReading:null;hostEntryReading=null;renderedReadingKey=nextReadingKey;
     const expeditionActors=sameBooklet?(savedGarden?.expeditionActors||[...root.querySelectorAll('[data-expedition-actor]')].map(n=>n.value)):[];
     const expeditionFocus=focused?.dataset?.expeditionActor;
+    const showcaseSelection=sameBooklet?(savedGarden?.showcaseSelection||[...root.querySelectorAll('[data-showcase-actor],[data-showcase-item]')].map(n=>n.value)):[];
+    const showcaseFocus=focused?.hasAttribute?.('data-showcase-item')?'item':focused?.dataset?.showcaseActor;
     media.preserve();
-    root.innerHTML=(mode==='raptors'?renderRaptorNotebook(w,{base,id:pageId}):mode==='crows'?renderCrowNotebook(w,{base,id:pageId}):mode==='event'?renderEncounterScene(w,{system,base}):mode==='garden'?renderFinchGarden(w,{system,base,selectedBirdId:getSelectedBirdId(),crowWarning:crowClock.warning,companionDraft,companionMessage,expeditionCelebration}):mode==='entry'?renderEncounterPage(w,pageId,{system,base,showPhoto}):renderEncounterNotebook(w,{system,base}))+`<p class="finch-notice" role="status">${escape(notice)}</p><button type="button" class="finch-media-retry" data-media-retry hidden>絵をもう一度読み込む</button>`;
+    root.innerHTML=(mode==='raptors'?renderRaptorNotebook(w,{base,id:pageId}):mode==='crows'?renderCrowNotebook(w,{base,id:pageId}):mode==='event'?renderEncounterScene(w,{system,base}):mode==='garden'?renderFinchGarden(w,{system,base,selectedBirdId:getSelectedBirdId(),crowWarning:crowClock.warning,companionDraft,companionMessage,expeditionCelebration,showcaseCelebration}):mode==='entry'?renderEncounterPage(w,pageId,{system,base,showPhoto}):renderEncounterNotebook(w,{system,base}))+`<p class="finch-notice" role="status">${escape(notice)}</p><button type="button" class="finch-media-retry" data-media-retry hidden>絵をもう一度読み込む</button>`;
     root.querySelectorAll('[data-expedition-actor]').forEach((select,i)=>{if([...select.options].some(o=>o.value===expeditionActors[i]))select.value=expeditionActors[i];if(expeditionFocus===select.dataset.expeditionActor)select.focus({preventScroll:true});});
+    root.querySelectorAll('[data-showcase-actor],[data-showcase-item]').forEach((select,i)=>{if([...select.options].some(o=>o.value===showcaseSelection[i]))select.value=showcaseSelection[i];if(showcaseFocus===(select.hasAttribute('data-showcase-item')?'item':select.dataset.showcaseActor))select.focus({preventScroll:true});});
     const selector=root.querySelector('.finch-garden-selector');
     if(selector){
       const selected=selector.querySelector('[aria-current=page]');
@@ -201,6 +206,19 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
     const button=event.target.closest('button');if(!button||!root.contains(button)||busy)return;
     if(button.hasAttribute('data-garden-story-close')){const card=button.closest('details[name=garden-story]');if(card){card.open=false;card.querySelector('summary')?.focus({preventScroll:true});}return;}
     if(rub){rub=null;clearTimeout(petTimer);generation++;}
+    if(button.matches('[data-showcase-start],[data-showcase-complete],[data-showcase-buy],[data-showcase-diary],[data-showcase-next],[data-showcase-go-garden]')){
+      const card=button.closest('[data-showcase-world]');if(!card||mode!=='garden')return;
+      if(button.hasAttribute('data-showcase-diary')){onDiary();return;}
+      if(button.hasAttribute('data-showcase-next')){showcaseCelebration=null;render();const d=root.querySelector('[data-garden-details=showcase]');if(d)d.open=true;return;}
+      if(button.hasAttribute('data-showcase-go-garden')){await garden(button.dataset.showcaseGoGarden);return;}
+      const expected={worldId:card.dataset.showcaseWorld,revision:Number(card.dataset.showcaseRevision)},actors=[...card.querySelectorAll('[data-showcase-actor]')].map(n=>n.value),item=card.querySelector('[data-showcase-item]')?.value||null,token=++generation;
+      const result=await mutate(w=>button.hasAttribute('data-showcase-start')?startShowcase(w,button.dataset.showcaseStart,actors,item,expected):button.hasAttribute('data-showcase-buy')?buyShowcaseItem(w,button.dataset.showcaseBuy,button.dataset.showcasePayment,expected):completeShowcase(w,expected),token);
+      if(!alive||token!==generation)return;
+      if(result?.changed&&button.hasAttribute('data-showcase-complete'))showcaseCelebration=result.entry;
+      if(result?.changed&&button.hasAttribute('data-showcase-start'))showcaseCelebration=null;
+      if(result)notice=result.changed?'':result.reason==='stale'?'べつの がめんで ようすが かわったよ。もういちど みてみよう。':'いまの もちものと ともだちを かくにんしてね。';
+      render();const d=root.querySelector('[data-garden-details=showcase]');if(d){d.open=true;d.querySelector('[data-garden-story-close]')?.focus({preventScroll:true});}return;
+    }
     if(button.matches('[data-expedition-start],[data-expedition-choice],[data-expedition-complete],[data-expedition-later],[data-expedition-go-garden],[data-expedition-diary],[data-expedition-next]')){
       const card=button.closest('[data-expedition-world]');if(!card||mode!=='garden')return;
       if(button.hasAttribute('data-expedition-diary')){onDiary();return;}

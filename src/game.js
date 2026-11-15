@@ -1,3 +1,4 @@
+import {renderShowcaseDiary} from './garden-showcase-ui.js';
 import {renderExpeditionDiary} from './garden-expedition-ui.js';
 import {renderLeafDiary} from './garden-leaf-event-ui.js';
 import { trackEvent } from './analytics.js';
@@ -655,7 +656,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
   function resizeFamily(){if(panel==='family'){render();centerFamily();}else if(panel==='garden'&&!interactionActive())render();}
   function centerFamily(){const pan=root.querySelector('.game-family-pan'),canvas=root.querySelector('.game-family-canvas');if(pan&&canvas)pan.scrollLeft=Math.max(0,parseFloat(canvas.style.width)*familyZoom/2-pan.clientWidth/2);}
   function diary() {
-    return renderEndingDiary(world)+renderLeafDiary(world)+renderExpeditionDiary(world)+renderDiaryPaper(world, {portrait:b=>`<span class="game-mini-bird">${birdSvg(b.color,b.stage,'left')}</span>`})+(world.away.reports.length?`<details class="game-away-history" data-game-details="away-history"><summary>留守の小さな記録（直近7日）</summary><ul class="game-away-reports">${world.away.reports.map(r=>`<li><time datetime="${r.day}">${r.day}</time><span>${escape(awayText(r))}</span></li>`).join('')}</ul></details>`:'');
+    return renderEndingDiary(world)+renderLeafDiary(world)+renderExpeditionDiary(world)+renderShowcaseDiary(world)+renderDiaryPaper(world, {portrait:b=>`<span class="game-mini-bird">${birdSvg(b.color,b.stage,'left')}</span>`})+(world.away.reports.length?`<details class="game-away-history" data-game-details="away-history"><summary>留守の小さな記録（直近7日）</summary><ul class="game-away-reports">${world.away.reports.map(r=>`<li><time datetime="${r.day}">${r.day}</time><span>${escape(awayText(r))}</span></li>`).join('')}</ul></details>`:'');
   }
   function roster() {
     const current=chosen();
@@ -912,6 +913,13 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     finally{lifeBusy=false;if(button.isConnected)button.disabled=false;}
   }
   async function click(ev) {
+    const showcaseDestination=ev.target.closest?.('[data-showcase-go-garden]');
+    if(showcaseDestination){
+      if(busy||world.encounters.raptor?.active||world.paused||showcaseDestination.dataset.showcaseWorld!==world.worldId)return;
+      const expected={worldId:world.worldId,revision:world.revision},gardenId=showcaseDestination.dataset.showcaseGoGarden;let result;
+      const committed=await mutate(w=>{if(!w.showcase?.entries.some(e=>e.gardenId===gardenId)||w.encounters.raptor?.active||w.paused)return w;result=encounterSystem.selectGarden(w,gardenId,expected);return w;},'',()=>alive,{bump:false,advanceCurrent:false});
+      if(committed&&(result?.changed||result?.resumed)){sheetOpen=false;fieldViewRequest++;cancelCareEffects();panel='outdoors';render();focusPanel();}return;
+    }
     const expeditionDestination=ev.target.closest?.('[data-expedition-go-garden]');
     if(expeditionDestination){
       if(busy||world.encounters.raptor?.active||world.paused||expeditionDestination.dataset.expeditionWorld!==world.worldId)return;
