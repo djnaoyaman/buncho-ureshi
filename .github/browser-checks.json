@@ -1,5 +1,9 @@
 {
   "base": "0e45044207c5265e805de20b46ee7fea46a44c30",
-  "tests": ["tests/browser/garden-event-position.spec.js", "tests/browser/garden-story-scenes.spec.js", "tests/browser/iphone15-scene.spec.js"],
-  "reason": "User-approved high-quality garden event storybook screens. Verify the three illustrated modal scenes, native actor previews, shop disclosure persistence, pause explanation, close/reopen/focus and phone overflow at 320/375/402 widths, plus retained iOS15 scene geometry. Visual/device acceptance is by the user; no user PC browser is required. Local headless launch is blocked by container socket permissions; CI Chrome/WebKit performs automated checks. Protected baseline independently reviewed against #210: 497 unchanged, 57 cache-token-only, 5 authorized presentation changes, no deletion; add helper, CSS and 3 WebP scenes (564 total). Save, rewards and progression unchanged."
+  "tests": [
+    "tests/browser/garden-event-position.spec.js",
+    "tests/browser/garden-story-scenes.spec.js",
+    "tests/browser/iphone15-scene.spec.js"
+  ],
+  "reason": "承認済み3イベントの絵本化。320/375/402幅で背景・操作・閉じる・再開・鳥プレビュー・お店の開閉維持とiOS15表示をChrome/WebKitで検査。実機/目視は本人。ローカル起動はsocket制限。保護baselineは独立レビュー済み、559件保持（497同一/57版識別子/5表示変更）と新規5件。保存・報酬・進行ルール無変更。"
 }
