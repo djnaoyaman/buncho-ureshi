@@ -1,3 +1,4 @@
+import {validateShowcase} from './garden-showcase.js';
 import {initialExpedition,validateExpedition} from './garden-expedition.js';
 import {initialLeafEvent,validateLeafEvent} from './garden-leaf-event.js';
 import {initialCollectionEndings,validateCollectionEndings,syncCollectionEndings} from './collection-endings.js';
@@ -728,7 +729,7 @@ function validateVersion(input, version) {
   const fail = msg => { throw new Error(`保存データを読み込めません：${msg}`); };
   if (!input || typeof input !== 'object' || Array.isArray(input)) fail('形式が違います。');
   const shape = (value, keys) => value !== null && typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length === keys.length && keys.every(key => Object.hasOwn(value, key));
-  const worldKeys = ['version','revision','worldId','epoch','lastUpdated','seed','tick','nextId','nextEvent','paused','settings','birds','events','offlineSummary', ...(version >= 2 ? ['care'] : []), ...(version >= 3 ? ['field','decor'] : []), ...(version >= 4 ? ['gems'] : []), ...(version >= 5 ? ['careSchedule'] : []), ...(version >= 6 ? ['encounters'] : []), ...(version >= 7 ? ['economy','adoption'] : []), ...(version >= 8 ? ['lifecycle'] : []), ...(version >= 9 ? ['protagonist'] : []),...(version>=12?['clock','archive','journal']:[]),...(version>=15?['away']:[]),...(version>=16?['careRules']:[]),...(version>=17?['collectionEndings']:[]),...(version>=18?['leafEvent']:[]),...(version>=19?['expedition']:[])];
+  const worldKeys = ['version','revision','worldId','epoch','lastUpdated','seed','tick','nextId','nextEvent','paused','settings','birds','events','offlineSummary', ...(version >= 2 ? ['care'] : []), ...(version >= 3 ? ['field','decor'] : []), ...(version >= 4 ? ['gems'] : []), ...(version >= 5 ? ['careSchedule'] : []), ...(version >= 6 ? ['encounters'] : []), ...(version >= 7 ? ['economy','adoption'] : []), ...(version >= 8 ? ['lifecycle'] : []), ...(version >= 9 ? ['protagonist'] : []),...(version>=12?['clock','archive','journal']:[]),...(version>=15?['away']:[]),...(version>=16?['careRules']:[]),...(version>=17?['collectionEndings']:[]),...(version>=18?['leafEvent']:[]),...(version>=19?['expedition']:[]),...(version>=19&&Object.hasOwn(input,'showcase')?['showcase']:[])];
   if (!shape(input, worldKeys)) fail('保存の項目が不正です。');
   // Check bounded input before JSON cloning, including direct IndexedDB values.
   // Descriptors avoid invoking getters/toJSON on malformed non-JSON objects.
@@ -865,7 +866,7 @@ function validateVersion(input, version) {
   if(version>=16)validateRelaxedCare(w);
   if(version>=17)validateCollectionEndings(w);
   if(version>=18)validateLeafEvent(w);
-  if(version>=19)validateExpedition(w);
+  if(version>=19){validateExpedition(w);if(Object.hasOwn(w,'showcase'))validateShowcase(w);}
   return w;
 }
 /** Strict current-version validator for transactions; use compatibility only at read boundaries. */

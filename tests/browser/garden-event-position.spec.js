@@ -15,12 +15,12 @@ for(const size of [{width:320,height:568},{width:375,height:667},{width:568,heig
  });
  const icons=page.locator('.finch-garden > details[name="garden-story"] > summary');
  const boxes=await icons.evaluateAll(ns=>ns.map(n=>{const r=n.getBoundingClientRect();return {x:r.x,y:r.y,r:r.right,b:r.bottom,w:r.width,h:r.height}}));
- expect(boxes).toHaveLength(2);
+ expect(boxes).toHaveLength(3);
  const jog=await page.locator('.finch-garden-selector-wrap').boundingBox();
  expect(Math.abs(boxes[0].y-boxes[1].y)).toBeLessThan(1);
  expect(boxes[1].x-boxes[0].r).toBeGreaterThanOrEqual(9);
- expect(boxes[1].r).toBeLessThanOrEqual(size.width-10);
- expect(size.width-boxes[1].r).toBeLessThanOrEqual(16);
+ expect(boxes[2].r).toBeLessThanOrEqual(size.width-10);
+ expect(size.width-boxes[2].r).toBeLessThanOrEqual(16);
  expect(boxes[0].y-jog.y-jog.height).toBeGreaterThanOrEqual(7);
  expect(boxes[0].y-jog.y-jog.height).toBeLessThanOrEqual(15);
  expect(boxes[0].b).toBeLessThan(size.height-90);
@@ -28,7 +28,7 @@ for(const size of [{width:320,height:568},{width:375,height:667},{width:568,heig
  await page.evaluate(()=>document.body.dataset.sceneControls='closed');
  await expect(icons.first()).toBeHidden();await expect(icons.last()).toBeHidden();
  await page.evaluate(()=>document.body.dataset.sceneControls='open');
- for(const name of ['leaf-gift','expedition']){
+ for(const name of ['leaf-gift','expedition','showcase']){
   const card=page.locator(`[data-garden-details="${name}"]`),summary=card.locator(':scope > summary');
   await expect(summary).toBeVisible();await expect(summary).toHaveText('');
   const box=await summary.boundingBox();expect(box.width).toBeGreaterThanOrEqual(44);expect(box.width).toBeLessThanOrEqual(56);expect(box.height).toBeGreaterThanOrEqual(44);
