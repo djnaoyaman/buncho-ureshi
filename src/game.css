@@ -158,14 +158,14 @@ body[data-world="buncho"] .game-play-actions button{background:#e7edcb;border:1p
 }
 /* Keep fixtures inside the visible portion of a full-bleed cage. The image
    can crop at unusual aspect ratios; collectible furnishings must not vanish. */
-body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room) .game-furnishing:not(.furnishing-paper){left:clamp(calc(max(0px,(100% - 100cqw)/2) + var(--furniture-width)/2 + 2px),var(--furniture-x),calc(100% - max(0px,(100% - 100cqw)/2) - var(--furniture-width)/2 - 2px))}
-body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room){--roof-visible-top:calc(0px - clamp(calc(100cqh - var(--plane-h)),calc(70cqh - var(--plane-h)*.79),0px))}
+body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room) .game-furnishing:not(.furnishing-paper){left:clamp(calc(max(0px,(100% - calc(100 * var(--game-cqw,1cqw)))/2) + var(--furniture-width)/2 + 2px),var(--furniture-x),calc(100% - max(0px,(100% - calc(100 * var(--game-cqw,1cqw)))/2) - var(--furniture-width)/2 - 2px))}
+body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room){--roof-visible-top:calc(0px - clamp(calc(calc(100 * var(--game-cqh,1cqh)) - var(--plane-h)),calc(calc(70 * var(--game-cqh,1cqh)) - var(--plane-h)*.79),0px))}
 body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room) .furnishing-swing,
-body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room) .furnishing-toy{top:max(var(--roof-y),calc(var(--roof-visible-top) + 8cqh))}
+body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room) .furnishing-toy{top:max(var(--roof-y),calc(var(--roof-visible-top) + calc(8 * var(--game-cqh,1cqh))))}
 body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room) .furnishing-swing{--roof-y:11.5%;--roof-fraction:.115}
 body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room) .furnishing-toy{--roof-y:13%;--roof-fraction:.13}
 body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room) .furnishing-swing:before,
-body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room) .furnishing-toy:before{display:block;bottom:98%;height:calc(14% + max(0px,var(--roof-visible-top) + 8cqh - var(--plane-h)*var(--roof-fraction)));width:2px}
+body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room) .furnishing-toy:before{display:block;bottom:98%;height:calc(14% + max(0px,var(--roof-visible-top) + calc(8 * var(--game-cqh,1cqh)) - var(--plane-h)*var(--roof-fraction)));width:2px}
 @media(max-width:600px){body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room) .furnishing-swing{--roof-y:9%;--roof-fraction:.09}}
 @media(max-height:500px){
  body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room) .furnishing-swing{--furniture-width:11%;width:var(--furniture-width)}
@@ -177,14 +177,14 @@ body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport 
    Use the visible lower crossbar for the perch and keep dishes on the back wall. */
 @media(min-width:601px) and (min-aspect-ratio:2/1){
  body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room) .game-furnishing:not(.furnishing-paper){top:calc(var(--roof-visible-top) + var(--compact-mount-y));transform:translate(-50%,0)}
- body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room) .game-furnishing.furnishing-perch{--furniture-width:40cqh;top:59.2%;transform:translate(-50%,-24.2%)}
- body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room) .furnishing-feed{--compact-mount-y:28cqh;--furniture-width:14cqh}
- body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room) .furnishing-water{--compact-mount-y:28cqh;--furniture-width:13cqh}
- body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room) .furnishing-greens{--compact-mount-y:40cqh;--furniture-width:9cqh}
- body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room) .furnishing-shellgrit{--compact-mount-y:40cqh;--furniture-width:8cqh}
- body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room) .furnishing-swing{--compact-mount-y:8cqh;--furniture-width:18cqh}
- body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room) .furnishing-toy{--compact-mount-y:10cqh;--furniture-width:12cqh}
- body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room) .game-furnishing.furnishing-bath{--compact-mount-y:90cqh;--furniture-width:24cqh;transform:translate(-50%,-94%)}
+ body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room) .game-furnishing.furnishing-perch{--furniture-width:calc(40 * var(--game-cqh,1cqh));top:59.2%;transform:translate(-50%,-24.2%)}
+ body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room) .furnishing-feed{--compact-mount-y:calc(28 * var(--game-cqh,1cqh));--furniture-width:calc(14 * var(--game-cqh,1cqh))}
+ body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room) .furnishing-water{--compact-mount-y:calc(28 * var(--game-cqh,1cqh));--furniture-width:calc(13 * var(--game-cqh,1cqh))}
+ body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room) .furnishing-greens{--compact-mount-y:calc(40 * var(--game-cqh,1cqh));--furniture-width:calc(9 * var(--game-cqh,1cqh))}
+ body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room) .furnishing-shellgrit{--compact-mount-y:calc(40 * var(--game-cqh,1cqh));--furniture-width:calc(8 * var(--game-cqh,1cqh))}
+ body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room) .furnishing-swing{--compact-mount-y:calc(8 * var(--game-cqh,1cqh));--furniture-width:calc(18 * var(--game-cqh,1cqh))}
+ body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room) .furnishing-toy{--compact-mount-y:calc(10 * var(--game-cqh,1cqh));--furniture-width:calc(12 * var(--game-cqh,1cqh))}
+ body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room) .game-furnishing.furnishing-bath{--compact-mount-y:calc(90 * var(--game-cqh,1cqh));--furniture-width:calc(24 * var(--game-cqh,1cqh));transform:translate(-50%,-94%)}
  body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room) .furnishing-swing:before,
  body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room) .furnishing-toy:before{height:calc(14% + max(0px,var(--roof-visible-top) + var(--compact-mount-y) - var(--plane-h)*var(--roof-fraction)))}
 }
@@ -330,8 +330,8 @@ body[data-world="buncho"] .game-field-bar{min-width:0;gap:.3rem}body[data-world=
 
 /* Fit the reviewed coordinate plane; never crop its habitat or stretch contacts. */
 body[data-world="buncho"] .game-main{container-type:size}
-body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room){--scene-h:min(calc(100cqh - 100px),calc(100cqw * 5 / 8));height:var(--scene-h);width:auto;aspect-ratio:8/5;max-width:none;top:calc(36px + (100cqh - 100px - var(--scene-h)) / 2);bottom:auto}
-@media(max-width:600px){body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room){--scene-h:min(calc(100cqh - 100px),calc(100cqw * 4 / 3));aspect-ratio:3/4}}
+body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room){--scene-h:min(calc(calc(100 * var(--game-cqh,1cqh)) - 100px),calc(calc(100 * var(--game-cqw,1cqw)) * 5 / 8));height:var(--scene-h);width:auto;aspect-ratio:8/5;max-width:none;top:calc(36px + (calc(100 * var(--game-cqh,1cqh)) - 100px - var(--scene-h)) / 2);bottom:auto}
+@media(max-width:600px){body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room){--scene-h:min(calc(calc(100 * var(--game-cqh,1cqh)) - 100px),calc(calc(100 * var(--game-cqw,1cqw)) * 4 / 3));aspect-ratio:3/4}}
 
 /* A short viewport is a focused scene, not ten competing tiny touch targets.
    The existing swipe/previous/next controls still visit every bird. */
@@ -345,7 +345,7 @@ body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport 
  body[data-world="buncho"] .game-field-bar .game-wallet strong{font-size:12px}
  body[data-world="buncho"] .game-field-nav{top:0;left:4px;right:4px;width:auto;max-width:none;height:44px;gap:3px}
  body[data-world="buncho"] .game-field-nav button{height:44px;min-height:44px;padding:2px;font-size:11px}
- body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room){--scene-h:min(calc(100cqh - 92px),calc(100cqw * 5 / 8));top:calc(44px + (100cqh - 92px - var(--scene-h)) / 2)}
+ body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room){--scene-h:min(calc(calc(100 * var(--game-cqh,1cqh)) - 92px),calc(calc(100 * var(--game-cqw,1cqw)) * 5 / 8));top:calc(44px + (calc(100 * var(--game-cqh,1cqh)) - 92px - var(--scene-h)) / 2)}
  body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room) .game-room-bird:not(.game-nestling){width:64px;min-width:64px;min-height:64px}
  body[data-world="buncho"] .game-bottom-dock{height:48px;padding:0 4px;gap:2px;border-radius:12px 12px 0 0}
  body[data-world="buncho"] .game-bottom-dock button{min-height:48px;gap:0;font-size:10px}
@@ -365,7 +365,7 @@ body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport 
  body[data-world="buncho"] .game-room .game-scene-caption,body[data-world="buncho"] .game-owner-companion{display:none}
  body[data-world="buncho"] .game-main .game-secondary-menu{bottom:50px}
 }
-@media(max-height:500px) and (max-width:600px){body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room){--scene-h:min(calc(100cqh - 92px),calc(100cqw * 4 / 3))}}
+@media(max-height:500px) and (max-width:600px){body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room){--scene-h:min(calc(calc(100 * var(--game-cqh,1cqh)) - 92px),calc(calc(100 * var(--game-cqw,1cqw)) * 4 / 3))}}
 /* Fixed-height game shell must not retain the legacy article's 3rem bottom pad. */
 body[data-world="buncho"] .game-app{padding:0;margin:0;max-width:none}
 @media(max-height:500px){
@@ -385,7 +385,7 @@ body[data-world="buncho"] .game-world-exit{position:fixed;top:calc(8px + env(saf
 body[data-world="buncho"] .game-world-title{position:fixed;left:8px;top:calc(5px + env(safe-area-inset-top,0px));transform:none;z-index:60}
 body[data-world="buncho"] .game-world-title img{width:clamp(110px,28vw,170px);max-height:56px}
 body[data-world="buncho"] .game-main{overflow:hidden;border-radius:0}
-body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room){--room-ratio:1.6;--plane-h:max(100cqh,calc(100cqw / var(--room-ratio)));height:var(--plane-h);width:max(100cqw,calc(100cqh * var(--room-ratio)));aspect-ratio:auto;top:clamp(calc(100cqh - var(--plane-h)),calc(70cqh - var(--plane-h) * .79),0px);left:50%;transform:translateX(-50%);max-height:none;max-width:none;border-radius:0}
+body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room){--room-ratio:1.6;--plane-h:max(calc(100 * var(--game-cqh,1cqh)),calc(calc(100 * var(--game-cqw,1cqw)) / var(--room-ratio)));height:var(--plane-h);width:max(calc(100 * var(--game-cqw,1cqw)),calc(calc(100 * var(--game-cqh,1cqh)) * var(--room-ratio)));aspect-ratio:auto;top:clamp(calc(calc(100 * var(--game-cqh,1cqh)) - var(--plane-h)),calc(calc(70 * var(--game-cqh,1cqh)) - var(--plane-h) * .79),0px);left:50%;transform:translateX(-50%);max-height:none;max-width:none;border-radius:0}
 body[data-world="buncho"] :is(.game-main .game-room,.game-home-preview-viewport .game-preview-room) .game-habitat img{object-fit:fill}
 body[data-world="buncho"] .game-field-bar{top:calc(10px + env(safe-area-inset-top,0px));left:auto;right:86px;width:auto;z-index:61}
 body[data-world="buncho"] .game-field-bar>div:first-child{display:none}
@@ -484,7 +484,7 @@ body[data-world="buncho"] .game-main>.game-scene-caption strong{max-width:100%;w
 body[data-world="buncho"] .game-main>.game-scene-caption>span{font-size:11px;white-space:normal;overflow:visible;max-width:100%}
 body[data-world="buncho"][data-scene-controls="closed"] .game-main>.game-scene-caption{top:auto;bottom:calc(16px + env(safe-area-inset-bottom,0px))}
 
-@media(min-height:501px){body[data-world="buncho"][data-scene-controls="open"] .game-main>.game-scene-caption{top:44cqh;bottom:auto}}
+@media(min-height:501px){body[data-world="buncho"][data-scene-controls="open"] .game-main>.game-scene-caption{top:calc(44 * var(--game-cqh,1cqh));bottom:auto}}
 
 /* Care status: retain the numbers while making each level easy to scan. */
 .game-care .game-fullness,.game-bird-sheet .game-fullness{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.8rem;margin:.4rem 0 .9rem;font-size:.8rem}
@@ -519,7 +519,7 @@ body[data-world="buncho"] .game-app .game-draw-result button{display:block;min-w
 
 
 /* A foreground observer, facing the birds rather than hidden behind controls. */
-body[data-world="buncho"] .game-owner-companion{display:block;position:absolute;left:auto;right:0;bottom:calc(72px + env(safe-area-inset-bottom,0px));width:clamp(104px,18cqw,190px);z-index:12;pointer-events:none}
+body[data-world="buncho"] .game-owner-companion{display:block;position:absolute;left:auto;right:0;bottom:calc(72px + env(safe-area-inset-bottom,0px));width:clamp(104px,calc(18 * var(--game-cqw,1cqw)),190px);z-index:12;pointer-events:none}
 body[data-world="buncho"] .owner-peek-art{display:block;width:100%;height:auto;transform:scaleX(-1);filter:drop-shadow(0 3px 3px #4d49322c)}
 .owner-peek-body{transform-origin:50% 100%;animation:owner-lean 12s ease-in-out infinite}
 .owner-peek-glance{opacity:0;animation:owner-glance 12s ease-in-out infinite}
@@ -527,8 +527,8 @@ body[data-world="buncho"] .owner-peek-art{display:block;width:100%;height:auto;t
 @keyframes owner-lean{0%,76%,94%,100%{transform:translateX(0) scaleX(1) rotate(0)}79%,91%{transform:translateX(3px) scaleX(.68) rotate(-3deg)}82%,88%{transform:translateX(1px) scaleX(1) rotate(-1deg)}}
 @keyframes owner-glance{0%,79.8%,90.2%,100%{opacity:0}80.2%,89.8%{opacity:1}}
 @keyframes owner-away{0%,79.8%,90.2%,100%{opacity:1}80.2%,89.8%{opacity:0}}
-@media(max-width:600px){body[data-world="buncho"] .game-owner-companion{width:clamp(120px,36cqw,160px)}}
-@media(max-height:500px){body[data-world="buncho"] .game-owner-companion{display:block;width:clamp(110px,29cqh,135px);bottom:calc(70px + env(safe-area-inset-bottom,0px))}}
+@media(max-width:600px){body[data-world="buncho"] .game-owner-companion{width:clamp(120px,calc(36 * var(--game-cqw,1cqw)),160px)}}
+@media(max-height:500px){body[data-world="buncho"] .game-owner-companion{display:block;width:clamp(110px,calc(29 * var(--game-cqh,1cqh)),135px);bottom:calc(70px + env(safe-area-inset-bottom,0px))}}
 @media(prefers-reduced-motion:reduce){.owner-peek-body,.owner-peek-back,.owner-peek-glance{animation:none!important}}
 html[data-motion="off"] .owner-peek-body,html[data-motion="off"] .owner-peek-back,html[data-motion="off"] .owner-peek-glance,.game-app[data-care-motion="off"] :is(.owner-peek-body,.owner-peek-back,.owner-peek-glance){animation:none!important}
 
@@ -571,10 +571,10 @@ body[data-world="buncho"] .game-bottom-dock [data-home-close]:disabled{opacity:.
 @media(max-height:500px){.game-app .finch-cage-guest>span:not(.game-home-role,.finch-media){top:calc(100% + 17px);font-size:8px;max-width:min(66px,18vw);padding:1px 3px}}
 
 /* A full home keeps every guest visible while the owner watches from the edge. */
-body[data-world="buncho"] .game-owner-companion[data-home-crowded="true"]{width:clamp(56px,10cqh,120px);bottom:0}
+body[data-world="buncho"] .game-owner-companion[data-home-crowded="true"]{width:clamp(56px,calc(10 * var(--game-cqh,1cqh)),120px);bottom:0}
 @media(max-height:500px){body[data-world="buncho"] .game-owner-companion[data-home-crowded="true"]{width:clamp(46px,8.5vw,72px)}body[data-world="buncho"] .game-main:has(.game-room[data-home-crowded="true"])>.game-scene-caption{display:none}}
 
-@media(max-width:600px) and (min-height:501px){body[data-world="buncho"] .game-owner-companion[data-home-crowded="true"]{width:min(72px,10cqh)}}
+@media(max-width:600px) and (min-height:501px){body[data-world="buncho"] .game-owner-companion[data-home-crowded="true"]{width:min(72px,calc(10 * var(--game-cqh,1cqh)))}}
 body[data-world="buncho"][data-scene-controls="closed"]:has(.game-room[data-home-crowded="true"]) .game-scene-controls-toggle{left:auto;right:calc(72px + env(safe-area-inset-right,0px));top:calc(4px + env(safe-area-inset-top,0px));bottom:auto}
 
 /* Direct care: the bird itself is the gesture surface, not another action tile. */
@@ -1354,7 +1354,7 @@ body[data-world="buncho"] .game-panel-overlay[data-scene="true"] .finch-garden-d
  left: max(10px,env(safe-area-inset-left,0px)); right: max(10px,env(safe-area-inset-right,0px));
  max-height: min(50dvh,380px); padding: 12px;
 }
-/* Cover can bottom-clamp a wide garden's anchor below 65cqh. Reserve the real
+/* Cover can bottom-clamp a wide garden's anchor below calc(65 * var(--game-cqh,1cqh)). Reserve the real
    dock row for ordinary actors, moving the whole group only by the deficit.
    Layout margins leave the foot transform and motion-owned translate intact. */
 body[data-world="buncho"] .game-panel-overlay[data-scene="true"] .finch-garden-stage {
@@ -1363,10 +1363,10 @@ body[data-world="buncho"] .game-panel-overlay[data-scene="true"] .finch-garden-s
 }
 body[data-world="buncho"] .game-panel-overlay[data-scene="true"] .finch-garden-stage[data-garden-id="mizukagami"] { --garden-lower-row: .15; }
 body[data-world="buncho"] .game-panel-overlay[data-scene="true"] .finch-garden-stage[data-garden-density="regular"]:not(:has(.finch-crow-scale-scene,.finch-raptor-scale-scene)) .finch-garden-image-plane {
- --garden-plane-top: clamp(calc(100cqh - var(--draw-h)),calc(65cqh - var(--garden-anchor-y) * var(--draw-h)),0px);
- --garden-lowest-foot: calc(var(--garden-plane-top) + var(--garden-anchor-y) * var(--draw-h) + var(--garden-lower-row) * min(17cqh,110px));
+ --garden-plane-top: clamp(calc(calc(100 * var(--game-cqh,1cqh)) - var(--draw-h)),calc(calc(65 * var(--game-cqh,1cqh)) - var(--garden-anchor-y) * var(--draw-h)),0px);
+ --garden-lowest-foot: calc(var(--garden-plane-top) + var(--garden-anchor-y) * var(--draw-h) + var(--garden-lower-row) * min(calc(17 * var(--game-cqh,1cqh)),110px));
  /* Keep both labels and measured long tails above the floating controls. */
- --garden-controls-rise: max(0px,calc(var(--garden-lowest-foot) + max(27px,calc(var(--garden-tail-reserve,0px) + 6px)) + var(--garden-dock-reserve) + env(safe-area-inset-bottom,0px) - 100cqh));
+ --garden-controls-rise: max(0px,calc(var(--garden-lowest-foot) + max(27px,calc(var(--garden-tail-reserve,0px) + 6px)) + var(--garden-dock-reserve) + env(safe-area-inset-bottom,0px) - calc(100 * var(--game-cqh,1cqh))));
 }
 body[data-world="buncho"] .game-panel-overlay[data-scene="true"] .finch-garden-stage[data-garden-density="regular"]:not(:has(.finch-crow-scale-scene,.finch-raptor-scale-scene)) .finch-garden-image-plane > :is(.finch-garden-friend,.finch-garden-household,.finch-garden-visitor) {
  margin-block-start: calc(0px - var(--garden-controls-rise));

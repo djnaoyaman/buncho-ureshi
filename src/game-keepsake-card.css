@@ -20,8 +20,8 @@ body[data-world="buncho"] .finch-garden .expedition-gift .expedition-discovery,.
 [data-keepsake-pose=play] .keepsake-bird-1{transform:scaleX(-1) rotate(-3deg)}
 [data-keepsake-pose=wonder] .keepsake-bird-1{transform:scaleX(-1) rotate(7deg)}
 .keepsake-lettering{position:absolute;left:17%;right:17%;top:78%;height:14%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;text-align:center;color:#40522c;font-family:"Noto Serif JP","Yu Mincho",serif;line-height:1.35}
-.keepsake-title{font-weight:700;font-size:clamp(14px,5cqw,21px);text-wrap:balance}
-.keepsake-signature{font-size:clamp(11px,3.1cqw,13px);letter-spacing:.025em;overflow-wrap:anywhere}
+.keepsake-title{font-weight:700;font-size:clamp(14px,calc(5 * var(--game-cqw,1cqw)),21px);text-wrap:balance}
+.keepsake-signature{font-size:clamp(11px,calc(3.1 * var(--game-cqw,1cqw)),13px);letter-spacing:.025em;overflow-wrap:anywhere}
 .expedition-diary .expedition-keepsake{margin-block:18px}
-@media(max-width:360px){.expedition-gift .expedition-discovery,.expedition-diary .expedition-discovery{padding:0}.expedition-keepsake>.expedition-keepsake-art{width:100%}.keepsake-lettering{left:16%;right:16%;gap:2px}.keepsake-title{font-size:clamp(13px,4.6cqw,17px)}.keepsake-signature{font-size:11px}}
+@media(max-width:360px){.expedition-gift .expedition-discovery,.expedition-diary .expedition-discovery{padding:0}.expedition-keepsake>.expedition-keepsake-art{width:100%}.keepsake-lettering{left:16%;right:16%;gap:2px}.keepsake-title{font-size:clamp(13px,calc(4.6 * var(--game-cqw,1cqw)),17px)}.keepsake-signature{font-size:11px}}
 @media(prefers-reduced-motion:reduce){.expedition-keepsake-art *{animation:none;transition:none}}
