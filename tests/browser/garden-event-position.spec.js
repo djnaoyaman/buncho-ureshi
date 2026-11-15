@@ -16,6 +16,8 @@ for(const size of [{width:320,height:568},{width:375,height:667},{width:568,heig
  const icons=page.locator('.finch-garden > details[name="garden-story"] > summary');
  const boxes=await icons.evaluateAll(ns=>ns.map(n=>{const r=n.getBoundingClientRect();return {x:r.x,y:r.y,r:r.right,b:r.bottom,w:r.width,h:r.height}}));
  expect(boxes).toHaveLength(3);
+ expect(await icons.locator('svg').evaluateAll(ns=>ns.map(n=>n.dataset.eventIcon))).toEqual(['1A','2B','02']);
+ for(const svg of await icons.locator('svg').all()){await expect(svg).toBeVisible();await expect(svg).toHaveAttribute('viewBox','0 0 100 100');}
  const jog=await page.locator('.finch-garden-selector-wrap').boundingBox();
  expect(Math.abs(boxes[0].y-boxes[1].y)).toBeLessThan(1);
  expect(boxes[1].x-boxes[0].r).toBeGreaterThanOrEqual(9);

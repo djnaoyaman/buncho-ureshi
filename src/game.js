@@ -1026,6 +1026,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     if(action==='reset-state'){openResetDialog();return;}
     if(action==='reset-cancel'){if(!resetPending)closeResetDialog();return;}
     if(action==='reset-confirm'){await confirmStateReset();return;}
+    if(action==='resume-events')await mutate(w=>{if(w.paused){w.paused=false;markCurrentTime(w);}},'じかんが また すすみはじめたよ。');
     if(action==='pause')await mutate(w=>{w.paused=!w.paused;markCurrentTime(w);});
     if(action==='dismiss-welcome')await dismissWelcome();
     if(action==='adopt'){const name=root.querySelector('#game-name')?.value,birdId=selected;await mutate(w=>{adoptBird(w,birdId,name);},'新しい仲間を迎えたよ。');}

@@ -20,7 +20,7 @@ test('real garden DOM and CSS place the story above the stage with contained scr
  win.happyDOM.abort();
 });
 test('blocked story retains explanation but never offers mutations',()=>{
- for(const [change,message] of [[w=>{w.paused=true;},/おやすみ/],[w=>{w.encounters.active={id:'sparrow'};},/おきゃくさま/],[w=>{w.encounters.raptor.active={id:'black-kite'};},/ほかの とり/],[w=>{w.encounters.crow.active={id:'crow'};},/ほかの とり/]]){
+ for(const [change,message] of [[w=>{w.paused=true;},/data-event-status="paused"/],[w=>{w.encounters.active={id:'sparrow'};},/おきゃくさま/],[w=>{w.encounters.raptor.active={id:'black-kite'};},/ほかの とり/],[w=>{w.encounters.crow.active={id:'crow'};},/ほかの とり/]]){
  const w=ready();change(w);const before=structuredClone(w),html=renderLeafGift(w);assert.match(html,/data-leaf-unavailable/);assert.match(html,message);assert.doesNotMatch(html,/data-leaf-(start|choice|complete|display)[ =>]/);assert.deepEqual(w,before);
  }
 });
