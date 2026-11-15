@@ -694,3 +694,18 @@ test('decoration shares the home backdrop and changes only the temporary candida
  f.root.querySelector('[data-decor-cancel]').click();assert.deepEqual(ids(preview()),home);
  assert.deepEqual(await rawWorld(f.indexedDB),before);
 });
+
+test('event resume is explicit, persists and cannot toggle a running game back to pause',async t=>{
+ const f=await fixture(t);await f.mount();
+ const before=await rawWorld(f.indexedDB);
+ const button=f.window.document.createElement('button');button.dataset.gameAction='resume-events';f.root.append(button);button.click();
+ await until(async()=>!(await rawWorld(f.indexedDB)).paused,'event resumes saved world');
+ const resumed=await rawWorld(f.indexedDB);
+ assert.deepEqual(resumed.birds,before.birds);
+ assert.deepEqual({...resumed.economy,seenAt:0},{...before.economy,seenAt:0});
+ assert.deepEqual(resumed.diary,before.diary);
+ await until(()=>!!f.root.querySelector('[data-game-action="pause"]'),'resume render');
+ const again=f.window.document.createElement('button');again.dataset.gameAction='resume-events';f.root.append(again);again.click();
+ await sleep(50);
+ assert.equal((await rawWorld(f.indexedDB)).paused,false);
+});

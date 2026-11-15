@@ -1,9 +1,8 @@
 {
-  "base": "8c96f3fd5d1db5d32d9473badeba3a8fce5a45f3",
+  "base": "a3f4eb83cdfc6379acaa44a89509840a645b3910",
   "tests": [
-    "tests/browser/iphone15-scene.spec.js",
-    "tests/browser/gacha-home-layout.spec.js",
-    "tests/browser/garden-event-position.spec.js"
+    "tests/browser/garden-event-position.spec.js",
+    "tests/browser/iphone15-scene.spec.js"
   ],
-  "reason": "iPhone 7/iOS15.8の背景・鳥欠落。未対応CQ単位を注入した再現条件とネイティブ条件で375/320の寸法・画像・鳥・帰宅・再読込・保存保持をChrome/WebKit確認。既存の試着と庭イベントも非退行検査。実機は本人確認。"
+  "reason": "採用済み3イベントアイコンと状態案内を統合。停止理由・明示的再開・発表会の解放条件を改善。コードとDOM自動検査を実施し、視覚・実機確認は本人が担当。Chrome/WebKitの入口・閉じる・再操作とiOS15表示互換をCIで確認。保護baselineは公開main全558件を比較し496件同一、58件キャッシュ版のみ、4件承認範囲内の実差。新規状態表示helperを保護対象へ追加し、独立レビュー後に公開する。"
 }

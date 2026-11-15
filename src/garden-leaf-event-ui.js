@@ -1,8 +1,10 @@
+import {pausedEventMessage} from './garden-event-status-ui.js';
 import {gardenById} from './data/gardens.js';
 import {leafEventStatus,LEAF_EVENT_ENABLED} from './garden-leaf-event.js';
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const title='<ruby>落<rt>お</rt></ruby>ち<ruby>葉<rt>ば</rt></ruby>のおくりもの';
 export const leafArt=()=>'<svg class="leaf-gift-art" viewBox="0 0 96 96" aria-hidden="true" focusable="false"><path d="M22 76C5 45 35 13 78 15C79 55 58 85 22 76Z" fill="#c89855" stroke="#766144" stroke-width="2"/><path d="M17 85L65 29M28 71L27 49M42 56L42 35M41 55L62 55M53 41L70 41" fill="none" stroke="#795e3e" stroke-width="2" stroke-linecap="round"/></svg>';
+const eventIcon=()=>"<svg class=\"leaf-gift-art\" data-event-icon=\"1A\" viewBox=\"0 0 100 100\" aria-hidden=\"true\" focusable=\"false\"><g stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M26 72C14 43 40 19 75 23C78 55 57 80 26 72Z\" fill=\"#C99159\" /><path d=\"M22 80L64 36M36 64V47M48 51H64\" fill=\"none\" stroke=\"#FFF8EA\" stroke-width=\"3\" /><path d=\"M62 74q14-5 16-18q-16 0-20 12\" fill=\"#718976\" /></g></svg>";
 const portrait=(bird,base,side)=>bird?`<figure class="leaf-gift-bird ${side}"><img src="${esc(base)}game-art/${['white','sakura','silver','cinnamon'].includes(bird.appearance?.color)?bird.appearance.color:'white'}.webp" width="1160" height="1359" alt="" draggable="false"><figcaption>${esc(bird.name)}</figcaption></figure>`:'';
 const scene=(status,base)=>`<div class="leaf-gift-vignette">${portrait(status.source,base,'leaf-gift-left')}${leafArt()}${portrait(status.recipient,base,'leaf-gift-right')}</div>`;
 export function leafGiftNarrative(status,{thanks=false}={}){
@@ -22,14 +24,15 @@ export function renderLeafGift(w,{base='/buncho-ureshi/'}={}){
  s.phase==='unavailable'?'いまは はっぱを みつける ともだちが いないみたい。べつの にわへ あそびに いってみよう。':'';
  const waiting=s.phase==='waiting',complete=s.phase==='complete';
  let body='';
- if(blocked)body=`<p data-leaf-unavailable>${blocked}</p>`;
+ if(w.paused)body='<div data-leaf-unavailable>'+pausedEventMessage()+'</div>';
+ else if(blocked)body=`<p data-leaf-unavailable>${blocked}</p>`;
  else if(s.phase==='available')body='<p>はっぱを みつけた ともだちがいるよ。</p><button type="button" data-leaf-start>そっと よってみる</button>';
  else if(s.phase==='choice')body=scene(s,base)+`<p>${leafGiftNarrative(s)}</p><div class="leaf-gift-choices"><button type="button" data-leaf-choice="deliver"><ruby>一緒<rt>いっしょ</rt></ruby>に<ruby>届<rt>とど</rt></ruby>ける<small>そばで ゆうきを わけよう</small></button><button type="button" data-leaf-choice="display"><ruby>庭<rt>にわ</rt></ruby>に<ruby>飾<rt>かざ</rt></ruby>って<ruby>待<rt>ま</rt></ruby>つ<small>そのこの ペースを だいじに</small></button><button type="button" data-leaf-choice="later">あとで<ruby>考<rt>かんが</rt></ruby>える</button></div><p class="leaf-gift-note">いつ きめても だいじょうぶ。どちらを えらんでも、おれいは おなじだよ。</p>`;
  else if(waiting)body=scene(s,base)+`<p>${leafGiftNarrative(s)}</p><p>また このにわに あそびにきたら、つづきを みてみよう。いそがなくて いいよ。</p>`;
  else if(s.phase==='ready')body=scene(s,base)+`<p>はっぱの おはなしに、つづきが あるみたい。</p><button type="button" data-leaf-complete>ともだちの ようすを みる</button>`;
  else if(complete&&s.entry.gardenId!==w.encounters.garden.id)body='<p>この おはなしは おわって、おもいでに なったよ。にっきで よみかえせるよ。ふたりに また あったら、いつもの おはなしも してみてね。</p>';
  else if(complete)body=scene(s,base)+`<p>${leafGiftNarrative(s,{thanks:true})}</p><p>はっぱの しおりが、おもいでに なったよ。ふたりに また あったら、いつもの おはなしも してみてね。</p><p class="leaf-gift-note">おれいの ${s.entry.goldAward} Gold と、にわの なかよし +2 は いちどだけ。にっきにも のこしたよ。</p><button type="button" data-leaf-display="${!s.entry.displayed}" aria-pressed="${s.entry.displayed}">${s.entry.displayed?'しおりを しまう':'しおりを にわに かざる'}</button>`;
- return `<details name="garden-story" class="leaf-gift" data-garden-details="leaf-gift" data-leaf-world="${esc(w.worldId)}" data-leaf-revision="${w.revision}"><summary aria-label="落ち葉のおくりものをひらく" title="落ち葉のおくりもの">${leafArt()}</summary><div class="leaf-gift-content"><header class="garden-story-header"><h3 class="garden-story-title">${title}</h3><button type="button" class="garden-story-close" data-garden-story-close aria-label="落ち葉のおくりものを閉じる"><span aria-hidden="true">×</span><span>とじる</span></button></header>${body}</div></details>`;
+ return `<details name="garden-story" class="leaf-gift" data-garden-details="leaf-gift" data-leaf-world="${esc(w.worldId)}" data-leaf-revision="${w.revision}"><summary aria-label="落ち葉のおくりものをひらく" title="落ち葉のおくりもの">${eventIcon()}</summary><div class="leaf-gift-content"><header class="garden-story-header"><h3 class="garden-story-title">${title}</h3><button type="button" class="garden-story-close" data-garden-story-close aria-label="落ち葉のおくりものを閉じる"><span aria-hidden="true">×</span><span>とじる</span></button></header>${body}</div></details>`;
 }
 const bookmarkArt=(base)=>`<img class="leaf-bookmark-object" src="${esc(base)}game-art/keepsakes/pressed-leaf.webp" alt="" draggable="false" decoding="async">`;
 export function renderLeafKeepsake(w,{base='/buncho-ureshi/'}={}){

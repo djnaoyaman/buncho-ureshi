@@ -16,6 +16,8 @@ for(const size of [{width:320,height:568},{width:375,height:667},{width:568,heig
  const icons=page.locator('.finch-garden > details[name="garden-story"] > summary');
  const boxes=await icons.evaluateAll(ns=>ns.map(n=>{const r=n.getBoundingClientRect();return {x:r.x,y:r.y,r:r.right,b:r.bottom,w:r.width,h:r.height}}));
  expect(boxes).toHaveLength(3);
+ expect(await icons.locator('svg').evaluateAll(ns=>ns.map(n=>n.dataset.eventIcon))).toEqual(['1A','2B','02']);
+ for(const svg of await icons.locator('svg').all()){await expect(svg).toBeVisible();await expect(svg).toHaveAttribute('viewBox','0 0 100 100');}
  const jog=await page.locator('.finch-garden-selector-wrap').boundingBox();
  expect(Math.abs(boxes[0].y-boxes[1].y)).toBeLessThan(1);
  expect(boxes[1].x-boxes[0].r).toBeGreaterThanOrEqual(9);
@@ -32,11 +34,14 @@ for(const size of [{width:320,height:568},{width:375,height:667},{width:568,heig
   const card=page.locator(`[data-garden-details="${name}"]`),summary=card.locator(':scope > summary');
   await expect(summary).toBeVisible();await expect(summary).toHaveText('');
   const box=await summary.boundingBox();expect(box.width).toBeGreaterThanOrEqual(44);expect(box.width).toBeLessThanOrEqual(56);expect(box.height).toBeGreaterThanOrEqual(44);
-  await summary.click();const close=card.locator('[data-garden-story-close]');await expect(close).toBeVisible();
+  await summary.click();const close=card.locator('.garden-story-header [data-garden-story-close]');await expect(close).toBeVisible();
   await expect(card.locator('.garden-story-title')).toBeVisible();
   const cb=await close.boundingBox();expect(cb.x).toBeGreaterThanOrEqual(0);expect(cb.y).toBeGreaterThanOrEqual(0);expect(cb.x+cb.width).toBeLessThanOrEqual(size.width);expect(cb.height).toBeGreaterThanOrEqual(44);
   await page.screenshot({path:info.outputPath(`${name}-${size.width}.png`)});
   await close.click();await expect(card).not.toHaveAttribute('open','');await expect(summary).toBeFocused();
+  if(name==='showcase'){
+   await summary.click();const back=card.getByRole('button',{name:'にわに もどって すすめる',exact:true});await expect(back).toBeVisible();await back.click();await expect(card).not.toHaveAttribute('open','');await expect(summary).toBeFocused();
+  }
   await summary.press('Enter');await expect(close).toBeVisible();await close.focus();await page.keyboard.press('Escape');await expect(summary).toBeFocused();
  }
  expect(await page.evaluate(()=>JSON.stringify(eventWorld)===eventBefore)).toBe(true);
