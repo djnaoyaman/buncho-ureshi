@@ -1,8 +1,5 @@
 {
-  "base": "a3f4eb83cdfc6379acaa44a89509840a645b3910",
-  "tests": [
-    "tests/browser/garden-event-position.spec.js",
-    "tests/browser/iphone15-scene.spec.js"
-  ],
-  "reason": "採用済み3イベントアイコンと状態案内を統合。停止理由・明示的再開・発表会の解放条件を改善。コードとDOM自動検査を実施し、視覚・実機確認は本人が担当。Chrome/WebKitの入口・閉じる・再操作とiOS15表示互換をCIで確認。保護baselineは公開main全558件を比較し496件同一、58件キャッシュ版のみ、4件承認範囲内の実差。新規状態表示helperを保護対象へ追加し、独立レビュー後に公開する。"
+  "base": "0e45044207c5265e805de20b46ee7fea46a44c30",
+  "tests": ["tests/browser/garden-event-position.spec.js", "tests/browser/garden-story-scenes.spec.js", "tests/browser/iphone15-scene.spec.js"],
+  "reason": "User-approved high-quality garden event storybook screens. Verify the three illustrated modal scenes, native actor previews, shop disclosure persistence, pause explanation, close/reopen/focus and phone overflow at 320/375/402 widths, plus retained iOS15 scene geometry. Visual/device acceptance is by the user; no user PC browser is required. Local headless launch is blocked by container socket permissions; CI Chrome/WebKit performs automated checks. Protected baseline independently reviewed against #210: 497 unchanged, 57 cache-token-only, 5 authorized presentation changes, no deletion; add helper, CSS and 3 WebP scenes (564 total). Save, rewards and progression unchanged."
 }

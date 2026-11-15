@@ -1,0 +1,82 @@
+/* Garden storybooks: the selected scene, participants and next action lead.
+   Native HTML controls and existing transactions remain authoritative. */
+body[data-world="buncho"] .game-encounter-host .finch-garden > details.leaf-gift[open]{
+ top:max(12px,env(safe-area-inset-top,0px));bottom:auto;left:max(12px,env(safe-area-inset-left,0px));right:max(12px,env(safe-area-inset-right,0px));
+ max-height:calc(100% - 24px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));
+ border:1px solid #e2d6bb;border-radius:28px;background:#fffcf3;
+ box-shadow:0 12px 40px #35483a38,0 3px 0 #d4c8b58c;scroll-padding-top:84px;
+}
+body[data-world="buncho"] .game-encounter-host .finch-garden > details.leaf-gift[open] .leaf-gift-content{padding:0 20px 24px;background:radial-gradient(ellipse at 0 0,#f5edda70,transparent 55%),#fffcf3;}
+body[data-world="buncho"] .game-encounter-host .finch-garden > details.leaf-gift[open] .garden-story-header{
+ background:#fffcf3f5;margin:0 -20px 0;padding:14px 12px 12px 20px;border:0;border-radius:0;gap:10px;align-items:center;
+}
+body[data-world="buncho"] .game-encounter-host .finch-garden > details.leaf-gift[open] .garden-story-title{font-family:inherit;font-size:clamp(16px,4.4vw,21px);font-weight:800;line-height:1.8;letter-spacing:.025em;}
+body[data-world="buncho"] .game-encounter-host .finch-garden > details.leaf-gift[open] .garden-story-close{
+ width:48px;min-width:48px;min-height:48px;height:48px;border:0;border-radius:50%;box-shadow:none;background:#f0eadb;display:flex;padding:0;
+}
+body[data-world="buncho"] .game-encounter-host .finch-garden > details.leaf-gift[open] .garden-story-close span:first-child{font-size:27px;font-weight:400;}
+body[data-world="buncho"] .game-encounter-host .finch-garden > details.leaf-gift[open] .garden-story-close span:last-child{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;}
+.garden-story-scene{position:relative;isolation:isolate;aspect-ratio:3/2;width:100%;margin:4px auto 22px;overflow:hidden;border-radius:18px 18px 30px 30px;background:#eee8d8;}
+.garden-story-scene .story-scene-backdrop,.story-showcase-stage>.story-scene-backdrop{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;}
+.garden-story-scene .story-scene-bird{position:absolute;z-index:1;bottom:9%;width:32%;height:59%;margin:0;display:flex;flex-direction:column;align-items:center;justify-content:end;}
+.garden-story-scene .story-scene-bird-0{left:8%;}.garden-story-scene .story-scene-bird-1{right:8%;}
+.garden-story-scene .story-scene-bird img{width:100%;height:calc(100% - 21px);object-fit:contain;filter:drop-shadow(0 4px 3px #786d4238);}
+.garden-story-scene .story-scene-bird-1 img{transform:scaleX(-1);}
+.garden-story-scene .story-scene-bird figcaption{max-width:100%;font-size:12px;line-height:1.5;overflow-wrap:anywhere;background:#fffcf3e8;border-radius:12px;padding:1px 8px;color:#344b42;}
+.story-scene-keepsake{position:absolute;z-index:2;left:39%;bottom:8%;width:22%;}
+body[data-world="buncho"] .game-encounter-host .finch-garden > details.leaf-gift[open] .leaf-gift-content>p{font-size:16px;line-height:1.85;margin:16px 0;color:#344b42;}
+body[data-world="buncho"] .game-encounter-host .finch-garden > details.leaf-gift[open] .leaf-gift-content>h4{font-size:18px;line-height:1.8;text-align:center;margin:12px 0;}
+body[data-world="buncho"] .game-encounter-host .finch-garden > details.leaf-gift[open] .leaf-gift-content button:not(.garden-story-close){
+ min-height:48px;border:1px solid #426249;border-radius:25px;background:#47674f;color:#fffdf4;box-shadow:0 3px 0 #263f3020;font-size:16px;font-weight:700;padding:12px 18px;line-height:1.6;
+}
+body[data-world="buncho"] .game-encounter-host .finch-garden > details.leaf-gift[open] .leaf-gift-content>button{display:block;width:100%;margin:20px 0 8px;}
+body[data-world="buncho"] .game-encounter-host .finch-garden > details.leaf-gift[open] .leaf-gift-content button small{color:inherit;opacity:.92;font-size:13px;line-height:1.6;}
+body[data-world="buncho"] .game-encounter-host .finch-garden > details.leaf-gift[open] .leaf-gift-content :is([data-expedition-later],[data-leaf-choice="later"],[data-expedition-next],[data-showcase-next],.showcase-buy-options button){background:#f6f0e2;color:#344b42;border-color:#d1c4a8;box-shadow:none;}
+body[data-world="buncho"] .game-encounter-host .finch-garden > details.leaf-gift[open] .leaf-gift-choices{display:grid;grid-template-columns:1fr;gap:10px;margin:22px 0 12px;}
+body[data-world="buncho"] .game-encounter-host .finch-garden > details.leaf-gift[open] .leaf-gift-note{font-size:13px!important;line-height:1.8!important;color:#66715e!important;margin:12px 0!important;}
+body[data-world="buncho"] .game-encounter-host .finch-garden > details.leaf-gift[open] :is(.showcase-form,.expedition-invitations){display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;background:transparent;padding:0;margin:22px 0;border:0;}
+.story-friend-picker{min-width:0;padding:10px;background:linear-gradient(#f6f1e5,#efe8d5);border-radius:20px;text-align:center;}
+.story-friend-picker>[data-story-friend-portrait]{width:82px;height:86px;object-fit:contain;display:block;margin:0 auto 6px;}
+.story-friend-picker>label{display:block;font-size:12px!important;font-weight:500!important;color:#596951;margin-bottom:7px;}
+body[data-world="buncho"] .game-encounter-host .finch-garden > details.leaf-gift[open] .story-friend-picker select{width:100%;max-width:100%;min-width:0;min-height:48px;background:#fffcf3;color:#344b42;border:1px solid #d8ccb3;border-radius:14px;padding:7px;font-size:16px;}
+body[data-world="buncho"] .game-encounter-host .finch-garden > details.leaf-gift[open] .showcase-form>label,body[data-world="buncho"] .game-encounter-host .finch-garden > details.leaf-gift[open] .showcase-form>select{grid-column:1/-1;}
+body[data-world="buncho"] .game-encounter-host .finch-garden > details.leaf-gift[open] .showcase-themes{gap:10px;margin:22px 0;}
+body[data-world="buncho"] .game-encounter-host .finch-garden > details.leaf-gift[open] .showcase-themes button{text-align:center;}
+body[data-world="buncho"] .game-encounter-host .finch-garden > details.leaf-gift[open] .showcase-progress{gap:8px;}
+body[data-world="buncho"] .game-encounter-host .finch-garden > details.leaf-gift[open] .showcase-progress li{font-size:13px;line-height:1.7;background:#f0ecdf;color:#596951;}
+body[data-world="buncho"] .game-encounter-host .finch-garden > details.leaf-gift[open] .showcase-progress li[data-complete=true]{background:#dce7d5;color:#35563d;}
+.garden-story-note{margin:18px 0;border-top:1px solid #e5ddc9;}
+.garden-story-note>summary,.showcase-shop>summary{cursor:pointer;min-height:48px;display:flex;align-items:center;justify-content:center;gap:12px;padding:12px 8px;color:#47674f;font-size:15px;font-weight:700;list-style:none;}
+.garden-story-note>summary::after,.showcase-shop>summary::after{content:'＋';}.garden-story-note[open]>summary::after,.showcase-shop[open]>summary::after{content:'−';}
+.garden-story-note>summary::-webkit-details-marker,.showcase-shop>summary::-webkit-details-marker{display:none;}
+body[data-world="buncho"] .game-encounter-host .finch-garden > details.leaf-gift[open] .showcase-shop{padding-top:6px;margin-top:20px;border-top:1px solid #e5ddc9;}
+body[data-world="buncho"] .game-encounter-host .finch-garden > details.leaf-gift[open] .showcase-stock li{background:#f5edda;border-radius:22px;padding:16px;}
+body[data-world="buncho"] .game-encounter-host .finch-garden > details.leaf-gift[open] .showcase-stock button:disabled{opacity:.65;color:#4c5945;}
+body[data-world="buncho"] .game-encounter-host .finch-garden > details.leaf-gift[open] .story-showcase-stage{aspect-ratio:3/2;max-width:none;border:0;border-radius:18px 18px 30px 30px;background:#eee8d8;margin:4px auto 22px;}
+body[data-world="buncho"] .game-encounter-host .finch-garden > details.leaf-gift[open] .story-showcase-stage::before,body[data-world="buncho"] .game-encounter-host .finch-garden > details.leaf-gift[open] .story-showcase-stage::after{display:none;}
+body[data-world="buncho"] .game-encounter-host .finch-garden > details.leaf-gift[open] .story-showcase-stage .showcase-performer{z-index:1;bottom:8%;height:58%;}
+body[data-world="buncho"] .game-encounter-host .finch-garden > details.leaf-gift[open] .story-showcase-stage .showcase-ribbon{z-index:2;top:15%;}
+body[data-world="buncho"] .game-encounter-host .finch-garden > details.leaf-gift[open] .story-showcase-stage .showcase-prop{z-index:2;}
+body[data-world="buncho"] .game-encounter-host .finch-garden > details.leaf-gift[open] :is(button,select,summary):focus-visible{outline:3px solid #98634b;outline-offset:3px;}
+@media(min-width:600px){body[data-world="buncho"] .game-encounter-host .finch-garden > details.leaf-gift[open]{max-width:540px;left:50%;right:auto;width:calc(100% - 24px);transform:translateX(-50%);}}
+@media(max-height:420px){.garden-story-scene{max-width:290px;}body[data-world="buncho"] .game-encounter-host .finch-garden > details.leaf-gift[open] .garden-story-header{padding-top:5px;padding-bottom:5px;}body[data-world="buncho"] .game-encounter-host .finch-garden > details.leaf-gift[open]{max-height:calc(100% - 16px);top:8px;}}
+@media(prefers-reduced-motion:reduce){.garden-story-scene *{animation:none!important;transition:none!important;}}
+/* Footing follows the generated set, not the viewport bottom. */
+.garden-story-scene[data-story-scene="leaf"] .story-scene-bird{bottom:24%;height:54%;}
+.garden-story-scene[data-story-scene="expedition"] .story-scene-bird{bottom:12%;height:51%;width:29%;}
+.garden-story-scene[data-story-scene="expedition"] .story-scene-bird-1{right:32%;}
+body[data-world="buncho"] .game-encounter-host .finch-garden > details.leaf-gift[open] .story-showcase-stage .showcase-performer{bottom:24%;height:50%;width:28%;}
+body[data-world="buncho"] .game-encounter-host .finch-garden > details.leaf-gift[open] .story-showcase-stage .showcase-performer:first-of-type{left:18%;}
+body[data-world="buncho"] .game-encounter-host .finch-garden > details.leaf-gift[open] .story-showcase-stage .showcase-performer:last-of-type{right:19%;}
+.story-showcase-stage .showcase-performer:first-of-type img{transform:none;}
+.story-showcase-stage .showcase-performer:last-of-type img{transform:scaleX(-1);}
+/* The same performance scene also appears in the diary; child order is not identity. */
+.story-showcase-stage.showcase-stage{aspect-ratio:3/2;border:0;border-radius:18px 18px 30px 30px;}
+.story-showcase-stage.showcase-stage::before,.story-showcase-stage.showcase-stage::after{display:none;}
+.story-showcase-stage.showcase-stage .showcase-performer{z-index:1;bottom:24%;height:50%;width:28%;}
+.story-showcase-stage.showcase-stage .showcase-performer:first-of-type{left:18%;right:auto;height:50%;}
+.story-showcase-stage.showcase-stage .showcase-performer:last-of-type{right:19%;left:auto;height:50%;}
+.story-showcase-stage.showcase-stage .showcase-performer:first-of-type img{transform:none;}
+.story-showcase-stage.showcase-stage .showcase-performer:last-of-type img{transform:scaleX(-1);}
+.story-showcase-stage.showcase-stage .showcase-ribbon{z-index:2;top:15%;}
+.story-showcase-stage.showcase-stage .showcase-prop{z-index:2;}
