@@ -1,3 +1,4 @@
+const nativeUnits = text => text.replace(/calc\(([\d.]+) \* var\(--game-cq([wh]),1cq[wh]\)\)/g, '$1cq$2');
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -6,7 +7,7 @@ import {createWorld, createBird} from '../src/engine.js';
 import {gardenStageGeometry} from '../src/data/gardens.js';
 import {renderGardenStage} from '../src/encounter-ui.js';
 
-const css = readFileSync(new URL('../src/game.css', import.meta.url), 'utf8');
+const css = nativeUnits(readFileSync(new URL('../src/game.css', import.meta.url), 'utf8'));
 const scope = 'body[data-world="buncho"] .game-panel-overlay[data-scene="true"] .finch-garden-stage';
 const ordinary = `${scope}[data-garden-density="regular"]:not(:has(.finch-crow-scale-scene,.finch-raptor-scale-scene)) .finch-garden-image-plane`;
 
@@ -52,7 +53,7 @@ test('cover-clamped ordinary 3–6 bird rows clear the actual dock without shrin
         assert.equal(stage.dataset.gardenCount, String(count));
         assert.equal(stage.dataset.gardenDensity, 'regular');
         const offsets = [...stage.querySelectorAll('.finch-garden-image-plane > button')].map(button => {
-          const match = button.getAttribute('style').match(/\+ (-?[\d.]+) \* min\(22cqw,120px\).*\+ (-?[\d.]+) \* min\(17cqh,110px\)/);
+          const match = nativeUnits(button.getAttribute('style')).match(/\+ (-?[\d.]+) \* min\(22cqw,120px\).*\+ (-?[\d.]+) \* min\(17cqh,110px\)/);
           assert.ok(match); return {dx:Number(match[1]), dy:Number(match[2])};
         });
         for (const [width, height] of [[390,844], [1280,800], [844,390], [667,375], [740,360]]) {

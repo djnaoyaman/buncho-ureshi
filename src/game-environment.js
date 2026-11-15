@@ -1,3 +1,4 @@
+import { mountSceneUnits } from './game-scene-units.js';
 // Presentation preferences are deliberately separate from every saved world.
 export const GAME_DEVICE_CHOICE_KEY = 'buncho-game-device-choice-v1';
 export const GAME_VIEW_EVENT = 'buncho-game-view-visibility';
@@ -25,6 +26,7 @@ export function portraitGameDevice(win) {
  * closes existing game dialogs, replaces the world, or writes a game preference. */
 export function mountGameEnvironment(root, { start, exitURL } = {}) {
   const doc = root.ownerDocument, win = doc.defaultView, body = doc.body;
+  const disposeSceneUnits = mountSceneUnits(root);
   const supported = supportsGameDevice(win);
   const priorDevice = body.getAttribute('data-game-device');
   const priorBlocked = body.getAttribute('data-game-view-blocked');
@@ -119,6 +121,7 @@ export function mountGameEnvironment(root, { start, exitURL } = {}) {
   refresh();
   return () => {
     alive = false;
+    disposeSceneUnits();
     win.removeEventListener('resize', refresh);
     win.removeEventListener('orientationchange', refresh);
     win.screen?.orientation?.removeEventListener?.('change', refresh);

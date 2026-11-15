@@ -120,8 +120,8 @@ export function renderGardenStage(w,{system=encounterSystem,base='/buncho-ureshi
  let denseIndex=0;
  const position=slot=>{
   const [dx,dy]=compact?dense[denseIndex++]:slots[slot];
-  const y=compact?`calc(var(--garden-anchor-y) * 100% + ${place.id==='mizukagami'?'.15':'.75'} * min(17cqh,110px) - ${2-dy} * var(--garden-row-gap))`:`calc(var(--garden-anchor-y) * 100% + ${dy} * min(17cqh,110px))`;
-  return `left:calc(var(--garden-anchor-x) * 100% + ${dx} * min(22cqw,120px));top:${y}`;
+  const y=compact?`calc(var(--garden-anchor-y) * 100% + ${place.id==='mizukagami'?'.15':'.75'} * min(calc(17 * var(--game-cqh,1cqh)),110px) - ${2-dy} * var(--garden-row-gap))`:`calc(var(--garden-anchor-y) * 100% + ${dy} * min(calc(17 * var(--game-cqh,1cqh)),110px))`;
+  return `left:calc(var(--garden-anchor-x) * 100% + ${dx} * min(calc(22 * var(--game-cqw,1cqw)),120px));top:${y}`;
  };
  const bird=(f,index)=>{const color=['white','sakura','silver','cinnamon'].includes(f.color)?f.color:'white';return `<button type="button" class="finch-garden-friend" style="${position(index)}" data-garden-friend="${esc(f.friendId)}" data-garden-friend-action="chat" aria-label="${esc(f.name)}と庭でおしゃべり">${renderGardenBirdSprite(color,f.friendId,{base})}<span class="finch-friend-name">${esc(f.name)}</span></button>`;};
  const friendMarkup=friends.map(bird).join('');

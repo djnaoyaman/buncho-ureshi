@@ -43,9 +43,9 @@
 .finch-garden{width:100%;height:100%;min-height:0;padding:0;border:0;border-radius:0;overflow:hidden;background:#c4d2b3;box-sizing:border-box}
 .finch-garden .finch-garden-stage{position:absolute;inset:0;width:100%;height:100%;min-height:0;margin:0;border-radius:0;container-type:size;isolation:isolate}
 .finch-garden-slide{position:relative;inline-size:100%;block-size:100%;min-inline-size:0;flex:0 0 100%;scroll-snap-align:center;scroll-snap-stop:always;overflow:hidden}
-.finch-garden-stage .finch-garden-image-plane{--draw-w:max(100cqw,calc(100cqh * var(--garden-image-ratio)));--draw-h:max(100cqh,calc(100cqw / var(--garden-image-ratio)));position:absolute;inline-size:var(--draw-w);block-size:var(--draw-h);left:clamp(calc(100cqw - var(--draw-w)),calc(50cqw - var(--garden-anchor-x) * var(--draw-w)),0px);top:clamp(calc(100cqh - var(--draw-h)),calc(65cqh - var(--garden-anchor-y) * var(--draw-h)),0px);isolation:isolate}
+.finch-garden-stage .finch-garden-image-plane{--draw-w:max(calc(100 * var(--game-cqw,1cqw)),calc(calc(100 * var(--game-cqh,1cqh)) * var(--garden-image-ratio)));--draw-h:max(calc(100 * var(--game-cqh,1cqh)),calc(calc(100 * var(--game-cqw,1cqw)) / var(--garden-image-ratio)));position:absolute;inline-size:var(--draw-w);block-size:var(--draw-h);left:clamp(calc(calc(100 * var(--game-cqw,1cqw)) - var(--draw-w)),calc(calc(50 * var(--game-cqw,1cqw)) - var(--garden-anchor-x) * var(--draw-w)),0px);top:clamp(calc(calc(100 * var(--game-cqh,1cqh)) - var(--draw-h)),calc(calc(65 * var(--game-cqh,1cqh)) - var(--garden-anchor-y) * var(--draw-h)),0px);isolation:isolate}
 .finch-garden-stage .finch-garden-background{position:absolute;inset:0;display:block;inline-size:100%;block-size:100%;object-fit:cover;z-index:-1;border-radius:0;max-width:none}
-.finch-garden-stage :is(.finch-garden-friend,.finch-garden-household){transform:translate(-50%,-100%);display:block;box-sizing:border-box;min-width:44px;min-height:44px;width:clamp(64px,18cqh,144px);height:clamp(64px,18cqh,144px);padding:0!important;line-height:1;box-shadow:none;border:0!important}
+.finch-garden-stage :is(.finch-garden-friend,.finch-garden-household){transform:translate(-50%,-100%);display:block;box-sizing:border-box;min-width:44px;min-height:44px;width:clamp(64px,calc(18 * var(--game-cqh,1cqh)),144px);height:clamp(64px,calc(18 * var(--game-cqh,1cqh)),144px);padding:0!important;line-height:1;box-shadow:none;border:0!important}
 .finch-garden-stage :is(.finch-garden-friend,.finch-garden-household) img{display:block;width:100%;height:100%;object-fit:contain;max-width:none;pointer-events:none}
 .finch-garden-stage :is(.finch-garden-friend,.finch-garden-household) span{position:absolute;top:100%;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:14px;line-height:20px;padding:3px 12px;pointer-events:none;color:#294533;background:#fff8e9f5;box-shadow:0 2px 8px #2c34232b}
 .finch-garden-stage :is(.finch-garden-friend,.finch-garden-household):focus-visible{outline:3px solid #925b2a;outline-offset:2px}
@@ -62,7 +62,7 @@
 @media(prefers-reduced-motion:reduce){.finch-garden-carousel{scroll-behavior:auto}.finch-garden button{transition:none}}
 /* Garden play keeps the view open: four birds together and small floating tools. */
 .finch-garden-stage .finch-garden-carousel{overflow:hidden;touch-action:pan-y}
-.finch-garden-stage :is(.finch-garden-friend,.finch-garden-household){width:clamp(64px,18cqw,100px);height:clamp(75px,21.18cqw,117.65px);transform:translate(-54%,-97.5%)}
+.finch-garden-stage :is(.finch-garden-friend,.finch-garden-household){width:clamp(64px,calc(18 * var(--game-cqw,1cqw)),100px);height:clamp(75px,calc(21.18 * var(--game-cqw,1cqw)),117.65px);transform:translate(-54%,-97.5%)}
 .finch-garden-stage :is(.finch-garden-friend,.finch-garden-household)>.finch-friend-name{font-size:11px;line-height:16px;padding:1px 7px;max-width:100px;overflow:hidden;text-overflow:ellipsis}
 .finch-garden>header h3{font-size:14px!important;line-height:1.3!important;padding:5px 9px!important;max-width:calc(100% - 50px)}
 .finch-garden>header>button{font-size:11px;min-width:44px;padding:6px 9px;flex-shrink:0;white-space:nowrap}
@@ -89,7 +89,7 @@
 /* The selected household bird travels with the player; family portraits remain reachable. */
 .finch-garden-stage .finch-garden-household>.finch-friend-name{background:#fff2b9;box-shadow:0 1px 5px #745b3440;font-weight:800}
 /* All present birds share the terrain. A staggered compact scene fits up to ten. */
-.finch-garden-stage[data-garden-density=compact]{--garden-row-gap:clamp(60px,8cqh,64px)}
+.finch-garden-stage[data-garden-density=compact]{--garden-row-gap:clamp(60px,calc(8 * var(--game-cqh,1cqh)),64px)}
 .finch-garden-stage[data-garden-density=compact] :is(.finch-garden-friend,.finch-garden-household,.finch-garden-visitor){width:44px;height:52px;min-width:44px;min-height:44px}
 .finch-garden-stage[data-garden-density=compact] :is(.finch-friend-name,.finch-garden-visitor>span:not(.finch-media)){font-size:10px;line-height:13px;padding:1px 3px;max-width:58px;overflow:hidden;text-overflow:ellipsis}
 
@@ -147,7 +147,7 @@
 .finch-crow-notice strong,.finch-crow-notice span{flex:1 0 100%}.finch-crow-notice button{font-size:12px!important;padding:6px 10px!important}
 .finch-crow-shadow{position:absolute;pointer-events:none;z-index:3;inset:0;color:#202a2a;opacity:.25;overflow:hidden}.finch-crow-shadow svg{position:absolute;width:70%;top:28%;left:15%;animation:crow-shadow-pass 6s linear both}
 @keyframes crow-shadow-pass{from{transform:translateX(-120%) scale(.6);opacity:.2}to{transform:translateX(120%) scale(1.1);opacity:.7}}
-.finch-garden-stage:has(.finch-crow-scale-scene){--crow-unit:min(12cqw,11cqh,54px)}
+.finch-garden-stage:has(.finch-crow-scale-scene){--crow-unit:min(calc(12 * var(--game-cqw,1cqw)),calc(11 * var(--game-cqh,1cqh)),54px)}
 .finch-crow-scale-scene{position:absolute;left:50%;bottom:23%;width:calc(var(--crow-unit) * 6.4);height:calc(var(--crow-unit) * 5);transform:translateX(-50%);pointer-events:none;z-index:3}
 .finch-crow-java{transform:translateY(2.5%);position:absolute;left:0;bottom:0;width:var(--crow-unit);height:calc(var(--crow-unit) * 1000 / 850)}
 .finch-crow-actor{position:absolute;left:calc(var(--crow-unit) * 1.6);top:100%;transform:translateY(calc(var(--crow-foot-y) * -100%));width:calc(var(--crow-unit) * var(--crow-ratio));margin:0;aspect-ratio:1}
@@ -172,7 +172,7 @@
  .finch-crow-notice button[data-crow-entry]{display:none}
  body[data-world="buncho"] .game-encounter-host .finch-garden:has(.finch-crow-notice)>header{right:72px;top:2px}
  body[data-world="buncho"] .game-encounter-host .finch-crow-notice{right:132px}
- .finch-garden-stage:has(.finch-crow-scale-scene){--crow-unit:min(9cqw,8cqh,36px)}
+ .finch-garden-stage:has(.finch-crow-scale-scene){--crow-unit:min(calc(9 * var(--game-cqw,1cqw)),calc(8 * var(--game-cqh,1cqh)),36px)}
  .finch-crow-scale-scene{left:62%;bottom:76px}
  .finch-crow-actor figcaption,.finch-crow-java>span:last-child{position:absolute;inline-size:1px;block-size:1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 }
@@ -180,11 +180,11 @@
    reserve the remaining strip for both birds; Home and the book stay available. */
 @media(max-height:340px){
  body[data-world="buncho"] .game-app[data-panel=notebook] .finch-garden:has(.finch-crow-scale-scene)>.finch-garden-selector-wrap{visibility:hidden}
- body[data-world="buncho"] .game-app[data-panel=notebook] .finch-garden-stage:has(.finch-crow-scale-scene){--crow-unit:min(9cqw,7cqh,30px)}
+ body[data-world="buncho"] .game-app[data-panel=notebook] .finch-garden-stage:has(.finch-crow-scale-scene){--crow-unit:min(calc(9 * var(--game-cqw,1cqw)),calc(7 * var(--game-cqh,1cqh)),30px)}
  body[data-world="buncho"] .game-app[data-panel=notebook] .finch-crow-scale-scene{bottom:64px}
 }
 /* Rare raptor encounters share one measured centimetre scale with the player. */
-.finch-garden-stage:has(.finch-raptor-scale-scene){--raptor-unit:min(9cqw,8cqh,44px)}
+.finch-garden-stage:has(.finch-raptor-scale-scene){--raptor-unit:min(calc(9 * var(--game-cqw,1cqw)),calc(8 * var(--game-cqh,1cqh)),44px)}
 .finch-raptor-scale-scene{position:absolute;z-index:3;pointer-events:none;left:50%;bottom:23%;width:calc(var(--raptor-unit) * var(--raptor-span));height:calc(var(--raptor-unit) * var(--raptor-height));transform:translateX(-50%)}
 .finch-raptor-java{position:absolute;left:0;bottom:0;width:var(--raptor-unit);height:calc(var(--raptor-unit) * 1000 / 850);transform:translateY(2.5%)}
 .finch-raptor-actor{position:absolute;left:calc(var(--raptor-unit) * 1.5);top:100%;width:calc(var(--raptor-unit) * var(--raptor-canvas-ratio));aspect-ratio:var(--raptor-aspect);margin:0;transform:translateY(calc(var(--raptor-foot-y) * -100%))}
@@ -195,7 +195,7 @@
 .finch-garden-stage:has(.finch-raptor-scale-scene) :is(.finch-garden-friend,.finch-garden-household){--garden-bird-width:var(--raptor-unit);width:var(--raptor-unit);height:calc(var(--raptor-unit) * 1000 / 850);min-width:44px;min-height:44px}
 .finch-raptor-entry [data-encounter-rub]{touch-action:none;cursor:grab;display:block;min-height:44px;outline-offset:4px}.finch-raptor-entry [data-encounter-rub]:focus-visible{outline:3px solid #826436}.finch-raptor-entry [data-encounter-rub] img{display:block;width:auto;height:auto;max-width:100%;max-height:280px;margin:auto;pointer-events:none}.finch-raptor-catalog h4{margin-top:1.3rem}.finch-raptor-catalog p{font-size:13px;line-height:1.8}
 @media(max-height:500px){.finch-raptor-scale-scene{bottom:22%}.finch-garden:has(.finch-raptor-scale-scene)>.finch-garden-selector-wrap{visibility:hidden}}
-@media(max-height:340px){.finch-garden-stage:has(.finch-raptor-scale-scene){--raptor-unit:min(9cqw,6.5cqh,28px)}.finch-raptor-scale-scene{bottom:68px}.finch-raptor-actor figcaption,.finch-raptor-java>span:last-child{position:absolute;inline-size:1px;block-size:1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}.finch-garden:has(.finch-raptor-scale-scene)>header h3{display:none}.finch-garden:has(.finch-raptor-scale-scene)>header{top:54px!important}}
+@media(max-height:340px){.finch-garden-stage:has(.finch-raptor-scale-scene){--raptor-unit:min(calc(9 * var(--game-cqw,1cqw)),calc(6.5 * var(--game-cqh,1cqh)),28px)}.finch-raptor-scale-scene{bottom:68px}.finch-raptor-actor figcaption,.finch-raptor-java>span:last-child{position:absolute;inline-size:1px;block-size:1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}.finch-garden:has(.finch-raptor-scale-scene)>header h3{display:none}.finch-garden:has(.finch-raptor-scale-scene)>header{top:54px!important}}
 
 .finch-garden:has(.finch-raptor-scale-scene)>.finch-garden-selector-wrap{visibility:hidden}
 @media(min-height:341px) and (max-height:500px){.finch-garden:has(.finch-raptor-scale-scene)>header h3{display:none}.finch-garden:has(.finch-raptor-scale-scene)>header{top:78px!important}}
@@ -345,7 +345,7 @@ body[data-world="buncho"] .finch-mystery-postcard .finch-page-actions>button:fir
 /* Match Java-sparrow frames without shrinking tap targets. Tail reserve is
    measured below standing feet, separate from body proportions. */
 .finch-garden-stage{--encounter-frame-width:70px;--encounter-frame-height:80px}
-.finch-garden-stage[data-garden-density=regular]{--encounter-frame-width:clamp(64px,18cqw,100px);--encounter-frame-height:clamp(75px,21.18cqw,117.65px)}
+.finch-garden-stage[data-garden-density=regular]{--encounter-frame-width:clamp(64px,calc(18 * var(--game-cqw,1cqw)),100px);--encounter-frame-height:clamp(75px,calc(21.18 * var(--game-cqw,1cqw)),117.65px)}
 @media(max-height:500px){.finch-garden-stage[data-garden-density=regular]{--encounter-frame-width:64px;--encounter-frame-height:75.3px}}
 .finch-garden-stage[data-garden-density=regular][data-garden-id=mizukagami]{--encounter-frame-width:60px;--encounter-frame-height:70.6px}
 .finch-garden-stage[data-garden-density=compact]{--encounter-frame-width:44px;--encounter-frame-height:52px}

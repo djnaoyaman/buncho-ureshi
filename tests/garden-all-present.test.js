@@ -1,3 +1,4 @@
+const nativeUnits = text => text.replace(/calc\(([\d.]+) \* var\(--game-cq([wh]),1cq[wh]\)\)/g, '$1cq$2');
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -54,7 +55,7 @@ test('known household references are deduplicated without dropping unrelated fri
 });
 
 test('compact scene CSS declares 44px minimum targets and staggered terrain spacing (not browser geometry)',()=>{
- const css=readFileSync(new URL('../src/encounter-ui.css',import.meta.url),'utf8');
+ const css=nativeUnits(readFileSync(new URL('../src/encounter-ui.css',import.meta.url),'utf8'));
  assert.match(css,/data-garden-density=compact[^}]+--garden-row-gap:clamp\(60px,8cqh,64px\)/);
  assert.match(css,/data-garden-density=compact[^}]+width:44px;height:52px;min-width:44px;min-height:44px/);
  assert.doesNotMatch(css,/\.finch-garden-family/);
