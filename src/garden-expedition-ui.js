@@ -1,3 +1,4 @@
+import {gardenStoryArt,storyRewardNote,storyFriendPicker} from './garden-story-art-ui.js';
 import {pausedEventMessage} from './garden-event-status-ui.js';
 import {gardenById} from './data/gardens.js';
 import {GARDEN_REGULARS} from './garden-friends.js';
@@ -11,7 +12,7 @@ const bird=id=>GARDEN_REGULARS.find(r=>r.id===id);
 const art=()=>'<svg class="leaf-gift-art expedition-art" viewBox="0 0 96 96" aria-hidden="true" focusable="false"><path d="M14 20 37 13 61 21 82 14V74L60 82 36 74 14 82Z" fill="#f2e5bd" stroke="#807454" stroke-width="2"/><path d="M37 14v60M61 22v59" stroke="#c5b98b" fill="none"/><path d="M23 63Q67 66 69 31" stroke="#759078" stroke-width="3" stroke-dasharray="4 5" fill="none"/><circle cx="69" cy="30" r="6" fill="#b77f55"/></svg>';
 const eventIcon=()=>"<svg class=\"leaf-gift-art\" data-event-icon=\"2B\" viewBox=\"0 0 100 100\" aria-hidden=\"true\" focusable=\"false\"><g stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"50\" cy=\"50\" r=\"29\" fill=\"none\" stroke=\"#627B68\" stroke-width=\"3.3\" /><path d=\"M50 14v9M50 77v9M14 50h9M77 50h9\" stroke=\"#627B68\" stroke-width=\"3.3\" /><path d=\"M62 32L54 54L33 66L43 44Z\" fill=\"#C4965D\" /><path d=\"M62 32L54 54L43 44Z\" fill=\"#718976\" /><circle cx=\"50\" cy=\"50\" r=\"3\" fill=\"#FFF8EA\" /></g></svg>";
 const portrait=(b,base,right=false)=>b?`<figure class="leaf-gift-bird ${right?'leaf-gift-right':'leaf-gift-left'}"><img src="${esc(base)}game-art/${['white','sakura','silver','cinnamon'].includes(b.appearance?.color)?b.appearance.color:'white'}.webp" width="1160" height="1359" alt="" draggable="false"><figcaption>${esc(b.name)}</figcaption></figure>`:'';
-const scene=(e,base,keepsake=false)=>`<div class="leaf-gift-vignette">${portrait(bird(e.actorIds[0]),base)}${keepsake?expeditionKeepsakeArt(e,base):art()}${portrait(bird(e.actorIds[1]),base,true)}</div>`;
+const scene=(e,base,keepsake=false)=>gardenStoryArt('expedition',{base,actors:e.actorIds.map(bird),keepsake:keepsake?expeditionKeepsakeArt(e,base):''});
 export function expeditionNarrative(entry){
  if(!entry)return '';
  const a=bird(entry.actorIds[0]),b=bird(entry.actorIds[1]);
@@ -72,9 +73,10 @@ export function renderExpedition(w,{base='/buncho-ureshi/',celebrationId=null}={
  else if(s.phase==='complete')body=`<p>みっつの たんけんが、おもいでに なったよ。ふたりで みつけたものは、にっきで いつでも よみかえせるよ。</p>${e?scene(e,base)+result(e,base):''}${diaryButton()}`;
  else if(s.known.length<2)body='<p>にわの ともだちと おはなししたり、あそんだりしてみよう。ふたりと こうりゅうしたら、たんけんに さそえるよ。</p><p class="leaf-gift-note">なかよしの てんすうは ひつようないよ。いそがなくて だいじょうぶ。</p>';
  else {
- const choose=i=>`<label for="expedition-actor-${i}">${i===0?'ひとりめ':'ふたりめ'}の ともだち</label><select id="expedition-actor-${i}" name="expedition-actor-${i}" data-expedition-actor="${i}">${s.known.map((r,j)=>`<option value="${esc(r.id)}" ${j===i?'selected':''}>${esc(r.name)} · ${favorites[r.favorite]||''}</option>`).join('')}</select>`;
- body=`${e?'<p>おもいでを にっきに のこしたよ。べつの みちも、すきなときに たのしもう。</p>'+diaryButton():''}<p>こうりゅうした ともだちを ふたり さそおう。すきなことが ちがうと、はっけんも かわるよ。</p><div class="expedition-invitations">${choose(0)}${choose(1)}</div><p>どこを たんけんする？</p><div class="leaf-gift-choices">${s.remaining.map(path=>`<button type="button" data-expedition-start="${path}">${EXPEDITION_PATH_LABELS[path]}<small>${hints[path]}</small></button>`).join('')}<button type="button" data-expedition-later>いまは みおくる</button></div><p class="leaf-gift-note">どの みちも おれいは おなじ。ひとつの みちは いちどだけ、2 Gold と ふたりの なかよし +1。Gems は つかわないよ。まちじかんも ないよ。</p>`;
+ const choose=i=>storyFriendPicker('expedition',i,s.known,{base});
+ body=`${e?'<p>おもいでを にっきに のこしたよ。べつの みちも、すきなときに たのしもう。</p>'+diaryButton():''}<p>こうりゅうした ともだちを ふたり さそおう。すきなことが ちがうと、はっけんも かわるよ。</p><div class="expedition-invitations">${choose(0)}${choose(1)}</div><p>どこを たんけんする？</p><div class="leaf-gift-choices">${s.remaining.map(path=>`<button type="button" data-expedition-start="${path}">${EXPEDITION_PATH_LABELS[path]}<small>${hints[path]}</small></button>`).join('')}<button type="button" data-expedition-later>いまは みおくる</button></div>${storyRewardNote('どの みちも おれいは おなじ。ひとつの みちは いちどだけ、2 Gold と ふたりの なかよし +1。Gems は つかわないよ。まちじかんも ないよ。','expedition-reward')}`;
  }
+ if(!body.includes('data-story-scene='))body=gardenStoryArt('expedition',{base,actors:e?e.actorIds.map(bird):[]})+body;
  return `<details name="garden-story" class="leaf-gift expedition-gift" data-garden-details="expedition" data-expedition-world="${esc(w.worldId)}" data-expedition-revision="${w.revision}"><summary aria-label="鳥たちの小さな探検をひらく" title="鳥たちの小さな探検">${eventIcon()}</summary><div class="leaf-gift-content"><header class="garden-story-header"><h3 class="garden-story-title">${title}</h3><button type="button" class="garden-story-close" data-garden-story-close aria-label="探検を閉じる"><span aria-hidden="true">×</span><span>とじる</span></button></header>${body}</div></details>`;
 }
 export function renderExpeditionDiary(w,{base='/buncho-ureshi/'}={}){

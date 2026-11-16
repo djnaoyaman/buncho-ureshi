@@ -1,8 +1,9 @@
 {
-  "base": "a3f4eb83cdfc6379acaa44a89509840a645b3910",
+  "base": "0e45044207c5265e805de20b46ee7fea46a44c30",
   "tests": [
     "tests/browser/garden-event-position.spec.js",
+    "tests/browser/garden-story-scenes.spec.js",
     "tests/browser/iphone15-scene.spec.js"
   ],
-  "reason": "採用済み3イベントアイコンと状態案内を統合。停止理由・明示的再開・発表会の解放条件を改善。コードとDOM自動検査を実施し、視覚・実機確認は本人が担当。Chrome/WebKitの入口・閉じる・再操作とiOS15表示互換をCIで確認。保護baselineは公開main全558件を比較し496件同一、58件キャッシュ版のみ、4件承認範囲内の実差。新規状態表示helperを保護対象へ追加し、独立レビュー後に公開する。"
+  "reason": "承認済み3イベントの絵本化。320/375/402幅で背景・操作・閉じる・再開・鳥プレビュー・お店の開閉維持とiOS15表示をChrome/WebKitで検査。実機/目視は本人。ローカル起動はsocket制限。保護baselineは独立レビュー済み、559件保持（497同一/57版識別子/5表示変更）と新規5件。保存・報酬・進行ルール無変更。"
 }
