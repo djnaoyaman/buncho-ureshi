@@ -1,6 +1,7 @@
 /**
  * Presentation only. Keep the management details wrapper, feedback, event
- * delegation, export and import safety controller in game.js unchanged.
+ * delegation and import safety controller in game.js. Export feedback has one
+ * dedicated status node so the controller need not replace the open panel.
  * There is no user text / HTML input, state, file read or interactive artwork.
  */
 export function renderPreservationBox() {
@@ -13,8 +14,9 @@ export function renderPreservationBox() {
     </figure>
     <section class="game-preservation-card game-preservation-export" aria-labelledby="game-preservation-export-title">
       <h5 id="game-preservation-export-title">今の物語を、しまう</h5>
-      <p>家族や記録を、保存ファイルに。</p>
+      <p>最後に保存できた家族や記録を、保存ファイルに。書き出すだけでは庭の時間は進みません。保存に失敗した変更は含まれません。</p>
       <button type="button" data-game-action="export">保存ファイルを書き出す</button>
+      <p data-preservation-export-status role="status" class="game-small"></p>
     </section>
     <section class="game-preservation-card game-preservation-import" aria-labelledby="game-preservation-import-title">
       <h5 id="game-preservation-import-title">しまった物語を、ひらく</h5>
@@ -23,6 +25,7 @@ export function renderPreservationBox() {
       <input id="game-import" type="file" accept="application/json,.json" aria-describedby="game-preservation-warning game-preservation-validation">
       <p id="game-preservation-validation" class="game-small">読み込み前に形式・版・血縁・人数を検査します。不正なファイルで今の庭は壊れません。読み込む前に、今の保存も書き出しておくと安心です。</p>
     </section>
+    <p class="game-small">保存に失敗したら、リセットやブラウザのデータ削除をせず、まず書き出してください。ファイルを保管できたら、ほかのタブを閉じて空き容量や保存設定を確認します。復旧には、保管したファイルを上の欄から選び、確認して読み込みます。以前の記録に戻り、その後の変更は合流しません。</p>
     <div class="game-preservation-reset"><button type="button" id="game-reset-open" data-game-action="reset-state">リセットするものを選ぶ</button></div>
   </section>`;
 }

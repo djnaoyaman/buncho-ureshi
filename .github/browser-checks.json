@@ -1,10 +1,9 @@
 {
-  "base": "4cb33a772cfcd51fd1499c90edc2ab08b8f41d2e",
+  "base": "ebd7c8da280e4e5806da017acf6f2a6ab025b642",
   "tests": [
-    "tests/browser/home-continuity.spec.js",
-    "tests/browser/home-atmosphere-motion.spec.js",
-    "tests/browser/home-care-response.spec.js",
-    "tests/browser/game-device-policy.spec.js"
+    "tests/browser/save-protection.spec.js",
+    "tests/browser/preservation-box.spec.js",
+    "tests/browser/home-continuity.spec.js"
   ],
-  "reason": "Stabilize exact saved-world comparisons by explicitly controlling the existing 3-second health poll. Keep all 44 Chrome/WebKit cases and add exact post-poll world/revision/exposure assertions; no product code, exclusion or baseline change."
+  "reason": "Read-only original-save export and quota/read-error recovery at 320/375/402px; existing native export/import/reset/layout preservation plus care timer and orientation continuity. Chrome/WebKit only; no new schema or ending. Physical iPhone verification remains separate."
 }

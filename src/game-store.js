@@ -1,20 +1,33 @@
-import { MAX_SAVE_BYTES, createWorld, parseSave, serializeWorld, validateWorld, readCompatibleWorld, prepareWorldReplacement } from './engine.js';
+import { MAX_SAVE_BYTES, SAVE_VERSION, createWorld, parseSave, serializeWorld, validateWorld, readCompatibleWorld, prepareWorldReplacement } from './engine.js';
 
 export const STORAGE_KEY = 'buncho-ureshi-world-v1';
 export const DB_NAME = 'buncho-ureshi-garden-v1';
 const BACKUP_KEY = 'reset-backup';
 const LOCAL_FORMAT = 'buncho-world-with-reset-backup-v1';
-// Raw migration copies are independent of the reset backup and never overwrite an older copy.
+// Keep raw source copies before migration; the current format is never migrated here.
+function migrationVersion(version){return version<12?11:version;}
+function backupVersion(version){
+ if(!Number.isInteger(version)||version<11||version>SAVE_VERSION)throw new Error('対応していないバックアップの版です。');
+ return version;
+}
 function preserveMigration(store,raw){
- if(!raw||raw.version>=19)return;
- const key=raw.version>=18?'migration-backup-v18':raw.version>=17?'migration-backup-v17':raw.version>=16?'migration-backup-v16':raw.version>=15?'migration-backup-v15':raw.version>=14?'migration-backup-v14':raw.version>=13?'migration-backup-v13':raw.version<12?'migration-backup-v11':'migration-backup-v12',q=store.get(key);
+ if(!raw||raw.version>=SAVE_VERSION)return;
+ const key=`migration-backup-v${migrationVersion(raw.version)}`,q=store.get(key);
  q.onsuccess=()=>{if(q.result===undefined)store.put(raw,key);};
 }
 function preserveLocalMigration(storage,raw){
- if(!raw)return;const world=JSON.parse(raw).current??JSON.parse(raw);
- if(world.version>=19)return;
- const key=STORAGE_KEY+(world.version>=18?'-migration-v18':world.version>=17?'-migration-v17':world.version>=16?'-migration-v16':world.version>=15?'-migration-v15':world.version>=14?'-migration-v14':world.version>=13?'-migration-v13':world.version<12?'-migration-v11':'-migration-v12');
+ if(!raw)return;const parsed=JSON.parse(raw),world=parsed.current??parsed;
+ if(world.version>=SAVE_VERSION)return;
+ const key=STORAGE_KEY+`-migration-v${migrationVersion(world.version)}`;
  if(storage.getItem(key)===null)storage.setItem(key,raw);
+}
+function snapshotText(raw){
+ if(raw===undefined)throw new Error('書き出せる保存が見つかりません。保存は変更していません。');
+ // Validate a compatible copy, but export the original version and values.
+ readCompatibleWorld(raw);
+ const text=JSON.stringify(raw);
+ if(new TextEncoder().encode(text).byteLength>MAX_SAVE_BYTES)throw new Error('保存ファイルは64MB以下のJSONを選んでください。');
+ return text;
 }
 
 let generation = 0;
@@ -106,7 +119,17 @@ export async function openGameStore(platform = globalThis) {
     }
     return {
       mode: 'device',
-      async migrationBackup(version=11){return new Promise((resolve,reject)=>{const tx=db.transaction('world','readonly'),q=tx.objectStore('world').get(version===18?'migration-backup-v18':version===17?'migration-backup-v17':version===16?'migration-backup-v16':version===15?'migration-backup-v15':version===14?'migration-backup-v14':version===13?'migration-backup-v13':version===12?'migration-backup-v12':'migration-backup-v11');q.onsuccess=()=>resolve(q.result||null);q.onerror=()=>reject(q.error);});},
+      async exportSnapshot(){
+        if(closed)throw closedError();
+        return new Promise((resolve,reject)=>{
+          const tx=db.transaction('world','readonly'),q=tx.objectStore('world').get('current');let text,failure;
+          q.onsuccess=()=>{try{text=snapshotText(q.result);}catch(error){failure=error;tx.abort();}};
+          q.onerror=()=>{failure=q.error;};
+          tx.oncomplete=()=>resolve(text);
+          tx.onerror=tx.onabort=()=>reject(failure||tx.error||new Error('保存を読み取れませんでした。保存は変更していません。'));
+        });
+      },
+      async migrationBackup(version=11){if(closed)throw closedError();const key=`migration-backup-v${backupVersion(version)}`;return new Promise((resolve,reject)=>{const tx=db.transaction('world','readonly'),q=tx.objectStore('world').get(key);let result;q.onsuccess=()=>{result=q.result||null;};tx.oncomplete=()=>resolve(result);tx.onerror=tx.onabort=()=>reject(tx.error||new Error('バックアップを読み取れませんでした。'));});},
       replaceWorld(expectedWorldId,replacement,now=Date.now(),{guard=()=>true}={}){
         if(closed)return Promise.reject(closedError());
         return new Promise((resolve,reject)=>{
@@ -201,7 +224,19 @@ function lockedLocalStore(storage, locks) {
   });
   return {
     mode: 'locked-local',
-    migrationBackup:(version=11)=>locked(()=>{const raw=storage.getItem(STORAGE_KEY+(version===18?'-migration-v18':version===17?'-migration-v17':version===16?'-migration-v16':version===15?'-migration-v15':version===14?'-migration-v14':version===13?'-migration-v13':version===12?'-migration-v12':'-migration-v11'));return raw?(JSON.parse(raw).current??JSON.parse(raw)):null;}),
+    exportSnapshot:()=>locked(()=>{
+      const raw=storage.getItem(STORAGE_KEY);
+      if(raw===null)return snapshotText(undefined);
+      if(raw.length>MAX_SAVE_BYTES*2)throw new Error('保存データが大きすぎます。');
+      const parsed=JSON.parse(raw);
+      if(parsed?.format===LOCAL_FORMAT){
+        if(Object.keys(parsed).length!==3||!Object.hasOwn(parsed,'current')||!Object.hasOwn(parsed,'backup'))throw new Error('保存の項目が不正です。');
+        return snapshotText(parsed.current);
+      }
+      if(new TextEncoder().encode(raw).byteLength>MAX_SAVE_BYTES)throw new Error('保存ファイルは64MB以下のJSONを選んでください。');
+      snapshotText(parsed);return raw;
+    }),
+    migrationBackup:(version=11)=>locked(()=>{const raw=storage.getItem(STORAGE_KEY+`-migration-v${backupVersion(version)}`);return raw?(JSON.parse(raw).current??JSON.parse(raw)):null;}),
     replaceWorld(expectedWorldId,replacement,now=Date.now(),{guard=()=>true}={}){
       return locked(()=>{
         const raw=storage.getItem(STORAGE_KEY),record=localRecord(raw);
@@ -241,7 +276,8 @@ function memoryStore() {
   };
   return {
     mode: 'memory',
-    async migrationBackup(){return null;},
+    async exportSnapshot(){if(closed)throw closedError();return snapshotText(world);},
+    async migrationBackup(version=11){if(closed)throw closedError();backupVersion(version);return null;},
     async replaceWorld(expectedWorldId,replacement,now=Date.now(),{guard=()=>true}={}){
       if(closed)throw closedError();if(!guard())return structuredClone(world);
       const result=replacementResult(world,expectedWorldId,replacement,now);world=result;return structuredClone(world);

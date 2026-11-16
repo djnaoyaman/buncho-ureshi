@@ -49,7 +49,10 @@ test('all headings and descriptions resolve; no hidden or fake controls',t=>{
     for(const attr of ['aria-labelledby','aria-describedby'])for(const id of (n.getAttribute(attr)||'').split(' ').filter(Boolean))assert.ok(d.getElementById(id));
   }
   assert.equal(d.querySelector('script,iframe,[onclick],[onchange],[hidden],[role=button]'),null);
-  assert.equal(d.querySelector('[role=status],[role=alert]'),null,'feedback stays in the application, not duplicated');
+  assert.equal(d.querySelectorAll('[role=status]').length,1,'one export result avoids a whole-screen refresh');
+  assert.equal(d.querySelector('[role=status]').hasAttribute('data-preservation-export-status'),true);
+  assert.equal(d.querySelector('[role=status]').textContent,'');
+  assert.equal(d.querySelector('[role=alert]'),null);
 });
 test('renderer cannot inject untrusted VM text or markup; arbitrary inputs are not used',()=>{
   const expected=renderPreservationBox();
