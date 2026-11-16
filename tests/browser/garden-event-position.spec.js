@@ -1,5 +1,5 @@
 import {test,expect} from '@playwright/test';
-for(const size of [{width:320,height:568},{width:375,height:667},{width:568,height:320}])test(`event icons below jog in right horizontal row ${size.width}`,async({page},info)=>{
+for(const size of [{width:320,height:568},{width:375,height:667},{width:402,height:874},{width:568,height:320}])test(`event icons below jog in right horizontal row ${size.width}`,async({page},info)=>{
  await page.setViewportSize(size);await page.goto('');
  await page.evaluate(async()=>{
   const {createWorld}=await import('/buncho-ureshi/src/engine.js');
@@ -16,8 +16,9 @@ for(const size of [{width:320,height:568},{width:375,height:667},{width:568,heig
  const icons=page.locator('.finch-garden > details[name="garden-story"] > summary');
  const boxes=await icons.evaluateAll(ns=>ns.map(n=>{const r=n.getBoundingClientRect();return {x:r.x,y:r.y,r:r.right,b:r.bottom,w:r.width,h:r.height}}));
  expect(boxes).toHaveLength(3);
- expect(await icons.locator('svg').evaluateAll(ns=>ns.map(n=>n.dataset.eventIcon))).toEqual(['1A','2B','02']);
- for(const svg of await icons.locator('svg').all()){await expect(svg).toBeVisible();await expect(svg).toHaveAttribute('viewBox','0 0 100 100');}
+ expect(await icons.locator('img').evaluateAll(ns=>ns.map(n=>n.dataset.eventIcon))).toEqual(['06-leaf','06-compass','06-showcase']);
+ for(const img of await icons.locator('img').all()){await expect(img).toBeVisible();await expect(img).toHaveAttribute('alt','');await expect.poll(()=>img.evaluate(n=>n.complete&&n.naturalWidth===192)).toBe(true);}
+ for(const card of await page.locator('.finch-garden > details[name="garden-story"]').all()){await expect(card).toHaveCSS('background-color','rgba(0, 0, 0, 0)');await expect(card).toHaveCSS('box-shadow','none');}
  const jog=await page.locator('.finch-garden-selector-wrap').boundingBox();
  expect(Math.abs(boxes[0].y-boxes[1].y)).toBeLessThan(1);
  expect(boxes[1].x-boxes[0].r).toBeGreaterThanOrEqual(9);

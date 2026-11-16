@@ -1,9 +1,7 @@
 {
-  "base": "0e45044207c5265e805de20b46ee7fea46a44c30",
+  "base": "f9749d93f82e2491e55dbb32449413037828d80e",
   "tests": [
-    "tests/browser/garden-event-position.spec.js",
-    "tests/browser/garden-story-scenes.spec.js",
-    "tests/browser/iphone15-scene.spec.js"
+    "tests/browser/garden-event-position.spec.js"
   ],
-  "reason": "承認済み3イベントの絵本化。320/375/402幅で背景・操作・閉じる・再開・鳥プレビュー・お店の開閉維持とiOS15表示をChrome/WebKitで検査。実機/目視は本人。ローカル起動はsocket制限。保護baselineは独立レビュー済み、559件保持（497同一/57版識別子/5表示変更）と新規5件。保存・報酬・進行ルール無変更。"
+  "reason": "本人採用06押し花標本を庭の3入口に限定適用。表示・操作52px・横並び・開閉・フォーカス・保存不変をChrome/WebKitで自動検査。本人PCのブラウザ目視はせず本人が実機表示確認。保存・報酬・進行ルールは無変更。"
 }
