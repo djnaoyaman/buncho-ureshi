@@ -217,6 +217,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
   let homeResponse=null,homeResponseTimer;
   function clearHomeResponse(){
     clearTimeout(homeResponseTimer);const previous=homeResponse;homeResponse=null;
+    if(!previous)return;
     for(const node of root.querySelectorAll('[data-home-response]')){
       if(previous&&node.matches('.game-care-pet-bird')){const b=findBird(world,node.dataset.careBirdId),sprite=node.querySelector('.game-sprite');if(b&&sprite){const t=document.createElement('template');t.innerHTML=gameCareBirdSvg(b.color,b.stage);sprite.replaceWith(t.content.firstElementChild);}}
       node.removeAttribute('data-home-response');node.removeAttribute('data-home-response-phase');

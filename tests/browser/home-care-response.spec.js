@@ -4,7 +4,7 @@ import {COLOR_PLAY_NOW as NOW,colorPlayWorld} from '../fixtures/color-play.js';
 async function record(page,w){return page.evaluate(w=>new Promise((resolve,reject)=>{const r=indexedDB.open('buncho-ureshi-garden-v1',1);r.onupgradeneeded=()=>r.result.createObjectStore('world');r.onerror=()=>reject(r.error);r.onsuccess=()=>{const db=r.result,t=db.transaction('world',w?'readwrite':'readonly'),s=t.objectStore('world'),q=w?s.put(w,'current'):s.get('current');t.oncomplete=()=>{db.close();resolve(q.result)};t.onerror=()=>reject(t.error)};}),w)}
 async function start(page,w,width=375){
  await page.setViewportSize({width,height:width===402?874:667});await page.addInitScript(now=>{Date.now=()=>now;Math.random=()=>.99;localStorage.setItem('buncho.music.v1',JSON.stringify({enabled:false}));localStorage.setItem('buncho.care-sound-choice.v1',JSON.stringify({explicit:true,enabled:false}));},NOW);
- await page.goto('');await record(page,w);await page.goto('game/');await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');await page.locator('.game-scene-controls-toggle').click();
+ await page.goto('');await record(page,w);await page.goto('game/');await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');if(await page.locator('.game-scene-controls-toggle').getAttribute('aria-expanded')==='false')await page.locator('.game-scene-controls-toggle').click();
 }
 for(const width of [320,375,402])test(`care responds after commit and settles with exact ordinary rewards at ${width}`,async({page})=>{
  const w=colorPlayWorld();w.birds[0].needs.food=w.birds[0].needs.energy=40;w.paused=false;w.settings.motion=true;
