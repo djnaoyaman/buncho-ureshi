@@ -1,10 +1,10 @@
 {
-  "base": "b52e050ee38a9256d2f622bf0a12ccefc41783e4",
+  "base": "02e7db85466672f96a16c98dfedf8a8eb09c7679",
   "tests": [
+    "tests/browser/home-continuity.spec.js",
     "tests/browser/home-atmosphere-motion.spec.js",
-    "tests/browser/home-atmosphere.spec.js",
     "tests/browser/home-care-response.spec.js",
-    "tests/browser/furniture-styles.spec.js"
+    "tests/browser/game-device-policy.spec.js"
   ],
-  "reason": "Actual vessel geometry, pure resting poses and gentle opacity animation. 320/375/402px, hidden/pagehide/reduced-motion, repeated resume with bounded DOM and unchanged save, preview isolation and prior care responses. Chrome/WebKit; not physical iOS 15 verification."
+  "reason": "Final continuity: independent panels, friend/home return, actual treatment, emulated phone rotation preserving draft/focus/save and cancelling responses, existing device policy and non-game routes, motion and care regression. 320/375/402px; Chrome/WebKit automation, not iOS 15 physical verification."
 }

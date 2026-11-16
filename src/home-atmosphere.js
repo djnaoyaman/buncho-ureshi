@@ -12,7 +12,7 @@ export function homeAtmosphere(world,{selectedId=null,place=world.field?.place,p
  const food=mature.length?mature.reduce((n,b)=>n+level(b.needs.food),0)/mature.length:100;
  const energy=mature.length?Math.min(...mature.map(b=>level(b.needs.energy))):100;
  const cleanliness=level(world.care?.cleanliness),drops=world.gems?.droppings?.length||0;
- const blocked=error||memory?'storage':world.encounters?.raptor?.active?.hostile||family.some(b=>lifeStatus(world,b)?.condition)?'health':ending||panel!=='garden'||place!=='home'||selected&&lifeStatus(world,selected)?.death?'screen':null;
+ const blocked=error||memory?'storage':world.encounters?.raptor?.active?.hostile||family.some(b=>lifeStatus(world,b)?.condition)||selected&&lifeStatus(world,selected)?.condition?'health':ending||panel!=='garden'||place!=='home'||selected&&lifeStatus(world,selected)?.death?'screen':null;
  const state=blocked||(!family.length?'empty':!mature.length?'nest':food<60?'hungry':energy<60?'resting':cleanliness<=20||drops?'lived-in':'quiet');
  // Broad bands preserve a peaceful room through ordinary 100 -> 99 decay.
  const feed=food>=80?'plentiful':food>=60?'shared':'sparse';
