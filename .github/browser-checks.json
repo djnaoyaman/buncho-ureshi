@@ -1,10 +1,10 @@
 {
-  "base": "e6244218fe906fb5430416edcd55b6bde0ddb94e",
+  "base": "b52e050ee38a9256d2f622bf0a12ccefc41783e4",
   "tests": [
-    "tests/browser/home-care-response.spec.js",
+    "tests/browser/home-atmosphere-motion.spec.js",
     "tests/browser/home-atmosphere.spec.js",
-    "tests/browser/family-care.spec.js",
-    "tests/browser/care-direct-petting.spec.js"
+    "tests/browser/home-care-response.spec.js",
+    "tests/browser/furniture-styles.spec.js"
   ],
-  "reason": "Committed individual/family care responses, ordinary rewards unchanged, 320/375/402px, selection/hidden/save failure interruption, stale concurrent batches and existing pet gestures. Chrome/WebKit automation; not iOS 15 device verification."
+  "reason": "Actual vessel geometry, pure resting poses and gentle opacity animation. 320/375/402px, hidden/pagehide/reduced-motion, repeated resume with bounded DOM and unchanged save, preview isolation and prior care responses. Chrome/WebKit; not physical iOS 15 verification."
 }

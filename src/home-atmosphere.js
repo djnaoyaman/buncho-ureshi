@@ -1,5 +1,6 @@
 import {allBirds} from './world-birds.js';
 import {lifeStatus} from './life-care.js';
+import {presentationSeed} from './bird-poses.js';
 
 const level=n=>Number.isFinite(n)?Math.max(0,Math.min(100,n)):100;
 /** A disposable view of the committed world. Never a care/reward predicate.
@@ -19,4 +20,14 @@ export function homeAtmosphere(world,{selectedId=null,place=world.field?.place,p
   feed,grainFraction:feed==='plentiful'?1:feed==='shared'?.72:.44,
   scatter:blocked||!mature.length?0:Math.min(7,Math.floor((100-food)/15)+(cleanliness<=20?2:0)),
   selectedState:!selected?'none':lifeStatus(world,selected)?.death?'memorial':lifeStatus(world,selected)?.condition?'health':['egg','chick'].includes(selected.stage)?'nest':selected.home!=='resident'?'guest':level(selected.needs.food)<60?'hungry':level(selected.needs.energy)<60?'resting':'quiet'};
+}
+
+/** Rest follows the real individual's energy, while social/action poses keep priority.
+ * Only the existing active presentation clock is consumed; never game RNG/time. */
+export function homeIdlePose(world,bird,elapsed=0,visible=true){
+ if(!visible||world.field.place!=='home'||bird.home!=='resident'||!['adult','juvenile'].includes(bird.stage)||lifeStatus(world,bird)?.death||lifeStatus(world,bird)?.condition||bird.action?.kind!=='rest'||bird.action?.target)return null;
+ if(level(bird.needs.energy)<60)return 'rest';
+ if(level(bird.needs.energy)<80||level(bird.needs.food)<80)return null;
+ const seed=presentationSeed(world.worldId+':home:'+bird.id),time=Math.max(0,Number.isFinite(elapsed)?elapsed:0);
+ return Math.floor((time+seed%26000)/(18000+seed%8000))%3===1?'preen':'rest';
 }
