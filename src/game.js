@@ -1074,7 +1074,15 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     if(action==='dismiss-welcome')await dismissWelcome();
     if(action==='adopt'){const name=root.querySelector('#game-name')?.value,birdId=selected;await mutate(w=>{adoptBird(w,birdId,name);},'新しい仲間を迎えたよ。');}
     if(action==='export-care-migration'||action==='export-away-migration'||action==='export-migration'||action==='export-household-migration'||action==='export-growth-migration'){try{const care=action==='export-care-migration',away=action==='export-away-migration',growth=action==='export-growth-migration',household=action==='export-household-migration',saved=await store.migrationBackup(care?15:away?14:growth?13:household?12:11);if(!saved){setMessage('更新前の保存はありません。');render();return;}const url=URL.createObjectURL(new Blob([JSON.stringify(saved)],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download=care?'buncho-before-care-rules.json':away?'buncho-before-away-reports.json':growth?'buncho-before-growth-update.json':household?'buncho-before-household-gold.json':'buncho-before-clock-update.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),10000);}catch(e){error=e.message;render();}return;}
-    if(action==='export') {try{const current=await store.transact(w=>advanceTo(w));if(!alive||!root.isConnected)return;latest(current);const blob=new Blob([serializeWorld(current)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`buncho-garden-${new Date().toISOString().slice(0,10)}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),10000);setMessage('保存ファイルを書き出しました。');render();}catch(e){if(alive){error=e.message;render();}}}
+    if(action==='export') {
+      const status=root.querySelector('[data-preservation-export-status]');
+      try{
+        const text=await store.exportSnapshot();if(!alive||!root.isConnected)return;
+        const url=URL.createObjectURL(new Blob([text],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download=`buncho-garden-${new Date().toISOString().slice(0,10)}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),10000);
+        if(status?.isConnected)status.textContent=store.mode==='memory'?'このタブの庭を書き出しました。端末保存ではありません。':'最後に保存できた庭を書き出しました。保存に失敗した変更は含まれません。';
+      }catch(e){if(alive&&status?.isConnected)status.textContent=`書き出せませんでした。保存は変更していません。${e.message||''}`;}
+      return;
+    }
     if(action==='qa-step'&&new URLSearchParams(location.search).get('qa')==='1')await mutate(w=>{const paused=w.paused;w.paused=false;advanceTicks(w,1000);w.paused=paused;markCurrentTime(w);},'検証用に1000時間を進めました。');
   }
   async function talkAction(text){
