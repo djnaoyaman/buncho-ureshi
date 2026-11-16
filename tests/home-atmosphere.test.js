@@ -34,3 +34,15 @@ test('all 24 equipped feeder forms use their existing vessel and preview stays p
  const html=renderHomeScene({base:'/',furniture:'fixture'});assert(!html.includes('game-home-daylight'));
  assert(renderHomeScene({base:'/',furniture:'fixture',atmosphere:a}).includes('game-home-daylight'));
 });
+test('illness overrides full gauges; memorial never inherits another bird; recovery is immediately projected',()=>{
+ const w=createWorld(12345);w.birds[0].needs.food=w.birds[0].needs.energy=100;
+ w.lifecycle.birds[0].condition={kind:'injury'};
+ assert.equal(homeAtmosphere(w,{selectedId:'b1'}).state,'health');assert.equal(homeAtmosphere(w,{selectedId:'b1'}).selectedState,'health');
+ w.lifecycle.birds[0].condition=null;assert.equal(homeAtmosphere(w).state,'quiet');
+ w.lifecycle.birds[0].death={};assert.equal(homeAtmosphere(w,{selectedId:'b1'}).state,'screen');assert.equal(homeAtmosphere(w,{selectedId:'b1'}).selectedState,'memorial');
+});
+test('caretaker and restored worlds are projected fresh without storing previous room state',()=>{
+ const a=createWorld(12345),b=createWorld(54321);a.birds[0].needs.food=40;b.birds[0].needs.food=b.birds[0].needs.energy=100;
+ const before=JSON.stringify([a,b]);for(let i=0;i<1000;i++){assert.equal(homeAtmosphere(a).state,'hungry');assert.equal(homeAtmosphere(b).state,'quiet');}
+ assert.equal(JSON.stringify([a,b]),before);
+});
