@@ -8,7 +8,7 @@ async function until(fn){for(let i=0;i<30;i++){if(fn())return;await sleep();}ass
 function fixture(t,{shared,canPresent=()=>true,failAck=false}={}){
  const window=new Window({url:'https://example.test/game/'}),doc=window.document,root=doc.createElement('main');doc.body.append(root);
  const holder=shared||{world:createWorld(Date.now(),7)};
- if(!shared)holder.world.collectionEndings.entries=[{id:'garden',unlockedTick:0,acknowledged:false,lease:null}];
+ if(!shared)holder.world.collectionEndings.entries=[{id:'garden',unlockedTick:0,acknowledged:false,lease:null,playback:'pending'}];
  let plays=0,pauses=0,rejectPlay=true,fail=failAck;
  window.HTMLMediaElement.prototype.play=function(){plays++;if(rejectPlay)return Promise.reject(Error('NotAllowedError'));this.dispatchEvent(new window.Event('playing'));return Promise.resolve();};
  window.HTMLMediaElement.prototype.pause=function(){pauses++;};window.HTMLMediaElement.prototype.load=function(){};
@@ -81,4 +81,14 @@ test('denied or unavailable native fullscreen leaves the full viewport dialog pl
  h.allowPlay();h.root.querySelector('[data-ending-play]').click();await until(()=>d.hasAttribute('data-playing'));await sleep();assert.ok(d.open);
  h.root.querySelector('video').dispatchEvent(new h.window.Event('pause'));assert.equal(d.hasAttribute('data-playing'),false);
  h.root.querySelector('[data-ending-close]').click();await until(()=>!h.p.active());
+});
+test('defer, real playing and ended are distinct durable records, with completed sticky on replay',async t=>{
+ const h=fixture(t);await h.p.open('garden');h.root.querySelector('[data-ending-skip]').click();await until(()=>!h.p.active());assert.equal(h.holder.world.collectionEndings.entries[0].playback,'deferred');
+ await h.p.open('garden');h.allowPlay();h.root.querySelector('[data-ending-play]').click();await until(()=>h.holder.world.collectionEndings.entries[0].playback==='started');
+ h.root.querySelector('video').dispatchEvent(new h.window.Event('ended'));await until(()=>!h.p.active());assert.equal(h.holder.world.collectionEndings.entries[0].playback,'completed');
+ await h.p.open('garden');await sleep();h.root.querySelector('[data-ending-close]').click();await until(()=>!h.p.active());assert.equal(h.holder.world.collectionEndings.entries[0].playback,'completed');
+});
+test('hidden document cannot acquire a pending movie lease, including manual replay',async t=>{
+ const h=fixture(t);Object.defineProperty(h.doc,'hidden',{configurable:true,value:true});assert.equal(await h.p.open('garden'),false);h.p.sync();await sleep();assert.equal(h.holder.world.collectionEndings.entries[0].lease,null);
+ Object.defineProperty(h.doc,'hidden',{configurable:true,value:false});h.doc.dispatchEvent(new h.window.Event('visibilitychange'));await until(()=>h.p.active());
 });

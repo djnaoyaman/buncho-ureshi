@@ -7,7 +7,7 @@ import {createWorld} from '../src/engine.js';
 const tick=()=>new Promise(r=>setTimeout(r,0));
 function setup(t){
  const window=new Window({url:'https://example.test/game/'}),doc=window.document,root=doc.createElement('main');doc.body.append(root);
- let world=createWorld(Date.now(),7);world.collectionEndings.entries=[{id:'garden',unlockedTick:0,acknowledged:true,lease:null}];
+ let world=createWorld(Date.now(),7);world.collectionEndings.entries=[{id:'garden',unlockedTick:0,acknowledged:true,lease:null,playback:'legacy'}];
  window.HTMLMediaElement.prototype.play=function(){this.dispatchEvent(new window.Event('playing'));return Promise.resolve();};
  window.HTMLMediaElement.prototype.pause=function(){};window.HTMLMediaElement.prototype.load=function(){};
  const p=mountCollectionEndingPlayer(root,{getWorld:()=>world,transact:async fn=>{world=fn(world);return world;}});

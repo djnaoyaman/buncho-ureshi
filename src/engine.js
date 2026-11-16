@@ -15,7 +15,7 @@ import {initialEconomy,validateEconomy,syncEconomy,reserveAutomaticGems,awardHou
 /** A deterministic, offline story simulation with fictional lifecycle rules. No real husbandry advice. */
 import { initializeCareSchedule, validateCareSchedule, syncCareSchedule, applyScheduledCare, reconcileImportedCare, careWindow, careDay } from './care-schedule.js';
 import { directLineNameFields, newDefaultNameFields, automaticNaming, manualNaming, legacyNaming, isValidNaming } from './bird-names.js';
-export const SAVE_VERSION = 19;
+export const SAVE_VERSION = 20;
 const careTime = now => Math.max(0, Math.min(253402268399999, now));
 export { reconcileImportedCare, careWindow };
 export const TICK_MS = 60000;
@@ -864,7 +864,7 @@ function validateVersion(input, version) {
   }
   if(version>=15)validateAway(w);
   if(version>=16)validateRelaxedCare(w);
-  if(version>=17)validateCollectionEndings(w);
+  if(version>=17)validateCollectionEndings(w,version<20?1:2);
   if(version>=18)validateLeafEvent(w);
   if(version>=19){validateExpedition(w);if(Object.hasOwn(w,'showcase'))validateShowcase(w);}
   return w;
@@ -932,10 +932,16 @@ export function migrateV13ToV14(input,now=Date.now()){
 /** First observation establishes presence; never backfill pre-update absence. */
 export function migrateV14ToV15(input,now=Date.now()){const w=validateVersion(input,14);w.version=15;w.away=initialAway();return migrateV15ToV16(w,now);}
 export function migrateV15ToV16(input,now=Date.now()){const w=validateVersion(input,15);w.version=16;initializeRelaxedCare(w,careTime(Math.max(now,w.careSchedule.seenAt,w.lifecycle.seenAt,w.economy.seenAt)));return migrateV16ToV17(w,now);}
-export function migrateV16ToV17(input,now=Date.now()){const w=validateVersion(input,16);w.version=17;w.collectionEndings=initialCollectionEndings();syncCollectionEndings(w);return migrateV17ToV18(w,now);}
+export function migrateV16ToV17(input,now=Date.now()){const w=validateVersion(input,16);w.version=17;w.collectionEndings=initialCollectionEndings(1);syncCollectionEndings(w);return migrateV17ToV18(w,now);}
 /** Add only the bounded event record; do not touch clocks, birds, RNG or prior rewards. */
 export function migrateV17ToV18(input,now=Date.now()){const w=validateVersion(input,17);w.version=18;w.leafEvent=initialLeafEvent();return migrateV18ToV19(w,now);}
-export function migrateV18ToV19(input,now=Date.now()){const w=validateVersion(input,18);w.version=19;w.expedition=initialExpedition();return validateWorld(w);}
+export function migrateV18ToV19(input,now=Date.now()){const w=validateVersion(input,18);w.version=19;w.expedition=initialExpedition();return migrateV19ToV20(w,now);}
+/** Add playback provenance only. Preserve earned IDs, acknowledgement and active leases exactly. */
+export function migrateV19ToV20(input,now=Date.now()){
+ const w=validateVersion(input,19);w.version=20;w.collectionEndings.version=2;
+ for(const entry of w.collectionEndings.entries)entry.playback=entry.acknowledged?'legacy':'pending';
+ return validateWorld(w);
+}
 export function readCompatibleWorld(input, now=Date.now()) {
   // Do not execute an accessor even to discover the version of an untrusted object.
   const descriptor = input && typeof input === 'object' ? Object.getOwnPropertyDescriptor(input, 'version') : null;
@@ -958,6 +964,7 @@ export function readCompatibleWorld(input, now=Date.now()) {
   if (descriptor.value === 16) return migrateV16ToV17(input,now);
   if (descriptor.value === 17) return migrateV17ToV18(input,now);
   if (descriptor.value === 18) return migrateV18ToV19(input,now);
+  if (descriptor.value === 19) return migrateV19ToV20(input,now);
   if (descriptor.value === SAVE_VERSION) return validateWorld(input);
   throw new Error('保存データを読み込めません：対応していない版です。元の保存はそのままです。');
 }
