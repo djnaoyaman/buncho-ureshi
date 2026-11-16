@@ -8,6 +8,7 @@ import {crowScene} from './garden-crows.js';
 import {mountRaptorReturnPrompt} from './garden-raptor-return-prompt.js';
 import {renderHomeScene} from './home-scene.js';
 import {homeAtmosphere} from './home-atmosphere.js';
+import {homeCareResponse,homeResponsePose} from './home-care-response.js';
 import {renderNextEnjoyments} from './game-next-goals.js';
 import {advanceObservedWorld} from './away-session.js';
 import {notePresence,unreadAway,acknowledgeAway,awayText,awayViewKey} from './away-reports.js';
@@ -201,7 +202,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
   const poseClock=createPoseClock(),reducedMotion=globalThis.matchMedia?.('(prefers-reduced-motion: reduce)'),poseLayout=globalThis.matchMedia?.('(max-width: 600px)'),compactLayout=globalThis.matchMedia?.('(max-height: 500px)');
   const poseEnabled=()=>alive&&root.isConnected&&panel==='garden'&&!document.hidden&&world.settings.motion&&!world.paused&&document.documentElement.dataset.motion!=='off'&&!reducedMotion?.matches;
   const holdPoses=()=>{poseClock.hold();if(document.hidden)cancelCareEffects();};
-  const poseFor=(bird,positions,birds)=>birdPose(bird,{worldId:world.worldId,elapsed:poseClock.elapsed,positions,birds});
+  const poseFor=(bird,positions,birds)=>homeResponsePose(currentHomeResponse(),bird)||birdPose(bird,{worldId:world.worldId,elapsed:poseClock.elapsed,positions,birds});
   function updatePoses(force=false){
     poseClock.advance(poseEnabled());if((!force&&!poseEnabled())||!alive||!root.isConnected||panel!=='garden')return;
     const allBirds=fieldBirds(world),birds=compactLayout?.matches?[allBirds.find(b=>b.id===selected)||allBirds[0]].filter(Boolean):allBirds,positions=fieldPositions(birds,globalThis.matchMedia?.('(max-width: 600px)').matches?'tall':'wide',world.field.place);
@@ -213,10 +214,30 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
   let lastInteractionAt=Date.now();
   const noteInteraction=()=>{lastInteractionAt=Date.now();};
   let careGeneration=0, soundRequest=0, soundChoice=null, careFeedback=null, careGesture=null, gestureTimer;
+  let homeResponse=null,homeResponseTimer;
+  function clearHomeResponse(){
+    clearTimeout(homeResponseTimer);const previous=homeResponse;homeResponse=null;
+    for(const node of root.querySelectorAll('[data-home-response]')){
+      if(previous&&node.matches('.game-care-pet-bird')){const b=findBird(world,node.dataset.careBirdId),sprite=node.querySelector('.game-sprite');if(b&&sprite){const t=document.createElement('template');t.innerHTML=gameCareBirdSvg(b.color,b.stage);sprite.replaceWith(t.content.firstElementChild);}}
+      node.removeAttribute('data-home-response');node.removeAttribute('data-home-response-phase');
+    }
+    if(previous)updatePoses(true);
+  }
+  function currentHomeResponse(){return !error&&!document.hidden&&homeResponse?.worldId===world.worldId&&homeResponse.revision===world.revision?homeResponse:null;}
+  function startHomeResponse(result,options={}){
+    clearHomeResponse();if(document.hidden||error)return;
+    const response=homeCareResponse(world,result,{...options,saved:store.mode!=='memory'});if(!response)return;
+    const generation=careGeneration;homeResponse=response;
+    const current=()=>alive&&root.isConnected&&homeResponse===response&&currentHomeResponse()===response&&generation===careGeneration;
+    const finish=()=>{if(homeResponse!==response)return;clearHomeResponse();if(alive&&root.isConnected)render();};
+    if(!poseEnabled()){response.phase='settled';homeResponseTimer=setTimeout(finish,3400);return;}
+    homeResponseTimer=setTimeout(()=>{if(!current()){finish();return;}response.phase='settled';render();homeResponseTimer=setTimeout(finish,2200);},1200);
+  }
   let pollFlight=null, pendingCareIntent=null;
   const careSoundEnabled = () => soundChoice ?? explicitSound ?? true;
-  function cancelCareEffects() { clearCareRub();pendingCareIntent=null;careGeneration++;audio.cancel();clearTimeout(gestureTimer);careGesture=null;careFeedback=null;root.querySelectorAll('.game-care-cheer,.game-gem-reward').forEach(node=>node.remove()); }
+  function cancelCareEffects() { clearHomeResponse();clearCareRub();pendingCareIntent=null;careGeneration++;audio.cancel();clearTimeout(gestureTimer);careGesture=null;careFeedback=null;root.querySelectorAll('.game-care-cheer,.game-gem-reward,.game-sheet-cheer').forEach(node=>node.remove());root.querySelectorAll('.game-care-rub-note').forEach(node=>{node.textContent='';}); }
   const latest = w => {
+    if(homeResponse&&(homeResponse.worldId!==w.worldId||homeResponse.revision!==w.revision))clearHomeResponse();
     const changedProtagonist=getProtagonistId(world)!==getProtagonistId(w),replacedWorld=world.worldId!==w.worldId;
     if(findBird(world,selected)?.name!==findBird(w,selected)?.name){lastReply='';replyBird=null;}
     if (world.worldId !== w.worldId) { if(!resetPending)closeResetDialog(false);sheetOpen=false;sheetReturn=null;poseClock.reset();drafts.clear();nameSuggestionOrigins.clear();previewItem=null;drawResult=null;lastReply='';replyBird=null;cancelCareEffects();soundRequest++;soundChoice=null; }
@@ -235,7 +256,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     const expectedWorldId=world.worldId;
     busy++;error='';
     try { latest(await store.transact(w=>{if(!guard())return w;if(w.worldId!==expectedWorldId)throw new Error('別のタブで別の庭が読み込まれました。画面の更新を待ってから、もう一度選んでください。');if(advanceCurrent&&(!w.paused||advancePaused))advanceTo(w,Date.now(),{present:!document.hidden});const next=fn(w)||w;syncCollectionEndings(next);if(bump)bumpRevision(next);return next;})); committed=true;if(alive&&guard()){if(success)setMessage(success);channel?.postMessage({revision:world.revision});} }
-    catch(e){error=e.message||'保存できませんでした。もう一度試してください。';}
+    catch(e){clearHomeResponse();error=e.message||'保存できませんでした。もう一度試してください。';}
     finally{busy--;if(alive&&renderAfter)render();}
     return committed;
   }
@@ -398,8 +419,9 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
   function careReceipt(){return !error&&!busy&&careFeedback?.saved&&careFeedback.worldId===world.worldId&&careFeedback.revision===world.revision&&careIsSettled(world)?'<p class="game-small" data-care-receipt role="status">いまのおせわは、ひとくぎり。かえたことは、ほぞんしたよ。</p>':'';}
   function canTalk(b){return b.home!=='departed'&&['juvenile','adult'].includes(b.stage);}
   function carePortrait(b) {
+    const responsePose=homeResponsePose(currentHomeResponse(),b);
     const eligible=b.home!=='departed'&&['juvenile','adult'].includes(b.stage);
-    return `<div class="game-care-petting"><p id="game-care-pet-help" class="game-care-pet-help">${isAlive(world,b)&&eligible?(b.needs.energy>=100?'元気いっぱい。なでてふれ合えるよ。':'文鳥を指やマウスでやさしくこすって、なでよう'):'文鳥をそっと見守ろう'}</p><button id="game-care-pet" class="game-care-pet-bird" type="button" data-care-rub data-game-care="pet" data-care-bird-id="${b.id}" aria-label="${escape(b.name)}をなでる" aria-describedby="game-care-pet-help game-care-pet-keyboard" ${isAlive(world,b)&&canTalk(b)?'':'disabled'}>${gameCareBirdSvg(b.color,b.stage)}<span class="game-care-rub-note" aria-hidden="true">${careGesture?.birdId===b.id&&careGesture.kind==='pet'?'♪':''}</span></button><small id="game-care-pet-keyboard">キーボードでは文鳥を選び、Enter または Space</small></div>`;
+    return `<div class="game-care-petting"><p id="game-care-pet-help" class="game-care-pet-help">${isAlive(world,b)&&eligible?(b.needs.energy>=100?'元気いっぱい。なでてふれ合えるよ。':'文鳥を指やマウスでやさしくこすって、なでよう'):'文鳥をそっと見守ろう'}</p><button id="game-care-pet" class="game-care-pet-bird" data-home-response="${responsePose||''}" type="button" data-care-rub data-game-care="pet" data-care-bird-id="${b.id}" aria-label="${escape(b.name)}をなでる" aria-describedby="game-care-pet-help game-care-pet-keyboard" ${isAlive(world,b)&&canTalk(b)?'':'disabled'}>${responsePose?birdSvg(b.color,b.stage,responsePose):gameCareBirdSvg(b.color,b.stage)}<span class="game-care-rub-note" aria-hidden="true">${careGesture?.birdId===b.id&&careGesture.kind==='pet'?'♪':''}</span></button><small id="game-care-pet-keyboard">キーボードでは文鳥を選び、Enter または Space</small></div>`;
   }
   function careControls(b) {
     const eligible=b.home!=='departed'&&['juvenile','adult'].includes(b.stage);
@@ -532,11 +554,12 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     const intent=button.dataset.familyCare?reserveCareIntent(clickedToken):null;
     if(button.dataset.familyCare&&!intent)return;
     const gestureAt=button.dataset.familyCare?Date.now():null;
+    const responseGeneration=careGeneration,responseSelection=selected,responsePanel=panel;
     economyPending=true;button.disabled=true;let token=clickedToken,result;
     try{
       if(intent?.poll){token=await afterCarePoll(intent,()=>alive&&root.isConnected);if(!token)return;}
       const committed=await mutate(w=>{result=button.dataset.familyCare?careFamily(w,button.dataset.familyCare,token,gestureAt):button.hasAttribute('data-care-base')?claimCareBase(w,token):button.hasAttribute('data-household-income')?claimHouseholdIncome(w,token):button.dataset.autoGift?claimAutomaticGift(w,button.dataset.autoGift,token):buyOrdinaryFurniture(w,button.dataset.goldBuy,token);},'',()=>alive,{bump:false,advanceCurrent:false});
-      if(committed&&result){setMessage(result.message||'');render();showGemReward(result.gemAward,undefined,result.goldAward);if(!button.dataset.familyCare&&result.changed)root.querySelector((button.hasAttribute('data-care-base')||button.hasAttribute('data-household-income'))?'.game-menu-close':button.dataset.autoGift?'[data-game-open-menu]':'[data-decor-preview="'+button.dataset.goldBuy+'"]')?.focus({preventScroll:true});}
+      if(committed&&result){if(button.dataset.familyCare&&responseGeneration===careGeneration&&responseSelection===selected&&responsePanel===panel)startHomeResponse(result,{kind:button.dataset.familyCare});setMessage(result.message||'');render();showGemReward(result.gemAward,undefined,result.goldAward);if(!button.dataset.familyCare&&result.changed)root.querySelector((button.hasAttribute('data-care-base')||button.hasAttribute('data-household-income'))?'.game-menu-close':button.dataset.autoGift?'[data-game-open-menu]':'[data-decor-preview="'+button.dataset.goldBuy+'"]')?.focus({preventScroll:true});}
     }finally{if(intent)releaseCareIntent(intent);economyPending=false;if(alive){render();if(button.dataset.familyCare){(root.querySelector('[data-family-care="'+button.dataset.familyCare+'"]:not(:disabled)')||root.querySelector('[data-family-care]:not(:disabled)')||root.querySelector('[data-household-income]:not(:disabled)')||root.querySelector('.game-menu-close'))?.focus();}}}
   }
   function gemCollectibles(){
@@ -554,9 +577,11 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
   }
   async function collectGem(button){
     if(button.disabled)return;button.disabled=true;
+    const responseGeneration=careGeneration;
     const expectedWorld=button.dataset.gemWorld,revision=Number(button.dataset.gemRevision),view=fieldViewRequest,rect=button.getBoundingClientRect();let feedback;
     const committed=await mutate(w=>{feedback=collectDropping(w,button.dataset.gemCollect,revision,Date.now());},'',()=>alive&&world.worldId===expectedWorld,{bump:false,advanceCurrent:false});
     if(committed&&feedback?.changed&&view===fieldViewRequest&&world.field.place==='home'){
+      if(responseGeneration===careGeneration){startHomeResponse(feedback,{kind:'drop'});render();}
       showGemReward(feedback.gemAward,{x:rect.left+rect.width/2,y:rect.top});
       (root.querySelector('[data-gem-collect]')||root.querySelector('[data-game-care=clean]')||root.querySelector('#game-open-bird'))?.focus({preventScroll:true});
     }
@@ -626,7 +651,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
         actors.forEach((actor,i)=>{const row=Math.floor(i/columns),count=Math.min(columns,actors.length-row*columns),x=(i%columns+1)/(count+1),foot=rows===1?geometry.height*(geometry.width<=600&&geometry.height<=280 ? .57 : .68):geometry.height*.46+row*Math.max(90,geometry.height*.23);map.set(actor.id,{...map.get(actor.id),x:(1-fraction)/2+x*fraction,y:(Math.min(geometry.height-26,foot)-geometry.top)/geometry.planeHeight});});
       }
     }
-    return `${fieldNavigation()}<div class="game-room" data-atmosphere="${atmosphere.state}" data-selected-atmosphere="${atmosphere.selectedState}" data-compact="${!!compactLayout?.matches}" data-many-guests="${cageGuests.length>2}" data-home-crowded="${world.field.place==='home'&&(actors.length>8||(compactLayout?.matches&&cageGuests.length>0))}" data-field="${world.field.place}" data-friend-cage="${world.field.place==='friend'?friendCage(world,world.field.hostId).id:''}" aria-label="${escape(fieldTitle())}。イラストのゲーム用風景です。">
+    return `${fieldNavigation()}<div class="game-room" data-atmosphere="${atmosphere.state}" data-home-response="${atmosphere.visible?currentHomeResponse()?.kind||'':''}" data-home-response-phase="${currentHomeResponse()?.phase||''}" data-selected-atmosphere="${atmosphere.selectedState}" data-compact="${!!compactLayout?.matches}" data-many-guests="${cageGuests.length>2}" data-home-crowded="${world.field.place==='home'&&(actors.length>8||(compactLayout?.matches&&cageGuests.length>0))}" data-field="${world.field.place}" data-friend-cage="${world.field.place==='friend'?friendCage(world,world.field.hostId).id:''}" aria-label="${escape(fieldTitle())}。イラストのゲーム用風景です。">
       ${world.field.place==='home'?renderHomeScene({base:GAME_ART,furniture:sceneFurniture(null,true,atmosphere.visible?atmosphere:null),atmosphere}):world.field.place==='friend'?`<picture class="game-habitat"><img src="${GAME_ART}${friendCage(world,world.field.hostId).file}" alt="" aria-hidden="true" width="1600" height="1000" decoding="async"></picture>`:`<picture class="game-habitat"><source media="(max-width: 600px)" srcset="${GAME_ART}field-park-tall.webp"><img src="${GAME_ART}field-park-wide.webp" alt="" aria-hidden="true" width="1600" height="1000" decoding="async"></picture>`}
       ${gemCollectibles()}<span class="game-floor-soil" style="--care-soil-opacity:${careFloorOpacity(getCleanliness(world)).toFixed(3)}" aria-hidden="true"></span>
       ${shown.map(b=>{
@@ -846,6 +871,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
       if(!feedback.birdId&&feedback.kind!=='clean'&&feedback.message){setMessage(feedback.message);render();return;}
       if(feedback.changed)trackEvent('game_care',{site_area:'game',action:kind});
       careFeedback={...feedback,saved:store.mode!=='memory',worldId:expectedWorldId,revision:world.revision};setMessage('');
+      startHomeResponse(feedback,{kind,birdId});
       if(['pet','feed'].includes(kind)&&(feedback.changed||kind==='pet'&&feedback.reason==='full')){
         careGesture={birdId,worldId:expectedWorldId,kind};clearTimeout(gestureTimer);
         gestureTimer=setTimeout(()=>{if(!current())return;careGesture=null;render();},850);
@@ -1040,14 +1066,14 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     const birdId=selected,generation=careGeneration,worldId=world.worldId,expectedPanel=panel,gestureAt=Date.now();
     const intent=reserveCareIntent();if(!intent)return false;
     try{
-      let answer,gemAward,goldAward,careChanged=false;
+      let answer,gemAward,goldAward,careChanged=false,responseResult;
       const eligible=['adult','juvenile'].includes(findBird(world,birdId)?.stage)&&findBird(world,birdId)?.home!=='departed';
       const unlocked=eligible&&careSoundEnabled()?audio.unlockFromGesture():Promise.resolve(false);
       const current=()=>alive&&root.isConnected&&generation===careGeneration&&selected===birdId&&world.worldId===worldId&&panel===expectedPanel;
       const token=intent.poll?await afterCarePoll(intent,current):intent.token;if(!token)return false;
-      const committed=await mutate(w=>{const b=findBird(w,birdId);const reply=talkToBird(w,birdId,text==='名前を呼ぶ'?b.name:text,gestureAt,token);answer=reply.answer;gemAward=reply.gemAward;goldAward=reply.goldAward;careChanged=reply.careChanged;},'',()=>alive,{bump:false,advanceCurrent:false});
+      const committed=await mutate(w=>{const b=findBird(w,birdId);const reply=talkToBird(w,birdId,text==='名前を呼ぶ'?b.name:text,gestureAt,token);responseResult=reply;answer=reply.answer;gemAward=reply.gemAward;goldAward=reply.goldAward;careChanged=reply.careChanged;},'',()=>alive,{bump:false,advanceCurrent:false});
       releaseCareIntent(intent);
-      if(committed&&generation===careGeneration&&selected===birdId&&world.worldId===worldId){lastReply=answer;replyBird=birdId;render();showGemReward(gemAward,undefined,goldAward);}
+      if(committed&&generation===careGeneration&&selected===birdId&&world.worldId===worldId){if(current())startHomeResponse(responseResult,{kind:text==='名前を呼ぶ'?'name':'talk',birdId,contact:!!String(text).trim()});lastReply=answer;replyBird=birdId;render();showGemReward(gemAward,undefined,goldAward);}
       if(committed&&eligible&&careChanged&&careSoundEnabled()){
         const current=()=>alive&&root.isConnected&&generation===careGeneration&&selected===birdId&&world.worldId===worldId&&!document.hidden&&careSoundEnabled()&&Date.now()-gestureAt<=1500;
         if(await unlocked&&current())await audio.chirp(current);

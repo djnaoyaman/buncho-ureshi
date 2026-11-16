@@ -1,9 +1,10 @@
 {
-  "base": "b66f7bdee6f011dd6238b11a8ba17a15674e39c9",
+  "base": "e6244218fe906fb5430416edcd55b6bde0ddb94e",
   "tests": [
+    "tests/browser/home-care-response.spec.js",
     "tests/browser/home-atmosphere.spec.js",
-    "tests/browser/miniature-navigation.spec.js",
-    "tests/browser/furniture-styles.spec.js"
+    "tests/browser/family-care.spec.js",
+    "tests/browser/care-direct-petting.spec.js"
   ],
-  "reason": "Read-only committed home atmosphere: static 320/375/402px, real equipped vessel geometry, preview isolation, frozen saved world, motion-off, unchanged navigation and all furniture finishes. Chrome/WebKit automation, not iOS 15 device verification."
+  "reason": "Committed individual/family care responses, ordinary rewards unchanged, 320/375/402px, selection/hidden/save failure interruption, stale concurrent batches and existing pet gestures. Chrome/WebKit automation; not iOS 15 device verification."
 }
