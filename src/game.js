@@ -7,6 +7,7 @@ import {mountCollectionEndingPlayer,renderEndingDiary} from './collection-ending
 import {crowScene} from './garden-crows.js';
 import {mountRaptorReturnPrompt} from './garden-raptor-return-prompt.js';
 import {renderHomeScene} from './home-scene.js';
+import {homeAtmosphere} from './home-atmosphere.js';
 import {renderNextEnjoyments} from './game-next-goals.js';
 import {advanceObservedWorld} from './away-session.js';
 import {notePresence,unreadAway,acknowledgeAway,awayText,awayViewKey} from './away-reports.js';
@@ -481,11 +482,11 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     const level=decorLevel(world);
     return `<div class="game-field-bar"><div><p class="game-eyebrow">${world.field.place==='park'?'BUNCHO PARK':'LITTLE HOME'}</p><h3 title="${escape(fieldTitle())}">${escape(fieldTitle())}</h3></div>${wallet()}</div>${fieldControls()}`;
   }
-  function sceneFurniture(override=null,ownRoom=false){
+  function sceneFurniture(override=null,ownRoom=false,atmosphere=null){
     return `<div class="game-furnishings" aria-hidden="true">${DECOR_SLOTS.map(slot=>{
       const own=world.decor.inventory.find(i=>i.id===world.decor.equipped[slot.id]);
       const item=override?.slot===slot.id?override:world.field.place==='friend'&&!ownRoom?friendFurnishing(findBird(world,world.field.hostId),slot.id,DECOR_COLORS,DECOR_TIERS):own;
-      return `<span class="game-furnishing furnishing-${slot.id}" data-equipped-slot="${slot.id}" data-equipped-item="${item.id}" data-furniture-form="${furnitureFormIndex(itemColor(item).hex)}">${furnitureSceneSvg(slot.id,itemColor(item).hex,DECOR_TIERS.findIndex(t=>t.id===item.tier)+1)}</span>`;
+      return `<span class="game-furnishing furnishing-${slot.id}" data-equipped-slot="${slot.id}" data-equipped-item="${item.id}" data-furniture-form="${furnitureFormIndex(itemColor(item).hex)}">${furnitureSceneSvg(slot.id,itemColor(item).hex,DECOR_TIERS.findIndex(t=>t.id===item.tier)+1,atmosphere)}</span>`;
     }).join('')}</div>`;
   }
   function friendRooms(){
@@ -608,6 +609,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     // in the picker, scene caption and compact profile.
     if(!preserveSelection&&!active.some(b=>b.id===selected)&&active.length){cancelCareEffects();selected=active[0].id;}
     const current=active.find(b=>b.id===selected)||active[0];
+    const atmosphere=homeAtmosphere(world,{selectedId:selected,panel,error:!!error,memory:store.mode==='memory',ending:!!endingPlayer?.active(),hidden:document.hidden,motion:poseEnabled()});
     const shown=compactLayout?.matches?[current].filter(Boolean):active;
     const cageGuests=world.field.place==='home'?encounterCageActors(world):[],actors=[...shown,...cageGuests];
     const positions=visibleFieldPositions(actors,'wide',world.field.place),mobilePositions=visibleFieldPositions(actors,'tall',world.field.place);
@@ -624,8 +626,8 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
         actors.forEach((actor,i)=>{const row=Math.floor(i/columns),count=Math.min(columns,actors.length-row*columns),x=(i%columns+1)/(count+1),foot=rows===1?geometry.height*(geometry.width<=600&&geometry.height<=280 ? .57 : .68):geometry.height*.46+row*Math.max(90,geometry.height*.23);map.set(actor.id,{...map.get(actor.id),x:(1-fraction)/2+x*fraction,y:(Math.min(geometry.height-26,foot)-geometry.top)/geometry.planeHeight});});
       }
     }
-    return `${fieldNavigation()}<div class="game-room" data-compact="${!!compactLayout?.matches}" data-many-guests="${cageGuests.length>2}" data-home-crowded="${world.field.place==='home'&&(actors.length>8||(compactLayout?.matches&&cageGuests.length>0))}" data-field="${world.field.place}" data-friend-cage="${world.field.place==='friend'?friendCage(world,world.field.hostId).id:''}" aria-label="${escape(fieldTitle())}。イラストのゲーム用風景です。">
-      ${world.field.place==='home'?renderHomeScene({base:GAME_ART,furniture:sceneFurniture(null,true)}):world.field.place==='friend'?`<picture class="game-habitat"><img src="${GAME_ART}${friendCage(world,world.field.hostId).file}" alt="" aria-hidden="true" width="1600" height="1000" decoding="async"></picture>`:`<picture class="game-habitat"><source media="(max-width: 600px)" srcset="${GAME_ART}field-park-tall.webp"><img src="${GAME_ART}field-park-wide.webp" alt="" aria-hidden="true" width="1600" height="1000" decoding="async"></picture>`}
+    return `${fieldNavigation()}<div class="game-room" data-atmosphere="${atmosphere.state}" data-selected-atmosphere="${atmosphere.selectedState}" data-compact="${!!compactLayout?.matches}" data-many-guests="${cageGuests.length>2}" data-home-crowded="${world.field.place==='home'&&(actors.length>8||(compactLayout?.matches&&cageGuests.length>0))}" data-field="${world.field.place}" data-friend-cage="${world.field.place==='friend'?friendCage(world,world.field.hostId).id:''}" aria-label="${escape(fieldTitle())}。イラストのゲーム用風景です。">
+      ${world.field.place==='home'?renderHomeScene({base:GAME_ART,furniture:sceneFurniture(null,true,atmosphere.visible?atmosphere:null),atmosphere}):world.field.place==='friend'?`<picture class="game-habitat"><img src="${GAME_ART}${friendCage(world,world.field.hostId).file}" alt="" aria-hidden="true" width="1600" height="1000" decoding="async"></picture>`:`<picture class="game-habitat"><source media="(max-width: 600px)" srcset="${GAME_ART}field-park-tall.webp"><img src="${GAME_ART}field-park-wide.webp" alt="" aria-hidden="true" width="1600" height="1000" decoding="async"></picture>`}
       ${gemCollectibles()}<span class="game-floor-soil" style="--care-soil-opacity:${careFloorOpacity(getCleanliness(world)).toFixed(3)}" aria-hidden="true"></span>
       ${shown.map(b=>{
         const pos=positions.get(b.id),mobile=mobilePositions.get(b.id),isSelected=b.id===selected;
