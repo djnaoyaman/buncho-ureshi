@@ -17,7 +17,7 @@ for(const size of [{width:320,height:568},{width:375,height:667},{width:402,heig
  for(const s of await summaries.all()){await fits(s);expect(await s.evaluate(e=>getComputedStyle(e,'::before').backgroundImage)).toContain('/game-art/miniature-nav/');}
  await fits(page.locator('.finch-garden > header [data-encounter-back]'));await fits(page.locator('[data-game-close-panel][data-home-icon]'));
  expect(await page.locator('details[name="garden-story"] > summary img').evaluateAll(ns=>ns.map(n=>n.dataset.eventIcon))).toEqual(['06-leaf','06-compass','06-showcase']);
- const about=page.locator('[data-garden-details="about"]');await about.locator(':scope > summary').click();await expect(about).toHaveAttribute('open','');expect(await about.locator(':scope > summary').evaluate(e=>getComputedStyle(e,'::before').backgroundImage)).not.toContain('miniature-nav');await page.keyboard.press('Escape');
+ const about=page.locator('[data-garden-details="about"]');await about.locator(':scope > summary').click();await expect(about).toHaveAttribute('open','');expect(await about.locator(':scope > summary').evaluate(e=>getComputedStyle(e,'::before').backgroundImage)).not.toContain('miniature-nav');await about.locator(':scope > summary').click();await expect(about).not.toHaveAttribute('open','');
  await page.screenshot({path:info.outputPath(`miniature-garden-${size.width}.png`)});
  await page.locator('[data-game-close-panel][data-home-icon]').click();await expect(page.locator('.game-room')).toBeVisible();expect(protectedState(await record(page))).toEqual(before);
  await page.reload();expect(protectedState(await record(page))).toEqual(before);
