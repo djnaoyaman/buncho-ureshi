@@ -8,7 +8,7 @@ for(const width of [320,375,402])test(`committed home, static fallback and previ
  const before=await record(page);await expect.poll(()=>room.locator('.game-habitat img').evaluate(e=>e.complete&&e.naturalWidth>0)).toBe(true);
  expect(await room.locator('.game-floor-soil').count()).toBe(1);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  await page.screenshot({path:info.outputPath(`home-static-${width}.png`)});await page.emulateMedia({reducedMotion:'reduce'});expect(await record(page)).toEqual(before);
- await page.locator('.game-scene-controls-toggle').click();await page.locator('[data-game-panel="decorate"]').first().click();
+ await page.locator('.game-scene-controls-toggle').click();await page.locator('.game-bottom-dock [data-game-panel="decorate"]').click();
  const preview=page.locator('.game-preview-room');await expect(preview).toBeVisible();await expect(preview.locator('.game-feed-hulls,.game-home-daylight')).toHaveCount(0);
  await page.locator('[data-game-close-panel]').first().click();await expect(page.locator('.game-room')).toBeVisible();expect(await record(page)).toEqual(before);
 });
