@@ -653,6 +653,14 @@ body[data-world="buncho"]:has(.game-panel-overlay[open] .game-encounter-host>:is
 /* Reserve a separate escape row above the scrollable reading surface. */
 body[data-world="buncho"] .game-panel-overlay[open][data-scene=true]:has(.game-encounter-host>:is(.finch-notebook,.finch-entry,.finch-event)){padding-top:calc(60px + env(safe-area-inset-top,0px));box-sizing:border-box;background:#f6edce}
 
+/* Slow opacity changes stay inside the equipped vessel. No bird scaling, sound or new timers. */
+@keyframes home-water-glint{0%,100%{opacity:1}50%{opacity:.88}}
+@keyframes home-daylight-drift{0%,100%{opacity:1}50%{opacity:.75}}
+.game-room[data-field="home"][data-atmosphere-motion="true"] .game-home-water{animation:home-water-glint 18s ease-in-out infinite}
+.game-room[data-field="home"][data-atmosphere-motion="true"] .game-home-daylight{animation:home-daylight-drift 29s ease-in-out infinite}
+html[data-motion="off"] .game-room .game-home-water,html[data-motion="off"] .game-room .game-home-daylight{animation:none}
+@media(prefers-reduced-motion:reduce){.game-room .game-home-water,.game-room .game-home-daylight{animation:none!important}}
+
 /* COLOR PLAY — UI presentation only. A unified curved shell, bold color
    surfaces and a clear primary/secondary control hierarchy. The gameplay,
    living artwork, actor sizes, saved data and action handlers stay unchanged. */
@@ -2142,10 +2150,3 @@ body[data-world="buncho"] .finch-garden-dock > details:not([open]) > summary:foc
 /* A completed cleaning has a quiet static answer, separate from rewards. */
 .game-room[data-field="home"][data-home-response="clean"] .game-home-daylight,.game-room[data-field="home"][data-home-response="drop"] .game-home-daylight{background:linear-gradient(123deg,rgba(255,246,204,.21),transparent 48%)}
 
-/* Slow opacity changes stay inside the equipped vessel. No bird scaling, sound or new timers. */
-@keyframes home-water-glint{0%,100%{opacity:1}50%{opacity:.88}}
-@keyframes home-daylight-drift{0%,100%{opacity:1}50%{opacity:.75}}
-.game-room[data-field="home"][data-atmosphere-motion="true"] .game-home-water{animation:home-water-glint 18s ease-in-out infinite}
-.game-room[data-field="home"][data-atmosphere-motion="true"] .game-home-daylight{animation:home-daylight-drift 29s ease-in-out infinite}
-html[data-motion="off"] .game-room .game-home-water,html[data-motion="off"] .game-room .game-home-daylight{animation:none}
-@media(prefers-reduced-motion:reduce){.game-room .game-home-water,.game-room .game-home-daylight{animation:none!important}}
