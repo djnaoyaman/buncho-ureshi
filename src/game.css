@@ -2138,3 +2138,6 @@ body[data-world="buncho"] .finch-garden-dock > details:not([open]) > summary:foc
 
 /* Committed home only; the furniture preview never receives this layer. */
 .game-room[data-field="home"] .game-home-daylight{position:absolute;inset:0;pointer-events:none;z-index:1;background:linear-gradient(123deg,rgba(255,246,204,.16),transparent 44%,rgba(239,229,193,.04));border-radius:inherit}
+
+/* A completed cleaning has a quiet static answer, separate from rewards. */
+.game-room[data-field="home"][data-home-response="clean"] .game-home-daylight,.game-room[data-field="home"][data-home-response="drop"] .game-home-daylight{background:linear-gradient(123deg,rgba(255,246,204,.21),transparent 48%)}

@@ -20,3 +20,15 @@
 - iPhone 17 Pro、およびiPhone 7 / iOS 15.8.8の実機確認は未実施。最新WebKitと旧iOS実機は同一視しない。
 
 第1公開の検査・公開照合後、世話の前後反応、静かな動き、暮らし全体の仕上げを順に別PRで公開する。
+
+## Release 1 published
+
+PR #214 was merged by the owner as e6244218fe906fb5430416edcd55b6bde0ddb94e. Main CI run 43805636140 passed build, all 2142 Node tests, 20 Chrome/WebKit cases, verify and deploy. The official sealed artifact ZIP digest was dba7c7054c02135ac1c867d0c236f8778c2d4691eba2a90f6eb3094ec0badcd3; its SOURCE_SHA, tar checksum and all 577 protected files were verified. Seventeen live files including both home backgrounds, white pose/care art and miniature navigation matched the sealed dist. Public URL: https://djnaoyaman.github.io/buncho-ureshi/game/ .
+
+An additional local Chrome-for-Testing check against production could not navigate because this cloud browser reported ERR_CERT_AUTHORITY_INVALID. Certificate verification was not disabled. Formal prepublication Chrome/WebKit checks succeeded; physical iPhones remain unverified. Check the actual equipped dish, sparse feed, room background and unchanged navigation on those devices.
+
+## Release 2
+
+Ephemeral responses use only completed durable transaction results. No response is stored, and no engine, reward, history, clock or RNG logic changes. Feed pecks, touch preens, speech tilts, then the existing atlas rests. Full touch/speech can respond without adding rewards; an unchanged full feeding does not invent a meal. Family care includes only changed individuals. Cleaning and collecting use the same room daylight, without duplicating floor soil. Failed saves/memory mode never claim a durable success. Selection, navigation, hidden/pagehide, world/revision replacement and disposal cancel the response and restore the original care portrait. Reduced motion/pause/settings show a static resting response.
+
+The focused family-care browser tests still expected the old per-action uncapped rewards (86/42/56 Gems). Running the unchanged prior engine confirms 20 initial + 10 daily extra = 30 Gems, for both 2 and 6 residents. These assertions now use 30; the action, focus, identities, history, save and concurrent-tab assertions remain. No failed test was excluded. The native CDP multi-touch case already requires a Chromium touch project and is inapplicable to the prescribed desktop Chrome/WebKit lane.
