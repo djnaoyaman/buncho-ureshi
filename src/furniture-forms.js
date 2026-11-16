@@ -57,7 +57,7 @@ export function formArtwork(slot,index,level,p,h){
   let out=shadow(100,bottom+7,rx+8,10)+path(d,g('glaze'),edge)+`<ellipse cx="100" cy="${top}" rx="${rx-8}" ry="${rx*.24}" fill="${g('rim')}" stroke="${edge}"/><ellipse cx="100" cy="${top+1}" rx="${rx-14}" ry="${rx*.24-5}" fill="${fill}"/>`+line(`M${a+7} ${top+12}l6 ${Math.max(5,bottom-top-25)}`,2,pale)+tierTrim(`M${a+17} ${bottom-14}q${rx-17} 20 ${2*rx-34} 0`);
   out+=line(`M${a+18} ${bottom-5}q${rx-18} 12 ${rx*2-36} 0`,1,deep);
   if(level===3)out+=line(`M${a+16} ${top+4}q${rx-16} ${rx*.32} ${rx*2-32} 0`,1.5,g('gold'));
-  if(kind==='feed'||kind==='shellgrit')out+=Array.from({length:23},(_,i)=>{const a=i*2.399,r=Math.sqrt(i/23),x=100+Math.cos(a)*r*(rx-19),y=top+2+Math.sin(a)*r*(rx*.24-8);return kind==='shellgrit'?`<path d="M${x} ${y}l-4-2 2-3 5 1 1 3Z" fill="${i%2?'#f5efdd':'#d0c4a5'}" stroke="#b6ac8d" stroke-width=".4"/>`:`<ellipse cx="${x}" cy="${y}" rx="2.8" ry="1.7" fill="${i%2?'#f7edce':'#b8a072'}" transform="rotate(${i*31} ${x} ${y})"/>`;}).join('');
+  if(kind==='feed'||kind==='shellgrit')out+=Array.from({length:23},(_,i)=>{if(kind==='feed'&&i>=Math.ceil(23*(h.grainFraction??1)))return '';const a=i*2.399,r=Math.sqrt(i/23),x=100+Math.cos(a)*r*(rx-19),y=top+2+Math.sin(a)*r*(rx*.24-8);return kind==='shellgrit'?`<path d="M${x} ${y}l-4-2 2-3 5 1 1 3Z" fill="${i%2?'#f5efdd':'#d0c4a5'}" stroke="#b6ac8d" stroke-width=".4"/>`:`<ellipse cx="${x}" cy="${y}" rx="2.8" ry="1.7" fill="${i%2?'#f7edce':'#b8a072'}" transform="rotate(${i*31} ${x} ${y})"/>`;}).join('');
   if(kind==='water'||kind==='bath')out+=line(`M${a+22} ${top}q20-7 39-2m5 5q17 3 29-3`,1.5,'#effff0');
   return out;
  }

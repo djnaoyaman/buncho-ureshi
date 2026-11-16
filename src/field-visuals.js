@@ -3,10 +3,11 @@ import { furnitureFormIndex, formArtwork } from './furniture-forms.js';
 export { furnitureFormName, furnitureFormIndex, FURNITURE_FORMS } from './furniture-forms.js';
 /** Original vector furnishings: their color/finish comes from the owned item,
  * never from a filter over the bird. All text stays in accessible HTML. */
-export function furnitureSvg(slot, color='#a6c6b2', tier=1) {
+export function furnitureSvg(slot, color='#a6c6b2', tier=1,atmosphere=null) {
   if(!['perch','feed','water','bath','greens','shellgrit','swing','toy','paper'].includes(slot))slot='toy';
   // A small product illustration, not a flat menu glyph. Geometry and material
   // are drawn separately: thick rims, recessed contents, a foot and reflected light.
+  const grainFraction=atmosphere?.grainFraction??1;
   const c=/^#[0-9a-f]{6}$/i.test(color)?color:'#a6c6b2';
   const mix=(hex,to,t)=>'#'+[1,3,5].map(i=>Math.round(parseInt(hex.slice(i,i+2),16)*(1-t)+parseInt(('#'+to.replace('#','')).slice(i,i+2),16)*t).toString(16).padStart(2,'0')).join('');
   const level=Math.max(1,Math.min(3,Number(tier)||1));
@@ -39,14 +40,14 @@ export function furnitureSvg(slot, color='#a6c6b2', tier=1) {
     <ellipse cx="100" cy="${top}" rx="${rx-6}" ry="${rx*.29-5}" fill="${g('inner')}"/>
     <ellipse cx="100" cy="${top+3}" rx="${rx-11}" ry="${rx*.29-8}" fill="${inner}"/>
     ${kind==='bath'?`<path d="M${115-rx} ${top+3}q${rx*.4} 10 ${rx*.75} 2m9 0q18-1 28-6" fill="none" stroke="#f5fff0" stroke-width="1.2" opacity=".8"/><ellipse cx="110" cy="${top+4}" rx="23" ry="4" fill="none" stroke="#eaf7ed" stroke-width=".8"/><path d="M62 ${top-2}q12-5 25-3" fill="none" stroke="#fffef0" stroke-width="1.5" stroke-linecap="round"/>`:''}
-    ${kind==='feed'?Array.from({length:36},(_,i)=>{const a=i*2.399,r=Math.sqrt(i/36);const x=100+Math.cos(a)*r*(rx-15),y=top+3+Math.sin(a)*r*(rx*.29-10);return `<ellipse cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" rx="${2+i%3*.5}" ry="${1.2+i%2*.4}" transform="rotate(${i*23} ${x.toFixed(2)} ${y.toFixed(2)})" fill="${['#b89355','#f5e4b6','#c7aa71','#968151'][i%4]}" stroke="#a68a5e" stroke-width=".35"/>`;}).join(''):''}
+    ${kind==='feed'?Array.from({length:36},(_,i)=>{if(i>=Math.ceil(36*grainFraction))return '';const a=i*2.399,r=Math.sqrt(i/36);const x=100+Math.cos(a)*r*(rx-15),y=top+3+Math.sin(a)*r*(rx*.29-10);return `<ellipse cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" rx="${2+i%3*.5}" ry="${1.2+i%2*.4}" transform="rotate(${i*23} ${x.toFixed(2)} ${y.toFixed(2)})" fill="${['#b89355','#f5e4b6','#c7aa71','#968151'][i%4]}" stroke="#a68a5e" stroke-width=".35"/>`;}).join(''):''}
     ${kind==='shellgrit'?Array.from({length:23},(_,i)=>{const a=i*2.399,r=Math.sqrt(i/23),x=100+Math.cos(a)*r*(rx-15),y=top+3+Math.sin(a)*r*(rx*.29-10);return `<path d="M${x} ${y}l${-3-i%3} -2 2 -3 5 1 1 3z" fill="${['#f8f3df','#c6bda1','#e8dfc3'][i%3]}" stroke="#b6ac8d" stroke-width=".45"/>`;}).join(''):''}
     <path d="M${104-rx} ${top-2}C${123-rx} ${top-rx*.32} ${77+rx} ${top-rx*.32} ${96+rx} ${top-2}" fill="none" stroke="${ivory}" stroke-width="2" opacity=".9"/>
     ${level===2?`<path d="M${100-rx*.79} ${bottom-11}Q100 ${bottom+1} ${100+rx*.79} ${bottom-11}" fill="none" stroke="${g('wood')}" stroke-width="8"/>`:leafPattern(bottom-23,rx*1.45)}${level===3?`<ellipse cx="100" cy="${top}" rx="${rx-2}" ry="${rx*.29-1.5}" fill="none" stroke="${g('gold')}" stroke-width="1.4"/>`:''}`;
   };
   const woodGrain=(y=105)=>`<g fill="none" stroke="#805d36" stroke-opacity=".34" stroke-width=".8"><path d="M27 ${y}q28-6 60-2t84-2M26 ${y+6}q25-5 44-2m33-3q24 3 61-1M32 ${y+12}q26-5 56-1t70-5"/><ellipse cx="81" cy="${y+4}" rx="9" ry="2"/><ellipse cx="81" cy="${y+4}" rx="4" ry=".8"/></g>`;
   const accent=g('glaze');
-  return `<svg viewBox="0 0 200 180" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" data-item-art="atelier-v3" data-form="${furnitureFormIndex(c)}">${defs}${styleArtwork(slot,furnitureFormIndex(c),level,formArtwork(slot,furnitureFormIndex(c),level,{g,c:body,pale,deep,edge,ivory},{bowl,shadow}),{g,c:body,ivory})}</svg>`;
+  return `<svg viewBox="0 0 200 180" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" data-item-art="atelier-v3" data-form="${furnitureFormIndex(c)}">${defs}${styleArtwork(slot,furnitureFormIndex(c),level,formArtwork(slot,furnitureFormIndex(c),level,{g,c:body,pale,deep,edge,ivory},{bowl,shadow,grainFraction})+feedScatter(slot,atmosphere),{g,c:body,ivory})}</svg>`;
 }
 
 /** Twelve intentional foot contacts, not population-dependent rows. Visible
@@ -85,8 +86,8 @@ export function friendFurnishing(host,slot,colors,tiers) {
 
 /** World-only, softly shaded materials. The inventory uses the simpler icon
  * vocabulary; these vessels have an elliptical rim, inner wall and contact base. */
-export function furnitureSceneSvg(slot,color='#8fbea6',tier=1){
- const svg=furnitureSvg(slot,color,tier);
+export function furnitureSceneSvg(slot,color='#8fbea6',tier=1,atmosphere=null){
+ const svg=furnitureSvg(slot,color,tier,atmosphere);
  // Scene fixtures are separate from the collectible artwork. Bowls and
  // bottles sit in a bracket fixed to the cage bars, not on the floor. This
  // preserves all 216 product silhouettes and the existing inventory IDs.
@@ -95,4 +96,10 @@ export function furnitureSceneSvg(slot,color='#8fbea6',tier=1){
  const fixture=wall?`<g data-scene-fixture="wall" transform="${['water','shellgrit'].includes(slot)?'translate(200 0) scale(-1 1)':'translate(0 0)'}" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M25 55v105m0-7h144M26 124l37 29" stroke="#8d7959" stroke-width="5"/><path d="M25 55v105m0-7h144M26 124l37 29" stroke="#d7c5a0" stroke-width="2"/><rect x="17" y="50" width="16" height="18" rx="5" fill="#c7b58a" stroke="#8d7959" stroke-width="1.5"/><path d="M21 57h8m-4-4v9" stroke="#f7ecd0" stroke-width="1.5"/></g>`:'';
  const box=slot==='perch'?'0 55 200 120':slot==='paper'?'0 32 200 125':'0 0 200 170';
  return svg.replace('</defs>',`</defs>${fixture}`).replace('viewBox="0 0 200 180"',`viewBox="${box}"`).replace('data-item-art="atelier-v3"',`data-item-art="atelier-v3" data-scene-art="true" data-scene-mount="${mount}"`);
+}
+
+/** Hulls sit on the actual feeder bracket, inside the furniture's own transform. */
+function feedScatter(slot,atmosphere){
+ if(slot!=='feed'||!atmosphere?.scatter)return '';
+ return `<g class="game-feed-hulls" fill="#cbb080" stroke="#947c59" stroke-width=".5">${Array.from({length:atmosphere.scatter},(_,i)=>`<path d="M${40+i*17} ${154+i%2*3}q3-3 6 0q-3 3-6 0"/>`).join('')}</g>`;
 }

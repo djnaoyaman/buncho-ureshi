@@ -2135,3 +2135,6 @@ body[data-world="buncho"] .finch-garden-dock > details:not([open]) > summary:foc
  body[data-world="buncho"] .game-bottom-dock[data-home-dock="true"] > button > span{font-size:10px;min-height:18px}
  body[data-world="buncho"] .game-bottom-dock[data-home-dock="true"] > button::after{height:22px;background:linear-gradient(#e2ba82 0 3px,#fbf5e5 3px 19px,#b58a56 19px)}
 }
+
+/* Committed home only; the furniture preview never receives this layer. */
+.game-room[data-field="home"] .game-home-daylight{position:absolute;inset:0;pointer-events:none;z-index:1;background:linear-gradient(123deg,rgba(255,246,204,.16),transparent 44%,rgba(239,229,193,.04));border-radius:inherit}
