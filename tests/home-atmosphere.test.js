@@ -28,7 +28,7 @@ test('all 24 equipped feeder forms use their existing vessel and preview stays p
  const w=createWorld(12345);w.birds[0].needs.food=40;const a=homeAtmosphere(w);
  for(const c of DECOR_COLORS)for(const tier of [1,2,3]){
   const normal=furnitureSceneSvg('feed',c.hex,tier),live=furnitureSceneSvg('feed',c.hex,tier,a);
-  assert(live.includes('game-feed-hulls'));assert(!normal.includes('game-feed-hulls'));assert.notEqual(live,normal);
+  assert(live.includes('game-feed-hulls'));assert.match(live,/<\/g><g class="game-feed-hulls"/);assert(!normal.includes('game-feed-hulls'));assert.notEqual(live,normal);
   assert.equal((live.match(/<svg /g)||[]).length,1);assert.equal(furnitureSvg('feed',c.hex,tier).includes('game-feed-hulls'),false);
  }
  const html=renderHomeScene({base:'/',furniture:'fixture'});assert(!html.includes('game-home-daylight'));

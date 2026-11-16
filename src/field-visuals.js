@@ -47,7 +47,7 @@ export function furnitureSvg(slot, color='#a6c6b2', tier=1,atmosphere=null) {
   };
   const woodGrain=(y=105)=>`<g fill="none" stroke="#805d36" stroke-opacity=".34" stroke-width=".8"><path d="M27 ${y}q28-6 60-2t84-2M26 ${y+6}q25-5 44-2m33-3q24 3 61-1M32 ${y+12}q26-5 56-1t70-5"/><ellipse cx="81" cy="${y+4}" rx="9" ry="2"/><ellipse cx="81" cy="${y+4}" rx="4" ry=".8"/></g>`;
   const accent=g('glaze');
-  return `<svg viewBox="0 0 200 180" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" data-item-art="atelier-v3" data-form="${furnitureFormIndex(c)}">${defs}${styleArtwork(slot,furnitureFormIndex(c),level,formArtwork(slot,furnitureFormIndex(c),level,{g,c:body,pale,deep,edge,ivory},{bowl,shadow,grainFraction})+feedScatter(slot,atmosphere),{g,c:body,ivory})}</svg>`;
+  return `<svg viewBox="0 0 200 180" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" data-item-art="atelier-v3" data-form="${furnitureFormIndex(c)}">${defs}${styleArtwork(slot,furnitureFormIndex(c),level,formArtwork(slot,furnitureFormIndex(c),level,{g,c:body,pale,deep,edge,ivory},{bowl,shadow,grainFraction}),{g,c:body,ivory})}${feedScatter(slot,atmosphere)}</svg>`;
 }
 
 /** Twelve intentional foot contacts, not population-dependent rows. Visible
@@ -98,7 +98,7 @@ export function furnitureSceneSvg(slot,color='#8fbea6',tier=1,atmosphere=null){
  return svg.replace('</defs>',`</defs>${fixture}`).replace('viewBox="0 0 200 180"',`viewBox="${box}"`).replace('data-item-art="atelier-v3"',`data-item-art="atelier-v3" data-scene-art="true" data-scene-mount="${mount}"`);
 }
 
-/** Hulls sit on the actual feeder bracket, inside the furniture's own transform. */
+/** Hulls sit on the actual feeder bracket, in the fixture coordinate system, outside finish-specific vessel transforms. */
 function feedScatter(slot,atmosphere){
  if(slot!=='feed'||!atmosphere?.scatter)return '';
  return `<g class="game-feed-hulls" fill="#cbb080" stroke="#947c59" stroke-width=".5">${Array.from({length:atmosphere.scatter},(_,i)=>`<path d="M${40+i*17} ${154+i%2*3}q3-3 6 0q-3 3-6 0"/>`).join('')}</g>`;
