@@ -1,5 +1,5 @@
 {
-  "source": "63b82676b16e4d58fbd0a35bbb28d9e4156c8611 (PR #212) + approved style10 miniature navigation. Independent audit: 508 unchanged, 58 cache-key-only, game.css presentation-only, 9 new PNG decorations. Save/logic/pressed botanical icons preserved.",
+  "source": "b66f7bdee6f011dd6238b11a8ba17a15674e39c9 (PR #213) + approved home atmosphere stage 1. Original build verified against prior seal. Audited 64 changed files: 5 presentation sources and 59 cache-URL-only; 512 unchanged and one new protected projection module. Evidence: docs/home-atmosphere-1-output-audit.json. Save/engine/RNG/assets unchanged.",
   "files": {
     ".nojekyll": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "apple-touch-icon.png": "54aceebdade1893630e0e42528c1f7a122f38c1a20814be558ef624f60311bc0",
