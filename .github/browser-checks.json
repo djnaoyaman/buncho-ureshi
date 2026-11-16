@@ -1,9 +1,10 @@
 {
-  "base": "ebd7c8da280e4e5806da017acf6f2a6ab025b642",
+  "base": "157e20938d9b471f89d9472bf5a85386d1c69ea6",
   "tests": [
+    "tests/browser/ending-records.spec.js",
     "tests/browser/save-protection.spec.js",
     "tests/browser/preservation-box.spec.js",
     "tests/browser/home-continuity.spec.js"
   ],
-  "reason": "Read-only original-save export and quota/read-error recovery at 320/375/402px; existing native export/import/reset/layout preservation plus care timer and orientation continuity. Chrome/WebKit only; no new schema or ending. Physical iPhone verification remains separate."
+  "reason": "v19 migration and exact original backup download at 320/375/402px; IndexedDB defer/start/end/reload and quota retry; existing export/import/reset and input/timer/orientation continuity. Chrome/WebKit, not physical iOS. Controlled media events validate records, not movie rendering."
 }

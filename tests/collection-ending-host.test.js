@@ -27,7 +27,7 @@ async function host(t,{danger=false}={}){
  t.after(async()=>{dispose?.();await window.happyDOM.abort();await window.happyDOM.close();for(const[key,descriptor]of globals){if(descriptor)Object.defineProperty(globalThis,key,descriptor);else delete globalThis[key];}});
  const world=createWorld(Date.now(),301);world.field.place='park';world.encounters.garden.open=true;world.encounters.gardenFriends.attendees=['b1'];
  if(danger)assert.equal(arriveGardenRaptor(world,'black-kite',Date.now(),{...raptorToken(world),gardenId:world.encounters.garden.id}).changed,true);
- world.collectionEndings.entries=[{id:'garden',unlockedTick:0,acknowledged:false,lease:null}];
+ world.collectionEndings.entries=[{id:'garden',unlockedTick:0,acknowledged:false,lease:null,playback:'pending'}];
  window.HTMLMediaElement.prototype.play=function(){return Promise.reject(Error('NotAllowedError'));};
  window.HTMLMediaElement.prototype.pause=function(){};window.HTMLMediaElement.prototype.load=function(){};
  world.paused=true;await saved(indexedDB,world);
@@ -56,4 +56,10 @@ test('active ending poll observes another tab world replacement without advancin
  await h.write(replacement);await h.poll();await until(()=>!h.root.querySelector('[data-ending-skip]'),'old movie removed');
  assert.equal(h.window.document.body.hasAttribute('data-game-ending-active'),false);
  assert.deepEqual(await h.read(),replacement);assert.equal(h.root.querySelector('[data-ending-replay]'),null);
+});
+for(const panel of ['settings','health'])test(`pending peer achievement waits while ${panel} is open, then resumes`,async t=>{
+ const h=await host(t);await until(()=>h.root.querySelector('[data-ending-skip]'),'first ending');h.root.querySelector('[data-ending-skip]').click();await until(()=>!h.root.querySelector('[data-ending-skip]'),'close first');
+ const nav=h.root.querySelector(`[data-game-panel="${panel}"]`);assert.ok(nav);nav.click();
+ const w=await h.read();w.collectionEndings.entries.push({id:'crows',unlockedTick:w.tick,acknowledged:false,lease:null,playback:'pending'});w.revision++;await h.write(w);await h.poll();await sleep(10);assert.equal(h.root.querySelector('[data-ending-skip]'),null);assert.equal((await h.read()).collectionEndings.entries[1].lease,null);
+ h.root.querySelector('[data-game-panel="diary"]').click();await until(()=>h.root.querySelector('[data-ending-skip]'),'safe resume');assert.equal((await h.read()).collectionEndings.entries[1].acknowledged,false);
 });

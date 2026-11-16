@@ -13,7 +13,7 @@ function backupVersion(version){
 function preserveMigration(store,raw){
  if(!raw||raw.version>=SAVE_VERSION)return;
  const key=`migration-backup-v${migrationVersion(raw.version)}`,q=store.get(key);
- q.onsuccess=()=>{if(q.result===undefined)store.put(raw,key);};
+ q.onsuccess=()=>{try{if(q.result===undefined)store.put(raw,key);}catch{store.transaction.abort();}};
 }
 function preserveLocalMigration(storage,raw){
  if(!raw)return;const parsed=JSON.parse(raw),world=parsed.current??parsed;
