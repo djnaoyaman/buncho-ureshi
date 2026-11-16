@@ -609,7 +609,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     // in the picker, scene caption and compact profile.
     if(!preserveSelection&&!active.some(b=>b.id===selected)&&active.length){cancelCareEffects();selected=active[0].id;}
     const current=active.find(b=>b.id===selected)||active[0];
-    const atmosphere=homeAtmosphere(world,{selectedId:selected,panel,error:!!error,memory:store.mode==='memory',hidden:document.hidden,motion:poseEnabled()});
+    const atmosphere=homeAtmosphere(world,{selectedId:selected,panel,error:!!error,memory:store.mode==='memory',ending:!!endingPlayer?.active(),hidden:document.hidden,motion:poseEnabled()});
     const shown=compactLayout?.matches?[current].filter(Boolean):active;
     const cageGuests=world.field.place==='home'?encounterCageActors(world):[],actors=[...shown,...cageGuests];
     const positions=visibleFieldPositions(actors,'wide',world.field.place),mobilePositions=visibleFieldPositions(actors,'tall',world.field.place);
