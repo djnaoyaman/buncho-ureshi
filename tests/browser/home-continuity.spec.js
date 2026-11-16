@@ -5,6 +5,12 @@ async function record(page,w){return page.evaluate(w=>new Promise((resolve,rejec
 import {createBird,treatBird,economyToken} from '../../src/engine.js';
 import {lifeStatus} from '../../src/life-care.js';
 async function start(page,w,width=375){await page.setViewportSize({width,height:width===402?874:667});await page.addInitScript(now=>{Date.now=()=>now;Math.random=()=>.99;localStorage.setItem('buncho.music.v1',JSON.stringify({enabled:false}));localStorage.setItem('buncho.care-sound-choice.v1',JSON.stringify({explicit:true,enabled:false}));},NOW);await page.goto('');await record(page,w);await page.goto('game/');await expect(page.locator('.game-app')).toBeVisible();await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');if(await page.locator('.game-scene-controls-toggle').getAttribute('aria-expanded')==='false')await page.locator('.game-scene-controls-toggle').click();}
+test('care timers retain disclosure and input nodes through settling and completion',async({page})=>{
+ const w=colorPlayWorld();w.paused=false;w.settings.motion=true;w.birds[0].needs.food=40;await start(page,w);await page.locator('#game-open-bird').click();await page.locator('#game-care-feed').click();await expect(page.locator('#game-care-pet')).toHaveAttribute('data-home-response',/peck|rest/);
+ const input=await page.locator('#game-words').elementHandle(),summary=await page.locator('.game-sheet-talk summary').elementHandle(),saved=await record(page);
+ await page.waitForTimeout(1300);expect(await input.evaluate(node=>node.isConnected)).toBe(true);expect(await summary.evaluate(node=>node.isConnected)).toBe(true);await expect(page.locator('#game-care-pet')).toHaveAttribute('data-home-response','rest');
+ await summary.click();await input.fill('そばで見守っているよ');await expect(page.locator('#game-care-pet .game-care-illustration')).toHaveCount(1);expect(await input.evaluate(node=>node.isConnected&&node===document.activeElement)).toBe(true);expect(await summary.evaluate(node=>node.isConnected&&node.parentElement.open)).toBe(true);await expect(page.locator('#game-words')).toHaveValue('そばで見守っているよ');expect(await record(page)).toEqual(saved);
+});
 for(const width of [320,375,402])test(`independent screens and friend return keep real home state at ${width}`,async({page})=>{
  const w=colorPlayWorld();w.birds[0].needs.food=40;const friend=createBird(w,{home:'departed'});await start(page,w,width);const room=page.locator('.game-room'),before=await record(page);
  for(const panel of ['diary','memorial','health','notebook']){

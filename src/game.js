@@ -235,9 +235,18 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     const response=homeCareResponse(world,result,{...options,saved:store.mode!=='memory'});if(!response)return;
     const generation=careGeneration;homeResponse=response;
     const current=()=>alive&&root.isConnected&&homeResponse===response&&currentHomeResponse()===response&&generation===careGeneration;
-    const finish=()=>{if(homeResponse!==response)return;clearHomeResponse();if(alive&&root.isConnected)render();};
+    const finish=()=>{if(homeResponse!==response)return;clearHomeResponse();};
     if(!poseEnabled()){response.phase='settled';homeResponseTimer=setTimeout(finish,3400);return;}
-    homeResponseTimer=setTimeout(()=>{if(!current()){finish();return;}response.phase='settled';render();homeResponseTimer=setTimeout(finish,2200);},1200);
+    homeResponseTimer=setTimeout(()=>{
+      if(!current()){finish();return;}response.phase='settled';
+      // A timed pose change must not replace a disclosure or input under a tap.
+      const room=root.querySelector('.game-room');if(room)room.dataset.homeResponsePhase=response.phase;
+      for(const node of root.querySelectorAll('.game-care-pet-bird')){
+        const b=findBird(world,node.dataset.careBirdId),pose=b&&homeResponsePose(response,b),sprite=node.querySelector('.game-sprite');
+        if(pose&&sprite){const t=document.createElement('template');t.innerHTML=birdSvg(b.color,b.stage,pose);sprite.replaceWith(t.content.firstElementChild);node.dataset.homeResponse=pose;}
+      }
+      updatePoses(true);homeResponseTimer=setTimeout(finish,2200);
+    },1200);
   }
   let pollFlight=null, pendingCareIntent=null;
   const careSoundEnabled = () => soundChoice ?? explicitSound ?? true;
@@ -880,7 +889,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
       startHomeResponse(feedback,{kind,birdId});
       if(['pet','feed'].includes(kind)&&(feedback.changed||kind==='pet'&&feedback.reason==='full')){
         careGesture={birdId,worldId:expectedWorldId,kind};clearTimeout(gestureTimer);
-        gestureTimer=setTimeout(()=>{if(!current())return;careGesture=null;render();},850);
+        gestureTimer=setTimeout(()=>{if(!current())return;careGesture=null;root.querySelectorAll('.game-care-cheer,.game-sheet-cheer').forEach(node=>node.remove());root.querySelectorAll('.game-care-rub-note').forEach(node=>{node.textContent='';});},850);
       }
       render();
       showGemReward(feedback.gemAward,undefined,feedback.goldAward);

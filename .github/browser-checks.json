@@ -1,10 +1,10 @@
 {
-  "base": "02e7db85466672f96a16c98dfedf8a8eb09c7679",
+  "base": "2ca18f626ff1963f4c82a27686ced4683ed22ff4",
   "tests": [
     "tests/browser/home-continuity.spec.js",
     "tests/browser/home-atmosphere-motion.spec.js",
     "tests/browser/home-care-response.spec.js",
     "tests/browser/game-device-policy.spec.js"
   ],
-  "reason": "Final continuity: independent panels, friend/home return, actual treatment, emulated phone rotation preserving draft/focus/save and cancelling responses, existing device policy and non-game routes, motion and care regression. 320/375/402px; Chrome/WebKit automation, not iOS 15 physical verification."
+  "reason": "Fix a real timed DOM replacement race found by main WebKit at 375px after PR success. Keep all four release-4 specs and add node identity checks across 850/1200/3400ms care timers; no skipped cases or relaxed assertions. Verify 320/375/402px navigation, rotation, drafts, saved state, motion and device policy."
 }
