@@ -1908,24 +1908,24 @@ body[data-world="buncho"] .game-encounter-host .finch-garden > .expedition-gift>
 .expedition-diary ol{padding:0}
 @media(max-width:360px){.expedition-conversation p:nth-child(2){margin-left:8px}.expedition-discovery{padding:8px}.expedition-keepsake-art{width:112px}.expedition-gift .leaf-gift-choices{grid-template-columns:1fr}}
 
-/* Garden stories: small OMOCHI POP tokens, with a roomy storybook only on request. */
+/* Approved 06 pressed-botanical specimens; compact entrance, story opens on request. */
 body[data-world="buncho"] .game-encounter-host .finch-garden > .leaf-gift:not(.leaf-gift-diary):not([open]) {
  left:auto; right:max(12px,env(safe-area-inset-right,0px));
  bottom:calc(138px + env(safe-area-inset-bottom,0px));
  width:52px; height:52px; max-height:none; overflow:visible; overflow-y:visible;
- border:1.5px solid var(--play-line,#c8b99e); border-radius:50%;
- background:var(--play-yellow,#f8df9d); box-shadow:0 3px 0 #bda47a,0 4px 12px #604b3d20;
+ border:0; border-radius:14px;
+ background:transparent; box-shadow:none;
 }
 body[data-world="buncho"] .game-encounter-host .finch-garden > .expedition-gift:not(.leaf-gift-diary):not([open]) {
- bottom:calc(78px + env(safe-area-inset-bottom,0px)); background:var(--play-mint,#dfe6d3);
+ bottom:calc(78px + env(safe-area-inset-bottom,0px)); background:transparent;
 }
 body[data-world="buncho"] .game-encounter-host .finch-garden > .leaf-gift > summary {
  display:flex; align-items:center; justify-content:center; width:100%; min-height:50px;
- padding:7px; margin:0; border:0; border-radius:50%; background:transparent; list-style:none;
+ padding:0; margin:0; border:0; border-radius:14px; background:transparent; list-style:none;
 }
 body[data-world="buncho"] .game-encounter-host .finch-garden > .leaf-gift > summary::-webkit-details-marker { display:none; }
 body[data-world="buncho"] .game-encounter-host .finch-garden > .leaf-gift > summary::marker { content:''; }
-body[data-world="buncho"] .game-encounter-host .finch-garden > .leaf-gift > summary .leaf-gift-art { width:34px; height:34px; }
+body[data-world="buncho"] .game-encounter-host .finch-garden > .leaf-gift > summary .leaf-gift-art { display:block; width:52px; height:52px; object-fit:contain; pointer-events:none; user-select:none; }
 body[data-world="buncho"] .game-encounter-host .finch-garden > .leaf-gift > summary:focus-visible { outline:3px solid var(--play-ink,#304b42); outline-offset:4px; }
 body[data-world="buncho"] .game-encounter-host .finch-garden > .leaf-gift[open] {
  left:max(12px,env(safe-area-inset-left,0px)); right:max(12px,env(safe-area-inset-right,0px));

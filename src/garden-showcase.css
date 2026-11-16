@@ -1,5 +1,5 @@
 /* The third garden story is a single compact ticket, never a banner over birds. */
-body[data-world="buncho"] .game-encounter-host .finch-garden:has(.showcase-gift) > .showcase-gift:not(.leaf-gift-diary):not([open]){right:var(--garden-story-right);background:var(--play-peach-wash,#f3dfd3);position:absolute;z-index:7;touch-action:pan-y}
+body[data-world="buncho"] .game-encounter-host .finch-garden:has(.showcase-gift) > .showcase-gift:not(.leaf-gift-diary):not([open]){right:var(--garden-story-right);background:transparent;position:absolute;z-index:7;touch-action:pan-y}
 body[data-world="buncho"] .finch-garden .showcase-gift .garden-story-header{background:var(--play-peach-wash,#f3dfd3)}
 .showcase-gift .showcase-intro,.showcase-diary .showcase-intro{font-size:.95em;line-height:1.8}
 .showcase-gift h4,.showcase-diary h4{margin:16px 0 8px;color:var(--play-ink,#304b42)}
