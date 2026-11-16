@@ -2066,3 +2066,72 @@ body[data-world="buncho"] .game-app[data-panel="garden"] .game-garden-care .game
 body[data-world="buncho"] .game-app[data-panel="garden"] .game-garden-care .game-care-feedback{grid-row:5}
 body[data-world="buncho"] .game-app[data-panel="garden"] .game-garden-care [data-care-receipt]{grid-row:6}
 }
+
+/* 10 小さな舞台: decorative miniature props, existing navigation semantics.
+   PNG + ordinary gradients work on iOS 15; no relational-selector dependency. */
+body[data-world="buncho"] .game-app[data-panel="garden"] .game-field-nav button {
+ border:1px solid #bda583;border-radius:9px 9px 13px 13px;color:#514330;
+ background:linear-gradient(110deg,#fffdf4,#eee2c9 55%,#fffaf0);
+ box-shadow:inset 0 2px 0 #ffffffd9,0 3px 0 #aa8661,0 5px 8px #49331e26;
+ text-shadow:0 1px #fff;position:relative;
+}
+body[data-world="buncho"] .game-app[data-panel="garden"] .game-field-nav button[aria-pressed="true"] {
+ background:linear-gradient(110deg,#edeccf,#faf4d7,#dfdfba);border-color:#7b8b54;
+ box-shadow:inset 0 2px 0 #fffdf0,0 3px 0 #849064,0 5px 8px #49331e26;
+}
+body[data-world="buncho"] .game-app[data-panel="garden"] .game-bottom-dock[data-home-dock="true"] {
+ background:transparent;border:0;box-shadow:none;
+}
+body[data-world="buncho"] .game-bottom-dock[data-home-dock="true"] > button {
+ --miniature:url('../game-art/miniature-nav/house-v1.png');
+ position:relative;isolation:isolate;overflow:visible;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;
+ border:0!important;border-radius:8px!important;padding:0 2px 4px!important;gap:0!important;
+ color:#514330!important;background:transparent!important;box-shadow:none!important;
+}
+body[data-world="buncho"] .game-bottom-dock[data-home-dock="true"] > #game-open-bird{--miniature:url('../game-art/miniature-nav/bird-v1.png')}
+body[data-world="buncho"] .game-bottom-dock[data-home-dock="true"] > [data-game-panel="family"]{--miniature:url('../game-art/miniature-nav/family-v1.png')}
+body[data-world="buncho"] .game-bottom-dock[data-home-dock="true"] > #game-nav-open{--miniature:url('../game-art/miniature-nav/menu-v1.png')}
+body[data-world="buncho"] .game-bottom-dock[data-home-dock="true"] > button > svg{display:none}
+body[data-world="buncho"] .game-bottom-dock[data-home-dock="true"] > button::before{
+ content:"";display:block;width:100%;height:48px;flex:0 0 48px;background:var(--miniature) center/contain no-repeat;pointer-events:none;
+}
+body[data-world="buncho"] .game-bottom-dock[data-home-dock="true"] > button::after{
+ content:"";position:absolute;z-index:-1;left:0;right:0;bottom:1px;height:31px;border-radius:5px;
+ background:linear-gradient(#e2ba82 0 3px,#fbf5e5 3px 27px,#b58a56 27px);box-shadow:0 3px 4px #46351b30;pointer-events:none;
+}
+body[data-world="buncho"] .game-bottom-dock[data-home-dock="true"] > button > span{font-size:clamp(10px,2.9vw,12px);white-space:nowrap;line-height:1.1;min-height:25px;display:flex;align-items:center;justify-content:center;text-shadow:0 1px #fff;}
+body[data-world="buncho"] .game-bottom-dock[data-home-dock="true"] > button > span br{display:none}
+body[data-world="buncho"] .game-panel-overlay[data-scene="true"] .finch-garden-dock > details:not([open]) > summary{
+ --miniature:url('../game-art/miniature-nav/observe-v1.png');
+ position:relative;isolation:isolate;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:0;
+ height:52px;min-height:52px;padding:0 1px 3px;border:0;border-radius:5px;background:transparent;color:#514330;box-shadow:none;font-size:11px;line-height:16px;white-space:nowrap;
+}
+body[data-world="buncho"] .game-panel-overlay[data-scene="true"] .finch-garden-dock > details[data-garden-details="friends"]:not([open]) > summary{--miniature:url('../game-art/miniature-nav/friends-v1.png')}
+body[data-world="buncho"] .game-panel-overlay[data-scene="true"] .finch-garden-dock > details[data-garden-details="companions"]:not([open]) > summary,
+body[data-world="buncho"] .game-panel-overlay[data-scene="true"] .finch-garden-dock > details.finch-companion-settings:not([open]) > summary{--miniature:url('../game-art/miniature-nav/companion-v1.png')}
+body[data-world="buncho"] .game-panel-overlay[data-scene="true"] .finch-garden-dock > details[data-garden-details="about"]:not([open]) > summary{--miniature:url('../game-art/miniature-nav/garden-v1.png')}
+body[data-world="buncho"] .game-panel-overlay[data-scene="true"] .finch-garden-dock > details:not([open]) > summary::before{
+ content:"";display:block;width:100%;height:34px;flex:0 0 34px;background:var(--miniature) center/contain no-repeat;pointer-events:none;
+}
+body[data-world="buncho"] .game-panel-overlay[data-scene="true"] .finch-garden-dock > details:not([open]) > summary::after{
+ content:"";position:absolute;z-index:-1;left:0;right:0;bottom:0;height:21px;border-radius:4px;
+ background:linear-gradient(#e2ba82 0 3px,#fff6e2 3px 18px,#b58a56 18px);box-shadow:0 2px 3px #46351b30;pointer-events:none;
+}
+body[data-world="buncho"] .game-encounter-host .finch-garden > header [data-encounter-back]{
+ position:relative;gap:0;padding:0 4px 3px;min-width:64px;color:#514330;border:0;border-radius:6px;
+ background:linear-gradient(transparent 0 20px,#dfb580 20px 23px,#fff8e9 23px);box-shadow:0 3px 0 #b58a56;font-size:10px;line-height:1.35;
+}
+body[data-world="buncho"] .game-encounter-host .finch-garden > header [data-encounter-back]::before{content:"";width:42px;height:20px;background:url('../game-art/miniature-nav/book-v1.png') center/contain no-repeat;pointer-events:none}
+body[data-world="buncho"] .game-app .game-panel-overlay[data-scene="true"] .game-overlay-head [data-game-close-panel][data-home-icon]{
+ padding:0!important;border:0;border-radius:5px;background:linear-gradient(transparent 0 40px,#dfb580 40px,#af8151);box-shadow:0 2px 3px #46351b30;
+}
+body[data-world="buncho"] .game-app .game-panel-overlay[data-scene="true"] .game-overlay-head [data-game-close-panel][data-home-icon]::before{
+ width:44px;height:44px;flex-basis:44px;background:url('../game-art/miniature-nav/house-v1.png') center/contain no-repeat;mask:none;-webkit-mask:none;
+}
+body[data-world="buncho"] .game-bottom-dock[data-home-dock="true"] > button:focus-visible,
+body[data-world="buncho"] .finch-garden-dock > details:not([open]) > summary:focus-visible{outline:3px solid #536e43;outline-offset:2px}
+@media(max-height:500px){
+ body[data-world="buncho"] .game-bottom-dock[data-home-dock="true"] > button::before{height:28px;flex-basis:28px}
+ body[data-world="buncho"] .game-bottom-dock[data-home-dock="true"] > button > span{font-size:10px;min-height:18px}
+ body[data-world="buncho"] .game-bottom-dock[data-home-dock="true"] > button::after{height:22px;background:linear-gradient(#e2ba82 0 3px,#fbf5e5 3px 19px,#b58a56 19px)}
+}

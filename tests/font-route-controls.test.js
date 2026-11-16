@@ -23,7 +23,7 @@ test('garden notebook label uses the requested two centered lines without changi
 });
 test('typography is route scoped, locally rendered and preserves intentional existing hierarchy',()=>{
  const css=read('src/game.css').split('/* Typography and route controls:')[1];
- assert(css.includes('--game-font: "Hiragino Maru Gothic ProN"'));assert(!css.includes('@font-face'));assert(!css.includes('url('));
+ assert(css.includes('--game-font: "Hiragino Maru Gothic ProN"'));assert(!css.includes('@font-face'));assert(!css.replace(/url\(['"]?\.\.\/game-art\/miniature-nav\/[a-z-]+-v1\.png['"]?\)/g,'').includes('url('));
  assert(css.includes('line-height: 1.8'));assert(css.includes('font-size: var(--game-text-control)'));
 });
 test('final garden button cascade wins over legacy compact header rules',async()=>{

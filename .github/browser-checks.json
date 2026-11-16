@@ -1,7 +1,8 @@
 {
-  "base": "f9749d93f82e2491e55dbb32449413037828d80e",
+  "base": "63b82676b16e4d58fbd0a35bbb28d9e4156c8611",
   "tests": [
+    "tests/browser/miniature-navigation.spec.js",
     "tests/browser/garden-event-position.spec.js"
   ],
-  "reason": "本人採用06押し花標本を庭の3入口に限定適用。表示・操作52px・横並び・開閉・フォーカス・保存不変をChrome/WebKitで自動検査。本人PCのブラウザ目視はせず本人が実機表示確認。保存・報酬・進行ルールは無変更。"
+  "reason": "User-selected style10 miniature home/garden navigation: routes, 44px targets, portrait/landscape, decorative asset decode, save preservation, unchanged pressed botanical event entrances. Chrome and WebKit simulation; owner performs real-device visual QA."
 }
