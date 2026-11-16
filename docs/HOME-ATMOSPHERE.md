@@ -40,3 +40,11 @@ PR #215 merged as b52e050ee38a9256d2f622bf0a12ccefc41783e4. Main CI 43812697178 
 ## Release 3
 
 Actual equipped water/bath fill geometry receives gentle opacity variation; no new bowl or displaced reflection is overlaid. Preview artwork stays unchanged. Existing atlas rest/preen poses follow individual energy and only an actual rest action; social targets, illness, guests, young and non-home locations retain existing behavior. The existing active presentation clock supplies independent deterministic variation. No audio or new interval is added. Hidden, pagehide, pause, reduced motion, settings and higher-priority screens suppress motion.
+
+## Release 3 published
+
+PR #216 merged as 02e7db85466672f96a16c98dfedf8a8eb09c7679. Main CI 43822651802 passed build/check/Node, Chrome/WebKit, verify and deploy. Sealed ZIP digest: 99ed88d05cc21e96267aa966119a1666409fb4bab3267d012020b0568a83bcd4. SOURCE_SHA, inner checksum and 578 protected files verified. All 18 sampled live files match this sealed build. Public URL: https://djnaoyaman.github.io/buncho-ureshi/game/ . Physical iPhones unverified.
+
+## Release 4
+
+The existing device/orientation notice now immediately suspends decorative motion and cancels transient care responses, restoring the original portrait without replacing the form or its draft. Returning to the view resumes only current-world poses. Listener cleanup is paired with mount disposal. The selected guest's actual illness also takes priority over decorative atmosphere. Engine/save/rewards/RNG/audio remain unchanged. Continuity checks cover treatment, caretaker expiry, clock reversal, restored worlds, nests/empty homes, independent panels, friend return, emulated phone rotation, drafts/focus and saved state. Prior full Node coverage protects garden events, succession, diary, gacha and endings; visual projection never changes their conditions.
