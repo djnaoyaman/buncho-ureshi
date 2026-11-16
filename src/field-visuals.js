@@ -46,8 +46,10 @@ export function furnitureSvg(slot, color='#a6c6b2', tier=1,atmosphere=null) {
     ${level===2?`<path d="M${100-rx*.79} ${bottom-11}Q100 ${bottom+1} ${100+rx*.79} ${bottom-11}" fill="none" stroke="${g('wood')}" stroke-width="8"/>`:leafPattern(bottom-23,rx*1.45)}${level===3?`<ellipse cx="100" cy="${top}" rx="${rx-2}" ry="${rx*.29-1.5}" fill="none" stroke="${g('gold')}" stroke-width="1.4"/>`:''}`;
   };
   const woodGrain=(y=105)=>`<g fill="none" stroke="#805d36" stroke-opacity=".34" stroke-width=".8"><path d="M27 ${y}q28-6 60-2t84-2M26 ${y+6}q25-5 44-2m33-3q24 3 61-1M32 ${y+12}q26-5 56-1t70-5"/><ellipse cx="81" cy="${y+4}" rx="9" ry="2"/><ellipse cx="81" cy="${y+4}" rx="4" ry=".8"/></g>`;
+  // Mark the actual water geometry after the existing finish transforms. Previews omit it.
+  const waterSurface=art=>atmosphere?.visible&&['water','bath'].includes(slot)?art.replaceAll(`fill="${g('water')}"`,`class="game-home-water" fill="${g('water')}"`):art;
   const accent=g('glaze');
-  return `<svg viewBox="0 0 200 180" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" data-item-art="atelier-v3" data-form="${furnitureFormIndex(c)}">${defs}${styleArtwork(slot,furnitureFormIndex(c),level,formArtwork(slot,furnitureFormIndex(c),level,{g,c:body,pale,deep,edge,ivory},{bowl,shadow,grainFraction}),{g,c:body,ivory})}${feedScatter(slot,atmosphere)}</svg>`;
+  return `<svg viewBox="0 0 200 180" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" data-item-art="atelier-v3" data-form="${furnitureFormIndex(c)}">${defs}${waterSurface(styleArtwork(slot,furnitureFormIndex(c),level,formArtwork(slot,furnitureFormIndex(c),level,{g,c:body,pale,deep,edge,ivory},{bowl,shadow,grainFraction}),{g,c:body,ivory}))}${feedScatter(slot,atmosphere)}</svg>`;
 }
 
 /** Twelve intentional foot contacts, not population-dependent rows. Visible
