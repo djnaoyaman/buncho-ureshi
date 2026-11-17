@@ -93,7 +93,12 @@ jobs:
         run: |
           apt-get update -qq
           apt-get install -y pulseaudio pulseaudio-utils
-          pulseaudio --start --exit-idle-time=-1
+          # Use temporary daemon state, not the container's mounted HOME.
+          export PULSE_RUNTIME_PATH=/tmp/ci-pulse-runtime
+          export PULSE_STATE_PATH=/tmp/ci-pulse-state
+          mkdir -p "$PULSE_RUNTIME_PATH" "$PULSE_STATE_PATH" /tmp/ci-pulse-home
+          echo "PULSE_RUNTIME_PATH=$PULSE_RUNTIME_PATH" >> "$GITHUB_ENV"
+          HOME=/tmp/ci-pulse-home pulseaudio --daemonize=yes --exit-idle-time=-1 --log-target=stderr
           pactl load-module module-null-sink sink_name=ci_audio sink_properties=device.description=CI_Audio
           pactl set-default-sink ci_audio
           pactl info
