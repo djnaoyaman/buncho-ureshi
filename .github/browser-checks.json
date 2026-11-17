@@ -2,7 +2,8 @@
   "base": "0b01c66686b92788d07525fb4c6ee25702becd4d",
   "tests": [
     "tests/browser/crow-collection-film.spec.js",
-    "tests/browser/garden-collection-film.spec.js"
+    "tests/browser/garden-collection-film.spec.js",
+    "tests/browser/ending-media-compatibility.spec.js"
   ],
-  "reason": "Install user-approved third film byte-identically. Chrome/WebKit verify five-crow unlock, explicit audio gesture, vertical native playback, interrupted/repeated flows, save preservation, and existing garden film regression."
+  "reason": "Install user-approved third film byte-identically. Chrome/WebKit verify five-crow unlock, explicit audio gesture, vertical native playback, interrupted/repeated flows, save preservation, and existing garden film regression. Isolate standalone muted/unmuted native decoding from game lifecycle before release."
 }
