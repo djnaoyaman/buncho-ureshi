@@ -3,3 +3,7 @@ dist/
 playwright-report/
 test-results/
 .openai/
+
+# Reassembled byte-identical approved film; checked source parts live in media-source.
+public/game-endings/omochi-ending02-revised-87.mp4
+focused-test-results/

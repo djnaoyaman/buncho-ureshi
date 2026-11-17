@@ -1,11 +1,10 @@
 {
-  "base": "0b9f38fbf1d5560d48cfb43effb9c0ac90901289",
+  "base": "7e2be77cb437fa2b3e024be58f0047cc229797bf",
   "tests": [
+    "tests/browser/garden-collection-film.spec.js",
     "tests/browser/garden-tour-film.spec.js",
     "tests/browser/ending-records.spec.js",
-    "tests/browser/save-protection.spec.js",
-    "tests/browser/preservation-box.spec.js",
-    "tests/browser/home-continuity.spec.js"
+    "tests/browser/save-protection.spec.js"
   ],
-  "reason": "Approved real MP4 decoding and explicit audio start, 320/375/402px controls, pause/replay/reload/completion, v20 original and unearned migration; prior recording quota retry/import/reset and input/orientation continuity. Chrome/WebKit, not physical iOS15 or subjective listening. Preserve failing WebKit402 case; inspect native lifecycle, stale media/session isolation and serialized fullscreen close/replay."
+  "reason": "Approved ending 2 MP4, explicit audio start and shared cinema controls: real 87s metadata and decoding, narrow phone controls, interruption/replay/native completion, persisted achievement and save preservation. Existing ending 1 and storage regressions retained. Chrome/WebKit only; no physical iOS or subjective listening claim."
 }
