@@ -15,7 +15,7 @@ import {initialEconomy,validateEconomy,syncEconomy,reserveAutomaticGems,awardHou
 /** A deterministic, offline story simulation with fictional lifecycle rules. No real husbandry advice. */
 import { initializeCareSchedule, validateCareSchedule, syncCareSchedule, applyScheduledCare, reconcileImportedCare, careWindow, careDay } from './care-schedule.js';
 import { directLineNameFields, newDefaultNameFields, automaticNaming, manualNaming, legacyNaming, isValidNaming } from './bird-names.js';
-export const SAVE_VERSION = 20;
+export const SAVE_VERSION = 21;
 const careTime = now => Math.max(0, Math.min(253402268399999, now));
 export { reconcileImportedCare, careWindow };
 export const TICK_MS = 60000;
@@ -940,8 +940,10 @@ export function migrateV18ToV19(input,now=Date.now()){const w=validateVersion(in
 export function migrateV19ToV20(input,now=Date.now()){
  const w=validateVersion(input,19);w.version=20;w.collectionEndings.version=2;
  for(const entry of w.collectionEndings.entries)entry.playback=entry.acknowledged?'legacy':'pending';
- return validateWorld(w);
+ return migrateV20ToV21(w,now);
 }
+/** Format boundary only; achievements are recognized by a successful fresh transaction. */
+export function migrateV20ToV21(input,now=Date.now()){const w=validateVersion(input,20);w.version=21;return validateWorld(w);}
 export function readCompatibleWorld(input, now=Date.now()) {
   // Do not execute an accessor even to discover the version of an untrusted object.
   const descriptor = input && typeof input === 'object' ? Object.getOwnPropertyDescriptor(input, 'version') : null;
@@ -965,6 +967,7 @@ export function readCompatibleWorld(input, now=Date.now()) {
   if (descriptor.value === 17) return migrateV17ToV18(input,now);
   if (descriptor.value === 18) return migrateV18ToV19(input,now);
   if (descriptor.value === 19) return migrateV19ToV20(input,now);
+  if (descriptor.value === 20) return migrateV20ToV21(input,now);
   if (descriptor.value === SAVE_VERSION) return validateWorld(input);
   throw new Error('保存データを読み込めません：対応していない版です。元の保存はそのままです。');
 }

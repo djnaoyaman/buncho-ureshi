@@ -1,10 +1,11 @@
 {
-  "base": "157e20938d9b471f89d9472bf5a85386d1c69ea6",
+  "base": "0b9f38fbf1d5560d48cfb43effb9c0ac90901289",
   "tests": [
+    "tests/browser/garden-tour-film.spec.js",
     "tests/browser/ending-records.spec.js",
     "tests/browser/save-protection.spec.js",
     "tests/browser/preservation-box.spec.js",
     "tests/browser/home-continuity.spec.js"
   ],
-  "reason": "v19 migration and exact original backup download at 320/375/402px; IndexedDB defer/start/end/reload and quota retry; existing export/import/reset and input/timer/orientation continuity. Chrome/WebKit, not physical iOS. Controlled media events validate records, not movie rendering."
+  "reason": "Approved real MP4 decoding and explicit audio start, 320/375/402px controls, pause/replay/reload/completion, v20 original and unearned migration; prior recording quota retry/import/reset and input/orientation continuity. Chrome/WebKit, not physical iOS15 or subjective listening."
 }

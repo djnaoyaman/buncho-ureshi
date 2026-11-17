@@ -11,8 +11,8 @@ async function database(idb){return new Promise((resolve,reject)=>{const q=idb.o
 async function record(db,value,key='current'){return new Promise((resolve,reject)=>{const tx=db.transaction('world',value===undefined?'readonly':'readwrite'),s=tx.objectStore('world'),q=value===undefined?s.get(key):s.put(value,key);tx.oncomplete=()=>resolve(q.result);tx.onerror=tx.onabort=()=>reject(tx.error);});}
 for(const mode of ['device','locked-local','memory'])test(`snapshot is detached, read-only and closes safely: ${mode}`,async()=>{
  const storage=new Storage(),platform=mode==='device'?{indexedDB:new IDBFactory()}:mode==='locked-local'?{localStorage:storage,navigator:{locks:locks()}}:{};
- const store=await openGameStore(platform),w=createWorld(NOW);assert.equal(SAVE_VERSION,20);await store.transact(()=>w);const before=JSON.stringify(w),writes=storage.writes;
- const snapshot=JSON.parse(await store.exportSnapshot());assert.deepEqual(snapshot,w);snapshot.birds[0].name='not persisted';assert.equal(await store.exportSnapshot(),before);assert.equal(storage.writes,writes);assert.deepEqual(await store.transact(w=>w),w);assert.equal(await store.migrationBackup(19),null);await assert.rejects(store.migrationBackup(21),/対応/);store.close();await assert.rejects(store.exportSnapshot(),/閉じ/);
+ const store=await openGameStore(platform),w=createWorld(NOW);assert.equal(SAVE_VERSION,21);await store.transact(()=>w);const before=JSON.stringify(w),writes=storage.writes;
+ const snapshot=JSON.parse(await store.exportSnapshot());assert.deepEqual(snapshot,w);snapshot.birds[0].name='not persisted';assert.equal(await store.exportSnapshot(),before);assert.equal(storage.writes,writes);assert.deepEqual(await store.transact(w=>w),w);assert.equal(await store.migrationBackup(19),null);await assert.rejects(store.migrationBackup(22),/対応/);store.close();await assert.rejects(store.exportSnapshot(),/閉じ/);
 });
 test('quota failure still exports the last committed IndexedDB world, never the rejected edit',async()=>{
  const idb=new IDBFactory(),store=await openGameStore({indexedDB:idb}),db=await database(idb),w=createWorld(NOW);await record(db,w);const put=IDBObjectStore.prototype.put;
@@ -26,7 +26,7 @@ test('legacy source export retains its raw version; future, malformed and absent
  const legacy=JSON.parse(await readFile(new URL('./fixtures/v10-gacha-world.json',import.meta.url))),idb=new IDBFactory(),db=await database(idb),store=await openGameStore({indexedDB:idb});
  await assert.rejects(store.exportSnapshot(),/見つかりません/);
  await record(db,legacy);assert.deepEqual(JSON.parse(await store.exportSnapshot()),legacy);assert.equal(await record(db,undefined,'migration-backup-v11'),undefined);assert.deepEqual(await record(db),legacy);
- for(const bad of [{...createWorld(NOW),version:21},{...createWorld(NOW),seed:-1}]){await record(db,bad);await assert.rejects(store.exportSnapshot());assert.deepEqual(await record(db),bad);}
+ for(const bad of [{...createWorld(NOW),version:22},{...createWorld(NOW),seed:-1}]){await record(db,bad);await assert.rejects(store.exportSnapshot());assert.deepEqual(await record(db),bad);}
  store.close();db.close();
 });
 test('snapshot waits for a concurrent committed transaction and never rolls it back',async()=>{

@@ -1,5 +1,6 @@
 import {collectionEndingStatus,pendingCollectionEnding,claimCollectionEnding,recordCollectionEndingPlayback,releaseCollectionEnding} from './collection-endings.js';
-const TITLES={garden:'<ruby>庭<rt>にわ</rt></ruby>の<ruby>鳥<rt>とり</rt></ruby>との<ruby>出会<rt>であ</rt></ruby>い',crows:'カラスたちとの<ruby>出会<rt>であ</rt></ruby>い',raptors:'<ruby>大空<rt>おおぞら</rt></ruby>の<ruby>鳥<rt>とり</rt></ruby>たちとの<ruby>出会<rt>であ</rt></ruby>い'};
+const MOVIES=Object.freeze({garden:'garden-v1.mp4',crows:'crows-v1.mp4',raptors:'raptors-v1.mp4','garden-tour':'buncho-ending-01-rich-final-review.mp4'});
+const TITLES={'garden-tour':'どこへ行っても、帰る場所',garden:'<ruby>庭<rt>にわ</rt></ruby>の<ruby>鳥<rt>とり</rt></ruby>との<ruby>出会<rt>であ</rt></ruby>い',crows:'カラスたちとの<ruby>出会<rt>であ</rt></ruby>い',raptors:'<ruby>大空<rt>おおぞら</rt></ruby>の<ruby>鳥<rt>とり</rt></ruby>たちとの<ruby>出会<rt>であ</rt></ruby>い'};
 export function renderEndingDiary(world){
  const entries=collectionEndingStatus(world).filter(e=>e.unlocked);
  if(!entries.length)return '';
@@ -42,14 +43,15 @@ export function mountCollectionEndingPlayer(root,{getWorld,transact,canPresent=(
  async function open(id,{automatic=false}={}){
   if(!alive||active()||doc.hidden||!canPresent())return false;
   const w=getWorld(),status=collectionEndingStatus(w).find(e=>e.id===id);
-  if(!status?.unlocked)return false;
+  if(!status?.unlocked||!MOVIES[id])return false;
   flight=true;const worldId=w.worldId;let claimed=false;
   try{if(!status.acknowledged)await transactFor(worldId,latest=>{claimed=claimCollectionEnding(latest,id,owner,now()).changed;});
    if(!alive||doc.hidden||getWorld().worldId!==worldId||!canPresent()||(automatic&&!claimed))return false;
    current={id,worldId,acked:status.acknowledged||!claimed,recordable:status.acknowledged||claimed};lastFocus=doc.activeElement;notify(true);
    dialog=doc.createElement('dialog');dialog.className='game-ending-dialog';dialog.setAttribute('aria-labelledby','game-ending-title');
    dialog.innerHTML=`<div class="game-ending-screen"><header><h2 id="game-ending-title">${TITLES[id]}</h2><button type="button" data-ending-close aria-label="エンディングを閉じる">とじる</button></header><video controls playsinline preload="none" aria-label="${status.title}"></video><div class="game-ending-actions"><button type="button" data-ending-play>▶ <ruby>再生<rt>さいせい</rt></ruby></button><button type="button" data-ending-fullscreen><ruby>全画面<rt>ぜんがめん</rt></ruby></button><button type="button" data-ending-skip>あとで<ruby>見<rt>み</rt></ruby>る</button></div><p role="status" aria-live="polite"></p></div>`;
-   root.append(dialog);video=dialog.querySelector('video');video.tabIndex=0;video.volume=.5;video.src=new URL(`../game-endings/${id}-v1.mp4`,import.meta.url).href;
+   if(id==='garden-tour'){dialog.dataset.film='tour';const controls=doc.createElement('div');controls.className='game-ending-tour-controls';controls.append(dialog.querySelector('[role=status]'),dialog.querySelector('.game-ending-actions'));dialog.querySelector('.game-ending-screen').append(controls);}
+   root.append(dialog);video=dialog.querySelector('video');video.tabIndex=0;video.volume=.5;video.src=new URL(`../game-endings/${MOVIES[id]}`,import.meta.url).href;
    video.addEventListener('playing',()=>{dialog?.setAttribute('data-playing','');if(doc.activeElement?.matches('[data-ending-play]'))video?.focus({preventScroll:true});message('');void savePlayback('started').catch(()=>message('きろくの ほぞんを まっています。'));});
    video.addEventListener('pause',()=>{dialog?.removeAttribute('data-playing');});
    video.addEventListener('ended',()=>{void close({playback:'completed'});});
@@ -57,12 +59,15 @@ export function mountCollectionEndingPlayer(root,{getWorld,transact,canPresent=(
    dialog.addEventListener('click',ev=>{ev.stopPropagation();if(ev.target.closest('[data-ending-play]'))void play({fullscreen:true});else if(ev.target.closest('[data-ending-fullscreen]'))enterFullscreen();else if(ev.target.closest('[data-ending-close],[data-ending-skip]'))void close();});
    dialog.addEventListener('cancel',ev=>{ev.preventDefault();ev.stopPropagation();void close();});
    dialog.addEventListener('keydown',ev=>{if(ev.key==='Escape'){ev.preventDefault();ev.stopPropagation();void close();}else if(ev.key==='Tab'){const controls=[...dialog.querySelectorAll('button,video')].filter(e=>!e.disabled);const i=controls.indexOf(doc.activeElement);if(ev.shiftKey&&i<=0){ev.preventDefault();controls.at(-1)?.focus();}else if(!ev.shiftKey&&i===controls.length-1){ev.preventDefault();controls[0]?.focus();}}});
-   dialog.showModal();dialog.querySelector('[data-ending-play]').focus({preventScroll:true});void play();return true;
+   dialog.showModal();dialog.querySelector('[data-ending-play]').focus({preventScroll:true});if(id==='garden-tour'){dialog.querySelector('[data-ending-play]').textContent='▶ 音声と映像を再生';message('35の庭を訪ねた記念の作品です。あなたの訪問順や個体を再現した映像ではありません。');}else void play();return true;
   }catch{if(current)remove();return false;}
   finally{flight=false;if(!current&&claimed)void transactFor(worldId,w=>releaseCollectionEnding(w,id,owner)).catch(()=>{});}
  }
  function sync(){if(!alive)return;if(current&&getWorld().worldId!==current.worldId){remove();return;}if(active()||doc.hidden||!canPresent())return;const entry=pendingCollectionEnding(getWorld());if(entry&&!blocked.has(`${getWorld().worldId}:${entry.id}`))void open(entry.id,{automatic:true});}
- const visibility=()=>{if(doc.hidden){try{video?.pause();}catch{}}else sync();};
+ const pause=()=>{try{video?.pause();}catch{}};
+ const viewBlocked=()=>{if(doc.body.dataset.gameViewBlocked)pause();};
+ const visibility=()=>{if(doc.hidden)pause();else sync();};
+ win.addEventListener('pagehide',pause);doc.addEventListener('buncho-game-view-visibility',viewBlocked);
  doc.addEventListener('visibilitychange',visibility);
- return {active,sync,open,destroy(){alive=false;const c=current;if(c&&!c.acked)void transactFor(c.worldId,w=>releaseCollectionEnding(w,c.id,owner)).catch(()=>{});remove();doc.removeEventListener('visibilitychange',visibility);}};
+ return {active,sync,open,destroy(){alive=false;const c=current;if(c&&!c.acked)void transactFor(c.worldId,w=>releaseCollectionEnding(w,c.id,owner)).catch(()=>{});remove();doc.removeEventListener('visibilitychange',visibility);win.removeEventListener('pagehide',pause);doc.removeEventListener('buncho-game-view-visibility',viewBlocked);}};
 }
