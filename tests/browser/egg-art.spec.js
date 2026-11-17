@@ -10,8 +10,8 @@ for(const [width,height]of [[320,568],[393,852],[844,390]])test(`rounded egg in 
  await page.goto('game/');await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');
  const toggle=page.locator('.game-scene-controls-toggle');if(await toggle.getAttribute('aria-expanded')==='false')await toggle.click();
  await page.locator('.game-bottom-dock [data-game-open-bird]').click();
- for(let i=0;i<4&&await page.locator('.game-bird-sheet .game-bird-carousel-face').getAttribute('data-bird-id')!==egg.id;i++)await page.locator('.game-bird-sheet [data-bird-step="1"]').click();
- await expect(page.locator('.game-bird-sheet .game-bird-carousel-face')).toHaveAttribute('data-bird-id',egg.id);
+ for(let i=0;i<4&&await page.locator('#game-care-pet').getAttribute('data-care-bird-id')!==egg.id;i++)await page.locator('.game-bird-sheet [data-bird-step="1"]').click();
+ await expect(page.locator('#game-care-pet')).toHaveAttribute('data-care-bird-id',egg.id);
  const img=page.locator('.game-bird-sheet .game-sprite[data-stage="egg"] img');await expect(img).toHaveAttribute('src',/game-art\/egg\.svg$/);await expect.poll(()=>img.evaluate(i=>i.complete&&i.naturalWidth>0)).toBe(true);
  const geometry=await img.evaluate(i=>{const r=i.getBoundingClientRect();return{ratio:r.width/r.height,natural:i.naturalWidth/i.naturalHeight}});expect(geometry.ratio).toBeCloseTo(.85,2);expect(geometry.natural).toBe(.85);
  const silhouette=await img.evaluate(async i=>{const c=document.createElement('canvas');c.width=850;c.height=1000;const ctx=c.getContext('2d');ctx.drawImage(i,0,0);const a=ctx.getImageData(0,0,850,1000).data,rows=[];for(let y=0;y<1000;y++){let n=0;for(let x=0;x<850;x++)if(a[(y*850+x)*4+3]>127)n++;if(n)rows.push(n)}return{ratio:Math.max(...rows)/rows.length,base:rows.at(-11)/Math.max(...rows)}});
