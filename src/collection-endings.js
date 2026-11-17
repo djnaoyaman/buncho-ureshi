@@ -2,12 +2,15 @@ import {GARDEN35_PLAN} from './data/garden35-plan.js';
 import {CROW_SPECIES} from './garden-crows.js';
 import {RAPTOR_SPECIES} from './data/raptor-species.js';
 
+export const TOUR_GARDEN_IDS=Object.freeze(["java-rice","bird-gouldian-finch","komorebi","bird-diamond-firetail","mizukagami","bird-white-headed-munia","bird-zebra-finch","bird-red-avadavat","komugi","bird-tricolored-munia","bird-scaly-breasted-munia","bird-black-rumped-waxbill","bird-pin-tailed-whydah","bird-long-tailed-paradise-whydah","bird-red-crossbill","yuyake","bird-eurasian-siskin","bird-eurasian-bullfinch","bird-hawfinch","bird-japanese-grosbeak","shrine-grove","bird-chinese-grosbeak","bird-oriental-greenfinch","kazaguruma","bird-pine-grosbeak","bird-common-redpoll","bird-white-winged-crossbill","bird-long-tailed-rosefinch","tsukiakari","paris-unrest","hanadokei","onsen","bali-terrace","bird-masked-finch","bird-hooded-siskin"]);
 /** Completion sets are frozen for this release: later additions never revoke an earned ending. */
 export const ENDING_CATALOG=Object.freeze([
  {id:'garden',title:'庭の鳥との出会い',ids:GARDEN35_PLAN.map(x=>x.birdId)},
  {id:'crows',title:'カラスたちとの出会い',ids:CROW_SPECIES.map(x=>x.id)},
  {id:'raptors',title:'大空の鳥たちとの出会い',ids:RAPTOR_SPECIES.map(x=>x.id)},
+ {id:'garden-tour',title:'どこへ行っても、帰る場所',ids:TOUR_GARDEN_IDS},
 ].map(e=>Object.freeze({...e,ids:Object.freeze([...new Set(e.ids)])})));
+const catalogFor=w=>w.version>=21?ENDING_CATALOG:ENDING_CATALOG.filter(e=>e.id!=='garden-tour');
 export const ENDING_LEASE_MS=5*60*1000;
 const MAX_TIME=8640000000000000;
 const integer=(n,min=0,max=Number.MAX_SAFE_INTEGER)=>Number.isSafeInteger(n)&&n>=min&&n<=max;
@@ -17,17 +20,17 @@ const validOwner=o=>typeof o==='string'&&/^[a-zA-Z0-9_-]{1,80}$/.test(o);
 export const initialCollectionEndings=(version=2)=>({version,entries:[]});
 export function validateCollectionEndings(w,version=2){
  const s=w.collectionEndings,fail=()=>{throw Error('エンディングの記録が不正です。');};
- if(!shape(s,['version','entries'])||s.version!==version||![1,2].includes(version)||!Array.isArray(s.entries)||s.entries.length>ENDING_CATALOG.length||new Set(s.entries.map(e=>e?.id)).size!==s.entries.length)fail();
+ if(!shape(s,['version','entries'])||s.version!==version||![1,2].includes(version)||!Array.isArray(s.entries)||s.entries.length>catalogFor(w).length||new Set(s.entries.map(e=>e?.id)).size!==s.entries.length)fail();
  for(const e of s.entries){
-  if(!shape(e,['id','unlockedTick','acknowledged','lease',...(version===2?['playback']:[])])||!ENDING_CATALOG.some(c=>c.id===e.id)||!integer(e.unlockedTick,0,w.tick)||typeof e.acknowledged!=='boolean')fail();
+  if(!shape(e,['id','unlockedTick','acknowledged','lease',...(version===2?['playback']:[])])||!catalogFor(w).some(c=>c.id===e.id)||!integer(e.unlockedTick,0,w.tick)||typeof e.acknowledged!=='boolean')fail();
   if(version===2&&(!['pending','legacy','deferred','started','completed'].includes(e.playback)||(e.playback==='pending')!==!e.acknowledged))fail();
   if(e.lease!==null&&(!shape(e.lease,['owner','until'])||!validOwner(e.lease.owner)||!integer(e.lease.until,1,MAX_TIME)||e.acknowledged))fail();
  }
  return s;
 }
-const discoveries=(w,id)=>id==='garden'?w.encounters.discoveries:id==='crows'?w.encounters.crow.visits:w.encounters.raptor.visits;
+const discoveries=(w,id)=>{switch(id){case 'garden':return w.encounters.discoveries;case 'crows':return w.encounters.crow.visits;case 'raptors':return w.encounters.raptor.visits;case 'garden-tour':return TOUR_GARDEN_IDS.filter(id=>w.encounters.garden.visits[id]>0).map(id=>({id}));default:throw Error('Unknown ending condition');}};
 export function collectionEndingStatus(w){
- return ENDING_CATALOG.map(c=>{const seen=new Set(discoveries(w,c.id).map(e=>e.id)),entry=w.collectionEndings?.entries.find(e=>e.id===c.id);return {...c,completed:c.ids.filter(id=>seen.has(id)).length,total:c.ids.length,unlocked:!!entry,acknowledged:entry?.acknowledged||false,playback:entry?.playback??(entry?.acknowledged?'legacy':'pending')};});
+ return catalogFor(w).map(c=>{const seen=new Set(discoveries(w,c.id).map(e=>e.id)),entry=w.collectionEndings?.entries.find(e=>e.id===c.id);return {...c,completed:c.ids.filter(id=>seen.has(id)).length,total:c.ids.length,unlocked:!!entry,acknowledged:entry?.acknowledged||false,playback:entry?.playback??(entry?.acknowledged?'legacy':'pending')};});
 }
 /** Mutate only inside a fresh-state store transaction. No PRNG, clocks, balance or bird changes. */
 export function syncCollectionEndings(w){
@@ -36,7 +39,7 @@ export function syncCollectionEndings(w){
  if(changed)bump(w);
  return {changed};
 }
-export function pendingCollectionEnding(w){return ENDING_CATALOG.find(c=>w.collectionEndings.entries.some(e=>e.id===c.id&&!e.acknowledged))||null;}
+export function pendingCollectionEnding(w){return catalogFor(w).find(c=>w.collectionEndings.entries.some(e=>e.id===c.id&&!e.acknowledged))||null;}
 export function claimCollectionEnding(w,id,owner,now){
  if(!validOwner(owner)||!integer(now,0,MAX_TIME-ENDING_LEASE_MS))return {changed:false,reason:'invalid'};
  const e=w.collectionEndings.entries.find(e=>e.id===id);

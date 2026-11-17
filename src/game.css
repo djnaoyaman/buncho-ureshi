@@ -2150,3 +2150,8 @@ body[data-world="buncho"] .finch-garden-dock > details:not([open]) > summary:foc
 /* A completed cleaning has a quiet static answer, separate from rewards. */
 .game-room[data-field="home"][data-home-response="clean"] .game-home-daylight,.game-room[data-field="home"][data-home-response="drop"] .game-home-daylight{background:linear-gradient(123deg,rgba(255,246,204,.21),transparent 48%)}
 
+
+/* The approved tour has a gesture-gated soundtrack and a flowing pre-play explanation. */
+.game-ending-tour-controls{position:absolute;z-index:2;pointer-events:none;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 64px);display:flex;flex-direction:column;gap:8px}
+.game-ending-dialog[data-film="tour"] .game-ending-actions{position:static}
+.game-ending-dialog[data-film="tour"] [role=status]{position:static;margin:0}
