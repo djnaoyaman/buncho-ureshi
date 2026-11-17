@@ -20,7 +20,7 @@ test('fullscreen request targets an eligible element, never the dialog',async t=
  assert.ok(target);assert.notEqual(target.tagName,'DIALOG');assert.ok(h.root.querySelector('dialog').contains(target));
 });
 test('playing does not leave the action panel focused over the movie',async t=>{
- const h=setup(t);await h.p.open('garden');await tick();
+ const h=setup(t);await h.p.open('garden');h.root.querySelector('[data-ending-play]').click();await tick();
  assert.equal(h.root.querySelector('.game-ending-actions').contains(h.doc.activeElement),false);
 });
 test('cinema CSS removes card bounds and preserves the complete video frame',async()=>{

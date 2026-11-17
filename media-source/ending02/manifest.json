@@ -1,0 +1,17 @@
+{
+  "output": "omochi-ending02-revised-87.mp4",
+  "bytes": 16618441,
+  "sha256": "8ff8e50f2f3bfb2e6e546ec731bdc5a6636e7c02de53a6ee9058e2b1dcc09867",
+  "parts": [
+    {
+      "name": "approved-87.part1",
+      "bytes": 9000000,
+      "sha256": "9a1f9ac4cf7ea6d712d86b7198e11d30c7360c9d397a69faafd2a4cbf6c5571f"
+    },
+    {
+      "name": "approved-87.part2",
+      "bytes": 7618441,
+      "sha256": "5f5e38686d4be2f975d086854a6d68cc75ee9ceb9ec86513cbf3be9ab85801ff"
+    }
+  ]
+}
