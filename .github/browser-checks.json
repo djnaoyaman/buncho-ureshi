@@ -1,7 +1,8 @@
 {
-  "base": "1eca4cdcb6fe1c40ad4681f5c214862b4688cda8",
+  "base": "0b01c66686b92788d07525fb4c6ee25702becd4d",
   "tests": [
-    "tests/browser/egg-art.spec.js"
+    "tests/browser/crow-collection-film.spec.js",
+    "tests/browser/garden-collection-film.spec.js"
   ],
-  "reason": "Round egg silhouette; keep egg/chick nest positions in backdrop coordinates, reveal nest when selected in cropped scenes. Chrome/WebKit cover care geometry and carousel, 1/2/6/9 nestlings, portrait/landscape, selection reset, and unchanged saved identity/family/currency."
+  "reason": "Install user-approved third film byte-identically. Chrome/WebKit verify five-crow unlock, explicit audio gesture, vertical native playback, interrupted/repeated flows, save preservation, and existing garden film regression."
 }
