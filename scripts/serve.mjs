@@ -37,7 +37,23 @@ const server = http
           ".webm": "video/webm",
         }[path.extname(file)] || "application/octet-stream",
       );
-      res.end(data);
+      res.setHeader("Accept-Ranges", "bytes");
+      let start = 0, end = data.length - 1;
+      if (req.headers.range) {
+        const match = /^bytes=(\d*)-(\d*)$/.exec(req.headers.range);
+        if (!match || (!match[1] && !match[2])) {
+          res.writeHead(416, {"Content-Range": `bytes */${data.length}`});return res.end();
+        }
+        if (!match[1]) {const suffix = Number(match[2]);start = Math.max(0, data.length - suffix);}
+        else {start = Number(match[1]);if (match[2]) end = Math.min(Number(match[2]), end);}
+        if (!Number.isSafeInteger(start) || !Number.isSafeInteger(end) || start < 0 || start >= data.length || end < start) {
+          res.writeHead(416, {"Content-Range": `bytes */${data.length}`});return res.end();
+        }
+        res.statusCode = 206;
+        res.setHeader("Content-Range", `bytes ${start}-${end}/${data.length}`);
+      }
+      res.setHeader("Content-Length", end - start + 1);
+      res.end(req.method === "HEAD" ? undefined : data.subarray(start, end + 1));
     } catch {
       try {
         const page = await readFile(path.join(root, "404.html"));
