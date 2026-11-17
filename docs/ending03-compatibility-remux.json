@@ -1,0 +1,9 @@
+{
+  "original_sha256": "07f3c56a3a71a6287bec79ef9c5fbe6b7cb34a80881e7fcaa29d6f736589940e",
+  "delivery_sha256": "dbc8d5e51b20e859ad3c631741aa9b489171343e655825c87e521900c377f1d8",
+  "packet_metadata_and_payload_sha256": "a54dfe60fc8d8e93bb77b33a231a919f61197cbf3d07023f26790703c13d2cdb",
+  "packets": 2836,
+  "changed_container_bytes": 7,
+  "reencoded": false,
+  "reason": "WebKit native decode stalls on original; lossless stream-copy remux passes standalone CI."
+}

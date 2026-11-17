@@ -102,9 +102,6 @@ jobs:
           pactl load-module module-null-sink sink_name=ci_audio sink_properties=device.description=CI_Audio
           pactl set-default-sink ci_audio
           pactl info
-      - name: Prepare lossless media diagnostics without changing approved film
-        run: |
-          ffmpeg -v error -i dist/game-endings/omochi-ending03-approved-40.mp4 -map 0 -c copy -movflags +faststart dist/game-endings/ending03-remux-diagnostic.mp4
       - name: Run the selected checks on Chrome and Safari-compatible WebKit
         env:
           BROWSER_TESTS_JSON: ${{ needs.build.outputs.browser_tests }}

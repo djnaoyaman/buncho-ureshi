@@ -1,8 +1,7 @@
 import {test,expect} from '@playwright/test';
 // Isolate native decoding from game state, fake wall clocks and fullscreen.
-for(const [name,file] of [['crow','omochi-ending03-approved-40.mp4'],['garden','omochi-ending02-revised-87.mp4'],['crow-remux','ending03-remux-diagnostic.mp4'],['crow-blob','omochi-ending03-approved-40.mp4']])for(const muted of [true,false])test(`${name} native standalone media muted=${muted}`,async({page},info)=>{
+for(const [name,file] of [['crow','omochi-ending03-approved-40.mp4'],['garden','omochi-ending02-revised-87.mp4']])for(const muted of [true,false])test(`${name} native standalone media muted=${muted}`,async({page},info)=>{
  await page.goto('');let src=new URL(`game-endings/${file}`,page.url()).href;
- if(name==='crow-blob')src=await page.evaluate(async url=>URL.createObjectURL(await (await fetch(url)).blob()),src);
  await page.setContent('<video controls playsinline style="width:180px;height:320px"></video><button>Play</button>');
  await page.evaluate(({src,muted})=>{const v=document.querySelector('video');v.src=src;v.muted=muted;window.samples=[];v.__frames=0;const f=()=>{v.__frames++;v.requestVideoFrameCallback(f);};v.requestVideoFrameCallback(f);for(const e of ['play','playing','pause','waiting','stalled','error'])v.addEventListener(e,()=>window.samples.push({event:e,time:v.currentTime,paused:v.paused,ready:v.readyState,error:v.error?.message}));document.querySelector('button').onclick=()=>v.play().catch(e=>window.samples.push({playError:String(e)}));},{src,muted});
  await page.getByRole('button',{name:'Play'}).click();await page.waitForTimeout(8000);

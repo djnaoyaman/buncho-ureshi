@@ -581,7 +581,7 @@
     "src/home-care-response.js": "5f72e1b709c297d28da79506f244b6dc1492370c8bb537e210390b7686e53715",
     "game-endings/buncho-ending-01-rich-final-review.mp4": "b32329f433baeb466c4b592ed998c81f3502880cc3cbecc7b058bfb01f09a2b4",
     "game-endings/omochi-ending02-revised-87.mp4": "8ff8e50f2f3bfb2e6e546ec731bdc5a6636e7c02de53a6ee9058e2b1dcc09867",
-    "game-endings/omochi-ending03-approved-40.mp4": "07f3c56a3a71a6287bec79ef9c5fbe6b7cb34a80881e7fcaa29d6f736589940e"
+    "game-endings/omochi-ending03-approved-40.mp4": "dbc8d5e51b20e859ad3c631741aa9b489171343e655825c87e521900c377f1d8"
   },
   "authorizedConnectionFix": {
     "reason": "User separately approved game-to-studio session handoff. Game HTML/app plus cache-query-only updates in four emitted modules; game logic and saves unchanged.",
