@@ -89,6 +89,14 @@ jobs:
           cat /tmp/chrome-libraries.txt
           if grep -q 'not found' /tmp/chrome-libraries.txt; then exit 1; fi
           /opt/google/chrome/chrome --version
+      - name: Provide native audio output for real media checks
+        run: |
+          apt-get update -qq
+          apt-get install -y pulseaudio pulseaudio-utils
+          pulseaudio --start --exit-idle-time=-1
+          pactl load-module module-null-sink sink_name=ci_audio sink_properties=device.description=CI_Audio
+          pactl set-default-sink ci_audio
+          pactl info
       - name: Run the selected checks on Chrome and Safari-compatible WebKit
         env:
           BROWSER_TESTS_JSON: ${{ needs.build.outputs.browser_tests }}
