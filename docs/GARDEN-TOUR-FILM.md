@@ -30,3 +30,5 @@ Chrome/WebKitは新作の実MP4再生と音声開始、320/375/402px、説明と
 出力監査: docs/garden-tour-output-audit.json。前回sealed dist578ファイルを照合し、5実装ファイルとcache URL変更、および承認MP4追加だけを許可。既存動画3本、画像、その他音源は不変。
 
 実装レビュー3往復の結果: 版境界と条件分離の確認→狭幅の操作重なり/pagehide/空active配列の指摘と修正→最終差分と検査行列の確認。別担当が関連35件を独立実行し全件成功。未完ブラウザと正式CIの成功を公開前条件とし、実機・主観的試聴の合格とは扱っていない。
+
+初回PR CIではWebKit402の再視聴でcurrentTime値がほぼ0のままという検査失敗が発生。traceと実画像では後続場面を描画していた。製品はcurrentTimeに依存しないため、再視聴開始の検査をrequestVideoFrameCallbackによる複数フレーム提示とtrusted native endedへ変更し、自然終了・completed保存・再読込の条件を維持する。ケース除外や動画イベントの合成はしない。
