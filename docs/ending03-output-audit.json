@@ -1,0 +1,246 @@
+[
+  {
+    "file": "game/index.html",
+    "cache_only": true
+  },
+  {
+    "file": "src/app.js",
+    "cache_only": true
+  },
+  {
+    "file": "src/away-reports.js",
+    "cache_only": true
+  },
+  {
+    "file": "src/away-session.js",
+    "cache_only": true
+  },
+  {
+    "file": "src/bird-names.js",
+    "cache_only": true
+  },
+  {
+    "file": "src/bird-poses.js",
+    "cache_only": true
+  },
+  {
+    "file": "src/care-guidance.js",
+    "cache_only": true
+  },
+  {
+    "file": "src/care-rules.js",
+    "cache_only": true
+  },
+  {
+    "file": "src/care-schedule.js",
+    "cache_only": true
+  },
+  {
+    "file": "src/collection-ending-player.js",
+    "cache_only": false
+  },
+  {
+    "file": "src/collection-endings.js",
+    "cache_only": true
+  },
+  {
+    "file": "src/data/encounter-catalog.js",
+    "cache_only": true
+  },
+  {
+    "file": "src/data/garden35-music.js",
+    "cache_only": true
+  },
+  {
+    "file": "src/data/gardens.js",
+    "cache_only": true
+  },
+  {
+    "file": "src/diary-paper.js",
+    "cache_only": true
+  },
+  {
+    "file": "src/economy.js",
+    "cache_only": true
+  },
+  {
+    "file": "src/encounter-controller.js",
+    "cache_only": true
+  },
+  {
+    "file": "src/encounter-ui.js",
+    "cache_only": true
+  },
+  {
+    "file": "src/encounters.js",
+    "cache_only": true
+  },
+  {
+    "file": "src/engine.js",
+    "cache_only": true
+  },
+  {
+    "file": "src/family-care.js",
+    "cache_only": true
+  },
+  {
+    "file": "src/family-layout.js",
+    "cache_only": true
+  },
+  {
+    "file": "src/field-visuals.js",
+    "cache_only": true
+  },
+  {
+    "file": "src/friend-cages.js",
+    "cache_only": true
+  },
+  {
+    "file": "src/gacha-motion.js",
+    "cache_only": true
+  },
+  {
+    "file": "src/game-environment.js",
+    "cache_only": true
+  },
+  {
+    "file": "src/game-music-ui.js",
+    "cache_only": true
+  },
+  {
+    "file": "src/game-music.js",
+    "cache_only": true
+  },
+  {
+    "file": "src/game-next-goals.js",
+    "cache_only": true
+  },
+  {
+    "file": "src/game-store.js",
+    "cache_only": true
+  },
+  {
+    "file": "src/game.css",
+    "cache_only": true
+  },
+  {
+    "file": "src/game.js",
+    "cache_only": true
+  },
+  {
+    "file": "src/garden-about-booklet.js",
+    "cache_only": true
+  },
+  {
+    "file": "src/garden-bird-motion.js",
+    "cache_only": true
+  },
+  {
+    "file": "src/garden-companion-ui.js",
+    "cache_only": true
+  },
+  {
+    "file": "src/garden-crow-ui.js",
+    "cache_only": true
+  },
+  {
+    "file": "src/garden-crows.js",
+    "cache_only": true
+  },
+  {
+    "file": "src/garden-expedition-ui.js",
+    "cache_only": true
+  },
+  {
+    "file": "src/garden-expedition.js",
+    "cache_only": true
+  },
+  {
+    "file": "src/garden-friend-cards.js",
+    "cache_only": true
+  },
+  {
+    "file": "src/garden-friends.js",
+    "cache_only": true
+  },
+  {
+    "file": "src/garden-keepsake-layout.js",
+    "cache_only": true
+  },
+  {
+    "file": "src/garden-leaf-event-ui.js",
+    "cache_only": true
+  },
+  {
+    "file": "src/garden-leaf-event.js",
+    "cache_only": true
+  },
+  {
+    "file": "src/garden-predator-clock.js",
+    "cache_only": true
+  },
+  {
+    "file": "src/garden-raptor-controller.js",
+    "cache_only": true
+  },
+  {
+    "file": "src/garden-raptor-return-prompt.js",
+    "cache_only": true
+  },
+  {
+    "file": "src/garden-raptor-ui.js",
+    "cache_only": true
+  },
+  {
+    "file": "src/garden-raptors.js",
+    "cache_only": true
+  },
+  {
+    "file": "src/garden-showcase-ui.js",
+    "cache_only": true
+  },
+  {
+    "file": "src/garden-showcase.js",
+    "cache_only": true
+  },
+  {
+    "file": "src/garden-social-plan.js",
+    "cache_only": true
+  },
+  {
+    "file": "src/garden-visit-sessions.js",
+    "cache_only": true
+  },
+  {
+    "file": "src/garden35-migration.js",
+    "cache_only": true
+  },
+  {
+    "file": "src/life-care-ui.js",
+    "cache_only": true
+  },
+  {
+    "file": "src/life-care.js",
+    "cache_only": true
+  },
+  {
+    "file": "src/owner-peek.js",
+    "cache_only": true
+  },
+  {
+    "file": "src/protagonist.js",
+    "cache_only": true
+  },
+  {
+    "file": "src/relationship-map.js",
+    "cache_only": true
+  },
+  {
+    "file": "src/home-atmosphere.js",
+    "cache_only": true
+  },
+  {
+    "file": "src/home-care-response.js",
+    "cache_only": true
+  }
+]
