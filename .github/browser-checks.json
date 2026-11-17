@@ -1,10 +1,7 @@
 {
-  "base": "7e2be77cb437fa2b3e024be58f0047cc229797bf",
+  "base": "1eca4cdcb6fe1c40ad4681f5c214862b4688cda8",
   "tests": [
-    "tests/browser/garden-collection-film.spec.js",
-    "tests/browser/garden-tour-film.spec.js",
-    "tests/browser/ending-records.spec.js",
-    "tests/browser/save-protection.spec.js"
+    "tests/browser/egg-art.spec.js"
   ],
-  "reason": "Approved ending 2 MP4, explicit audio start and shared cinema controls: real 87s metadata and decoding, narrow phone controls, interruption/replay/native completion, persisted achievement and save preservation. Existing ending 1 and storage regressions retained. Chrome/WebKit only; no physical iOS or subjective listening claim."
+  "reason": "Round egg silhouette; keep egg/chick nest positions in backdrop coordinates, reveal nest when selected in cropped scenes. Chrome/WebKit cover care geometry and carousel, 1/2/6/9 nestlings, portrait/landscape, selection reset, and unchanged saved identity/family/currency."
 }
