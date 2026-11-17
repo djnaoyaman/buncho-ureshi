@@ -7,5 +7,5 @@
     "tests/browser/preservation-box.spec.js",
     "tests/browser/home-continuity.spec.js"
   ],
-  "reason": "Approved real MP4 decoding and explicit audio start, 320/375/402px controls, pause/replay/reload/completion, v20 original and unearned migration; prior recording quota retry/import/reset and input/orientation continuity. Chrome/WebKit, not physical iOS15 or subjective listening."
+  "reason": "Approved real MP4 decoding and explicit audio start, 320/375/402px controls, pause/replay/reload/completion, v20 original and unearned migration; prior recording quota retry/import/reset and input/orientation continuity. Chrome/WebKit, not physical iOS15 or subjective listening. Preserve failing WebKit402 case; inspect native lifecycle, stale media/session isolation and serialized fullscreen close/replay."
 }
