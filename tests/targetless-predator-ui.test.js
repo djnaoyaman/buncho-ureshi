@@ -190,8 +190,8 @@ test('garden help distinguishes arrival from the saved attending protagonist tar
  const w=fixture();
  dom(renderFinchGarden(w,{now:NOW}),root=>{
   const help=root.querySelector('[data-garden-details="about"]').textContent;
-  assert.match(help,/カラスも猛禽類も、主人公が同行していない庭にも来ます/);
-  assert.match(help,/来訪時に同行している主人公だけが標的になります/);
-  assert.match(help,/おうちで留守番している文鳥は狙われません/);
+  assert.match(help,/カラスももうきんも、主人公がいないにわにも来る/);
+  assert.match(help,/ねらわれるのは、鳥が来たときにいっしょにいる主人公だけ/);
+  assert.match(help,/おうちでるす番している文鳥は、ねらわれない/);
  });
 });

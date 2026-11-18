@@ -10,7 +10,7 @@ import {inviteFixture} from './fixtures/garden-invitation.js';
 
 const system=createEncounterSystem(ENCOUNTER_CANDIDATES),guard=w=>({worldId:w.worldId,revision:w.revision});
 const dom=html=>{const win=new Window();win.document.body.innerHTML=html;return win.document.body;};
-const actions={grass:'草をそっと観察',water:'水辺をそっと観察',branch:'枝を見上げ',song:'歌を聴',quiet:'ひとやすみ'};
+const actions={grass:'草をそっと見て',water:'水のそばをそっと見て',branch:'えだを見上げ',song:'歌を聞',quiet:'ひとやすみ'};
 
 test('all 32 hidden birds have source-derived gardens, real observation actions and gentle appearance clues',()=>{
  assert.equal(ENCOUNTER_CANDIDATES.length,35);
@@ -20,8 +20,8 @@ test('all 32 hidden birds have source-derived gardens, real observation actions 
   for(const garden of GARDENS)assert.equal(hint.includes(garden.name),names.includes(garden.name),`${entry.id}: ${garden.id}`);
   assert.ok(hint.includes(actions[entry.gardenEvent.scene]),entry.id);
   assert.ok(hint.includes(entry.searchClue),entry.id);
-  assert.match(hint,/^庭の友達より「/);
-  assert.match(hint,/を見かけたよ」$/);
+  assert.match(hint,/^にわの友だちより「/);
+  assert.match(hint,/を見たよ」$/);
   assert.doesNotMatch(hint,/必ず|絵本を|ページを|ノートを|しおりを/);
   for(const name of [entry.name,entry.english,entry.scientific].filter(Boolean))assert.ok(!hint.includes(name),entry.id);
  }

@@ -22,5 +22,5 @@ test('shadow and garden guide distinguish arrival odds, escape time and conseque
  const w=createWorld(now),before=structuredClone(w),notice=renderCrowNotice(w,{warning:'large-billed-crow',now});
  assert.match(notice,/6秒でカラスが来る/);assert.match(notice,/来る前に/);assert.doesNotMatch(notice,/事故死/);
  const guide=renderGardenAboutBooklet({name:'庭',description:'創作の庭'});
- assert.match(guide,/事故の確率ではありません/);assert.match(guide,/1分ごとに35%/);assert.match(guide,/危険な来訪は全種類合わせて24時間に1回まで/);assert.match(guide,/次のカラスまで10分/);assert.doesNotMatch(guide,/1分ごとに1%/);assert.match(guide,/残り10秒/);assert.match(guide,/おうちで留守番している文鳥は狙われません/);assert.deepEqual(w,before);
+ assert.match(guide,/事故が起きるわりあいではない/);assert.match(guide,/そのあとも1分ごと/);assert.match(guide,/来るチャンスは、毎回35%/);assert.match(guide,/あぶないもうきんが来るのは、全部の鳥を合わせて24時間に1回まで/);assert.match(guide,/次のカラスまで10分/);assert.doesNotMatch(guide,/1分ごとに1%|毎回1%/);assert.match(guide,/のこり10秒/);assert.match(guide,/おうちでるす番している文鳥は、ねらわれない/);assert.deepEqual(w,before);
 });

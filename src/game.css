@@ -2190,3 +2190,16 @@ body[data-world="buncho"] .game-main .game-room[data-field="home"][data-nest-bow
 .game-food-choice{border-top:1px solid #d7d0bc;margin-top:.75rem;padding-top:.35rem;font-size:.85rem;line-height:1.7}
 .game-food-choice>summary{cursor:pointer;min-height:44px;padding:.5rem 0;font-weight:700;overflow-wrap:anywhere}
 .game-food-choice label{display:block;margin:.5rem 0}.game-food-choice select{display:block;width:100%;max-width:100%;min-height:44px;font:inherit;padding:.45rem;border:1px solid #a9b59d;border-radius:.5rem;background:#fffdf7;color:#314b37}.game-food-choice p{margin:.6rem 0;overflow-wrap:anywhere}
+
+/* Plain-language guidance shared by care, food, and the help notebook.
+   Native lists retain their reading order without pictures or color. */
+body[data-world="buncho"] :is(.kids-guide,.kids-steps){line-height:1.9;overflow-wrap:anywhere;min-width:0}
+body[data-world="buncho"] .kids-guide{margin-block:1rem;padding:1rem;border:1px solid #a9b9a3;border-radius:1rem;background:#f7f8ef;color:#304d43}
+body[data-world="buncho"] .kids-steps{display:grid;gap:.7rem;margin-block:.8rem;padding-left:1.6rem;list-style:decimal}
+body[data-world="buncho"] .kids-steps>li{min-width:0;padding:.7rem;border:1px solid #c8c5b3;border-radius:.7rem;background:#fffdf6}
+body[data-world="buncho"] .kids-steps>li::marker{font-weight:700;color:#304d43}
+body[data-world="buncho"] .kids-steps :is(strong,span){display:block}
+body[data-world="buncho"] :is(.game-food-choice,.life-time-guide,.life-caretaker-scope,.caretaker-recruitment,.life-health-rules,.game-next-goals) ruby{ruby-position:over;ruby-align:center}
+body[data-world="buncho"] :is(.game-food-choice,.life-time-guide,.life-caretaker-scope,.caretaker-recruitment,.life-health-rules,.game-next-goals) rt{font-size:.62em;font-weight:400;line-height:1.2}
+body[data-world="buncho"] :is(.game-food-choice,.life-time-guide,.life-caretaker-scope,.life-health-rules) p{line-height:1.95}
+@media(max-width:420px){body[data-world="buncho"] .kids-guide{padding:.75rem}body[data-world="buncho"] .kids-steps{padding-left:1.35rem}body[data-world="buncho"] .kids-steps>li{padding:.6rem}}

@@ -29,7 +29,7 @@ function documentFor(html){const window=new Window();window.document.body.innerH
 test('health rendering is pure and states fictional real-time rules and prices',()=>{
  const w=world(),before=JSON.stringify(w),html=renderLifeCarePanel(w),doc=documentFor(html);
  assert.equal(JSON.stringify(w),before);
- assert.match(html,/ゲーム内10年/);assert.match(html,/実時間3日/);assert.match(html,/発症から実時間24時間/);assert.match(html,/鳥を診られる獣医師/);assert.match(html,/追加料金なし/);
+ assert.match(html,/ゲーム内10年/);assert.match(html,/ほんとうの時間3日/);assert.match(html,/病気になってから24時間/);assert.match(html,/<ruby>獣医師<rt aria-hidden="true">じゅういし<\/rt><\/ruby>/);assert.match(html,/病院のお金も/);
  assert.equal(doc.querySelector('[data-life-hire="1"]').disabled,false);
  assert.equal(doc.querySelector('[data-life-hire="3"]').disabled,false);
  assert.equal(doc.querySelector('[data-life-hire="7"]').disabled,true);
@@ -67,13 +67,13 @@ test('empty memorial and missing residents remain usable',()=>{
 test('illness shows both independent deadlines in earliest-first order, including ties',()=>{
  for(const [foodHours,treatmentHours,first] of [[1,24,'feed'],[72,1,'treatment'],[24,24,'feed']]){
   const w=world();w.birds[0].life.lastCareAt=time+(foodHours-72)*3600000;w.birds[0].life.condition={kind:'injury',deadlineAt:time+treatmentHours*3600000};const before=JSON.stringify(w),doc=documentFor(renderLifeCarePanel(w));
-  const deadlines=[...doc.querySelectorAll('[data-life-deadline]')];assert.equal(deadlines.length,2);assert.equal(deadlines[0].dataset.lifeDeadline,first);assert.match(deadlines.find(e=>e.dataset.lifeDeadline==='feed').textContent,/ごはんまで（実時間）/);assert.match(deadlines.find(e=>e.dataset.lifeDeadline==='treatment').textContent,/通院まで（実時間）/);
+  const deadlines=[...doc.querySelectorAll('[data-life-deadline]')];assert.equal(deadlines.length,2);assert.equal(deadlines[0].dataset.lifeDeadline,first);assert.match(deadlines.find(e=>e.dataset.lifeDeadline==='feed').textContent,/ごはんまで（ほんとうの時間）/);assert.match(deadlines.find(e=>e.dataset.lifeDeadline==='treatment').textContent,/病院まで（ほんとうの時間）/);
   if(foodHours===treatmentHours)assert.ok(deadlines.every(e=>e.textContent.startsWith('同じ時刻')));else{assert.ok(deadlines[0].textContent.startsWith('先に必要'));assert.ok(!deadlines[1].textContent.startsWith('先に必要'));}
-  assert.match(doc.querySelector('.life-bird-card').textContent,/片方だけでは、もう片方の期限は延びません/);assert.equal(JSON.stringify(w),before);
+  assert.match(doc.querySelector('.life-bird-card').textContent,/片方だけでは、もう片方の時間はのびません/);assert.equal(JSON.stringify(w),before);
  }
 });
 test('healthy feeding deadline stays explicit while caretaker coverage stays clear',()=>{
- const w=world();assert.match(documentFor(renderLifeCarePanel(w)).querySelector('.life-bird-card').textContent,/ごはんの期限まで：実時間 3日 0時間/);w.contract={active:true,remainingMs:7*86400000};const card=documentFor(renderLifeCarePanel(w)).querySelector('.life-bird-card');assert.match(card.textContent,/飼育員がお世話をしています/);assert.doesNotMatch(card.textContent,/ごはんの期限まで/);
+ const w=world();assert.match(documentFor(renderLifeCarePanel(w)).querySelector('.life-bird-card').textContent,/ごはんの期限まで：ほんとうの時間 3日 0時間/);w.contract={active:true,remainingMs:7*86400000};const card=documentFor(renderLifeCarePanel(w)).querySelector('.life-bird-card');assert.match(card.textContent,/飼育員がお世話をしています/);assert.doesNotMatch(card.textContent,/ごはんの期限まで/);
 });
 
 test('leave/return guidance distinguishes real clocks, grace, lifespan and successful feeding without changing state',()=>{
@@ -81,8 +81,8 @@ test('leave/return guidance distinguishes real clocks, grace, lifespan and succe
  const rules=doc.querySelector('[data-game-details="health-rules"]');
  assert.equal(rules.open,false);
  const guide=rules.querySelector('[data-life-time-guide]').textContent;
- for(const phrase of ['成長と年齢が進みます','年齢は止まります','実時間24時間の猶予','猶予は自動の給餌や治療ではありません','寿命は延びません','寿命・事故','満腹で食べなかったとき','親の卵・ひなにも届きます','1羽1回 12 Gold'])assert.ok(guide.includes(phrase),phrase);
+ for(const phrase of ['成長と年れいが進みます','年れいも止まります','ほんとうの時間で24時間','自動でごはんを食べたり、病気が治ったりするわけではありません','寿命はのびません','取り消すこともできません','おなかいっぱいで食べなかったとき','親の卵・ひなにもごはんが届きます','1羽1回 12 Gold'])assert.ok(guide.includes(phrase),phrase);
  assert.equal(JSON.stringify(w),before);
- assert.equal(doc.querySelectorAll('[data-life-time-guide]').length,1);
+ assert.equal(doc.querySelectorAll('[data-life-time-guide]').length,1);assert.equal(doc.querySelectorAll('[data-life-time-guide] ol.kids-steps > li').length,3);assert.ok([...doc.querySelectorAll('rt')].every(rt=>rt.getAttribute('aria-hidden')==='true'));assert.equal(doc.querySelector('[data-game-details=life-time-more]').open,false);
  assert.ok(doc.querySelector('.life-care-warning').textContent.includes('すべてゲームのルール'));
 });

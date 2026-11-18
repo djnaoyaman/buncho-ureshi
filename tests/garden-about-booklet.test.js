@@ -1,11 +1,11 @@
 import test from 'node:test';
-import {originalAbout} from './fixtures/garden-about-baseline.js';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {Window} from 'happy-dom';
 import {renderGardenAboutBooklet} from '../src/garden-about-booklet.js';
 import {GARDENS} from '../src/data/gardens.js';
 import {CROW_RULES} from '../src/garden-crows.js';
+import {PREDATOR_ENTRY_RULES} from '../src/garden-predator-clock.js';
 import {RAPTOR_RULES} from '../src/garden-raptors.js';
 import {createWorld,serializeWorld} from '../src/engine.js';
 const vm=p=>({name:p.name,description:p.description,landform:p.landform,art:{src:'/buncho-ureshi/'+p.background.src.replace(/\.png$/,'.screen.webp'),width:p.background.width,height:p.background.height,alt:p.description}});
@@ -14,22 +14,30 @@ for(const place of GARDENS)test(`${place.id}: three chapters preserve actual ide
  const outer=doc.querySelector('details');assert.equal(outer.dataset.gardenDetails,'about');assert.equal(outer.getAttribute('name'),'garden-tools');assert.equal(outer.open,false);
  assert.equal(outer.querySelector(':scope > summary').textContent,'庭のこと');
  assert.equal(doc.querySelector('h4').textContent,place.name);assert.ok(doc.body.textContent.includes(place.description));
- assert.deepEqual([...doc.querySelectorAll('h5')].map(e=>e.textContent),['01どんな庭？','02空からの来客','03この庭について']);
+ assert.deepEqual([...doc.querySelectorAll('h5')].map(e=>e.textContent),['01どんな庭？','02空から来る鳥','03この庭について']);
  assert.equal(doc.querySelector('img').getAttribute('src'),vm(place).art.src);assert.equal(doc.querySelector('img').alt,place.description);
  assert.ok(doc.querySelector('figcaption').textContent.includes(place.landform));
  const warning=doc.querySelector('.garden-about-booklet__warning');assert.equal(warning.closest('details'),outer,'danger is not nested in optional rules');
- assert.ok(warning.textContent.includes('1分以内'));assert.ok(warning.textContent.includes('事故死'));assert.equal(doc.querySelectorAll('[role=alert]').length,0,'general rules are not a live warning');
+ assert.ok(warning.textContent.includes('1分以内'));assert.ok(warning.textContent.includes('事故で命をなくします'));assert.equal(doc.querySelectorAll('[role=alert]').length,0,'general rules are not a live warning');
  const rules=doc.querySelector('[data-garden-details=about-rules]');assert.equal(rules.getAttribute('name'),null);assert.equal(rules.open,false);outer.open=true;rules.open=true;outer.open=false;outer.open=true;assert.equal(rules.open,true);
  window.happyDOM.close();
 });
-test('explanatory sentences retain safety and targetless distinction with updated frequency',()=>{
- const original=originalAbout.replace('庭に続けて2分いると、カラスが来ることがあります','カラスが来た後は、次のカラスまで10分あけます').replace('まれに猛禽類も来訪します','猛禽類も来訪します').replace('猛禽の警告が出たら1分以内におうちへ','猛禽の警告で「残る」を選んだら1分以内におうちへ');
- const oldText=original.replace(/<[^>]+>/g,'').replace('${esc(place.description)}','').replace('庭のこと','');
+test('plain language retains every safety, timing and target rule without hiding the return instruction',()=>{
  const window=new Window();window.document.body.innerHTML=renderGardenAboutBooklet(vm(GARDENS[0]));
- const text=window.document.body.textContent.replace(/\s/g,'');
- for(const sentence of oldText.split('。').filter(Boolean))assert.ok(text.includes(sentence),sentence);
- assert.ok(text.includes('主人公の同行なしで始まった来訪には標的がなく'));assert.ok(text.includes('途中から別の文鳥を標的にすることはありません'));
- assert.ok(text.includes(`${CROW_RULES.dwellMs/60000}分`));assert.ok(text.includes(`${RAPTOR_RULES.warningMs/60000}分以内`));
+ const doc=window.document,text=doc.body.textContent.replace(/\s/g,''),duration=ms=>ms%60000===0?`${ms/60000}分`:`${ms/1000}秒`;
+ for(const phrase of ['主人公がいないときに来た鳥は、安全にながめられる','そのとちゅうから、ほかの文鳥がねらわれることはない',
+ '全部の鳥を合わせて24時間に1回まで','安全な出会いでずかんをふやせる','元気が半分になる','おうちでお世話すると、また元気になる',
+ 'ずかんは消えない','おうちでるす番している文鳥は、ねらわれない','ミサゴとなかよしの鳥は、おそってこない',
+ '帰るかどうかをえらんでいる間は、時間が止まる','「残る」をえらぶと、のこり時間が動きだす','のこり10秒','「今すぐ帰る」',
+ 'ゲームの画面が見えていない間は止まる','画面を読みこみなおしても、のこり時間はそのまま','画面を閉じるだけでは、あぶない鳥は消えない',
+ 'いっしょに行く鳥を変えても、お知らせは消えない','鳥が来たときにいっしょにいる主人公だけ'])assert.ok(text.includes(phrase),phrase);
+ assert.ok(text.includes(`${duration(PREDATOR_ENTRY_RULES.dwellMs)}すごす`));assert.ok(text.includes(`${duration(PREDATOR_ENTRY_RULES.retryMs)}ごと`));
+ assert.ok(text.includes(`毎回${PREDATOR_ENTRY_RULES.chance*100}%`));assert.ok(text.includes(`カラス${PREDATOR_ENTRY_RULES.crowWeight}：もうきん${PREDATOR_ENTRY_RULES.raptorWeight}`));
+ assert.ok(text.includes('事故が起きるわりあいではない'));
+ assert.ok(text.includes(`次のカラスまで${duration(CROW_RULES.cooldownMs)}`));assert.ok(text.includes(`かげが出てから${duration(CROW_RULES.warningMs)}`));
+ assert.ok(text.includes(`${duration(RAPTOR_RULES.visitCooldownMs)}たつ`));assert.ok(text.includes(`${duration(RAPTOR_RULES.warningMs)}以内`));
+ const warning=doc.querySelector('.garden-about-booklet__warning');assert.equal(warning.getAttribute('aria-label'),'もうきんのお知らせが出たとき');assert.equal(warning.querySelector('h6').textContent,'ワシ・タカなどのお知らせが出たら');assert.match(warning.querySelector('li:nth-child(2)').textContent,/もうきんのお知らせで「残る」/);assert.equal(warning.closest('details').dataset.gardenDetails,'about');assert.equal(warning.querySelectorAll('ol>li').length,3);assert.match(warning.querySelector('li').textContent,/「おうちへ戻る」を押そう/);
+ const frequency=doc.querySelector('[data-garden-details=about-frequency]');assert.equal(frequency.open,false);assert.equal(doc.querySelector('[data-garden-details=about-rules]').open,false);
  window.happyDOM.close();
 });
 test('pure renderer escapes text, refuses external art and preserves frozen VM and world bytes',()=>{

@@ -6,12 +6,12 @@ export function careGuidance(world,birdId){
  const bird=allBirds(world).find(b=>b.id===birdId);if(!bird)return '';
  const life=lifeStatus(world,bird),danger=world.encounters?.raptor?.active;
  if(life?.death)return '思い出の庭で、この子に会えるよ。';
- if(danger?.hostile&&danger.targetBirdId===birdId)return '危険が近づいているよ。おうちへ帰ろう。';
- if(life?.condition&&bird.home==='resident')return '体調が変わったよ。病院で診てもらおう。';
+ if(danger?.hostile&&danger.targetBirdId===birdId)return 'あぶないよ。おうちへ帰ろう。';
+ if(life?.condition&&bird.home==='resident')return 'ぐあいがよくないよ。病院でみてもらおう。';
  if(bird.home==='departed')return '別のおうちで暮らす仲間だよ。';
- if(['egg','chick'].includes(bird.stage))return '巣で育つ時間。そっと見守ろう。';
- if(bird.home==='visitor')return '遊びに来たお友達。お話ししてみよう。';
- if(bird.needs.food<100)return 'ごはんで、この子のおなかを満たそう。';
+ if(['egg','chick'].includes(bird.stage))return 'すで育つ時間。そっと見守ろう。';
+ if(bird.home==='visitor')return '遊びに来た友だち。お話ししてみよう。';
+ if(bird.needs.food<100)return 'ごはんで、おなかをいっぱいにしよう。';
  if(bird.needs.energy<100)return '名前を呼ぶか、なでてふれ合おう。';
  return 'おなかも、げんきもいっぱい。なでてあそぼう。';
 }

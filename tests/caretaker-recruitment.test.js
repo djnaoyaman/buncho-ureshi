@@ -9,7 +9,7 @@ const parse=html=>{const w=new Window();w.document.body.innerHTML=html;return w.
 // Use baseline renderer as oracle: never reproduce price/time/eligibility formulas.
 function fromBaseline(old){
  const section=old.querySelector('.life-caretaker');
- return {active:!!section.querySelector('.life-contract'),dailyGoldLabel:section.querySelector(':scope > p strong').textContent.replace(' Gold',''),goldLabel:section.lastElementChild.textContent.match(/所持金：(.*?) Gold/)[1],remainingLabel:section.querySelector('.life-contract strong')?.textContent.replace('実時間 ','')||'',insufficientGold:section.lastElementChild.textContent.includes('足りません'),options:[...section.querySelectorAll('[data-life-hire]')].map(b=>({days:Number(b.dataset.lifeHire),priceLabel:b.querySelector('strong').textContent.replace(' Gold',''),disabled:b.disabled}))};
+ return {active:!!section.querySelector('.life-contract'),dailyGoldLabel:section.querySelector(':scope > p strong').textContent.replace(' Gold',''),goldLabel:section.lastElementChild.textContent.match(/もっているお金：(.*?) Gold/)[1],remainingLabel:section.querySelector('.life-contract strong')?.textContent.replace('ほんとうの時間 ','')||'',insufficientGold:section.lastElementChild.textContent.includes('足りません'),options:[...section.querySelectorAll('[data-life-hire]')].map(b=>({days:Number(b.dataset.lifeHire),priceLabel:b.querySelector('strong').textContent.replace(' Gold',''),disabled:b.disabled}))};
 }
 for(const [name,gold,days,residents] of [['normal',200,0,true],['insufficient',0,0,true],['partial',25,0,true],['active',500,2,true],['cap',5000,29,true],['expired',500,-1,true],['empty',500,0,false]]){
  test(`baseline values and all existing labels retained: ${name}`,()=>{
@@ -45,8 +45,8 @@ test('approved signboard remains exact bytes',async()=>{
 test('contract explanation covers all residents, no automatic renewal and limited coverage in collapsed detail',()=>{
  const w=createWorld(now,42),before=JSON.stringify(w),doc=parse(renderLifeCarePanel(w));
  const section=doc.querySelector('.caretaker-recruitment'),scope=section.querySelector('.life-caretaker-scope');
- assert.equal(scope.open,false);
- for(const phrase of ['自動更新や自動の追加支払いはありません','おうちで暮らす全員','羽数による追加料金はありません','庭の事故を防いだり','契約が終わると自動のお世話も終わります','最後の給餌から実時間3日','合計30日'])assert.ok(section.textContent.includes(phrase),phrase);
+ assert.equal(scope.open,false);assert.equal(scope.querySelectorAll('ol.kids-steps > li').length,3);assert.ok([...scope.querySelectorAll('rt')].every(rt=>rt.getAttribute('aria-hidden')==='true'));
+ for(const phrase of ['勝手に日数がふえたり、お金が引かれたりしません','おうちの全員','鳥がふえても、お金は同じ','ふせぐこと','時間が来たらおしまい','最後に食べてから','ほんとうの時間で3日','残りを合わせて30日'])assert.ok(section.textContent.includes(phrase),phrase);
  assert.deepEqual([...section.querySelectorAll('[data-life-hire]')].map(b=>b.dataset.lifeHire),['1','3','7']);
  assert.equal(JSON.stringify(w),before);
 });
