@@ -1,0 +1,405 @@
+{
+  "base": "00e99456b9b64ec97fd64cd61b89ebcd7b0c53ff",
+  "verifiedBaselineFiles": 581,
+  "changes": [
+    {
+      "path": "game/index.html",
+      "reason": "cache URL only",
+      "before": "8bf0b60c32fa18154a5173de68e46a51ecb35557a33c5d6e51402d0c94834fb0",
+      "after": "2b415e8c14408ed39319f09aa595c764bdd707d8c6163db9153520ce6a310f5b"
+    },
+    {
+      "path": "src/analytics-loader.js",
+      "reason": "approved telemetry source",
+      "before": "3dc6c6df29065c06c08c730d67366035eb4ec099be476fdbe5e95ee0ac628611",
+      "after": "55f970f99499ca5d79fecbc4994f6e4dd0810b79a49e88056309adaec3ec2069"
+    },
+    {
+      "path": "src/analytics.js",
+      "reason": "approved telemetry source",
+      "before": "ab1548447a53e9914b462805de7384a2979ea7a0827631776feda01c2a94e163",
+      "after": "18801bf5f294a9f90c17c0efeafd2e8152af494bfed4f30f46c032a34a8e90ed"
+    },
+    {
+      "path": "src/app.js",
+      "reason": "cache URL only",
+      "before": "c48d52213c6ca05ccce88c2c93eb68d16fc001343ccb738f432338fddda9a559",
+      "after": "6d742bf848dba227b1e1df444d3e14fa619173207ec971151bfa0d56c513f1d0"
+    },
+    {
+      "path": "src/away-reports.js",
+      "reason": "cache URL only",
+      "before": "8228792aa22bcc84f9f3f51627d3eaed89f6f5fbf13b176c2371c23af077d7c3",
+      "after": "102c8f445b99894137ae7c10e056e0022741a5fa16daa77b2f7be617f1419346"
+    },
+    {
+      "path": "src/away-session.js",
+      "reason": "cache URL only",
+      "before": "bd2666f259b33f1229039b73736c7ef4cc220a1fa2bf6f4703a39e606990a00b",
+      "after": "09689624c6d3f5362563195764d8804d1094e0ecb6814c55f7b39c1a240f5df3"
+    },
+    {
+      "path": "src/bird-names.js",
+      "reason": "cache URL only",
+      "before": "144a322a7bfc41f0b84b0e7cc95cc9e42960821b200de448bb56e9e93a8d5d08",
+      "after": "17457071a7760e7766018c5ff1ea777bb543ab1af718929ec07a9fe082acee7a"
+    },
+    {
+      "path": "src/bird-poses.js",
+      "reason": "cache URL only",
+      "before": "78a8c5fab1290b2dce838d9ef6a532b6625ad8f3d19b7d2825c1f9aacb8badd3",
+      "after": "7adcac2ab262aef99f2796410521454e8a2d9295cdcda08529e9fcce40dfcd3c"
+    },
+    {
+      "path": "src/care-guidance.js",
+      "reason": "cache URL only",
+      "before": "4d04478c9d2aaeb387b9ca94df26d805dca03cd3af5595b76ab54c98e45e15f6",
+      "after": "778b43abc2e01bb3e737b28b0b442a96c5b2c9352a244210d195048c055bf944"
+    },
+    {
+      "path": "src/care-rules.js",
+      "reason": "cache URL only",
+      "before": "8250adf246fc8c865503a6b5af14b9cc7dd9de1eb70e7a630f0bc8e35419426e",
+      "after": "75f927f767e0d7e76effca840aa8d5cc5049dee94f601a495d60c4d5b1cf17f8"
+    },
+    {
+      "path": "src/care-schedule.js",
+      "reason": "cache URL only",
+      "before": "4d3668d230a32c6f9a6e3d1819d101a445748fa1dabebbe12c1335c8673c6804",
+      "after": "fbb1e2ecc04a74591cbd08a2b67df498a24ab1ce55f1fd4b29cd8d1f435ff83c"
+    },
+    {
+      "path": "src/collection-ending-player.js",
+      "reason": "cache URL only",
+      "before": "a67b91e571742169bc0b8cb8ea7ea9490fb16234a38f472f7eb4c2ae9531a457",
+      "after": "3fa1947f6adaf4c3819ac0d749126755344781c2b3d00370924aa00e252fe3cf"
+    },
+    {
+      "path": "src/collection-endings.js",
+      "reason": "cache URL only",
+      "before": "5dc40d4206154420f6a4be213b98bf43af7cc7df3fb819a540b555ad84253998",
+      "after": "e595524d2a13294f27685a6787b7e7a88f1e64de00bd170a97df272990165617"
+    },
+    {
+      "path": "src/data/encounter-catalog.js",
+      "reason": "cache URL only",
+      "before": "09fc43535202771ff11f3a8fc5f1c76757075f40bd882d98d212679102490ca9",
+      "after": "bea83dfb1dde31eafc4b4c3d11df9dc4293b0899f0e97238f28a7349ca55b21b"
+    },
+    {
+      "path": "src/data/garden35-music.js",
+      "reason": "cache URL only",
+      "before": "59223d8e1a84a7e1a0a311e1c53709e043e4cee53e61ca5ed9918dc4f921c113",
+      "after": "edf44d89dff5b375b159c379dec410558ba142c68dcbcea3205199c553ff67d0"
+    },
+    {
+      "path": "src/data/gardens.js",
+      "reason": "cache URL only",
+      "before": "0ed4526e8954d78d3707b6368ca7a6ae0b98483676d053a39f606e0a906a13b4",
+      "after": "a35c3b67fa0da4ed137b6487750e0f425be4454ec44be4013e5f15cc0018f60f"
+    },
+    {
+      "path": "src/diary-paper.js",
+      "reason": "cache URL only",
+      "before": "d698e6f4e66477adc0ca7e7ae87a9c255ff15ecac74a9bd6198c4e6e5e8683ea",
+      "after": "37f687a1ad1c46612815b133adb84c9ec8744a2a88ae2586101cea99644484f8"
+    },
+    {
+      "path": "src/economy.js",
+      "reason": "cache URL only",
+      "before": "92e16901216b79c5b3d101e96ea47eb0aa74c5df701040b7a726c2ff8a81704a",
+      "after": "08447041d321762114df3fde2bb3c4f12dcf1fdacc9d8f681ada77de69229af4"
+    },
+    {
+      "path": "src/editorial-parallax.js",
+      "reason": "cache URL only",
+      "before": "55d6e56acf79cd5cbb3cffce1aa1ddc195340f537f9db07d1a9a538e0113e01d",
+      "after": "63d81b4ec7c66e28490f56faee7e0580fb4350edaaba77a37cc0a55ec657420c"
+    },
+    {
+      "path": "src/encounter-controller.js",
+      "reason": "cache URL only",
+      "before": "b1fe0313c42224d1000f8b722fb059769f5af7bdeb1a886276d1a9980fddcda2",
+      "after": "6e8a4887b3d49a2f4ade2437c87c1eb7179e0804d84f3d4651a3b03188ac690c"
+    },
+    {
+      "path": "src/encounter-ui.js",
+      "reason": "cache URL only",
+      "before": "d6e212f1b7b6624933028eb70f00292f34bfd6dfac9a469d8581bec02964ba26",
+      "after": "0e75a4538372c799bd701c6d0c32b8ee4fa3e941d02ffefca251d022b34bf8fa"
+    },
+    {
+      "path": "src/encounters.js",
+      "reason": "cache URL only",
+      "before": "b96d8fce5281ec9efc1bf1632da8988eddafddebe8aa3d90ef74163914b90aac",
+      "after": "37b4dd283cb0545e42ad1d161b8f8d76ee00b0cb27fa4903317e6fcdb8c6bd45"
+    },
+    {
+      "path": "src/engine.js",
+      "reason": "cache URL only",
+      "before": "63674adec30084e286cefb66d73cc17a2e5843ed0b56758b4b4706ff7dfc4c6b",
+      "after": "cae50711604af3678a0f17819c7f53993cdeb3c3939d020aa60dcc08a631e9a7"
+    },
+    {
+      "path": "src/family-care.js",
+      "reason": "cache URL only",
+      "before": "9bdd00459229e54f6e033b9769e4916e36f0c53d2e7ded420bb67f7a3370cfa9",
+      "after": "63dd5f8d8477ed5a9be434614e0ea80f9f71d5aa13e15bb70b7a91a9d6b2fe07"
+    },
+    {
+      "path": "src/family-layout.js",
+      "reason": "cache URL only",
+      "before": "5555aaa31611bf999122f96384fff864b545e8a8a6c1fd423d2fae6ee354016f",
+      "after": "737760661d941ea481f86a24a44baf073ac45b0104b3a0a0b347a3ddebcf004b"
+    },
+    {
+      "path": "src/field-visuals.js",
+      "reason": "cache URL only",
+      "before": "f9ef610b6c3ab8b83d12ece3d21270d7902dffddc039849652f31b4043d6600a",
+      "after": "65b2b528feae9b41602febdc914b8f9615e07fac7d6ad7f6ee623f3581dcb01d"
+    },
+    {
+      "path": "src/friend-cages.js",
+      "reason": "cache URL only",
+      "before": "4f91707e6d2261843a8c02cba853ca003ab4a3b073e9410c5b6d437ae6e16f79",
+      "after": "598f416fafb3ecf34ed2fd2fb2ac83df69c41a1cfee5ea63e9c996bac1941bf7"
+    },
+    {
+      "path": "src/gacha-motion.js",
+      "reason": "cache URL only",
+      "before": "5b6e80f5989dc20b8240ed33b70b74f7e7ef61907bf022a5962f5adb84bb7dbe",
+      "after": "7f6c17032f19691f6effe02a6c7a4124e52eac5f73fc46477a1c495bda3425f2"
+    },
+    {
+      "path": "src/game-environment.js",
+      "reason": "cache URL only",
+      "before": "b2324b77646efb96cd3e506a10d7133d19f9406025ff5888cb736db1bbaab58b",
+      "after": "cc6efee635e12479a27150de31b04a8a547bac112e96e860fa6b20cef778be21"
+    },
+    {
+      "path": "src/game-music-ui.js",
+      "reason": "cache URL only",
+      "before": "80a031e21db0fea6a91a592e6cf531fe8fa130493a0547115b4af4770b91c2bd",
+      "after": "3dc0d99cbc523fd81c28cc26a2046e9c4d05492f62bcc0aedd03dc5d59e43404"
+    },
+    {
+      "path": "src/game-music.js",
+      "reason": "cache URL only",
+      "before": "c71170f607a47592b6895de7b052767bf6b486e9653b9ae5bed59ff4f26911ab",
+      "after": "04a74426b51ee8dea9bb2baad665369247460d8270a661969e0727e5c7a3414d"
+    },
+    {
+      "path": "src/game-next-goals.js",
+      "reason": "cache URL only",
+      "before": "6ae8f680b481d9ec9b04c49e4150478562b2f2b0eb68d69777aa98d9d4a01a8b",
+      "after": "f10f74e2e22a793d4ba0ddf9a611a7ce306262f6a6198f019f00416c962d018c"
+    },
+    {
+      "path": "src/game-store.js",
+      "reason": "cache URL only",
+      "before": "226ad356e241df69fe63cc1a16ebce8c71fc1ebc7f0e3638f49a2b744107e918",
+      "after": "b621ee255627d7b0cebf99e23bfef7d17da1e965d143213dfaf89cbec64f5306"
+    },
+    {
+      "path": "src/game.css",
+      "reason": "cache URL only",
+      "before": "a6c3a35b97acd6c23d7a0d386d31e9e67584572e3eb49d13625981711b81dfd5",
+      "after": "83a7d87ac39d9ef754a8f77fa84d39d17e1801a4416870338c1a136df8dd1d3b"
+    },
+    {
+      "path": "src/game.js",
+      "reason": "approved telemetry source",
+      "before": "1488a21c34191bee8eea8bb641be5e1ec8102c65a93c02a19d1807c985e9e6cf",
+      "after": "63d7e632b7730a15c624b2e5f6d7dda92e7f12bcce4f7e5d3e7fc4b968ee1859"
+    },
+    {
+      "path": "src/garden-about-booklet.js",
+      "reason": "cache URL only",
+      "before": "8009d2e5e258ad05913e8722b292956023f982e931dd9e188239b49ba3322501",
+      "after": "25d4e56d48d59e04f2ce11a5942f238f8e6219798d9ecd848822c905f027b4ae"
+    },
+    {
+      "path": "src/garden-bird-motion.js",
+      "reason": "cache URL only",
+      "before": "77eb1ecba085632862f0a45f92919c8d9161be6ef15f0f6482ec920ba92276c7",
+      "after": "25e84a6d72e24da33aa1c420ddce9e80c0755d3ff573015bbe17415c175d2d61"
+    },
+    {
+      "path": "src/garden-companion-ui.js",
+      "reason": "cache URL only",
+      "before": "4983d6a440a3e14f38ca7e25f7d4f046fe06d41c90005f1ef701ac7e42e039cb",
+      "after": "40e7a480b17c0fe62c06cf3357bbdfd0c4bc00abfb6e75396106eff25d239a98"
+    },
+    {
+      "path": "src/garden-crow-ui.js",
+      "reason": "cache URL only",
+      "before": "87b0311ea9857a721ba5697a246a39a69e04617e86e451b1cc759d377bf985c1",
+      "after": "98c193ab229956a89b1aecbead1339f9aea35b6eb6cb7a735b1f194ab5cb78d1"
+    },
+    {
+      "path": "src/garden-crows.js",
+      "reason": "cache URL only",
+      "before": "7ee4857288c102250f7bdbc2ca1c72573a9fcd26caa17c4034ebc5be81d816c8",
+      "after": "9093f3d0d5bf2ac98fc413d873194d96caa6e92bd904f83a0a554fe828dac2b0"
+    },
+    {
+      "path": "src/garden-expedition-ui.js",
+      "reason": "cache URL only",
+      "before": "cb22f73c5b81720e6c889ac4bc1dac58ee30ad52344594ce810987560a4c830c",
+      "after": "72d2d0d20c8fa35edd4a60045c6a668986ed5ca7d0f4277ee744189f1626eee2"
+    },
+    {
+      "path": "src/garden-expedition.js",
+      "reason": "cache URL only",
+      "before": "54fe74c0d54fa29fc055a5f6a51a922287aa7b04c16e621dfa569137889f57a9",
+      "after": "23b58d231b0827492fb5f840cbad56cd6507579b35dff88a042544e8dd25a7a6"
+    },
+    {
+      "path": "src/garden-friend-cards.js",
+      "reason": "cache URL only",
+      "before": "a59997351ea53358164d203d3125e4abdbc4cf7b43de8ba2b34c1a4fc90baa64",
+      "after": "d04e5a2cd1400fb26e52c1dd244565809c5a84fd7526446154ce3eaad6823031"
+    },
+    {
+      "path": "src/garden-friends.js",
+      "reason": "cache URL only",
+      "before": "2926e2ffd22c6f548668446427d08aa61c85583ca74b84b4fe0b9840c05943cf",
+      "after": "7d49774026b565a7d3b9a0618406a138ffd7b2eeb3accb773a44f5dad938968f"
+    },
+    {
+      "path": "src/garden-keepsake-layout.js",
+      "reason": "cache URL only",
+      "before": "41dfaf1b2aeafe5429fc82794c202516909727beadccc24c6c251c019db76253",
+      "after": "5b4be4bc55d143e7223968afbf0af075f5af5178f74c189a0f4b985e025ace92"
+    },
+    {
+      "path": "src/garden-leaf-event-ui.js",
+      "reason": "cache URL only",
+      "before": "f75df2454d6748daebf19154611bfdcfd1191815205390f8d8cb300ff5568a61",
+      "after": "c15127e3b8abeda9356496410c786910b4c831329facc9385d3ddbef31c24480"
+    },
+    {
+      "path": "src/garden-leaf-event.js",
+      "reason": "cache URL only",
+      "before": "e29ec1b5b7bc4fe307690e98e0b49ff9770644a2a5eaf77524d9402a7e5e3d99",
+      "after": "e522181cd533ea5f2c55acffad7b979f20e1d80bd51a2548a957eec338a75b5e"
+    },
+    {
+      "path": "src/garden-predator-clock.js",
+      "reason": "approved telemetry source",
+      "before": "f21890e3d0ac5c95cddb8d84fc8cfe81c8cc84675aa9d03d64c7ea2e5a8e877e",
+      "after": "0cf3b8721432cc0b6ec3dff0fce6738a0aecd8f2e841d9269b21afec42b3367a"
+    },
+    {
+      "path": "src/garden-raptor-controller.js",
+      "reason": "approved telemetry source",
+      "before": "4a00299c9e6b541f77d56abb9799f78de4ccd3e5b831925fd1b450e8fb50e2e3",
+      "after": "ac991db0d3d032fa666398038f4d9e13d5dfeb1f9b7cf7b88b399c42146b44eb"
+    },
+    {
+      "path": "src/garden-raptor-return-prompt.js",
+      "reason": "cache URL only",
+      "before": "053b5f35614be1ac70faf109a2595fa30e17b69fa4b5451d5944cdedfb985d9c",
+      "after": "8284ade89423aba3baa8bf36469f16bb22e1cb118b24c8282b20cf123e0523f0"
+    },
+    {
+      "path": "src/garden-raptor-ui.js",
+      "reason": "cache URL only",
+      "before": "f29f1a640aa8a35e43c7990a3708cf84627b5be75d74e60ee0a5f037caf5eca4",
+      "after": "0201e45303067d97e0003b35909d3066ecc12809f1d60aae0af80830762d6df6"
+    },
+    {
+      "path": "src/garden-raptors.js",
+      "reason": "cache URL only",
+      "before": "161a22a7e386bb74b5530e7a007a87f9087313aaa4fef5e08b1126f915b1bc0e",
+      "after": "758c354326af9a593ed11fa5eee8aba79dff4353db2c601e1765ff16f485bf02"
+    },
+    {
+      "path": "src/garden-showcase-ui.js",
+      "reason": "cache URL only",
+      "before": "667148e839839ccaecf6326cd86067256457c68f1da033172881f469b5920167",
+      "after": "fe6baf54782541f1f75ba1bed151f578538ceb77ddd122af58811246c120a75f"
+    },
+    {
+      "path": "src/garden-showcase.js",
+      "reason": "cache URL only",
+      "before": "0b41bd9ce8d53ffec1f9c499f5b8b62b7e1afa21d59609a61a3bc9c7b7eeca8e",
+      "after": "36fd321e7cce4a484e155703d6ad5763f0e8403677047f49cdeb546f580d5189"
+    },
+    {
+      "path": "src/garden-social-plan.js",
+      "reason": "cache URL only",
+      "before": "bb20bbe3f8912935dbe49442a327fb30e87fcee8f419fdbb02c644e7ad8768c0",
+      "after": "c2bc83611d309aaf62e8f00934654ac084c6f90758f2b650247b9172723bf973"
+    },
+    {
+      "path": "src/garden-visit-sessions.js",
+      "reason": "cache URL only",
+      "before": "138c58a5675689d29f1a92271f453ac1dd846ae13f847dbc477687a2032a331a",
+      "after": "5eeb6a1869ef9ebf13bef50ed852c82ce41f2b387c627bf3a04ef933f4b35205"
+    },
+    {
+      "path": "src/garden35-migration.js",
+      "reason": "cache URL only",
+      "before": "227e50695f9e270e4971b088703897f54f381db6433184cc088507bcc3b8b3d8",
+      "after": "28fd368548024fec07153307aae494d0de927c4eba07a8634806bf0f4ad3e7df"
+    },
+    {
+      "path": "src/life-care-ui.js",
+      "reason": "cache URL only",
+      "before": "67ca26dd7342d1631aca811566e7bdb2bed46111a66f56060fc7c4542d903e73",
+      "after": "4de40bde93efcbc7eed7074f96505f335aaaac80376d58b9018bd819e90f3f8a"
+    },
+    {
+      "path": "src/life-care.js",
+      "reason": "cache URL only",
+      "before": "8a74f54962daa57daa0bc253227e612747db74ec81c29770c9640571b1e076e4",
+      "after": "67319840bfa4ad7652ddab98f277442e934cc87070e1d1df1602eda78eeb4320"
+    },
+    {
+      "path": "src/metadata.js",
+      "reason": "cache URL only",
+      "before": "9cbca460c239ed4a298d6df757af0f86ba30f46e6f54de634d6821af9a081067",
+      "after": "63a472b46c89bea026c6c5afac690d66b279bc0321bcf90ff07544b63d9dc3ff"
+    },
+    {
+      "path": "src/owner-peek.js",
+      "reason": "cache URL only",
+      "before": "9378becc12e60ebf9cce9d489c36086f0eba182fde99d25a1d125883492035fa",
+      "after": "69b6ed46ac397aaf0e7024c1e7e9cbd432184c13e0a35ec80d315e3c337c768d"
+    },
+    {
+      "path": "src/protagonist.js",
+      "reason": "cache URL only",
+      "before": "ff6d5ae7a3ec0062f0c0b9e77bf5fefb66c62d6f059b5b3f7dc9216bca5203f7",
+      "after": "1ea451c9ffa64e510fa96581ee8b329e632f1e096d0caf9457c7daa4569c8627"
+    },
+    {
+      "path": "src/relationship-map.js",
+      "reason": "cache URL only",
+      "before": "9d3d5b39f1b81f392d9d61ff74952035e63aa262c979aeec117d879454530b35",
+      "after": "bde4b09af8ec76956ae07c31f4fc0a9eb37b1f37ea74e95faf4b9d1126cbb742"
+    },
+    {
+      "path": "src/studio.js",
+      "reason": "cache URL only",
+      "before": "4f4f4e1e19fdadc53feb1e4d37f0aa30d3b5553febda4a0909859ca4a8443214",
+      "after": "bece69a4c1c7267cbef7aff04f5b9accde8ba145de6c9aa0b8957653c504d551"
+    },
+    {
+      "path": "src/home-atmosphere.js",
+      "reason": "cache URL only",
+      "before": "374eba61b1b7049ff09ac6a3a24619d1094b85dc007a42ca8953212e33faa79d",
+      "after": "3f4ccf733a9b0b7cae5f0f2c0c0e543853b5be5fab1290ab7dc8d08134b58269"
+    },
+    {
+      "path": "src/home-care-response.js",
+      "reason": "cache URL only",
+      "before": "629637eade050c2dd5a81def1badd34bf67fabfcc77a9eb57d185b0a4ca6da74",
+      "after": "69469d673366cca8ed532badaba853e12f3203423b25a981cd380c5ec1ec47f8"
+    }
+  ],
+  "added": [
+    "src/garden-analytics.js"
+  ]
+}

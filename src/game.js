@@ -2,6 +2,7 @@ import {renderShowcaseDiary} from './garden-showcase-ui.js';
 import {renderExpeditionDiary} from './garden-expedition-ui.js';
 import {renderLeafDiary} from './garden-leaf-event-ui.js';
 import { trackEvent } from './analytics.js';
+import {createGardenAnalytics,predatorSnapshot} from './garden-analytics.js';
 import {syncCollectionEndings} from './collection-endings.js';
 import {mountCollectionEndingPlayer,renderEndingDiary} from './collection-ending-player.js';
 import {crowScene} from './garden-crows.js';
@@ -132,6 +133,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
   function setMessage(text,options){message=text||'';feedbackTimer.set(message,options);}
   try { store=await openGameStore();world=await store.transact(w=>{advanceObservedWorld(w,Date.now(),{returning:true});syncCollectionEndings(w);const desired=explicitSound??true;if(w.settings.careSound!==desired){w.settings.careSound=desired;bumpRevision(w);}return w;}); } catch(e){store?.close();if(!root.isConnected)return()=>{};root.innerHTML=`<div role="alert"><h2>保存を開けませんでした</h2><p>${escape(e.message)}</p><p>いまの保存は削除していません。ほかのタブを閉じて、再読み込みしてください。</p></div>`;return()=>{};}
   if(!alive||!root.isConnected){store.close();return()=>{};}
+  const gardenAnalytics=createGardenAnalytics();
   selected=getProtagonistId(world);
   if(world.encounters.raptor?.active)panel='outdoors';
   // Unsaved local text belongs to an immutable bird in one world. A background
@@ -271,10 +273,10 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
   audio.setEnabled(careSoundEnabled());
   async function mutate(fn, success='', guard=()=>true, {bump=true,advancePaused=true,advanceCurrent=true,renderAfter=true}={}) {
     if(!alive||!guard())return false;
-    let committed=false;
+    let committed=false,measurementBefore;
     const expectedWorldId=world.worldId;
     busy++;error='';
-    try { latest(await store.transact(w=>{if(!guard())return w;if(w.worldId!==expectedWorldId)throw new Error('別のタブで別の庭が読み込まれました。画面の更新を待ってから、もう一度選んでください。');if(advanceCurrent&&(!w.paused||advancePaused))advanceTo(w,Date.now(),{present:!document.hidden});const next=fn(w)||w;syncCollectionEndings(next);if(bump)bumpRevision(next);return next;})); committed=true;if(alive&&guard()){if(success)setMessage(success);channel?.postMessage({revision:world.revision});} }
+    try { latest(await store.transact(w=>{if(!guard())return w;if(w.worldId!==expectedWorldId)throw new Error('別のタブで別の庭が読み込まれました。画面の更新を待ってから、もう一度選んでください。');if(advanceCurrent&&(!w.paused||advancePaused))advanceTo(w,Date.now(),{present:!document.hidden});try{measurementBefore=predatorSnapshot(w);}catch{}const next=fn(w)||w;syncCollectionEndings(next);if(bump)bumpRevision(next);return next;})); committed=true;gardenAnalytics.committed(measurementBefore,world);if(alive&&guard()){if(success)setMessage(success);channel?.postMessage({revision:world.revision});} }
     catch(e){clearHomeResponse();error=e.message||'保存できませんでした。もう一度試してください。';}
     finally{busy--;if(alive&&renderAfter)render();}
     return committed;
@@ -1209,7 +1211,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     const committed=await mutate(fn,'',()=>alive,{bump:false,advanceCurrent:false,renderAfter:false});if(!committed)throw new Error('保存できませんでした。');return world;
   },canPresent:()=>!busy&&!lifeBusy&&!interactionActive()&&!document.hidden&&!document.body.dataset.gameViewBlocked&&!['settings','health'].includes(panel)&&!sheetOpen&&!adoptionDialogToken&&!independenceDialogToken&&!successorDialogToken&&!resetPending&&!drawResult&&!world.encounters.raptor?.active&&!crowScene(world)&&!world.encounters.active&&!world.encounters.queue.length&&!['loading','shown'].includes(document.body.dataset.gameIntro),onActive:value=>{if(value)cancelCareEffects();},onClose:()=>{if(alive)render();}});
   timer=setInterval(poll,3000);render();document.dispatchEvent(new document.defaultView.CustomEvent('buncho-game-ready'));
-  const raptorController=mountGardenRaptors(root,{getWorld:()=>world,random:raptorRandom,predatorRandom,canStartCrowWarning:()=>encounterController?.canStartCrowWarning()||false,startCrowWarning:id=>encounterController?.startCrowWarning(id)||false,isAvailable:()=>!busy&&!endingPlayer?.active(),hasCrowPending:()=>encounterController?.hasCrowPending()||false,transact:async operation=>{
+  const raptorController=mountGardenRaptors(root,{onActiveTime:delta=>gardenAnalytics.active(delta),getWorld:()=>world,random:raptorRandom,predatorRandom,canStartCrowWarning:()=>encounterController?.canStartCrowWarning()||false,startCrowWarning:id=>encounterController?.startCrowWarning(id)||false,isAvailable:()=>!busy&&!endingPlayer?.active(),hasCrowPending:()=>encounterController?.hasCrowPending()||false,transact:async operation=>{
     const committed=await mutate(operation,'',()=>alive,{bump:false,advanceCurrent:false,renderAfter:false});if(!committed)throw new Error('保存できませんでした。');return world;
   },onChange:({result,structural,error:raptorError})=>{
     if(raptorError){error='猛禽との記録を保存できませんでした。残り時間と保存を保持しています。おうちへ戻ってもう一度試してください。';render();return;}

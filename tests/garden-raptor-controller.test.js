@@ -84,3 +84,13 @@ test('portrait notice holds the exact saved warning and invalidates a queued hid
   await s.run(1);assert.equal(w.encounters.raptor.active.remainingMs,before.encounters.raptor.active.remainingMs-1000);
  }finally{s.close();}
 });
+
+test('telemetry uses the actual shared clock and excludes hidden/resume and suspended gaps',async()=>{
+ let elapsed=0;const s=setup(fixture(),{earlyPredatorVisits:true,predatorRandom:()=>1,onActiveTime:delta=>elapsed+=delta});
+ try{
+  await s.run(2);assert.equal(elapsed,2000);
+  Object.defineProperty(s.win.document,'visibilityState',{value:'hidden',configurable:true});s.win.document.dispatchEvent(new s.win.Event('visibilitychange'));await s.run(10);assert.equal(elapsed,2000);
+  Object.defineProperty(s.win.document,'visibilityState',{value:'visible',configurable:true});s.win.document.dispatchEvent(new s.win.Event('visibilitychange'));await s.run(2);assert.equal(elapsed,3000);
+  await (await s.tick(100000)).flight;assert.equal(elapsed,3000);await s.run(1);assert.equal(elapsed,4000);
+ }finally{s.close();}
+});

@@ -4,7 +4,7 @@ import {RAPTOR_SPECIES} from './garden-raptors.js';
 // Lottery state is separate from the saved world and its PRNG. The host journals
 // attempts in this tab's session storage so reload cannot reroll a selected bird.
 export const PREDATOR_ENTRY_RULES=Object.freeze({dwellMs:3000,chance:.35,crowWeight:5,raptorWeight:5,retryMs:60000,maxSampleGapMs:2500});
-export function createGardenPredatorClock({random=Math.random,persist=()=>true}={}){
+export function createGardenPredatorClock({random=Math.random,persist=()=>true,onElapsed=()=>{}}={}){
  let key=null,last=null,elapsed=0,lastDraw=null,pending=null,issued=false;
  const reset=()=>{key=null;last=null;elapsed=0;issued=false;};
  const snapshot=()=>({version:1,lastDraw,pending:pending?{...pending}:null});
@@ -31,6 +31,7 @@ export function createGardenPredatorClock({random=Math.random,persist=()=>true}=
    const delta=now-last;last=now;
    if(delta<0||delta>PREDATOR_ENTRY_RULES.maxSampleGapMs){reset();prime({key:nextKey,now,eligible});return null;}
    elapsed+=delta;
+   try{onElapsed(delta);}catch{/* Optional measurement never affects a draw. */}
    if(elapsed<PREDATOR_ENTRY_RULES.dwellMs||!available)return null;
    // A water-only ticket must not block every other garden forever. It may
    // expire only at the next normal draw deadline, never on rapid navigation.
