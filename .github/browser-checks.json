@@ -1,9 +1,9 @@
 {
-  "base": "6ad1c3cc73d40a5512b0d6cf5e5fd20ec0748f89",
+  "base": "792a28c9ce4dfe520756da1f1edc506dbdabaa40",
   "tests": [
     "tests/browser/nestling-visibility.spec.js",
     "tests/browser/egg-art.spec.js",
     "tests/browser/home-visits.spec.js"
   ],
-  "reason": "Restore user-approved centered room balance: pan only enough to show nest entrance, preserve furniture/adult viewport coordinates. Check 1/9 young across seven viewport sizes, newborn transitions, guests, eggs and real screenshot visual review in Chrome/WebKit. No save/engine changes."
+  "reason": "Keep hand scene-controls button in its original lower position when young occupy the nest: exclude non-interactive eggs/chicks from crowded floor/perch count. Compare button x/y/size before and after 1/9 young on seven viewport sizes, retain nest/furniture/guest tests and real screenshots in Chrome/WebKit."
 }
