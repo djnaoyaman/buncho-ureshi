@@ -63,3 +63,26 @@ for(const count of [2,6])test(`compact nest camera keeps ${count} cage guests an
   await info.attach(`nest-and-guests-${size.width}`,{body:await page.screenshot(),contentType:'image/png'});expect(identity(await record(page))).toEqual(before);
  }
 });
+
+// Approved visual baseline: centered room with furniture breathing room.
+// An occupied nest may reveal its opening, but must not drag the furniture
+// across the adult or shrink/reposition the existing scene's objects.
+for(const count of [1,9])test(`entrance-only framing preserves centered furniture and adult spacing with ${count} young`,async({page},info)=>{
+ const original=createWorld(NOW,545);original.paused=true;original.settings.motion=false;original.settings.careSound=false;
+ await page.setViewportSize({width:320,height:568});await start(page,original);await dismissWelcome(page);
+ const measure=()=>page.locator('.game-main .game-furnishing').evaluateAll(es=>Object.fromEntries(es.map(e=>{const r=e.getBoundingClientRect();return [e.dataset.equippedSlot,{x:r.x,y:r.y,width:r.width,height:r.height}]})));
+ for(const [width,height]of [[320,568],[393,852],[600,1000],[768,1024],[1280,720],[844,390],[320,480]]){
+  await page.setViewportSize({width,height});await record(page,validateWorld(structuredClone(original)));await page.reload();await ready(page);await dismissWelcome(page);
+  const baseline=await measure(),parent=await page.locator(`[data-bird-id="${original.birds[0].id}"].game-room-bird`).boundingBox();
+  const occupied=structuredClone(original),young=Array.from({length:count},(_,i)=>createBird(occupied,{home:'resident',stage:i%2?'egg':'chick',name:`こども${i+1}`}));
+  await record(page,validateWorld(occupied));await page.reload();await ready(page);await dismissWelcome(page);
+  const current=await measure();for(const [slot,rect] of Object.entries(baseline))for(const key of ['x','y','width','height'])expect(Math.abs(current[slot][key]-rect[key]),`${slot} ${key} preserves the centered composition`).toBeLessThan(1);
+  const adult=await page.locator(`[data-bird-id="${original.birds[0].id}"].game-room-bird`).boundingBox();for(const key of ['x','y','width','height'])expect(Math.abs(adult[key]-parent[key]),`adult ${key} unchanged`).toBeLessThan(1);
+  for(const b of young)await fullyInside(page,b.id);
+  const frame=await page.locator('.game-main .game-room').evaluate(el=>{const r=el.getBoundingClientRect();return{left:r.left,width:r.width,pan:Number.parseFloat(el.style.getPropertyValue('--nest-camera-pan'))}});
+  const centerCrop=(frame.width-width)/2,expectedPan=Math.min(frame.width-width,Math.max(centerCrop,.89*frame.width-width+12))-centerCrop;
+  expect(frame.pan).toBeCloseTo(expectedPan,0);expect(frame.left+.89*frame.width).toBeLessThanOrEqual(width+1);expect(frame.left+.78*frame.width).toBeGreaterThanOrEqual(0);
+  expect((await record(page)).birds).toEqual(occupied.birds);
+  await info.attach(`balanced-${count}-young-${width}x${height}`,{body:await page.screenshot(),contentType:'image/png'});
+ }
+});

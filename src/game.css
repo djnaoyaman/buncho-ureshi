@@ -2166,9 +2166,12 @@ body[data-world="buncho"] .finch-garden-dock > details:not([open]) > summary:foc
 .game-ending-dialog[data-film] [role=status]{position:static;margin:0}
 
 /* Nestlings belong to the backdrop's woven nest, never to the viewport's
-   adult-bird row. Keep the whole nest visible even with an adult selected;
+   adult-bird row. Keep the nest opening visible even with an adult selected;
    scene actor coordinates share this camera crop without changing saves. */
-body[data-world="buncho"] .game-main .game-room[data-field="home"][data-has-nestlings="true"]{left:auto;right:0;transform:none}
+body[data-world="buncho"] .game-main .game-room[data-field="home"][data-has-nestlings="true"]{left:calc(50% - var(--nest-camera-pan,0px));right:auto;transform:translateX(-50%)}
+/* Preserve the approved furniture spacing in viewport coordinates. Only the
+   backdrop/nest pans; feeding bowls and the bath must not crowd the birds. */
+body[data-world="buncho"] .game-main .game-room[data-field="home"][data-has-nestlings="true"]>.game-furnishings{transform:translateX(var(--nest-camera-pan,0px))}
 /* Repeating a full-size family badge on every tiny nestling hides its siblings.
    Identity remains available in the bird picker and care sheet. */
 .game-app .game-room-bird.game-nestling>.game-home-role{display:none}
