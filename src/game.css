@@ -2172,6 +2172,9 @@ body[data-world="buncho"] .game-main .game-room[data-field="home"][data-has-nest
 /* Preserve the approved furniture spacing in viewport coordinates. Only the
    backdrop/nest pans; feeding bowls and the bath must not crowd the birds. */
 body[data-world="buncho"] .game-main .game-room[data-field="home"][data-has-nestlings="true"]>.game-furnishings{transform:translateX(var(--nest-camera-pan,0px))}
+/* On a cropped wide-art tablet, keep the mineral bowl beside the opening,
+   never in front of the young. All other furniture keeps its original spacing. */
+body[data-world="buncho"] .game-main .game-room[data-field="home"][data-nest-bowl-shift="true"] .furnishing-shellgrit{margin-left:calc(0px - var(--nest-bowl-shift,0px))}
 /* Repeating a full-size family badge on every tiny nestling hides its siblings.
    Identity remains available in the bird picker and care sheet. */
 .game-app .game-room-bird.game-nestling>.game-home-role{display:none}

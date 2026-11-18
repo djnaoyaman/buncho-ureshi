@@ -76,12 +76,16 @@ for(const count of [1,9])test(`entrance-only framing preserves centered furnitur
   const baseline=await measure(),parent=await page.locator(`[data-bird-id="${original.birds[0].id}"].game-room-bird`).boundingBox();
   const occupied=structuredClone(original),young=Array.from({length:count},(_,i)=>createBird(occupied,{home:'resident',stage:i%2?'egg':'chick',name:`こども${i+1}`}));
   await record(page,validateWorld(occupied));await page.reload();await ready(page);await dismissWelcome(page);
-  const current=await measure();expect(Object.keys(baseline)).toHaveLength(9);expect(Object.keys(current).sort()).toEqual(Object.keys(baseline).sort());for(const [slot,rect] of Object.entries(baseline))for(const key of ['x','y','width','height'])expect(Math.abs(current[slot][key]-rect[key]),`${slot} ${key} preserves the centered composition`).toBeLessThan(1);
+  const bowlShift=await page.locator('.game-main .game-room').evaluate(el=>Number.parseFloat(el.style.getPropertyValue('--nest-bowl-shift')));
+  const current=await measure();expect(Object.keys(baseline)).toHaveLength(9);expect(Object.keys(current).sort()).toEqual(Object.keys(baseline).sort());for(const [slot,rect] of Object.entries(baseline))for(const key of ['x','y','width','height'])expect(Math.abs(current[slot][key]-(rect[key]-(slot==='shellgrit'&&key==='x'?bowlShift:0))),`${slot} ${key} preserves composition except explicit entrance clearance`).toBeLessThan(1);
   const adult=await page.locator(`[data-bird-id="${original.birds[0].id}"].game-room-bird`).boundingBox();for(const key of ['x','y','width','height'])expect(Math.abs(adult[key]-parent[key]),`adult ${key} unchanged`).toBeLessThan(1);
   for(const b of young)await fullyInside(page,b.id);
   const frame=await page.locator('.game-main .game-room').evaluate(el=>{const r=el.getBoundingClientRect();return{left:r.left,width:r.width,pan:Number.parseFloat(el.style.getPropertyValue('--nest-camera-pan'))}});
   const centerCrop=(frame.width-width)/2,expectedPan=Math.min(frame.width-width,Math.max(centerCrop,.89*frame.width-width+12))-centerCrop;
   expect(frame.pan).toBeCloseTo(expectedPan,0);expect(frame.left+.89*frame.width).toBeLessThanOrEqual(width+1);expect(frame.left+.78*frame.width).toBeGreaterThanOrEqual(0);
+  expect(current.shellgrit.x).toBeGreaterThanOrEqual(-1);
+  if(bowlShift>0)expect(current.shellgrit.x+current.shellgrit.width+11).toBeLessThanOrEqual(frame.left+.78*frame.width);
+  for(const b of young){const r=await page.locator(`.game-room-bird[data-bird-id="${b.id}"]`).boundingBox(),bowl=current.shellgrit;expect(Math.max(0,Math.min(r.x+r.width,bowl.x+bowl.width)-Math.max(r.x,bowl.x))*Math.max(0,Math.min(r.y+r.height,bowl.y+bowl.height)-Math.max(r.y,bowl.y)),'mineral bowl never covers young').toBe(0);}
   expect((await record(page)).birds).toEqual(occupied.birds);
   await info.attach(`balanced-${count}-young-${width}x${height}`,{body:await page.screenshot(),contentType:'image/png'});
  }
