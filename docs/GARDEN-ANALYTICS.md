@@ -28,8 +28,8 @@
 
 - 専用作業ツリー `buncho-analytics`、ブランチ `codex/garden-analytics-local`。初期基準 `8bb37a3bf6e255befc0a612298a385d0b475fea4`、PR #229 統合後の基準 `86ee58acad4564d8f33f0fc917b186ebe4ad011b`、開始時と再確認時のopen PRは0件。checkoutに `.agents/skills` は存在せず `AGENTS.md` を使用。
 - 追加計測・天敵制御・実ホスト保存統合の集中検査54件成功。非表示/復帰、長時間中断、再読込、重複、保存失敗、計測例外を含む。Happy DOM / fake-indexeddb の結果はブラウザ確認ではない。
-- 全Node・ビルド検査結果は最終作業報告を参照。保護出力581ファイルを元mainの独立ビルドと照合した差分は `garden-analytics-output-audit.json`。許可ソース以外はキャッシュURLだけの変更と機械比較し、新計測モジュールを保護対象に追加した。独立した人/担当者のレビューは未実施。
+- 全Node・ビルド検査結果は最終作業報告を参照。保護出力581ファイルを元mainの独立ビルドと照合した差分は `garden-analytics-output-audit.json`。許可ソース以外はキャッシュURLだけの変更と機械比較し、新計測モジュールを保護対象に追加した。基準mainと候補を独立生成した出力比較に加え、保存成立箇所・乱数呼出し・定数不変を別途差分レビューした。
 - Chrome系: 利用可能なChromiumは socket() Operation not permitted により起動前に失敗。Chrome for Testing配布zip取得にも失敗。WebKit本体は取得できたが共有ライブラリ不足で起動失敗。Safari実機は未検証（AGENTS.mdによりユーザー担当）。
-- `npx playwright test -c playwright.analytics.config.js` と指定の天敵ブラウザ検査は、ブラウザ利用可能な環境で実行が必要。全外部リクエストを捕捉/遮断し、本番originのページ/素材はローカル候補に差し替える。実際の公開GTMスクリプトを用いた送出形式・送信先検査を追加したが、ブラウザ未起動のため実際のGAリクエスト形式は未検証。検査によるGA収集送信は行っていない。
+- `npx playwright test -c playwright.analytics.config.js` と指定の天敵ブラウザ検査は、ブラウザ利用可能な環境で実行が必要。全外部リクエストを捕捉/遮断し、本番originのページ/素材はローカル候補に差し替える。実際の公開GTMスクリプトを用いた送出形式・送信先検査は、GitHub Actions run 44298555801 のChrome/WebKit双方で成功。G-VVFMFGKXNL、イベント名、数値パラメータ、ルール版を検証し、収集要求はすべて送信前に遮断した。初回端末案内・URL解決と非同期保存完了を待つ検査修正を含めた最終全体結果はPR #231の最新CIを参照。
 
-ブラウザゲート・全体検査・独立レビュー完了前にready化/マージ/公開しない。
+公開は全必須CIの成功と、最終コミット・競合・差分の再確認後に行う。物理Safariの確認は自動WebKit検査と区別する。
