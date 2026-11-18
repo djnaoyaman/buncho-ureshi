@@ -24,7 +24,7 @@ for(const crow of [false,true])for(const safe of [false,true])test(`committed ${
  await setup(page,baseURL,{crow,safe});await tick(page,crow?12:5);
  const data=await events(page),arrivals=data.filter(e=>e.name==='garden_predator_arrival');expect(arrivals).toHaveLength(1);expect(arrivals[0].params).toMatchObject({send_to:'G-VVFMFGKXNL',predator_kind:crow?'crow':'raptor',encounter_safety:safe?'safe':'danger',rule_version:GARDEN_RULE_VERSION});
  expect(data.filter(e=>e.name==='garden_first_predator')).toHaveLength(1);
- if(!crow&&!safe){await page.locator('[data-raptor-choice=stay]').click();expect((await events(page)).filter(e=>e.params.outcome==='stay')).toHaveLength(1);}
+ if(!crow&&!safe){await page.locator('[data-raptor-choice=stay]').click();await expect.poll(async()=>(await events(page)).filter(e=>e.params.outcome==='stay').length).toBe(1);expect((await saved(page)).encounters.raptor.active.returnChoicePending).toBe(false);}
  await page.evaluate(()=>window.dispose());await page.reload();
  await page.evaluate(async()=>{window.dataLayer=[];document.body.dataset.world='buncho';const {mountGame}=await import('./src/game.js');window.dispose=await mountGame(document.querySelector('#root'),{predatorRandom:()=>1});});
  await tick(page,2);expect((await events(page)).filter(e=>e.name==='garden_predator_arrival')).toHaveLength(0);

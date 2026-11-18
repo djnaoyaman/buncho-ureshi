@@ -11,7 +11,7 @@ function seed({species='black-kite',friendly=false,active=true,child=false,atten
  w.paused=paused;return w;
 }
 async function save(page,world){await page.evaluate(world=>new Promise((resolve,reject)=>{const r=indexedDB.open('buncho-ureshi-garden-v1',1);r.onupgradeneeded=()=>r.result.createObjectStore('world');r.onerror=()=>reject(r.error);r.onsuccess=()=>{const db=r.result,tx=db.transaction('world','readwrite');tx.objectStore('world').put(world,'current');tx.oncomplete=()=>{db.close();resolve();};tx.onerror=()=>reject(tx.error);};}),world);}
-async function saved(page){return page.evaluate(()=>new Promise((resolve,reject)=>{const r=indexedDB.open('buncho-ureshi-garden-v1',1);r.onerror=()=>reject(r.error);r.onsuccess=()=>{const db=r.result,tx=db.transaction('world','readonly'),v=tx.objectStore('world').get('current');v.onsuccess=()=>resolve(v.result);tx.oncomplete=()=>db.close();};}));}
+async function saved(page){return page.evaluate(()=>new Promise((resolve,reject)=>{const r=indexedDB.open('buncho-ureshi-garden-v1',1);r.onerror=()=>reject(r.error);r.onsuccess=()=>{const db=r.result,tx=db.transaction('world','readonly'),v=tx.objectStore('world').get('current');let result;v.onsuccess=()=>{result=v.result;};tx.oncomplete=()=>{db.close();resolve(result);};tx.onerror=tx.onabort=()=>reject(tx.error);};}));}
 async function finishIntro(page){await expect.poll(()=>page.locator('body').getAttribute('data-game-intro')).toMatch(/shown|done/);if(await page.locator('body').getAttribute('data-game-intro')==='shown')await page.clock.runFor(2000);await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');}
 async function setup(page,options={}){
  await page.addInitScript(()=>{localStorage.setItem('buncho.music.v1',JSON.stringify({enabled:false}));localStorage.setItem('buncho.care-sound-choice.v1',JSON.stringify({explicit:true,enabled:false}));});
@@ -61,7 +61,11 @@ test('live full shell draws a rare early warning with the full escape minute des
 
 test('petting in the enemy notebook makes the current warning harmless and saves friendship',async({page})=>{
  const w=seed();for(const amount of [8,8,8,8,8,8,2])petGardenRaptor(w,'black-kite',amount,raptorToken(w));await setup(page,{world:w});await page.locator('[data-encounter-back]').click();await page.locator('[data-crow-notebook]').click();await expect(page.locator('.finch-raptor-card .is-silhouette')).toHaveCount(8);await page.locator('[data-raptor-entry=black-kite]').click();
- const target=page.locator('[data-encounter-rub=black-kite]');await target.focus();await target.press('Enter');for(let i=0;i<50;i++){await page.clock.runFor(1000);await target.press('Enter');await expect(page.locator('[data-raptor-points]')).toHaveText(String(51+i));}
+ const target=page.locator('[data-encounter-rub=black-kite]');await target.focus();await target.press('Enter');
+ // Advancing virtual time can start the host's real asynchronous IndexedDB poll.
+ // Drain that transaction before sending the next gesture, and confirm each
+ // petting save before starting its next full second (petClock settles on commit).
+ for(let i=0;i<50;i++){await page.clock.runFor(1000);await saved(page);await target.focus();await target.press('Enter');await expect(page.locator('[data-raptor-points]')).toHaveText(String(51+i));expect((await saved(page)).encounters.raptor.visits[0].petPoints).toBe(51+i);}
  await page.clock.runFor(1000);await expect(page.locator('.game-panel-overlay>[data-raptor-notice]')).toContainText('なかよし');await expect(page.locator('.game-panel-overlay>[data-raptor-notice]')).not.toContainText('事故死');expect((await saved(page)).encounters.raptor.visits[0].petPoints).toBe(100);await page.clock.runFor(60000);expect((await saved(page)).lifecycle.birds.find(b=>b.birdId==='b1').death).toBeNull();
 });
 
