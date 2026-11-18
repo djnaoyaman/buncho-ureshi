@@ -32,9 +32,14 @@ export function createGardenPredatorClock({random=Math.random,persist=()=>true}=
    if(delta<0||delta>PREDATOR_ENTRY_RULES.maxSampleGapMs){reset();prime({key:nextKey,now,eligible});return null;}
    elapsed+=delta;
    if(elapsed<PREDATOR_ENTRY_RULES.dwellMs||!available)return null;
+   // A water-only ticket must not block every other garden forever. It may
+   // expire only at the next normal draw deadline, never on rapid navigation.
+   if(pending?.id==='osprey'&&gardenId!=='mizukagami'){
+    if(wallNow-lastDraw<PREDATOR_ENTRY_RULES.retryMs)return null;
+    pending=null;issued=false;
+   }
    if(pending){
-    if(issued||(pending.kind==='crow'?!crowAvailable:!raptorAvailable)||
-      (pending.id==='osprey'&&gardenId!=='mizukagami'))return null;
+    if(issued||(pending.kind==='crow'?!crowAvailable:!raptorAvailable))return null;
     // Persist before issuing, including after a failed journal write. No fresh RNG.
     if(!save())return null;
     issued=true;return {kind:pending.kind,id:pending.id};

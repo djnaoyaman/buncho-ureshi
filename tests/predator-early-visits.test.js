@@ -78,3 +78,9 @@ test('miss deadline survives reload and backward wall clock never buys another d
  run(c,4000,62000);assert.equal(calls,1);sample(c,63000);assert.equal(calls,2);
  run(c,64000,68000,{wallNow:0});assert.equal(calls,2);
 });
+test('water-only ticket cannot starve other gardens past the normal draw deadline',()=>{
+ const values=[0,.9,.999,1];let calls=0;const c=createGardenPredatorClock({random:()=>{calls++;return values.shift();}});
+ assert.equal(run(c,0,3000,{gardenId:'mizukagami'}).id,'osprey');
+ for(let start=4000;start<60000;start+=4000){c.reset();run(c,start,start+3000,{key:`land${start}`,gardenId:'komorebi'});}assert.equal(calls,3);
+ c.reset();run(c,60000,63000,{key:'land',gardenId:'komorebi'});assert.equal(calls,4);assert.equal(c.snapshot().pending,null);assert.equal(c.snapshot().lastDraw,63000);
+});

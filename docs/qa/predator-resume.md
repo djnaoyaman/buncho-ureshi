@@ -11,7 +11,9 @@ separate from the world, revision, PRNG and exported save. A miss deadline is al
 journaled. Navigation, hidden state and delayed polling reset foreground dwell,
 not the pending species. After return, the same species can resume after three
 ready seconds; crows start a full six-second warning again. A selected osprey waits
-for its water garden rather than being replaced with another species.
+for its water garden until the next normal 60-second draw deadline. If still in
+an incompatible garden then, the old ticket expires and a normal draw is allowed;
+rapid navigation cannot reroll it and it cannot starve all other gardens forever.
 
 The selection is journaled before it can be presented. If writing the journal
 fails, the same in-memory selection remains unissued; it can be persisted on a

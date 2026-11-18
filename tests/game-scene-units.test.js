@@ -10,6 +10,13 @@ function fixture(native=false) {
  stage.getBoundingClientRect=()=>({width:375,height:667});
  return {win,stage,root:win.document.querySelector('#root')};
 }
+// Observe the scheduled measurement, rather than assuming a loaded CI worker
+// must deliver requestAnimationFrame within a fixed 40ms wall-clock sleep.
+async function measured(element,expected){
+ const deadline=Date.now()+2000;
+ while(element.style.getPropertyValue('--game-cqw')!==expected&&Date.now()<deadline)await new Promise(r=>setTimeout(r,5));
+ assert.equal(element.style.getPropertyValue('--game-cqw'),expected);
+}
 test('legacy scene uses measured dimensions without reading or changing any save',async()=>{
  const {win,stage,root}=fixture(); const sentinel='{"birds":["おもち"],"gems":1639}';win.localStorage.setItem('save',sentinel);
  const stop=mountSceneUnits(root);
@@ -17,14 +24,14 @@ test('legacy scene uses measured dimensions without reading or changing any save
  assert.equal(stage.style.getPropertyValue('--game-cqh'),'6.67px');
  assert.equal(win.localStorage.getItem('save'),sentinel);
  stage.getBoundingClientRect=()=>({width:320,height:568});win.dispatchEvent(new win.Event('resize'));
- await new Promise(r=>setTimeout(r,40));assert.equal(stage.style.getPropertyValue('--game-cqw'),'3.2px');
+ await measured(stage,'3.2px');
  stop();assert.equal(stage.style.getPropertyValue('--game-cqw'),'');assert.equal(win.localStorage.getItem('save'),sentinel);await win.happyDOM.close();
 });
 test('newly rendered scenes and preview containers measured; detached nodes cleaned up',async()=>{
  const {win,stage,root}=fixture();stage.style.setProperty('--game-cqw','9px');const stop=mountSceneUnits(root);
  const preview=win.document.createElement('div');preview.className='game-home-preview-viewport';preview.getBoundingClientRect=()=>({width:200,height:300});root.append(preview);
- await new Promise(r=>setTimeout(r,40));assert.equal(preview.style.getPropertyValue('--game-cqw'),'2px');
- preview.remove();await new Promise(r=>setTimeout(r,40));assert.equal(preview.style.getPropertyValue('--game-cqw'),'');
+ await measured(preview,'2px');
+ preview.remove();await measured(preview,'');
  stop();assert.equal(stage.style.getPropertyValue('--game-cqw'),'9px');await win.happyDOM.close();
 });
 test('native engines retain native container geometry and avoid observers',async()=>{
