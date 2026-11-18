@@ -20,6 +20,9 @@ test('container, SPA classification, studio editing and successful PNG export',a
 });
 test('game is ready and panel rerenders do not duplicate views',async({page})=>{
  await page.goto('https://djnaoyaman.github.io/buncho-ureshi/game/');
+ // The production-origin fixture has its own device-choice storage. Use the real UI.
+ await page.locator('[data-game-device-continue]').click();
+ await expect(page.locator('.game-app')).toBeVisible();
  await expect.poll(async()=> (await events(page)).filter(x=>x.name==='game_start').length).toBe(1);
  const before=(await events(page)).filter(x=>x.name==='game_panel_view').length;
  await page.evaluate(()=>{const e=new CustomEvent('buncho-game-panel',{detail:'analytics_test'});document.dispatchEvent(e);document.dispatchEvent(e);});
