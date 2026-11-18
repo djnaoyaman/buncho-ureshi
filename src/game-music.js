@@ -6,6 +6,7 @@ export const MUSIC_TRACKS = Object.freeze([
   {id:'lakeside', title:'湖畔のそよ風', file:'03_lakeside_breeze.wav'},
   {id:'village', title:'村のワルツ', file:'04_village_waltz.wav'},
 ]);
+export const ENCOUNTER_MUSIC_TRACKS=Object.freeze([{id:'encounter-crow',title:'黒い羽のいたずら',asset:'audio/encounters/crow.wav'},{id:'encounter-raptor',title:'空に落ちる影',asset:'audio/encounters/raptor.wav'}]);
 const GARDEN_TITLES=Object.freeze({komorebi:'こもれびの庭',mizukagami:'みずかがみの庭',komugi:'こむぎの庭',hanadokei:'はなとけいの庭',kazaguruma:'かざぐるまの丘',yuyake:'ゆうやけ果樹園',tsukiakari:'つきあかりの庭','shrine-grove':'こもりの杜',onsen:'湯気文吾温泉','java-rice':'ジャワ・いなほの庭','bali-terrace':'バリ・みどりの棚田','paris-unrest':'パリ・ざわめく街の庭'});
 export function gardenMusicTracks(assets=GARDEN_MUSIC_ASSETS){return Object.entries(assets).filter(([,a])=>(a.music?.releaseReady===true||a.music?.trialAvailable===true)).map(([gardenId,{music:m}])=>({id:m.themeId,gardenId,title:m.title||GARDEN_TITLES[gardenId]||gardenId,asset:m.asset,loopStartSeconds:m.loopStartSeconds,loopEndSeconds:m.loopEndSeconds}));}
 export function createGameMusic({base='', gardenAssets=GARDEN_MUSIC_ASSETS, Context=globalThis.AudioContext||globalThis.webkitAudioContext,
@@ -13,7 +14,10 @@ export function createGameMusic({base='', gardenAssets=GARDEN_MUSIC_ASSETS, Cont
   const key='buncho.music.v1';
   let saved={}; try {saved=JSON.parse(storage?.getItem(key)||'{}')||{};} catch {}
   const tracks=[...MUSIC_TRACKS,...gardenMusicTracks(gardenAssets)];
+  const playable=[...tracks,...ENCOUNTER_MUSIC_TRACKS];
+  let encounter=null,held=false,blocked=false,normalSelected;
   let fixedSelected=tracks.some(t=>t.id===saved.selected)?saved.selected:'meadow';
+  normalSelected=fixedSelected;
   let selected=fixedSelected, mode=saved.mode==='fixed'||(!saved.mode&&saved.selected)?'fixed':'auto', gardenId=null, worldId=null, unlocked=false;
   let volume=Number.isFinite(saved.volume)?Math.min(.6,Math.max(0,saved.volume)):.18;
   let enabled=saved.enabled!==false, status='paused', error='', context=null, disposed=false, generation=0, pending=null;
@@ -21,7 +25,7 @@ export function createGameMusic({base='', gardenAssets=GARDEN_MUSIC_ASSETS, Cont
   // The lane stays occupied until the native decode settles, even after a UI timeout.
   // AbortController cannot cancel decodeAudioData; never release it on a race timeout.
   let decodeLane=Promise.resolve();
-  const state=()=>({selected,fixedSelected,mode,gardenId,volume,enabled,status,error});
+  const state=()=>({selected,fixedSelected,mode,gardenId,encounter,volume,enabled,status,error});
   const emit=()=>onChange(state());
   const save=()=>{try {storage?.setItem(key,JSON.stringify({selected:fixedSelected,mode,volume,enabled}));} catch {}};
   function stop() {
@@ -30,16 +34,16 @@ export function createGameMusic({base='', gardenAssets=GARDEN_MUSIC_ASSETS, Cont
   }
   function invalidate(){generation++;pending?.abort();pending=null;stop();}
   function off(){invalidate();enabled=false;status='off';error='';save();emit();}
-  function pause(){if(disposed)return;invalidate();status=enabled?'paused':'off';emit();try{context?.suspend()?.catch(()=>{});}catch{}}
+  function pause(){if(disposed)return;held=true;invalidate();status=enabled?'paused':'off';emit();try{context?.suspend()?.catch(()=>{});}catch{}}
   function setVolume(value){if(!Number.isFinite(value)||disposed)return;volume=Math.min(.6,Math.max(0,value));for(const n of active){if(n.retiring)continue;const t=context.currentTime;n.gain.gain.cancelScheduledValues(t);n.gain.gain.setTargetAtTime(volume,t,.025);}save();emit();}
   async function playTrack(id,gesture) {
-    if(disposed||!tracks.some(t=>t.id===id))return false;
-    if(!gesture&&(!unlocked||context?.state!=='running'||!enabled))return false;
-    if(gesture)unlocked=true;
+    if(disposed||blocked||!playable.some(t=>t.id===id))return false;
+    if(!gesture&&(held||!unlocked||context?.state!=='running'||!enabled))return false;
+    if(gesture){unlocked=true;held=false;}
     // The caller MUST invoke this directly inside a trusted click handler.
     // resume() is invoked before any await/network request for iOS activation.
     const token=++generation;pending?.abort();pending=new AbortController();const controller=pending;
-    selected=id;enabled=true;error='';status='loading';save();emit();
+    selected=id;if(!id.startsWith('encounter-'))normalSelected=id;enabled=true;error='';status='loading';save();emit();
     let activationTimer, downloadTimer;
     try {
       if(typeof Context!=='function')throw Error('この端末では音楽を再生できません');
@@ -58,14 +62,14 @@ export function createGameMusic({base='', gardenAssets=GARDEN_MUSIC_ASSETS, Cont
       if(context.state!=='running')throw Error('もう一度、曲をタップしてください');
       // Garden selection can finish while iOS is still resuming. Follow the
       // latest committed garden rather than starting the now-stale track.
-      if(mode==='auto'&&autoTarget()!==id)return playTrack(autoTarget(),false);
+      if(target()!==id)return playTrack(target(),false);
       let buffer=buffers.get(id);
       if(!buffer){
         const current=()=>token===generation&&!disposed&&!controller.signal.aborted;
         // Serialize fetch/body/decode, coalescing stale queued requests before allocation.
         const work=decodeLane.then(async()=>{
           if(!current())return null;
-          const track=tracks.find(t=>t.id===id);
+          const track=playable.find(t=>t.id===id);
           const response=await fetcher(`${base}${track.asset||'audio/'+track.file}`,{signal:controller.signal});
           if(!current())return null;
           if(!response.ok)throw Error('音楽を読み込めませんでした');
@@ -83,8 +87,9 @@ export function createGameMusic({base='', gardenAssets=GARDEN_MUSIC_ASSETS, Cont
         buffers.clear();buffers.set(id,buffer);
       }
       if(token!==generation||disposed||!enabled)return false;
+      if(held||blocked||context.state!=='running'||target()!==id){pause();return false;}
       const source=context.createBufferSource(),gain=context.createGain();
-      const track=tracks.find(t=>t.id===id),loopStart=track.loopStartSeconds??0,requestedLoopEnd=track.loopEndSeconds??buffer.duration;
+      const track=playable.find(t=>t.id===id),loopStart=track.loopStartSeconds??0,requestedLoopEnd=track.loopEndSeconds??buffer.duration;
       // Native resampling can shorten decoded audio by less than one output sample.
       // Only tolerate this quantization error, never a materially truncated file.
       const sampleTolerance=Number.isFinite(buffer.sampleRate)&&buffer.sampleRate>0?1/buffer.sampleRate:0;
@@ -99,10 +104,17 @@ export function createGameMusic({base='', gardenAssets=GARDEN_MUSIC_ASSETS, Cont
     } catch(e){if(token===generation&&!disposed){stop();status='error';error=e.name==='AbortError'?'読み込みが止まりました。もう一度タップしてください':e.message||'音楽を再生できませんでした';emit();}return false;
     } finally {clearTimeout(activationTimer);clearTimeout(downloadTimer);if(pending===controller)pending=null;}
   }
-  function autoTarget(){return tracks.find(t=>t.gardenId===gardenId)?.id||(gardenId?selected:fixedSelected);}
-  function playFromGesture(id=fixedSelected){if(!tracks.some(t=>t.id===id)||disposed)return Promise.resolve(false);mode='fixed';fixedSelected=id;return playTrack(id,true);}
-  function playCurrentFromGesture(){return playTrack(mode==='auto'?autoTarget():fixedSelected,true);}
-  function playAutoFromGesture(){if(disposed)return Promise.resolve(false);mode='auto';save();return playTrack(autoTarget(),true);}
+  function autoTarget(){return tracks.find(t=>t.gardenId===gardenId)?.id||(gardenId?normalSelected:fixedSelected);}
+  function target(){return encounter?`encounter-${encounter}`:mode==='auto'?autoTarget():fixedSelected;}
+  function setScene({gardenId:id,worldId:nextWorldId,encounter:nextEncounter=null,paused=false}){
+    if(disposed)return Promise.resolve(false);
+    encounter=['crow','raptor'].includes(nextEncounter)?nextEncounter:null;blocked=!!paused;
+    if(blocked)pause();
+    return setGarden(id,nextWorldId);
+  }
+  function playFromGesture(id=fixedSelected){if(!tracks.some(t=>t.id===id)||disposed)return Promise.resolve(false);mode='fixed';fixedSelected=id;save();return playTrack(target(),true);}
+  function playCurrentFromGesture(){return playTrack(target(),true);}
+  function playAutoFromGesture(){if(disposed)return Promise.resolve(false);mode='auto';save();return playTrack(target(),true);}
   function setGarden(id,nextWorldId=null){
     if(disposed)return Promise.resolve(false);
     const replaced=worldId!==null&&nextWorldId!==null&&worldId!==nextWorldId;
@@ -113,12 +125,12 @@ export function createGameMusic({base='', gardenAssets=GARDEN_MUSIC_ASSETS, Cont
     // restart music, and explicit OFF is never overridden by navigation.
     if(arrived&&tracks.some(t=>t.gardenId===gardenId)){mode='auto';save();}
     if(replaced){invalidate();status=enabled?'paused':'off';}
-    const target=mode==='auto'?autoTarget():fixedSelected;emit();
-    if(!enabled||!unlocked||context?.state!=='running')return Promise.resolve(false);
-    if(replaced||target!==selected)return playTrack(target,false);
+    const next=target();emit();
+    if(blocked||held||!enabled||!unlocked||context?.state!=='running')return Promise.resolve(false);
+    if(replaced||next!==selected)return playTrack(next,false);
     return Promise.resolve(false);
   }
-  function needsGesture(){return enabled&&(status==='paused'||status==='error'||(status==='playing'&&context?.state!=='running'));}
+  function needsGesture(){return !blocked&&enabled&&(status==='paused'||status==='error'||(status==='playing'&&context?.state!=='running'));}
   function dispose(){if(disposed)return;invalidate();disposed=true;buffers.clear();try{context?.close()?.catch(()=>{});}catch{};context=null;}
-  return {state,tracks:()=>tracks.map(t=>({...t})),playFromGesture,playCurrentFromGesture,playAutoFromGesture,setGarden,off,pause,setVolume,needsGesture,dispose};
+  return {state,tracks:()=>tracks.map(t=>({...t})),playFromGesture,playCurrentFromGesture,playAutoFromGesture,setGarden,setScene,off,pause,setVolume,needsGesture,dispose};
 }

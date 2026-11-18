@@ -96,3 +96,23 @@ test('orientation notice silences playback without changing music preference or 
   f.trustedField();await tick();assert.ok(f.started.some(source=>source.live));
  }finally{f.dispose();f.window.happyDOM.abort();}
 });
+
+test('scene events respect pause, ending, visibility and restore fixed selection',async()=>{
+ const f=setup();f.emit('buncho-game-music-scene',{gardenId:'komorebi',worldId:'one',encounter:'crow'});assert.equal(f.contexts(),0);
+ f.trustedField();await tick();assert.match(f.requests.at(-1),/encounters\/crow.wav/);
+ f.emit('buncho-game-panel','settings');f.trustedShell('[data-music=village]');await tick();assert.match(f.requests.at(-1),/encounters\/crow.wav/);
+ f.emit('buncho-game-music-scene',{gardenId:'komorebi',worldId:'one',paused:true,encounter:'raptor'});f.trustedField();await tick();assert.equal(f.started.filter(x=>x.live).length,0);
+ f.emit('buncho-game-music-scene',{gardenId:'komorebi',worldId:'one',paused:false,encounter:'raptor'});assert.equal(f.started.filter(x=>x.live).length,0);f.trustedField();await tick();assert.match(f.requests.at(-1),/encounters\/raptor.wav/);
+ f.document.body.dataset.gameEndingActive='true';f.emit('buncho-game-ending',{active:true});f.emit('buncho-game-music-scene',{gardenId:null,worldId:'one'});f.trustedShell('[data-music=village]');await tick();assert.equal(f.started.filter(x=>x.live).length,0);
+ delete f.document.body.dataset.gameEndingActive;f.trustedField();await tick();assert.match(f.requests.at(-1),/04_village/);
+ f.dispose();assert.equal(f.docListeners.get('buncho-game-music-scene').size,0);f.window.happyDOM.abort();
+});
+
+test('legacy panel garden-null events cannot overwrite authoritative scene or fixed preference',async()=>{
+ const f=setup();f.emit('buncho-game-music-scene',{gardenId:'komorebi',worldId:'one'});f.emit('buncho-game-panel','settings');f.trustedShell('[data-music=village]');await tick();
+ const before=f.window.localStorage.getItem('buncho.music.v1');
+ f.emit('buncho-game-garden',{gardenId:null,worldId:'one'});f.emit('buncho-game-music-scene',{gardenId:'komorebi',worldId:'one',encounter:'crow'});await tick();
+ assert.equal(f.window.localStorage.getItem('buncho.music.v1'),before);
+ f.emit('buncho-game-music-scene',{gardenId:'komorebi',worldId:'one',paused:true,encounter:'crow'});f.trustedShell('[data-music-off]');
+ assert.equal(JSON.parse(f.window.localStorage.getItem('buncho.music.v1')).enabled,false);f.dispose();f.window.happyDOM.abort();
+});

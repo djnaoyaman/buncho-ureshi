@@ -111,3 +111,41 @@ for(const missingSamples of [2,48,48000])test(`rejects ${missingSamples} missing
  const p=createGameMusic({Context:Truncated,fetcher:async()=>({ok:true,arrayBuffer:async()=>new ArrayBuffer(1)})});
  await p.setGarden('komorebi');assert.equal(await p.playCurrentFromGesture(),false);assert.equal(f.started.length,0);assert.match(p.state().error,/ループ範囲/);p.dispose();
 });
+
+test('encounter priority preserves fixed preference, follows latest choice and restores it',async()=>{
+ const f=fixture();await f.player.setGarden('komorebi','one');await f.player.playFromGesture('village');
+ const before=f.values.get('buncho.music.v1');
+ await f.player.setScene({gardenId:'komorebi',worldId:'one',encounter:'crow'});
+ assert.equal(f.player.state().selected,'encounter-crow');assert.equal(f.values.get('buncho.music.v1'),before);
+ await f.player.playFromGesture('orchard');assert.equal(f.player.state().selected,'encounter-crow');
+ assert.equal(f.player.state().fixedSelected,'orchard');
+ await f.player.setScene({gardenId:'komorebi',worldId:'one',encounter:'raptor'});assert.equal(f.player.state().selected,'encounter-raptor');
+ await f.player.setScene({gardenId:'komorebi',worldId:'one'});assert.equal(f.player.state().selected,'orchard');
+ assert.equal(f.started.filter(x=>x.live).length,1);f.player.dispose();
+});
+test('encounter before unlock stays silent, OFF and pause dominate scene updates',async()=>{
+ const f=fixture();await f.player.setScene({gardenId:'komorebi',worldId:'one',encounter:'crow'});assert.equal(f.contexts.length,0);
+ await f.player.playCurrentFromGesture();assert.equal(f.player.state().selected,'encounter-crow');
+ await f.player.setScene({gardenId:'komorebi',worldId:'one',encounter:'raptor',paused:true});assert.equal(f.started.filter(x=>x.live).length,0);
+ assert.equal(await f.player.playCurrentFromGesture(),false);
+ await f.player.setScene({gardenId:'komorebi',worldId:'one',encounter:'raptor'});assert.equal(f.started.filter(x=>x.live).length,0);
+ await f.player.playCurrentFromGesture();assert.equal(f.player.state().selected,'encounter-raptor');f.player.off();
+ await f.player.setScene({gardenId:null,worldId:'one'});assert.equal(f.player.state().enabled,false);assert.equal(f.started.filter(x=>x.live).length,0);f.player.dispose();
+});
+test('late encounter download after departure never starts the encounter',async()=>{
+ let release;const f=fixture({fetcher:async url=>url.includes('encounters/')?new Promise(r=>release=r):{ok:true,arrayBuffer:async()=>new ArrayBuffer(1)}});
+ await f.player.playFromGesture('village');const a=f.player.setScene({gardenId:null,worldId:'one',encounter:'raptor'});await tick();
+ const b=f.player.setScene({gardenId:null,worldId:'one'});release({ok:true,arrayBuffer:async()=>new ArrayBuffer(1)});
+ assert.equal(await a,false);await b;assert.equal(f.player.state().selected,'village');assert.equal(f.started.length,2);f.player.dispose();
+});
+test('pause while native suspend is pending cannot be bypassed by scene updates',async()=>{
+ const f=fixture();await f.player.playFromGesture();f.contexts[0].suspend=()=>new Promise(()=>{});f.player.pause();
+ await f.player.setScene({gardenId:null,worldId:'one',encounter:'crow'});assert.equal(f.started.length,1);assert.equal(f.started.filter(x=>x.live).length,0);f.player.dispose();
+});
+
+test('interrupted context plus departure invalidates slow encounter decode',async()=>{
+ const f=fixture();await f.player.playFromGesture('village');let finish;
+ f.contexts[0].decodeAudioData=()=>new Promise(r=>finish=r);
+ const p=f.player.setScene({gardenId:null,worldId:'one',encounter:'crow'});await tick();f.contexts[0].state='interrupted';
+ await f.player.setScene({gardenId:null,worldId:'one'});finish({duration:12});assert.equal(await p,false);assert.equal(f.started.length,1);assert.equal(f.player.needsGesture(),true);f.player.dispose();
+});

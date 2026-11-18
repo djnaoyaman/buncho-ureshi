@@ -1,9 +1,11 @@
 {
-  "base": "792a28c9ce4dfe520756da1f1edc506dbdabaa40",
+  "base": "8bb37a3bf6e255befc0a612298a385d0b475fea4",
   "tests": [
-    "tests/browser/nestling-visibility.spec.js",
-    "tests/browser/egg-art.spec.js",
-    "tests/browser/home-visits.spec.js"
+    "tests/browser/encounter-music.spec.js",
+    "tests/browser/game-music.spec.js",
+    "tests/browser/garden-music.spec.js",
+    "tests/browser/garden-crows.spec.js",
+    "tests/browser/garden-raptors.spec.js"
   ],
-  "reason": "Keep hand scene-controls button in its original lower position when young occupy the nest: exclude non-interactive eggs/chicks from crowded floor/perch count. Compare button x/y/size before and after 1/9 young on seven viewport sizes, retain nest/furniture/guest tests and real screenshots in Chrome/WebKit."
+  "reason": "Temporary crow warning/visit and raptor visit BGM; native WAV decode and loop bounds at 44.1/48kHz, fixed/auto restoration, OFF/pause, full-game return home and existing encounter controller flows in Chrome and WebKit. Physical Safari and subjective listening remain manual."
 }
