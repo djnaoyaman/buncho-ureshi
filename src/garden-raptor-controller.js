@@ -5,7 +5,16 @@ import {crowScene} from './garden-crows.js';
 /** One host-owned foreground clock. A saved warning survives navigation and reload.
  * Transactions consume only a bounded observed interval, never offline wall time. */
 export function mountGardenRaptors(root,{getWorld,transact,onChange=()=>{},isAvailable=()=>true,hasCrowPending=()=>false,random=Math.random,predatorRandom=Math.random,earlyPredatorVisits=true,canStartCrowWarning=()=>false,startCrowWarning=null}={}){
- const doc=root.ownerDocument,win=doc.defaultView,clock=createGardenRaptorClock({random}),entryClock=createGardenPredatorClock({random:predatorRandom});
+ const doc=root.ownerDocument,win=doc.defaultView,clock=createGardenRaptorClock({random});
+ let journalWorld=getWorld().worldId,journalFailed=false,journalReadable=true;
+ const journalKey=()=>`buncho-predator-attempt-v1:${journalWorld}`;
+ const entryClock=createGardenPredatorClock({random:predatorRandom,persist:state=>{
+  try{win.sessionStorage.setItem(journalKey(),JSON.stringify(state));journalFailed=false;return true;}
+  catch{if(!journalFailed){journalFailed=true;onChange({error:new Error('出会いの再開情報を保存できませんでした。'),structural:false,world:getWorld()});}return false;}
+ }});
+ const restoreAttempt=()=>{try{entryClock.restore(JSON.parse(win.sessionStorage.getItem(journalKey())||'null'));journalReadable=true;}catch{journalReadable=false;}};
+ const arrivals=w=>JSON.stringify([w.encounters.crow?.lastArrivalAt??null,w.encounters.raptor?.lastArrivalAt??null]);
+ restoreAttempt();
  let alive=true,flight=false,timer=null,last=null,epoch=0,lastWorld=getWorld().worldId,lastPanel=root.querySelector('.game-app')?.dataset.panel,lastGarden=getWorld().encounters.garden.id;
  let renderedScene=sceneKey(getWorld());
  const visible=()=>alive&&root.isConnected&&!['loading','shown'].includes(doc.body.dataset.gameIntro)&&doc.visibilityState!=='hidden'&&!doc.body.hasAttribute('data-game-view-blocked')&&win.navigator?.onLine!==false&&!getWorld().paused&&!doc.body.hasAttribute('data-game-ending-active');
@@ -14,7 +23,10 @@ export function mountGardenRaptors(root,{getWorld,transact,onChange=()=>{},isAva
  async function poll(){
   if(!alive)return;
   const now=win.performance.now(),w=getWorld();
-  if(w.worldId!==lastWorld){lastWorld=w.worldId;interrupt();}
+  if(w.worldId!==lastWorld){lastWorld=w.worldId;interrupt();journalWorld=w.worldId;restoreAttempt();}
+  if(!journalReadable){restoreAttempt();if(!journalReadable&&!w.encounters.raptor?.active){interrupt();schedule();return;}}
+  entryClock.reconcile(arrivals(w),Date.now());
+  if(entryClock.snapshot().pending?.kind==='crow'&&!hasCrowPending())entryClock.retry();
   if(renderedScene!==sceneKey(w)){renderedScene=sceneKey(w);onChange({structural:true,world:w});}
   const delta=last===null?0:Math.floor(now-last);last=now;
   if(!visible()||raptorReturnChoicePending(w)){interrupt();schedule();return;}
@@ -22,8 +34,8 @@ export function mountGardenRaptors(root,{getWorld,transact,onChange=()=>{},isAva
   const active=w.encounters.raptor?.active;
   const stage=root.querySelector('.finch-garden-stage');
   const eligible=w.encounters.garden.open&&!!stage&&stage.dataset.sceneState==='ready'&&!doc.querySelector('.game-bird-sheet[open]');
-  const entry=earlyPredatorVisits?entryClock.sample({key:`${w.worldId}:${w.encounters.garden.id}:${raptorTarget(w)?.id}`,now,eligible,available:!active&&isAvailable()&&!hasCrowPending()&&!crowScene(w)&&!root.querySelector('[data-crow-phase=warning]'),crowAvailable:!!startCrowWarning&&canStartCrowWarning(),raptorAvailable:!raptorCoolingDown(w),gardenId:w.encounters.garden.id}):null;
-  if(entry?.kind==='crow')startCrowWarning(entry.id);
+  const entry=earlyPredatorVisits?entryClock.sample({key:`${w.worldId}:${w.encounters.garden.id}:${raptorTarget(w)?.id}`,now,wallNow:Date.now(),arrivals:arrivals(w),eligible,available:!active&&isAvailable()&&!hasCrowPending()&&!crowScene(w)&&!root.querySelector('[data-crow-phase=warning]'),crowAvailable:!!startCrowWarning&&canStartCrowWarning(),raptorAvailable:!raptorCoolingDown(w),gardenId:w.encounters.garden.id}):null;
+  if(entry?.kind==='crow'&&!startCrowWarning(entry.id))entryClock.reset();
   const sustained=earlyPredatorVisits?null:clock.sample({key:`${w.worldId}:${w.encounters.garden.id}:${raptorTarget(w)?.id}`,now,eligible,busy:!isAvailable(),available:!entry&&!active&&!raptorCoolingDown(w)&&!hasCrowPending()&&!crowScene(w)&&!root.querySelector('[data-crow-phase=warning]'),gardenId:w.encounters.garden.id});
   const event=entry?.kind==='raptor'?{kind:'arrive',id:entry.id}:sustained;
   if(active||event?.kind==='arrive'){
@@ -38,13 +50,13 @@ export function mountGardenRaptors(root,{getWorld,transact,onChange=()=>{},isAva
       // the exact event/progress snapshot to reject another tab's earlier step.
       result=advanceGardenRaptor(current,delta,Date.now(),{...token,revision:current.revision});
      }else{
-      if(hasCrowPending()||doc.querySelector('.game-bird-sheet[open]')||root.querySelector('[data-crow-phase=warning]')||crowScene(current)||current.encounters.garden.id!==gardenId||raptorTarget(current)?.id!==targetId||!root.querySelector('.finch-garden-stage[data-scene-state=ready]'))return current;
+      if(arrivals(current)!==arrivals(w)||hasCrowPending()||doc.querySelector('.game-bird-sheet[open]')||root.querySelector('[data-crow-phase=warning]')||crowScene(current)||current.encounters.garden.id!==gardenId||raptorTarget(current)?.id!==targetId||!root.querySelector('.finch-garden-stage[data-scene-state=ready]'))return current;
       result=arriveGardenRaptor(current,event.id,Date.now(),{worldId:current.worldId,revision:current.revision,gardenId});
      }
      return current;
     });
-    if(alive){const structural=renderedScene!==sceneKey(getWorld());renderedScene=sceneKey(getWorld());onChange({result,structural,world:getWorld()});if(!active&&!result?.changed)clock.reset();}
-   }catch(error){if(alive)onChange({error,structural:false,world:getWorld()});if(!active)clock.reset();}
+    if(alive){const structural=renderedScene!==sceneKey(getWorld());renderedScene=sceneKey(getWorld());onChange({result,structural,world:getWorld()});if(!active&&!result?.changed){clock.reset();entryClock.reset();}}
+   }catch(error){if(alive)onChange({error,structural:false,world:getWorld()});if(!active){clock.reset();entryClock.reset();}}
    finally{flight=false;}
   }
   schedule();
