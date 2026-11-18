@@ -612,7 +612,16 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     // A family nest must remain visible before selecting its eggs or chicks.
     // Share the actual camera crop with every viewport-relative scene actor.
     const nestCamera=world.field.place==='home'&&fieldBirds(world).some(b=>['egg','chick'].includes(b.stage));
-    return {width,height,planeWidth,planeHeight,top,left:(planeWidth-width)/(nestCamera?1:2)};
+    const centerCrop=(planeWidth-width)/2;
+    // Reveal the opening, not the entire outer shell. Keep the approved
+    // centered composition wherever the opening already fits.
+    const left=nestCamera?Math.min(planeWidth-width,Math.max(centerCrop,planeWidth*.89-width+12)):centerCrop;
+    const pan=left-centerCrop;
+    // In tall tablet crops the wide-art mineral bowl crosses the revealed
+    // entrance. Move only that bowl left; keep its size and mounting height.
+    const bowlWidth=planeWidth*.09,bowlCenter=Math.max(centerCrop+bowlWidth/2+2,Math.min(planeWidth*.74,planeWidth-centerCrop-bowlWidth/2-2));
+    const bowlShift=nestCamera&&kind==='wide'&&pan>0?Math.max(0,bowlCenter+bowlWidth/2-centerCrop-(planeWidth*.78-left)+12):0;
+    return {width,height,planeWidth,planeHeight,top,left,pan,bowlShift};
   }
   function visibleFieldPositions(birds,kind,place){
     const positions=fieldPositions(birds,place==='friend'?'wide':kind,place),g=roomGeometry(kind),fraction=g.width/g.planeWidth;
@@ -653,6 +662,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     if(!preserveSelection&&!active.some(b=>b.id===selected)&&active.length){cancelCareEffects();selected=active[0].id;}
     const current=active.find(b=>b.id===selected)||active[0];
     const atmosphere=homeAtmosphere(world,{selectedId:selected,panel,error:!!error,memory:store.mode==='memory',ending:!!endingPlayer?.active(),hidden:document.hidden,motion:poseEnabled()});
+    const camera=roomGeometry((root.ownerDocument.defaultView.innerWidth||390)<=600?'tall':'wide');
     const hasNestlings=world.field.place==='home'&&active.some(b=>['egg','chick'].includes(b.stage));
     // Compact mode may simplify adult perches, but must not hide newborns.
     const shown=compactLayout?.matches?active.filter(b=>b.id===current?.id||(hasNestlings&&['egg','chick'].includes(b.stage))):active;
@@ -671,7 +681,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
         perched.forEach((actor,i)=>{const row=Math.floor(i/columns),count=Math.min(columns,perched.length-row*columns),x=(i%columns+1)/(count+1),foot=rows===1?geometry.height*(geometry.width<=600&&geometry.height<=280 ? .57 : .68):geometry.height*.46+row*Math.max(90,geometry.height*.23);map.set(actor.id,{...map.get(actor.id),x:geometry.left/geometry.planeWidth+x*fraction,y:(Math.min(geometry.height-26,foot)-geometry.top)/geometry.planeHeight});});
       }
     }
-    return `${fieldNavigation()}<div class="game-room" data-atmosphere="${atmosphere.state}" data-atmosphere-motion="${atmosphere.animate}" data-home-response="${atmosphere.visible?currentHomeResponse()?.kind||'':''}" data-home-response-phase="${currentHomeResponse()?.phase||''}" data-selected-atmosphere="${atmosphere.selectedState}" data-has-nestlings="${hasNestlings}" data-compact="${!!compactLayout?.matches}" data-many-guests="${cageGuests.length>2}" data-home-crowded="${world.field.place==='home'&&(actors.length>8||(compactLayout?.matches&&cageGuests.length>0))}" data-field="${world.field.place}" data-friend-cage="${world.field.place==='friend'?friendCage(world,world.field.hostId).id:''}" aria-label="${escape(fieldTitle())}。イラストのゲーム用風景です。">
+    return `${fieldNavigation()}<div class="game-room" style="--nest-camera-pan:${camera.pan}px;--nest-bowl-shift:${camera.bowlShift}px" data-atmosphere="${atmosphere.state}" data-atmosphere-motion="${atmosphere.animate}" data-home-response="${atmosphere.visible?currentHomeResponse()?.kind||'':''}" data-home-response-phase="${currentHomeResponse()?.phase||''}" data-selected-atmosphere="${atmosphere.selectedState}" data-has-nestlings="${hasNestlings}" data-nest-bowl-shift="${camera.bowlShift>0}" data-compact="${!!compactLayout?.matches}" data-many-guests="${cageGuests.length>2}" data-home-crowded="${world.field.place==='home'&&(actors.length>8||(compactLayout?.matches&&cageGuests.length>0))}" data-field="${world.field.place}" data-friend-cage="${world.field.place==='friend'?friendCage(world,world.field.hostId).id:''}" aria-label="${escape(fieldTitle())}。イラストのゲーム用風景です。">
       ${world.field.place==='home'?renderHomeScene({base:GAME_ART,furniture:sceneFurniture(null,true,atmosphere.visible?atmosphere:null),atmosphere}):world.field.place==='friend'?`<picture class="game-habitat"><img src="${GAME_ART}${friendCage(world,world.field.hostId).file}" alt="" aria-hidden="true" width="1600" height="1000" decoding="async"></picture>`:`<picture class="game-habitat"><source media="(max-width: 600px)" srcset="${GAME_ART}field-park-tall.webp"><img src="${GAME_ART}field-park-wide.webp" alt="" aria-hidden="true" width="1600" height="1000" decoding="async"></picture>`}
       ${gemCollectibles()}<span class="game-floor-soil" style="--care-soil-opacity:${careFloorOpacity(getCleanliness(world)).toFixed(3)}" aria-hidden="true"></span>
       ${shown.map(b=>{

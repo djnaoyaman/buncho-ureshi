@@ -1,9 +1,9 @@
 {
-  "base": "e0bc06844674f0f1078630761c9e6992dfd103c3",
+  "base": "6ad1c3cc73d40a5512b0d6cf5e5fd20ec0748f89",
   "tests": [
     "tests/browser/nestling-visibility.spec.js",
     "tests/browser/egg-art.spec.js",
     "tests/browser/home-visits.spec.js"
   ],
-  "reason": "Fix real unselected newborn clipping missed by selection-first PR224 tests. Chrome/WebKit must check actual hatching, unselected mixed clutches, full viewport containment, parent selection, compact/portrait/tablet/wide layouts, repeated reload, existing nest art and guest positioning, with saved identity preserved. Retain all failed home-visits assertions; open the current visible menu before close-all, and keep the tiny crowded-home toggle clear of guest labels."
+  "reason": "Restore user-approved centered room balance: pan only enough to show nest entrance, preserve furniture/adult viewport coordinates. Check 1/9 young across seven viewport sizes, newborn transitions, guests, eggs and real screenshot visual review in Chrome/WebKit. No save/engine changes."
 }
