@@ -5,7 +5,7 @@ async function setup(page,{species='large-billed-crow',friendly=false,seedVisit=
  await page.goto('');
  const base=new URL('./',page.url()).href;
  await page.setContent(`<link rel="stylesheet" href="${base}src/encounter-ui.css"><style>body{margin:0;font-family:system-ui;color:#294d3b}#fixture{width:100vw;height:100dvh;position:relative;overflow:auto}.finch-overlay-content{max-height:100dvh}.finch-garden{height:100dvh}.finch-entry{padding:16px;box-sizing:border-box}</style><main id="fixture"></main>`);
- await page.clock.install({time:NOW});
+ await page.clock.install({time:NOW});await page.clock.pauseAt(NOW+1000);
  await page.evaluate(async({base,species,friendly,seedVisit,earlyPredatorVisits,NOW})=>{
    const {createWorld}=await import(base+'src/engine.js');
    const {openGameStore}=await import(base+'src/game-store.js');
@@ -46,7 +46,7 @@ test('warning can be escaped and a new garden needs its own continuous two minut
 });
 test('friendly crow keeps friends, never halves energy, and petting survives saved reload',async({page})=>{
  await setup(page,{friendly:true});await visit(page);expect(await page.evaluate(()=>crowFixture.world().birds[0].needs.energy)).toBe(80);await expect(page.locator('.finch-garden-stage [data-garden-friend]')).toHaveCount(4);await expect(page.locator('[data-crow-phase=visiting]')).toContainText('なかよし');
- await page.locator('[data-crow-entry=large-billed-crow]').click();const target=page.locator('[data-encounter-rub]');await target.focus();await page.keyboard.press('Enter');await expect(page.locator('[data-crow-points]')).toHaveText('105');await expect(target).toBeFocused();
+ await page.locator('[data-crow-entry=large-billed-crow]').click();const target=page.locator('[data-encounter-rub]');await target.focus();await page.keyboard.press('Enter');await page.clock.runFor(1000);await page.keyboard.press('Enter');await expect(page.locator('[data-crow-points]')).toHaveText('105');await expect(target).toBeFocused();
  const before=await page.evaluate(()=>JSON.stringify(crowFixture.world().birds));await page.evaluate(async()=>{const value=await crowFixture.store.transact(w=>w);window.savedCrowPoints=value.encounters.crow.visits[0].petPoints;});expect(await page.evaluate(()=>savedCrowPoints)).toBe(105);expect(await page.evaluate(()=>JSON.stringify(crowFixture.world().birds))).toBe(before);
 });
 test('friendly tiny garden keeps all Java sparrows on the same scale with accessible touch targets',async({page},info)=>{
@@ -84,9 +84,8 @@ for(const [species,size,mode='outdoors',successor=false,targetless=false] of [['
   const geometry=await scene.evaluate(e=>{const a=e.querySelector('.finch-crow-actor').getBoundingClientRect(),s=e.getBoundingClientRect(),friend=document.querySelector('.finch-garden-stage [data-garden-friend] .garden-bird-sprite').getBoundingClientRect(),dock=document.querySelector('.finch-garden-dock').getBoundingClientRect();return {left:s.left,right:s.right,artLeft:a.left,artRight:a.right,top:a.top,bottom:a.bottom,crowWidth:a.width,javaWidth:friend.width,ratio:Number(e.dataset.lengthRatio),dockTop:dock.top};});
   expect(geometry.left).toBeGreaterThanOrEqual(0);expect(geometry.right).toBeLessThanOrEqual(size[0]+1);expect(geometry.artLeft).toBeGreaterThanOrEqual(0);expect(geometry.artRight).toBeLessThanOrEqual(size[0]+1);expect(geometry.top).toBeGreaterThanOrEqual(0);expect(geometry.bottom).toBeLessThanOrEqual(size[1]);expect(geometry.bottom).toBeLessThan(geometry.dockTop);
   expect(geometry.crowWidth*CROW_ART[species].artWidthFraction/geometry.javaWidth).toBeCloseTo(geometry.ratio*JAVA_ART_LENGTH.white,1);
-  for(const friend of await stage.locator('[data-garden-friend]').all()){
-   const hit=await friend.boundingBox(),sprite=await friend.locator('.garden-bird-sprite').boundingBox();expect(hit.width).toBeGreaterThanOrEqual(43.99);expect(hit.height).toBeGreaterThanOrEqual(43.99);expect(Math.abs(sprite.width-geometry.javaWidth)).toBeLessThan(1);
-  }
+  const friends=await stage.locator('[data-garden-friend]').evaluateAll(nodes=>nodes.map(e=>({hit:e.getBoundingClientRect().toJSON(),sprite:e.querySelector('.garden-bird-sprite').getBoundingClientRect().toJSON()})));
+  for(const {hit,sprite} of friends){expect(hit.width).toBeGreaterThanOrEqual(43.99);expect(hit.height).toBeGreaterThanOrEqual(43.99);expect(Math.abs(sprite.width-geometry.javaWidth)).toBeLessThan(1);}
   const current=await savedGame(page);expect(current.encounters.crow).toMatchObject({arrivalBirdId:null,lastHostile:false});expect(current.encounters.gardenFriends.attendees).toEqual([]);expect(current.birds.find(b=>b.id===protagonist.id).needs.energy).toBe(80);expect(current.lifecycle.birds.find(b=>b.birdId===protagonist.id).death).toBeNull();
  }else{
   await expect(page.locator('.finch-garden-stage [data-garden-friend]')).toHaveCount(0);await expect(page.locator('.finch-crow-java>span:last-child')).toContainText(protagonist.name);
@@ -113,11 +112,11 @@ for(const [species,size,mode='outdoors',successor=false,targetless=false] of [['
 test('live game shell keeps the foreground clock through normal world polling and commits one visit',async({page})=>{
  const {createWorld}=await import('../../src/engine.js');
  const world=createWorld(NOW);world.settings.motion=false;world.settings.careSound=false;world.birds[0].needs.energy=80;world.encounters.gardenFriends.companions=['b1'];world.encounters.gardenFriends.accompany=true;
- await page.goto('');await page.clock.install({time:NOW});
+ await page.goto('');await page.clock.install({time:NOW});await page.clock.pauseAt(NOW+1000);
  await page.addInitScript(()=>{Math.random=()=>0;localStorage.setItem('buncho.music.v1',JSON.stringify({enabled:false}));localStorage.setItem('buncho.care-sound-choice.v1',JSON.stringify({explicit:true,enabled:false}));});
  await page.evaluate(world=>new Promise((resolve,reject)=>{const r=indexedDB.open('buncho-ureshi-garden-v1',1);r.onupgradeneeded=()=>r.result.createObjectStore('world');r.onerror=()=>reject(r.error);r.onsuccess=()=>{const db=r.result,tx=db.transaction('world','readwrite');tx.objectStore('world').put(world,'current');tx.oncomplete=()=>{db.close();resolve();};tx.onerror=()=>reject(tx.error);};}),world);
  const saved=()=>page.evaluate(()=>new Promise((resolve,reject)=>{const r=indexedDB.open('buncho-ureshi-garden-v1',1);r.onerror=()=>reject(r.error);r.onsuccess=()=>{const db=r.result,tx=db.transaction('world','readonly'),value=tx.objectStore('world').get('current');value.onsuccess=()=>resolve(value.result);tx.oncomplete=()=>db.close();};}));
- await page.goto('game/');await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');await page.clock.pauseAt(await page.evaluate(()=>Date.now())+1000);await page.locator('.game-scene-controls-toggle').click();await page.locator('.game-field-nav [data-game-panel=outdoors]').click();await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-scene-state','ready');
+ await page.goto('game/');await expect.poll(()=>page.locator('body').getAttribute('data-game-intro')).toMatch(/shown|done/);if(await page.locator('body').getAttribute('data-game-intro')==='shown')await page.clock.runFor(2000);await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');await page.clock.pauseAt(await page.evaluate(()=>Date.now())+1000);await page.locator('.game-scene-controls-toggle').click();await page.locator('.game-field-nav [data-game-panel=outdoors]').click();await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-scene-state','ready');
  await page.clock.runFor(2000);expect((await saved()).encounters.crow.visits).toHaveLength(0);
  for(let i=0;i<5&&await page.locator('[data-crow-phase=warning]').count()===0;i++){await page.clock.runFor(1000);await saved();}
  await expect(page.locator('[data-crow-phase=warning]')).toBeVisible();const before=await saved();expect(before.encounters.crow.visits).toHaveLength(0);
@@ -137,5 +136,5 @@ test('all five undiscovered crow shapes are visible as individual silhouettes an
 });
 
 test('rare early crow entry retains the warning and home escape',async({page})=>{
- await setup(page,{earlyPredatorVisits:true});await page.clock.runFor(2000);await expect(page.locator('[data-crow-phase=warning]')).toHaveCount(0);await page.clock.runFor(1000);await expect(page.locator('[data-crow-phase=warning]')).toBeVisible();expect(await page.evaluate(()=>crowFixture.world().birds[0].needs.energy)).toBe(80);await page.locator('[data-crow-phase=warning] [data-finch-go-home]').click();await page.clock.runFor(6000);expect(await page.evaluate(()=>crowFixture.world().birds[0].needs.energy)).toBe(80);
+ await setup(page,{earlyPredatorVisits:true});await page.clock.runFor(1000);await expect(page.locator('[data-crow-phase=warning]')).toHaveCount(0);await page.clock.runFor(1000);await expect(page.locator('[data-crow-phase=warning]')).toBeVisible();expect(await page.evaluate(()=>crowFixture.world().birds[0].needs.energy)).toBe(80);await page.locator('[data-crow-phase=warning] [data-finch-go-home]').click();await page.clock.runFor(6000);expect(await page.evaluate(()=>crowFixture.world().birds[0].needs.energy)).toBe(80);
 });

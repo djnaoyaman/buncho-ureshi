@@ -1,5 +1,5 @@
 {
-  "base": "8bb37a3bf6e255befc0a612298a385d0b475fea4",
+  "base": "86ee58acad4564d8f33f0fc917b186ebe4ad011b",
   "tests": [
     "tests/browser/encounter-music.spec.js",
     "tests/browser/game-music.spec.js",
