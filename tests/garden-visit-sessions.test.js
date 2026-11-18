@@ -48,10 +48,10 @@ test('two independent active conversations preserve exact instance, step and rew
   assert.equal(w.encounters.discoveries.length,2);assert.ok(w.encounters.discoveries.every(d=>d.visits===1));validateWorld(w);
 });
 
-test('completed guest stays in its own garden and reunion is immediate without extra meeting credit',()=>{
+test('completed guest leaves after home (revised policy), while reunion stays immediate without extra credit',()=>{
   const w=fresh(),a=arrive(w);start(w,a);finish(w);const original=clone(w.encounters.garden);
   system.leaveGarden(w,economyToken(w));select(w,'komugi');assert.equal(w.encounters.garden.scene,original.scene);
-  const b=arrive(w,'mizukagami','water');assert.ok(b);select(w,'komugi');assert.equal(w.encounters.garden.lastGuest,a);
+  const b=arrive(w,'mizukagami','water');assert.ok(b);select(w,'komugi');assert.equal(w.encounters.garden.lastGuest,null);
   assert.equal(observe(w,'grass').arrived,true);start(w,a);finish(w);
   assert.equal(w.encounters.discoveries.find(d=>d.id===a).visits,1);assert.equal(w.tick,0);
   advanceTicks(w,8,NOW);assert.equal(observe(w,'grass').arrived,true);start(w,a);finish(w);

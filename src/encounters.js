@@ -44,7 +44,16 @@ export function getGardenEncounterAvailability(w){
 export function cageVisitorCount(w){return w.birds.filter(b=>b.home==='visitor').length+(w.encounters?.cageVisitors?.length||0);}
 /** Called only after the legacy state has passed full schema validation. */
 export function upgradeEncounterState(state){if(state.version===4){state.version=5;state.friendship=[];state.cageVisitors=[];}if(state.version===5){state.version=6;state.homeClosedUntil=0;}if(state.version===6){state.version=7;state.crow=initialCrowState();}if(state.version===7){state.version=8;state.raptor=initialRaptorState();delete state.raptor.lastThreatAt;}if(state.version===8){state.version=9;for(const id of OLD_GARDEN_IDS)if(!Object.hasOwn(state.garden.visits,id))state.garden.visits[id]=0;}if(state.version===9){state.version=10;state.homeGoodbyes=[];}if(state.version===10){initializeGardenVisitSessions(state);state.version=11;}if(state.version===11){state.gardenFriends={...state.gardenFriends,version:2,accompany:false,attendees:[],visits:[]};state.version=12;}if(state.version===12)state.version=13;if(state.version===13){state.garden.visits=prepareGarden35Visits(state.garden.visits);state.version=14;}if(state.version===14){if(state.raptor.active)state.raptor.active.returnChoicePending=state.raptor.active.hostile;state.version=15;}if(state.version===15){state.raptor.lastThreatAt=state.raptor.lastArrivalAt;state.version=16;}return state;}
-export function expireEncounterVisitors(w){if(w.encounters.cageVisitors)w.encounters.cageVisitors=w.encounters.cageVisitors.filter(v=>w.tick-v.arrivedTick<=FRIENDSHIP_RULES.visitTicks);}
+/** Completed garden guests share the established visit cap. Pending conversations
+ * are never expired. nextTick already records the completion/invitation tick, so
+ * old saves need no schema rewrite and discoveries/friendship are untouched. */
+export function expireEncounterVisitors(w){
+ const s=w.encounters;
+ if(s.cageVisitors)s.cageVisitors=s.cageVisitors.filter(v=>w.tick-v.arrivedTick<=FRIENDSHIP_RULES.visitTicks);
+ for(const visit of [s.garden,...(s.gardenSessions||[])]){
+  if(visit.lastGuest&&w.tick-visit.nextTick>FRIENDSHIP_RULES.visitTicks)visit.lastGuest=null;
+ }
+}
 const ACTIVITIES=['park','talk','decorate','friend','read','garden'];
 export const GARDEN_SCENES=Object.freeze(['grass','water','branch','song','quiet']);
 export function initialGardenState(){return {open:false,id:'komorebi',scene:'quiet',turn:0,nextTurn:1,nextTick:0,lastGuest:null,guestGardenId:null,visits:Object.fromEntries(GARDEN_IDS.map(id=>[id,0])),moments:[]};}
@@ -160,6 +169,9 @@ export function createEncounterSystem(catalog=ENCOUNTER_CATALOG,{knownCatalog=ca
   function leaveGarden(w,expected){
     if(!guard(w,expected))return stale();validate(w.encounters,w.tick);
     if(!w.encounters.garden.open)return {changed:false};
+    // Going home ends completed visits in every garden of this outing, not
+    // unfinished scripts. Those retain their exact step and can be resumed.
+    for(const visit of [w.encounters.garden,...(w.encounters.gardenSessions||[])])visit.lastGuest=null;
     w.encounters.garden.open=false;w.encounters.gardenFriends.attendees=[];bump(w);return {changed:true};
   }
   function observeGarden(w,scene,expected){
@@ -211,7 +223,7 @@ export function createEncounterSystem(catalog=ENCOUNTER_CATALOG,{knownCatalog=ca
     if(!byId.has(id)||!d)return {changed:false,reason:'locked'};
     if(pendingGardenGuestLocation(s,id)||s.active||s.queue.length)return {changed:false,reason:'guest',message:'今のお客さまとの出会いを終えてから呼ぼう。'};
     if(g.lastGuest===id&&g.guestGardenId===g.id){if(!g.open){beginVisit(w);bump(w);return {changed:true,resumed:true};}return {changed:false,resumed:true,message:'もう庭で待っているよ。'};}
-    upgradeEncounterState(s);clearCompletedGardenGuest(s,id);s.cageVisitors=s.cageVisitors.filter(v=>v.id!==id);if(!g.open)beginVisit(w);g.open=true;g.lastGuest=id;g.guestGardenId=g.id;
+    upgradeEncounterState(s);clearCompletedGardenGuest(s,id);s.cageVisitors=s.cageVisitors.filter(v=>v.id!==id);if(!g.open)beginVisit(w);g.open=true;g.lastGuest=id;g.guestGardenId=g.id;g.nextTick=w.tick;
     if(w.tick-d.lastTick>=GARDEN_VISIT_RULES.meetingRewardTicks){d.visits=Math.min(ENCOUNTER_LIMITS.visits,d.visits+1);d.lastTick=w.tick;}bump(w);return {changed:true,message:`${byId.get(id).name}が庭に来てくれたよ。`};
   }
   function inviteCage(w,id,expected){

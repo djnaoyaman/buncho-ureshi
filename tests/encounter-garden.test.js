@@ -15,13 +15,20 @@ test('one conversation at a time, immediate reunion, no spam friendship or autom
 test('scene-specific fictional events cover35 with one native bird and repeat meetings',()=>{assert.equal(ENCOUNTER_CANDIDATES.length,35);assert.ok(ENCOUNTER_CANDIDATES.every(e=>e.gardenEvent?.fictional&&e.gardenEvent.invitation));const w=createWorld(1000);system.selectGarden(w,'mizukagami',guard(w));system.observeGarden(w,'water',guard(w));const first=w.encounters.queue[0];assert.ok(ENCOUNTER_CANDIDATES.some(e=>e.id===first&&e.gardenEvent.scene==='water'));finish(w);advanceTicks(w,8);for(let i=0;i<3;i++)system.observeGarden(w,'water',guard(w));assert.ok(w.encounters.queue[0]);assert.equal(w.encounters.queue[0],first);});
 test('garden route and silhouette notebook do not pretend park travel or compulsory long notes',()=>{const w=createWorld(1000),html=renderFinchGarden(w,{system});assert.match(html,/ふたつの輪の木陰/);assert.match(html,/finch-garden-scenery/);assert.match(html,/<details(?:\s[^>]*)?>/);assert.doesNotMatch(html,/data-game-travel/);assert.match(renderEncounterNotebook(w,{system}),/data-finch-go-garden/);});
 test('full reset creates fresh garden and stale old-world callbacks cannot change it',()=>{const old=createWorld(1000);system.enterGarden(old,guard(old));system.observeGarden(old,'grass',guard(old));const stale=guard(old),fresh=createWorld(2000),before=structuredClone(fresh);assert.equal(system.observeGarden(fresh,'water',stale).reason,'stale');assert.equal(system.enterGarden(fresh,stale).reason,'stale');assert.deepEqual(fresh,before);assert.equal(fresh.encounters.discoveries.length,0);assert.equal(fresh.encounters.garden.open,false);});
-test('completed guest remains in its garden through notebook and save until the next guest arrives',()=>{
- const w=createWorld(1000);system.selectGarden(w,'komugi',guard(w));system.observeGarden(w,'grass',guard(w));const id=finish(w),deadline=w.encounters.garden.nextTick;
- assert.equal(w.encounters.garden.guestGardenId,'komugi');assert.equal(w.encounters.garden.lastGuest,id);
- system.leaveGarden(w,guard(w));let restored=JSON.parse(JSON.stringify(w));validateWorld(restored);
- system.selectGarden(restored,'komugi',guard(restored));let html=renderFinchGarden(restored,{system});assert.match(html,new RegExp(`data-encounter-page="${id}"`));assert.equal(restored.encounters.discoveries[0].visits,1);
- system.selectGarden(restored,'mizukagami',guard(restored));html=renderFinchGarden(restored,{system});assert.doesNotMatch(html,new RegExp(`data-encounter-page="${id}"`));assert.doesNotMatch(html,/のお客さまへ/);assert.match(html,/data-garden-select="mizukagami"/);
- system.selectGarden(restored,'komugi',guard(restored));advanceTicks(restored,deadline-restored.tick);html=renderFinchGarden(restored,{system});assert.match(html,new RegExp(`data-encounter-page="${id}"`));for(let i=0;i<3;i++)system.observeGarden(restored,'grass',guard(restored));assert.equal(restored.encounters.queue[0],id);html=renderFinchGarden(restored,{system});assert.doesNotMatch(html,new RegExp(`data-encounter-page="${id}"`));validateWorld(restored);
+// Intentional policy change: completed guests no longer survive a trip home forever.
+test('completed guest leaves on going home while notebook and friendship survive reload',()=>{
+ const w=createWorld(1000);system.selectGarden(w,'komugi',guard(w));system.observeGarden(w,'grass',guard(w));const id=finish(w);
+ assert.match(renderFinchGarden(w,{system}),new RegExp(`data-encounter-page="${id}"`));
+ const before=structuredClone(w);system.leaveGarden(w,guard(w));
+ assert.equal(w.encounters.garden.lastGuest,null);
+ for(const key of ['birds','seed','decor','economy','events','lifecycle'])assert.deepEqual(w[key],before[key]);
+ for(const key of ['discoveries','friendship'])assert.deepEqual(w.encounters[key],before.encounters[key]);
+ const restored=JSON.parse(JSON.stringify(w));validateWorld(restored);system.selectGarden(restored,'komugi',guard(restored));
+ assert.equal(restored.encounters.garden.lastGuest,null);
+ assert.doesNotMatch(renderFinchGarden(restored,{system}),new RegExp(`data-encounter-page="${id}"`));
+ assert.equal(restored.encounters.discoveries[0].visits,1);
+ assert.equal(system.observeGarden(restored,'grass',guard(restored)).arrived,true);assert.equal(finish(restored),id);
+ assert.equal(restored.encounters.discoveries[0].visits,1);validateWorld(restored);
 });
 
 test('garden dock removes redundant guest shortcut and names observation clearly',()=>{const w=createWorld(1000);const html=renderFinchGarden(w,{system});assert.doesNotMatch(html,/のお客さまへ|<summary>眺める<\/summary>/);assert.match(html,/<summary>観察する<\/summary>/);assert.match(html,/草を観察する/);assert.match(html,/水辺を観察する/);for(const control of ['observe','friends','companions','about'])assert.match(html,new RegExp(`data-garden-details="${control}"`));});
