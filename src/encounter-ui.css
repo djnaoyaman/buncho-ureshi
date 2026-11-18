@@ -171,7 +171,7 @@
  .finch-crow-notice button[data-finch-go-home]{flex:0 0 auto;padding:4px 6px!important;font-size:10px!important}
  .finch-crow-notice button[data-crow-entry]{display:none}
  body[data-world="buncho"] .game-encounter-host .finch-garden:has(.finch-crow-notice)>header{right:72px;top:2px}
- body[data-world="buncho"] .game-encounter-host .finch-crow-notice{right:132px}
+ body[data-world="buncho"] .game-encounter-host .finch-crow-notice{right:140px}
  .finch-garden-stage:has(.finch-crow-scale-scene){--crow-unit:min(calc(9 * var(--game-cqw,1cqw)),calc(8 * var(--game-cqh,1cqh)),36px)}
  .finch-crow-scale-scene{left:62%;bottom:76px}
  .finch-crow-actor figcaption,.finch-crow-java>span:last-child{position:absolute;inline-size:1px;block-size:1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}

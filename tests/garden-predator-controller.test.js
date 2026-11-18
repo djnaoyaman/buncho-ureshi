@@ -7,9 +7,10 @@ import {arriveGardenRaptor} from '../src/garden-raptors.js';
 import {mountEncounterPanel} from '../src/encounter-controller.js';
 import {mountGardenRaptors} from '../src/garden-raptor-controller.js';
 const NOW=Date.UTC(2026,10,5),sleep=()=>new Promise(r=>setTimeout(r,1));
-async function setup({random=()=>0,reverse=false,attends=true,legacyRandom=()=>1,failures=0,beforeCommit=null}={}){
+async function setup({random=()=>0,reverse=false,attends=true,legacyRandom=()=>1,failures=0,beforeCommit=null,journal=null}={}){
  const w=createWorld(NOW);w.encounters.garden.open=true;w.encounters.gardenFriends.attendees=attends?['b1']:[];w.field.place='park';
  const win=new Window();win.document.body.innerHTML='<main id="root"><div class="game-app" data-panel="outdoors"><div id="panel"></div></div></main>';
+ if(journal)Object.defineProperty(win,'sessionStorage',{value:journal});
  const root=win.document.querySelector('#root');let panel,elapsed=0,n=0;const timers=new Map(),originalNow=Date.now;Date.now=()=>NOW+elapsed;
  Object.defineProperty(win.performance,'now',{value:()=>elapsed,configurable:true});win.setTimeout=(fn,delay)=>{timers.set(++n,{fn,delay});return n;};win.clearTimeout=id=>timers.delete(id);
  const transact=async fn=>{if(failures>0){failures--;throw new Error('simulated disk failure');}if(beforeCommit){const hook=beforeCommit;beforeCommit=null;hook(w);}const next=structuredClone(w);fn(next);Object.assign(w,next);};
@@ -81,4 +82,15 @@ for(const chosen of ['crow','raptor'])for(const peer of ['crow','raptor'])test(`
   const result=peer==='crow'?arriveGardenCrow(w,'rook',Date.now(),token):arriveGardenRaptor(w,'golden-eagle',Date.now(),token);assert.equal(result.changed,true);
  }});
  try{await s.run(20);assert.equal(s.w.encounters.crow.visits.length+s.w.encounters.raptor.visits.length,1);assert.equal(s.w.encounters[peer].visits[0].count,1);assert.equal(calls,3);await s.reload();await s.run(10);assert.equal(s.w.encounters.crow.visits.length+s.w.encounters.raptor.visits.length,1);assert.equal(calls,3);}finally{s.close();}
+});
+
+test('unreadable resume journal blocks fresh draws then recovers without touching the save',async()=>{
+ let blocked=true,calls=0;const journal={getItem(){if(blocked)throw Error('blocked');return null;},setItem(){}};
+ const s=await setup({attends:false,journal,random:()=>{calls++;return 0;}}),original=structuredClone(s.w);
+ try{await s.run(10);assert.equal(calls,0);assert.deepEqual(s.w,original);blocked=false;await s.run(14);assert.equal(s.w.encounters.crow.visits[0].count,1);assert.equal(calls,3);}finally{s.close();}
+});
+test('journal write failure never presents an unjournaled bird and keeps its selected species',async()=>{
+ let blocked=true,calls=0;const journal={getItem(){return null;},setItem(){if(blocked)throw Error('quota');}};
+ const s=await setup({attends:false,journal,random:()=>{calls++;return 0;}}),original=structuredClone(s.w);
+ try{await s.run(10);assert.deepEqual(s.w,original);assert.equal(s.panel.hasCrowPending(),false);assert.equal(calls,3);blocked=false;await s.run(14);assert.equal(s.w.encounters.crow.visits[0].count,1);assert.equal(calls,3);}finally{s.close();}
 });
