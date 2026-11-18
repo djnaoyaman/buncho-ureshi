@@ -33,7 +33,7 @@ for(const rate of [44100,48000])test(`native encounter WAV loops and priority at
  await page.locator('#play').click();await playing(page,'encounter-crow');await page.locator('#off').click();await page.locator('#raptor').click();expect(await page.evaluate(()=>music.snapshot().active)).toBe(0);
  await info.attach('native-encounter-pcm',{body:Buffer.from(JSON.stringify(report)),contentType:'application/json'});await page.evaluate(()=>music.p.dispose());
 });
-test('actual crow controller announces warning, cancellation and successful arrival',async({page})=>{
+test('actual crow controller announces warning and cancellation',async({page})=>{
  await page.goto('credits/');
  await page.evaluate(async()=>{
   const base=new URL('.',document.baseURI).href;
@@ -60,6 +60,7 @@ test('full game raptor arrival, settings fixed choice, pause and home restore',a
   const store=await openGameStore();await store.transact(()=>w);store.close();localStorage.setItem('buncho.music.v1',JSON.stringify({enabled:true,mode:'fixed',selected:'village',volume:.1}));
  });
  await page.goto('game/');await expect(page.locator('body')).toHaveAttribute('data-game-intro','done',{timeout:15000});
+ await page.locator('[data-raptor-choice=stay]').click();
  await page.locator('.game-scene-controls-toggle').click();await expect(page.locator('.game-music')).toHaveAttribute('data-status','playing',{timeout:15000});
  await expect(page.locator('.game-music-current')).toContainText('空に落ちる影');
  await page.evaluate(()=>document.dispatchEvent(new CustomEvent('buncho-world-action',{detail:'settings'})));
