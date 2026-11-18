@@ -73,9 +73,11 @@ for(const count of [1,9])test(`entrance-only framing preserves centered furnitur
  const measure=()=>page.locator('.game-main .game-furnishing').evaluateAll(es=>Object.fromEntries(es.map(e=>{const r=e.getBoundingClientRect();return [e.dataset.equippedSlot,{x:r.x,y:r.y,width:r.width,height:r.height}]})));
  for(const [width,height]of [[320,568],[393,852],[600,1000],[768,1024],[1280,720],[844,390],[320,480]]){
   await page.setViewportSize({width,height});await record(page,validateWorld(structuredClone(original)));await page.reload();await ready(page);await dismissWelcome(page);
+  const handBefore=await page.locator('.game-scene-controls-toggle').boundingBox();
   const baseline=await measure(),parent=await page.locator(`[data-bird-id="${original.birds[0].id}"].game-room-bird`).boundingBox();
   const occupied=structuredClone(original),young=Array.from({length:count},(_,i)=>createBird(occupied,{home:'resident',stage:i%2?'egg':'chick',name:`こども${i+1}`}));
   await record(page,validateWorld(occupied));await page.reload();await ready(page);await dismissWelcome(page);
+  const handAfter=await page.locator('.game-scene-controls-toggle').boundingBox();for(const key of ['x','y','width','height'])expect(Math.abs(handAfter[key]-handBefore[key]),`hand ${key} stays in the same reachable position`).toBeLessThan(1);
   const bowlShift=await page.locator('.game-main .game-room').evaluate(el=>Number.parseFloat(el.style.getPropertyValue('--nest-bowl-shift')));
   const current=await measure();expect(Object.keys(baseline)).toHaveLength(9);expect(Object.keys(current).sort()).toEqual(Object.keys(baseline).sort());for(const [slot,rect] of Object.entries(baseline))for(const key of ['x','y','width','height'])expect(Math.abs(current[slot][key]-(rect[key]-(slot==='shellgrit'&&key==='x'?bowlShift:0))),`${slot} ${key} preserves composition except explicit entrance clearance`).toBeLessThan(1);
   const adult=await page.locator(`[data-bird-id="${original.birds[0].id}"].game-room-bird`).boundingBox();for(const key of ['x','y','width','height'])expect(Math.abs(adult[key]-parent[key]),`adult ${key} unchanged`).toBeLessThan(1);
