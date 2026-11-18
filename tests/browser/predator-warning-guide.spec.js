@@ -14,13 +14,13 @@ async function saved(page){return page.evaluate(()=>new Promise((resolve,reject)
 async function finishIntro(page){await expect.poll(()=>page.locator('body').getAttribute('data-game-intro')).toMatch(/shown|done/);if(await page.locator('body').getAttribute('data-game-intro')==='shown')await page.clock.runFor(2000);await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');}
 async function setup(page,options={}){
  await page.addInitScript(()=>{localStorage.setItem('buncho.music.v1',JSON.stringify({enabled:false}));localStorage.setItem('buncho.care-sound-choice.v1',JSON.stringify({explicit:true,enabled:false}));});
- await page.goto('');await page.clock.install({time:NOW});await page.clock.pauseAt(NOW+1000);await save(page,options.world??seed(options));await page.goto('game/');await finishIntro(page);await page.locator('.game-scene-controls-toggle').click();await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-scene-state','ready');
+ await page.goto('');await page.clock.install({time:NOW});await page.clock.pauseAt(NOW+1000);await save(page,options.world??seed(options));await page.goto('game/');await finishIntro(page);const stay=page.locator('[data-raptor-choice=stay]');if(await stay.count())await stay.click();if(!await page.locator('.finch-garden-stage').count())await page.locator('.game-scene-controls-toggle').click();await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-scene-state','ready');
 }
 async function setupCrow(page,{species='large-billed-crow',friendly=false,seedVisit=false,earlyPredatorVisits=false}={}){
  await page.goto('');
  const base=new URL('./',page.url()).href;
  await page.setContent(`<link rel="stylesheet" href="${base}src/encounter-ui.css"><style>body{margin:0;font-family:system-ui;color:#294d3b}#fixture{width:100vw;height:100dvh;position:relative;overflow:auto}.finch-overlay-content{max-height:100dvh}.finch-garden{height:100dvh}.finch-entry{padding:16px;box-sizing:border-box}</style><main id="fixture"></main>`);
- await page.clock.install({time:NOW});
+ await page.clock.install({time:NOW});await page.clock.pauseAt(NOW+1000);
  await page.evaluate(async({base,species,friendly,seedVisit,earlyPredatorVisits,NOW})=>{
    const {createWorld}=await import(base+'src/engine.js');
    const {openGameStore}=await import(base+'src/game-store.js');

@@ -5,7 +5,7 @@ async function setup(page,{species='large-billed-crow',friendly=false,seedVisit=
  await page.goto('');
  const base=new URL('./',page.url()).href;
  await page.setContent(`<link rel="stylesheet" href="${base}src/encounter-ui.css"><style>body{margin:0;font-family:system-ui;color:#294d3b}#fixture{width:100vw;height:100dvh;position:relative;overflow:auto}.finch-overlay-content{max-height:100dvh}.finch-garden{height:100dvh}.finch-entry{padding:16px;box-sizing:border-box}</style><main id="fixture"></main>`);
- await page.clock.install({time:NOW});
+ await page.clock.install({time:NOW});await page.clock.pauseAt(NOW+1000);
  await page.evaluate(async({base,species,friendly,seedVisit,earlyPredatorVisits,NOW})=>{
    const {createWorld}=await import(base+'src/engine.js');
    const {openGameStore}=await import(base+'src/game-store.js');
@@ -46,7 +46,7 @@ test('warning can be escaped and a new garden needs its own continuous two minut
 });
 test('friendly crow keeps friends, never halves energy, and petting survives saved reload',async({page})=>{
  await setup(page,{friendly:true});await visit(page);expect(await page.evaluate(()=>crowFixture.world().birds[0].needs.energy)).toBe(80);await expect(page.locator('.finch-garden-stage [data-garden-friend]')).toHaveCount(4);await expect(page.locator('[data-crow-phase=visiting]')).toContainText('なかよし');
- await page.locator('[data-crow-entry=large-billed-crow]').click();const target=page.locator('[data-encounter-rub]');await target.focus();await page.keyboard.press('Enter');await expect(page.locator('[data-crow-points]')).toHaveText('105');await expect(target).toBeFocused();
+ await page.locator('[data-crow-entry=large-billed-crow]').click();const target=page.locator('[data-encounter-rub]');await target.focus();await page.keyboard.press('Enter');await page.clock.runFor(1000);await page.keyboard.press('Enter');await expect(page.locator('[data-crow-points]')).toHaveText('105');await expect(target).toBeFocused();
  const before=await page.evaluate(()=>JSON.stringify(crowFixture.world().birds));await page.evaluate(async()=>{const value=await crowFixture.store.transact(w=>w);window.savedCrowPoints=value.encounters.crow.visits[0].petPoints;});expect(await page.evaluate(()=>savedCrowPoints)).toBe(105);expect(await page.evaluate(()=>JSON.stringify(crowFixture.world().birds))).toBe(before);
 });
 test('friendly tiny garden keeps all Java sparrows on the same scale with accessible touch targets',async({page},info)=>{
@@ -113,7 +113,7 @@ for(const [species,size,mode='outdoors',successor=false,targetless=false] of [['
 test('live game shell keeps the foreground clock through normal world polling and commits one visit',async({page})=>{
  const {createWorld}=await import('../../src/engine.js');
  const world=createWorld(NOW);world.settings.motion=false;world.settings.careSound=false;world.birds[0].needs.energy=80;world.encounters.gardenFriends.companions=['b1'];world.encounters.gardenFriends.accompany=true;
- await page.goto('');await page.clock.install({time:NOW});
+ await page.goto('');await page.clock.install({time:NOW});await page.clock.pauseAt(NOW+1000);
  await page.addInitScript(()=>{Math.random=()=>0;localStorage.setItem('buncho.music.v1',JSON.stringify({enabled:false}));localStorage.setItem('buncho.care-sound-choice.v1',JSON.stringify({explicit:true,enabled:false}));});
  await page.evaluate(world=>new Promise((resolve,reject)=>{const r=indexedDB.open('buncho-ureshi-garden-v1',1);r.onupgradeneeded=()=>r.result.createObjectStore('world');r.onerror=()=>reject(r.error);r.onsuccess=()=>{const db=r.result,tx=db.transaction('world','readwrite');tx.objectStore('world').put(world,'current');tx.oncomplete=()=>{db.close();resolve();};tx.onerror=()=>reject(tx.error);};}),world);
  const saved=()=>page.evaluate(()=>new Promise((resolve,reject)=>{const r=indexedDB.open('buncho-ureshi-garden-v1',1);r.onerror=()=>reject(r.error);r.onsuccess=()=>{const db=r.result,tx=db.transaction('world','readonly'),value=tx.objectStore('world').get('current');value.onsuccess=()=>resolve(value.result);tx.oncomplete=()=>db.close();};}));
