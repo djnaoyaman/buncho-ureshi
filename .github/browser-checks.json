@@ -1,14 +1,5 @@
 {
-  "base": "bb73bf208d19ba537e560b33fc8ef143b7dc5c24",
-  "tests": [
-    "tests/browser/analytics.spec.js",
-    "tests/browser/garden-analytics.spec.js",
-    "tests/browser/garden-raptors.spec.js",
-    "tests/browser/garden-crows.spec.js",
-    "tests/browser/predator-warning-guide.spec.js",
-    "tests/browser/encounter-music.spec.js",
-    "tests/browser/game-music.spec.js",
-    "tests/browser/garden-music.spec.js"
-  ],
-  "reason": "Interrupted encounter source retirement and atomic crow geometry measurement; preserve latest main telemetry and predator fixes. Verify all selected music, encounter and telemetry integration cases in Chrome/WebKit; GA collectors intercepted. Physical Safari remains manual."
+  "base": "4e1ac0294e8b53409c34ee4dd9d3432fb57aad57",
+  "tests": ["tests/browser/unified-care.spec.js", "tests/browser/journey-story.spec.js", "tests/browser/next-enjoyments.spec.js", "tests/browser/growth-pace.spec.js", "tests/browser/life-care.spec.js", "tests/browser/caretaker-recruitment.spec.js", "tests/browser/family-care.spec.js", "tests/browser/home-care-response.spec.js"],
+  "reason": "One integrated release: state-derived story guidance, bounded meal growth with v22 migration, absence/lifespan and caretaker/treatment explanations. Cover direct/repeated/return navigation, food persistence and age protection, existing growth/care/family flows, small screens and Chrome/WebKit. Real Safari remains owner manual QA per AGENTS.md."
 }

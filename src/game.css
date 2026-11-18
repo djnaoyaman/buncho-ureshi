@@ -1944,6 +1944,13 @@ body[data-world="buncho"] .game-encounter-host .finch-garden > .leaf-gift[open] 
  box-shadow:0 6px 0 #b7ad932e,0 12px 32px #304b4230; z-index:9;
 }
 body[data-world="buncho"] .game-encounter-host .finch-garden > .leaf-gift[open] > summary { display:none; }
+/* An open story is the active reading sheet. Keep the garden's home chrome
+   behind that sheet (z-index 9), otherwise it intercepts the sticky Close
+   button after scrolling. Do not raise stories over emergency notices
+   (z-index 30), or move the garden, hand, nest, or any scene coordinates.
+   Closing the story restores the normal home chrome layer automatically. */
+body[data-world="buncho"] .game-panel-overlay[data-scene="true"]:has(.finch-garden > .leaf-gift[open]) > .game-overlay-head { z-index:8; }
+
 body[data-world="buncho"] .finch-garden > .leaf-gift .leaf-gift-content { padding:0 18px 20px; }
 body[data-world="buncho"] .finch-garden .garden-story-header {
  position:sticky; top:0; z-index:2; display:flex; align-items:center; justify-content:space-between; gap:10px;
@@ -2178,3 +2185,8 @@ body[data-world="buncho"] .game-main .game-room[data-field="home"][data-nest-bow
 /* Repeating a full-size family badge on every tiny nestling hides its siblings.
    Identity remains available in the bird picker and care sheet. */
 .game-app .game-room-bird.game-nestling>.game-home-role{display:none}
+
+/* Food choice stays below the established hand and care controls, inside the sheet. */
+.game-food-choice{border-top:1px solid #d7d0bc;margin-top:.75rem;padding-top:.35rem;font-size:.85rem;line-height:1.7}
+.game-food-choice>summary{cursor:pointer;min-height:44px;padding:.5rem 0;font-weight:700;overflow-wrap:anywhere}
+.game-food-choice label{display:block;margin:.5rem 0}.game-food-choice select{display:block;width:100%;max-width:100%;min-height:44px;font:inherit;padding:.45rem;border:1px solid #a9b59d;border-radius:.5rem;background:#fffdf7;color:#314b37}.game-food-choice p{margin:.6rem 0;overflow-wrap:anywhere}

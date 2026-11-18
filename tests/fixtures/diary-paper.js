@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {createWorld,createBird,renameBird,validateWorld,serializeWorld,parseSave,TICK_MS} from '../../src/engine.js';
+import {createWorld,createBird,renameBird,validateWorld,serializeWorld,parseSave,TICK_MS,SAVE_VERSION} from '../../src/engine.js';
 import {accidentLifeBird} from '../../src/life-care.js';
 
 export const NOW=Date.UTC(2026,10,8),LONG_NAME='あいうえおかきくけこさしすせそた';
@@ -10,7 +10,7 @@ export const summarySelector=(scope,id)=>`${detailSelector(scope,id)} > summary`
 export const FULL='[data-game-details="full-diary"]';
 export function validated(world){
   validateWorld(world);const restored=parseSave(serializeWorld(world));assert.deepEqual(restored,world);
-  assert.equal(world.version,21);assert.equal(world.encounters.version,16);assert.equal(world.encounters.gardenFriends.version,2);
+  assert.equal(world.version,SAVE_VERSION);assert.equal(world.encounters.version,16);assert.equal(world.encounters.gardenFriends.version,2);
   return restored;
 }
 /** Synthetic event history with real engine birds, lifecycle, naming and strict save validation.
