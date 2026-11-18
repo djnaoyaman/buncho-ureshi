@@ -4,11 +4,11 @@ import {createGardenPredatorClock} from './garden-predator-clock.js';
 import {crowScene} from './garden-crows.js';
 /** One host-owned foreground clock. A saved warning survives navigation and reload.
  * Transactions consume only a bounded observed interval, never offline wall time. */
-export function mountGardenRaptors(root,{getWorld,transact,onChange=()=>{},isAvailable=()=>true,hasCrowPending=()=>false,random=Math.random,predatorRandom=Math.random,earlyPredatorVisits=true,canStartCrowWarning=()=>false,startCrowWarning=null}={}){
+export function mountGardenRaptors(root,{getWorld,transact,onChange=()=>{},isAvailable=()=>true,hasCrowPending=()=>false,random=Math.random,predatorRandom=Math.random,earlyPredatorVisits=true,canStartCrowWarning=()=>false,startCrowWarning=null,onActiveTime=()=>{}}={}){
  const doc=root.ownerDocument,win=doc.defaultView,clock=createGardenRaptorClock({random});
  let journalWorld=getWorld().worldId,journalFailed=false,journalReadable=true;
  const journalKey=()=>`buncho-predator-attempt-v1:${journalWorld}`;
- const entryClock=createGardenPredatorClock({random:predatorRandom,persist:state=>{
+ const entryClock=createGardenPredatorClock({random:predatorRandom,onElapsed:onActiveTime,persist:state=>{
   try{win.sessionStorage.setItem(journalKey(),JSON.stringify(state));journalFailed=false;return true;}
   catch{if(!journalFailed){journalFailed=true;onChange({error:new Error('出会いの再開情報を保存できませんでした。'),structural:false,world:getWorld()});}return false;}
  }});

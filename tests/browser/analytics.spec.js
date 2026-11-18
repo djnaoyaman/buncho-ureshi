@@ -1,8 +1,9 @@
 import {test,expect} from '@playwright/test';
+import {isolatedProduction} from '../fixtures/analytics-network.js';
 const events=page=>page.evaluate(()=>window.dataLayer.filter(x=>x[0]==='event').map(x=>({name:x[1],params:x[2]})));
-test.beforeEach(async({page})=>{await page.route('https://www.googletagmanager.com/**',route=>route.fulfill({body:'',contentType:'application/javascript'}));});
+test.beforeEach(async({page,baseURL})=>{await isolatedProduction(page,baseURL);});
 test('container, SPA classification, studio editing and successful PNG export',async({page})=>{
- await page.goto('');
+ await page.goto('https://djnaoyaman.github.io/buncho-ureshi/');
  await expect.poll(async()=> (await events(page)).filter(x=>x.name==='content_view').length).toBe(1);
  await expect(page.locator('script[src*="gtm.js?id=GTM-W9SQSCBT"]')).toHaveCount(1);
  await page.locator('.desktop-nav a[data-nav="studio/"]').click();
@@ -18,7 +19,7 @@ test('container, SPA classification, studio editing and successful PNG export',a
  expect(data.some(x=>x.name==='page_view')).toBeFalsy();
 });
 test('game is ready and panel rerenders do not duplicate views',async({page})=>{
- await page.goto('game/');
+ await page.goto('https://djnaoyaman.github.io/buncho-ureshi/game/');
  await expect.poll(async()=> (await events(page)).filter(x=>x.name==='game_start').length).toBe(1);
  const before=(await events(page)).filter(x=>x.name==='game_panel_view').length;
  await page.evaluate(()=>{const e=new CustomEvent('buncho-game-panel',{detail:'analytics_test'});document.dispatchEvent(e);document.dispatchEvent(e);});
