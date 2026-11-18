@@ -1,7 +1,7 @@
 // Prepared only. Run against the integrated actual application, never a synthetic page.
 import {test,expect} from '@playwright/test';
 import {writeFile} from 'node:fs/promises';
-import {NOW,at,cases,worldFor,GARDENS,engine} from '../fixtures/garden-about-world.js';
+import {NOW,at,cases,worldFor,GARDENS,engine,raptor} from '../fixtures/garden-about-world.js';
 async function raw(page,value){
  return page.evaluate(({value,write})=>new Promise((resolve,reject)=>{
  const req=indexedDB.open('buncho-ureshi-garden-v1',1);
@@ -22,6 +22,21 @@ async function enterVisibleGarden(page){
  await expect.poll(()=>page.locator('body').getAttribute('data-game-intro')).toMatch(/shown|done/);
  if(await page.locator('body').getAttribute('data-game-intro')==='shown')await page.clock.runFor(2000);
  await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');
+ // A restored hostile visit requires a real choice before the garden is
+ // interactive. This test deliberately stays to inspect the live warning;
+ // it never dismisses the modal or edits its saved pending flag directly.
+ const returnDialog=page.locator('.game-raptor-return-dialog[open]');
+ if(await returnDialog.count()){
+  const before=await raw(page),expected=structuredClone(before),choiceAt=await page.evaluate(()=>Date.now());
+  expect(before.encounters.raptor.active.hostile).toBe(true);
+  expect(before.encounters.raptor.active.returnChoicePending).toBe(true);
+  expect(raptor.remainWithGardenRaptor(expected,choiceAt,raptor.raptorToken(expected)).changed).toBe(true);
+  await returnDialog.locator('[data-raptor-choice=stay]').click();
+  await expect(returnDialog).toHaveCount(0);
+  expect(await raw(page)).toEqual(expected);
+  expect(expected.encounters.raptor.active.targetBirdId).toBe(before.encounters.raptor.active.targetBirdId);
+  expect(expected.encounters.raptor.active.remainingMs).toBe(before.encounters.raptor.active.remainingMs);
+ }
  const outdoors=page.locator('.game-field-nav [data-game-panel=outdoors]');
  if(!await outdoors.isVisible())await page.locator('.game-scene-controls-toggle').click();
  if(await outdoors.getAttribute('aria-pressed')!=='true')await outdoors.click();
@@ -69,7 +84,18 @@ test('polling focus scroll and close/reopen navigation',async({page})=>{
  await page.clock.runFor(7000);await expect(a).toHaveAttribute('open','');await expect(a.locator('[data-garden-details=about-rules]')).toHaveAttribute('open','');await expect(a.locator('[data-garden-details=about-frequency]')).toHaveAttribute('open','');
  expect(await a.evaluate(e=>e.scrollTop)).toBeGreaterThanOrEqual(top-2);
  await expect(a.locator('[data-garden-details=about-rules] > summary')).toBeFocused();
- await page.locator('[data-garden-select=kazaguruma]').click();await expect(page.locator('#finch-garden-title')).toHaveText(GARDENS.find(g=>g.id==='kazaguruma').name);
+ // The garden picker is now a single jog dial, not one button per garden.
+ // Close the booklet and operate the visible keyboard controls, waiting for
+ // each real transaction before sending another key.
+ await a.locator(':scope > summary').focus();await page.keyboard.press('Enter');await expect(a).not.toHaveAttribute('open','');
+ const center=page.locator('[data-jog-center]');await center.focus();await page.keyboard.press('Home');
+ await expect(center).toHaveAttribute('data-garden-select',GARDENS[0].id);
+ const targetIndex=GARDENS.findIndex(g=>g.id==='kazaguruma');expect(targetIndex).toBeGreaterThan(0);
+ for(let index=1;index<=targetIndex;index++){
+  await center.focus();await page.keyboard.press('ArrowDown');
+  await expect(center).toHaveAttribute('data-garden-select',GARDENS[index].id);
+ }
+ await expect(page.locator('#finch-garden-title')).toHaveText(GARDENS[targetIndex].name);
  await page.locator('.game-overlay-head [data-game-close-panel]').click();await expect(page.locator('.game-room')).toBeVisible();
  await page.locator('.game-field-nav [data-game-panel=outdoors]').click();await expect(about(page)).toHaveCount(1);
  await page.reload();await enterVisibleGarden(page);await expect(about(page)).toHaveCount(1);
