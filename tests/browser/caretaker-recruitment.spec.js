@@ -92,6 +92,16 @@ test('layout, exact artwork, native actions and cancellation',async({page},info)
   await page.keyboard.press('Shift+Tab');await expect(page.locator('.life-caretaker-fold > summary')).toBeFocused();
   await page.keyboard.press('Tab');await expect(button).toBeFocused();
   for(const days of ['3','7']){await page.keyboard.press('Tab');await expect(section.locator('[data-life-hire=\"'+days+'\"]')).toBeFocused();}
+  const scope=section.locator('.life-caretaker-scope'),scopeSummary=scope.locator(':scope > summary');
+  await page.keyboard.press('Tab');await expect(scopeSummary).toBeFocused();
+  await expect(scope).toHaveJSProperty('open',false);
+  await page.keyboard.press('Enter');await expect(scope).toHaveJSProperty('open',true);
+  await expect(scopeSummary).toBeFocused();
+  await expect(scope.getByText('契約期間中は、おうちで暮らす全員のごはん・元気の回復・掃除・自動通院を行います。羽数による追加料金はありません。')).toBeVisible();
+  await page.keyboard.press('Space');await expect(scope).toHaveJSProperty('open',false);
+  await expect(scopeSummary).toBeFocused();
+  await page.keyboard.press('Tab');await expect(page.locator('.life-health-rules > summary')).toBeFocused();
+  await page.keyboard.press('Shift+Tab');await expect(scopeSummary).toBeFocused();
   await page.keyboard.press('Tab');await expect(page.locator('.life-health-rules > summary')).toBeFocused();
  }finally{
   const events=await page.evaluate(()=>window.__caretakerFocus.finish()),path=info.outputPath('caretaker-keyboard-focus.json');

@@ -18,7 +18,11 @@ test('200% text keeps buttons operable and excludes guests, nests and graves',as
  const saved=validateWorld(await record(page));expect(saved.birds.slice(2)).toEqual(excluded);expect(saved.decor.points).toBe(30);expect(saved.economy.gold).toBe(0);expect(saved.lifecycle.birds.find(b=>b.birdId===dead.id)).toEqual(w.lifecycle.birds.find(b=>b.birdId===dead.id));expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
 });
 test('queued stale batches in two tabs charge and recover only once',async({page,context})=>{
+ // The two tabs share one simulated wall clock. A page-only init script does not
+ // propagate to newPage(): a real-time second tab would advance care/death clocks
+ // and test clock divergence rather than simultaneous stale feeding.
+ await context.addInitScript(at=>{Date.now=()=>at;},NOW);
  const w=family();for(const b of w.birds)b.needs.food=40;await start(page,w);const other=await context.newPage();await other.goto('game/');await menu(other);
- for(const tab of [page,other])await tab.evaluate(()=>window.__queuedFamilyCare=document.querySelector('[data-family-care=feed]'));
+ for(const tab of [page,other]){expect(await tab.evaluate(()=>Date.now())).toBe(NOW);await expect(tab.locator('[data-family-care=feed]')).toBeEnabled();await tab.evaluate(()=>window.__queuedFamilyCare=document.querySelector('[data-family-care=feed]'));}
  await Promise.all([page.evaluate(()=>window.__queuedFamilyCare.click()),other.evaluate(()=>window.__queuedFamilyCare.click())]);await expect.poll(async()=>(await record(page)).decor.points).toBe(30);const saved=validateWorld(await record(page));expect(saved.birds.every(b=>b.needs.food===60)).toBe(true);expect(saved.events.filter(e=>e.kind==='user-feed')).toHaveLength(6);expect(saved.economy.gold).toBe(0);expect(saved.economy.household.lastClaimedDay).toBeNull();await other.close();
 });

@@ -1944,6 +1944,13 @@ body[data-world="buncho"] .game-encounter-host .finch-garden > .leaf-gift[open] 
  box-shadow:0 6px 0 #b7ad932e,0 12px 32px #304b4230; z-index:9;
 }
 body[data-world="buncho"] .game-encounter-host .finch-garden > .leaf-gift[open] > summary { display:none; }
+/* An open story is the active reading sheet. Keep the garden's home chrome
+   behind that sheet (z-index 9), otherwise it intercepts the sticky Close
+   button after scrolling. Do not raise stories over emergency notices
+   (z-index 30), or move the garden, hand, nest, or any scene coordinates.
+   Closing the story restores the normal home chrome layer automatically. */
+body[data-world="buncho"] .game-panel-overlay[data-scene="true"]:has(.finch-garden > .leaf-gift[open]) > .game-overlay-head { z-index:8; }
+
 body[data-world="buncho"] .finch-garden > .leaf-gift .leaf-gift-content { padding:0 18px 20px; }
 body[data-world="buncho"] .finch-garden .garden-story-header {
  position:sticky; top:0; z-index:2; display:flex; align-items:center; justify-content:space-between; gap:10px;
