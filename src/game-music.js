@@ -6,7 +6,7 @@ export const MUSIC_TRACKS = Object.freeze([
   {id:'lakeside', title:'湖畔のそよ風', file:'03_lakeside_breeze.wav'},
   {id:'village', title:'村のワルツ', file:'04_village_waltz.wav'},
 ]);
-export const ENCOUNTER_MUSIC_TRACKS=Object.freeze([{id:'encounter-crow',title:'黒い羽のいたずら',asset:'audio/encounters/crow.wav'},{id:'encounter-raptor',title:'空に落ちる影',asset:'audio/encounters/raptor.wav'}]);
+export const ENCOUNTER_MUSIC_TRACKS=Object.freeze([{id:'encounter-crow',title:'黒い羽のいたずら',asset:'audio/encounters/crow.wav',loopStartSeconds:.02,loopEndPaddingSeconds:.02,startOffsetSeconds:.02},{id:'encounter-raptor',title:'空に落ちる影',asset:'audio/encounters/raptor.wav',loopStartSeconds:.02,loopEndPaddingSeconds:.02,startOffsetSeconds:.02}]);
 const GARDEN_TITLES=Object.freeze({komorebi:'こもれびの庭',mizukagami:'みずかがみの庭',komugi:'こむぎの庭',hanadokei:'はなとけいの庭',kazaguruma:'かざぐるまの丘',yuyake:'ゆうやけ果樹園',tsukiakari:'つきあかりの庭','shrine-grove':'こもりの杜',onsen:'湯気文吾温泉','java-rice':'ジャワ・いなほの庭','bali-terrace':'バリ・みどりの棚田','paris-unrest':'パリ・ざわめく街の庭'});
 export function gardenMusicTracks(assets=GARDEN_MUSIC_ASSETS){return Object.entries(assets).filter(([,a])=>(a.music?.releaseReady===true||a.music?.trialAvailable===true)).map(([gardenId,{music:m}])=>({id:m.themeId,gardenId,title:m.title||GARDEN_TITLES[gardenId]||gardenId,asset:m.asset,loopStartSeconds:m.loopStartSeconds,loopEndSeconds:m.loopEndSeconds}));}
 export function createGameMusic({base='', gardenAssets=GARDEN_MUSIC_ASSETS, Context=globalThis.AudioContext||globalThis.webkitAudioContext,
@@ -89,7 +89,7 @@ export function createGameMusic({base='', gardenAssets=GARDEN_MUSIC_ASSETS, Cont
       if(token!==generation||disposed||!enabled)return false;
       if(held||blocked||context.state!=='running'||target()!==id){pause();return false;}
       const source=context.createBufferSource(),gain=context.createGain();
-      const track=playable.find(t=>t.id===id),loopStart=track.loopStartSeconds??0,requestedLoopEnd=track.loopEndSeconds??buffer.duration;
+      const track=playable.find(t=>t.id===id),loopStart=track.loopStartSeconds??0,requestedLoopEnd=track.loopEndSeconds??(buffer.duration-(track.loopEndPaddingSeconds??0));
       // Native resampling can shorten decoded audio by less than one output sample.
       // Only tolerate this quantization error, never a materially truncated file.
       const sampleTolerance=Number.isFinite(buffer.sampleRate)&&buffer.sampleRate>0?1/buffer.sampleRate:0;
@@ -99,7 +99,7 @@ export function createGameMusic({base='', gardenAssets=GARDEN_MUSIC_ASSETS, Cont
       source.buffer=buffer;source.loop=true;source.loopStart=loopStart;source.loopEnd=loopEnd;
       const entry={source,gain};active.add(entry);source.onended=()=>{active.delete(entry);try{source.disconnect();gain.disconnect();}catch{}};
       const startAt=Math.max(context.currentTime,fadeUntil);
-      source.connect(gain);gain.connect(context.destination);gain.gain.setValueAtTime(0,context.currentTime);gain.gain.setValueAtTime(0,startAt);gain.gain.linearRampToValueAtTime(volume,startAt+.12);source.start(startAt);
+      source.connect(gain);gain.connect(context.destination);gain.gain.setValueAtTime(0,context.currentTime);gain.gain.setValueAtTime(0,startAt);gain.gain.linearRampToValueAtTime(volume,startAt+.12);source.start(startAt,track.startOffsetSeconds??0);
       status='playing';emit();return true;
     } catch(e){if(token===generation&&!disposed){stop();status='error';error=e.name==='AbortError'?'読み込みが止まりました。もう一度タップしてください':e.message||'音楽を再生できませんでした';emit();}return false;
     } finally {clearTimeout(activationTimer);clearTimeout(downloadTimer);if(pending===controller)pending=null;}

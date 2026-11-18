@@ -1,22 +1,30 @@
 {
   "crow": {
     "sourceSHA256": "879ac7441f86a5695b5b46caf3fb011c6a3bff45272deb41688c4c19696b4f8f",
-    "assetSHA256": "77f8b059a190e31d0ccca59bc5e6e8f1323a5378412556f9f8cfc12971575b0e",
-    "duration": 30.462244897959184,
+    "assetSHA256": "28a8d88208694569366bf32908ff10a8cea510afb779bfefbba460881025b721",
+    "duration": 30.502244897959184,
     "trimStartSeconds": 0.06,
     "crossfadeSeconds": 0.25,
     "seamDelta": 0.0007283948361873627,
     "peak": 0.40675944089889526,
-    "minimum20msRMS": 0.005220254883170128
+    "minimum20msRMS": 0.005220254883170128,
+    "loopDuration": 30.462244897959184,
+    "guardSeconds": 0.02,
+    "loopStartSeconds": 0.02,
+    "loopEndSeconds": 30.482244897959184
   },
   "raptor": {
     "sourceSHA256": "f4ad30afa3a70adad5829ffe5a9419c914dadc74968e3e0a6730630e0a0a3eeb",
-    "assetSHA256": "6e914a64f325444debea05b3b39e553f72efdcacf5f5f26a9e6338ebefe9e8db",
-    "duration": 30.462244897959184,
+    "assetSHA256": "a1ac4e5dd39754f3b96828a0d0a36f8fbfd0af8bab7f50aedd5f76c1ce6c2e80",
+    "duration": 30.502244897959184,
     "trimStartSeconds": 0.06,
     "crossfadeSeconds": 0.25,
     "seamDelta": 0.01721101999282837,
     "peak": 0.40092194080352783,
-    "minimum20msRMS": 0.015414126217365265
+    "minimum20msRMS": 0.015414126217365265,
+    "loopDuration": 30.462244897959184,
+    "guardSeconds": 0.02,
+    "loopStartSeconds": 0.02,
+    "loopEndSeconds": 30.482244897959184
   }
 }

@@ -3,12 +3,12 @@ async function fixture(page,sampleRate=44100){
  await page.goto('credits/');
  await page.evaluate(async sampleRate=>{
   const {createGameMusic}=await import(new URL('src/game-music.js',document.baseURI));
-  const Native=window.AudioContext||window.webkitAudioContext;const probe={starts:[],decoded:[]};let ctx;
+  const Native=window.AudioContext||window.webkitAudioContext;const probe={starts:[],decoded:[]},decodedBuffers=[];let ctx;
   class Context extends Native{
    constructor(){super({sampleRate});ctx=this;}
-   async decodeAudioData(bytes){const b=await super.decodeAudioData(bytes);const a=b.getChannelData(0);probe.decoded.push({duration:b.duration,rate:b.sampleRate,peak:Math.max(...a.subarray(10000,20000).map(Math.abs)),seam:Math.abs(a[0]-a.at(-1))});return b;}
+   async decodeAudioData(bytes){const b=await super.decodeAudioData(bytes);const a=b.getChannelData(0);decodedBuffers.push(b);probe.decoded.push({duration:b.duration,rate:b.sampleRate,peak:Math.max(...a.subarray(10000,20000).map(Math.abs))});return b;}
    createBufferSource(){const s=super.createBufferSource(),start=s.start.bind(s),stop=s.stop.bind(s);let row;
-    s.start=(when=0)=>{row={at:Math.max(this.currentTime,when),stopAt:Infinity,loop:s.loop};probe.starts.push(row);return start(when);};
+    s.start=(when=0,...offset)=>{const first=Math.round(s.loopStart*s.buffer.sampleRate),last=Math.round(s.loopEnd*s.buffer.sampleRate)-1;row={at:Math.max(this.currentTime,when),stopAt:Infinity,loop:s.loop,startOffset:offset[0]??0,seam:Math.max(...Array.from({length:s.buffer.numberOfChannels},(_,c)=>{const a=s.buffer.getChannelData(c);return Math.abs(a[first]-a[last]);})),loopStart:s.loopStart,loopEnd:s.loopEnd};probe.starts.push(row);return start(when,...offset);};
     s.stop=(when=0)=>{if(row)row.stopAt=Math.max(this.currentTime,when);return stop(when);};return s;
    }
   }
@@ -19,7 +19,13 @@ async function fixture(page,sampleRate=44100){
   for(const [id,fn]of Object.entries({play:()=>p.playCurrentFromGesture(),crow:()=>scene('crow'),raptor:()=>scene('raptor'),leave:()=>scene(null),off:()=>p.off(),pause:()=>p.pause(),fixed:()=>p.playFromGesture('village')})){
    const b=document.createElement('button');b.id=id;b.textContent=id;b.onclick=e=>{if(e.isTrusted)void fn();};host.append(b);
   }
-  window.music={p,probe,scene,values,snapshot:()=>({state:p.state(),active:probe.starts.filter(s=>s.at<=ctx.currentTime&&s.stopAt>ctx.currentTime).length,probe})};
+  window.music={p,probe,scene,values,renderLoops:async()=> (await Promise.all(decodedBuffers.map(async(buffer,track)=>{
+   const rate=buffer.sampleRate,period=buffer.length-2*Math.round(.02*rate);
+   const Offline=window.OfflineAudioContext||window.webkitOfflineAudioContext,offline=new Offline(2,period*2+Math.round(.05*rate),rate),source=offline.createBufferSource();
+   source.buffer=buffer;source.loop=true;source.loopStart=.02;source.loopEnd=buffer.duration-.02;source.connect(offline.destination);source.start(0,.02);
+   const rendered=await offline.startRendering();
+   return [0,1].flatMap(channel=>{const a=rendered.getChannelData(channel);return [period,period*2].map(k=>{let sum=0;const radius=Math.round(.01*rate);for(let i=k-radius;i<k+radius;i++)sum+=a[i]*a[i];return {track,channel,jump:Math.abs(a[k]-a[k-1]),rms:Math.sqrt(sum/(radius*2))};});});
+  }))).flat(),snapshot:()=>({state:p.state(),active:probe.starts.filter(s=>s.at<=ctx.currentTime&&s.stopAt>ctx.currentTime).length,probe})};
  },sampleRate);
 }
 const playing=async(page,id)=>{await expect.poll(()=>page.evaluate(()=>music.p.state().selected+':'+music.p.state().status)).toBe(id+':playing');await expect.poll(()=>page.evaluate(()=>music.snapshot().active)).toBe(1);};
@@ -28,7 +34,9 @@ for(const rate of [44100,48000])test(`native encounter WAV loops and priority at
  await page.locator('#play').click();await playing(page,'encounter-crow');await page.locator('#fixed').click();await playing(page,'encounter-crow');
  expect(await page.evaluate(()=>JSON.parse(music.values.get('buncho.music.v1')).selected)).toBe('village');
  await page.locator('#raptor').click();await playing(page,'encounter-raptor');
- const report=await page.evaluate(()=>music.snapshot());for(const d of report.probe.decoded){expect(d.duration).toBeGreaterThan(30.4);expect(d.peak).toBeGreaterThan(.001);expect(d.rate).toBe(rate);expect(d.seam).toBeLessThan(.03);}expect(report.probe.starts.every(s=>s.loop)).toBe(true);
+ const report=await page.evaluate(()=>music.snapshot());for(const d of report.probe.decoded){expect(d.duration).toBeGreaterThan(30.4);expect(d.peak).toBeGreaterThan(.001);expect(d.rate).toBe(rate);}expect(report.probe.starts.every(s=>s.loop)).toBe(true);for(const s of report.probe.starts){expect(s.loopStart).toBe(.02);expect(s.startOffset).toBe(.02);expect(s.seam).toBeLessThan(.03);}
+ const loopOutput=await page.evaluate(()=>music.renderLoops());for(const seam of loopOutput){expect(seam.jump).toBeLessThan(.03);expect(seam.rms).toBeGreaterThan(.004);}
+ await info.attach('two-loop-offline-render',{body:Buffer.from(JSON.stringify(loopOutput)),contentType:'application/json'});
  await page.locator('#leave').click();await playing(page,'village');await page.locator('#pause').click();await page.locator('#crow').click();expect(await page.evaluate(()=>music.snapshot().active)).toBe(0);
  await page.locator('#play').click();await playing(page,'encounter-crow');await page.locator('#off').click();await page.locator('#raptor').click();expect(await page.evaluate(()=>music.snapshot().active)).toBe(0);
  await info.attach('native-encounter-pcm',{body:Buffer.from(JSON.stringify(report)),contentType:'application/json'});await page.evaluate(()=>music.p.dispose());
