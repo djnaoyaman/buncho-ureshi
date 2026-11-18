@@ -1,11 +1,14 @@
 {
-  "base": "86ee58acad4564d8f33f0fc917b186ebe4ad011b",
+  "base": "00e99456b9b64ec97fd64cd61b89ebcd7b0c53ff",
   "tests": [
+    "tests/browser/analytics.spec.js",
+    "tests/browser/garden-analytics.spec.js",
+    "tests/browser/garden-raptors.spec.js",
+    "tests/browser/garden-crows.spec.js",
+    "tests/browser/predator-warning-guide.spec.js",
     "tests/browser/encounter-music.spec.js",
     "tests/browser/game-music.spec.js",
-    "tests/browser/garden-music.spec.js",
-    "tests/browser/garden-crows.spec.js",
-    "tests/browser/garden-raptors.spec.js"
+    "tests/browser/garden-music.spec.js"
   ],
-  "reason": "Temporary crow warning/visit and raptor visit BGM; native WAV decode and loop bounds at 44.1/48kHz, fixed/auto restoration, OFF/pause, full-game return home and existing encounter controller flows in Chrome and WebKit. Physical Safari and subjective listening remain manual."
+  "reason": "Privacy-preserving committed garden telemetry and shared-clock regressions; integrate encounter music main unchanged and verify music, saving and home outcomes in Chrome/WebKit. All GA collectors intercepted and aborted. Physical Safari remains manual."
 }

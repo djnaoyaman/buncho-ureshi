@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {Window} from 'happy-dom';
-import {IDBFactory} from 'fake-indexeddb';
+import {IDBFactory,IDBObjectStore} from 'fake-indexeddb';
 import {mountGame} from '../src/game.js';
 import {createWorld,validateWorld} from '../src/engine.js';
 import {arriveGardenRaptor,raptorToken} from '../src/garden-raptors.js';
@@ -20,6 +20,8 @@ async function saved(indexedDB,value){
 }
 async function host(t){
  const window=new Window({url:'https://djnaoyaman.github.io/buncho-ureshi/game/',settings:{disableCSSFileLoading:true,disableJavaScriptFileLoading:true,disableJavaScriptEvaluation:true}});
+ // JavaScript/network loading is disabled above; exercise production serialization in memory.
+ Object.defineProperty(window.navigator,'webdriver',{get:()=>false});
  const indexedDB=new IDBFactory(),globals=new Map(),timers=new Map();let dispose,id=0;
  for(const [key,value]of Object.entries({window,document:window.document,location:window.location,navigator:window.navigator,localStorage:window.localStorage,FormData:window.FormData,matchMedia:window.matchMedia.bind(window),indexedDB,BroadcastChannel:undefined,setInterval:fn=>{timers.set(++id,fn);return id;},clearInterval:id=>timers.delete(id)})){
   globals.set(key,Object.getOwnPropertyDescriptor(globalThis,key));Object.defineProperty(globalThis,key,{value,configurable:true,writable:true});
@@ -65,4 +67,25 @@ test('host prompt traps Tab in its two choices and Escape uses the safe home pat
 test('host redraw and reload preserve the unanswered question and its remaining time',async t=>{
  const h=await host(t),before=await h.read();await h.poll();assert.ok(h.root.querySelector('.game-raptor-return-dialog[open]'));
  await h.reload();const after=await h.read();assert.equal(after.encounters.raptor.active.returnChoicePending,true);assert.equal(after.encounters.raptor.active.remainingMs,before.encounters.raptor.active.remainingMs);assert.ok(h.root.querySelector('.game-raptor-return-dialog[open]'));validateWorld(after);
+});
+
+const telemetry=h=>(h.window.dataLayer||[]).filter(x=>x[0]==='event'&&x[1].startsWith('garden_')).map(x=>({name:x[1],params:x[2]}));
+test('host telemetry follows only committed choices, not redraw or restored arrivals',async t=>{
+ const h=await host(t);assert.deepEqual(telemetry(h),[]);
+ h.root.querySelector('[data-raptor-choice=stay]').click();await until(()=>!h.root.querySelector('.game-raptor-return-dialog'),'stay commits');
+ assert.deepEqual(telemetry(h).map(e=>e.params.outcome),['stay']);await h.poll();await h.reload();assert.equal(telemetry(h).length,1);
+ h.root.querySelector('[data-game-raptor-home]').click();await until(()=>h.root.querySelector('.game-app').dataset.panel==='garden','home commits');
+ assert.deepEqual(telemetry(h).map(e=>e.params.outcome),['stay','home']);
+ assert.ok(telemetry(h).every(e=>e.params.send_to==='G-VVFMFGKXNL'));
+ assert.ok(!JSON.stringify(telemetry(h)).includes(h.world.worldId));
+});
+test('failed host save cannot emit a choice; throwing analytics cannot prevent retry saving',async t=>{
+ const h=await host(t),put=IDBObjectStore.prototype.put;
+ try{
+  IDBObjectStore.prototype.put=function(){throw Error('simulated full disk');};
+  h.root.querySelector('[data-raptor-choice=stay]').click();await sleep(50);
+  assert.equal((await h.read()).encounters.raptor.active.returnChoicePending,true);assert.deepEqual(telemetry(h),[]);
+ }finally{IDBObjectStore.prototype.put=put;}
+ h.window.gtag=()=>{throw Error('blocked collector');};h.root.querySelector('[data-raptor-choice=home]').click();
+ await until(()=>h.root.querySelector('.game-app').dataset.panel==='garden','home commits despite collector');assert.equal((await h.read()).field.place,'home');
 });

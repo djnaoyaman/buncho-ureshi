@@ -1,6 +1,18 @@
 // The published GTM container connects to GA4 G-VVFMFGKXNL.
 // Keep initialization external so the site's CSP needs no unsafe-inline scripts.
 (function () {
+  // Keep this classic-script gate equivalent to analytics.js measurementAllowed.
+  try {
+    const u = new URL(window.location.href);
+    if (['qa', 'test', 'debug', 'analytics'].some(k => u.searchParams.has(k))) {
+      window.sessionStorage.setItem('buncho.analytics.qa', '1');
+      return;
+    }
+    if (u.protocol !== 'https:' || u.hostname !== 'djnaoyaman.github.io'
+      || !u.pathname.startsWith('/buncho-ureshi/') || window.navigator?.webdriver
+      || window.sessionStorage?.getItem('buncho.analytics.qa') === '1'
+      || window.localStorage.getItem('buncho.analytics.disabled') === '1') return;
+  } catch { return; }
   if (window.__bunchoTagLoaded) return;
   window.__bunchoTagLoaded = true;
   window.dataLayer = window.dataLayer || [];
