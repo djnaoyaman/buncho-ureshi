@@ -21,10 +21,15 @@ async function ready(page){await expect(page.locator('.game-encounter-host')).to
 async function outdoors(page){await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');await page.locator('.game-scene-controls-toggle').click();await page.locator('.game-field-nav [data-game-panel=outdoors]').click();await ready(page);}
 async function start(page,size,w){await page.setViewportSize(size);await page.addInitScript(now=>{Date.now=()=>now;localStorage.setItem('buncho.music.v1',JSON.stringify({enabled:false}));localStorage.setItem('buncho.care-sound-choice.v1',JSON.stringify({explicit:true,enabled:false}));},NOW);await page.goto('');await record(page,w);await page.goto('game/');await outdoors(page);}
 async function garden(page,id){
- const jog=page.locator('[data-jog-center]');await jog.focus();await page.keyboard.press('Home');await expect(jog).toHaveAttribute('data-garden-select',GARDEN_IDS[0]);
- for(let i=0;i<GARDEN_IDS.indexOf(id);i++){await page.keyboard.press('ArrowDown');await expect(jog).toHaveAttribute('data-garden-select',GARDEN_IDS[i+1]);}
+ const jog=page.locator('[data-jog-center]');let current=GARDEN_IDS.indexOf(await jog.getAttribute('data-garden-select')),target=GARDEN_IDS.indexOf(id);
+ expect(current).toBeGreaterThanOrEqual(0);expect(target).toBeGreaterThanOrEqual(0);
+ while(current!==target){
+  const direction=target>current?1:-1;await ready(page);await expect(jog).toBeEnabled();await jog.focus();await page.keyboard.press(direction===1?'ArrowDown':'ArrowUp');current+=direction;
+  await expect(jog).toHaveAttribute('data-garden-select',GARDEN_IDS[current]);
+ }
  await ready(page);await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-garden-id',id);
 }
+
 async function observe(page,scene){await page.locator('[data-garden-details=observe]>summary').click();await expect(page.locator(`[data-garden-observe="${scene}"]`)).toBeEnabled();await page.locator(`[data-garden-observe="${scene}"]`).click();await ready(page);await page.locator('[data-garden-details=observe]>summary').click();}
 async function finish(page){
  // A click starts an asynchronous store transaction. A zero immediate count
