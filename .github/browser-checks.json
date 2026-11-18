@@ -1,9 +1,9 @@
 {
-  "base": "0b01c66686b92788d07525fb4c6ee25702becd4d",
+  "base": "e0bc06844674f0f1078630761c9e6992dfd103c3",
   "tests": [
-    "tests/browser/crow-collection-film.spec.js",
-    "tests/browser/garden-collection-film.spec.js",
-    "tests/browser/ending-media-compatibility.spec.js"
+    "tests/browser/nestling-visibility.spec.js",
+    "tests/browser/egg-art.spec.js",
+    "tests/browser/home-visits.spec.js"
   ],
-  "reason": "Install user-approved third film byte-identically. Chrome/WebKit verify five-crow unlock, explicit audio gesture, vertical native playback, interrupted/repeated flows, save preservation, and existing garden film regression. Isolate standalone muted/unmuted native decoding from game lifecycle before release."
+  "reason": "Fix real unselected newborn clipping missed by selection-first PR224 tests. Chrome/WebKit must check actual hatching, unselected mixed clutches, full viewport containment, parent selection, compact/portrait/tablet/wide layouts, repeated reload, existing nest art and guest positioning, with saved identity preserved. Retain all failed home-visits assertions; open the current visible menu before close-all, and keep the tiny crowded-home toggle clear of guest labels."
 }
