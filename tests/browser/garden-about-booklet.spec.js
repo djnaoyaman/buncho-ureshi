@@ -35,7 +35,7 @@ for(const {garden,size} of layouts)test('layout '+garden.id+' '+size.join('x'),a
  await expect(a.locator('h4')).toHaveText(garden.name);await expect(a).toContainText(garden.description);
  const img=a.locator('img');await expect(img).toHaveCount(1);await img.scrollIntoViewIfNeeded();await img.evaluate(i=>i.decode());expect(await img.evaluate(i=>i.naturalWidth)).toBeGreaterThan(0);
  await page.screenshot({path:info.outputPath('01-identity.png')});
- await a.locator('.garden-about-booklet__warning > p').first().scrollIntoViewIfNeeded();await expect(a.locator('.garden-about-booklet__warning > p').first()).toBeInViewport({ratio:1});
+ await a.locator('.garden-about-booklet__warning ol > li').first().scrollIntoViewIfNeeded();await expect(a.locator('.garden-about-booklet__warning ol > li').first()).toBeInViewport({ratio:1});
  await page.screenshot({path:info.outputPath('02-warning.png')});
  await a.locator('[data-garden-details=about-rules] > summary').click();
  await page.screenshot({path:info.outputPath('03-rules.png')});
@@ -63,10 +63,10 @@ for(const kind of cases.filter(k=>k!=='crow-warning'))test('exact saves and actu
  await page.locator('[data-garden-details=observe] > summary').click();await expect(a).not.toHaveAttribute('open','');
 });
 test('polling focus scroll and close/reopen navigation',async({page})=>{
- await setup(page,'navigation-cooldown');const a=await open(page);await a.locator('[data-garden-details=about-rules] > summary').click();
+ await setup(page,'navigation-cooldown');const a=await open(page);await a.locator('[data-garden-details=about-frequency] > summary').click();await a.locator('[data-garden-details=about-rules] > summary').click();
  await a.locator('[data-garden-details=about-rules] > summary').focus();
  const top=await a.evaluate(e=>{e.scrollTop=e.scrollHeight;return e.scrollTop;});expect(top).toBeGreaterThan(0);
- await page.clock.runFor(7000);await expect(a).toHaveAttribute('open','');await expect(a.locator('[data-garden-details=about-rules]')).toHaveAttribute('open','');
+ await page.clock.runFor(7000);await expect(a).toHaveAttribute('open','');await expect(a.locator('[data-garden-details=about-rules]')).toHaveAttribute('open','');await expect(a.locator('[data-garden-details=about-frequency]')).toHaveAttribute('open','');
  expect(await a.evaluate(e=>e.scrollTop)).toBeGreaterThanOrEqual(top-2);
  await expect(a.locator('[data-garden-details=about-rules] > summary')).toBeFocused();
  await page.locator('[data-garden-select=kazaguruma]').click();await expect(page.locator('#finch-garden-title')).toHaveText(GARDENS.find(g=>g.id==='kazaguruma').name);
@@ -85,11 +85,14 @@ test('browser history leaves and restores a single garden disclosure',async({pag
 
 test('native tab order, scoped long text enlargement, and forced-color focus',async({page},info)=>{
  await page.setViewportSize({width:390,height:844});await setup(page);
- const a=await open(page),outer=a.locator(':scope > summary'),rules=a.locator('[data-garden-details=about-rules]'),inner=rules.locator(':scope > summary');
- await expect(outer).toBeFocused();await page.keyboard.press('Tab');await expect(inner).toBeFocused();
+ const a=await open(page),outer=a.locator(':scope > summary'),frequency=a.locator('[data-garden-details=about-frequency]'),frequencySummary=frequency.locator(':scope > summary'),rules=a.locator('[data-garden-details=about-rules]'),inner=rules.locator(':scope > summary');
+ await expect(outer).toBeFocused();await page.keyboard.press('Tab');await expect(frequencySummary).toBeFocused();
+ await page.keyboard.press('Enter');await expect(frequency).toHaveAttribute('open','');
+ await page.keyboard.press('Space');await expect(frequency).not.toHaveAttribute('open','');
+ await page.keyboard.press('Tab');await expect(inner).toBeFocused();
  await page.keyboard.press('Enter');await expect(rules).toHaveAttribute('open','');
  await page.keyboard.press('Space');await expect(rules).not.toHaveAttribute('open','');
- await page.keyboard.press('Shift+Tab');await expect(outer).toBeFocused();
+ await page.keyboard.press('Shift+Tab');await expect(frequencySummary).toBeFocused();await page.keyboard.press('Shift+Tab');await expect(outer).toBeFocused();
  // Test-only DOM stress: not a garden identity assertion, persisted data change, or app style patch.
  const before=await raw(page);
  await a.locator('h4').evaluate(e=>e.textContent+='・長い案内を読むための折り返し確認'.repeat(3));
@@ -108,7 +111,7 @@ test('native tab order, scoped long text enlargement, and forced-color focus',as
  for(const row of enlargement)expect(row.after).toBeCloseTo(row.before*2,1);
  await a.locator('.garden-about-booklet__warning').scrollIntoViewIfNeeded();
  expect(await a.evaluate(e=>e.scrollWidth<=e.clientWidth+1)).toBe(true);
- await expect(a.locator('.garden-about-booklet__warning')).toContainText('事故死');
+ await expect(a.locator('.garden-about-booklet__warning')).toContainText('事故で命をなくします');
  await page.screenshot({path:info.outputPath('text-enlargement-200-percent.png')});
  await page.emulateMedia({forcedColors:'active'});await inner.focus();
  await expect(inner).toBeFocused();expect(await inner.evaluate(e=>getComputedStyle(e).outlineStyle)).not.toBe('none');

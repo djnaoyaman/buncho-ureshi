@@ -8,7 +8,7 @@ for(const food of [60,80,100])test(`selected food ${food}, no mutation and short
 });
 test('energy shares one pool; resting never promises automatic recovery',()=>{const w=createWorld(now);w.birds[0].needs.food=100;assert.match(careGuidance(w,'b1'),/名前を呼ぶ/);assert.doesNotMatch(careGuidance(w,'b1'),/待|回復/);});
 for(const stage of ['egg','chick'])test(`${stage} has observation only`,()=>{const w=createWorld(now);w.birds[0].stage=stage;assert.match(careGuidance(w,'b1'),/見守ろう/);});
-test('visitor and departed never inherit resident feeding instructions',()=>{const w=createWorld(now),b=createBird(w);assert.match(careGuidance(w,b.id),/お友達/);b.home='departed';assert.match(careGuidance(w,b.id),/別のおうち/);assert.match(careGuidance(w,'b1'),/ごはん/);});
+test('visitor and departed never inherit resident feeding instructions',()=>{const w=createWorld(now),b=createBird(w);assert.match(careGuidance(w,b.id),/友だち/);b.home='departed';assert.match(careGuidance(w,b.id),/別のおうち/);assert.match(careGuidance(w,'b1'),/ごはん/);});
 test('death, danger and illness have priority over normal gauges',()=>{const w=createWorld(now),s=w.lifecycle.birds[0];s.condition={kind:'injury'};assert.match(careGuidance(w,'b1'),/病院/);w.encounters.raptor.active={hostile:true,targetBirdId:'b1'};assert.match(careGuidance(w,'b1'),/帰ろう/);s.death={};assert.match(careGuidance(w,'b1'),/思い出/);});
 test('only the targeted bird sees the predator instruction',()=>{const w=createWorld(now),b=createBird(w,{home:'resident'});w.encounters.raptor.active={hostile:true,targetBirdId:b.id};assert.doesNotMatch(careGuidance(w,'b1'),/帰ろう/);});
 for(const place of ['home','park','friend'])test(`cleaning location ${place}`,()=>{const w=createWorld(now);w.field.place=place;w.care.cleanliness=20;assert.equal(!!cleaningGuidance(w),place==='home');});
@@ -27,4 +27,10 @@ test('a care break checks the whole living household, illness, dirt and danger w
  w.encounters.raptor.active={hostile:true};assert.equal(careIsSettled(w),false);
  w.encounters.raptor.active=null;w.gems.droppings=[{birdId:b.id}];assert.equal(careIsSettled(w),false);w.gems.droppings=[];b.stage='chick';b.needs.food=0;assert.equal(careIsSettled(w),true);
  for(const bird of w.birds)bird.home='departed';assert.equal(careIsSettled(w),false);
+});
+
+test('everyday guidance uses short plain text, not technical care words or HTML',()=>{
+ const w=createWorld(now),b=w.birds[0],state=w.lifecycle.birds[0];
+ for(const condition of [null,{kind:'injury'}]){state.condition=condition;const text=careGuidance(w,b.id);assert.doesNotMatch(text,/体調|診|満た|給餌|猶予|<[^>]*>/);assert.ok([...text].length<=30);}
+ w.encounters.raptor.active={hostile:true,targetBirdId:b.id};assert.equal(careGuidance(w,b.id),'あぶないよ。おうちへ帰ろう。');
 });

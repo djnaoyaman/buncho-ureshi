@@ -5,17 +5,18 @@ import {Window} from 'happy-dom';
 import {renderGameHelp} from '../src/game-help.js';
 import {renderGameHelp as baseline} from './fixtures/help-guide-baseline.js';
 function dom(markup) {const w = new Window(); w.document.body.innerHTML = markup; return w.document.body;}
+const legacyRuby = html => html.replaceAll('<rt aria-hidden="true">','<rt>');
 function plain(el) {const copy=el.cloneNode(true);copy.querySelectorAll('rt').forEach(n=>n.remove());return copy.textContent;}
 for (const holidayCoverageKnown of [true,false]) {
  test(`preserves the existing guide and safety facts alongside the reviewed child-friendly updates (holiday coverage ${holidayCoverageKnown})`,()=>{
   const original=dom(baseline({holidayCoverageKnown})), result=dom(renderGameHelp({holidayCoverageKnown}));
-  assert.equal(result.querySelector('h3').innerHTML,original.querySelector('h3').innerHTML);
+  assert.equal(legacyRuby(result.querySelector('h3').innerHTML),original.querySelector('h3').innerHTML);
   const oldSteps=[...original.querySelectorAll('ol>li')];
   const newSteps=[...result.querySelectorAll('.game-help-guide-explanation')];
   assert.equal(newSteps.length,5);
   oldSteps.forEach((li,i)=>{
-   assert.equal(newSteps[i].querySelector('h4').innerHTML,li.querySelector('strong').innerHTML);
-   if(i!==3)assert.equal(newSteps[i].querySelector('p').innerHTML,li.innerHTML.split('<br>')[1]);else{const text=plain(newSteps[i]);for(const fact of ['家族が6羽','独立の相談','「いいよ」とえらんだときだけ','家系図と思い出に残る','また友達として招ける'])assert.ok(text.includes(fact),fact);}
+   assert.equal(legacyRuby(newSteps[i].querySelector('h4').innerHTML),li.querySelector('strong').innerHTML);
+   if(i!==3)assert.equal(legacyRuby(newSteps[i].querySelector('p').innerHTML),li.innerHTML.split('<br>')[1]);else{const text=plain(newSteps[i]);for(const fact of ['家族が6羽','独立の相談','「いいよ」とえらんだときだけ','家系図と思い出に残る','また友達として招ける'])assert.ok(text.includes(fact),fact);}
   });
   const additions=result.querySelectorAll('[data-game-cleanliness-help]');assert.equal(additions.length,1);
   assert.equal(plain(additions[0]),'そうじをして床が100になると、20までへるのは、ほんとうの時間で約36時間だよ。物語を止めているあいだは、床もよごれないよ。留守から戻ったら、体調も見てあげよう。');
@@ -28,8 +29,8 @@ for (const holidayCoverageKnown of [true,false]) {
    if(key==='help-care'){for(const fact of ['30 Gems','10 Gems','30 Gold','元気がいっぱいでも'])assert(text.includes(fact),fact);}
    else for(const fact of ['10年','3日間','24時間','12 Gold','24 Gold','寿命と事故'])assert(text.includes(fact),fact);
   }
-  assert.equal(result.querySelector('[data-game-details="help-story"]').outerHTML,original.querySelector('[data-game-details="help-story"]').outerHTML);
-  assert.equal(result.querySelector(':scope > section > p').innerHTML,original.querySelector(':scope > section > p').innerHTML);
+  assert.equal(legacyRuby(result.querySelector('[data-game-details="help-story"]').outerHTML),original.querySelector('[data-game-details="help-story"]').outerHTML);
+  assert.equal(legacyRuby(result.querySelector(':scope > section > p').innerHTML),original.querySelector(':scope > section > p').innerHTML);
   const unannotated=result.cloneNode(true);unannotated.querySelectorAll('ruby').forEach(n=>n.remove());
   assert.doesNotMatch(unannotated.textContent,/[一-龠々]/);
   assert.doesNotMatch(result.innerHTML,/[{}]/);
@@ -50,7 +51,7 @@ test('five ordered cards have native disclosure controls and four decorative cur
  });
  assert.equal(root.querySelectorAll('a,button').length,0);
  assert.equal(root.querySelectorAll('details').length,8);
- assert.equal(root.querySelectorAll('h3').length,1); assert.equal(root.querySelectorAll('h4').length,5);
+ assert.equal(root.querySelectorAll('h3').length,1); assert.equal(root.querySelectorAll('.game-help-guide-map h4').length,5); assert.equal(root.querySelectorAll('.kids-guide h4').length,2);
  const curves=root.querySelectorAll('svg');assert.equal(curves.length,4);
  curves.forEach(s=>{assert.equal(s.getAttribute('aria-hidden'),'true');assert.equal(s.getAttribute('focusable'),'false');});
  const img=root.querySelector('img');assert.equal(img.alt,'');assert(existsSync(new URL('../public/'+img.getAttribute('src').slice(2),import.meta.url)));

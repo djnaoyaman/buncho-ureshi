@@ -14,7 +14,7 @@ function view(w){const before=JSON.stringify(w),win=new Window();win.document.bo
 
 test('health A puts all living residents before caretaker and game rules',()=>{
  const w=seed();const sick=createBird(w,{home:'resident',color:'sakura'});lifeStatus(w,sick).condition={kind:'injury',sinceAt:NOW,deadlineAt:NOW+DAY};createBird(w,{home:'visitor'});createBird(w,{home:'departed'});
- const doc=view(w),cards=[...doc.querySelectorAll('.life-bird-card')];assert.equal(cards.length,2);assert.equal(cards[0].querySelector('h4').textContent,sick.name);assert.match(doc.querySelector('.life-panel-heading').textContent,/家族 2羽/);assert.match(doc.querySelector('.life-panel-heading').textContent,/通院が必要な子が1羽/);
+ const doc=view(w),cards=[...doc.querySelectorAll('.life-bird-card')];assert.equal(cards.length,2);assert.equal(cards[0].querySelector('h4').textContent,sick.name);assert.match(doc.querySelector('.life-panel-heading').textContent,/家族 2羽/);assert.match(doc.querySelector('.life-panel-heading').textContent,/病院へ行く子が1羽/);
  const order=[...doc.querySelector('.life-health-notebook').children].map(e=>e.className);assert.ok(order.indexOf('life-bird-grid')<order.indexOf('life-caretaker-fold'));assert.ok(order.indexOf('life-bird-grid')<order.indexOf('life-health-rules'));
  assert.equal(doc.querySelector('.life-caretaker-fold').open,false);assert.match(doc.querySelector('.life-caretaker-fold > summary').textContent,/お留守番の飼育員/);assert.equal(doc.querySelectorAll('[data-life-hire]').length,3);assert.equal(doc.querySelectorAll('[data-life-treat]').length,1);assert.ok(!doc.querySelector('.life-care-warning').closest('details'));
 });
@@ -28,7 +28,7 @@ test('long names are text, and never create a second portrait or executable mark
 });
 test('multiple illness cards and both exact real deadlines remain separate and sorted',()=>{
  const w=seed();const next=createBird(w,{home:'resident'});for(const [b,feed,treat] of [[w.birds[0],1,24],[next,72,1]]){const s=lifeStatus(w,b);s.lastCareAt=NOW+(feed-72)*3600000;s.condition={kind:'injury',sinceAt:NOW,deadlineAt:NOW+treat*3600000};}
- const doc=view(w);assert.match(doc.querySelector('.life-panel-heading').textContent,/通院が必要な子が2羽/);assert.equal(doc.querySelectorAll('.life-deadline-grid').length,2);assert.deepEqual([...doc.querySelectorAll('.life-deadline-grid')].map(e=>e.firstElementChild.dataset.lifeDeadline),['feed','treatment']);assert.equal(doc.querySelectorAll('[data-life-treat]').length,2);
+ const doc=view(w);assert.match(doc.querySelector('.life-panel-heading').textContent,/病院へ行く子が2羽/);assert.equal(doc.querySelectorAll('.life-deadline-grid').length,2);assert.deepEqual([...doc.querySelectorAll('.life-deadline-grid')].map(e=>e.firstElementChild.dataset.lifeDeadline),['feed','treatment']);assert.equal(doc.querySelectorAll('[data-life-treat]').length,2);
 });
 test('active caretaker and 30-day limit stay present behind the entry',()=>{
  const w=seed();w.lifecycle.caretaker={fromAt:NOW,until:NOW+29*DAY};const doc=view(w);assert.match(doc.querySelector('.life-caretaker-fold > summary').textContent,/契約中/);assert.match(doc.querySelector('.life-bird-card').textContent,/飼育員がお世話/);assert.match(doc.querySelector('.life-contract').textContent,/29日/);assert.equal(doc.querySelector('[data-life-hire="1"]').disabled,false);assert.equal(doc.querySelector('[data-life-hire="3"]').disabled,true);assert.equal(doc.querySelector('[data-life-hire="7"]').disabled,true);
@@ -53,5 +53,5 @@ test('health A separates priority, complete time units and age without duplicati
  const w=seed();lifeStatus(w,'b1').condition={kind:'respiratory',sinceAt:NOW,deadlineAt:NOW+DAY};const doc=view(w),card=doc.querySelector('.is-unwell');
  assert.equal(card.querySelector('.life-health-condition').textContent,'呼吸器の病気');assert.match(card.querySelector('.life-bird-age').textContent,/ゲーム内/);assert.equal(card.querySelector('.life-treatment-hint'),null);assert.equal(card.querySelector('[data-life-treat]').nextElementSibling.className,'life-small life-deadline-note');
  assert.equal(card.querySelectorAll('.life-time-unit').length,4);for(const unit of card.querySelectorAll('.life-time-unit'))assert.match(unit.textContent,/^\d+(日|時間|分)$/);
- assert.equal(card.querySelector('.life-deadline-label').textContent,'通院まで（実時間）');assert.equal(card.querySelector('.life-deadline-priority').textContent,'先に必要');
+ assert.equal(card.querySelector('.life-deadline-label').textContent,'病院まで（ほんとうの時間）');assert.equal(card.querySelector('.life-deadline-priority').textContent,'先に必要');
 });

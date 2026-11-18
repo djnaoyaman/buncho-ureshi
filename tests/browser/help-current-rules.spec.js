@@ -7,7 +7,7 @@ async function plain(locator){return locator.evaluate(e=>{const copy=e.cloneNode
 for(const [width,height,enlarged] of [[320,568,false],[390,844,true]])test(`plain child help and visual steps preserve saves ${width}x${height}`,async({page},info)=>{
  await page.setViewportSize({width,height});await page.addInitScript(n=>{Date.now=()=>n;localStorage.setItem('buncho.music.v1',JSON.stringify({enabled:false}));localStorage.setItem('buncho.care-sound-choice.v1',JSON.stringify({explicit:true,enabled:false}));},NOW);
  await page.goto('');const w=createWorld(NOW);w.paused=true;await record(page,w);await page.goto('game/');await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');const before=await record(page);await openHelp(page);
- const help=page.locator('.game-help');await expect(help.locator('ol>li')).toHaveCount(5);await expect(help.locator('details')).toHaveCount(8);await expect(help.locator('h3 rt').first()).toHaveCSS('display','ruby-text');
+ const help=page.locator('.game-help');await expect(help.locator('.game-help-guide-map > li')).toHaveCount(5);await expect(help.locator('details')).toHaveCount(8);await expect(help.locator('h3 rt').first()).toHaveCSS('display','ruby-text');
  if(enlarged)await help.evaluate(root=>{const nodes=[root,...root.querySelectorAll('*')],sizes=nodes.map(e=>parseFloat(getComputedStyle(e).fontSize));nodes.forEach((e,i)=>e.style.setProperty('font-size',`${sizes[i]*2}px`,'important'));});
  for(const key of ['help-care','help-life'])await help.locator(`[data-game-details=${key}]>summary`).click();
  const gold=help.locator('[data-help-update=gold]'),growth=help.locator('[data-game-growth-help]'),warning=help.locator('[data-help-update=predators]');

@@ -32,14 +32,14 @@ export function renderEncounterActorArt(entry,base='/buncho-ureshi/',loading=tru
 }
 /** Search text follows the actual first-meeting conditions, not arrival story text. */
 const observationHints=Object.freeze({
- grass:'草をそっと観察していたら',water:'水辺をそっと観察していたら',
- branch:'枝を見上げていたら',song:'歌を聴いていたら',quiet:'ひとやすみしていたら'
+ grass:'草をそっと見ていたら',water:'水のそばをそっと見ていたら',
+ branch:'えだを見上げていたら',song:'歌を聞いていたら',quiet:'ひとやすみしていたら'
 });
 export function encounterSearchHint(entry,{compact=false}={}){
  const event=entry.gardenEvent,names=[...new Set(event?.gardenIds||[])].map(id=>gardenById(id)?.name).filter(Boolean),action=observationHints[event?.scene];
- if(!names.length||!action)return entry.hint||'庭をそっとのぞいてみよう。';
+ if(!names.length||!action)return entry.hint||'にわをそっとのぞいてみよう。';
  const shown=compact?names.slice(0,2):names,places=shown.join('・')+(shown.length<names.length?'など':'');
- return `庭の友達より「${places}で、${action}、${entry.searchClue||'小さなお客さまの姿'}を見かけたよ」`;
+ return `にわの友だちより「${places}で、${action}、${entry.searchClue||'小さなお客さん'}を見たよ」`;
 }
 export function renderEncounterFriendship(w,id,{system=encounterSystem}={}){
  const s=system.status(w,id);if(!s.discovery)return '';

@@ -591,7 +591,7 @@ test('settings A keeps native switches, visible state and all existing managemen
  assert.ok(select('.game-switchbook'));assert.equal(select('.game-settings-intro').textContent,'いまの設定が、ひと目で。');assert.equal(select('[data-game-care-sound]').getAttribute('role'),'switch');assert.equal(select('[data-game-motion]').getAttribute('role'),'switch');
  const order=[...select('.game-switchbook').children];assert.ok(order.indexOf(select('[data-settings-music]'))<order.indexOf(select('.game-care-sound')));assert.ok(order.indexOf(select('.game-care-sound'))<order.indexOf(select('.game-motion-switch')));assert.ok(order.indexOf(select('.game-motion-switch'))<order.indexOf(select('.game-adoption-settings')));
  for(const q of ['[data-game-action=export]','#game-import','#game-reset-open','[data-game-action=pause]','[data-game-details=save-help]','[data-game-details=wallet]'])assert.equal(select('.game-switchbook').querySelectorAll(q).length,1);
- assert.equal(select('[data-game-panel=owner]'),null);assert.match(select('.game-care-disclosure').textContent,/実際のおもちの声ではありません/);assert.match(select('[data-game-time-state]').textContent,/一時停止中/);
+ assert.equal(select('[data-game-panel=owner]'),null);assert.match(select('.game-care-disclosure').textContent,/本物のおもちの声ではありません/);assert.match(select('[data-game-time-state]').textContent,/一時停止中/);
  const sound=select('[data-game-care-sound]'),before=sound.checked;sound.focus();sound.click();await until(()=>select('[data-game-care-sound]').checked===!before&&select('#game-care-sound-state').textContent===(!before?'音を鳴らす':'音を鳴らさない'),'sound switch state');assert.equal(f.window.document.activeElement,select('[data-game-care-sound]'));await until(async()=>(await rawWorld(f.indexedDB)).settings.careSound===!before,'saved care sound');
  const motion=select('[data-game-motion]'),oldMotion=motion.checked;motion.focus();motion.click();await until(()=>select('[data-game-motion]').checked===!oldMotion&&select('#game-motion-state').textContent===(!oldMotion?'動きを表示する':'動きを表示しない'),'motion switch state');assert.equal(f.window.document.activeElement,select('[data-game-motion]'));
  for(const mode of ['auto','ask']){select(`[data-adoption-mode=${mode}]`).focus();select(`[data-adoption-mode=${mode}]`).click();await until(()=>select(`[data-adoption-mode=${mode}]`).getAttribute('aria-pressed')==='true','adoption choice');assert.equal(f.window.document.activeElement,select(`[data-adoption-mode=${mode}]`));assert.equal(select(`[data-adoption-mode=${mode}] .game-choice-check`).textContent,'✓');assert.equal(select(`[data-adoption-mode=${mode==='ask'?'auto':'ask'}] .game-choice-check`).textContent,'');}
@@ -618,7 +618,7 @@ for(const machine of GACHA_MACHINES)for(const delta of [-1,0,1])test(`gacha ${ma
  f.root.querySelector('[data-game-panel="decorate"]').click();
  f.root.querySelector(`[data-gacha-machine="${machine.id}"]`).click();
  assert.equal(f.root.querySelector('.game-gacha-cost').textContent,`1回 · ${machine.cost} Gems`);
- assert.ok(f.root.querySelector('[data-game-details="draw-odds"]').textContent.includes(`同じお飾りは${machine.refund} Gems返却`));
+ assert.ok(f.root.querySelector('[data-game-details="draw-odds"]').textContent.includes(`同じおかざりが出たら、${machine.refund} Gemsがもどります。`));
  assert.equal(f.root.querySelector('[data-decor-draw]').disabled,delta<0);
  assert.equal(f.root.querySelector('[data-decor-guarantee]').textContent.includes(`${machine.cost} Gemsを集めよう。`),delta<0);
  assert.equal(f.window.localStorage.getItem('buncho.gacha-machine.v1'),machine.id);
@@ -708,4 +708,34 @@ test('event resume is explicit, persists and cannot toggle a running game back t
  const again=f.window.document.createElement('button');again.dataset.gameAction='resume-events';f.root.append(again);again.click();
  await sleep(50);
  assert.equal((await rawWorld(f.indexedDB)).paused,false);
+});
+
+
+test('child readable settings and gacha explain rules in steps without changing the save',async t=>{
+ const f=await fixture(t);await f.mount();const before=await rawWorld(f.indexedDB);f.settings();
+ const settings=f.root.querySelector('.game-settings');
+ assert.equal(settings.querySelectorAll('.kids-steps li').length,3);
+ assert.match(settings.textContent,/約5時間36分/);assert.match(settings.textContent,/約11時間12分/);assert.match(settings.textContent,/約3.5日/);
+ assert.match(settings.textContent,/少なくとも24時間/);assert.match(settings.textContent,/卵は12分、ひなは24分/);
+ assert.ok(settings.querySelector('rt[aria-hidden="true"]'));
+ f.root.querySelector('[data-game-close-panel]').click();f.root.querySelector('[data-game-panel="decorate"]').click();
+ const guide=f.root.querySelector('[data-game-details="draw-odds"]');
+ assert.match(guide.textContent,/2回つづけて/);assert.match(guide.textContent,/まだ持っていないもの/);assert.match(guide.textContent,/それぞれ12.5%/);
+ assert.match(guide.textContent,/何回まわせば出る、という約束ではありません/);
+ assert.match(guide.textContent,/40 Gemsまで、いつまでも/);assert.match(guide.textContent,/16 Gold/);
+ assert.equal(f.root.querySelector('.game-decor-intro .kids-steps').children.length,3);
+ assert.deepEqual(await rawWorld(f.indexedDB),before,'reading explanations changes no saved values');
+});
+
+test('plain reset warnings explain changes and cancellation preserves the entire save',async t=>{
+ const f=await fixture(t);await f.mount();f.settings();const before=await rawWorld(f.indexedDB);
+ f.root.querySelector('[data-game-action="reset-state"]').click();
+ for(const [kind,phrase] of [['care','今の数字がそれより高いときは、下げません'],['furniture','集めた家具'],['all','消えるもの']]){
+  f.root.querySelector(`[data-reset-kind="${kind}"]`).click();
+  const dialog=f.root.querySelector('.game-reset-dialog');assert.match(dialog.textContent,new RegExp(phrase));assert.match(dialog.textContent,/残るもの/);
+  if(kind==='all'){dialog.querySelector('[data-game-action="reset-confirm"]').click();assert.match(dialog.textContent,/最後の確認/);assert.match(dialog.textContent,/エド1羽/);}
+  dialog.querySelector('[data-game-action="reset-back"]').click();
+ }
+ f.root.querySelector('[data-game-action="reset-cancel"]').click();
+ assert.deepEqual(await rawWorld(f.indexedDB),before);
 });

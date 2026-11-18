@@ -97,7 +97,7 @@ test('layout, exact artwork, native actions and cancellation',async({page},info)
   await expect(scope).toHaveJSProperty('open',false);
   await page.keyboard.press('Enter');await expect(scope).toHaveJSProperty('open',true);
   await expect(scopeSummary).toBeFocused();
-  await expect(scope.getByText('契約期間中は、おうちで暮らす全員のごはん・元気の回復・掃除・自動通院を行います。羽数による追加料金はありません。')).toBeVisible();
+  await expect(scope.getByText('ごはん・元気の回復・そうじ・病院。おうちの鳥がふえても、お金は同じです。')).toBeVisible();
   await page.keyboard.press('Space');await expect(scope).toHaveJSProperty('open',false);
   await expect(scopeSummary).toBeFocused();
   await page.keyboard.press('Tab');await expect(page.locator('.life-health-rules > summary')).toBeFocused();

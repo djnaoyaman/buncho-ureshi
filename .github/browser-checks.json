@@ -1,5 +1,13 @@
 {
-  "base": "4e1ac0294e8b53409c34ee4dd9d3432fb57aad57",
-  "tests": ["tests/browser/unified-care.spec.js", "tests/browser/journey-story.spec.js", "tests/browser/next-enjoyments.spec.js", "tests/browser/growth-pace.spec.js", "tests/browser/life-care.spec.js", "tests/browser/caretaker-recruitment.spec.js", "tests/browser/family-care.spec.js", "tests/browser/home-care-response.spec.js"],
-  "reason": "One integrated release: state-derived story guidance, bounded meal growth with v22 migration, absence/lifespan and caretaker/treatment explanations. Cover direct/repeated/return navigation, food persistence and age protection, existing growth/care/family flows, small screens and Chrome/WebKit. Real Safari remains owner manual QA per AGENTS.md."
+  "base": "400d28684a5d6d4c3d3d370bd4bb81f83315e93a",
+  "tests": [
+    "tests/browser/kids-guidance.spec.js",
+    "tests/browser/unified-care.spec.js",
+    "tests/browser/help-current-rules.spec.js",
+    "tests/browser/garden-about-booklet.spec.js",
+    "tests/browser/next-enjoyments.spec.js",
+    "tests/browser/caretaker-recruitment.spec.js",
+    "tests/browser/life-care.spec.js"
+  ],
+  "reason": "Child-readable explanation release only. Validate narrow/mobile/desktop ruby, semantic step diagrams, screen-reader tree, keyboard, doubled text, real food/care/help/garden integration and exact saved worlds on Chrome/WebKit. Existing game calculations and save schema unchanged; physical Safari is not claimed."
 }
