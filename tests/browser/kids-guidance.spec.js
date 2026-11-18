@@ -8,9 +8,9 @@ for(const width of [320,390,1280])test(`plain guidance has readable ruby and dia
   const w=engine.createWorld(now);w.birds[0].stage='juvenile';const before=JSON.stringify(w);
   const html=food.renderFoodChoice(w.birds[0],now)+life.renderLifeCarePanel(w)+help.renderGameHelp();
   if(JSON.stringify(w)!==before)throw Error('Guidance mutated the world');
-  document.body.dataset.world='buncho';document.body.innerHTML=`<main id="kids-fixture">${html}</main>`;
+  document.body.dataset.world='buncho';document.body.innerHTML=`<main id="kids-fixture" class="game-app">${html}</main>`;
   await Promise.all(['game.css','life-care.css','caretaker-recruitment.css','game-help-guide.css'].map(n=>new Promise((resolve,reject)=>{const l=document.createElement('link');l.rel='stylesheet';l.href=new URL(`src/${n}`,base);l.onload=resolve;l.onerror=()=>reject(new Error('Missing guidance CSS '+n));document.head.append(l);})));await document.fonts.ready;
-  const style=document.createElement('style');style.textContent='html,body{margin:0;min-width:0;width:100%;height:auto;overflow:auto}#kids-fixture{box-sizing:border-box;padding:12px;width:100%;max-width:760px;margin:auto}';document.head.append(style);
+  const style=document.createElement('style');style.textContent='html,body[data-world="buncho"]{margin:0;min-width:0;width:100%;height:auto;overflow:auto}body[data-world="buncho"] #kids-fixture{box-sizing:border-box;padding:12px;width:100%;max-width:760px;margin:auto}';document.head.append(style);
   document.querySelectorAll('details').forEach(d=>d.open=true);
  },{now:NOW});
  await expect(page.locator('[data-help-food]')).toBeVisible();await expect(page.locator('[data-help-clocks]')).toBeVisible();
