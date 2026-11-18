@@ -35,7 +35,7 @@ for(const stage of ['egg','chick'])for(const count of [1,2,6,9])test(`${count} $
   const room=page.locator('.game-main .game-room');await expect(room).toHaveAttribute('data-selected-atmosphere','nest');
   await expect(page.locator(`.game-room-bird[data-bird-id="${young[0].id}"]`)).toBeInViewport();
   const geometry=await room.evaluate(el=>{const r=el.getBoundingClientRect();return [...el.querySelectorAll('.game-nestling')].map(n=>{const b=n.getBoundingClientRect();return{left:(b.left-r.left)/r.width,right:(b.right-r.left)/r.width,top:(b.top-r.top)/r.height,bottom:(b.bottom-r.top)/r.height,x:b.x,y:b.y,width:b.width,height:b.height,visible:b.right>0&&b.left<innerWidth&&b.bottom>0&&b.top<innerHeight}})});
-  expect(geometry).toHaveLength(height<500?1:count);
+  expect(geometry).toHaveLength(count);
   for(const b of geometry){expect(b.left).toBeGreaterThan(.78);expect(b.right).toBeLessThan(.89);expect(b.top).toBeGreaterThan(.52);expect(b.bottom).toBeLessThan(.60);expect(b.visible).toBe(true);}
   await info.attach(`nest-${stage}-${count}-${width}`,{body:await page.screenshot(),contentType:'image/png'});
   expect(identity(await record(page))).toEqual(before);

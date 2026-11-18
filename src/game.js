@@ -609,11 +609,14 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
   function roomGeometry(kind){
     const win=root.ownerDocument.defaultView,width=win.innerWidth||390,height=Number.parseFloat(document.body.style.getPropertyValue('--game-viewport-height'))||win.innerHeight||844,ratio=kind==='tall'?.75:1.6;
     const planeWidth=Math.max(width,height*(world.field.place==='friend'?1.6:ratio)),planeHeight=Math.max(height,width/(world.field.place==='friend'?1.6:ratio)),top=Math.max(height-planeHeight,Math.min(0,height*.7-planeHeight*.79));
-    return {width,height,planeWidth,planeHeight,top,left:(planeWidth-width)/2};
+    // A family nest must remain visible before selecting its eggs or chicks.
+    // Share the actual camera crop with every viewport-relative scene actor.
+    const nestCamera=world.field.place==='home'&&fieldBirds(world).some(b=>['egg','chick'].includes(b.stage));
+    return {width,height,planeWidth,planeHeight,top,left:(planeWidth-width)/(nestCamera?1:2)};
   }
   function visibleFieldPositions(birds,kind,place){
     const positions=fieldPositions(birds,place==='friend'?'wide':kind,place),g=roomGeometry(kind),fraction=g.width/g.planeWidth;
-    return new Map([...positions].map(([id,p])=>[id,p.interactive?{...p,x:(1-fraction)/2+p.x*fraction,width:p.width*fraction}:p]));
+    return new Map([...positions].map(([id,p])=>[id,p.interactive?{...p,x:g.left/g.planeWidth+p.x*fraction,width:p.width*fraction}:p]));
   }
   // Keep the caption in a free viewport band, including crowded perch rows.
   function placeSceneCaption(){
@@ -650,7 +653,9 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     if(!preserveSelection&&!active.some(b=>b.id===selected)&&active.length){cancelCareEffects();selected=active[0].id;}
     const current=active.find(b=>b.id===selected)||active[0];
     const atmosphere=homeAtmosphere(world,{selectedId:selected,panel,error:!!error,memory:store.mode==='memory',ending:!!endingPlayer?.active(),hidden:document.hidden,motion:poseEnabled()});
-    const shown=compactLayout?.matches?[current].filter(Boolean):active;
+    const hasNestlings=world.field.place==='home'&&active.some(b=>['egg','chick'].includes(b.stage));
+    // Compact mode may simplify adult perches, but must not hide newborns.
+    const shown=compactLayout?.matches?active.filter(b=>b.id===current?.id||(hasNestlings&&['egg','chick'].includes(b.stage))):active;
     const cageGuests=world.field.place==='home'?encounterCageActors(world):[],actors=[...shown,...cageGuests];
     const positions=visibleFieldPositions(actors,'wide',world.field.place),mobilePositions=visibleFieldPositions(actors,'tall',world.field.place);
     // Short screens crop the upper perches. Keep the selected family bird and
@@ -659,20 +664,20 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
       const geometry=roomGeometry(kind),fraction=geometry.width/geometry.planeWidth;
       if(cageGuests.length<=2){
         const household=visibleFieldPositions(shown,kind,world.field.place);
-        for(const b of shown)if(household.get(b.id)?.interactive)map.set(b.id,{...household.get(b.id),x:.5});
-        cageGuests.forEach((guest,i)=>{const x=cageGuests.length===1?.75:i===0?.25:.75;map.set(guest.id,{...map.get(guest.id),x:(1-fraction)/2+x*fraction,y:.79});});
+        for(const b of shown)if(household.get(b.id)?.interactive)map.set(b.id,{...household.get(b.id),x:geometry.left/geometry.planeWidth+.5*fraction});
+        cageGuests.forEach((guest,i)=>{const x=cageGuests.length===1?.75:i===0?.25:.75;map.set(guest.id,{...map.get(guest.id),x:geometry.left/geometry.planeWidth+x*fraction,y:.79});});
       }else{
-        const columns=geometry.width>600?actors.length:4,rows=Math.ceil(actors.length/columns);
-        actors.forEach((actor,i)=>{if(!map.get(actor.id)?.interactive)return;const row=Math.floor(i/columns),count=Math.min(columns,actors.length-row*columns),x=(i%columns+1)/(count+1),foot=rows===1?geometry.height*(geometry.width<=600&&geometry.height<=280 ? .57 : .68):geometry.height*.46+row*Math.max(90,geometry.height*.23);map.set(actor.id,{...map.get(actor.id),x:(1-fraction)/2+x*fraction,y:(Math.min(geometry.height-26,foot)-geometry.top)/geometry.planeHeight});});
+        const perched=actors.filter(actor=>map.get(actor.id)?.interactive),columns=geometry.width>600?perched.length:4,rows=Math.ceil(perched.length/columns);
+        perched.forEach((actor,i)=>{const row=Math.floor(i/columns),count=Math.min(columns,perched.length-row*columns),x=(i%columns+1)/(count+1),foot=rows===1?geometry.height*(geometry.width<=600&&geometry.height<=280 ? .57 : .68):geometry.height*.46+row*Math.max(90,geometry.height*.23);map.set(actor.id,{...map.get(actor.id),x:geometry.left/geometry.planeWidth+x*fraction,y:(Math.min(geometry.height-26,foot)-geometry.top)/geometry.planeHeight});});
       }
     }
-    return `${fieldNavigation()}<div class="game-room" data-atmosphere="${atmosphere.state}" data-atmosphere-motion="${atmosphere.animate}" data-home-response="${atmosphere.visible?currentHomeResponse()?.kind||'':''}" data-home-response-phase="${currentHomeResponse()?.phase||''}" data-selected-atmosphere="${atmosphere.selectedState}" data-compact="${!!compactLayout?.matches}" data-many-guests="${cageGuests.length>2}" data-home-crowded="${world.field.place==='home'&&(actors.length>8||(compactLayout?.matches&&cageGuests.length>0))}" data-field="${world.field.place}" data-friend-cage="${world.field.place==='friend'?friendCage(world,world.field.hostId).id:''}" aria-label="${escape(fieldTitle())}。イラストのゲーム用風景です。">
+    return `${fieldNavigation()}<div class="game-room" data-atmosphere="${atmosphere.state}" data-atmosphere-motion="${atmosphere.animate}" data-home-response="${atmosphere.visible?currentHomeResponse()?.kind||'':''}" data-home-response-phase="${currentHomeResponse()?.phase||''}" data-selected-atmosphere="${atmosphere.selectedState}" data-has-nestlings="${hasNestlings}" data-compact="${!!compactLayout?.matches}" data-many-guests="${cageGuests.length>2}" data-home-crowded="${world.field.place==='home'&&(actors.length>8||(compactLayout?.matches&&cageGuests.length>0))}" data-field="${world.field.place}" data-friend-cage="${world.field.place==='friend'?friendCage(world,world.field.hostId).id:''}" aria-label="${escape(fieldTitle())}。イラストのゲーム用風景です。">
       ${world.field.place==='home'?renderHomeScene({base:GAME_ART,furniture:sceneFurniture(null,true,atmosphere.visible?atmosphere:null),atmosphere}):world.field.place==='friend'?`<picture class="game-habitat"><img src="${GAME_ART}${friendCage(world,world.field.hostId).file}" alt="" aria-hidden="true" width="1600" height="1000" decoding="async"></picture>`:`<picture class="game-habitat"><source media="(max-width: 600px)" srcset="${GAME_ART}field-park-tall.webp"><img src="${GAME_ART}field-park-wide.webp" alt="" aria-hidden="true" width="1600" height="1000" decoding="async"></picture>`}
       ${gemCollectibles()}<span class="game-floor-soil" style="--care-soil-opacity:${careFloorOpacity(getCleanliness(world)).toFixed(3)}" aria-hidden="true"></span>
       ${shown.map(b=>{
         const pos=positions.get(b.id),mobile=mobilePositions.get(b.id),isSelected=b.id===selected;
         const pose=poseFor(b,globalThis.matchMedia?.('(max-width: 600px)').matches?mobilePositions:positions,shown);
-        const style=`--bird-x:${(compactLayout?.matches&&!cageGuests.length&&pos.interactive?.5:pos.x)*100}%;--bird-y:${pos.y*100}%;--bird-width:${pos.width*100}%;--bird-depth:${Math.round(pos.y*100)};--bird-tall-x:${(compactLayout?.matches&&!cageGuests.length&&mobile.interactive?.5:mobile.x)*100}%;--bird-tall-y:${mobile.y*100}%;--bird-tall-width:${mobile.width*100}%;--bird-tall-depth:${Math.round(mobile.y*100)};--foot-x:${SPRITE_CONTACT.x*100}%;--foot-y:${SPRITE_CONTACT.y*100}%`;
+        const style=`--bird-x:${(compactLayout?.matches&&!cageGuests.length&&pos.interactive?(roomGeometry('wide').left+roomGeometry('wide').width*.5)/roomGeometry('wide').planeWidth:pos.x)*100}%;--bird-y:${pos.y*100}%;--bird-width:${pos.width*100}%;--bird-depth:${Math.round(pos.y*100)};--bird-tall-x:${(compactLayout?.matches&&!cageGuests.length&&mobile.interactive?(roomGeometry('tall').left+roomGeometry('tall').width*.5)/roomGeometry('tall').planeWidth:mobile.x)*100}%;--bird-tall-y:${mobile.y*100}%;--bird-tall-width:${mobile.width*100}%;--bird-tall-depth:${Math.round(mobile.y*100)};--foot-x:${SPRITE_CONTACT.x*100}%;--foot-y:${SPRITE_CONTACT.y*100}%`;
         const attrs=`class="game-room-bird ${isSelected?'is-selected':''} ${pos.interactive?'':'game-nestling'}" style="${style}" data-bird-id="${b.id}" data-anchor="${pos.id}" data-tall-anchor="${mobile.id}" data-action="${b.action.kind}"`;
         return pos.interactive?`<button ${attrs} type="button" data-game-select="${b.id}" data-game-scene-select aria-pressed="${isSelected}" aria-label="${escape(b.name)}、${homeRole(world,b)}、${STAGES[b.stage]}、${ACTIONS[b.action.kind]}">${birdSvg(b.color,b.stage,pose)}${homeBadge(homeRole(world,b),b.name)}${careGesture&&careGesture.birdId===b.id&&careGesture.worldId===world.worldId?'<span class="game-care-cheer" aria-hidden="true">♪</span>':''}</button>`:`<span ${attrs} aria-hidden="true">${birdSvg(b.color,b.stage,pose)}${homeBadge(homeRole(world,b),b.name)}</span>`;
       }).join('')}

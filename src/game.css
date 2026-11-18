@@ -2157,6 +2157,6 @@ body[data-world="buncho"] .finch-garden-dock > details:not([open]) > summary:foc
 .game-ending-dialog[data-film] [role=status]{position:static;margin:0}
 
 /* Nestlings belong to the backdrop's woven nest, never to the viewport's
-   adult-bird row. Reveal that whole area when it is selected on a cropped
-   portrait scene; move the background and nestlings together, without state. */
-body[data-world="buncho"] .game-main .game-room[data-field="home"][data-selected-atmosphere="nest"]{left:auto;right:0;transform:none}
+   adult-bird row. Keep the whole nest visible even with an adult selected;
+   scene actor coordinates share this camera crop without changing saves. */
+body[data-world="buncho"] .game-main .game-room[data-field="home"][data-has-nestlings="true"]{left:auto;right:0;transform:none}
