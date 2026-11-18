@@ -1,6 +1,7 @@
 import {test,expect} from '@playwright/test';
 import {createWorld,createBird} from '../../src/engine.js';
 import {arriveGardenRaptor,petGardenRaptor,raptorToken} from '../../src/garden-raptors.js';
+import {OLD_GARDEN_IDS} from '../../src/data/gardens.js';
 import {arriveGardenCrow} from '../../src/garden-crows.js';
 const NOW=Date.UTC(2026,10,4,9);
 function seed({species='black-kite',friendly=false,active=true,child=false,attending=true,paused=false}={}){
@@ -118,7 +119,7 @@ for(const [species,size] of [['black-kite',[390,844]],['golden-eagle',[320,240]]
 });
 
 test('legacy v12 targeted warning keeps its exact bird and full escape minute after migration',async({page})=>{
- const world=seed({paused:true});world.encounters.version=12;delete world.encounters.raptor.lastThreatAt;world.encounters.gardenFriends.attendees=[];world.encounters.gardenFriends.companions=[];world.encounters.gardenFriends.accompany=false;
+ const world=seed({paused:true});world.encounters.version=12;delete world.encounters.raptor.lastThreatAt;delete world.encounters.raptor.active.returnChoicePending;world.encounters.garden.visits=Object.fromEntries(OLD_GARDEN_IDS.map(id=>[id,world.encounters.garden.visits[id]??0]));world.encounters.gardenFriends.attendees=[];world.encounters.gardenFriends.companions=[];world.encounters.gardenFriends.accompany=false;
  await page.setViewportSize({width:390,height:844});await setup(page,{world});
  const banner=page.locator('.game-panel-overlay>[data-raptor-notice]');await expect(banner).toHaveAttribute('data-raptor-phase','warning');await expect(banner).toContainText(`${world.birds[0].name}をおうちへ`);await expect(banner).toContainText('事故死');await expect(banner.locator('[data-raptor-seconds]')).toHaveText('60');await expect(page.locator('.finch-raptor-java>span:last-child')).toContainText(world.birds[0].name);
  const migrated=await saved(page);expect(migrated.encounters.version).toBe(16);expect(migrated.encounters.raptor.active).toMatchObject({targetBirdId:'b1',hostile:true,remainingMs:60000});

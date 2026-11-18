@@ -5,5 +5,5 @@
     "tests/browser/garden-crows.spec.js",
     "tests/browser/predator-warning-guide.spec.js"
   ],
-  "reason": "Verify 35%/60s shared lottery, persistent pending species across navigation/reload at 320/375/402px, single committed arrival, existing crow/raptor exclusion and safe escape in Chrome/WebKit. Keep 3s dwell, 10min crow, 2min raptor and 24h threat caps; save schema unchanged. Verify tiny-screen crow notice does not overlap the book control; exercise current return-choice and timed-petting interactions rather than bypassing them."
+  "reason": "Verify 35%/60s shared lottery, persistent pending species across navigation/reload at 320/375/402px, single committed arrival, existing crow/raptor exclusion and safe escape in Chrome/WebKit. Keep 3s dwell, 10min crow, 2min raptor and 24h threat caps; save schema unchanged. Verify tiny-screen crow notice and raptor art do not overlap the book/dock controls; exercise current return-choice and timed-petting interactions rather than bypassing them."
 }

@@ -39,3 +39,8 @@ failed world writes, competing crow/raptor arrivals, and repeated host recreatio
 Browser tests use 320/375/402 widths with real document navigation and reload,
 asserting one saved crow arrival, one energy change and no extra random draws.
 Chrome/WebKit automation does not constitute iPhone hardware or iOS 15 testing.
+
+Tiny 320×240 layouts also reserve clearance between crow notices/book controls
+and raptor artwork/the dock. Browser fixtures construct actual v12 encounter
+shapes (without later-only fields) and observe real intro/choice/petting clocks.
+Geometry is measured atomically when a host refresh can replace scene nodes.
