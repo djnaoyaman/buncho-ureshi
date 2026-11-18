@@ -17,7 +17,7 @@ import {mountGardenBirdMotion} from './garden-bird-motion.js';
 import {encounterSystem} from './encounters.js';
 import {renderEncounterNotebook,renderEncounterPage,renderEncounterScene,renderFinchGarden,renderEncounterFriendship} from './encounter-ui.js';
 /** Host injects its single existing transaction store. Never creates a second save/backend. */
-export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()=>null,onHouseholdBird=()=>{},onGarden=async()=>{},onGardenChanged=()=>{},onHome=()=>{},onDiary=()=>{},onReward=()=>{},meetFriend=null,completeEncounter=null,system=encounterSystem,initialMode='notebook',base='/buncho-ureshi/',crowRandom=Math.random,sharedPredatorClock=false,petNow=()=>performance.now(),getSound=()=>true}={}){
+export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()=>null,onHouseholdBird=()=>{},onGarden=async()=>{},onGardenChanged=()=>{},onCrowWarning=()=>{},onHome=()=>{},onDiary=()=>{},onReward=()=>{},meetFriend=null,completeEncounter=null,system=encounterSystem,initialMode='notebook',base='/buncho-ureshi/',crowRandom=Math.random,sharedPredatorClock=false,petNow=()=>performance.now(),getSound=()=>true}={}){
   if(typeof getWorld!=='function'||typeof transact!=='function')throw new Error('図鑑の保存先が必要です。');
   let alive=true,busy=false,mode=initialMode==='garden'?'garden':'notebook',pageId=null,showPhoto=false,generation=0,notice='',worldId=getWorld().worldId,revealGardenId=null,renderedView=null;
   let rub=null,petFlight=false,petTimer=null;
@@ -28,7 +28,7 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
   const discardCompanions=()=>{companionDraft=null;companionMessage='';};
  const crowClock=createGardenCrowClock({random:crowRandom});
  let crowFlight=false,crowTimer=null,crowPhase=null,crowEpoch=0,crowContext=null;
- const stopCrow=()=>{crowClock.reset();crowEpoch++;};
+ const stopCrow=()=>{crowClock.reset();crowEpoch++;onCrowWarning(false);};
  const syncCrowContext=w=>{const key=`${w.worldId}:${w.encounters.garden.id}:${crowTarget(w)?.id}`;if(key!==crowContext){stopCrow();crowContext=key;}return key;};
   const doc=root.ownerDocument,win=doc.defaultView;
   const media=mountEncounterMedia(root);
@@ -103,6 +103,7 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
     const expeditionFocus=focused?.dataset?.expeditionActor;
     const showcaseSelection=sameBooklet?(savedGarden?.showcaseSelection||[...root.querySelectorAll('[data-showcase-actor],[data-showcase-item]')].map(n=>n.value)):[];
     const showcaseFocus=focused?.hasAttribute?.('data-showcase-item')?'item':focused?.dataset?.showcaseActor;
+    onCrowWarning(!!crowClock.warning);
     media.preserve();
     root.innerHTML=(mode==='raptors'?renderRaptorNotebook(w,{base,id:pageId}):mode==='crows'?renderCrowNotebook(w,{base,id:pageId}):mode==='event'?renderEncounterScene(w,{system,base}):mode==='garden'?renderFinchGarden(w,{system,base,selectedBirdId:getSelectedBirdId(),crowWarning:crowClock.warning,companionDraft,companionMessage,expeditionCelebration,showcaseCelebration}):mode==='entry'?renderEncounterPage(w,pageId,{system,base,showPhoto}):renderEncounterNotebook(w,{system,base}))+`<p class="finch-notice" role="status">${escape(notice)}</p><button type="button" class="finch-media-retry" data-media-retry hidden>絵をもう一度読み込む</button>`;
     root.querySelectorAll('[data-expedition-actor]').forEach((select,i)=>{if([...select.options].some(o=>o.value===expeditionActors[i]))select.value=expeditionActors[i];if(expeditionFocus===select.dataset.expeditionActor)select.focus({preventScroll:true});});
