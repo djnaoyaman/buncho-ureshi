@@ -1,13 +1,7 @@
 {
-  "base": "400d28684a5d6d4c3d3d370bd4bb81f83315e93a",
+  "base": "e28e0ce95aee8f6a424d2f796c204c5e1dd61a23",
   "tests": [
-    "tests/browser/kids-guidance.spec.js",
-    "tests/browser/unified-care.spec.js",
-    "tests/browser/help-current-rules.spec.js",
-    "tests/browser/garden-about-booklet.spec.js",
-    "tests/browser/next-enjoyments.spec.js",
-    "tests/browser/caretaker-recruitment.spec.js",
-    "tests/browser/life-care.spec.js"
+    "tests/browser/garden-visits.spec.js"
   ],
-  "reason": "Child-readable explanation release only. Validate narrow/mobile/desktop ruby, semantic step diagrams, screen-reader tree, keyboard, doubled text, real food/care/help/garden integration and exact saved worlds on Chrome/WebKit. Existing game calculations and save schema unchanged; physical Safari is not claimed."
+  "reason": "Guest departure lifecycle change only: Chrome/WebKit verify completed guests disappear on return home and reload, queued/active conversations survive, cross-garden sessions and legacy migration retain progress, notebook and rediscovery remain usable. Node covers expiry boundary, offline clock and paused state, invitations, home visitors and protected saved identity/economy."
 }
