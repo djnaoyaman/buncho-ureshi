@@ -1,7 +1,7 @@
 {
-  "base": "e28e0ce95aee8f6a424d2f796c204c5e1dd61a23",
+  "base": "b1166ea4eb4d7a0870594702a10b521354ddaaf4",
   "tests": [
-    "tests/browser/garden-visits.spec.js"
+    "tests/browser/encounter-pet-response.spec.js"
   ],
-  "reason": "Guest departure lifecycle change only: Chrome/WebKit verify completed guests disappear on return home and reload, queued/active conversations survive, cross-garden sessions and legacy migration retain progress, notebook and rediscovery remain usable. Node covers expiry boundary, offline clock and paused state, invitations, home visitors and protected saved identity/economy."
+  "reason": "Verify approved 420ms portrait-only response after committed pet points for ordinary birds/crows/raptors; no feedback on failed saves, caps, delayed departed targets, settings/reduced motion; real pointer input, re-render cancellation and 320/375/402px geometry in Chrome/WebKit. Existing reward/save rules and travelling garden sprites unchanged. Also verify protected photo image styles remain intact while the portrait container visibly moves; wait for actual OS media preference before input."
 }
