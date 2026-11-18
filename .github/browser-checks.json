@@ -3,5 +3,5 @@
   "tests": [
     "tests/browser/encounter-pet-response.spec.js"
   ],
-  "reason": "Verify approved 420ms portrait-only response after committed pet points for ordinary birds/crows/raptors; no feedback on failed saves, caps, delayed departed targets, settings/reduced motion; real pointer input, re-render cancellation and 320/375/402px geometry in Chrome/WebKit. Existing reward/save rules and travelling garden sprites unchanged."
+  "reason": "Verify approved 420ms portrait-only response after committed pet points for ordinary birds/crows/raptors; no feedback on failed saves, caps, delayed departed targets, settings/reduced motion; real pointer input, re-render cancellation and 320/375/402px geometry in Chrome/WebKit. Existing reward/save rules and travelling garden sprites unchanged. Also verify protected photo image styles remain intact while the portrait container visibly moves; wait for actual OS media preference before input."
 }

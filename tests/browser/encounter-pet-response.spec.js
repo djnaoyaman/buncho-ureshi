@@ -8,7 +8,7 @@ async function setup(page,kind='normal'){
   for(const id of ids){system.enterGarden(w,token());w.encounters.queue=[id];w.encounters.garden.guestGardenId=w.encounters.garden.id;system.open(w,id,token());for(const step of system.catalog.find(e=>e.id===id).steps)system.act(w,w.encounters.active.instanceId,step.action,token());}
   arriveGardenCrow(w,'large-billed-crow',Date.now()-700000,token());arriveGardenRaptor(w,'black-kite',Date.now()-200000,token());w.encounters.raptor.active=null;w.encounters.garden.open=false;
   const store=await openGameStore();w=await store.transact(()=>w);let now=0,fail=false,release=null,hold=false;const records=[];
-  const original=Element.prototype.animate;Element.prototype.animate=function(...args){const a=original.apply(this,args);if(this.closest('[data-encounter-rub]')){const record={id:this.closest('[data-encounter-rub]').dataset.encounterRub,animation:a,points:points(),frames:[]};records.push(record);const sample=()=>{if(this.isConnected)record.frames.push(getComputedStyle(this).transform);if(a.playState==='running')requestAnimationFrame(sample);};requestAnimationFrame(sample);}return a;};
+  const original=Element.prototype.animate;Element.prototype.animate=function(...args){const a=original.apply(this,args);if(this.closest('[data-encounter-rub]')){const record={id:this.closest('[data-encounter-rub]').dataset.encounterRub,animation:a,points:points(),reduced:matchMedia('(prefers-reduced-motion: reduce)').matches,visible:document.visibilityState,frames:[]};records.push(record);const sample=()=>{if(this.isConnected)record.frames.push(getComputedStyle(this).transform);if(a.playState==='running')requestAnimationFrame(sample);};requestAnimationFrame(sample);}return a;};
   const id=kind==='normal'?ids[0]:kind==='crow'?'large-billed-crow':'black-kite';
   const points=()=> (kind==='normal'?w.encounters.friendship:kind==='crow'?w.encounters.crow.visits:w.encounters.raptor.visits).find(v=>v.id===id)?.petPoints||0;
   const panel=mountEncounterPanel(document.querySelector('#fixture'),{base,getWorld:()=>w,petNow:()=>window.petQA?.realTime?performance.now():now,transact:async fn=>{if(hold)await new Promise(r=>release=r);if(fail){const next=structuredClone(w);fn(next);throw Error('injected save failure after mutation');}w=await store.transact(fn);if(window.petQA?.holdDelivery)await new Promise(r=>release=r);return w;}});
@@ -17,6 +17,7 @@ async function setup(page,kind='normal'){
  },{base,kind});
  await page.locator('[data-encounter-rub] img').evaluate(i=>i.decode());
 }
+async function reducedMotion(page,value){await page.emulateMedia({reducedMotion:value?'reduce':'no-preference'});await expect.poll(()=>page.evaluate(()=>matchMedia('(prefers-reduced-motion: reduce)').matches)).toBe(value);await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>resolve())));}
 async function gain(page){const target=page.locator('[data-encounter-rub]');await target.press('Enter');await page.evaluate(()=>petQA.advance());await target.press('Enter');}
 for(const kind of ['normal','crow','raptor']){
  test(`${kind}: only committed points shake, no burst banking or save side effects`,async({page})=>{
@@ -28,8 +29,8 @@ for(const kind of ['normal','crow','raptor']){
  });
  test(`${kind}: failed save, cap, reduced motion, setting and page departure`,async({page})=>{
   await setup(page,kind);const original=await page.evaluate(()=>petQA.world());await page.evaluate(()=>petQA.fail(true));await gain(page);await page.waitForTimeout(50);expect(await page.evaluate(()=>petQA.world())).toEqual(original);expect(await page.evaluate(()=>petQA.records.length)).toBe(0);
-  await page.evaluate(()=>petQA.fail(false));await page.emulateMedia({reducedMotion:'reduce'});await gain(page);await expect.poll(()=>page.evaluate(()=>petQA.points())).toBe(1);expect(await page.evaluate(()=>petQA.records.length)).toBe(0);
-  await page.emulateMedia({reducedMotion:'no-preference'});await page.evaluate(()=>petQA.set(w=>{w.settings.motion=false;return w;}));await gain(page);await expect.poll(()=>page.evaluate(()=>petQA.points())).toBe(2);expect(await page.evaluate(()=>petQA.records.length)).toBe(0);
+  await page.evaluate(()=>petQA.fail(false));await reducedMotion(page,true);await gain(page);await expect.poll(()=>page.evaluate(()=>petQA.points())).toBe(1);expect(await page.evaluate(()=>petQA.records.length)).toBe(0);
+  await reducedMotion(page,false);await page.evaluate(()=>petQA.set(w=>{w.settings.motion=false;return w;}));await gain(page);await expect.poll(()=>page.evaluate(()=>petQA.points())).toBe(2);expect(await page.evaluate(()=>petQA.records.length)).toBe(0);
   await page.evaluate(()=>petQA.set(w=>{w.settings.motion=true;for(const a of [w.encounters.friendship,w.encounters.crow.visits,w.encounters.raptor.visits]){const v=a.find(v=>v.id===petQA.id);if(v)v.petPoints=1000000;}return w;}));await gain(page);await page.waitForTimeout(50);expect(await page.evaluate(()=>petQA.points())).toBe(1000000);expect(await page.evaluate(()=>petQA.records.length)).toBe(0);
  });
  test(`${kind}: delayed transaction cannot reward or animate a departed target`,async({page})=>{
@@ -41,9 +42,13 @@ for(const width of [320,375,402])test(`real pointer input and re-render at ${wid
 });
 
 test('in-flight burst cannot duplicate points, and changing motion preference cancels the response',async({page})=>{
- await setup(page);await page.evaluate(()=>petQA.hold(true));await gain(page);await expect.poll(()=>page.evaluate(()=>petQA.waiting())).toBe(true);for(let i=0;i<8;i++){await page.evaluate(()=>petQA.advance());await page.locator('[data-encounter-rub]').press('Enter');}expect(await page.evaluate(()=>petQA.points())).toBe(0);await page.evaluate(()=>petQA.release());await expect.poll(()=>page.evaluate(()=>petQA.records.length)).toBe(1);expect(await page.evaluate(()=>petQA.points())).toBe(1);await page.emulateMedia({reducedMotion:'reduce'});await expect.poll(()=>page.evaluate(()=>petQA.records[0].animation.playState)).toBe('idle');
+ await setup(page);await page.evaluate(()=>petQA.hold(true));await gain(page);await expect.poll(()=>page.evaluate(()=>petQA.waiting())).toBe(true);for(let i=0;i<8;i++){await page.evaluate(()=>petQA.advance());await page.locator('[data-encounter-rub]').press('Enter');}expect(await page.evaluate(()=>petQA.points())).toBe(0);await page.evaluate(()=>petQA.release());await expect.poll(()=>page.evaluate(()=>petQA.records.length)).toBe(1);expect(await page.evaluate(()=>petQA.points())).toBe(1);await reducedMotion(page,true);await expect.poll(()=>page.evaluate(()=>petQA.records[0].animation.playState)).toBe('idle');
 });
 
 test('already committed pet remains on its original bird when delivery follows navigation',async({page})=>{
  await setup(page);await page.evaluate(()=>petQA.holdDelivery=true);await gain(page);await expect.poll(()=>page.evaluate(()=>petQA.waiting())).toBe(true);expect(await page.evaluate(()=>petQA.points())).toBe(1);await page.evaluate(()=>petQA.panel.entry(petQA.ids[1]));await page.evaluate(()=>petQA.release());await page.waitForTimeout(80);expect(await page.evaluate(()=>petQA.points())).toBe(1);expect(await page.evaluate(()=>petQA.world().encounters.friendship.find(v=>v.id===petQA.ids[1])?.petPoints||0)).toBe(0);expect(await page.evaluate(()=>petQA.records.length)).toBe(0);
+});
+
+test('protected photo image transform remains intact while its portrait responds',async({page})=>{
+ await setup(page);await page.addStyleTag({content:'[data-encounter-rub] img{transform:none!important}'});await gain(page);await expect.poll(()=>page.evaluate(()=>petQA.records.length)).toBe(1);await page.waitForTimeout(500);expect(await page.evaluate(()=>petQA.records[0].frames.some(v=>v!=='none'&&v!=='matrix(1, 0, 0, 1, 0, 0)'))).toBe(true);expect(await page.locator('[data-encounter-rub] img').evaluate(i=>getComputedStyle(i).transform)).toBe('none');expect(await page.evaluate(()=>petQA.points())).toBe(1);
 });

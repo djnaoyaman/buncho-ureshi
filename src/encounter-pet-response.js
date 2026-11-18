@@ -6,10 +6,11 @@ export function createEncounterPetResponse(root,getWorld){
   cancel();const w=getWorld();
   if(!alive||!root.isConnected||doc.hidden||w.paused||w.settings?.motion===false||reduced?.matches||doc.body.hasAttribute('data-game-view-blocked')||doc.body.hasAttribute('data-game-ending-active'))return;
   const target=[...root.querySelectorAll('[data-encounter-rub]')].find(e=>e.dataset.encounterRub===id),img=target?.querySelector('img');
-  if(!img?.animate||!img.complete||!img.naturalWidth)return;
+  if(!target?.animate||!img||!img.complete||!img.naturalWidth)return;
   try{
-   const original=win.getComputedStyle(img).transform,base=original==='none'?'':original;
-   const animation=img.animate([0,-2,2,-1.5,1,0].map(x=>({transform:`${base} translateX(${x}px) rotate(${x*.25}deg)`})),{duration:420,easing:'ease-in-out'});
+   const original=win.getComputedStyle(target).transform,base=original==='none'?'':original;
+   // Animate the portrait container; keep decoded image reuse and protected photo styles intact.
+   const animation=target.animate([0,-2,2,-1.5,1,0].map(x=>({transform:`${base} translateX(${x}px) rotate(${x*.25}deg)`})),{duration:420,easing:'ease-in-out'});
    current=animation;animation.onfinish=()=>{if(current===animation)current=null;};
   }catch{/* Unsupported animation never rolls back or repeats the pet action. */}
  };

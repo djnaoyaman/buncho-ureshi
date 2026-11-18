@@ -26,3 +26,12 @@ checks are automation, not an iPhone or iOS 15 hardware test.
 The protected baseline update is checked against the preceding live hashes.
 Only encounter-controller.js and the new encounter-pet-response.js contain
 product changes; other changed protected files contain cache-version changes only.
+
+WebKit follow-up: media emulation is now awaited until matchMedia reports the
+requested preference before pet input. The portrait container is animated rather
+than the reused decoded IMG, preserving protected photo transform:none!important
+and image styles. Real frame progress remains asserted; it is not replaced with
+an animation-registration assertion. The extra protected-image-style case keeps
+point gain and visible movement assertions. This also isolates the effect from
+image reuse; the original CI-only missing frame is not claimed as conclusively
+reproduced locally.
