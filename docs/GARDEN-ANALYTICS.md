@@ -26,7 +26,7 @@
 
 ## 検査と公開ゲート
 
-- 専用作業ツリー `buncho-analytics`、ブランチ `codex/garden-analytics-local`。初期基準 `8bb37a3bf6e255befc0a612298a385d0b475fea4`、PR #229 統合後の基準 `86ee58acad4564d8f33f0fc917b186ebe4ad011b`、開始時と再確認時のopen PRは0件。checkoutに `.agents/skills` は存在せず `AGENTS.md` を使用。
+- 専用作業ツリー `buncho-analytics`、ブランチ `codex/garden-analytics-local`。初期基準 `8bb37a3bf6e255befc0a612298a385d0b475fea4`、PR #229 統合後の基準 `86ee58acad4564d8f33f0fc917b186ebe4ad011b`、音楽PR #230統合後の最終基準 `00e99456b9b64ec97fd64cd61b89ebcd7b0c53ff`。checkoutに `.agents/skills` は存在せず `AGENTS.md` を使用。
 - 追加計測・天敵制御・実ホスト保存統合の集中検査54件成功。非表示/復帰、長時間中断、再読込、重複、保存失敗、計測例外を含む。Happy DOM / fake-indexeddb の結果はブラウザ確認ではない。
 - 全Node・ビルド検査結果は最終作業報告を参照。保護出力581ファイルを元mainの独立ビルドと照合した差分は `garden-analytics-output-audit.json`。許可ソース以外はキャッシュURLだけの変更と機械比較し、新計測モジュールを保護対象に追加した。基準mainと候補を独立生成した出力比較に加え、保存成立箇所・乱数呼出し・定数不変を別途差分レビューした。
 - Chrome系: 利用可能なChromiumは socket() Operation not permitted により起動前に失敗。Chrome for Testing配布zip取得にも失敗。WebKit本体は取得できたが共有ライブラリ不足で起動失敗。Safari実機は未検証（AGENTS.mdによりユーザー担当）。

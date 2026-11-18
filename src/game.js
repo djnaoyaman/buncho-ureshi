@@ -104,7 +104,11 @@ export function careFloorOpacity(cleanliness) {
   return Math.min(.22, Math.max(0, (100 - value) / 100 * .22));
 }
 export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () => {}, goArt = () => {}, audioFactory = createCareAudio, raptorRandom = Math.random, predatorRandom = Math.random } = {}) {
-  let raptorReturnPrompt=null,endingPlayer=null;
+  let raptorReturnPrompt=null,endingPlayer=null,crowMusicWarning=false;
+  function syncEncounterMusic(){
+    const outside=world.encounters.garden.open;
+    document.dispatchEvent(new document.defaultView.CustomEvent('buncho-game-music-scene',{detail:{worldId:world.worldId,gardenId:outside?world.encounters.garden.id:null,paused:world.paused,encounter:world.encounters.raptor?.active?'raptor':outside&&(crowMusicWarning||crowScene(world)?.phase==='visiting')?'crow':null}}));
+  }
   let sheetOpen=false, sheetReturn=null, welcomeFocusKey=null;
   let adoptionDialogToken=null,adoptionBusy=false;
   let independenceDialogToken=null,independenceBusy=false;
@@ -786,7 +790,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     if(['outdoors','notebook'].includes(panel)){
       if(!encounterRoot){
         encounterRoot=document.createElement('div');encounterRoot.className='game-encounter-host';
-        encounterController=mountEncounterPanel(encounterRoot,{sharedPredatorClock:true,initialMode:panel==='outdoors'?'garden':'notebook',getSound:careSoundEnabled,getWorld:()=>world,getSelectedBirdId:()=>selected,onHouseholdBird:id=>openBirdSheet(id),meetFriend:(w,id,action,token)=>meetGardenFriendReward(w,id,action,token),completeEncounter:(w,id,action,token)=>completeEncounterReward(w,id,action,token),onReward:amount=>showGemReward(amount),onHome:returnRaptorHome,onDiary:()=>{fieldViewRequest++;cancelCareEffects();setMessage('');sheetOpen=false;panel='diary';render();focusPanel();},base:new URL('../',GAME_ART).href,transact:async (operation,options={})=>{
+        encounterController=mountEncounterPanel(encounterRoot,{sharedPredatorClock:true,onCrowWarning:value=>{crowMusicWarning=value;syncEncounterMusic();},initialMode:panel==='outdoors'?'garden':'notebook',getSound:careSoundEnabled,getWorld:()=>world,getSelectedBirdId:()=>selected,onHouseholdBird:id=>openBirdSheet(id),meetFriend:(w,id,action,token)=>meetGardenFriendReward(w,id,action,token),completeEncounter:(w,id,action,token)=>completeEncounterReward(w,id,action,token),onReward:amount=>showGemReward(amount),onHome:returnRaptorHome,onDiary:()=>{fieldViewRequest++;cancelCareEffects();setMessage('');sheetOpen=false;panel='diary';render();focusPanel();},base:new URL('../',GAME_ART).href,transact:async (operation,options={})=>{
           const committed=await mutate(operation,'',()=>alive,{bump:false,advanceCurrent:false,renderAfter:!options.gesture});
           if(!committed)throw new Error('記録できませんでした。');return world;
         },onGardenChanged:({gardenId,worldId})=>document.dispatchEvent(new document.defaultView.CustomEvent('buncho-game-garden',{detail:{gardenId,worldId}}))});
@@ -798,6 +802,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
       if(encounterMode!==panel){encounterMode=panel;if(panel==='outdoors')queueMicrotask(()=>{if(alive&&panel==='outdoors')encounterController?.garden();});else encounterController.notebook();}
       else if(!interactionActive())encounterController.refresh();
     }else if(encounterRoot){encounterController?.destroy();encounterController=null;encounterRoot=null;encounterMode=null;document.dispatchEvent(new document.defaultView.CustomEvent('buncho-game-garden',{detail:{gardenId:null,worldId:world.worldId}}));}
+    syncEncounterMusic();
     syncDrawResult();
     document.dispatchEvent(new document.defaultView.CustomEvent('buncho-game-panel',{detail:panel}));
     const sheet=root.querySelector('.game-bird-sheet'),opening=sheetOpen&&!sheet.open;
