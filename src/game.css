@@ -2160,3 +2160,11 @@ body[data-world="buncho"] .finch-garden-dock > details:not([open]) > summary:foc
    adult-bird row. Keep the whole nest visible even with an adult selected;
    scene actor coordinates share this camera crop without changing saves. */
 body[data-world="buncho"] .game-main .game-room[data-field="home"][data-has-nestlings="true"]{left:auto;right:0;transform:none}
+
+/* On very short, narrow screens the first guest row begins just below 48px.
+   Keep the closed-view toggle in the reserved header band, not over a bird.
+   Retain the 44px touch target; the usual 52px pictogram remains elsewhere. */
+@media(max-width:600px) and (max-height:340px){
+ body[data-world="buncho"][data-scene-controls="closed"]:has(.game-room[data-home-crowded="true"]) .game-scene-controls-toggle{width:44px;min-width:44px;height:44px;min-height:44px;padding:6px}
+ body[data-world="buncho"][data-scene-controls="closed"]:has(.game-room[data-home-crowded="true"]) .game-scene-controls-toggle .game-scene-mode-icon{width:28px;height:28px}
+}

@@ -5,5 +5,5 @@
     "tests/browser/egg-art.spec.js",
     "tests/browser/home-visits.spec.js"
   ],
-  "reason": "Fix real unselected newborn clipping missed by selection-first PR224 tests. Chrome/WebKit must check actual hatching, unselected mixed clutches, full viewport containment, parent selection, compact/portrait/tablet/wide layouts, repeated reload, existing nest art and guest positioning, with saved identity preserved."
+  "reason": "Fix real unselected newborn clipping missed by selection-first PR224 tests. Chrome/WebKit must check actual hatching, unselected mixed clutches, full viewport containment, parent selection, compact/portrait/tablet/wide layouts, repeated reload, existing nest art and guest positioning, with saved identity preserved. Retain all failed home-visits assertions; open the current visible menu before close-all, and keep the tiny crowded-home toggle clear of guest labels."
 }
