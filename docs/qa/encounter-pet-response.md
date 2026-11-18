@@ -35,3 +35,10 @@ an animation-registration assertion. The extra protected-image-style case keeps
 point gain and visible movement assertions. This also isolates the effect from
 image reuse; the original CI-only missing frame is not claimed as conclusively
 reproduced locally.
+
+CI diagnostic run 44418370237 captured the remaining first-WebKit failure:
+visible=true, reduced=false, zero rAF samples, no cancellations, native animation
+still running at currentTime=0 after the old fixed 500ms wait. The fixture now
+waits for the first real rendered frame before input and polls actual nonidentity
+frame observations instead of equating wall time with browser animation time.
+No animation time is advanced, no events are forged, and no checks are removed.

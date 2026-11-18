@@ -16,6 +16,9 @@ async function setup(page,kind='normal'){
   if(kind==='normal')panel.entry(id);else{panel.notebook();document.querySelector('[data-crow-notebook]').click();document.querySelector(`[data-${kind==='crow'?'crow':'raptor'}-entry="${id}"]`).click();}
  },{base,kind});
  await page.locator('[data-encounter-rub] img').evaluate(i=>i.decode());
+ // A person cannot rub an image before its first painted frame. WebKit CI can
+ // defer its initial rendering clock even after decoding and DOM input are ready.
+ await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>resolve())));
 }
 async function reducedMotion(page,value){await page.emulateMedia({reducedMotion:value?'reduce':'no-preference'});await expect.poll(()=>page.evaluate(()=>matchMedia('(prefers-reduced-motion: reduce)').matches)).toBe(value);await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>resolve())));}
 async function gain(page){const target=page.locator('[data-encounter-rub]');await target.press('Enter');await page.evaluate(()=>petQA.advance());await target.press('Enter');}
@@ -23,7 +26,7 @@ for(const kind of ['normal','crow','raptor']){
  test(`${kind}: only committed points shake, no burst banking or save side effects`,async({page})=>{
   await setup(page,kind);const before=await page.evaluate(()=>petQA.world());await gain(page);await expect.poll(()=>page.evaluate(()=>petQA.records.length)).toBe(1);expect(await page.evaluate(()=>petQA.points())).toBe(1);
   const after=await page.evaluate(()=>petQA.world());for(const key of ['birds','economy','seed','tick','events','lifecycle','field','collectionEndings'])expect(after[key]).toEqual(before[key]);
-  expect(await page.evaluate(()=>petQA.records[0].animation.effect.getTiming().duration)).toBe(420);await page.waitForTimeout(500);expect(await page.evaluate(()=>petQA.records[0].frames.some(value=>value!=='none'&&value!=='matrix(1, 0, 0, 1, 0, 0)'))).toBe(true);for(let i=0;i<8;i++)await page.locator('[data-encounter-rub]').press('Enter');expect(await page.evaluate(()=>petQA.points())).toBe(1);expect(await page.evaluate(()=>petQA.records.length)).toBe(1);
+  expect(await page.evaluate(()=>petQA.records[0].animation.effect.getTiming().duration)).toBe(420);await expect.poll(()=>page.evaluate(()=>petQA.records[0].frames.some(value=>value!=='none'&&value!=='matrix(1, 0, 0, 1, 0, 0)'))).toBe(true);for(let i=0;i<8;i++)await page.locator('[data-encounter-rub]').press('Enter');expect(await page.evaluate(()=>petQA.points())).toBe(1);expect(await page.evaluate(()=>petQA.records.length)).toBe(1);
   await page.evaluate(()=>petQA.advance());await page.locator('[data-encounter-rub]').press('Enter');await expect.poll(()=>page.evaluate(()=>petQA.records.length)).toBe(2);expect(await page.evaluate(()=>petQA.records.filter(r=>r.animation.playState==='running').length)).toBeLessThanOrEqual(1);
   await page.waitForTimeout(500);expect(await page.locator('[data-encounter-rub] img').evaluate(i=>getComputedStyle(i).transform)).toBe('none');const committed=await page.evaluate(()=>petQA.world());await page.reload();const stored=await page.evaluate(()=>new Promise((resolve,reject)=>{const r=indexedDB.open('buncho-ureshi-garden-v1',1);r.onerror=()=>reject(r.error);r.onsuccess=()=>{const db=r.result,q=db.transaction('world').objectStore('world').get('current');q.onsuccess=()=>{resolve(q.result);db.close();};};}));expect(stored).toEqual(committed);
  });
@@ -50,7 +53,7 @@ test('already committed pet remains on its original bird when delivery follows n
 });
 
 test('protected photo image transform remains intact while its portrait responds',async({page})=>{
- await setup(page);await page.addStyleTag({content:'[data-encounter-rub] img{transform:none!important}'});await gain(page);await expect.poll(()=>page.evaluate(()=>petQA.records.length)).toBe(1);await page.waitForTimeout(500);expect(await page.evaluate(()=>petQA.records[0].frames.some(v=>v!=='none'&&v!=='matrix(1, 0, 0, 1, 0, 0)'))).toBe(true);expect(await page.locator('[data-encounter-rub] img').evaluate(i=>getComputedStyle(i).transform)).toBe('none');expect(await page.evaluate(()=>petQA.points())).toBe(1);
+ await setup(page);await page.addStyleTag({content:'[data-encounter-rub] img{transform:none!important}'});await gain(page);await expect.poll(()=>page.evaluate(()=>petQA.records.length)).toBe(1);await expect.poll(()=>page.evaluate(()=>petQA.records[0].frames.some(v=>v!=='none'&&v!=='matrix(1, 0, 0, 1, 0, 0)'))).toBe(true);expect(await page.locator('[data-encounter-rub] img').evaluate(i=>getComputedStyle(i).transform)).toBe('none');expect(await page.evaluate(()=>petQA.points())).toBe(1);
 });
 
 test.afterEach(async({page},info)=>{if(info.status!==info.expectedStatus){const records=await page.evaluate(()=>window.petQA?.records.map(({animation,...record})=>({...record,state:animation.playState,currentTime:animation.currentTime}))).catch(()=>null);await info.attach('pet-animation-observations',{body:JSON.stringify(records,null,2),contentType:'application/json'});}});
