@@ -97,8 +97,8 @@ for(const [species,size,mode='outdoors',successor=false,targetless=false] of [['
  }else{
   await expect(page.locator('.finch-garden-stage [data-garden-friend]')).toHaveCount(0);await expect(page.locator('.finch-crow-java>span:last-child')).toContainText(protagonist.name);
  }
- const home=page.locator('.finch-crow-notice [data-finch-go-home]');await expect(home).toBeVisible();await expect.poll(async()=> (await home.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44);
- if(targetless){const hb=await home.boundingBox();expect(hb.x).toBeGreaterThanOrEqual(0);expect(hb.x+hb.width).toBeLessThanOrEqual(size[0]);expect(hb.y).toBeGreaterThanOrEqual(0);expect(hb.y+hb.height).toBeLessThanOrEqual(size[1]);}
+ const home=page.locator('.finch-crow-notice [data-finch-go-home]');await expect(home).toBeVisible();let hb;await expect.poll(async()=>{hb=await home.boundingBox();return hb?.height??0;}).toBeGreaterThanOrEqual(44);
+ if(targetless){expect(hb.x).toBeGreaterThanOrEqual(0);expect(hb.x+hb.width).toBeLessThanOrEqual(size[0]);expect(hb.y).toBeGreaterThanOrEqual(0);expect(hb.y+hb.height).toBeLessThanOrEqual(size[1]);}
  if(size[1]<=340){
   // The host can replace the scene between separate locator measurements.
   // Resolve all current elements and their geometry in one browser task.
