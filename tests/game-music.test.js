@@ -149,3 +149,13 @@ test('interrupted context plus departure invalidates slow encounter decode',asyn
  const p=f.player.setScene({gardenId:null,worldId:'one',encounter:'crow'});await tick();f.contexts[0].state='interrupted';
  await f.player.setScene({gardenId:null,worldId:'one'});finish({duration:12});assert.equal(await p,false);assert.equal(f.started.length,1);assert.equal(f.player.needsGesture(),true);f.player.dispose();
 });
+
+test('departure retires a playing encounter before an interrupted context resumes',async()=>{
+ for(const encounter of ['crow','raptor']){
+  const f=fixture();await f.player.playFromGesture('village');await f.player.setScene({gardenId:null,worldId:'one',encounter});
+  f.contexts[0].state='interrupted';await f.player.setScene({gardenId:null,worldId:'one'});
+  assert.equal(f.started.filter(s=>s.live).length,0);assert.equal(f.player.state().status,'paused');
+  f.contexts[0].state='running';assert.equal(f.started.filter(s=>s.live).length,0);assert.equal(f.player.needsGesture(),true);
+  await f.player.playCurrentFromGesture();assert.equal(f.player.state().selected,'village');assert.equal(f.started.filter(s=>s.live).length,1);f.player.dispose();
+ }
+});

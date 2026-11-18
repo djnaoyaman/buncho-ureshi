@@ -81,7 +81,14 @@ for(const [species,size,mode='outdoors',successor=false,targetless=false] of [['
   await expect(stage.locator('[data-garden-friend]')).toHaveCount(4);await expect(stage.locator('[data-garden-household]')).toHaveCount(0);await expect(page.locator('.finch-crow-java')).toHaveCount(0);await expect(scene).toHaveAttribute('aria-label',/文鳥約14cmを基準/);
   await expect(notice).toContainText('庭を訪れています');await expect(notice).not.toContainText(/なかよし|元気は半分|安全な場所/);
   const {CROW_ART,JAVA_ART_LENGTH}=await import('../../src/garden-crow-ui.js');
-  const geometry=await scene.evaluate(e=>{const a=e.querySelector('.finch-crow-actor').getBoundingClientRect(),s=e.getBoundingClientRect(),friend=document.querySelector('.finch-garden-stage [data-garden-friend] .garden-bird-sprite').getBoundingClientRect(),dock=document.querySelector('.finch-garden-dock').getBoundingClientRect();return {left:s.left,right:s.right,artLeft:a.left,artRight:a.right,top:a.top,bottom:a.bottom,crowWidth:a.width,javaWidth:friend.width,ratio:Number(e.dataset.lengthRatio),dockTop:dock.top};});
+  // Read a connected scene and its friends atomically; the host may repaint.
+  let geometry;await expect.poll(async()=>{geometry=await page.evaluate(()=>{
+   const e=document.querySelector('.finch-crow-scale-scene'),stage=document.querySelector('.finch-garden-stage');
+   const actor=e?.querySelector('.finch-crow-actor'),friend=stage?.querySelector('[data-garden-friend] .garden-bird-sprite'),dock=document.querySelector('.finch-garden-dock');
+   if(stage?.dataset.sceneState!=='ready'||![e,actor,friend,dock].every(n=>n?.isConnected))return null;
+   const [a,s,f,d]=[actor,e,friend,dock].map(n=>n.getBoundingClientRect());if(![a,s,f,d].every(r=>r.width>0&&r.height>0))return null;
+   return {left:s.left,right:s.right,artLeft:a.left,artRight:a.right,top:a.top,bottom:a.bottom,crowWidth:a.width,javaWidth:f.width,ratio:Number(e.dataset.lengthRatio),dockTop:d.top};
+  });return !!geometry;}).toBe(true);
   expect(geometry.left).toBeGreaterThanOrEqual(0);expect(geometry.right).toBeLessThanOrEqual(size[0]+1);expect(geometry.artLeft).toBeGreaterThanOrEqual(0);expect(geometry.artRight).toBeLessThanOrEqual(size[0]+1);expect(geometry.top).toBeGreaterThanOrEqual(0);expect(geometry.bottom).toBeLessThanOrEqual(size[1]);expect(geometry.bottom).toBeLessThan(geometry.dockTop);
   expect(geometry.crowWidth*CROW_ART[species].artWidthFraction/geometry.javaWidth).toBeCloseTo(geometry.ratio*JAVA_ART_LENGTH.white,1);
   const friends=await stage.locator('[data-garden-friend]').evaluateAll(nodes=>nodes.map(e=>({hit:e.getBoundingClientRect().toJSON(),sprite:e.querySelector('.garden-bird-sprite').getBoundingClientRect().toJSON()})));
@@ -90,8 +97,8 @@ for(const [species,size,mode='outdoors',successor=false,targetless=false] of [['
  }else{
   await expect(page.locator('.finch-garden-stage [data-garden-friend]')).toHaveCount(0);await expect(page.locator('.finch-crow-java>span:last-child')).toContainText(protagonist.name);
  }
- const home=page.locator('.finch-crow-notice [data-finch-go-home]');await expect(home).toBeVisible();await expect.poll(async()=> (await home.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44);
- if(targetless){const hb=await home.boundingBox();expect(hb.x).toBeGreaterThanOrEqual(0);expect(hb.x+hb.width).toBeLessThanOrEqual(size[0]);expect(hb.y).toBeGreaterThanOrEqual(0);expect(hb.y+hb.height).toBeLessThanOrEqual(size[1]);}
+ const home=page.locator('.finch-crow-notice [data-finch-go-home]');await expect(home).toBeVisible();let hb;await expect.poll(async()=>{hb=await home.boundingBox();return hb?.height??0;}).toBeGreaterThanOrEqual(44);
+ if(targetless){expect(hb.x).toBeGreaterThanOrEqual(0);expect(hb.x+hb.width).toBeLessThanOrEqual(size[0]);expect(hb.y).toBeGreaterThanOrEqual(0);expect(hb.y+hb.height).toBeLessThanOrEqual(size[1]);}
  if(size[1]<=340){
   // The host can replace the scene between separate locator measurements.
   // Resolve all current elements and their geometry in one browser task.

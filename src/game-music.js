@@ -126,7 +126,12 @@ export function createGameMusic({base='', gardenAssets=GARDEN_MUSIC_ASSETS, Cont
     if(arrived&&tracks.some(t=>t.gardenId===gardenId)){mode='auto';save();}
     if(replaced){invalidate();status=enabled?'paused':'off';}
     const next=target();emit();
-    if(blocked||held||!enabled||!unlocked||context?.state!=='running')return Promise.resolve(false);
+    if(blocked||held||!enabled||!unlocked||context?.state!=='running'){
+      // Interrupted native contexts may resume without a gesture. Retire a
+      // departed scene now, while retaining any initial activation redirect.
+      if(next!==selected){stop();if(!pending){invalidate();status=enabled?'paused':'off';emit();}}
+      return Promise.resolve(false);
+    }
     if(replaced||next!==selected)return playTrack(next,false);
     return Promise.resolve(false);
   }

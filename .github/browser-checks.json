@@ -1,5 +1,5 @@
 {
-  "base": "00e99456b9b64ec97fd64cd61b89ebcd7b0c53ff",
+  "base": "bb73bf208d19ba537e560b33fc8ef143b7dc5c24",
   "tests": [
     "tests/browser/analytics.spec.js",
     "tests/browser/garden-analytics.spec.js",
@@ -10,5 +10,5 @@
     "tests/browser/game-music.spec.js",
     "tests/browser/garden-music.spec.js"
   ],
-  "reason": "Privacy-preserving committed garden telemetry and shared-clock regressions; integrate encounter music main unchanged and verify music, saving and home outcomes in Chrome/WebKit. All GA collectors intercepted and aborted. Physical Safari remains manual."
+  "reason": "Interrupted encounter source retirement and atomic crow geometry measurement; preserve latest main telemetry and predator fixes. Verify all selected music, encounter and telemetry integration cases in Chrome/WebKit; GA collectors intercepted. Physical Safari remains manual."
 }
