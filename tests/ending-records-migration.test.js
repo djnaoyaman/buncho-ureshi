@@ -9,7 +9,7 @@ import {openGameStore,DB_NAME,STORAGE_KEY} from '../src/game-store.js';
 import {recordCollectionEndingPlayback,claimCollectionEnding} from '../src/collection-endings.js';
 const source=JSON.parse(await readFile(new URL('./fixtures/v19-before-ending-records.json',import.meta.url)));
 const migrated=()=>readCompatibleWorld(source);
-const expected=structuredClone(source);expected.version=21;expected.collectionEndings.version=2;for(const e of expected.collectionEndings.entries)e.playback=e.acknowledged?'legacy':'pending';
+const expected=structuredClone(source);expected.version=22;for(const b of [...expected.birds,...expected.archive])b.foodGrowth={bonusTicks:0,lastBonusAt:null,lastFood:null};expected.collectionEndings.version=2;for(const e of expected.collectionEndings.entries)e.playback=e.acknowledged?'legacy':'pending';
 class Storage{data=new Map();fail=null;getItem(k){return this.data.get(k)??null;}setItem(k,v){if(k===this.fail)throw new DOMException('full','QuotaExceededError');this.data.set(k,v);}removeItem(k){this.data.delete(k);}}
 function locks(){let tail=Promise.resolve();return {request(_key,fn){const next=tail.then(fn);tail=next.catch(()=>{});return next;}};}
 async function database(idb){return new Promise((resolve,reject)=>{const q=idb.open(DB_NAME,1);q.onupgradeneeded=()=>q.result.createObjectStore('world');q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error);});}

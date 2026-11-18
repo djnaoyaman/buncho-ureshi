@@ -12,6 +12,8 @@ import {homeAtmosphere,homeIdlePose} from './home-atmosphere.js';
 import {GAME_VIEW_EVENT} from './game-environment.js';
 import {homeCareResponse,homeResponsePose} from './home-care-response.js';
 import {renderNextEnjoyments} from './game-next-goals.js';
+import {renderFoodChoice} from './food-choice-ui.js';
+import {FOOD_CATALOG} from './food-growth.js';
 import {advanceObservedWorld} from './away-session.js';
 import {notePresence,unreadAway,acknowledgeAway,awayText,awayViewKey} from './away-reports.js';
 import {careFamily,familyCareStatus} from './family-care.js';
@@ -118,6 +120,9 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
   let machineChoice='house';try{const saved=localStorage.getItem('buncho.gacha-machine.v1');if(GACHA_MACHINES.some(m=>m.id===saved))machineChoice=saved;}catch{}
   let drawMotion=null,pendingGachaAudio=null;
   let decorSlot='perch', previewItem=null, drawResult=null, fieldPending=false, fieldViewRequest=0;
+  const foodChoices=new Map();
+  const foodChoiceKey=b=>`${world.worldId}:${b.id}`;
+  const selectedFood=b=>foodChoices.get(foodChoiceKey(b))||b.foodGrowth?.lastFood||'seed';
   let alive=true, store, world, panel='garden', selected='b1', message='', error='', busy=0, lastReply='', replyBird=null, timer, channel, importRequest=0;
   root.innerHTML='<div class="game-loading" role="status">文鳥たちの庭をひらいているよ…</div>';
   // Older false values were the old default, not proof of an explicit mute.
@@ -436,7 +441,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
   function soundControl() {
     return `<label class="game-check game-care-sound game-switch-card"><span class="game-switch-copy"><strong>ふれあいの音</strong><span id="game-care-sound-state">${careSoundEnabled()?'音を鳴らす':'音を鳴らさない'}</span></span><input id="game-care-sound-switch" type="checkbox" role="switch" aria-label="ふれあいの音" aria-describedby="game-care-sound-state" data-game-care-sound ${careSoundEnabled()?'checked':''}><span class="game-switch-track" aria-hidden="true"></span></label>`;
   }
-  function careMessage(feedback){if(feedback.kind==='clean')return feedback.changed?'ぴかぴかになったよ。':'もうきれいだよ。';if(feedback.reason==='cooldown')return `${feedback.kind==='feed'?'さっき食べたところ。':'ひとやすみ。'}${world.paused?'再開すると、また遊べます。':'もう少ししたら、またね。'}`;if(feedback.reason==='full')return feedback.kind==='feed'?'いまは、おなかいっぱい。こえをかけてみよう。':'ぴっ♪ なでてもらって、うれしそう。';return feedback.kind==='feed'?'もぐもぐ♪ ごちそうさま。':'ぴっ♪ うれしそう。';}
+  function careMessage(feedback){if(feedback.kind==='clean')return feedback.changed?'ぴかぴかになったよ。':'もうきれいだよ。';if(feedback.reason==='cooldown')return `${feedback.kind==='feed'?'さっき食べたところ。':'ひとやすみ。'}${world.paused?'再開すると、また遊べます。':'もう少ししたら、またね。'}`;if(feedback.reason==='full')return feedback.kind==='feed'?'いまは、おなかいっぱい。こえをかけてみよう。':'ぴっ♪ なでてもらって、うれしそう。';return feedback.kind==='feed'?(feedback.growthAwardTicks>0?'もぐもぐ♪ ごちそうさま。成長が少し進んだよ。':'もぐもぐ♪ ごちそうさま。'):'ぴっ♪ うれしそう。';}
   function careReceipt(){return !error&&!busy&&careFeedback?.saved&&careFeedback.worldId===world.worldId&&careFeedback.revision===world.revision&&careIsSettled(world)?'<p class="game-small" data-care-receipt role="status">いまのおせわは、ひとくぎり。かえたことは、ほぞんしたよ。</p>':'';}
   function canTalk(b){return b.home!=='departed'&&['juvenile','adult'].includes(b.stage);}
   function carePortrait(b) {
@@ -447,7 +452,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
   function careControls(b) {
     const eligible=b.home!=='departed'&&['juvenile','adult'].includes(b.stage);
     const explanation=!isAlive(world,b)?'お墓でお線香とお祈りができます。名前と家族はずっと残ります。':b.home==='departed'?'別の庭に巣立った仲間です。思い出を見守ろう。':['egg','chick'].includes(b.stage)?'巣で育つ時間。お世話は親にまかせよう。':'';
-    return `<section class="game-care" aria-label="${escape(b.name)}のお世話"><div class="game-fullness"><div class="game-care-meter"><div class="game-care-meter-heading"><span>おなか</span><output data-game-fullness>${Math.round(getFullness(world,b.id))} / 100</output></div><meter aria-label="おなか" min="0" max="100" value="${Math.round(getFullness(world,b.id))}">${Math.round(getFullness(world,b.id))} / 100</meter></div><div class="game-care-meter game-care-meter-energy"><div class="game-care-meter-heading"><span>元気</span><output data-game-energy>${Math.round(b.needs.energy)} / 100</output></div><meter aria-label="元気" min="0" max="100" value="${Math.round(b.needs.energy)}">${Math.round(b.needs.energy)} / 100</meter></div></div><p class="game-care-guidance game-small" data-care-guidance data-guidance-bird="${b.id}">${escape(careGuidance(world,b.id))}</p><div class="game-care-actions"><button id="game-care-feed" type="button" data-game-care="feed" data-care-bird-id="${b.id}" ${eligible&&b.needs.food<100?'':'disabled'}>ごはん</button><button id="game-talk-call" type="button" data-game-talk="名前を呼ぶ" ${canTalk(b)?'':'disabled'}>名前を呼ぶ</button></div>${explanation?`<p id="game-care-explanation" class="game-small">${explanation}</p>`:''}${careFeedback&&careFeedback.birdId===b.id?`<p class="game-care-feedback" role="status">${escape(careMessage(careFeedback))}</p>`:''}${careReceipt()}</section>`;
+    return `<section class="game-care" aria-label="${escape(b.name)}のお世話"><div class="game-fullness"><div class="game-care-meter"><div class="game-care-meter-heading"><span>おなか</span><output data-game-fullness>${Math.round(getFullness(world,b.id))} / 100</output></div><meter aria-label="おなか" min="0" max="100" value="${Math.round(getFullness(world,b.id))}">${Math.round(getFullness(world,b.id))} / 100</meter></div><div class="game-care-meter game-care-meter-energy"><div class="game-care-meter-heading"><span>元気</span><output data-game-energy>${Math.round(b.needs.energy)} / 100</output></div><meter aria-label="元気" min="0" max="100" value="${Math.round(b.needs.energy)}">${Math.round(b.needs.energy)} / 100</meter></div></div><p class="game-care-guidance game-small" data-care-guidance data-guidance-bird="${b.id}">${escape(careGuidance(world,b.id))}</p><div class="game-care-actions"><button id="game-care-feed" type="button" data-game-care="feed" data-care-bird-id="${b.id}" ${eligible&&b.needs.food<100?'':'disabled'}>ごはん</button><button id="game-talk-call" type="button" data-game-talk="名前を呼ぶ" ${canTalk(b)?'':'disabled'}>名前を呼ぶ</button></div>${explanation?`<p id="game-care-explanation" class="game-small">${explanation}</p>`:''}${careFeedback&&careFeedback.birdId===b.id?`<p class="game-care-feedback" role="status">${escape(careMessage(careFeedback))}</p>`:''}${careReceipt()}${renderFoodChoice(b,world.lifecycle.seenAt,{selectedFood:selectedFood(b),alive:isAlive(world,b)})}</section>`;
   }
   function gardenCare() {
     const cleanliness=getCleanliness(world);
@@ -889,6 +894,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
   }
   async function careAction(button) {
     const kind=button.dataset.gameCare, birdId=button.dataset.careBirdId || null;
+    const foodId=kind==='feed'?selectedFood(findBird(world,birdId)||{}):'seed';
     const expectedWorldId=world.worldId, expectedSelection=selected, expectedPanel=panel, generation=careGeneration, gestureAt=Date.now();
     if(!['feed','pet','clean'].includes(kind)||button.disabled)return;
     const intent=reserveCareIntent();if(!intent)return;
@@ -900,7 +906,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
       let feedback;
       const committed=await mutate(w=>{
         if(w.worldId!==expectedWorldId)throw new Error('庭が変わりました。もう一度えらんでね。');
-        feedback=kind==='feed'?feedBird(w,birdId,gestureAt,token):kind==='pet'?petBird(w,birdId,gestureAt,token):cleanGarden(w,gestureAt);
+        feedback=kind==='feed'?feedBird(w,birdId,gestureAt,token,foodId):kind==='pet'?petBird(w,birdId,gestureAt,token):cleanGarden(w,gestureAt);
         // Feedback is deliberately NOT returned: transactions require the world.
       },'',()=>alive&&root.isConnected,{bump:false,advancePaused:false,advanceCurrent:false});
       releaseCareIntent(intent);
@@ -1076,6 +1082,19 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     if(button.dataset.decorPreview){fieldViewRequest++;previewItem=button.dataset.decorPreview;setMessage('');render();return;}
     if(button.hasAttribute('data-decor-cancel')){fieldViewRequest++;previewItem=null;drawResult=null;render();return;}
     if(button.dataset.gameCare){if(button.hasAttribute('data-care-rub')&&ev.detail>0){ev.preventDefault();return;}await careAction(button);return;}
+    if(button.dataset.goalStory){
+      const story=button.dataset.goalStory;
+      if(!['leaf-gift','expedition','showcase','shop'].includes(story))return;
+      const request=++fieldViewRequest,worldId=world.worldId,gardenId=button.dataset.goalGarden||world.encounters.garden.id;
+      const menu=root.querySelector('.game-secondary-menu');if(menu)menu.open=false;
+      sheetOpen=false;cancelCareEffects();panel='outdoors';encounterMode='outdoors';setMessage('');render();
+      const controller=encounterController;
+      const opened=await controller?.garden(gardenId);
+      if(!opened||!alive||request!==fieldViewRequest||world.worldId!==worldId||panel!=='outdoors'||controller!==encounterController)return;
+      const target=encounterRoot?.querySelector(`[data-garden-details="${story==='shop'?'showcase':story}"]`);
+      if(target){target.open=true;if(story==='shop'){const shop=target.querySelector('[data-garden-details="showcase-shop"]');if(shop)shop.open=true;}target.querySelector('summary')?.focus({preventScroll:true});target.scrollIntoView?.({block:'nearest'});}
+      return;
+    }
     if(button.dataset.gamePanel||button.dataset.goalPanel){if(button.dataset.gamePanel==='owner')return;const menu=root.querySelector('.game-secondary-menu');if(menu)menu.open=false;sheetOpen=false;fieldViewRequest++;cancelCareEffects();panel=button.dataset.gamePanel||button.dataset.goalPanel;if(panel==='decorate'&&DECOR_SLOTS.some(s=>s.id===button.dataset.goalSlot)){decorSlot=button.dataset.goalSlot;previewItem=null;}setMessage('');render();focusPanel();if(panel==='notebook'&&encounterSystem.catalog.some(e=>e.id===button.dataset.goalEncounter))encounterController?.entry(button.dataset.goalEncounter);if(panel==='family')centerFamily();return;}
     if(button.hasAttribute('data-cage-guest')){const id=button.dataset.cageGuest;panel='notebook';render();encounterController?.entry(id);return;}
     if(button.dataset.gameSelect&&button.hasAttribute('data-game-scene-select')){openBirdSheet(button.dataset.gameSelect);return;}
@@ -1152,7 +1171,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
       if(committed&&drafts.get(key)?.['game-words']===value){delete drafts.get(key)['game-words'];if(key===draftKey()){const input=root.querySelector('#game-words');if(input)input.value='';}}
     }
   }
-  async function change(ev){if(ev.target.matches('[data-game-care-sound]')){await changeCareSound(ev.target.checked);return;}if(ev.target.matches('[data-game-choose], [data-game-scene-choose]')){cancelCareEffects();selected=ev.target.value;render();}if(ev.target.matches('[data-game-motion]'))await mutate(w=>{w.settings.motion=ev.target.checked;});if(ev.target.id==='game-import'&&ev.target.files?.[0]){cancelCareEffects();const file=ev.target.files[0],request=++importRequest;const currentRequest=()=>alive&&root.isConnected&&request===importRequest;try{if(file.size>MAX_SAVE_BYTES)throw new Error('64MB以下の保存ファイルを選んでね。');const text=await file.text();if(!currentRequest())return;const imported=parseSave(text);if(!confirm(`「${getProtagonistBird(imported)?.name||(imported.birds[0]?.name||'この庭')}」の庭（${allBirds(imported).length}羽）を読み込み、今の庭と入れ替えますか？`)){ev.target.value='';return;}const now=Date.now();if(!Number.isSafeInteger(now)||now<0||now>8640000000000000)throw new Error('端末の日時を確認してから、もう一度読み込んでください。');const expectedWorld=world.worldId;busy++;try{const replacement=await store.replaceWorld(expectedWorld,imported,now,{guard:currentRequest});if(currentRequest()){latest(replacement);setMessage('保存ファイルから庭を復元しました。');channel?.postMessage({revision:world.revision});render();}}finally{busy--;}}catch(e){if(!currentRequest())return;error=`読み込めませんでした。今の保存はそのままです。 ${e.message}`;render();}}}
+  async function change(ev){if(ev.target.matches('[data-game-food-choice]')){const b=chosen();if(b?.id===ev.target.dataset.foodBird&&FOOD_CATALOG.some(f=>f.id===ev.target.value)){foodChoices.set(foodChoiceKey(b),ev.target.value);render();root.querySelector('[data-game-food-choice]')?.focus({preventScroll:true});}return;}if(ev.target.matches('[data-game-care-sound]')){await changeCareSound(ev.target.checked);return;}if(ev.target.matches('[data-game-choose], [data-game-scene-choose]')){cancelCareEffects();selected=ev.target.value;render();}if(ev.target.matches('[data-game-motion]'))await mutate(w=>{w.settings.motion=ev.target.checked;});if(ev.target.id==='game-import'&&ev.target.files?.[0]){cancelCareEffects();const file=ev.target.files[0],request=++importRequest;const currentRequest=()=>alive&&root.isConnected&&request===importRequest;try{if(file.size>MAX_SAVE_BYTES)throw new Error('64MB以下の保存ファイルを選んでね。');const text=await file.text();if(!currentRequest())return;const imported=parseSave(text);if(!confirm(`「${getProtagonistBird(imported)?.name||(imported.birds[0]?.name||'この庭')}」の庭（${allBirds(imported).length}羽）を読み込み、今の庭と入れ替えますか？`)){ev.target.value='';return;}const now=Date.now();if(!Number.isSafeInteger(now)||now<0||now>8640000000000000)throw new Error('端末の日時を確認してから、もう一度読み込んでください。');const expectedWorld=world.worldId;busy++;try{const replacement=await store.replaceWorld(expectedWorld,imported,now,{guard:currentRequest});if(currentRequest()){latest(replacement);setMessage('保存ファイルから庭を復元しました。');channel?.postMessage({revision:world.revision});render();}}finally{busy--;}}catch(e){if(!currentRequest())return;error=`読み込めませんでした。今の保存はそのままです。 ${e.message}`;render();}}}
   const worldAction=event=>{if(!alive||!root.isConnected||!['settings','help','music'].includes(event.detail))return;sheetOpen=false;fieldViewRequest++;cancelCareEffects();panel=event.detail==='music'?'settings':event.detail;setMessage('');render();focusPanel();};
   document.addEventListener('buncho-world-action',worldAction);
   root.ownerDocument.defaultView.addEventListener('storage',syncCarePreference);

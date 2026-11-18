@@ -641,7 +641,7 @@ for(const slot of ['perch','swing'])test(`draw preview guide preserves the saved
 test('next enjoyment disclosure and all four routes preserve the complete paused saved world',async t=>{
  const f=await fixture(t);await f.mount();const before=await rawWorld(f.indexedDB);
  const open=()=>{f.root.querySelector('.game-secondary-menu').open=true;f.root.querySelector('[data-game-details="next-goals"]').open=true;};
- open();assert.equal(f.root.querySelectorAll('[data-next-goal]').length,4);
+ open();assert.equal(f.root.querySelectorAll('[data-next-goal]').length,6);
  f.root.querySelector('[data-next-goal="meeting"] button').click();assert.ok(f.root.querySelector('.finch-mystery-postcard'));f.root.querySelector('[data-game-close-panel]').click();
  open();f.root.querySelector('[data-next-goal="friendship"] button').click();assert.ok(f.root.querySelector('.finch-notebook'));f.root.querySelector('[data-game-close-panel]').click();
  open();const slot=f.root.querySelector('[data-next-goal="collection"] button').dataset.goalSlot;f.root.querySelector('[data-next-goal="collection"] button').click();assert.equal(f.root.querySelector('[data-decor-slot][aria-pressed="true"]').dataset.decorSlot,slot);f.root.querySelector('[data-game-close-panel]').click();

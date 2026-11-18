@@ -75,3 +75,14 @@ test('illness shows both independent deadlines in earliest-first order, includin
 test('healthy feeding deadline stays explicit while caretaker coverage stays clear',()=>{
  const w=world();assert.match(documentFor(renderLifeCarePanel(w)).querySelector('.life-bird-card').textContent,/ごはんの期限まで：実時間 3日 0時間/);w.contract={active:true,remainingMs:7*86400000};const card=documentFor(renderLifeCarePanel(w)).querySelector('.life-bird-card');assert.match(card.textContent,/飼育員がお世話をしています/);assert.doesNotMatch(card.textContent,/ごはんの期限まで/);
 });
+
+test('leave/return guidance distinguishes real clocks, grace, lifespan and successful feeding without changing state',()=>{
+ const w=world(),before=JSON.stringify(w),doc=documentFor(renderLifeCarePanel(w));
+ const rules=doc.querySelector('[data-game-details="health-rules"]');
+ assert.equal(rules.open,false);
+ const guide=rules.querySelector('[data-life-time-guide]').textContent;
+ for(const phrase of ['成長と年齢が進みます','年齢は止まります','実時間24時間の猶予','猶予は自動の給餌や治療ではありません','寿命は延びません','寿命・事故','満腹で食べなかったとき','親の卵・ひなにも届きます','1羽1回 12 Gold'])assert.ok(guide.includes(phrase),phrase);
+ assert.equal(JSON.stringify(w),before);
+ assert.equal(doc.querySelectorAll('[data-life-time-guide]').length,1);
+ assert.ok(doc.querySelector('.life-care-warning').textContent.includes('すべてゲームのルール'));
+});
