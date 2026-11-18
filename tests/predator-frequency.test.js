@@ -10,18 +10,18 @@ const fresh=()=>{const w=createWorld(NOW,42);w.encounters.garden.open=true;w.enc
 const reopen=w=>{w.encounters.garden.open=true;w.encounters.gardenFriends.attendees=['b1'];};
 const arrive=(w,id,now)=>arriveGardenRaptor(w,id,now,token(w));
 function run(clock,start,end,key='A',extra={}){for(let now=start;now<=end;now+=1000)clock.sample({key,now,eligible:true,gardenId:'komorebi',...extra});}
-test('misses repeat every120 seconds while staying in the same visible garden',()=>{
+test('misses repeat every60 seconds while staying in the same visible garden',()=>{
  let draws=0;const clock=createGardenPredatorClock({random:()=>{draws++;return 1;}});
- run(clock,0,122000);assert.equal(draws,1);run(clock,123000,243000);assert.equal(draws,3);
+ run(clock,0,62000);assert.equal(draws,1);run(clock,63000,123000);assert.equal(draws,3);
 });
 test('an entry inside the shared cooldown does not consume the next opportunity',()=>{
  let draws=0;const clock=createGardenPredatorClock({random:()=>{draws++;return 1;}});
- run(clock,0,59000);run(clock,60000,122000,'B');assert.equal(draws,1);run(clock,123000,123000,'B');assert.equal(draws,2);
+ run(clock,0,29000);run(clock,30000,62000,'B');assert.equal(draws,1);run(clock,63000,63000,'B');assert.equal(draws,2);
 });
 test('fast garden switching does not buy extra draws, blocked time has no backlog burst',()=>{
  let draws=0;const clock=createGardenPredatorClock({random:()=>{draws++;return 1;}});
- for(let start=0;start<120000;start+=4000)run(clock,start,start+3000,`${start}`);assert.equal(draws,1);
- run(clock,120000,600000,'final',{available:false});assert.equal(draws,1);run(clock,601000,601000,'final');assert.equal(draws,2);run(clock,602000,720000,'final');assert.equal(draws,2);
+ for(let start=0;start<60000;start+=4000)run(clock,start,start+3000,`${start}`);assert.equal(draws,1);
+ run(clock,60000,600000,'final',{available:false});assert.equal(draws,1);run(clock,601000,601000,'final');assert.equal(draws,2);run(clock,602000,660000,'final');assert.equal(draws,2);
 });
 test('shared host can disable old crow lottery without disabling a selected six-second warning',()=>{
  let draws=0;const clock=createGardenCrowClock({random:()=>{draws++;return 0;}});
