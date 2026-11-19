@@ -11,8 +11,16 @@ async function ready(page){
  world.decor.inventory=world.decor.inventory.filter(i=>i.id!=='paper-aqua-special');world.decor.duplicateStreaks.paper=2;
  validateWorld(world);await page.goto('');
  await page.evaluate(({dbName,world})=>new Promise((resolve,reject)=>{const open=indexedDB.open(dbName,1);open.onupgradeneeded=()=>open.result.createObjectStore('world');open.onerror=()=>reject(open.error);open.onsuccess=()=>{const db=open.result,tx=db.transaction('world','readwrite');tx.objectStore('world').put(world,'current');tx.oncomplete=()=>{db.close();resolve();};tx.onerror=()=>reject(tx.error);};}),{dbName,world});
- await page.goto('game/');await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');await page.locator('.game-scene-controls-toggle').tap();await page.locator('.game-bottom-dock [data-game-panel="decorate"]').tap();
+ await page.goto('game/');
+ const orientation=page.locator('.game-environment-notice[open][data-reason="orientation"]');
+ if(await orientation.count()){
+  await expect(orientation).toContainText('端末を縦に戻してください');
+  const size=page.viewportSize();await page.setViewportSize({width:size.height,height:size.width});
+  await expect(orientation).toHaveCount(0);
+ }
+ await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');await page.locator('.game-scene-controls-toggle').tap();await page.locator('.game-bottom-dock [data-game-panel="decorate"]').tap();
 }
+async function savedWorld(page){return page.evaluate(()=>new Promise((resolve,reject)=>{const r=indexedDB.open('buncho-ureshi-garden-v1',1);r.onerror=()=>reject(r.error);r.onsuccess=()=>{const db=r.result,t=db.transaction('world','readonly'),q=t.objectStore('world').get('current');t.oncomplete=()=>{db.close();resolve(q.result)};t.onerror=()=>reject(t.error)};}));}
 async function reachable(locator){
  await locator.scrollIntoViewIfNeeded();await expect(locator).toBeVisible();
  const m=await locator.evaluate(el=>{const r=el.getBoundingClientRect(),hit=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);return{width:r.width,height:r.height,inside:r.left>=0&&r.right<=innerWidth+1&&r.top>=0&&r.bottom<=innerHeight+1,hit:hit===el||el.contains(hit)};});
@@ -55,7 +63,18 @@ for(const [width,height] of [[320,240],[320,568],[390,664],[390,844],[844,390],[
  await shelfEnd(page,info,`decor-${width}x${height}-after-draw`);
  for(const filter of ['owned','all']){const button=page.locator(`[data-decor-filter="${filter}"]`);await reachable(button);await button.tap();await expect(button).toHaveAttribute('aria-pressed','true');}
  const odds=page.locator('[data-game-details="draw-odds"]');await reachable(odds.locator('summary'));await odds.locator('summary').tap();await expect(odds).toHaveAttribute('open','');await odds.locator('summary').tap();await expect(odds).not.toHaveAttribute('open','');
- if(height>=320)await page.setViewportSize({width:height,height:width});await shelfEnd(page,info,`decor-${height}x${width}-rotated`);
+ if(height>=320){
+  const previousSize=page.viewportSize(),beforeRotation=await savedWorld(page);
+  await page.setViewportSize({width:previousSize.height,height:previousSize.width});
+  if(await page.locator('body').getAttribute('data-game-device')==='touch'&&previousSize.height>previousSize.width){
+   const notice=page.locator('.game-environment-notice[open][data-reason="orientation"]');
+   await expect(notice).toContainText('端末を縦に戻してください');
+   expect(await savedWorld(page)).toEqual(beforeRotation);
+   await page.setViewportSize(previousSize);await expect(notice).toHaveCount(0);
+   expect(await savedWorld(page)).toEqual(beforeRotation);
+  }
+ }
+ await shelfEnd(page,info,`decor-${height}x${width}-rotation-or-resume`);
  await reachable(page.locator('[data-game-close-panel]'));await page.locator('[data-game-close-panel]').tap();await expect(page.locator('.game-panel-overlay')).not.toBeVisible();
  await page.locator('.game-bottom-dock [data-game-panel="decorate"]').tap();await shelfEnd(page,info,`decor-${height}x${width}-reopened`);
  expect(await page.evaluate(()=>({x:scrollX,y:scrollY,w:document.documentElement.scrollWidth<=innerWidth+1,h:document.documentElement.scrollHeight<=innerHeight+1}))).toEqual({x:0,y:0,w:true,h:true});
