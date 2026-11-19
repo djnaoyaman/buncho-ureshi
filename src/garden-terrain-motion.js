@@ -1,6 +1,6 @@
 import { terrainFor, terrainLayout, terrainPlan, terrainFrame, TERRAIN_PERIOD, inside } from './garden-terrain-plan.js';
 
-const reset = 'display:block;position:absolute;margin:0;padding:0;border:0;border-radius:0;background:none;box-shadow:none;pointer-events:none;max-width:none;';
+const reset = 'display:block;position:absolute;margin:0;padding:0;border:0;border-radius:0;background:none;box-shadow:none;pointer-events:none;max-width:none;transform:none;';
 const selector = ':scope > .finch-garden-friend,:scope > .finch-garden-household,:scope > .finch-garden-visitor';
 /** Presentation state only. Owned styles are restored on exit; native button,
  * image, label, handlers and focus are never replaced. */

@@ -12,6 +12,7 @@ async function setup(page,id,width=390,motion=true,sparse=false){
   await page.goto('');await page.clock.install({time:NOW});await page.clock.pauseAt(NOW+1000);
   const world=worldFor('attending',id);world.settings.motion=motion;
   if(sparse)world.encounters.gardenFriends.visits=[{gardenId:id,visit:world.encounters.garden.visits[id],friendIds:[],returningIds:[]}];
+  if(sparse==='chick')world.birds[0].stage='chick';
   if(sparse==='empty')world.encounters.gardenFriends.attendees=[];
   if(sparse==='dense'){
     world.encounters.gardenFriends.visits=[];
@@ -62,6 +63,8 @@ for(const id of ids)test(`actual white flight or terrain-specific fallback ${id}
   }
   expect(seen).toBe(true);
   await expect(page.locator('[data-flight-source]')).toHaveCount(4);
+  // Label CSS must never translate the body/feet away from the wing joints.
+  for(const part of ['body','feet'])expect(await page.locator('[data-flight-part='+part+']').evaluate(e=>getComputedStyle(e).transform)).toBe('none');
   expect(await bird.locator('.garden-bird-pose-window').evaluate(e=>getComputedStyle(e).visibility)).toBe('hidden');
   const before=await bird.boundingBox();await page.clock.runFor(80);const after=await bird.boundingBox();
   expect(await bird.locator('.garden-bird-pose-window').evaluate(e=>getComputedStyle(e).visibility)).toBe('hidden');
@@ -112,4 +115,19 @@ for(const reduced of [false,true])test(`surveyed motion holds for ${reduced?'OS 
   await setup(page,'bali-terrace',390,reduced);const before=await measure(page);
   await page.clock.runFor(30000);expect(await measure(page)).toEqual(before);
   await expect(page.locator('.garden-terrain-flight:visible')).toHaveCount(0);
+});
+
+for(const condition of ['chick','missing-textures'])test(`native art survives ${condition}`,async({page})=>{
+  let requested=0;
+  if(condition==='missing-textures')await page.route('**/game-art/garden-flight/**',route=>{requested++;return route.abort();});
+  await setup(page,'yuyake',390,true,condition==='chick'?'chick':true);
+  await page.mouse.move(0,0);await page.locator('#finch-garden-title').focus();
+  for(let n=0;n<4;n++)await page.clock.runFor(26000);
+  if(condition==='missing-textures')await expect.poll(()=>requested).toBeGreaterThan(0);
+  else await expect(page.locator('[data-garden-flight]')).toHaveCount(0);
+  await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-scene-state','ready');
+  const native=page.locator('.finch-garden-household .garden-bird-pose-window');
+  expect(await native.evaluate(e=>getComputedStyle(e).visibility)).toBe('visible');
+  for(const b of await measure(page)){expect(b.hit).toBe(true);expect(b.filter).toBe('none');}
+  expect(await page.evaluate(()=>[...document.querySelectorAll('.garden-terrain-flight')].some(e=>getComputedStyle(e).visibility==='visible'))).toBe(false);
 });
