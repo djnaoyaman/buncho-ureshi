@@ -97,7 +97,7 @@ test('saved fixed choice is superseded by first garden arrival but leaving resto
 // A floor-rounded 48 kHz buffer is shorter than five garden loop endpoints.
 for(const sampleRate of [44100,48000])for(const[id,asset]of Object.entries(GARDEN_ASSETS)){
  test(`garden ${id} tolerates one output sample of resampling at ${sampleRate} Hz`,async()=>{
-  const duration=Math.floor(asset.music.loopSamples*sampleRate/asset.music.sampleRate+1e-8)/sampleRate;
+  const duration=Math.floor(asset.music.loopEndSeconds*sampleRate+1e-8)/sampleRate;
   const f=fixture();class Resampled extends f.Context{decodeAudioData(){return Promise.resolve({duration,sampleRate});}}
   const p=createGameMusic({Context:Resampled,fetcher:async()=>({ok:true,arrayBuffer:async()=>new ArrayBuffer(1)})});
   await p.setGarden(id);assert.equal(await p.playCurrentFromGesture(),true);assert.equal(p.state().status,'playing');

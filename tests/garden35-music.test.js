@@ -14,8 +14,9 @@ test('all 35 gardens have distinct complete matching music assets and exact loop
  assert.equal(new Set(tracks.map(t=>t.id)).size,35);
  for(const row of GARDEN35_PLAN){
   const m=GARDEN35_MUSIC[row.id],t=tracks.find(t=>t.gardenId===row.id);
-  assert.ok(m,row.id);assert.equal(t.title,row.name);assert.equal(m.loopStartSeconds,0);
-  assert.ok(m.loopEndSeconds>0);assert.equal(m.loopEndSeconds,m.loopSamples/m.sampleRate);
+  assert.ok(m,row.id);assert.equal(t.title,row.name);assert.ok(m.loopStartSeconds>=0);
+  assert.equal(t.startOffsetSeconds??0,m.loopStartSeconds);
+  assert.ok(m.loopEndSeconds>0);assert.ok(Math.abs((m.loopEndSeconds-m.loopStartSeconds)-m.loopSamples/m.sampleRate)<1e-12);
   const bytes=readFileSync(new URL('../public/'+m.asset,import.meta.url));
   assert.equal(createHash('sha256').update(bytes).digest('hex'),m.sha256);
   assert.deepEqual(GARDENS.find(g=>g.id===row.id).music,m);

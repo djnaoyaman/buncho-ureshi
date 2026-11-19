@@ -1,10 +1,10 @@
 {
-  "base": "595969a1e555bb097c050b4ef010af3e33e0c55c",
+  "base": "5fb21d5f1c347f1b7f18a067750e9c5702301c53",
   "tests": [
-    "tests/browser/gacha-intro-layout.spec.js",
-    "tests/browser/gacha-machines.spec.js",
-    "tests/browser/gacha-home-layout.spec.js",
-    "tests/browser/decor-scroll.spec.js"
+    "tests/browser/garden-five-runway.spec.js",
+    "tests/browser/game-music.spec.js",
+    "tests/browser/encounter-music.spec.js",
+    "tests/browser/encounter-pet-response.spec.js"
   ],
-  "reason": "ガチャ案内の幅と短画面配置を修正。Chrome/WebKitで320/375/402px、短画面、案内の可読性、残高、44px操作、スクロール、開閉と保存不変を確認。既存の台別料金・返却・抽選1回・再読込・結果/装備・動き軽減・棚末尾の全ケースを維持。対応端末の横向きは注意表示と保存不変の縦向き復帰を検証する。"
+  "reason": "承認済みRunway原音5曲の庭BGMのみ更新。Chrome/WebKitの44.1/48kHz実デコード、3周PCMレンダー、2周実時間出力、開始ガード・遭遇復帰・ミュート・停止再開・320/375/402pxの実ゲーム5庭ルーティングを確認。既存音楽設定・遭遇優先・4種類心拍効果音との共存を回帰検査。保存/得点/乱数と他30曲は変更しない。"
 }

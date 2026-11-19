@@ -1,0 +1,107 @@
+[
+  {
+    "gardenId": "java-rice",
+    "original": {
+      "name": "Umejima-Park-Runway.mp3",
+      "sha256": "375ade790633783281a11bc97f13410c621ecbe3c53b95379dc6de1d865139fe",
+      "bytes": 746250,
+      "sampleRate": "44100",
+      "channels": 2,
+      "duration": "30.772167",
+      "libraryId": "libfile_fde3_f-d60fc7ebcea481919eb7bf4c0ce70049_1e5190e96ae0819195a4cad3042d859b",
+      "version": "0"
+    },
+    "asset": "audio/gardens35/garden-01-runway-v1.wav",
+    "startSample": 249165,
+    "loopSamples": 962262,
+    "crossfadeSamples": 3528,
+    "guardSamples": 882,
+    "gainDb": -5.6,
+    "estimatedBpm": 88,
+    "estimatedBeats": 32
+  },
+  {
+    "gardenId": "bird-gouldian-finch",
+    "original": {
+      "name": "Rainbow-Meadow-Runway.mp3",
+      "sha256": "46236762fbe39ec775c13596f658a715f09b709f678a8688c35d56812d88f174",
+      "bytes": 746250,
+      "sampleRate": "44100",
+      "channels": 2,
+      "duration": "30.772167",
+      "libraryId": "libfile_fde3_f-f75d708102208191986aa640cd1dc4ae_1e5190e96ae0819195a4cad3042d859b",
+      "version": "0"
+    },
+    "asset": "audio/gardens35/garden-02-runway-v1.wav",
+    "startSample": 202992,
+    "loopSamples": 682888,
+    "crossfadeSamples": 2646,
+    "guardSamples": 882,
+    "gainDb": -5.2,
+    "estimatedBpm": 62,
+    "estimatedBeats": 16
+  },
+  {
+    "gardenId": "komorebi",
+    "original": {
+      "name": "Komorebi-Duet-Runway.mp3",
+      "sha256": "acf1baf3f278f0f70bec6754e8837829d6a3115fe650e9dbd3664568a39a3598",
+      "bytes": 746250,
+      "sampleRate": "44100",
+      "channels": 2,
+      "duration": "30.772167",
+      "libraryId": "libfile_fde3_f-c838a21922d4819182c5093fcdfbd24f_1e5190e96ae0819195a4cad3042d859b",
+      "version": "0"
+    },
+    "asset": "audio/gardens35/garden-03-runway-v1.wav",
+    "startSample": 21256,
+    "loopSamples": 1245649,
+    "crossfadeSamples": 2646,
+    "guardSamples": 882,
+    "gainDb": -7.1,
+    "estimatedBpm": 68,
+    "estimatedBeats": 32
+  },
+  {
+    "gardenId": "bird-diamond-firetail",
+    "original": {
+      "name": "Shirotsubu-Steppe-Runway.mp3",
+      "sha256": "446c6d1e174ed7140ed108ee40f2a6bbfce6f113bad58f055a0804b3d092598a",
+      "bytes": 746250,
+      "sampleRate": "44100",
+      "channels": 2,
+      "duration": "30.772167",
+      "libraryId": "libfile_fde3_f-8b1954dc0e0481918d7182396b3e2872_1e5190e96ae0819195a4cad3042d859b",
+      "version": "0"
+    },
+    "asset": "audio/gardens35/garden-04-runway-v1.wav",
+    "startSample": 155452,
+    "loopSamples": 705776,
+    "crossfadeSamples": 3528,
+    "guardSamples": 882,
+    "gainDb": -6.9,
+    "estimatedBpm": 120,
+    "estimatedBeats": 32
+  },
+  {
+    "gardenId": "mizukagami",
+    "original": {
+      "name": "Starlit-Lake-Runway.mp3",
+      "sha256": "d3005a7dd5e53bac1e8d9ac6c38af7fc9ae2dbabef8b801aa275e32ff1545730",
+      "bytes": 745624,
+      "sampleRate": "44100",
+      "channels": 2,
+      "duration": "30.746083",
+      "libraryId": "libfile_fde3_f-63b335fe50708191b89af028eeb186dd_1e5190e96ae0819195a4cad3042d859b",
+      "version": "0"
+    },
+    "asset": "audio/gardens35/garden-05-runway-v1.wav",
+    "startSample": 248724,
+    "loopSamples": 641964,
+    "crossfadeSamples": 4410,
+    "guardSamples": 882,
+    "gainDb": -8.2,
+    "estimatedBpm": 66,
+    "estimatedBeats": 16
+  }
+]
