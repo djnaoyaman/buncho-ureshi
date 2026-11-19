@@ -1,0 +1,25 @@
+[
+  {
+    "gardenId": "bird-white-headed-munia",
+    "original": {
+      "name": "穂道 - 穂をなでる風.mp3",
+      "libraryId": "libfile_fde3_f-a1c91979b6d08191ac5d3534df369cfa_1e5190e96ae0819195a4cad3042d859b",
+      "fileId": "file_00000000e2188212b4619852d19fe739",
+      "version": "0",
+      "bytes": 660360,
+      "sha256": "5874f97f02c938fb3205bbd69af2fc9fd47d143742c4145dfe7c8182fb8ec683",
+      "duration": 27.193417,
+      "sampleRate": 44100,
+      "channels": 2,
+      "generationId": "e88876fd-c6a7-4416-b00c-ddc9ecf5462f"
+    },
+    "asset": "audio/gardens35/garden-06-runway-v1.wav",
+    "startSample": 307818,
+    "loopSamples": 557049,
+    "crossfadeSamples": 3528,
+    "guardSamples": 882,
+    "gainDb": -7.0,
+    "estimatedBpm": 76,
+    "estimatedBeats": 16
+  }
+]

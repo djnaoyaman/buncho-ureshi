@@ -1,11 +1,12 @@
 """Reproduce the five approved recordings; never synthesize or fetch replacements.
-Usage: python scripts/music35/prepare_runway_five.py ORIGINAL_DIRECTORY
+Usage: python scripts/music35/prepare_runway_five.py ORIGINAL_DIRECTORY [MANIFEST]
+The optional repository-relative manifest supports another approved recording.
 Requires ffmpeg and numpy. Exact originals are verified before any output is written.
 """
 import hashlib, json, pathlib, subprocess, sys, wave
 import numpy as np
 ROOT=pathlib.Path(__file__).resolve().parents[2]
-ROWS=json.loads((ROOT/'docs/qa/garden-five-runway.json').read_text())
+ROWS=json.loads((ROOT/(sys.argv[2] if len(sys.argv)>2 else 'docs/qa/garden-five-runway.json')).read_text())
 original_dir=pathlib.Path(sys.argv[1]); rate=44100
 for row in ROWS:
     original=original_dir/row['original']['name']

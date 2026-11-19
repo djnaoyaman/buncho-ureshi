@@ -1,10 +1,10 @@
 {
-  "base": "5fb21d5f1c347f1b7f18a067750e9c5702301c53",
+  "base": "0ee8f6f1e29aa8dac9976c72f11069c6ae18f2b5",
   "tests": [
-    "tests/browser/garden-five-runway.spec.js",
+    "tests/browser/homichi-runway.spec.js",
     "tests/browser/game-music.spec.js",
     "tests/browser/encounter-music.spec.js",
     "tests/browser/encounter-pet-response.spec.js"
   ],
-  "reason": "承認済みRunway原音5曲の庭BGMのみ更新。Chrome/WebKitの44.1/48kHz実デコード、3周PCMレンダー、2周実時間出力、開始ガード・遭遇復帰・ミュート・停止再開・320/375/402pxの実ゲーム5庭ルーティングを確認。既存音楽設定・遭遇優先・4種類心拍効果音との共存を回帰検査。保存/得点/乱数と他30曲は変更しない。"
+  "reason": "白い帽子の穂道のBGM1曲を承認原音へ更新。44.1/48kHzのネイティブデコード・3周PCMレンダーと実時間3周、320/375/402pxの実ゲーム、鳴り始め、庭切替、ミュート、停止/遭遇復帰をChrome/WebKitで確認。既存音楽設定・4種類心拍と保存成立条件を回帰検査。他34庭とゲーム再生/保存/得点コードは不変。"
 }
