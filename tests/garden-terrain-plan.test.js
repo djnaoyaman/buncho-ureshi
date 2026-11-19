@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { terrainFor, terrainLayout, terrainPlan, terrainFrame, inside } from '../src/garden-terrain-plan.js';
 import { GARDENS } from '../src/data/gardens.js';
 
-const ids=['yuyake','bird-eurasian-bullfinch','bird-white-winged-crossbill','bali-terrace'];
+const ids=['yuyake','bird-eurasian-bullfinch','bird-white-winged-crossbill','bali-terrace','java-rice','bird-diamond-firetail','bird-zebra-finch','kazaguruma'];
 const actors=n=>Array.from({length:n},(_,i)=>({id:'bird'+i,width:70,height:82.35,labelWidth:38,labelHeight:18,point:[.2+i*.15,.7],movable:true,flight:i===0}));
 for(const id of ids) test(id+' routes stay grounded, separated and continuous without changing inputs',()=>{
   for(const width of [320,375,390,402,430]){
@@ -35,7 +35,7 @@ for(const id of ids) test(id+' routes stay grounded, separated and continuous wi
     }
   }
 });
-test('only four gardens opt in; blocked, narrow, crowded and unknown surfaces stay static',()=>{
+test('only eight gardens opt in; blocked, narrow, crowded and unknown surfaces stay static',()=>{
   for(const g of GARDENS)assert.equal(!!terrainFor(g.id),ids.includes(g.id));
   const p={left:0,top:0,width:390,height:844},c={left:0,top:0,right:390,bottom:844};
   assert.equal(terrainLayout('yuyake',actors(10),p,c),null);
