@@ -8,10 +8,11 @@ for(const r of rows)test(`approved Runway recording and guarded MP3 routing: ${r
  assert.equal(t.startOffsetSeconds,.1);assert.equal(t.loopStartSeconds,.1);assert.equal(t.loopEndSeconds,.1+r.loopSamples/44100);assert.equal(r.decodedSamples,r.loopSamples+2*r.guardSamples);
  assert.ok(r.seamPeakDelta<.03);assert.ok(r.boundaryRms>.004);assert.ok(Math.abs(r.integratedLufs+19)<.2);assert.ok(r.truePeakDbfs<0);assert.equal(m.auditionReviewed,false);
 });
-test('exactly two authorized IDs; other33, released booklet, Bach sources and gameplay remain unchanged',()=>{
+test('exactly two authorized IDs; other33, explicit booklet successor, Bach sources and gameplay remain unchanged',()=>{
  assert.deepEqual(rows.map(r=>r.gardenId),['paris-unrest','bird-hooded-siskin']);assert.deepEqual(rows.map(r=>r.original.sha256),['4ec15ddf05d0cf72be0a53ae4b3ff6be79a72f753c908a4fe5e01cd3057b1968','0d14e22b099d4324dc16e4713bc831a9378db18c46c6ded0392d75d8c8d588b7']);
  const audit=JSON.parse(read('docs/qa/gardens30-35-scope.json'));assert.equal(Object.keys(audit.otherGardenHashes).length,33);
  for(const [id,expected] of Object.entries(audit.otherGardenHashes))assert.equal(hash(JSON.stringify(GARDEN35_MUSIC[id])),expected,id);
- for(const [file,expected] of Object.entries(audit.unchangedSource))assert.equal(hash(read(file)),expected,file);
- assert.doesNotMatch(read('src/garden-about-booklet.js').toString(),/renderGardenTrackCredit|data-garden-track-credit/);
+ const ui=JSON.parse(read('docs/qa/garden-track-credit-scope.json'));
+ for(const [file,expected] of Object.entries(audit.unchangedSource)){const successor=ui.changedSource[file];if(successor)assert.equal(successor.before,expected,file);assert.equal(hash(read(file)),successor?.after||expected,file);}
+ assert.match(read('src/garden-about-booklet.js').toString(),/renderGardenTrackCredit/);
 });

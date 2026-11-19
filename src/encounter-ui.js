@@ -161,5 +161,5 @@ export function renderFinchGarden(w,{system=encounterSystem,base='/buncho-ureshi
     recollection: leafFriendRecollection(w,f.friendId),
     actions: place.actions.map(([kind, label]) => ({kind, label, disabled: false, disabledReason: ''}))
   }))
-})}${renderCompanionSettings(w,{draft:companionDraft,message:companionMessage,base})}${renderGardenAboutBooklet({name:place.name,description:place.description,landform:place.landform,art:(place.background.releaseReady||place.background.trialAvailable)?(()=>{const a=place.background.landscape||place.background;return {src:new URL(base,'https://booklet.invalid/').pathname+a.src.replace(/\.png$/,'.screen.webp')+'?v='+a.sha256.slice(0,12),width:a.width,height:a.height,alt:place.description};})():null})}</div></section>`;
+})}${renderCompanionSettings(w,{draft:companionDraft,message:companionMessage,base})}${renderGardenAboutBooklet({themeId:place.music.themeId,base,name:place.name,description:place.description,landform:place.landform,art:(place.background.releaseReady||place.background.trialAvailable)?(()=>{const a=place.background.landscape||place.background;return {src:new URL(base,'https://booklet.invalid/').pathname+a.src.replace(/\.png$/,'.screen.webp')+'?v='+a.sha256.slice(0,12),width:a.width,height:a.height,alt:place.description};})():null})}</div></section>`;
 }
