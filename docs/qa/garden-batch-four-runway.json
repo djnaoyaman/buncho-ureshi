@@ -1,0 +1,113 @@
+[
+  {
+    "gardenId": "bird-eurasian-siskin",
+    "original": {
+      "libraryId": "libfile_fde3_f-9e1a672ef1548191878849de24be3bc5_1e5190e96ae0819195a4cad3042d859b",
+      "fileId": "file_00000000536c8212b55e283ccfc26d00",
+      "name": "garden-17-runway-original.mp3",
+      "version": "0",
+      "bytes": 2466570,
+      "sha256": "a9e97510fbf5d0a3fe6df573557f99f203792cbfc6117aeed47c5a91cd4ef972",
+      "duration": 102.452167,
+      "sampleRate": 44100,
+      "channels": 2
+    },
+    "asset": "audio/gardens35/garden-17-runway-v1.wav",
+    "startSample": 181472,
+    "loopSamples": 1984500,
+    "crossfadeSamples": 1764,
+    "guardSamples": 882,
+    "gainDb": -7.7,
+    "estimatedBpm": 96,
+    "estimatedBeats": 72
+  },
+  {
+    "gardenId": "bird-eurasian-bullfinch",
+    "original": {
+      "libraryId": "libfile_fde3_f-599eb4f2b6308191b1f13ac9e07404ff_1e5190e96ae0819195a4cad3042d859b",
+      "fileId": "file_000000001bcc821291b9ea7dcf2f7605",
+      "name": "garden-18-runway-original.mp3",
+      "version": "0",
+      "bytes": 2396980,
+      "sha256": "d2a23e586290b31739c24a2674781da99121463d45c20193cb232c9373ed0bc5",
+      "duration": 99.552583,
+      "sampleRate": 44100,
+      "channels": 2
+    },
+    "asset": "audio/gardens35/garden-18-runway-v1.wav",
+    "startSample": 1169532,
+    "loopSamples": 2721600,
+    "crossfadeSamples": 1764,
+    "guardSamples": 882,
+    "gainDb": -7.7,
+    "estimatedBpm": 70,
+    "estimatedBeats": 72
+  },
+  {
+    "gardenId": "bird-hawfinch",
+    "original": {
+      "libraryId": "libfile_fde3_f-7065663575008191b8b4cce6ad36fc95_1e5190e96ae0819195a4cad3042d859b",
+      "fileId": "file_00000000df208212baa17a9397f976d2",
+      "name": "garden-19-runway-original.mp3",
+      "version": "0",
+      "bytes": 3796308,
+      "sha256": "e976d90fe26d6818fe3897afdcdb72f92b827a138a4deb8f956cf9dac968129d",
+      "duration": 157.857917,
+      "sampleRate": 44100,
+      "channels": 2
+    },
+    "asset": "audio/gardens35/garden-19-runway-v1.wav",
+    "startSample": 1139544,
+    "loopSamples": 1301832,
+    "crossfadeSamples": 1764,
+    "guardSamples": 882,
+    "gainDb": -7.3,
+    "estimatedBpm": 65.04,
+    "estimatedBeats": 32
+  },
+  {
+    "gardenId": "shrine-grove",
+    "original": {
+      "libraryId": "libfile_fde3_f-79428549824c819185c6edf053b51c9b_1e5190e96ae0819195a4cad3042d859b",
+      "fileId": "file_00000000c1408212a5562467cf65a70a",
+      "name": "garden-21-runway-original.mp3",
+      "version": "0",
+      "bytes": 3647096,
+      "sha256": "e8676eb8c06c59c2e40d59a4a9b178d2bfdce59ce9a937b4b98f7def2cc45e72",
+      "duration": 151.64075,
+      "sampleRate": 44100,
+      "channels": 2
+    },
+    "asset": "audio/gardens35/garden-21-runway-v1.wav",
+    "startSample": 348831,
+    "loopSamples": 604800,
+    "crossfadeSamples": 1764,
+    "guardSamples": 882,
+    "gainDb": -2.0,
+    "estimatedBpm": 70,
+    "estimatedBeats": 16
+  },
+  {
+    "gardenId": "bird-chinese-grosbeak",
+    "original": {
+      "libraryId": "libfile_fde3_f-52dd9ff767cc8191893819e2fdc5fbce_1e5190e96ae0819195a4cad3042d859b",
+      "fileId": "file_00000000b60481fd9387730a51819423",
+      "name": "木の実の小さな広場 - 木陰のバチャータ.mp3",
+      "version": "0",
+      "bytes": 4396915,
+      "generationId": "bbd9f8ab-59e7-41a6-a181-a2eadf37b9d4",
+      "sha256": "be0a66496b6cf1da2cc29a733143a0f6e5a2ac87fa07b7572ba6fddedad90953",
+      "duration": 182.883208,
+      "sampleRate": 44100,
+      "channels": 2
+    },
+    "asset": "audio/gardens35/garden-22-runway-v1.wav",
+    "startSample": 1299848,
+    "loopSamples": 1443273,
+    "crossfadeSamples": 1764,
+    "guardSamples": 882,
+    "gainDb": -6.4,
+    "estimatedBpm": 110,
+    "estimatedBeats": 60
+  }
+]
