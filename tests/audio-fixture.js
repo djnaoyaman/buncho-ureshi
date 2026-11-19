@@ -6,6 +6,8 @@ export function audioRig({held=false,reject=false}={}) {
     constructor(){this.state='suspended';this.currentTime=10;this.destination={};this.nodes=[];this.gains=[];this.resumes=0;this.closes=0;contexts.push(this);}
     resume(){this.resumes++;if(reject)return Promise.reject(new Error('audio denied'));return (held?gate.promise:Promise.resolve()).then(()=>{if(this.state!=='closed')this.state='running';});}
     createOscillator(){const node={frequency:new Param(),starts:[],stops:[],disconnected:0,connect(){},disconnect(){this.disconnected++;},start(time){this.starts.push(time);},stop(time){this.stops.push(time);}};this.nodes.push(node);return node;}
+    createBuffer(channels,length,sampleRate){const pcm=new Float32Array(length);return {length,sampleRate,duration:length/sampleRate,getChannelData:()=>pcm};}
+    createBufferSource(){return this.createOscillator();}
     createGain(){const gain={gain:new Param(),connect(){},disconnect(){}};this.gains.push(gain);return gain;}
     close(){this.closes++;this.state='closed';return Promise.resolve();}
   }

@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createCareAudio } from '../src/care-audio.js';
 import { audioRig } from './audio-fixture.js';
+import {getPetSound} from '../src/pet-sounds.js';
 
 test('care audio is default-off, lazy and gesture-unlocked; enabling/reloading alone never starts a source',async()=>{
   const rig=audioRig(),audio=createCareAudio({Context:rig.Context});
@@ -47,4 +48,16 @@ test('a never-settled native resume times out silently and a late completion can
 test('teardown resolves pending native activation immediately without waiting for its device promise',async()=>{
   const rig=audioRig({held:true}),audio=createCareAudio({Context:rig.Context});audio.setEnabled(true);
   const unlock=audio.unlockFromGesture();audio.close();assert.equal(await unlock,false);assert.equal(rig.starts,0);assert.equal(rig.contexts[0].closes,1);
+});
+
+test('pet confirmation is one exact approved motif, replaces an active note, and remains guarded/mutable',async()=>{
+ const rig=audioRig(),audio=createCareAudio({Context:rig.Context});audio.setEnabled(true);await audio.unlockFromGesture();
+ assert.equal(await audio.chime(()=>false,getPetSound(0)),false);assert.equal(rig.starts,0);
+ assert.equal(await audio.chime(()=>true,getPetSound(0)),true);assert.equal(rig.starts,1);assert.deepEqual(rig.contexts[0].nodes[0].buffer.getChannelData(0),getPetSound(0));assert.equal(rig.contexts[0].nodes[0].buffer.duration,1.25);
+ assert.equal(await audio.chime(()=>true,getPetSound(0)),true);assert.equal(rig.starts,2);assert(rig.contexts[0].nodes[0].stops.includes(undefined));
+ audio.setEnabled(false);assert.equal(await audio.chime(()=>true,getPetSound(0)),false);audio.close();
+});
+test('pending pet tone is discarded on route cancellation, mute and rejected activation',async()=>{
+ for(const action of ['cancel','mute']){const rig=audioRig({held:true}),audio=createCareAudio({Context:rig.Context});audio.setEnabled(true);audio.unlockFromGesture();const pending=audio.chime(()=>true,getPetSound(0));if(action==='mute')audio.setEnabled(false);else audio.cancel();rig.gate.resolve();assert.equal(await pending,false);assert.equal(rig.starts,0);audio.close();}
+ const rig=audioRig({reject:true}),audio=createCareAudio({Context:rig.Context});audio.setEnabled(true);await audio.unlockFromGesture();assert.equal(await audio.chime(()=>true,getPetSound(0)),false);audio.close();
 });

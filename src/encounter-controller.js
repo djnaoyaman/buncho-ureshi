@@ -33,7 +33,7 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
  const syncCrowContext=w=>{const key=`${w.worldId}:${w.encounters.garden.id}:${crowTarget(w)?.id}`;if(key!==crowContext){stopCrow();crowContext=key;}return key;};
   const doc=root.ownerDocument,win=doc.defaultView;
   const media=mountEncounterMedia(root);
-  const petResponse=createEncounterPetResponse(root,getWorld);
+  const petResponse=createEncounterPetResponse(root,getWorld,{getSound});
   const petPoints=(w,kind,id)=>(kind==='crows'?w.encounters.crow.visits:kind==='raptors'?w.encounters.raptor.visits:w.encounters.friendship).find(v=>v.id===id)?.petPoints||0;
   let keepsakeFrame=null;
   const scheduleKeepsake=()=>{
@@ -146,6 +146,7 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
     const catalog=root.querySelector('.finch-catalog');if(catalog)catalog.scrollTop=oldCatalogScroll||0;
     jog.refresh();
     media.refresh();
+    petResponse.prepare();
     scheduleKeepsake();
     root.setAttribute('aria-busy',String(busy));
     if(busy)for(const button of root.querySelectorAll('button'))button.disabled=true;
@@ -177,7 +178,7 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
   function startRub(event){
     const target=event.target.closest('[data-encounter-rub]');
     if(!target||!root.contains(target)||busy||petFlight||rub||event.isPrimary===false||event.button!==0)return;
-    event.preventDefault();const w=getWorld();
+    event.preventDefault();petResponse.gesture();const w=getWorld();
     rub={id:target.dataset.encounterRub,worldId:w.worldId,petKey:JSON.stringify([w.worldId,mode,target.dataset.encounterRub]),generation,pointerId:event.pointerId,x:event.clientX,y:event.clientY,distance:0,pending:0,active:true};
   }
   function moveRub(event){
@@ -187,16 +188,16 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
     const distance=Math.hypot(event.clientX-rub.x,event.clientY-rub.y);rub.x=event.clientX;rub.y=event.clientY;
     if(!box||event.clientX<box.left||event.clientX>box.right||event.clientY<box.top||event.clientY>box.bottom){rub.distance=0;return;}
     if(distance<=0)return;
-    event.preventDefault();notice='なでなで ♪';const petNotice=root.querySelector('.finch-notice');if(petNotice)petNotice.textContent=notice;
+    event.preventDefault();petResponse.gesture();notice='なでなで ♪';const petNotice=root.querySelector('.finch-notice');if(petNotice)petNotice.textContent=notice;
     const key=JSON.stringify([rub.worldId,mode,rub.id]);
     if(petClock.input(key,{pointer:true})&&!petFlight){rub.pending=1;flushPet();}
   }
-  function endRub(event){if(!rub||event.pointerId!==rub.pointerId)return;rub.active=false;if(!petFlight&&rub.pending)flushPet();else if(!petFlight){rub=null;render();}}
+  function endRub(event){if(!rub||event.pointerId!==rub.pointerId)return;rub.active=false;if(!petFlight&&rub.pending)flushPet();else if(!petFlight){rub=null;/* Bond is already refreshed; release must not cut off committed feedback. */}}
   function keyRub(event){
     if(event.key==='Escape'&&mode==='garden'){const story=event.target.closest('details[name=garden-story][open]');if(story&&root.contains(story)){event.preventDefault();event.stopPropagation();story.open=false;story.querySelector('summary')?.focus({preventScroll:true});return;}}
     const target=event.target.closest('[data-encounter-rub]');
     if(!target||!root.contains(target)||!['Enter',' '].includes(event.key)||event.repeat||busy)return;
-    event.preventDefault();const w=getWorld(),key=JSON.stringify([w.worldId,mode,target.dataset.encounterRub]);
+    event.preventDefault();petResponse.gesture();const w=getWorld(),key=JSON.stringify([w.worldId,mode,target.dataset.encounterRub]);
     notice='なでなで ♪';const petNotice=root.querySelector('.finch-notice');if(petNotice)petNotice.textContent=notice;
     if(petFlight||rub||!petClock.input(key))return;
     rub={id:target.dataset.encounterRub,worldId:w.worldId,petKey:key,generation,pending:1,active:false,keyboard:true};flushPet();
