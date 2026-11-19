@@ -1,10 +1,10 @@
 {
-  "base": "c0b330ba5675e96e760aad21d51e4d64a94a0cf2",
+  "base": "f03185ffec57541182dc3085acc8e15fbd055ddf",
   "tests": [
-    "tests/browser/garden-about-booklet.spec.js",
+    "tests/browser/garden-batch-six-runway.spec.js",
     "tests/browser/game-music.spec.js",
     "tests/browser/encounter-music.spec.js",
     "tests/browser/encounter-pet-response.spec.js"
   ],
-  "reason": "既存「庭のこと」に割当35曲の説明のみ追加。全35庭表示、狭幅320/375/390/402、native開閉/focus/スクロール/戻る、Bach出典、固定曲/ミュート/再生継続と保存非破壊、既存遭遇BGM/ハート回帰をChrome/WebKitで検証。音源・音声機構・モーション・保存/RNG不変。実iPhone未確認。"
+  "reason": "最終庭BGM #29/#31/#32/#33/#34。4承認Runway曲とBach独立MP3、既存creditsからの最小帰属リンク。各5曲Chrome/WebKit44.1/48kHz復号/出力、実時間2/3周、復帰/ミュート/重複残留、320/375/402px割当/Bアイコン、権利文書と資料リンク、既存心拍/保存回帰を110件で検査。他30庭・既存音源・エンジン/保存/得点/RNG不変。統一クレジットUIは追加しない。実機/主観試聴は未確認。"
 }
