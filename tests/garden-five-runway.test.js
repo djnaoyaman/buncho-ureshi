@@ -16,6 +16,6 @@ for(const row of rows)test(`approved recording, cyclic PCM guards and initial of
  let peak=0,sum=0;for(let i=g;i<g+n;i+=2){const x=pcm.readInt16LE(i)/32768;peak=Math.max(peak,Math.abs(x));sum+=x*x;}
  assert.ok(peak<.98);assert.ok(Math.sqrt(sum/(n/2))>.01);
 });
-test('guard offset stays absent for the three preserved garden tracks',()=>{
- const selected=new Set([...rows.map(r=>r.gardenId),'hanadokei']);for(const t of gardenMusicTracks())if(!selected.has(t.gardenId)){assert.equal(t.startOffsetSeconds,undefined);assert.equal(t.loopStartSeconds,0);}
+test('guard offset stays absent for tracks outside the explicit Runway and Bach replacements',()=>{
+ const selected=new Set([...rows.map(r=>r.gardenId),'hanadokei','paris-unrest','bird-hooded-siskin']);for(const t of gardenMusicTracks())if(!selected.has(t.gardenId)){assert.equal(t.startOffsetSeconds,undefined);assert.equal(t.loopStartSeconds,0);}
 });

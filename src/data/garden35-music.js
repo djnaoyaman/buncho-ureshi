@@ -621,31 +621,21 @@ export const GARDEN35_MUSIC=Object.freeze({
   "paris-unrest": {
     "title": "潮風の歌う丘",
     "themeId": "garden-paris-unrest",
-    "asset": "audio/gardens35/garden-30.mp3",
-    "loopStartSeconds": 0,
-    "loopEndSeconds": 55.94242630385487,
-    "loopSamples": 2467061,
+    "asset": "audio/gardens35/garden-30-runway-v1.mp3",
+    "loopStartSeconds": 0.1,
+    "loopEndSeconds": 32.09979591836735,
+    "loopSamples": 1411191,
     "sampleRate": 44100,
-    "sha256": "704804b30983be7b6835ba9dd2cae3e6efec3bcb2429ad999b13f8e264420326",
-    "source": "User-supplied Work composition",
-    "userAuthorizedWork": true,
-    "originalComposition": "reported Work-created by user",
-    "externalSamples": "not independently verified",
-    "auditionReviewed": true,
+    "sha256": "6a136cfc88f9af54926cd5704a53041ccb688e6895b92f8d4368686102489b6a",
+    "source": "Owner-provided Runway recording; docs/qa/gardens30-35-runway.json",
+    "auditionReviewed": false,
     "fullDecodePassed": true,
-    "seamPeakDelta": 1.7935522919287905e-05,
-    "sourceFilename": "shiokaze-flamenco-preview.mp3",
-    "sourceSha256": "12a02c23b550efea92d0785e0f9e3dadad8464e2fdd87ecac1ec39b52738481b",
-    "loopEdit": {
-      "trailingNearSilenceRemovedSeconds": 3.1921995464852606,
-      "boundaryCrossfadeSeconds": 0.25
-    },
-    "rmsDb": -21.201002714061023,
-    "peakDb": -3.1016989152417738,
+    "seamPeakDelta": 0.001004294492304325,
     "releaseReady": true,
     "trialAvailable": true,
     "browserPlaybackReviewed": false,
-    "requiresExplicitLoopEnd": true
+    "requiresExplicitLoopEnd": true,
+    "startOffsetSeconds": 0.1
   },
   "hanadokei": {
     "title": "まるい冠の花庭",
@@ -732,31 +722,21 @@ export const GARDEN35_MUSIC=Object.freeze({
   "bird-hooded-siskin": {
     "title": "金いろの高原窓",
     "themeId": "garden-bird-hooded-siskin",
-    "asset": "audio/gardens35/garden-35.mp3",
-    "loopStartSeconds": 0,
-    "loopEndSeconds": 60.714716553287985,
-    "loopSamples": 2677519,
+    "asset": "audio/gardens35/garden-35-runway-v1.mp3",
+    "loopStartSeconds": 0.1,
+    "loopEndSeconds": 54.89419501133787,
+    "loopSamples": 2416424,
     "sampleRate": 44100,
-    "sha256": "92b2f6455435a0b6b1acc18f624fd96169abc8785f9534075abe5f10212a297c",
-    "source": "User-supplied Work composition",
-    "userAuthorizedWork": true,
-    "originalComposition": "reported Work-created by user",
-    "externalSamples": "not independently verified",
-    "auditionReviewed": true,
+    "sha256": "137c4b4f7fa03a0413e31e1cb276722b06a5a764367ad507dd77f9c3494e24da",
+    "source": "Owner-provided Runway recording; docs/qa/gardens30-35-runway.json",
+    "auditionReviewed": false,
     "fullDecodePassed": true,
-    "seamPeakDelta": 7.149039447540417e-06,
-    "sourceFilename": "kiniro-bossa-nova-preview.mp3",
-    "sourceSha256": "1d42b9e657e1ae68690000985d087d64e90126a233634fe86a7795e5d854f56f",
-    "loopEdit": {
-      "trailingNearSilenceRemovedSeconds": 3.035283446712018,
-      "boundaryCrossfadeSeconds": 0.25
-    },
-    "rmsDb": -21.200080560416108,
-    "peakDb": -1.503180527664206,
+    "seamPeakDelta": 0.0034449100494384766,
     "releaseReady": true,
     "trialAvailable": true,
     "browserPlaybackReviewed": false,
-    "requiresExplicitLoopEnd": true
+    "requiresExplicitLoopEnd": true,
+    "startOffsetSeconds": 0.1
   }
 });
 export const GARDEN_MUSIC_ASSETS=Object.freeze({...GARDEN_ASSETS,...Object.fromEntries(Object.entries(GARDEN35_MUSIC).map(([id,music])=>[id,{music}]))});
