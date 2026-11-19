@@ -1,10 +1,10 @@
 {
-  "base": "cf0853f4d298f5d00e9218f722b14a65030283cf",
+  "base": "32899c5011b80c00e65523d3b052d0764b0eccd2",
   "tests": [
-    "tests/browser/garden-batch-four-runway.spec.js",
+    "tests/browser/garden-batch-five-runway.spec.js",
     "tests/browser/game-music.spec.js",
     "tests/browser/encounter-music.spec.js",
     "tests/browser/encounter-pet-response.spec.js"
   ],
-  "reason": "承認済み庭BGM #17/#18/#19/#21/#22のみ。#22は新バチャータ。各5曲Chrome/WebKit 44.1/48kHz復号/出力、実時間44.1kHz2周/48kHz3周、停止/庭切替/遭遇復帰/ミュート/残留音、320/375/402px割当とBアイコン、既存心拍4音と保存の回帰を108件で検査。他30庭と既存音源・保存/得点/RNGは不変監査。実機Safariと主観試聴は未確認。"
+  "reason": "承認済み庭BGM #23/#24/#25/#27/#28のみ。各5曲Chrome/WebKit 44.1/48kHz復号/出力、実時間44.1kHz2周/48kHz3周、停止/庭切替/遭遇復帰/ミュート/残留音、320/375/402px割当とBアイコン、既存心拍4音と保存回帰を108件で検査。他30庭・既存音源・保存/得点/RNGを不変監査。実機Safari・主観試聴は未確認。"
 }
