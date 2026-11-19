@@ -1,0 +1,90 @@
+[
+  {
+    "gardenId": "tsukiakari",
+    "original": {
+      "name": "garden-29-runway-original.mp3",
+      "bytes": 4159932,
+      "libraryId": "libfile_fde3_f-4e7936203c008191a646049a78a07744_1e5190e96ae0819195a4cad3042d859b",
+      "fileId": "file_00000000452c81f593496a620d3cafc5",
+      "version": "0",
+      "sha256": "cc2cf701c27e6a45e7bfe4a883f3b0cc0207de69937a2cd4a243bef7a45f42d5",
+      "duration": 173.008917,
+      "sampleRate": 44100,
+      "channels": 2
+    },
+    "asset": "audio/gardens35/garden-29-runway-v1.wav",
+    "startSample": 4533700,
+    "loopSamples": 1058400,
+    "crossfadeSamples": 1764,
+    "guardSamples": 882,
+    "gainDb": -5.0,
+    "estimatedBpm": 80,
+    "estimatedBeats": 32
+  },
+  {
+    "gardenId": "onsen",
+    "original": {
+      "name": "garden-32-runway-original.mp3",
+      "bytes": 3576879,
+      "libraryId": "libfile_fde3_f-7925bc593e0c8191bd7d14adf8703d56_1e5190e96ae0819195a4cad3042d859b",
+      "fileId": "file_00000000ea9881f597c775d5b5632008",
+      "version": "0",
+      "sha256": "4996bed37da1d24d1b2918090acb22346d1ac34284ac02d643a9d26c07ff996a",
+      "duration": 148.715042,
+      "sampleRate": 44100,
+      "channels": 2
+    },
+    "asset": "audio/gardens35/garden-32-runway-v1.wav",
+    "startSample": 1457284,
+    "loopSamples": 2721600,
+    "crossfadeSamples": 1764,
+    "guardSamples": 882,
+    "gainDb": -7.4,
+    "estimatedBpm": 70,
+    "estimatedBeats": 72
+  },
+  {
+    "gardenId": "bali-terrace",
+    "original": {
+      "name": "garden-33-runway-original.mp3",
+      "bytes": 2586316,
+      "libraryId": "libfile_fde3_f-a3364afbf904819187ba1105d3bf0815_1e5190e96ae0819195a4cad3042d859b",
+      "fileId": "file_0000000010c081f58e6d88b96139b160",
+      "version": "0",
+      "sha256": "f53e4beba633bb9a2027ca619877204c2df9e1ca2f7ae0feeea74fb7693d3cd8",
+      "duration": 107.441583,
+      "sampleRate": 44100,
+      "channels": 2
+    },
+    "asset": "audio/gardens35/garden-33-runway-v1.wav",
+    "startSample": 3169246,
+    "loopSamples": 495158,
+    "crossfadeSamples": 1764,
+    "guardSamples": 882,
+    "gainDb": -9.2,
+    "estimatedBpm": 85.5,
+    "estimatedBeats": 16
+  },
+  {
+    "gardenId": "bird-masked-finch",
+    "original": {
+      "name": "garden-34-runway-original.mp3",
+      "bytes": 4306009,
+      "libraryId": "libfile_fde3_f-6cc1bf2f97588191a9910a4afd0df644_1e5190e96ae0819195a4cad3042d859b",
+      "fileId": "file_00000000861c81f5893e6070e88b9fb7",
+      "version": "0",
+      "sha256": "91569ca90ff081ae13de568fa3d1660e223256df4658b695f1fee22bafdac111",
+      "duration": 179.095458,
+      "sampleRate": 44100,
+      "channels": 2
+    },
+    "asset": "audio/gardens35/garden-34-runway-v1.wav",
+    "startSample": 3576510,
+    "loopSamples": 2646000,
+    "crossfadeSamples": 1764,
+    "guardSamples": 882,
+    "gainDb": -6.8,
+    "estimatedBpm": 80,
+    "estimatedBeats": 80
+  }
+]

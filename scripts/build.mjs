@@ -194,6 +194,7 @@ function staticMain(route, description, title, article) {
   else if (route === "credits/") details = `<h2>写真の作者と利用条件</h2><ul>${photos.map(p => `<li><a href="${esc(p.source)}">${esc(p.title)}</a> — ${esc(p.author)} / <a href="${esc(secureLink(p.licenseUrl))}">${esc(p.license)}</a></li>`).join("")}</ul>`;
   else if (route === "") details = photoFigure("photo-39", true);
   if (["", "encyclopedia/"].includes(route)) details += `<section><h2><a href="${base}colors/">文鳥の羽色ずかん</a></h2><p>5つの色・模様と、幼鳥から成鳥へのちがいを写真と出典で比べます。14の追加の呼び名は写真未収録のことば帳です。</p></section>`;
+  if (route === "credits/") details += `<p>庭のバッハ音源：J.S.バッハ《目覚めよ、と呼ぶ声あり》BWV 645（一部・独自合成演奏）。デジタル楽譜：Bart Golsteijn / Mutopia Project。音源は CC BY-SA 2.5。<a href="${base}audio/gardens35/bach-bwv645-license.html">出典・改変・利用条件</a>。</p>`;
   if (route === "credits/") details += `<section class="morph-atlas"><h2>映像から取り出した静止画 ${newMorphPhotos.length}点</h2><p>42点の独立した写真とは別の派生素材です。CC BY-SA 3.0 の利用条件を維持し、工房の素材には含めません。</p>${newMorphPhotos.map(photo => renderMorphPhoto(photo.id, atlasData, { base })).join("")}<a href="${base}colors/">羽色ずかんの情報源へ</a></section>`;
   const links = pages.filter(page => !page[3] && !page[4] && page[0] !== route).map(([target, , label]) => `<li><a href="${base + target}">${esc(label || "トップへ戻る")}</a></li>`).join("");
   return `<h1>${esc(title || SITE_NAME)}</h1><p>${esc(description)}</p><p>${esc(intros[route] || "")}</p>${details}<nav aria-label="主なコーナー"><h2>文鳥の庭をめぐる</h2><ul>${links}</ul></nav>`;
