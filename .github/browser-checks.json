@@ -1,7 +1,7 @@
 {
-  "base": "b1166ea4eb4d7a0870594702a10b521354ddaaf4",
+  "base": "5e793f22a50a69ccf0f171957b5ca0ab013a97c5",
   "tests": [
     "tests/browser/encounter-pet-response.spec.js"
   ],
-  "reason": "Verify approved 420ms portrait-only response after committed pet points for ordinary birds/crows/raptors; no feedback on failed saves, caps, delayed departed targets, settings/reduced motion; real pointer input, re-render cancellation and 320/375/402px geometry in Chrome/WebKit. Existing reward/save rules and travelling garden sprites unchanged. Also verify protected photo image styles remain intact while the portrait container visibly moves; wait for actual OS media preference before input."
+  "reason": "Approved 8px/2deg/540ms pet response with three spatially distinct fan notes and one soft saved-gain sound. Verify real frames, store/reload, failure/caps/target races, native audio onset/ending/mute, separate motion settings, repeat input, protected photo styles and 320/375/402px layout in Chrome/WebKit."
 }

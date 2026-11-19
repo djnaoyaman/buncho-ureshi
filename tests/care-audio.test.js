@@ -48,3 +48,15 @@ test('teardown resolves pending native activation immediately without waiting fo
   const rig=audioRig({held:true}),audio=createCareAudio({Context:rig.Context});audio.setEnabled(true);
   const unlock=audio.unlockFromGesture();audio.close();assert.equal(await unlock,false);assert.equal(rig.starts,0);assert.equal(rig.contexts[0].closes,1);
 });
+
+test('pet confirmation is one soft note, replaces an active note, and remains guarded/mutable',async()=>{
+ const rig=audioRig(),audio=createCareAudio({Context:rig.Context});audio.setEnabled(true);await audio.unlockFromGesture();
+ assert.equal(await audio.chime(()=>false),false);assert.equal(rig.starts,0);
+ assert.equal(await audio.chime(),true);assert.equal(rig.starts,1);assert.equal(rig.contexts[0].nodes[0].frequency.events[0][1],880);
+ assert.equal(await audio.chime(),true);assert.equal(rig.starts,2);assert(rig.contexts[0].nodes[0].stops.includes(undefined));
+ audio.setEnabled(false);assert.equal(await audio.chime(),false);audio.close();
+});
+test('pending pet tone is discarded on route cancellation, mute and rejected activation',async()=>{
+ for(const action of ['cancel','mute']){const rig=audioRig({held:true}),audio=createCareAudio({Context:rig.Context});audio.setEnabled(true);audio.unlockFromGesture();const pending=audio.chime();if(action==='mute')audio.setEnabled(false);else audio.cancel();rig.gate.resolve();assert.equal(await pending,false);assert.equal(rig.starts,0);audio.close();}
+ const rig=audioRig({reject:true}),audio=createCareAudio({Context:rig.Context});audio.setEnabled(true);await audio.unlockFromGesture();assert.equal(await audio.chime(),false);audio.close();
+});

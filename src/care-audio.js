@@ -68,11 +68,24 @@ export function createCareAudio({ Context = globalThis.AudioContext || globalThi
       return true;
     } catch { stopNodes(); return false; }
   }
+  /** One quiet musical confirmation; independent of motion and the BGM player. */
+  async function chime(isCurrent = () => true) {
+    const token=generation,activation=ready;
+    if(!enabled||disposed||!context||!isCurrent())return false;
+    if(!(context.state==='running'||await activation)||!enabled||disposed||token!==generation||context.state!=='running'||!isCurrent())return false;
+    try {
+      stopNodes();const start=context.currentTime+.005,osc=context.createOscillator(),gain=context.createGain(),entry={osc,gain};active.add(entry);
+      osc.type='sine';osc.frequency.setValueAtTime(880,start);
+      gain.gain.setValueAtTime(0,start);gain.gain.linearRampToValueAtTime(.025,start+.012);gain.gain.exponentialRampToValueAtTime(.0001,start+.19);
+      osc.connect(gain);gain.connect(context.destination);osc.onended=()=>{active.delete(entry);try{osc.disconnect();gain.disconnect();}catch{}};
+      osc.start(start);osc.stop(start+.20);return true;
+    } catch {stopNodes();return false;}
+  }
   function close() {
     if (disposed) return;
     disposed = true; enabled = false; cancel();
     try { const closing = context?.close(); closing?.catch?.(() => {}); } catch {}
     context = null;
   }
-  return { setEnabled, unlockFromGesture, chirp, cancel, close };
+  return { setEnabled, unlockFromGesture, chirp, chime, cancel, close };
 }
