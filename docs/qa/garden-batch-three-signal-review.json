@@ -1,0 +1,376 @@
+{
+  "boundaries": [
+    {
+      "number": 10,
+      "start": 16.04,
+      "end": 36.25,
+      "period": 20.21,
+      "bpm": 95,
+      "contexts": [
+        {
+          "seconds": 1.2,
+          "chroma": 0.9597377922372753,
+          "onset": 0.9132575327709227
+        },
+        {
+          "seconds": 4,
+          "chroma": 0.9569798468987369,
+          "onset": 0.9274017353669345
+        },
+        {
+          "seconds": 6,
+          "chroma": 0.952796463381593,
+          "onset": 0.9303849374765664
+        },
+        {
+          "seconds": 8,
+          "chroma": 0.9411273289632891,
+          "onset": 0.9199723274265552
+        }
+      ],
+      "crossfades": [
+        {
+          "ms": 20,
+          "correlation": 0.2485476268907364,
+          "powerDb": 0.18181970185355595
+        },
+        {
+          "ms": 40,
+          "correlation": 0.17391624778506595,
+          "powerDb": 0.20802711853262446
+        },
+        {
+          "ms": 60,
+          "correlation": 0.16066771404642383,
+          "powerDb": 0.17587266041916863
+        },
+        {
+          "ms": 80,
+          "correlation": 0.11110898481842278,
+          "powerDb": 0.17004141219084734
+        },
+        {
+          "ms": 100,
+          "correlation": 0.11360206358206919,
+          "powerDb": 0.1574844014131846
+        }
+      ],
+      "startPitchWindows": [
+        "G",
+        "F"
+      ],
+      "startRmsDb": -14.876821517944336,
+      "endPitchWindows": [
+        "G",
+        "F"
+      ],
+      "endRmsDb": -12.695693969726562,
+      "selectedRmsDb": -14.014187812805176
+    },
+    {
+      "number": 11,
+      "start": 34.357732426303855,
+      "end": 68.64344671201815,
+      "period": 34.285714285714285,
+      "bpm": 112,
+      "contexts": [
+        {
+          "seconds": 1.2,
+          "chroma": 0.9882389760277701,
+          "onset": 0.9976994121016445
+        },
+        {
+          "seconds": 4,
+          "chroma": 0.9734646192640821,
+          "onset": 0.9949931979813743
+        },
+        {
+          "seconds": 6,
+          "chroma": 0.9720083357427888,
+          "onset": 0.9786938940895085
+        },
+        {
+          "seconds": 8,
+          "chroma": 0.970418523399988,
+          "onset": 0.950440006448191
+        }
+      ],
+      "crossfades": [
+        {
+          "ms": 20,
+          "correlation": 0.8646668443968598,
+          "powerDb": 1.2596417750105688
+        },
+        {
+          "ms": 40,
+          "correlation": 0.8643724476846522,
+          "powerDb": 0.8762426624752719
+        },
+        {
+          "ms": 60,
+          "correlation": 0.8641753957920496,
+          "powerDb": 0.4520852527037459
+        },
+        {
+          "ms": 80,
+          "correlation": 0.8640775783526268,
+          "powerDb": 0.26624328829746646
+        },
+        {
+          "ms": 100,
+          "correlation": 0.863984038663558,
+          "powerDb": 0.17383539673259946
+        }
+      ],
+      "startPitchWindows": [
+        "F",
+        "C#"
+      ],
+      "startRmsDb": -9.911469459533691,
+      "endPitchWindows": [
+        "F",
+        "C#"
+      ],
+      "endRmsDb": -9.79660415649414,
+      "selectedRmsDb": -14.156006813049316
+    },
+    {
+      "number": 13,
+      "start": 31.56,
+      "end": 91.92999999999999,
+      "period": 60.37,
+      "bpm": 71.56,
+      "contexts": [
+        {
+          "seconds": 1.2,
+          "chroma": 0.9866342865167905,
+          "onset": 0.9486491141040199
+        },
+        {
+          "seconds": 4,
+          "chroma": 0.9864010815819869,
+          "onset": 0.9499416046278452
+        },
+        {
+          "seconds": 6,
+          "chroma": 0.9663236072254898,
+          "onset": 0.884161260221278
+        },
+        {
+          "seconds": 8,
+          "chroma": 0.9462888700876612,
+          "onset": 0.8854123293202065
+        }
+      ],
+      "crossfades": [
+        {
+          "ms": 20,
+          "correlation": 0.43731625210094366,
+          "powerDb": 0.32848240008082313
+        },
+        {
+          "ms": 40,
+          "correlation": 0.4283745852201121,
+          "powerDb": 0.5068226186082557
+        },
+        {
+          "ms": 60,
+          "correlation": 0.4275950248505302,
+          "powerDb": 0.5288689397098729
+        },
+        {
+          "ms": 80,
+          "correlation": 0.4341033407082176,
+          "powerDb": 0.5127286747824823
+        },
+        {
+          "ms": 100,
+          "correlation": 0.4284066856853719,
+          "powerDb": 0.519260351706532
+        }
+      ],
+      "startPitchWindows": [
+        "A#",
+        "F"
+      ],
+      "startRmsDb": -13.959335327148438,
+      "endPitchWindows": [
+        "A#",
+        "F"
+      ],
+      "endRmsDb": -13.14477825164795,
+      "selectedRmsDb": -13.95993709564209
+    },
+    {
+      "number": 14,
+      "start": 18.045,
+      "end": 78.045,
+      "period": 60,
+      "bpm": 64,
+      "contexts": [
+        {
+          "seconds": 1.2,
+          "chroma": 0.9203098635709126,
+          "onset": 0.8567783995877881
+        },
+        {
+          "seconds": 4,
+          "chroma": 0.9429669640349136,
+          "onset": 0.9337115921747802
+        },
+        {
+          "seconds": 6,
+          "chroma": 0.9369201981483366,
+          "onset": 0.9478041156968429
+        },
+        {
+          "seconds": 8,
+          "chroma": 0.9224097803972887,
+          "onset": 0.9223974344640047
+        }
+      ],
+      "crossfades": [
+        {
+          "ms": 20,
+          "correlation": 0.6566162951952554,
+          "powerDb": 0.8441060125789701
+        },
+        {
+          "ms": 40,
+          "correlation": 0.6739916413159918,
+          "powerDb": 0.9868763392796869
+        },
+        {
+          "ms": 60,
+          "correlation": 0.5693891204362904,
+          "powerDb": 0.9871014175422661
+        },
+        {
+          "ms": 80,
+          "correlation": 0.4332118298988182,
+          "powerDb": 0.7884711991802419
+        },
+        {
+          "ms": 100,
+          "correlation": 0.3071839609959302,
+          "powerDb": 0.5266684227023329
+        }
+      ],
+      "startPitchWindows": [
+        "C",
+        "C"
+      ],
+      "startRmsDb": -13.993045806884766,
+      "endPitchWindows": [
+        "C",
+        "C"
+      ],
+      "endRmsDb": -12.174919128417969,
+      "selectedRmsDb": -13.832849502563477
+    },
+    {
+      "number": 16,
+      "start": 4.4,
+      "end": 52.4,
+      "period": 48,
+      "bpm": 80,
+      "contexts": [
+        {
+          "seconds": 1.2,
+          "chroma": 0.9743573133346316,
+          "onset": 0.9507205290202955
+        },
+        {
+          "seconds": 4,
+          "chroma": 0.9768426087122851,
+          "onset": 0.977214482075112
+        },
+        {
+          "seconds": 6,
+          "chroma": 0.9784272406672574,
+          "onset": 0.9679412898850756
+        },
+        {
+          "seconds": 8,
+          "chroma": 0.9750646577378607,
+          "onset": 0.9601956785355718
+        }
+      ],
+      "crossfades": [
+        {
+          "ms": 20,
+          "correlation": 0.5753397333669897,
+          "powerDb": 0.6310284883421282
+        },
+        {
+          "ms": 40,
+          "correlation": 0.6096583060158354,
+          "powerDb": 0.7583957804311827
+        },
+        {
+          "ms": 60,
+          "correlation": 0.5847855798712334,
+          "powerDb": 0.8871532535398257
+        },
+        {
+          "ms": 80,
+          "correlation": 0.560889523318692,
+          "powerDb": 0.8510406161318484
+        },
+        {
+          "ms": 100,
+          "correlation": 0.6475192275644766,
+          "powerDb": 0.6374813440369664
+        }
+      ],
+      "startPitchWindows": [
+        "F",
+        "G"
+      ],
+      "startRmsDb": -14.30496597290039,
+      "endPitchWindows": [
+        "F",
+        "G"
+      ],
+      "endRmsDb": -14.18692398071289,
+      "selectedRmsDb": -14.844130516052246
+    }
+  ],
+  "finalAudio": [
+    {
+      "gardenId": "bird-tricolored-munia",
+      "sha256": "0ed5247f8d6c7cd103c034176611ab98cea834d36bea419fd82903cba8583b76",
+      "bytes": 3572144,
+      "integratedLufs": -19.0,
+      "truePeakDbfs": -7.7
+    },
+    {
+      "gardenId": "bird-scaly-breasted-munia",
+      "sha256": "42deb59118ebb3c8642f804eacb0393fb74e83b308c0e9863db4ea4a7dd1599d",
+      "bytes": 6055100,
+      "integratedLufs": -19.0,
+      "truePeakDbfs": -5.4
+    },
+    {
+      "gardenId": "bird-pin-tailed-whydah",
+      "sha256": "324d1e096c4788e7867fbec28e92a0ced67aa8cc397e41b7a8de0dcbbdd32ca1",
+      "bytes": 10656368,
+      "integratedLufs": -19.0,
+      "truePeakDbfs": -7.4
+    },
+    {
+      "gardenId": "bird-long-tailed-paradise-whydah",
+      "sha256": "928c84dff4328424be6d9b0ef6aeec9652190fcc7c8f7b821b7b572683c49b07",
+      "bytes": 10591100,
+      "integratedLufs": -19.0,
+      "truePeakDbfs": -7.9
+    },
+    {
+      "gardenId": "yuyake",
+      "sha256": "791f1481c88b7cd0c9db4d07bfb2b59b1cfdbb7941b991d6a24eae3dd6e2fb92",
+      "bytes": 8474300,
+      "integratedLufs": -19.0,
+      "truePeakDbfs": -5.3
+    }
+  ]
+}

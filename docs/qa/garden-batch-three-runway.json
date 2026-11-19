@@ -1,0 +1,117 @@
+[
+  {
+    "gardenId": "bird-tricolored-munia",
+    "original": {
+      "libraryId": "libfile_fde3_f-1d97bb6993908191ac9685aad1fab926_1e5190e96ae0819195a4cad3042d859b",
+      "fileId": "file_00000000c40c81f5a74976ec831a2e95",
+      "name": "garden-10-runway-original.mp3",
+      "version": "0",
+      "bytes": 2383188,
+      "sha256": "6ea71317c937424aafede2edf1d52ff51e9b0038220146aab8ea85a88f44227b",
+      "duration": 98.977917,
+      "sampleRate": 44100,
+      "channels": 2,
+      "generationId": "9d2dcd3a-757f-4789-b3bc-a26540f4878a"
+    },
+    "asset": "audio/gardens35/garden-10-runway-v1.wav",
+    "startSample": 707364,
+    "loopSamples": 891261,
+    "crossfadeSamples": 1764,
+    "guardSamples": 882,
+    "gainDb": -7.6,
+    "estimatedBpm": 95,
+    "estimatedBeats": 32
+  },
+  {
+    "gardenId": "bird-scaly-breasted-munia",
+    "original": {
+      "libraryId": "libfile_fde3_f-229a58946218819182f2ee66e477b294_1e5190e96ae0819195a4cad3042d859b",
+      "fileId": "file_00000000ea1c81f5ae153ceb5ca1a5a7",
+      "name": "garden-11-runway-original.mp3",
+      "version": "0",
+      "bytes": 3509797,
+      "sha256": "69bf0ec646057d198819c97b212d3970d9e27292585ccc28af274502083780a9",
+      "duration": 145.919958,
+      "sampleRate": 44100,
+      "channels": 2,
+      "generationId": "0bded73a-f4e0-428b-9c99-f97d97ff26fa"
+    },
+    "asset": "audio/gardens35/garden-11-runway-v1.wav",
+    "startSample": 1515176,
+    "loopSamples": 1512000,
+    "crossfadeSamples": 1764,
+    "guardSamples": 882,
+    "gainDb": -5.5,
+    "estimatedBpm": 112,
+    "estimatedBeats": 64
+  },
+  {
+    "gardenId": "bird-pin-tailed-whydah",
+    "original": {
+      "libraryId": "libfile_fde3_f-e516152731288191b4b00d60968afae7_1e5190e96ae0819195a4cad3042d859b",
+      "fileId": "file_0000000056c481f5bf177d6411153b79",
+      "name": "garden-13-runway-original.mp3",
+      "version": "0",
+      "bytes": 3183162,
+      "sha256": "73b83864cdeb4a7fbb4c8264edaf79afe563005ef9a83113e3a366325cfe3913",
+      "duration": 132.310167,
+      "sampleRate": 44100,
+      "channels": 2,
+      "generationId": "d9f5ea03-aeb4-4aac-8747-de16a80cf67c"
+    },
+    "asset": "audio/gardens35/garden-13-runway-v1.wav",
+    "startSample": 1391796,
+    "loopSamples": 2662317,
+    "crossfadeSamples": 1764,
+    "guardSamples": 882,
+    "gainDb": -7.3,
+    "estimatedBpm": 71.56,
+    "estimatedBeats": 72
+  },
+  {
+    "gardenId": "bird-long-tailed-paradise-whydah",
+    "original": {
+      "libraryId": "libfile_fde3_f-408ef5eba42481918d9df72dbf29fc6b_1e5190e96ae0819195a4cad3042d859b",
+      "fileId": "file_000000001fd881f58e8c68c691394ad6",
+      "name": "garden-14-runway-original.mp3",
+      "version": "0",
+      "bytes": 3539890,
+      "sha256": "114420e196c33a999cdbef63536465e004af947c6f3579470883ba1ee2a31b16",
+      "duration": 147.173833,
+      "sampleRate": 44100,
+      "channels": 2,
+      "generationId": "c506a78f-e978-4bda-b66f-7d296621803c"
+    },
+    "asset": "audio/gardens35/garden-14-runway-v1.wav",
+    "startSample": 795785,
+    "loopSamples": 2646000,
+    "crossfadeSamples": 1764,
+    "guardSamples": 882,
+    "gainDb": -7.7,
+    "estimatedBpm": 64,
+    "estimatedBeats": 64
+  },
+  {
+    "gardenId": "yuyake",
+    "original": {
+      "libraryId": "libfile_fde3_f-77d26154e5048191b44ef0176b481096_1e5190e96ae0819195a4cad3042d859b",
+      "fileId": "file_00000000fbec81f5b5d5c0755904d7b4",
+      "name": "garden-16-runway-original.mp3",
+      "version": "0",
+      "bytes": 3865271,
+      "sha256": "71b1642b561a4a1f34aba2c3b9ac49a3ede335ec0e2c7b39e0c2c443207b28a2",
+      "duration": 160.731375,
+      "sampleRate": 44100,
+      "channels": 2,
+      "generationId": "2ba863ca-5579-416e-b777-9dd02cf48a67"
+    },
+    "asset": "audio/gardens35/garden-16-runway-v1.wav",
+    "startSample": 194040,
+    "loopSamples": 2116800,
+    "crossfadeSamples": 1764,
+    "guardSamples": 882,
+    "gainDb": -5.3,
+    "estimatedBpm": 80,
+    "estimatedBeats": 64
+  }
+]
