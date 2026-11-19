@@ -1,0 +1,19 @@
+{
+  "base": "5f4c8d045eea6574c5e41fcfd0092a0f66d2267c",
+  "gardenIds": [
+    "yuyake",
+    "bird-eurasian-bullfinch",
+    "bird-white-winged-crossbill",
+    "bali-terrace"
+  ],
+  "changedSource": {
+    "src/encounter-ui.js": {
+      "before": "69a10cf70f86b04210b790e633bf9e980394bf81d2a9ce1abd3123bf61745bb4",
+      "after": "679614a0994a959b84bc8abaa93fbb9529d553c760284ea1ae80a3cc0a11e3bb"
+    },
+    "src/garden-bird-motion.js": {
+      "before": "77f4ca6728fdfd161c9aebd1fdb7b309e6e36afe55959ab210891bf08acca009",
+      "after": "da2f317e3b3fb4ea9dc6bd0e12299e916e380b1b411f6befba47a129dc72eb68"
+    }
+  }
+}
