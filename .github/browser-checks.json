@@ -1,10 +1,10 @@
 {
-  "base": "1a7f0d45ea2196ee580df8ff3d8a778a512de0db",
+  "base": "4efc71d4413d90b93bb6d6839808d0038d444c92",
   "tests": [
-    "tests/browser/shimashima-runway.spec.js",
+    "tests/browser/garden-batch-two-runway.spec.js",
     "tests/browser/game-music.spec.js",
     "tests/browser/encounter-music.spec.js",
     "tests/browser/encounter-pet-response.spec.js"
   ],
-  "reason": "しましま風の庭のBGM1曲を承認原音へ更新。44.1/48kHzデコードと3周レンダー、実時間3周、320/375/402px実ゲーム、初回・庭切替・停止/遭遇復帰・ミュートをChrome/WebKitで検査。心拍4音と保存成立条件も回帰確認。他34庭と再生/保存/得点コードは不変。"
+  "reason": "承認済みRunway原音5曲（#15/#20/#8/#9/#12）のみ更新。各曲を独立して44.1/48kHzデコード・音声出力・3周レンダー、実時間3周、初回・停止/遭遇復帰・庭切替・ミュート・音重複なしをChrome/WebKitで検査。320/375/402px実ゲームと既存心拍/保存条件を回帰確認。他30庭・再生/保存/得点コードは不変。"
 }
