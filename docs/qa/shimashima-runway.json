@@ -1,0 +1,25 @@
+[
+  {
+    "gardenId": "bird-zebra-finch",
+    "original": {
+      "name": "しましま風の庭 - 風のしまもよう.mp3",
+      "libraryId": "libfile_fde3_f-1244a1ffb98c8191b81ca2ef442bd5c2_1e5190e96ae0819195a4cad3042d859b",
+      "fileId": "file_0000000004cc81fd8bb2082d6c9021d9",
+      "version": "0",
+      "bytes": 746250,
+      "sha256": "7d27ed0ded23adc425ffe01ae677197ef5e055ff1d538caa7b6747b9c361a55e",
+      "duration": 30.772167,
+      "sampleRate": 44100,
+      "channels": 2,
+      "generationId": "77c8581f-6c2d-4f27-8df7-b1eccdb51c74"
+    },
+    "asset": "audio/gardens35/garden-07-runway-v1.wav",
+    "startSample": 252693,
+    "loopSamples": 846720,
+    "crossfadeSamples": 1764,
+    "guardSamples": 882,
+    "gainDb": -8,
+    "estimatedBpm": 100,
+    "estimatedBeats": 32
+  }
+]
