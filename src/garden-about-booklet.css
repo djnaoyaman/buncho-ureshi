@@ -22,10 +22,4 @@
 .garden-about-booklet .garden-about-booklet__rules { margin-top:1.2rem; padding:.8rem; border:1px solid var(--booklet-rule); border-radius:.8rem; background:#fffdf6; }
 .garden-about-booklet .garden-about-booklet__rules > summary { cursor:pointer; line-height:1.7; font-weight:700; min-height:2.75rem; align-content:center; }
 .garden-about-booklet summary:focus-visible { outline:3px solid #405343; outline-offset:3px; }
-.garden-about-booklet .garden-about-booklet__music { margin:0 0 1.2rem; padding-bottom:.6rem; border-bottom:1px solid var(--booklet-rule); }
-.garden-about-booklet .garden-about-booklet__track-title { font-weight:700; }
-.garden-about-booklet .garden-about-booklet__music ruby { ruby-align:center; }
-.garden-about-booklet .garden-about-booklet__music rt { font-size:.6em; }
-.garden-about-booklet .garden-about-booklet__music a { display:inline-block; min-height:2.75rem; align-content:center; color:inherit; text-decoration:underline; }
-.garden-about-booklet .garden-about-booklet__music a:focus-visible { outline:3px solid #405343; outline-offset:3px; }
 @media (forced-colors:active) { .garden-about-booklet .garden-about-booklet__number { border:1px solid CanvasText; } }

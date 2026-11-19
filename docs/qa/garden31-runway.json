@@ -1,0 +1,114 @@
+{
+  "gardenId": "hanadokei",
+  "themeId": "garden-hanadokei",
+  "original": {
+    "name": "garden-31-runway-original.mp3",
+    "libraryId": "libfile_fde3_f-80d2feced3a88191ab3c9c1a03852872_1e5190e96ae0819195a4cad3042d859b",
+    "version": "0",
+    "bytes": 2411400,
+    "duration": 100.153417,
+    "sha256": "6a95dd548c7d982c340cb91947618b5303c0aa0262901520c5662bdad7925005",
+    "runwayTask": "3224c337-701b-4e8d-8c8e-a1154a739cd7"
+  },
+  "asset": "audio/gardens35/garden-31-runway-v1.mp3",
+  "startSample": 823700,
+  "loopSamples": 2268000,
+  "crossfadeSamples": 1764,
+  "guardSamples": 4410,
+  "gainDb": -7.1,
+  "sampleRate": 44100,
+  "bitrateKbps": 192,
+  "boundaryAnalysis": {
+    "startSample": 823700,
+    "loopSamples": 2268000,
+    "start": 18.67800453514739,
+    "end": 70.10657596371883,
+    "period": 51.42857142857143,
+    "pitch": 0.833489304419648,
+    "onset": 0.9098340800807119,
+    "phase40ms": 0.2581742325957838,
+    "rmsDb": [
+      -16.437047958374023,
+      -15.018333435058594
+    ],
+    "score": 0.8680572030415299,
+    "pitchClassWindows": [
+      [
+        [
+          -2.0,
+          9
+        ],
+        [
+          -1.5,
+          5
+        ],
+        [
+          -1.0,
+          5
+        ],
+        [
+          -0.5,
+          10
+        ],
+        [
+          0.0,
+          9
+        ],
+        [
+          0.5,
+          7
+        ],
+        [
+          1.0,
+          5
+        ],
+        [
+          1.5,
+          2
+        ]
+      ],
+      [
+        [
+          -2.0,
+          5
+        ],
+        [
+          -1.5,
+          5
+        ],
+        [
+          -1.0,
+          5
+        ],
+        [
+          -0.5,
+          10
+        ],
+        [
+          0.0,
+          9
+        ],
+        [
+          0.5,
+          7
+        ],
+        [
+          1.0,
+          5
+        ],
+        [
+          1.5,
+          2
+        ]
+      ]
+    ]
+  },
+  "subjectiveAudition": false,
+  "bytes": 1240754,
+  "sha256": "19ae3bd54b5550e7c1a4c83e12a2b4d8a2e3e0c8438a7859c7a8c6d359f27d6f",
+  "decodedSamples": 2276820,
+  "seamPeakDelta": 0.006834216415882111,
+  "boundaryRms": 0.08451811224222183,
+  "integratedLufs": -19.0,
+  "truePeakDbfs": -7.6
+}

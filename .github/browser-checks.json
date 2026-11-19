@@ -1,10 +1,10 @@
 {
-  "base": "c0b330ba5675e96e760aad21d51e4d64a94a0cf2",
+  "base": "14d1e6b4ba1b4fc33ec8dc5f700133ec7c0ea483",
   "tests": [
-    "tests/browser/garden-about-booklet.spec.js",
+    "tests/browser/garden31-runway.spec.js",
     "tests/browser/game-music.spec.js",
     "tests/browser/encounter-music.spec.js",
     "tests/browser/encounter-pet-response.spec.js"
   ],
-  "reason": "既存「庭のこと」に割当35曲の説明のみ追加。全35庭表示、狭幅320/375/390/402、native開閉/focus/スクロール/戻る、Bach出典、固定曲/ミュート/再生継続と保存非破壊、既存遭遇BGM/ハート回帰をChrome/WebKitで検証。音源・音声機構・モーション・保存/RNG不変。実iPhone未確認。"
+  "reason": "音楽先行の本人訂正に従い未公開#248冊子差分を保全して配信から除外。公開c0b330bのUI/音源34庭を保持し#31のみ承認Runway録音へ。Chrome/WebKit44.1/48kHzの実decode/出力と2/3周、入庭auto・入庭後実ボタンで別曲fixed選択・遭遇優先/復帰・ミュート・320/375/402px冊子旧UI・保存/4音回帰。Bach資料保持。実機/主観試聴未確認。"
 }
