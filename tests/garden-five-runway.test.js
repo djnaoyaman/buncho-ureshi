@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {GARDEN35_MUSIC} from '../src/data/garden35-music.js';
 import {gardenMusicTracks} from '../src/game-music.js';
-const rows=['garden-five-runway','homichi-runway','shimashima-runway','garden-batch-two-runway','garden-batch-three-runway','garden-batch-four-runway'].flatMap(name=>JSON.parse(readFileSync(new URL('../docs/qa/'+name+'.json',import.meta.url))));
+const rows=['garden-five-runway','homichi-runway','shimashima-runway','garden-batch-two-runway','garden-batch-three-runway','garden-batch-four-runway','garden-batch-five-runway'].flatMap(name=>JSON.parse(readFileSync(new URL('../docs/qa/'+name+'.json',import.meta.url))));
 for(const row of rows)test(`approved recording, cyclic PCM guards and initial offset: ${row.gardenId}`,()=>{
  const m=GARDEN35_MUSIC[row.gardenId],track=gardenMusicTracks().find(t=>t.gardenId===row.gardenId);
  assert.equal(m.asset,row.asset);assert.equal(track.startOffsetSeconds,.02);assert.equal(track.loopStartSeconds,.02);
@@ -16,6 +16,6 @@ for(const row of rows)test(`approved recording, cyclic PCM guards and initial of
  let peak=0,sum=0;for(let i=g;i<g+n;i+=2){const x=pcm.readInt16LE(i)/32768;peak=Math.max(peak,Math.abs(x));sum+=x*x;}
  assert.ok(peak<.98);assert.ok(Math.sqrt(sum/(n/2))>.01);
 });
-test('guard offset stays absent for the other thirteen garden tracks',()=>{
+test('guard offset stays absent for the other eight garden tracks',()=>{
  const selected=new Set(rows.map(r=>r.gardenId));for(const t of gardenMusicTracks())if(!selected.has(t.gardenId)){assert.equal(t.startOffsetSeconds,undefined);assert.equal(t.loopStartSeconds,0);}
 });

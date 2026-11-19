@@ -1,0 +1,112 @@
+[
+  {
+    "gardenId": "bird-oriental-greenfinch",
+    "original": {
+      "name": "garden-23-runway-original.mp3",
+      "bytes": 2459047,
+      "libraryId": "libfile_fde3_f-5cb894ff449c819190512f7325708a57_1e5190e96ae0819195a4cad3042d859b",
+      "fileId": "file_00000000f9e881f6842fa51d9d07cd22",
+      "version": "0",
+      "sha256": "c5ce704fe8055f8e575d9d554ada1f86d0fb9d6f0d62180a7fe5bb121c3503f2",
+      "duration": 102.138708,
+      "sampleRate": 44100,
+      "channels": 2
+    },
+    "asset": "audio/gardens35/garden-23-runway-v1.wav",
+    "startSample": 255560,
+    "loopSamples": 470400,
+    "crossfadeSamples": 1764,
+    "guardSamples": 882,
+    "gainDb": -6.7,
+    "estimatedBpm": 90,
+    "estimatedBeats": 16
+  },
+  {
+    "gardenId": "kazaguruma",
+    "original": {
+      "name": "garden-24-runway-original.mp3",
+      "bytes": 2538042,
+      "libraryId": "libfile_fde3_f-ade3e3408f848191ad565a1b683f9eef_1e5190e96ae0819195a4cad3042d859b",
+      "fileId": "file_00000000eb4081f6a066a205ff34a71f",
+      "version": "0",
+      "sha256": "44d76338f704ec525343efbe851bb325dc7d83d4e955bf1bde21ba5f591261bc",
+      "duration": 105.430167,
+      "sampleRate": 44100,
+      "channels": 2
+    },
+    "asset": "audio/gardens35/garden-24-runway-v1.wav",
+    "startSample": 398223,
+    "loopSamples": 2419200,
+    "crossfadeSamples": 1764,
+    "guardSamples": 882,
+    "gainDb": -7.1,
+    "estimatedBpm": 70,
+    "estimatedBeats": 64
+  },
+  {
+    "gardenId": "bird-pine-grosbeak",
+    "original": {
+      "name": "garden-25-runway-original.mp3",
+      "bytes": 4160559,
+      "libraryId": "libfile_fde3_f-30fc72c03dec8191a2b14091265cbb5b_1e5190e96ae0819195a4cad3042d859b",
+      "fileId": "file_00000000fd3481f6a091e73445fdfede",
+      "version": "0",
+      "sha256": "17a47eb966968f71acc6f355f3bea56acd826ab7c6ea2874ed24add97709e580",
+      "duration": 173.035042,
+      "sampleRate": 44100,
+      "channels": 2
+    },
+    "asset": "audio/gardens35/garden-25-runway-v1.wav",
+    "startSample": 2878627,
+    "loopSamples": 2352000,
+    "crossfadeSamples": 1764,
+    "guardSamples": 882,
+    "gainDb": -8.6,
+    "estimatedBpm": 72,
+    "estimatedBeats": 64
+  },
+  {
+    "gardenId": "bird-white-winged-crossbill",
+    "original": {
+      "name": "garden-27-runway-original.mp3",
+      "bytes": 4115419,
+      "libraryId": "libfile_fde3_f-0b686a48defc819194c0cbab404af4b6_1e5190e96ae0819195a4cad3042d859b",
+      "fileId": "file_00000000457081f69d8f22fcedd363a9",
+      "version": "0",
+      "sha256": "26c8341458e68af2b17d32a20e0c8f4b16a3c1fa26e83af93be3d21c14838577",
+      "duration": 171.154208,
+      "sampleRate": 44100,
+      "channels": 2
+    },
+    "asset": "audio/gardens35/garden-27-runway-v1.wav",
+    "startSample": 391608,
+    "loopSamples": 1302714,
+    "crossfadeSamples": 1764,
+    "guardSamples": 882,
+    "gainDb": -6.5,
+    "estimatedBpm": 65,
+    "estimatedBeats": 32
+  },
+  {
+    "gardenId": "bird-long-tailed-rosefinch",
+    "original": {
+      "name": "garden-28-runway-original.mp3",
+      "bytes": 4337983,
+      "libraryId": "libfile_fde3_f-ea391d4c57a08191b86b00e28d07cf83_1e5190e96ae0819195a4cad3042d859b",
+      "fileId": "file_00000000e4ac81f68374d2175d39abf8",
+      "version": "0",
+      "sha256": "f3e27a46b48cc55965f8697a5a748cae92e6008c0f5db6b591024681e697e67c",
+      "duration": 180.427708,
+      "sampleRate": 44100,
+      "channels": 2
+    },
+    "asset": "audio/gardens35/garden-28-runway-v1.wav",
+    "startSample": 4298427,
+    "loopSamples": 1693440,
+    "crossfadeSamples": 1764,
+    "guardSamples": 882,
+    "gainDb": -5.6,
+    "estimatedBpm": 75,
+    "estimatedBeats": 48
+  }
+]
