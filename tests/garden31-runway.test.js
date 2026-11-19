@@ -1,0 +1,15 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import {createHash} from 'node:crypto';
+import {GARDEN35_MUSIC} from '../src/data/garden35-music.js';import {gardenMusicTracks} from '../src/game-music.js';
+const read=p=>readFileSync(new URL('../'+p,import.meta.url)),hash=b=>createHash('sha256').update(b).digest('hex'),r=JSON.parse(read('docs/qa/garden31-runway.json'));
+test('hanadokei uses the exact approved Runway-derived MP3 with explicit period and entry guard',()=>{
+ const m=GARDEN35_MUSIC.hanadokei,t=gardenMusicTracks().find(t=>t.gardenId==='hanadokei'),bytes=read('public/'+r.asset);
+ assert.equal(m.themeId,'garden-hanadokei');assert.equal(m.title,'まるい冠の花庭');assert.equal(m.asset,r.asset);assert.equal(hash(bytes),r.sha256);assert.equal(bytes.length,r.bytes);assert.ok(bytes.length<1_500_000);
+ assert.equal(r.original.sha256,'6a95dd548c7d982c340cb91947618b5303c0aa0262901520c5662bdad7925005');assert.equal(r.original.version,'0');assert.equal(t.startOffsetSeconds,.02);assert.equal(t.loopStartSeconds,.02);assert.equal(t.loopEndSeconds,.02+r.loopSamples/44100);
+ assert.equal(r.decodedSamples,r.loopSamples+2*r.guardSamples);assert.ok(r.seamPeakDelta<.03);assert.ok(r.boundaryRms>.004);assert.ok(Math.abs(r.integratedLufs+19)<.2);assert.ok(r.truePeakDbfs<0);assert.equal(m.auditionReviewed,false);
+});
+test('other 34 assignments and released booklet remain unchanged; unpublished credits stay deferred',()=>{
+ const audit=JSON.parse(read('docs/qa/garden31-scope.json'));
+ for(const [id,expected] of Object.entries(audit.otherGardenHashes))assert.equal(hash(JSON.stringify(GARDEN35_MUSIC[id])),expected,id);
+ for(const [file,expected] of Object.entries(audit.unchangedSource))assert.equal(hash(read(file)),expected,file);
+ assert.doesNotMatch(read('src/garden-about-booklet.js').toString(),/renderGardenTrackCredit|data-garden-track-credit/);
+});

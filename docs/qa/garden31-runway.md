@@ -1,0 +1,15 @@
+# Garden 31: music-first Runway replacement
+
+Published baseline: c0b330ba5675e96e760aad21d51e4d64a94a0cf2. PR base includes unpublished credits #248 (14d1e6b); the first commit explicitly excludes that unpublished change from this release. The credits work remains preserved at branch feat/garden-music-credits / commit 66915995cc1aad5d733e46917810c43aedec54c2. This is not a rollback of a published UI. No motion or new garden/bird changes.
+
+Only hanadokei / garden-hanadokei changes its assigned recording. The original Library v0 is verified by SHA256 in garden31-runway.json. No generation or purchase. Source is the provided Runway chamber waltz, not a new performance. Bach's original audio, independent licence document, source archive and links remain unchanged; they are not relabelled as Runway.
+
+Chosen original interval: samples 823700–3091700 at 44.1 kHz (18.6780045351–70.1065759637 s), period 51.4285714286 s. Preserve the period with a 40 ms raised-cosine join into source pre-roll, then 20 ms cyclic guards. Start/loop-start .02 s; loop-end 51.4485714286 s. Gain −7.1 dB, stereo 192 kbps MP3, 1,236,993 bytes. Full decoded stream has exactly 2,269,764 frames, −19.0 LUFS and −7.6 dBFS true peak; decoded endpoint delta .008742 and local RMS .08448. No original full-length WAV is shipped.
+
+Boundary selection compares six seconds of pitch-class and onset context across several periods. The chosen interval has mean pitch-class similarity .83349 and onset correlation .90983; seven of eight half-second dominant-pitch windows match around the boundary. Alternative ~17.14/20.57/34.29/41.14/61.71-second candidates have lower combined context scores. Approximate pulse has 70/105 BPM metrical ambiguity; no definitive score transcription or verified bar count is claimed. These measurements support an aligned recurring phrase, not subjective musical quality. Subjective listening was not available; real iPhone Safari, cellular bandwidth and physical device output remain unverified.
+
+Browser checks use real native decode/output at 44.1/48 kHz, offline three-period boundary render and real-time two/three complete periods, pause/resume, mute, garden switching, encounter priority, and native fixed-track selection after arrival. Actual game routing and released booklet are checked at 320/375/402px. Existing music, encounter and pet-response suites remain. Preserve all assertions if failures occur; do not shorten realtime playback.
+
+Scope audit in garden31-scope.json fixes the other 34 catalog entries and released UI/audio engine/save/RNG sources. Protected-build audit compares previous sealed c0b330b output: only garden35-music catalog and derived cache strings can change; add the new MP3. All prior assets including the Bach package remain byte-identical.
+
+Recovery: restore hanadokei's previous catalog entry from c0b330b and run the required pipeline; its original MP3 remains available. Leave the credits deferral in place unless separately authorized. No saved-world change or save rollback is needed.

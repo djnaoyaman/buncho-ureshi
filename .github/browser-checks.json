@@ -1,10 +1,10 @@
 {
-  "base": "f03185ffec57541182dc3085acc8e15fbd055ddf",
+  "base": "14d1e6b4ba1b4fc33ec8dc5f700133ec7c0ea483",
   "tests": [
-    "tests/browser/garden-batch-six-runway.spec.js",
+    "tests/browser/garden31-runway.spec.js",
     "tests/browser/game-music.spec.js",
     "tests/browser/encounter-music.spec.js",
     "tests/browser/encounter-pet-response.spec.js"
   ],
-  "reason": "最終庭BGM #29/#31/#32/#33/#34。4承認Runway曲とBach独立MP3、既存creditsからの最小帰属リンク。各5曲Chrome/WebKit44.1/48kHz復号/出力、実時間2/3周、復帰/ミュート/重複残留、320/375/402px割当/Bアイコン、権利文書と資料リンク、既存心拍/保存回帰を110件で検査。他30庭・既存音源・エンジン/保存/得点/RNG不変。統一クレジットUIは追加しない。実機/主観試聴は未確認。"
+  "reason": "音楽先行の本人訂正に従い未公開#248冊子差分を保全して配信から除外。公開c0b330bのUI/音源34庭を保持し#31のみ承認Runway録音へ。Chrome/WebKit44.1/48kHzの実decode/出力と2/3周、入庭auto・入庭後実ボタンで別曲fixed選択・遭遇優先/復帰・ミュート・320/375/402px冊子旧UI・保存/4音回帰。Bach資料保持。実機/主観試聴未確認。"
 }
