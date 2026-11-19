@@ -1,10 +1,9 @@
 {
-  "base": "4efc71d4413d90b93bb6d6839808d0038d444c92",
+  "base": "9a8e70c5d888a5ca20ce6993fc43c2cc3662e8d9",
   "tests": [
-    "tests/browser/garden-batch-two-runway.spec.js",
+    "tests/browser/nav-small-world.spec.js",
     "tests/browser/game-music.spec.js",
-    "tests/browser/encounter-music.spec.js",
-    "tests/browser/encounter-pet-response.spec.js"
+    "tests/browser/garden-batch-two-runway.spec.js"
   ],
-  "reason": "承認済みRunway原音5曲（#15/#20/#8/#9/#12）のみ更新。各曲を独立して44.1/48kHzデコード・音声出力・3周レンダー、実時間3周、初回・停止/遭遇復帰・庭切替・ミュート・音重複なしをChrome/WebKitで検査。320/375/402px実ゲームと既存心拍/保存条件を回帰確認。他30庭・再生/保存/得点コードは不変。"
+  "reason": "B「小さな世界」の上部3タブ装飾のみ。Chrome/WebKitの320/375/390/430pxで変更前との実ゲーム配置・押下範囲・下線・focus・ARIA・Enter/Space・画像失敗・再読込保存を比較。既存BGM設定/切替/停止復帰と直前公開5曲を回帰検査。音楽/保存/得点/RNGのソースと資産は不変。"
 }

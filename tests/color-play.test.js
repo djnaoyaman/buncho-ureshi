@@ -33,7 +33,9 @@ test('Home header is open to the scene with compact readable 44px navigation',as
   const nav=matching('.game-field-nav').at(-1).style;assert.equal(nav.background,'transparent');assert.equal(nav.boxShadow,'none');assert.equal(nav.padding,'2px');
   const buttons=matching('.game-field-nav button');
   const sized=buttons.find(rule=>rule.style.fontSize==='14px');assert.ok(sized);assert.equal(sized.style.minHeight,'44px');
-  assert.equal(buttons.at(-1).style.background,'var(--play-paper)');
+  // A later layout-only block does not reset an earlier background declaration.
+  // Keep checking the winning declared background across equal-specificity rules.
+  assert.equal(buttons.filter(rule=>rule.style.background).at(-1).style.background,'var(--play-paper)');
   assert.equal(matching('.game-field-nav button[aria-pressed="true"]').at(-1).style.background,'var(--play-peach-wash)');
   assert.equal(matching('.game-field-bar .game-wallet strong').at(-1).style.fontSize,'17px');
   assert.equal(matching('.game-field-bar .game-wallet').at(-1).style.padding,'4px 10px');

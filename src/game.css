@@ -2230,3 +2230,9 @@ body[data-world="buncho"] .game-decor-intro > .game-wallet { justify-self:start;
  body[data-world="buncho"] .game-app .game-decoration > .game-collection-heading { grid-row:10; }
  body[data-world="buncho"] .game-app .game-decoration > .game-collection { grid-row:11; }
 }
+
+/* B: 小さな世界 — decorative art only; existing button geometry and semantics retained. */
+body[data-world="buncho"] .game-field-nav button { display:inline-flex; align-items:center; justify-content:center; gap:5px; white-space:nowrap; }
+body[data-world="buncho"] .game-field-nav .game-nav-miniature { display:block; width:26px; height:26px; object-fit:contain; flex:0 0 26px; pointer-events:none; }
+body[data-world="buncho"] .game-field-nav .game-nav-miniature-label { flex:0 0 auto; text-decoration:inherit; text-underline-offset:inherit; }
+@media (max-width:360px) { body[data-world="buncho"] .game-field-nav .game-nav-miniature { width:24px; height:24px; flex-basis:24px; } }
