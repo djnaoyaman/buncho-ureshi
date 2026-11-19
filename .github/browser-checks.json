@@ -1,10 +1,10 @@
 {
-  "base": "0ee8f6f1e29aa8dac9976c72f11069c6ae18f2b5",
+  "base": "1a7f0d45ea2196ee580df8ff3d8a778a512de0db",
   "tests": [
-    "tests/browser/homichi-runway.spec.js",
+    "tests/browser/shimashima-runway.spec.js",
     "tests/browser/game-music.spec.js",
     "tests/browser/encounter-music.spec.js",
     "tests/browser/encounter-pet-response.spec.js"
   ],
-  "reason": "白い帽子の穂道のBGM1曲を承認原音へ更新。44.1/48kHzのネイティブデコード・3周PCMレンダーと実時間3周、320/375/402pxの実ゲーム、鳴り始め、庭切替、ミュート、停止/遭遇復帰をChrome/WebKitで確認。既存音楽設定・4種類心拍と保存成立条件を回帰検査。他34庭とゲーム再生/保存/得点コードは不変。"
+  "reason": "しましま風の庭のBGM1曲を承認原音へ更新。44.1/48kHzデコードと3周レンダー、実時間3周、320/375/402px実ゲーム、初回・庭切替・停止/遭遇復帰・ミュートをChrome/WebKitで検査。心拍4音と保存成立条件も回帰確認。他34庭と再生/保存/得点コードは不変。"
 }
