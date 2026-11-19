@@ -6,5 +6,5 @@
     "tests/browser/gacha-home-layout.spec.js",
     "tests/browser/decor-scroll.spec.js"
   ],
-  "reason": "Gacha-only introduction layout: reproduce narrow instruction columns; verify mobile/touch 320/375/402px widths and 420/568/600/667/844px heights, readable scrollable guide, balances, full short-screen draw target and repeated modal close/reopen without save writes. Retain all existing machine price/refund/draw/result, motion, preview/equipment and persistence checks in Chrome/WebKit. Existing touch shelf-end and result scrolling at short, portrait, landscape and tablet sizes are included because the short-screen guide is reordered. Supported mobile landscape cases assert the mandatory orientation notice and unchanged-save portrait resume, rather than tapping through it."
+  "reason": "ガチャ案内の幅と短画面配置を修正。Chrome/WebKitで320/375/402px、短画面、案内の可読性、残高、44px操作、スクロール、開閉と保存不変を確認。既存の台別料金・返却・抽選1回・再読込・結果/装備・動き軽減・棚末尾の全ケースを維持。対応端末の横向きは注意表示と保存不変の縦向き復帰を検証する。"
 }
