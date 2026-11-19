@@ -1,0 +1,306 @@
+{
+  "boundaries": [
+    {
+      "number": 29,
+      "start": 102.80498866213152,
+      "end": 126.80498866213152,
+      "period": 24.0,
+      "bpm": 80,
+      "contexts": [
+        {
+          "seconds": 1.2,
+          "chroma": 0.9936264099288306,
+          "onset": 0.9977141975263489
+        },
+        {
+          "seconds": 4,
+          "chroma": 0.9943022685143217,
+          "onset": 0.9944105171447581
+        },
+        {
+          "seconds": 6,
+          "chroma": 0.9947067627598206,
+          "onset": 0.9952127431344184
+        },
+        {
+          "seconds": 8,
+          "chroma": 0.9948324077572535,
+          "onset": 0.994604617521889
+        }
+      ],
+      "crossfades": [
+        {
+          "ms": 20,
+          "correlation": 0.9566651678297108,
+          "powerDb": 1.299965299203042
+        },
+        {
+          "ms": 40,
+          "correlation": 0.9313148211293136,
+          "powerDb": 1.1887198970234456
+        },
+        {
+          "ms": 60,
+          "correlation": 0.9269407906459152,
+          "powerDb": 1.0118807331534143
+        },
+        {
+          "ms": 80,
+          "correlation": 0.9291684912760563,
+          "powerDb": 1.0400927939269287
+        },
+        {
+          "ms": 100,
+          "correlation": 0.9256443325154446,
+          "powerDb": 1.0349853401655156
+        }
+      ],
+      "startPitchWindows": [
+        "A#",
+        "D"
+      ],
+      "startRmsDb": -15.972043991088867,
+      "endPitchWindows": [
+        "A#",
+        "D"
+      ],
+      "endRmsDb": -15.945795059204102,
+      "selectedRmsDb": -15.32065486907959
+    },
+    {
+      "number": 32,
+      "start": 33.044988662131516,
+      "end": 94.75927437641724,
+      "period": 61.714285714285715,
+      "bpm": 70,
+      "contexts": [
+        {
+          "seconds": 1.2,
+          "chroma": 0.9487110860982461,
+          "onset": 0.9253853645340584
+        },
+        {
+          "seconds": 4,
+          "chroma": 0.9490295020029811,
+          "onset": 0.9132481886706356
+        },
+        {
+          "seconds": 6,
+          "chroma": 0.9332862216230634,
+          "onset": 0.8886768938073748
+        },
+        {
+          "seconds": 8,
+          "chroma": 0.916859623826417,
+          "onset": 0.8776304866172979
+        }
+      ],
+      "crossfades": [
+        {
+          "ms": 20,
+          "correlation": 0.31799163472211595,
+          "powerDb": 0.3415255953819264
+        },
+        {
+          "ms": 40,
+          "correlation": 0.23710535563741497,
+          "powerDb": 0.29783293877633743
+        },
+        {
+          "ms": 60,
+          "correlation": 0.11356777978990328,
+          "powerDb": 0.16238989944200116
+        },
+        {
+          "ms": 80,
+          "correlation": 0.05212501280334363,
+          "powerDb": 0.03702633837804158
+        },
+        {
+          "ms": 100,
+          "correlation": 0.05397757730874392,
+          "powerDb": -0.02303274678618693
+        }
+      ],
+      "startPitchWindows": [
+        "D",
+        "A"
+      ],
+      "startRmsDb": -11.853303909301758,
+      "endPitchWindows": [
+        "D",
+        "A"
+      ],
+      "endRmsDb": -11.236228942871094,
+      "selectedRmsDb": -14.48544979095459
+    },
+    {
+      "number": 33,
+      "start": 71.86498866213152,
+      "end": 83.09305883757011,
+      "period": 11.228070175438596,
+      "bpm": 85.5,
+      "contexts": [
+        {
+          "seconds": 1.2,
+          "chroma": 0.9943759346309221,
+          "onset": 0.9875505697185927
+        },
+        {
+          "seconds": 4,
+          "chroma": 0.9936117828599886,
+          "onset": 0.9705546919631258
+        },
+        {
+          "seconds": 6,
+          "chroma": 0.9857636792279103,
+          "onset": 0.9497572760460401
+        },
+        {
+          "seconds": 8,
+          "chroma": 0.9132953436794489,
+          "onset": 0.9189391173976794
+        }
+      ],
+      "crossfades": [
+        {
+          "ms": 20,
+          "correlation": 0.20173950082956052,
+          "powerDb": 0.02410830603517975
+        },
+        {
+          "ms": 40,
+          "correlation": 0.2970936466252128,
+          "powerDb": 0.33387444964700064
+        },
+        {
+          "ms": 60,
+          "correlation": 0.4012500179879475,
+          "powerDb": 0.45934454943676234
+        },
+        {
+          "ms": 80,
+          "correlation": 0.41310971953438247,
+          "powerDb": 0.5461567723676207
+        },
+        {
+          "ms": 100,
+          "correlation": 0.4820768977975152,
+          "powerDb": 0.5248551387601014
+        }
+      ],
+      "startPitchWindows": [
+        "G",
+        "G"
+      ],
+      "startRmsDb": -13.241042137145996,
+      "endPitchWindows": [
+        "G",
+        "G"
+      ],
+      "endRmsDb": -11.366058349609375,
+      "selectedRmsDb": -12.025938034057617
+    },
+    {
+      "number": 34,
+      "start": 81.1,
+      "end": 141.1,
+      "period": 60.0,
+      "bpm": 80,
+      "contexts": [
+        {
+          "seconds": 1.2,
+          "chroma": 0.9964072736662591,
+          "onset": 0.9973865736510088
+        },
+        {
+          "seconds": 4,
+          "chroma": 0.9962330459492414,
+          "onset": 0.9981872592070781
+        },
+        {
+          "seconds": 6,
+          "chroma": 0.9960388710133774,
+          "onset": 0.9981804859962825
+        },
+        {
+          "seconds": 8,
+          "chroma": 0.9947817415449695,
+          "onset": 0.9983901209804775
+        }
+      ],
+      "crossfades": [
+        {
+          "ms": 20,
+          "correlation": 0.9352044326043492,
+          "powerDb": 1.4099574940024588
+        },
+        {
+          "ms": 40,
+          "correlation": 0.954418211598029,
+          "powerDb": 1.4229698458304016
+        },
+        {
+          "ms": 60,
+          "correlation": 0.9458268746195378,
+          "powerDb": 1.5978488759779648
+        },
+        {
+          "ms": 80,
+          "correlation": 0.9400937305864636,
+          "powerDb": 1.2063209461445334
+        },
+        {
+          "ms": 100,
+          "correlation": 0.93619559760359,
+          "powerDb": 0.9100605747202722
+        }
+      ],
+      "startPitchWindows": [
+        "C#",
+        "F"
+      ],
+      "startRmsDb": -8.785714149475098,
+      "endPitchWindows": [
+        "C#",
+        "F"
+      ],
+      "endRmsDb": -8.871261596679688,
+      "selectedRmsDb": -13.636083602905273
+    }
+  ],
+  "finalAudio": [
+    {
+      "gardenId": "tsukiakari",
+      "sha256": "cfd76469e334fd666f7fd3cef69d8d4fb9f8f8977dc9973e0d27ebce38705ad3",
+      "bytes": 4240700,
+      "integratedLufs": -19.0,
+      "truePeakDbfs": -4.9,
+      "seamPeakDelta": 0.003662109375
+    },
+    {
+      "gardenId": "onsen",
+      "sha256": "795dfdc3599f5fcb823c4a6579cd6ec43dfcb3326e8f230f85c5b1ed9e15a49f",
+      "bytes": 10893500,
+      "integratedLufs": -19.0,
+      "truePeakDbfs": -7.6,
+      "seamPeakDelta": 0.0118408203125
+    },
+    {
+      "gardenId": "bali-terrace",
+      "sha256": "cd69f4f39c4457ea881d8c5aa15fac2b8917a981c47bf738c270b07030dc64cf",
+      "bytes": 1987732,
+      "integratedLufs": -19.0,
+      "truePeakDbfs": -8.7,
+      "seamPeakDelta": 0.00738525390625
+    },
+    {
+      "gardenId": "bird-masked-finch",
+      "sha256": "767e90bbb4a7e48a74d485e261bd994c8f7bf90cb9f0c4c174d48179c016a1ed",
+      "bytes": 10591100,
+      "integratedLufs": -19.0,
+      "truePeakDbfs": -6.7,
+      "seamPeakDelta": 0.00689697265625
+    }
+  ]
+}

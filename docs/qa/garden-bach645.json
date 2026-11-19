@@ -1,0 +1,56 @@
+{
+  "gardenId": "hanadokei",
+  "original": {
+    "name": "BWV645-garden31-repeat-candidate.mp3",
+    "bytes": 1681492,
+    "libraryId": "libfile_fde3_f-0d48dc5c92ac8191bd908dd343f0395d_1e5190e96ae0819195a4cad3042d859b",
+    "fileId": "file_00000000b6f481f79aeabaa92265db3b",
+    "version": "0",
+    "sha256": "e7f1afff5e6f63e577c7a5dad4944daec805f537f89c03c453cc2872f3434e10",
+    "duration": 70.034286,
+    "decodedSeconds": 70,
+    "sampleRate": 44100,
+    "channels": 2
+  },
+  "sourcePackage": {
+    "name": "BWV645-independent-source-package.zip",
+    "bytes": 26045726,
+    "libraryId": "libfile_fde3_f-d75116c6a810819182329bf9808e17c1_1e5190e96ae0819195a4cad3042d859b",
+    "fileId": "file_000000001e4c8212b404190e51262279",
+    "version": "0",
+    "sha256": "4734fa95b71ab55e4ca88b8ec92aa40941789ea6f51535e043a1507cf1cff8be"
+  },
+  "losslessMaster": {
+    "name": "BWV645-garden31-repeat-candidate.wav",
+    "sha256": "b2800a49580034328407a5bff1efc33b18a1a2460899f597776a52cc128906dd",
+    "frames": 3087000
+  },
+  "asset": "audio/gardens35/garden-31-bwv645-v1.mp3",
+  "sha256": "e9263e2031ceec86abd4f365182f8ebf25fd5c928e35bba48b4de14301401cc6",
+  "bytes": 1682746,
+  "sampleRate": 44100,
+  "loopSamples": 3087000,
+  "loopStartSeconds": 0.02,
+  "loopEndSeconds": 70.02,
+  "startOffsetSeconds": 0.02,
+  "guardSamples": 882,
+  "gainDb": 4.2,
+  "bpm": 72,
+  "scoreQuarterBeats": [
+    4.5,
+    88.5
+  ],
+  "decodedFrames": 3088764,
+  "seamPeakDelta": 0.0017478615045547485,
+  "integratedLufs": -19.3,
+  "truePeakDbfs": -7.1,
+  "license": "CC BY-SA 2.5",
+  "source": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=601",
+  "verifiedOfficialSources": {
+    "ly": "6e6b2b25a91e6b924cd3dee80594436d7d0efa9fee29141fff9f378bcd90f8cb",
+    "mid": "70478d1c4096009b5662adf154f72d9b814d3e58312bd01f9fc2830c0b0cc969"
+  },
+  "attributionDocument": "audio/gardens35/bach-bwv645-license.html",
+  "sourceArchive": "audio/gardens35/bach-bwv645-sources.zip",
+  "sourceArchiveSha256": "aebe191ddc616ae3476d22f033c1ab282fe8ceac533a5625eaa2916f6a8d3c08"
+}
