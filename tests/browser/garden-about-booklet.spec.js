@@ -1,5 +1,6 @@
 // Prepared only. Run against the integrated actual application, never a synthetic page.
 import {test,expect} from '@playwright/test';
+import {GARDEN_TRACK_CREDITS} from '../../src/data/garden-track-credits.js';
 import {writeFile} from 'node:fs/promises';
 import {NOW,at,cases,worldFor,GARDENS,engine,raptor} from '../fixtures/garden-about-world.js';
 async function raw(page,value){
@@ -12,8 +13,8 @@ async function raw(page,value){
  tx.oncomplete=()=>{db.close();resolve(out)};tx.onerror=()=>reject(tx.error);};
  }),{value,write:value!==undefined});
 }
-async function setup(page,kind='solo',garden=GARDENS[0].id){
- await page.addInitScript(()=>{localStorage.setItem('buncho.music.v1',JSON.stringify({enabled:false}));localStorage.setItem('buncho.care-sound-choice.v1',JSON.stringify({explicit:true,enabled:false}));});
+async function setup(page,kind='solo',garden=GARDENS[0].id,music={enabled:false}){
+ await page.addInitScript(music=>{localStorage.setItem('buncho.music.v1',JSON.stringify(music));localStorage.setItem('buncho.care-sound-choice.v1',JSON.stringify({explicit:true,enabled:false}));},music);
  await page.goto('');await page.clock.install({time:at(kind)});await page.clock.pauseAt(at(kind)+1000);
  await raw(page,worldFor(kind,garden));await page.goto('game/');
  await enterVisibleGarden(page);
@@ -48,6 +49,11 @@ const layouts=[...GARDENS.map(g=>({garden:g,size:[320,740]})),...[ [390,844],[84
 for(const {garden,size} of layouts)test('layout '+garden.id+' '+size.join('x'),async({page},info)=>{
  await page.setViewportSize({width:size[0],height:size[1]});await setup(page,'solo',garden.id);const a=await open(page);
  await expect(a.locator('h4')).toHaveText(garden.name);await expect(a).toContainText(garden.description);
+ const credit=GARDEN_TRACK_CREDITS[garden.music.themeId],block=a.locator('[data-garden-track-credit]');
+ await expect(block).toHaveAttribute('data-garden-track-credit',garden.music.themeId);
+ const text=await block.evaluate(e=>{const c=e.cloneNode(true);c.querySelectorAll('rt').forEach(r=>r.remove());return c.textContent;});
+ for(const value of [credit.trackTitle,'制作：みやざきなおや',credit.description])expect(text).toContain(value);
+ expect(await block.evaluate(e=>e.nextElementSibling.tagName)).toBe('FIGURE');
  const img=a.locator('img');await expect(img).toHaveCount(1);await img.scrollIntoViewIfNeeded();await img.evaluate(i=>i.decode());expect(await img.evaluate(i=>i.naturalWidth)).toBeGreaterThan(0);
  await page.screenshot({path:info.outputPath('01-identity.png')});
  await a.locator('.garden-about-booklet__warning ol > li').first().scrollIntoViewIfNeeded();await expect(a.locator('.garden-about-booklet__warning ol > li').first()).toBeInViewport({ratio:1});
@@ -144,4 +150,29 @@ test('native tab order, scoped long text enlargement, and forced-color focus',as
  await page.screenshot({path:info.outputPath('forced-colors-focus.png')});
  expect(await raw(page)).toEqual(before);
  // Native browser zoom remains untested; scoped measured text enlargement does not claim native zoom coverage. No manual check is required.
+});
+
+for(const [width,mode] of [[320,'auto'],[375,'fixed'],[402,'off']])test('assigned credit and audio continuity '+width+' '+mode,async({page},info)=>{
+ await page.setViewportSize({width,height:844});
+ await page.addInitScript(()=>{
+  const Native=window.AudioContext||window.webkitAudioContext;window.__creditStarts=0;
+  class Context extends Native {createBufferSource(){const source=super.createBufferSource(),start=source.start.bind(source);source.start=(...args)=>{window.__creditStarts++;return start(...args);};return source;}}
+  window.AudioContext=Context;window.webkitAudioContext=Context;
+ });
+ await setup(page,'navigation-cooldown','hanadokei',{enabled:mode!=='off',mode:mode==='off'?'auto':mode,selected:'village',volume:.1});
+ const a=await open(page),credit=a.locator('[data-garden-track-credit]');
+ await expect(a.locator('[data-garden-track-credit]')).toHaveAttribute('data-garden-track-credit','garden-hanadokei');
+ if(mode!=='off')await expect.poll(()=>page.evaluate(()=>window.__creditStarts),{timeout:30000}).toBeGreaterThan(0);
+ else expect(await page.evaluate(()=>window.__creditStarts)).toBe(0);
+ const starts=await page.evaluate(()=>window.__creditStarts),before=await raw(page);
+ await credit.scrollIntoViewIfNeeded();await expect(credit).toBeVisible();await expect(credit).not.toContainText('バッハ');
+ expect(await a.evaluate(e=>e.scrollWidth<=e.clientWidth+1)).toBe(true);
+ await page.screenshot({path:info.outputPath('assigned-credit-'+width+'.png')});
+ for(let i=0;i<3;i++){await a.locator(':scope > summary').focus();await page.keyboard.press('Enter');await expect(a).not.toHaveAttribute('open','');await page.keyboard.press('Enter');await expect(a).toHaveAttribute('open','');}
+ expect(await page.evaluate(()=>window.__creditStarts)).toBe(starts);expect(await raw(page)).toEqual(before);
+ await page.goto('credits/');
+ const oldSource=page.locator('a[href*="bach-bwv645-license.html"]');await expect(oldSource).toBeVisible();await oldSource.click();
+ await expect(page).toHaveURL(/bach-bwv645-license.html$/);await expect(page.locator('body')).toContainText('Bart Golsteijn');await expect(page.locator('body')).toContainText('CC BY-SA 2.5');
+ await page.goBack();await expect(page).toHaveURL(/credits\/$/);await page.goBack();await enterVisibleGarden(page);await open(page);
+ await expect(about(page).locator('[data-garden-track-credit]')).toHaveAttribute('data-garden-track-credit','garden-hanadokei');
 });

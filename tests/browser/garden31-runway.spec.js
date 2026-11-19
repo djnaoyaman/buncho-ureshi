@@ -83,7 +83,7 @@ for(const width of [320,375,402])test(`actual game garden31 Runway garden routin
   const title=await page.evaluate(async id=>(await import(new URL('src/data/garden35-music.js',document.baseURI))).GARDEN35_MUSIC[id].title,id);
   await expect(page.locator('.game-music-current')).toContainText(title);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
-  await expect(page.locator('[data-garden-track-credit]')).toHaveCount(0);
+  await expect(page.locator('[data-garden-track-credit]')).not.toBeVisible();
   await settings(page);
   await expect(page.locator('[data-music-auto]')).toHaveAttribute('aria-pressed','true');
   await page.locator('[data-music-choose]').click();const choice=page.locator('[data-music="garden-'+id+'"]').last();await expect(choice).toHaveAttribute('aria-pressed','false');await choice.click();await expect(choice).toHaveAttribute('aria-pressed','true');await expect(page.locator('.game-music-current')).toContainText(title);
@@ -96,8 +96,8 @@ for(const width of [320,375,402])test(`actual game garden31 Runway garden routin
   await page.locator('[data-game-close-panel]').click();await page.locator('.game-field-nav [data-game-panel=outdoors]').click();
   await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-scene-state','ready');
   const booklet=page.locator('[data-garden-details=about]');await booklet.locator(':scope > summary').click();
-  await expect(booklet.locator('h4')).toHaveText('まるい冠の花庭');await expect(booklet.locator('[data-garden-track-credit]')).toHaveCount(0);
-  await expect(booklet.locator('.garden-about-booklet__chapter').first().locator('h5 + figure')).toHaveCount(1);
+  await expect(booklet.locator('h4')).toHaveText('まるい冠の花庭');await expect(booklet.locator('[data-garden-track-credit]')).toHaveAttribute('data-garden-track-credit','garden-'+id);
+  await expect(booklet.locator('.garden-about-booklet__chapter').first().locator('h5 + .garden-about-booklet__music + figure')).toHaveCount(1);
   await booklet.locator(':scope > summary').focus();await page.keyboard.press('Enter');await expect(booklet).not.toHaveAttribute('open','');
  }
 });
