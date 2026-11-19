@@ -1,0 +1,114 @@
+[
+  {
+    "gardenId": "bird-red-crossbill",
+    "original": {
+      "name": "松ぼっくりの回廊 - 木立のオルガン.mp3",
+      "libraryId": "libfile_fde3_f-c8234a4a49788191a1c69f18f5b88292_1e5190e96ae0819195a4cad3042d859b",
+      "fileId": "file_00000000c40881f5bf0549acb488c6ef",
+      "bytes": 1852170,
+      "sha256": "4822b52657c5e67d98f068c456164b80344d7b10eb00ae42197ddcab22627ad5",
+      "duration": 76.852167,
+      "sampleRate": 44100,
+      "channels": 2,
+      "version": "0",
+      "generationId": "1a5b183c-2886-4a51-af1a-fd9ec99277ac"
+    },
+    "asset": "audio/gardens35/garden-15-runway-v1.wav",
+    "startSample": 998424,
+    "loopSamples": 1128960,
+    "crossfadeSamples": 1764,
+    "guardSamples": 882,
+    "gainDb": -8.4,
+    "estimatedBpm": 75,
+    "estimatedBeats": 32
+  },
+  {
+    "gardenId": "bird-japanese-grosbeak",
+    "original": {
+      "name": "こだまの新緑庭 - 葉の向こうの子守歌.mp3",
+      "libraryId": "libfile_fde3_f-86a6719075e88191a7552f11a2305db2_1e5190e96ae0819195a4cad3042d859b",
+      "fileId": "file_0000000052e881fd86ffd618683a04ef",
+      "bytes": 4374972,
+      "sha256": "13cf73c0b8910e15747485b55aee0dcb343a48c47ee48f9d52959f12d37e1a00",
+      "duration": 181.968917,
+      "sampleRate": 44100,
+      "channels": 2,
+      "version": "0",
+      "generationId": "79251edc-4a2e-4d71-9ce0-35c79800b9d8"
+    },
+    "asset": "audio/gardens35/garden-20-runway-v1.wav",
+    "startSample": 2110626,
+    "loopSamples": 1008000,
+    "crossfadeSamples": 1764,
+    "guardSamples": 882,
+    "gainDb": -7.4,
+    "estimatedBpm": 84,
+    "estimatedBeats": 32
+  },
+  {
+    "gardenId": "bird-red-avadavat",
+    "original": {
+      "name": "葦の手紙 - 水にほどける手紙.mp3",
+      "libraryId": "libfile_fde3_f-50e4d1c8bfbc8191bf26ce8e4eaf8288_1e5190e96ae0819195a4cad3042d859b",
+      "fileId": "file_0000000033d081fd8f129ea84105685d",
+      "bytes": 3804458,
+      "sha256": "2c98ba083db06b3ace32c479ac198e94fde053f49c6bb3c37bd97bd0f758540b",
+      "duration": 158.1975,
+      "sampleRate": 44100,
+      "channels": 2,
+      "version": "0"
+    },
+    "asset": "audio/gardens35/garden-08-runway-v1.wav",
+    "startSample": 3027024,
+    "loopSamples": 1130283,
+    "crossfadeSamples": 1764,
+    "guardSamples": 882,
+    "gainDb": -7.5,
+    "estimatedBpm": 75,
+    "estimatedBeats": 32
+  },
+  {
+    "gardenId": "komugi",
+    "original": {
+      "name": "栗いろの実り庭 - 夕暮れの実り.mp3",
+      "libraryId": "libfile_fde3_f-5871ad4847bc8191971f97ef0087660a_1e5190e96ae0819195a4cad3042d859b",
+      "fileId": "file_0000000047d881fd8a55f12ac6cdc444",
+      "bytes": 3081597,
+      "sha256": "6e705c314ae85196ccbac9668ce6e65022226dd288a46f7de1605c13afefac25",
+      "duration": 128.078292,
+      "sampleRate": 44100,
+      "channels": 2,
+      "version": "0"
+    },
+    "asset": "audio/gardens35/garden-09-runway-v1.wav",
+    "startSample": 2411829,
+    "loopSamples": 940800,
+    "crossfadeSamples": 882,
+    "guardSamples": 882,
+    "gainDb": -7.1,
+    "estimatedBpm": 90,
+    "estimatedBeats": 32
+  },
+  {
+    "gardenId": "bird-black-rumped-waxbill",
+    "original": {
+      "name": "赤い線の草みち - 赤土の糸.mp3",
+      "libraryId": "libfile_fde3_f-97fc052612808191bef63272284f3419_1e5190e96ae0819195a4cad3042d859b",
+      "fileId": "file_00000000885481fdbad809b5540f14f3",
+      "bytes": 4184383,
+      "sha256": "4868950cf07495166ee12b05d70c24bfc1398ab3883090080387fa1beacc6c64",
+      "duration": 174.027708,
+      "sampleRate": 44100,
+      "channels": 2,
+      "version": "0"
+    },
+    "asset": "audio/gardens35/garden-12-runway-v1.wav",
+    "startSample": 6166503,
+    "loopSamples": 940800,
+    "crossfadeSamples": 1764,
+    "guardSamples": 882,
+    "gainDb": -7.5,
+    "estimatedBpm": 90,
+    "estimatedBeats": 32
+  }
+]
