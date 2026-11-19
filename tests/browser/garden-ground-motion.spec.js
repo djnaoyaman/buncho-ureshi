@@ -57,6 +57,8 @@ for(const id of ids)test(`ground holds and resumes ${id}`,async({page})=>{
  await expect(page.locator('.finch-garden-stage')).not.toHaveAttribute('data-garden-id',id);
  await page.locator('[data-garden-scroll=previous]').click();await page.clock.runFor(1500);
  await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-garden-id',id);
+ await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-scene-state','ready');
+ await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-terrain-motion','grounded');
  for(const b of await measure(page))expect(b.hit).toBe(true);
 });
 for(const id of ids)test(`ground motion setting off ${id}`,async({page})=>{
