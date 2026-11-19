@@ -1,7 +1,10 @@
 {
-  "base": "5e793f22a50a69ccf0f171957b5ca0ab013a97c5",
+  "base": "595969a1e555bb097c050b4ef010af3e33e0c55c",
   "tests": [
-    "tests/browser/encounter-pet-response.spec.js"
+    "tests/browser/gacha-intro-layout.spec.js",
+    "tests/browser/gacha-machines.spec.js",
+    "tests/browser/gacha-home-layout.spec.js",
+    "tests/browser/decor-scroll.spec.js"
   ],
-  "reason": "Approved three fan hearts and exact four PCM motifs, uniform presentation-only random selection. Exercise every choice across normal/crow/raptor, RNG preservation, durable gain/reload, cap/failure/target races, slow save, native audio/mute/overlap, independent motion, BGM continuity, pending photos, and 320/375/402px in Chrome/WebKit."
+  "reason": "ガチャ案内の幅と短画面配置を修正。Chrome/WebKitで320/375/402px、短画面、案内の可読性、残高、44px操作、スクロール、開閉と保存不変を確認。既存の台別料金・返却・抽選1回・再読込・結果/装備・動き軽減・棚末尾の全ケースを維持。対応端末の横向きは注意表示と保存不変の縦向き復帰を検証する。"
 }

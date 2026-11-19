@@ -2203,3 +2203,30 @@ body[data-world="buncho"] :is(.game-food-choice,.life-time-guide,.life-caretaker
 body[data-world="buncho"] :is(.game-food-choice,.life-time-guide,.life-caretaker-scope,.caretaker-recruitment,.life-health-rules,.game-next-goals) rt{font-size:.62em;font-weight:400;line-height:1.2}
 body[data-world="buncho"] :is(.game-food-choice,.life-time-guide,.life-caretaker-scope,.life-health-rules) p{line-height:1.95}
 @media(max-width:420px){body[data-world="buncho"] .kids-guide{padding:.75rem}body[data-world="buncho"] .kids-steps{padding-left:1.35rem}body[data-world="buncho"] .kids-steps>li{padding:.6rem}}
+
+/* Gacha guidance must not compete with the non-shrinking balance pill. */
+body[data-world="buncho"] .game-decoration > .game-decor-intro {
+ display:grid; grid-template-columns:minmax(0,1fr); align-items:start; gap:8px;
+}
+body[data-world="buncho"] .game-decoration > .game-decor-intro > p { white-space:normal; }
+body[data-world="buncho"] .game-decor-intro > .kids-steps {
+ margin:0; padding-left:1.6rem; gap:4px; line-height:1.5;
+}
+body[data-world="buncho"] .game-decor-intro > .kids-steps > li { padding:4px 8px; }
+body[data-world="buncho"] .game-decor-intro > .game-wallet { justify-self:start; flex-wrap:wrap; max-width:100%; box-sizing:border-box; }
+/* On short screens keep the balance and purchase controls first, with the
+   complete guide directly after them and before the room preview. No copy is hidden. */
+@media(max-height:600px) {
+ body[data-world="buncho"] .game-app .game-decoration > .game-decor-intro,
+ body[data-world="buncho"] .game-app .game-decoration > .game-decor-workbench { display:contents; }
+ body[data-world="buncho"] .game-decor-intro > .game-wallet { grid-column:1; grid-row:1; }
+ body[data-world="buncho"] .game-decor-intro > p { grid-column:1; grid-row:6; }
+ body[data-world="buncho"] .game-decor-intro > .kids-steps { grid-column:1; grid-row:7; }
+ body[data-world="buncho"] .game-decoration .game-decor-draw { grid-column:1; grid-row:5; }
+ body[data-world="buncho"] .game-decoration .game-decor-preview { grid-column:1; grid-row:8; }
+ body[data-world="buncho"] .game-app .game-decor-draw .game-draw-button { display:flex; flex-direction:row; align-items:center; justify-content:center; gap:8px; min-height:48px; padding:4px 8px; font-size:14px; }
+ body[data-world="buncho"] .game-decor-draw .game-gacha-icon { width:24px; height:26px; }
+ body[data-world="buncho"] .game-app .game-decoration > .game-decor-tiers { grid-row:9; }
+ body[data-world="buncho"] .game-app .game-decoration > .game-collection-heading { grid-row:10; }
+ body[data-world="buncho"] .game-app .game-decoration > .game-collection { grid-row:11; }
+}
