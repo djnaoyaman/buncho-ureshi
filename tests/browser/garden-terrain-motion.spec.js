@@ -124,7 +124,13 @@ for(const condition of ['chick','missing-textures'])test(`native art survives ${
   await page.mouse.move(0,0);await page.locator('#finch-garden-title').focus();
   for(let n=0;n<4;n++)await page.clock.runFor(26000);
   if(condition==='missing-textures')await expect.poll(()=>requested).toBeGreaterThan(0);
-  else await expect(page.locator('[data-garden-flight]')).toHaveCount(0);
+  else {
+    await expect(page.locator('[data-garden-flight]')).toHaveCount(0);
+    // Existing game rules keep chicks at home; the adapter must not invent an adult attendee.
+    await expect(page.locator('.finch-garden-household')).toHaveCount(0);
+    await expect(page.locator('.garden-terrain-flight')).toHaveCount(0);
+    return;
+  }
   await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-scene-state','ready');
   const native=page.locator('.finch-garden-household .garden-bird-pose-window');
   expect(await native.evaluate(e=>getComputedStyle(e).visibility)).toBe('visible');
