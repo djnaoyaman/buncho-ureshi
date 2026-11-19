@@ -4,7 +4,7 @@
 export function createCareAudio({ Context = globalThis.AudioContext || globalThis.webkitAudioContext, activationTimeoutMs = 1200 } = {}) {
   let enabled = false, disposed = false, context = null, generation = 0;
   let ready = Promise.resolve(false);
-  const active = new Set(), pendingActivations = new Set();
+  const active = new Set(), pendingActivations = new Set(), petBuffers = new Map();
   const activationLimit = Number.isFinite(activationTimeoutMs) ? Math.max(1, Math.min(1200, activationTimeoutMs)) : 1200;
   function waitForActivation(resumed, token) {
     return new Promise(resolve => {
@@ -68,22 +68,22 @@ export function createCareAudio({ Context = globalThis.AudioContext || globalThi
       return true;
     } catch { stopNodes(); return false; }
   }
-  /** One quiet musical confirmation; independent of motion and the BGM player. */
-  async function chime(isCurrent = () => true) {
+  /** One approved PCM motif, independent of motion and the BGM player. */
+  async function chime(isCurrent = () => true, samples = null) {
     const token=generation,activation=ready;
-    if(!enabled||disposed||!context||!isCurrent())return false;
+    if(!enabled||disposed||!context||!samples?.length||!isCurrent())return false;
     if(!(context.state==='running'||await activation)||!enabled||disposed||token!==generation||context.state!=='running'||!isCurrent())return false;
     try {
-      stopNodes();const start=context.currentTime+.005,osc=context.createOscillator(),gain=context.createGain(),entry={osc,gain};active.add(entry);
-      osc.type='sine';osc.frequency.setValueAtTime(880,start);
-      gain.gain.setValueAtTime(0,start);gain.gain.linearRampToValueAtTime(.025,start+.012);gain.gain.exponentialRampToValueAtTime(.0001,start+.19);
+      let buffer=petBuffers.get(samples);if(!buffer){buffer=context.createBuffer(1,samples.length,48000);buffer.getChannelData(0).set(samples);petBuffers.set(samples,buffer);}
+      stopNodes();const start=context.currentTime+.005,osc=context.createBufferSource(),gain=context.createGain(),entry={osc,gain};active.add(entry);
+      osc.buffer=buffer;gain.gain.setValueAtTime(1,start);
       osc.connect(gain);gain.connect(context.destination);osc.onended=()=>{active.delete(entry);try{osc.disconnect();gain.disconnect();}catch{}};
-      osc.start(start);osc.stop(start+.20);return true;
+      osc.start(start);osc.stop(start+buffer.duration);return true;
     } catch {stopNodes();return false;}
   }
   function close() {
     if (disposed) return;
-    disposed = true; enabled = false; cancel();
+    disposed = true; enabled = false; cancel(); petBuffers.clear();
     try { const closing = context?.close(); closing?.catch?.(() => {}); } catch {}
     context = null;
   }

@@ -1,0 +1,58 @@
+{
+  "libraryId": "libfile_fde3_f-67c076d9347c8191803425230160382e_1e5190e96ae0819195a4cad3042d859b",
+  "version": 0,
+  "approvedVideoSHA256": "c9b55ed6406f5305a7aa9e2bc364fe56c8816053a87b88d85fc06fb69817b023",
+  "sourceWavSHA256": "cfd6345cbec76813ff9ea0aaa943da36e3fcd4c72402335ea8a63959b944c600",
+  "format": "48 kHz mono signed little-endian PCM16; 60000 samples per choice",
+  "extraction": "Exact 1.25 second regions beginning at 0.65, 5.65, 10.65, 15.65 seconds of the final pre-AAC comparison WAV. No resynthesis, resampling or extra gain.",
+  "sounds": [
+    {
+      "index": 0,
+      "pcmSHA256": "eb0b75e04f5a04d6bb59195ae516adc81201ee106e1e863954a261400d1d18fd",
+      "number": 1,
+      "title": "木の上向き鼓動",
+      "LUFS": -24.03,
+      "truePeak_dBTP": -10.15,
+      "peak": 0.31087890893738607,
+      "energyBelow100HzPercent": 0.00012936754797703007,
+      "encodedLUFS": -24.02,
+      "encodedTruePeak_dBTP": -10.72
+    },
+    {
+      "index": 1,
+      "pcmSHA256": "2c4636a940b4c9d6d7c603bc9634419112847e953d7e9d0d86384c7525b58693",
+      "number": 2,
+      "title": "ベルの胸の高鳴り",
+      "LUFS": -23.97,
+      "truePeak_dBTP": -11.14,
+      "peak": 0.27707111923644057,
+      "energyBelow100HzPercent": 8.526798486006233e-07,
+      "encodedLUFS": -24.02,
+      "encodedTruePeak_dBTP": -10.68
+    },
+    {
+      "index": 2,
+      "pcmSHA256": "adcb693b61ae49f8dc09efba28945e141dad4fff80af8f2c7bec9edae2f055bb",
+      "number": 3,
+      "title": "マリンバの弾み",
+      "LUFS": -24.0,
+      "truePeak_dBTP": -14.56,
+      "peak": 0.1868922355906121,
+      "energyBelow100HzPercent": 5.763064475098182e-06,
+      "encodedLUFS": -24.01,
+      "encodedTruePeak_dBTP": -14.74
+    },
+    {
+      "index": 3,
+      "pcmSHA256": "7f4ef067bf12e97d2fd72f0d5a3a6f16cf4adf1dd8e421fae71d05521b7e6abb",
+      "number": 4,
+      "title": "息を感じる温かな鼓動",
+      "LUFS": -24.47,
+      "truePeak_dBTP": -12.3,
+      "peak": 0.24271200564645984,
+      "energyBelow100HzPercent": 0.0026867316392199915,
+      "encodedLUFS": -24.0,
+      "encodedTruePeak_dBTP": -12.21
+    }
+  ]
+}

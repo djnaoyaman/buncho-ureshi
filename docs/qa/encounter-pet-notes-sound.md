@@ -1,3 +1,5 @@
+> Historical first draft (4145f9a). Superseded by the approved four PCM sounds and hearts documented in [pet-four-hearts.md](pet-four-hearts.md). The 880Hz single note and musical-note visuals below are no longer the proposed implementation.
+
 # Saved garden pet response: three fan notes and one sound
 
 Scope: ordinary visitors, crows and raptors. Preserve the existing transaction, positive point delta and current world/generation/target checks; no save schema, point rules, rewards, RNG, encounter frequency, BGM or analytics change.

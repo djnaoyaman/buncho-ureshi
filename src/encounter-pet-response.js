@@ -1,4 +1,5 @@
 import {createCareAudio} from './care-audio.js';
+import {choosePetSound,getPetSound} from './pet-sounds.js';
 /** Committed-pet feedback only. No world writes, scoring or game RNG. */
 export function createEncounterPetResponse(root,getWorld,{getSound=()=>getWorld().settings?.careSound===true,Context=root.ownerDocument.defaultView.AudioContext||root.ownerDocument.defaultView.webkitAudioContext}={}){
  const doc=root.ownerDocument,win=doc.defaultView,reduced=win.matchMedia?.('(prefers-reduced-motion: reduce)'),audio=createCareAudio({Context});
@@ -22,7 +23,7 @@ export function createEncounterPetResponse(root,getWorld,{getSound=()=>getWorld(
   const target=[...root.querySelectorAll('[data-encounter-rub]')].find(e=>e.dataset.encounterRub===id);if(!target)return;
   const token=epoch,worldId=getWorld().worldId;
   audio.setEnabled(getSound());
-  void audio.chime(()=>visible()&&getSound()&&token===epoch&&getWorld().worldId===worldId&&target.isConnected);
+  void audio.chime(()=>visible()&&getSound()&&token===epoch&&getWorld().worldId===worldId&&target.isConnected,getSound()?getPetSound(choosePetSound()):null);
   if(getWorld().settings?.motion===false||reduced?.matches)return;
   const portrait=target.querySelector('[data-pet-portrait]'),img=portrait?.querySelector('img'),band=target.querySelector('[data-pet-notes]');
   if(!portrait?.animate||!img?.complete||!img.naturalWidth)return;
@@ -31,8 +32,8 @@ export function createEncounterPetResponse(root,getWorld,{getSound=()=>getWorld(
    track(portrait,[0,-1,1,-.75,.5,0].map(t=>({transform:`${base} translateX(${8*t}px) rotate(${2*t}deg)`})),{duration:540,easing:'ease-in-out'});
    const width=band.getBoundingClientRect().width,spread=Math.max(0,Math.min(85,(width-144)/2));if(width<178)return;
    for(let i=0;i<3;i++){
-    const side=i-1,dx=side*38,dy=side===0?-28:-24,n=doc.createElement('span');n.dataset.petNote=String(i);n.textContent='♪';
-    n.style.cssText=`position:absolute;pointer-events:none;left:${width/2-17+side*spread}px;top:${side===0?28:34}px;width:34px;font:700 34px/1 sans-serif;text-align:center;color:#56734a`;
+    const side=i-1,dx=side*38,dy=side===0?-28:-24,n=doc.createElement('span');n.dataset.petNote=String(i);n.textContent='♥';
+    n.style.cssText=`position:absolute;pointer-events:none;left:${width/2-17+side*spread}px;top:${side===0?28:34}px;width:34px;font:700 30px/1 sans-serif;text-align:center;color:#b56b73`;
     band.append(n);notes.add(n);track(n,[{opacity:0,transform:'translate(0,0)'},{opacity:1,transform:`translate(${dx*.15}px,${dy*.15}px)`,offset:.15},{opacity:1,transform:`translate(${dx*.7}px,${dy*.7}px)`,offset:.7},{opacity:0,transform:`translate(${dx}px,${dy}px)`}],{duration:1100,delay:i*100,fill:'backwards',easing:'ease-out'},()=>{notes.delete(n);n.remove();});
    }
   }catch{cancelVisual();}
