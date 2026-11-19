@@ -1,12 +1,11 @@
 {
-  "base": "0ee295aa6d4de22a5a52f4d259fd9fcdd8efd9b3",
+  "base": "5f4c8d045eea6574c5e41fcfd0092a0f66d2267c",
   "tests": [
+    "tests/browser/garden-terrain-motion.spec.js",
     "tests/browser/garden-about-booklet.spec.js",
-    "tests/browser/garden31-runway.spec.js",
-    "tests/browser/gardens30-35-runway.spec.js",
-    "tests/browser/game-music.spec.js",
+    "tests/browser/encounter-pet-response.spec.js",
     "tests/browser/encounter-music.spec.js",
-    "tests/browser/encounter-pet-response.spec.js"
+    "tests/browser/game-music.spec.js"
   ],
-  "reason": "35庭の割当曲を既存冊子内だけに表示。全庭320px、375/402pxで自動/固定/ミュートと開閉時の再生継続、保存完全一致、focus/戻る/既存Bach出典リンク、差替済み30/31/35と遭遇復帰・ハート音の回帰をChrome/WebKitで検査。音源・再生エンジン・保存・RNG・モーションは変更なし。"
+  "reason": "承認済み4庭のみ地形に沿う表示・移動。5幅320/375/390/402/430、実ボタンのidentity/focus/タップ、白成鳥飛翔と未対応・密集の静止、motion OFF/OS軽減、冊子35庭・保存・親しみと4音・BGM切替/遭遇復帰をChrome/WebKitで検査。元画像/音源/他31庭/保存・RNGの変更なし。"
 }

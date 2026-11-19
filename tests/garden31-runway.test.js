@@ -11,7 +11,8 @@ test('prior garden assignments remain exact except separately verified Runway su
  const audit=JSON.parse(read('docs/qa/garden31-scope.json'));
  const successors=JSON.parse(read('docs/qa/gardens30-35-runway.json'));assert.deepEqual(successors.map(r=>r.gardenId),['paris-unrest','bird-hooded-siskin']);
  for(const [id,expected] of Object.entries(audit.otherGardenHashes)){const successor=successors.find(r=>r.gardenId===id);if(successor)assert.equal(successor.previousCatalogSha256,expected,id);assert.equal(hash(JSON.stringify(GARDEN35_MUSIC[id])),successor?.catalogSha256||expected,id);}
- const ui=JSON.parse(read('docs/qa/garden-track-credit-scope.json'));
- for(const [file,expected] of Object.entries(audit.unchangedSource)){const successor=ui.changedSource[file];if(successor)assert.equal(successor.before,expected,file);assert.equal(hash(read(file)),successor?.after||expected,file);}
+ const ui=JSON.parse(read('docs/qa/garden-track-credit-scope.json')),motion=JSON.parse(read('docs/qa/garden-motion-four-scope.json'));
+ assert.deepEqual(Object.keys(motion.changedSource),['src/encounter-ui.js','src/garden-bird-motion.js']);
+ for(const [file,expected] of Object.entries(audit.unchangedSource)){const successor=ui.changedSource[file];if(successor)assert.equal(successor.before,expected,file);const next=motion.changedSource[file];if(next)assert.equal(next.before,successor?.after||expected,file);assert.equal(hash(read(file)),next?.after||successor?.after||expected,file);}
  assert.match(read('src/garden-about-booklet.js').toString(),/renderGardenTrackCredit/);
 });
