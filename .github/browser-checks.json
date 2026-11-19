@@ -1,11 +1,12 @@
 {
-  "base": "5f4c8d045eea6574c5e41fcfd0092a0f66d2267c",
+  "base": "ca3b8dc069873f7a649d235d0d81427ff9fd554d",
   "tests": [
     "tests/browser/garden-terrain-motion.spec.js",
+    "tests/browser/garden-ground-motion.spec.js",
     "tests/browser/garden-about-booklet.spec.js",
     "tests/browser/encounter-pet-response.spec.js",
     "tests/browser/encounter-music.spec.js",
     "tests/browser/game-music.spec.js"
   ],
-  "reason": "承認済み4庭のみ地形に沿う表示・移動。5幅320/375/390/402/430、実ボタンのidentity/focus/タップ、白成鳥飛翔と未対応・密集の静止、motion OFF/OS軽減、冊子35庭・保存・親しみと4音・BGM切替/遭遇復帰をChrome/WebKitで検査。元画像/音源/他31庭/保存・RNGの変更なし。"
+  "reason": "第2弾4庭の実背景ごとの地上移動のみ追加。狭幅5種・密集静止・操作とfocus・非表示/軽減/横向き・先行4庭・冊子35庭・親しみ/効果音・BGM/遭遇復帰をChrome/WebKitで検査。原画、全音源、保存/得点/RNG不変。"
 }
