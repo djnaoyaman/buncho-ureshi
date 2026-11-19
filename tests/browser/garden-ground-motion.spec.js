@@ -2,6 +2,14 @@ import {test,expect} from '@playwright/test';
 import {setup,measure} from '../fixtures/garden-terrain-browser.js';
 import {terrainFor,inside} from '../../src/garden-terrain-plan.js';
 const ids=['java-rice','bird-diamond-firetail','bird-zebra-finch','kazaguruma'];
+async function setReducedMotion(page,reduced){
+ // Existing MediaQueryList objects update on WebKit's real media-change event,
+ // later than a fresh matchMedia query. Do not advance the fake clock before it.
+ await page.evaluate(()=>{const media=matchMedia('(prefers-reduced-motion: reduce)');let observed=false;media.addEventListener('change',()=>{observed=true;},{once:true});window.__terrainMediaState=()=>({observed,matches:media.matches});});
+ await page.emulateMedia({reducedMotion:reduced?'reduce':'no-preference'});
+ await expect.poll(()=>page.evaluate(()=>window.__terrainMediaState())).toEqual({observed:true,matches:reduced});
+ await page.evaluate(()=>delete window.__terrainMediaState);
+}
 for(const id of ids)for(const width of [320,375,390,402,430])test(`ground-only ${id} ${width}`,async({page},info)=>{
  await setup(page,id,width,true,true);
  await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-terrain-motion','grounded');
@@ -44,9 +52,10 @@ for(const id of ids)for(const density of [false,'dense'])test(`safe roster ${id}
 });
 for(const id of ids)test(`ground holds and resumes ${id}`,async({page})=>{
  await setup(page,id,390,true,true);
- await page.emulateMedia({reducedMotion:'reduce'});await page.clock.runFor(1000);
+ await setReducedMotion(page,true);
+ await page.clock.runFor(1000);
  const held=await measure(page);await page.clock.runFor(7000);expect(await measure(page)).toEqual(held);
- await page.emulateMedia({reducedMotion:'no-preference'});
+ await setReducedMotion(page,false);
  await page.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,get:()=>true});document.dispatchEvent(new Event('visibilitychange'));});
  const hidden=await measure(page);await page.clock.runFor(6000);expect(await measure(page)).toEqual(hidden);
  await page.evaluate(()=>{delete document.hidden;document.dispatchEvent(new Event('visibilitychange'));});
