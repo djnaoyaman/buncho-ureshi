@@ -1,10 +1,10 @@
 {
-  "base": "14d1e6b4ba1b4fc33ec8dc5f700133ec7c0ea483",
+  "base": "ba991a2b9aded834ecb2af85a8b683718cffdcac",
   "tests": [
-    "tests/browser/garden31-runway.spec.js",
+    "tests/browser/gardens30-35-runway.spec.js",
     "tests/browser/game-music.spec.js",
     "tests/browser/encounter-music.spec.js",
     "tests/browser/encounter-pet-response.spec.js"
   ],
-  "reason": "音楽先行の本人訂正に従い未公開#248冊子差分を保全して配信から除外。公開c0b330bのUI/音源34庭を保持し#31のみ承認Runway録音へ。Chrome/WebKit44.1/48kHzの実decode/出力と2/3周、入庭auto・入庭後実ボタンで別曲fixed選択・遭遇優先/復帰・ミュート・320/375/402px冊子旧UI・保存/4音回帰。Bach資料保持。実機/主観試聴未確認。"
+  "reason": "本人指示の#30/#35のみRunway録音へ。2曲独立にChrome/WebKit44.1/48kHzのnative decode/出力/境界3周、実時間2/3周、320/375/402px、入庭autoと入庭後実ボタンfixed/auto、停止復帰/遭遇優先/ミュート、旧冊子・Bach資料、4音/保存/上限/失敗回帰。共通エンジン・他33庭・未公開credits・モーション不変。実機/主観試聴未確認。"
 }

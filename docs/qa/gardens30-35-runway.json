@@ -1,0 +1,262 @@
+[
+  {
+    "gardenId": "paris-unrest",
+    "themeId": "garden-paris-unrest",
+    "original": {
+      "name": "30-shiokaze.mp3",
+      "version": "0",
+      "sha256": "4ec15ddf05d0cf72be0a53ae4b3ff6be79a72f753c908a4fe5e01cd3057b1968",
+      "bytes": 3682205,
+      "duration": 153.103625,
+      "runwayTask": "35a7d546-0913-44b8-8cf2-438c87e00138",
+      "bundleLibraryId": "libfile_fde3_f-ab035d05eb9881918aa28a2315c6b76b_1e5190e96ae0819195a4cad3042d859b",
+      "bundleSha256": "3cf3bbec1e50346dbc59cd8773dc019b12551202b2bbf8d5e4c97c2557f8784b"
+    },
+    "asset": "audio/gardens35/garden-30-runway-v1.mp3",
+    "startSample": 2925462,
+    "loopSamples": 1411191,
+    "crossfadeSamples": 1764,
+    "guardSamples": 4410,
+    "gainDb": -7.2,
+    "sampleRate": 44100,
+    "bitrateKbps": 192,
+    "bytes": 774312,
+    "sha256": "6a136cfc88f9af54926cd5704a53041ccb688e6895b92f8d4368686102489b6a",
+    "decodedSamples": 1420011,
+    "seamPeakDelta": 0.001004294492304325,
+    "boundaryRms": 0.030521726235747337,
+    "integratedLufs": -18.97,
+    "truePeakDbfs": -6.75,
+    "boundaryAnalysis": {
+      "startSample": 2925462,
+      "loopSamples": 1411191,
+      "start": 66.33700680272109,
+      "end": 98.33680272108843,
+      "period": 31.999795918367347,
+      "pitch": 0.9522241035046584,
+      "onset": 0.9737127088857863,
+      "phase40ms": 0.5407613120442719,
+      "rmsDb": [
+        -13.431769371032715,
+        -13.241567611694336
+      ],
+      "score": 0.9749658249216221,
+      "pitchClassWindows": [
+        [
+          [
+            -2,
+            9
+          ],
+          [
+            -1.5,
+            9
+          ],
+          [
+            -1,
+            6
+          ],
+          [
+            -0.5,
+            6
+          ],
+          [
+            0,
+            4
+          ],
+          [
+            0.5,
+            11
+          ],
+          [
+            1,
+            7
+          ],
+          [
+            1.5,
+            7
+          ]
+        ],
+        [
+          [
+            -2,
+            9
+          ],
+          [
+            -1.5,
+            9
+          ],
+          [
+            -1,
+            6
+          ],
+          [
+            -0.5,
+            9
+          ],
+          [
+            0,
+            4
+          ],
+          [
+            0.5,
+            11
+          ],
+          [
+            1,
+            7
+          ],
+          [
+            1.5,
+            11
+          ]
+        ]
+      ],
+      "name": "30-shiokaze",
+      "crossfadeSamples": 1764,
+      "guardSamples": 4410,
+      "gainDb": -7.2,
+      "bytes": 774312,
+      "sha256": "6a136cfc88f9af54926cd5704a53041ccb688e6895b92f8d4368686102489b6a",
+      "decodedSamples": 1420011,
+      "integratedLufs": -18.97,
+      "truePeakDbfs": -6.75,
+      "seamPeakDelta": 0.001004294492304325,
+      "boundaryRms": 0.030521726235747337
+    },
+    "subjectiveAudition": false,
+    "previousCatalogSha256": "9f7ac2ed1a23cf5c09cc1feb57866501b7cee8191f4042875f710a18caef3381",
+    "previousAsset": "audio/gardens35/garden-30.mp3",
+    "previousAssetSha256": "704804b30983be7b6835ba9dd2cae3e6efec3bcb2429ad999b13f8e264420326",
+    "catalogSha256": "8f5699a2d0ca656d5735704937d82e83c1758c79a8cff4a908224794d025c218"
+  },
+  {
+    "gardenId": "bird-hooded-siskin",
+    "themeId": "garden-bird-hooded-siskin",
+    "original": {
+      "name": "35-kiniro.mp3",
+      "version": "0",
+      "sha256": "0d14e22b099d4324dc16e4713bc831a9378db18c46c6ded0392d75d8c8d588b7",
+      "bytes": 3560579,
+      "duration": 148.035875,
+      "runwayTask": "3dd6cbfc-3ef6-4896-a259-481f52101b27",
+      "bundleLibraryId": "libfile_fde3_f-ab035d05eb9881918aa28a2315c6b76b_1e5190e96ae0819195a4cad3042d859b",
+      "bundleSha256": "3cf3bbec1e50346dbc59cd8773dc019b12551202b2bbf8d5e4c97c2557f8784b"
+    },
+    "asset": "audio/gardens35/garden-35-runway-v1.mp3",
+    "startSample": 1878263,
+    "loopSamples": 2416424,
+    "crossfadeSamples": 1764,
+    "guardSamples": 4410,
+    "gainDb": -6.1,
+    "sampleRate": 44100,
+    "bitrateKbps": 192,
+    "bytes": 1321630,
+    "sha256": "137c4b4f7fa03a0413e31e1cb276722b06a5a764367ad507dd77f9c3494e24da",
+    "decodedSamples": 2425244,
+    "seamPeakDelta": 0.0034449100494384766,
+    "boundaryRms": 0.11557003110647202,
+    "integratedLufs": -18.99,
+    "truePeakDbfs": -6.22,
+    "boundaryAnalysis": {
+      "startSample": 1878263,
+      "loopSamples": 2416424,
+      "start": 42.5909977324263,
+      "end": 97.38519274376418,
+      "period": 54.79419501133787,
+      "pitch": 0.9508471655118704,
+      "onset": 0.9607368948090012,
+      "phase40ms": 0.8921081405017073,
+      "rmsDb": [
+        -13.186552047729492,
+        -13.349961280822754
+      ],
+      "score": 0.9767874598082324,
+      "pitchClassWindows": [
+        [
+          [
+            -2,
+            0
+          ],
+          [
+            -1.5,
+            4
+          ],
+          [
+            -1,
+            2
+          ],
+          [
+            -0.5,
+            2
+          ],
+          [
+            0,
+            9
+          ],
+          [
+            0.5,
+            4
+          ],
+          [
+            1,
+            2
+          ],
+          [
+            1.5,
+            5
+          ]
+        ],
+        [
+          [
+            -2,
+            0
+          ],
+          [
+            -1.5,
+            2
+          ],
+          [
+            -1,
+            2
+          ],
+          [
+            -0.5,
+            2
+          ],
+          [
+            0,
+            9
+          ],
+          [
+            0.5,
+            4
+          ],
+          [
+            1,
+            2
+          ],
+          [
+            1.5,
+            5
+          ]
+        ]
+      ],
+      "name": "35-kiniro",
+      "crossfadeSamples": 1764,
+      "guardSamples": 4410,
+      "gainDb": -6.1,
+      "bytes": 1321630,
+      "sha256": "137c4b4f7fa03a0413e31e1cb276722b06a5a764367ad507dd77f9c3494e24da",
+      "decodedSamples": 2425244,
+      "integratedLufs": -18.99,
+      "truePeakDbfs": -6.22,
+      "seamPeakDelta": 0.0034449100494384766,
+      "boundaryRms": 0.11557003110647202
+    },
+    "subjectiveAudition": false,
+    "previousCatalogSha256": "6899069afd4f8c8730d288df342b7bf439107750e7a5d740b48ba344b9c00db8",
+    "previousAsset": "audio/gardens35/garden-35.mp3",
+    "previousAssetSha256": "92b2f6455435a0b6b1acc18f624fd96169abc8785f9534075abe5f10212a297c",
+    "catalogSha256": "737df2d0f926300c6a1218a288f74f7bbeb749273834262e9e2758965ae6d52d"
+  }
+]
