@@ -14,7 +14,7 @@
   "startSample": 823700,
   "loopSamples": 2268000,
   "crossfadeSamples": 1764,
-  "guardSamples": 882,
+  "guardSamples": 4410,
   "gainDb": -7.1,
   "sampleRate": 44100,
   "bitrateKbps": 192,
@@ -104,11 +104,11 @@
     ]
   },
   "subjectiveAudition": false,
-  "bytes": 1236993,
-  "sha256": "128fc6ed6ec8921612adc6358aa4934ab9015fbe71216fd0d66c11b5bbd6ad6e",
-  "decodedSamples": 2269764,
-  "seamPeakDelta": 0.008741796016693115,
-  "boundaryRms": 0.08447925001382828,
+  "bytes": 1240754,
+  "sha256": "19ae3bd54b5550e7c1a4c83e12a2b4d8a2e3e0c8438a7859c7a8c6d359f27d6f",
+  "decodedSamples": 2276820,
+  "seamPeakDelta": 0.006834216415882111,
+  "boundaryRms": 0.08451811224222183,
   "integratedLufs": -19.0,
   "truePeakDbfs": -7.6
 }

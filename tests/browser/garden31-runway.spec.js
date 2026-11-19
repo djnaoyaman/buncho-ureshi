@@ -46,16 +46,16 @@ for(const id of ids)for(const rate of [44100,48000])test(`approved garden31 Runw
  await page.locator('#play').click();
  {await playing(page,'garden-'+id);await expect.poll(()=>page.evaluate(()=>five.output())).toBeGreaterThan(.0001);
   const r=await page.evaluate(id=>({start:five.starts.at(-1),m:five.catalog[id],url:five.requests.at(-1)}),id);
-  expect(r.url.endsWith(r.m.asset)).toBe(true);expect(r.start.rate).toBe(rate);expect(r.start.startOffset).toBe(.02);expect(r.start.loopStart).toBe(.02);expect(r.start.loopEnd).toBe(r.m.loopEndSeconds);
+  expect(r.url.endsWith(r.m.asset)).toBe(true);expect(r.start.rate).toBe(rate);expect(r.start.startOffset).toBe(.1);expect(r.start.loopStart).toBe(.1);expect(r.start.loopEnd).toBe(r.m.loopEndSeconds);
  }
  const rendered=await page.evaluate(()=>five.render());expect(rendered).toHaveLength(6);for(const r of rendered){expect(r.jump).toBeLessThan(.03);expect(r.rms).toBeGreaterThan(.004);expect(r.peak).toBeLessThan(.98);}
  await info.attach('five-three-cycle-native-PCM',{body:Buffer.from(JSON.stringify(rendered)),contentType:'application/json'});
- for(const encounter of ['crow','raptor']){await page.locator('#'+encounter).click();await playing(page,'encounter-'+encounter);await page.locator('#return').click();await playing(page,'garden-'+id);expect(await page.evaluate(()=>five.starts.at(-1).startOffset)).toBe(.02);}
+ for(const encounter of ['crow','raptor']){await page.locator('#'+encounter).click();await playing(page,'encounter-'+encounter);await page.locator('#return').click();await playing(page,'garden-'+id);expect(await page.evaluate(()=>five.starts.at(-1).startOffset)).toBe(.1);}
  await page.locator('#other').click();await playing(page,'garden-komorebi');await page.locator('#'+id).click();await playing(page,'garden-'+id);
  await page.locator('#mute').click();await expect.poll(()=>page.evaluate(()=>five.output())).toBeLessThan(.00001);expect(await page.evaluate(()=>five.active())).toBe(1);
  await page.locator('#volume').click();await expect.poll(()=>page.evaluate(()=>five.output())).toBeGreaterThan(.0001);
  await page.locator('#pause').click();await page.locator('#'+id).click();expect(await page.evaluate(()=>five.active())).toBe(0);
- await page.locator('#play').click();await playing(page,'garden-'+id);expect(await page.evaluate(()=>five.starts.at(-1).startOffset)).toBe(.02);
+ await page.locator('#play').click();await playing(page,'garden-'+id);expect(await page.evaluate(()=>five.starts.at(-1).startOffset)).toBe(.1);
  await page.locator('#off').click();await page.locator('#'+id).click();expect(await page.evaluate(()=>five.active())).toBe(0);expect(await page.evaluate(()=>five.p.state().enabled)).toBe(false);
  await page.evaluate(()=>five.p.dispose());
 });
@@ -89,9 +89,9 @@ for(const width of [320,375,402])test(`actual game garden31 Runway garden routin
   await page.locator('[data-music-choose]').click();const choice=page.locator('[data-music="garden-'+id+'"]').last();await expect(choice).toHaveAttribute('aria-pressed','false');await choice.click();await expect(choice).toHaveAttribute('aria-pressed','true');await expect(page.locator('.game-music-current')).toContainText(title);
   expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('buncho.music.v1')).mode)).toBe('fixed');
   await page.locator('[data-music-choose]').click();await page.locator('[data-music=village]').last().click();
-  await expect(page.locator('[data-music-auto]')).toHaveAttribute('aria-pressed','false');await expect(page.locator('.game-music-current')).toHaveText('村のワルツ');
+  await expect(page.locator('[data-music-auto]')).toHaveAttribute('aria-pressed','false');await expect(page.locator('.game-music-current')).toHaveText('村のワルツ');await expect(page.locator('.game-music')).toHaveAttribute('data-status','playing');
   expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('buncho.music.v1')).mode)).toBe('fixed');
-  await page.locator('[data-music-auto]').click();await expect(page.locator('[data-music-auto]')).toHaveAttribute('aria-pressed','true');await expect(page.locator('.game-music-current')).toContainText(title);
+  await page.locator('[data-music-auto]').click();await expect(page.locator('[data-music-auto]')).toHaveAttribute('aria-pressed','true');await expect(page.locator('.game-music-current')).toContainText(title);await expect(page.locator('.game-music')).toHaveAttribute('data-status','playing');
   await page.locator('[data-music-off]').click();await expect(page.locator('.game-music')).toHaveAttribute('data-status','off');
   await page.locator('[data-game-close-panel]').click();await page.locator('.game-field-nav [data-game-panel=outdoors]').click();
   await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-scene-state','ready');
@@ -120,7 +120,10 @@ test('hanadokei real raptor priority, actual fixed choice and home restoration',
  await page.locator('[data-raptor-choice=stay]').click();
  await page.locator('.game-scene-controls-toggle').click();await expect(page.locator('.game-music')).toHaveAttribute('data-status','playing',{timeout:15000});
  await expect(page.locator('.game-music-current')).toContainText('空に落ちる影');
- await settings(page);
+ // Keep the real active encounter for the existing settings-event integration path.
+ // Native panel close intentionally returns home; actual post-arrival menu selection is covered above.
+ await page.evaluate(()=>document.dispatchEvent(new CustomEvent('buncho-world-action',{detail:'settings'})));
+ await expect(page.locator('[data-settings-music]')).toBeVisible();
  await page.locator('[data-music-choose]').click();await page.locator('[data-music=village]').click();await expect(page.locator('.game-music-current')).toContainText('空に落ちる影');
  await page.locator('[data-game-action=pause]').last().click();await expect(page.locator('.game-music')).toHaveAttribute('data-status','paused');
  await page.locator('[data-music-off]').click();await expect(page.locator('.game-music')).toHaveAttribute('data-status','off');

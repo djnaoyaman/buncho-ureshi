@@ -19,6 +19,7 @@ test('archived Bach preserves the approved independent performance and guarded M
 });
 test('Bach attribution is present in static and interactive credits and scopes the adaptation',()=>{
  const doc=read('public/audio/gardens35/bach-bwv645-license.html').toString();
+ assert.ok(doc.includes('以前「まるい冠の花庭」で使っていた'));
  for(const text of ['Wachet auf, ruft uns die Stimme','Johann Sebastian Bach','Bart Golsteijn','Copyright © 2006','Mutopia-2006/06/29-601','第2〜22小節','装飾音','https://creativecommons.org/licenses/by-sa/2.5/','https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=601','ゲームコード・画像・他の楽曲を同ライセンスへ変更するものではありません'])assert.ok(doc.includes(text),text);
  for(const source of ['src/app.js','scripts/build.mjs']){const content=read(source).toString();assert.ok(content.includes('audio/gardens35/bach-bwv645-license.html'));assert.ok(content.includes('target="_self">出典・改変・利用条件</a>'),'independent document must bypass SPA routing: '+source);}
  assert.ok(read('public/audio/gardens35/bach-bwv645-sources.zip').length>1000);
