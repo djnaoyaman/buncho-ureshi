@@ -27,3 +27,7 @@ J. S. Bach, Wachet auf, ruft uns die Stimme, BWV645 (public-domain composition);
 To revert only this release, revert its merge commit on current main, retain intervening unrelated work, regenerate and explicitly audit the protected output against the previous sealed artifacts, then rerun required tests and publish the resulting sealed commit. Do not restore or roll back user saves. The prior five audio files remain shipped for recovery.
 
 Physical iPhone/Safari, iOS 15 hardware, mobile-network latency/device memory, and subjective listening are not verified by automated WebKit or signal analysis. Exact local/CI/published verification counts and hashes belong in the PR and release evidence after completion.
+
+## Integration defect caught before release
+
+The first browser pass caught the existing SPA router intercepting the new independent attribution HTML link and displaying the application 404. Both credits links now explicitly use `target="_self"`, an existing router escape, to perform a normal same-tab document navigation. The original click/content/license/download/back assertions remain intact; Node checks also protect the escape attribute. No global navigation or music engine behavior changes.
