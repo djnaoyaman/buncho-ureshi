@@ -118,13 +118,18 @@ for(const id of ids)test(`${id} real raptor priority, actual fixed choice and ho
  },id);
  await page.goto('game/');await expect(page.locator('body')).toHaveAttribute('data-game-intro','done',{timeout:15000});
  await page.locator('[data-raptor-choice=stay]').click();
+ // A saved stay choice is reconciled by the real raptor controller on its next
+ // foreground poll. Await that observable transition before opening settings;
+ // music can already be playing while this initial structural render is pending.
+ await expect(page.locator('.game-raptor-return-dialog')).toHaveCount(0);
+ await expect.poll(async()=>Number(await page.locator('[data-raptor-seconds]').first().textContent())).toBeLessThan(60);
  await page.locator('.game-scene-controls-toggle').click();await expect(page.locator('.game-music')).toHaveAttribute('data-status','playing',{timeout:15000});
  await expect(page.locator('.game-music-current')).toContainText('空に落ちる影');
  // Keep the real active encounter for the existing settings-event integration path.
  // Native panel close intentionally returns home; actual post-arrival menu selection is covered above.
  await page.evaluate(()=>document.dispatchEvent(new CustomEvent('buncho-world-action',{detail:'settings'})));
  await expect(page.locator('[data-settings-music]')).toBeVisible();
- await page.locator('[data-music-choose]').click();await page.locator('[data-music=village]').click();await expect(page.locator('.game-music-current')).toContainText('空に落ちる影');
+ await page.locator('[data-music-choose]').click();await expect(page.locator('[data-music-choose]')).toHaveAttribute('aria-expanded','true');await page.locator('[data-music=village]').click();await expect(page.locator('.game-music-current')).toContainText('空に落ちる影');
  await page.locator('[data-game-action=pause]').last().click();await expect(page.locator('.game-music')).toHaveAttribute('data-status','paused');
  await page.locator('[data-music-off]').click();await expect(page.locator('.game-music')).toHaveAttribute('data-status','off');
  await page.locator('[data-game-action=pause]').last().click();
