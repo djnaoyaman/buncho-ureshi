@@ -1,6 +1,7 @@
 {
-  "base": "91b53af5eff91ebe3929c179db006bf18360b14e",
+  "base": "438763dfc7c52707afa7c073777b9e1aac2daadc",
   "tests": [
+    "tests/browser/flight-integrity.spec.js",
     "tests/browser/garden-actors.spec.js",
     "tests/browser/garden-actors-natural.spec.js",
     "tests/browser/garden-ground-motion.spec.js",
@@ -12,5 +13,5 @@
     "tests/browser/garden-viewport-sync.spec.js",
     "tests/browser/iphone15-scene.spec.js"
   ],
-  "reason": "型①の梅島公園と同型10庭だけに個体別表示FSM・4色の離着陸と庭別足場を統合。全対象庭の通常5羽、0/1/8/最大10羽、375/402/320幅、実タップ・focus・回転・復帰・軽減を検証。自然時間の通常入庭観測は時計/抽選介入なしで別検査。既存先行庭、冊子、撫でる保存成功/失敗/上限、4音、BGM/遭遇復帰、旧機能模擬を維持。固定ビルドでChrome/WebKitを実施し実機iPhone/GPUとは区別。"
+  "reason": "白文鳥の飛行パーツ分離のみ修正。白を既存全身atlasの単一描画へ暫定切替し、4色・全位相・左右・375/402画素比較、実ゲーム飛行/接地/操作と既存actor・BGM・保存回帰を固定成果物で検査。横向きタップ修正やCI変更は含まない。"
 }
