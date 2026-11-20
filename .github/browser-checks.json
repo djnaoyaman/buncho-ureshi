@@ -11,7 +11,9 @@
     "tests/browser/encounter-music.spec.js",
     "tests/browser/game-music.spec.js",
     "tests/browser/garden-viewport-sync.spec.js",
-    "tests/browser/iphone15-scene.spec.js"
+    "tests/browser/iphone15-scene.spec.js",
+    "tests/browser/white-flight-media.spec.js",
+    "tests/browser/white-flight-media-tap.spec.js"
   ],
-  "reason": "白文鳥の飛行パーツ分離のみ修正。白を既存全身atlasの単一描画へ暫定切替し、4色・全位相・左右・375/402画素比較、実ゲーム飛行/接地/操作と既存actor・BGM・保存回帰を固定成果物で検査。横向きタップ修正やCI変更は含まない。"
+  "reason": "白文鳥の全身21コマ・有限読込待ちと、飛行画像のみを庭の必須メディア判定から除外。既存の飛行整合、全庭actor・接地・回転・保存・BGMを保持し、白飛行画像の実表示、メディア到着順・再試行と実タップを追加検査。"
 }
