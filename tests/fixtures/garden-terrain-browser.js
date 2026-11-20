@@ -1,7 +1,7 @@
 import {expect} from '@playwright/test';
 import {worldFor,NOW,engine} from './garden-about-world.js';
-export async function setup(page,id,width=390,motion=true,sparse=false){
-  await page.setViewportSize({width,height:844});
+export async function setup(page,id,width=390,motion=true,sparse=false,height=844){
+  await page.setViewportSize({width,height});
   await page.route(/\/src\/game\.js(?:\?.*)?$/,async route=>{
     const response=await route.fetch(),source=await response.text();expect(source.split('predatorRandom = Math.random')).toHaveLength(2);
     await route.fulfill({response,body:source.replace('predatorRandom = Math.random','predatorRandom = () => 1')});
@@ -23,10 +23,12 @@ export async function setup(page,id,width=390,motion=true,sparse=false){
   await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-scene-state','ready');
   await page.clock.runFor(1100);
 }
-export async function measure(page){return page.locator('.finch-garden-image-plane').evaluate(e=>{
+export async function measure(page){return page.evaluate(()=>{
+  const e=document.querySelector('.finch-garden-image-plane'),revision=document.querySelector('.finch-garden')?.dataset.gardenRevision;
+  if(!e)throw new Error('Garden image plane missing during atomic measurement');
   const p=e.getBoundingClientRect();return [...e.querySelectorAll(':scope > button')].map(n=>{
     const r=n.getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2),sprite=n.querySelector('.garden-bird-sprite');
-    return {id:n.dataset.gardenFriend||n.dataset.gardenHousehold||n.dataset.encounterOpen,width:r.width,height:r.height,hit:!!hit&&n.contains(hit),
+    return {connected:n.isConnected,revision,front:hit?.className||null,id:n.dataset.gardenFriend||n.dataset.gardenHousehold||n.dataset.encounterOpen,width:r.width,height:r.height,hit:!!hit&&n.contains(hit),
       point:[parseFloat(n.style.left)/100,parseFloat(n.style.top)/100],style:n.getAttribute('style'),src:sprite?.querySelector('img')?.getAttribute('src'),filter:sprite?getComputedStyle(sprite).filter:'none',plane:[p.width,p.height]};
   });
 });}

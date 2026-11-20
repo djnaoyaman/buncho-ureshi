@@ -141,6 +141,13 @@ function terrainLayoutV2(id, actors, plane, clip, obstacles, maxWidth=64, reserv
         if(!route)continue;
         nextReserved=Array.from({length:41},(_,j)=>{const f=terrainFrameV2(route,1000+j*route.duration/40);return actorBox(a,f.point,plane,f.lift,route.flight);});
       }
+      // Prune a dead end before spending the bounded search on its children.
+      // This keeps narrow five-bird scenes grounded without reducing hit areas
+      // or enlarging the surveyed surfaces / search budget.
+      const occupied=[...chosen.map(b=>actorBox(b,b.point,plane)),box,...nextReserved];
+      if(candidates.slice(i+1).some(list=>!list.some(b=>{
+        const r=actorBox(b,b.point,plane);return !occupied.some(o=>overlaps(r,o,8));
+      })))continue;
       const result=place(i+1,[...chosen,a],nextReserved);if(result)return result;
     }
     return null;

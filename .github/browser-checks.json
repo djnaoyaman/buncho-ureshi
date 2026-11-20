@@ -3,6 +3,7 @@
   "tests": [
     "tests/browser/garden-terrain-v2.spec.js",
     "tests/browser/garden-terrain-v2-mobile.spec.js",
+    "tests/browser/garden-terrain-v2-redraw.spec.js",
     "tests/browser/garden-terrain-motion.spec.js",
     "tests/browser/garden-ground-motion.spec.js",
     "tests/browser/garden-about-booklet.spec.js",
@@ -10,7 +11,8 @@
     "tests/browser/encounter-music.spec.js",
     "tests/browser/game-music.spec.js",
     "tests/browser/garden-viewport-sync.spec.js",
-    "tests/browser/game-viewport.spec.js"
+    "tests/browser/game-viewport.spec.js",
+    "tests/browser/iphone15-scene.spec.js"
   ],
-  "reason": "v2先行4庭の地形別配置と連続経路。通常5羽の足場・全身と名前の間隔・44px操作・実クリック・focus・停止/復帰・軽減・縦横をChrome/WebKitで確認。他31庭と保存/得点/RNG/原画/音源は不変。冊子、親しみ成功反応、BGM/遭遇復帰を回帰検査。見本の暗転再配置と固定キャストは移植しない。"
+  "reason": "v2先行4庭の地形別配置と連続経路。通常5羽の足場・名前・44px操作・実タップ・focus・停止/復帰・軽減・縦横をChrome/WebKitで検査。375×667/402×874、dvh/CQ単位の非対応分岐、実保存再描画8回と同一revisionのヒット、遮蔽対照も確認。共通の高さ/準備完了時寸法のみ補正し、他31庭の動き・音源・保存/得点/RNGは不変。冊子・世話成功反応・BGMも回帰検査。"
 }

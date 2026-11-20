@@ -40,3 +40,10 @@ test('v2 graph is exactly four gardens and retains distinct legal surfaces and p
   if(e.motion!=='flight')for(let n=0;n<=100;n++)assert.ok(inside(e.a.map((v,i)=>v+(e.b[i]-v)*n/100),t.surfaces[e.surface]));
  }
 });
+test('compact 375x667 bullfinch five-bird layout prunes dead ends without shrinking targets or surfaces',()=>{
+ const plane={left:-.1875,top:0,width:375.375,height:667},clip={left:0,top:0,right:375,bottom:667},obstacles=[{left:10,top:8,right:299,bottom:58},{left:10,top:62,right:365,bottom:124},{left:68,top:599,right:365,bottom:667}];
+ const actors=['gf-komorebi-1','gf-shrine-grove-2','gf-komorebi-2','gf-hanadokei-1','b1'].map((id,i)=>({id,width:67.5,height:79.421875,labelWidth:[47,47,36,47,36][i],labelHeight:18,point:[[.2355,.4499],[.763,.4499],[.2355,.6643],[.763,.6643],[.4993,.6643]][i],movable:true,flight:i===2||i===4}));
+ const input=JSON.stringify(actors),layout=terrainLayout('bird-eurasian-bullfinch',actors,plane,clip,obstacles);assert.ok(layout);assert.equal(layout.length,5);assert.equal(JSON.stringify(actors),input);
+ for(const a of layout){assert.ok(a.width>=44&&a.height>=44);assert.ok(inside(a.point,terrainFor('bird-eurasian-bullfinch').surfaces[a.surface]));const box=actorBox(a,a.point,plane);assert.ok(!obstacles.some(o=>overlap(box,o)));assert.ok(!layout.some(b=>b!==a&&overlap(box,actorBox(b,b.point,plane))));}
+ assert.ok(terrainPlan('bird-eurasian-bullfinch',layout,plane,clip,obstacles));
+});

@@ -31,68 +31,79 @@ full regressions must pass before proposing a PR. Headless software rendering
 is not an iPhone/GPU performance measurement.
 
 All assets/audio/save/RNG modules stay unchanged. A prior sealed dist audit
-allows only terrain plan/motion substantive edits, the added graph and cache
-URL changes. The protected baseline is updated only after this comparison.
+allows terrain plan/motion, the compatibility repairs documented below, the
+added graph and otherwise cache URL changes. The protected baseline is updated only after this comparison.
 Rollback is this independent presentation change only; never roll back saves.
 
 Local findings/tests and any remaining failures are in
 /workspace/reports/garden-terrain-v2/. No push/PR/publication has occurred.
 
-## Fixed candidate checks (in progress)
+## Historical failures and repair evidence
 
-`npm run check`: passed. Full Node: 2,410 passed, zero failures/skips
-(350,525.85 ms). Build and non-game renewal completed; 704-file fixed dist
-manifest is retained in the report directory. Do not rebuild during browser QA.
-Eight unchanged sparse-white-flight/focus assertions passed in Chrome/WebKit.
-The 400-case related browser run and additional mobile touch/audio cases are
-still running; these are not represented as passed until their reports finish.
+The first fixed candidate passed check/build and 2,410 Node tests. Its related
+browser run was 399/400 (29.4 minutes), with the island402 WebKit hit assertion
+failing. The trace showed revision4→6 across locator/ElementHandle resolution;
+this is evidence of a measurement race, not proof of that historical failure's
+complete cause. Measurement now selects the current plane and revision within
+one browser task. A detached-plane negative control reproduces the false hit,
+and a real occluder still fails. Eight committed redraws with actual native taps
+are tested at both phone widths in both engines; no retry waits for hit success.
 
-Normal-play comparison uses isolated five-bird saves, actual entry UI, real
-wall time, and no clock or predator-RNG interception. Each old/new pair starts
-with identical world JSON. Continuous in-page observation avoids screenshot
-latency: Chrome first visible pose/position change in the candidate was
-0.87–1.43 seconds after entry versus 3.90–5.35 seconds in the published version.
-WebKit includes actual warning suppression and image readiness delays; no
-unconditional three-second guarantee is claimed. In one forest observation the
-crow warning suppressed the first gesture. Controlled geometry tests are
-reported separately from these ordinary-entry observations.
+A separate no-dvh simulation exposed old measured-height latency: candidate
+foreground birds could be offscreen before resize notification. Fixed top/bottom
+edges now track the layout immediately; the measured visual viewport inset
+still accommodates keyboards. The stale visualViewport height is distinguished
+from a current keyboard inset. Tests assert actual overlay geometry, all five
+hits, and real taps, not a CSS variable that may legitimately lag. The unchanged
+published control still failed both WebKit cases under these assertions.
 
-Normal frame captures were visually inspected for the four actual backgrounds,
-five native birds, ground planes, full bodies and labels. No user save/device
-was used. Current WebKit is not iPhone Safari 15.8.8. The extra no-dvh test only
-simulates that feature decision, not an old browser engine. Hardware GPU and
-mobile-network behavior remain unmeasured.
+Container-query-unit simulation then found a separate real zero-plane bug:
+a freshly redrawn scene could become media-ready before the compatibility
+measurement's animation frame. Synchronous compatibility dimensions now precede
+media readiness. Modern browsers retain native container units. These narrowly
+scoped common compatibility fixes change no world or music state; other31
+motion plans remain unchanged.
 
-## Release hold: old-feature height synchronization
+Focused repaired checks:32/32 Chrome/WebKit passed (2.9 minutes), including
+both negative controls, 32 actual redraw/tap operations, both no-dvh widths,
+all four gardens without cqw/cqh, and the existing iphone15-scene regressions.
+A subsequent pixel review found the 375x667 bullfinch layout could exhaust its
+search and fall back to the old floating arrangement, even though hits passed.
+A forward feasibility check now prunes branches where a remaining bird has no
+legal position. It preserves the 2,500-node budget, surfaces, 8px separation
+and >=44px targets. The captured real geometry is a new Node regression;
+mobile tests now also require grounded initial/restored five-bird layouts.
+The interrupted intermediate full run had 146 passed, 2 interrupted, 290 not
+run; it is not counted as a final pass. Intermediate Node was 2,412/2,412.
+Final fixed-build checks must pass before Ready/merge; see the PR's CI results.
 
-Additional 375x667 / 402x874 actual touch/rotation/audio checks: 16/16 passed.
-The separate no-dvh feature simulation: Chrome 2/2 passed, WebKit 0/2.
-Identical published-base comparison produced the same stale 844px shell
-height, but candidate's two foreground birds become offscreen at 375x667
-where the old layout's birds remain visible. This is an exposed compatibility
-regression even though the underlying height race predates the candidate.
-Do not publish or relax these assertions. See report `release-blocker.md`,
-`no-dvh-comparison.json` and both versions' retained failure traces.
-The shell/viewport fix is not silently mixed into this motion candidate.
+Normal-play comparison used isolated five-bird saves, actual entry UI, real
+wall time, and no clock or predator-RNG interception. Each old/new pair started
+with identical world JSON. Continuous in-page observation avoided screenshot
+latency: Chrome first visible pose/position change was 0.87–1.43 seconds versus
+3.90–5.35 seconds in the published version. WebKit includes warning suppression
+and image readiness delays; no unconditional three-second guarantee is claimed.
+Controlled geometry fixtures are separate from these ordinary observations.
 
-## Final local result — NOT ready for release
+Actual frame captures were visually inspected for four backgrounds, five birds,
+labels and unobscured buttons. No user save/device was used. Current WebKit is
+not iPhone Safari15.8.8. No-dvh and no-cqw/cqh only simulate feature decisions,
+not an old engine. Hardware GPU, real iPhones and mobile networks are untested.
 
-Related browser run: 399 passed / 1 failed / 0 skipped, 29.4 minutes.
-Failure: WebKit `surveyed terrain bali-terrace 402`, existing hit assertion
-at garden-terrain-motion.spec.js:10:103. Trace shows revision4→6 during locator
-resolution; stale ElementHandle is plausible but not established. No retry,
-assertion relaxation or product fix was used to make this case green.
-Additional ordinary touch/rotation/audio:16/16. Feature simulation:2/4;
-published-base comparison also2/4, with extra candidate clipping at375x667.
-These are separate outcomes, not successful full acceptance.
+704-file fixed dist and prior sealed baseline hashes are recorded externally.
+487 existing media files are byte-identical. The protected baseline audit allows
+terrain plan/motion, the added graph, the compatibility fixes above and otherwise
+only cache URL changes. Test assertions and historical failure traces remain.
+Do not rebuild during browser QA. Unchanged assets may be hardlinked to the
+prior seal for disk capacity: replace/detach before any future rebuild/edit.
 
-487 existing media files are byte-identical to the published sealed base.
-The 704-file candidate manifest was rechecked. The worktree dist has been
-made independent again after temporary disk deduplication, without byte changes.
-Some unchanged public assets remain hardlinked to the old worktree: do not
-modify those in place; replace via a new file if a future authorized task needs
-an asset edit. This task never edits them.
+No push, PR, CI, merge or deployment as of this record. Remaining31 gardens,
+new birds/gardens, source HTML, BGM and booklets are untouched.
 
-No push, PR, CI run, merge or deployment. Main/publication remain91b53af.
-Resolve the two recorded blockers before proposing publication. Remaining31
-gardens, new birds/gardens, original HTML, BGM and booklets are untouched.
+## Repaired fixed-build candidate
+
+check/build passed; full Node 2,413/2,413 passed (314,619.59 ms).
+Focused Chrome/WebKit mobile/redraw/compatibility tests:46/46 passed (6.9m).
+The repaired WebKit375x667 image shows five birds on the slab rather than the
+old floating fallback. The remaining400 browser cases are running on the same
+704-file build; no rebuild overlaps QA. PR CI must also pass before release.

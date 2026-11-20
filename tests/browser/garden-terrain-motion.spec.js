@@ -5,9 +5,9 @@ const ids=['yuyake','bird-eurasian-bullfinch','bird-white-winged-crossbill','bal
 for(const id of ids)for(const width of [320,375,390,402,430])test(`surveyed terrain ${id} ${width}`,async({page},info)=>{
   await setup(page,id,width);await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-terrain-motion','grounded');
   const before=await measure(page);expect(before).toHaveLength(5);
-  for(const b of before){expect(Math.round(b.width*1000)/1000).toBeGreaterThanOrEqual(44);expect(Math.round(b.height*1000)/1000).toBeGreaterThanOrEqual(44);expect(b.hit).toBe(true);expect(b.filter).toBe('none');expect(Object.values(terrainFor(id).surfaces).some(p=>inside(b.point,p))).toBe(true);}
+  for(const b of before){expect(Math.round(b.width*1000)/1000).toBeGreaterThanOrEqual(44);expect(Math.round(b.height*1000)/1000).toBeGreaterThanOrEqual(44);expect(b.hit,JSON.stringify(b)).toBe(true);expect(b.filter).toBe('none');expect(Object.values(terrainFor(id).surfaces).some(p=>inside(b.point,p))).toBe(true);}
   await page.clock.runFor(3200);await page.screenshot({path:info.outputPath('grounded.png')});
-  for(let i=0;i<4;i++){await page.clock.runFor(500);for(const b of await measure(page)){expect(b.hit).toBe(true);expect(b.filter).toBe('none');}}
+  for(let i=0;i<4;i++){await page.clock.runFor(500);const sample=await measure(page);expect(sample).toHaveLength(5);expect(new Set(sample.map(b=>b.revision)).size).toBe(1);for(const b of sample){expect(b.hit,JSON.stringify(b)).toBe(true);expect(b.filter).toBe('none');}}
   const bird=page.locator('.finch-garden-friend').first(),idBefore=await bird.getAttribute('data-garden-friend');
   await bird.focus();const held=await bird.getAttribute('style');await page.clock.runFor(3500);
   expect(await bird.getAttribute('data-garden-friend')).toBe(idBefore);expect(await bird.getAttribute('style')).toBe(held);await expect(bird).toBeFocused();
@@ -51,7 +51,7 @@ for(const density of ['empty','dense'])test(`unsupported ${density} roster remai
   const before=await measure(page);expect(before.length).toBe(density==='empty'?0:8);
   await page.clock.runFor(30000);
   expect((await measure(page)).map(b=>b.style)).toEqual(before.map(b=>b.style));
-  for(const b of await measure(page)){expect(b.hit).toBe(true);expect(Math.round(b.width*1000)/1000).toBeGreaterThanOrEqual(44);}
+  for(const b of await measure(page)){expect(b.hit,JSON.stringify(b)).toBe(true);expect(Math.round(b.width*1000)/1000).toBeGreaterThanOrEqual(44);}
 });
 test('natural real-time flight retains the actual button and returns to native art',async({page},info)=>{
   test.setTimeout(100000);await setup(page,'yuyake',390,true,true);
@@ -70,7 +70,7 @@ test('garden navigation, narrow landscape and simulated visibility interruption 
   await page.evaluate(()=>{delete document.hidden;document.dispatchEvent(new Event('visibilitychange'));});
   await page.clock.runFor(500);
   await page.setViewportSize({width:844,height:390});await page.clock.runFor(1500);
-  for(const b of await measure(page)){expect(b.hit).toBe(true);expect(Math.round(b.width*1000)/1000).toBeGreaterThanOrEqual(44);}
+  for(const b of await measure(page)){expect(b.hit,JSON.stringify(b)).toBe(true);expect(Math.round(b.width*1000)/1000).toBeGreaterThanOrEqual(44);}
   await page.setViewportSize({width:390,height:844});await page.clock.runFor(1500);
   expect((await measure(page)).map(b=>b.id).sort()).toEqual(prior);
   await page.locator('[data-garden-scroll=next]').click();await page.clock.runFor(1000);
@@ -78,7 +78,7 @@ test('garden navigation, narrow landscape and simulated visibility interruption 
   await expect(page.locator('.garden-terrain-mask,.garden-terrain-shadow,.garden-terrain-flight')).toHaveCount(0);
   await page.locator('[data-garden-scroll=previous]').click();await page.clock.runFor(1500);
   await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-garden-id','yuyake');
-  for(const b of await measure(page))expect(b.hit).toBe(true);
+  for(const b of await measure(page))expect(b.hit,JSON.stringify(b)).toBe(true);
 });
 for(const reduced of [false,true])test(`surveyed motion holds for ${reduced?'OS reduction':'motion off'}`,async({page})=>{
   if(reduced)await page.emulateMedia({reducedMotion:'reduce'});
@@ -104,6 +104,6 @@ for(const condition of ['chick','missing-textures'])test(`native art survives ${
   await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-scene-state','ready');
   const native=page.locator('.finch-garden-household .garden-bird-pose-window');
   expect(await native.evaluate(e=>getComputedStyle(e).visibility)).toBe('visible');
-  for(const b of await measure(page)){expect(b.hit).toBe(true);expect(b.filter).toBe('none');}
+  for(const b of await measure(page)){expect(b.hit,JSON.stringify(b)).toBe(true);expect(b.filter).toBe('none');}
   expect(await page.evaluate(()=>[...document.querySelectorAll('.garden-terrain-flight')].some(e=>getComputedStyle(e).visibility==='visible'))).toBe(false);
 });
