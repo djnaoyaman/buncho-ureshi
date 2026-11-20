@@ -10,7 +10,7 @@ const poseFor=a=>({rest:'rest',look:'tilt',peck:'peck',preen:'preen'})[a.state]|
 const reset='display:block;position:absolute;margin:0;padding:0;border:0;box-shadow:none;pointer-events:none;';
 /** DOM adapter for the explicitly surveyed open-ground gardens. Owns no game state. */
 export function createGardenActorMotion(root){
- const bindings=new Map(),routeCache=new WeakMap();let model=null,key='',geometryKey='',rosterKey='',footholds=[],geometry=null,terrain=null;
+ const bindings=new Map(),routeCache=new WeakMap();let model=null,key='',geometryKey='',rosterKey='',footholds=[],geometry=null,terrain=null,overlayStyle=null;
  const routeSamples=a=>{
   let samples=routeCache.get(a.route);
   if(!samples){samples=model.sampleRoute(a);routeCache.set(a.route,samples);}
@@ -22,7 +22,7 @@ export function createGardenActorMotion(root){
   b.pose?.removeAttribute('data-terrain-flight-active');
   for(const attr of ['data-actor-state','data-actor-phase','data-actor-node'])b.node.removeAttribute(attr);
  };
- const dispose=()=>{for(const b of bindings.values())restore(b);bindings.clear();model?.clear();model=null;key='';geometryKey='';rosterKey='';};
+ const dispose=()=>{if(overlayStyle){const [node,value]=overlayStyle;value?node.style.setProperty('--game-viewport-height',value):node.style.removeProperty('--game-viewport-height');overlayStyle=null;}for(const b of bindings.values())restore(b);bindings.clear();model?.clear();model=null;key='';geometryKey='';rosterKey='';};
  const body=(p,width,height,lift=0)=>({left:geometry.plane.left+p[0]*geometry.plane.width-width*.54,top:geometry.plane.top+p[1]*geometry.plane.height-height*.975-lift,
   right:geometry.plane.left+p[0]*geometry.plane.width+width*.46,bottom:geometry.plane.top+p[1]*geometry.plane.height+height*.025-lift});
  function safePoint(p,width,height,lift=0,flight=false){
@@ -68,9 +68,30 @@ export function createGardenActorMotion(root){
  return {dispose,step(elapsed,active,overrides,{settle=false}={}){
   const stage=root.querySelector('.finch-garden-stage');terrain=actorTerrainFor(stage?.dataset.gardenId);if(!terrain){dispose();return false;}
   if(stage.dataset.sceneState!=='ready')return false;
+  const view=root.ownerDocument.defaultView;
   const plane=stage.querySelector('.finch-garden-image-plane'),slide=stage.querySelector('.finch-garden-slide');if(!plane||!slide)return false;
   const world=root.querySelector('.finch-garden')?.dataset.gardenWorld||root.dataset.gardenWorld||'',nextKey=world+':'+stage.dataset.gardenId;
   if(key!==nextKey){dispose();key=nextKey;model=createGardenActors(key,elapsed);}
+  // Legacy dvh fallback resize events may arrive after the layout viewport.
+  // Scope the measured height to this scene, never change the global shell.
+  if(!view.CSS?.supports?.('height','100dvh')){
+   const overlay=stage.closest('.game-panel-overlay[data-scene=true]');
+   if(overlay){
+    if(overlayStyle&&overlayStyle[0]!==overlay){const [old,value]=overlayStyle;value?old.style.setProperty('--game-viewport-height',value):old.style.removeProperty('--game-viewport-height');overlayStyle=null;}
+    if(!overlayStyle)overlayStyle=[overlay,overlay.style.getPropertyValue('--game-viewport-height')];
+    const height=(view.visualViewport?.scale===1?view.visualViewport.height:view.innerHeight)||view.innerHeight;
+    const value=height+'px';if(overlay.style.getPropertyValue('--game-viewport-height')!==value)overlay.style.setProperty('--game-viewport-height',value);
+   }
+  }
+  // A committed-world redraw can expose a new stage before mountSceneUnits'
+  // next RAF. On engines without container units, project this stage from its
+  // actual content box synchronously, before reading the image plane or hits.
+  if(!view.CSS?.supports?.('width','1cqw')||!view.CSS?.supports?.('height','1cqh')){
+   const bounds=rect(stage),css=view.getComputedStyle(stage),n=k=>parseFloat(css[k])||0;
+   const width=bounds.width-n('borderLeftWidth')-n('borderRightWidth')-n('paddingLeft')-n('paddingRight');
+   const height=bounds.height-n('borderTopWidth')-n('borderBottomWidth')-n('paddingTop')-n('paddingBottom');
+   for(const [name,value]of [['--game-cqw',width],['--game-cqh',height]])if(value>0&&stage.style.getPropertyValue(name)!==value/100+'px')stage.style.setProperty(name,value/100+'px');
+  }
   const nodes=[...plane.querySelectorAll(selector)],definitions=nodes.map(node=>({node,id:node.dataset.gardenActorId||'guest:'+(node.dataset.gardenVisitingFriend||node.dataset.encounterOpen||node.dataset.encounterPage)}));
   const ids=new Set(definitions.map(d=>d.id));
   const nextRosterKey=[...ids].sort().join('|'),populationChanged=nextRosterKey!==rosterKey;rosterKey=nextRosterKey;

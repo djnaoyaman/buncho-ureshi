@@ -81,6 +81,7 @@ for(const id of ['java-rice','bird-diamond-firetail','hanadokei'])test(`actor ol
  for(const [width,height]of [[375,667],[667,375],[375,667],[402,874],[874,402],[402,874]]){
   await page.setViewportSize({width,height});await page.clock.runFor(500);
   const s=await snapshotGarden(page);await info.attach(`legacy-${width}-${height}`,{body:JSON.stringify(s),contentType:'application/json'});
+  expect(Math.abs(s.overlay.height-s.viewport.height),JSON.stringify(s)).toBeLessThan(2);
   expect(s.birds).toHaveLength(5);for(const b of s.birds){expect(b.centerInViewport,JSON.stringify(s)).toBe(true);expect(b.hit,JSON.stringify(s)).toBe(true);}
   expect(await page.locator('.finch-garden-background').evaluate(i=>i.complete&&i.naturalWidth>0)).toBe(true);
   const b=s.birds.find(b=>b.id==='b1');await page.touchscreen.tap(b.point.x,b.point.y);await expect(page.getByRole('dialog',{name:'エド',exact:true})).toBeVisible();await page.getByRole('button',{name:'文鳥の操作をとじる',exact:true}).click();
