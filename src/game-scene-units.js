@@ -4,6 +4,17 @@
 export const SCENE_CONTAINERS = '.game-main,.finch-garden-stage,.game-home-preview-viewport,.expedition-keepsake-art,.caretaker-recruitment-sign';
 function measure(node) {
     const win=node.ownerDocument.defaultView;
+    // The fullscreen garden is exactly the fixed viewport overlay. Bind its
+    // fallback units to that same CSS geometry, rather than a previous frame's
+    // pixel measurement. ResizeObserver/resize events may arrive after paint.
+    // Nested previews and other containers still require measured dimensions.
+    if (node.matches('.finch-garden-stage') && node.closest('.game-panel-overlay[data-scene="true"]')) {
+      node.style.setProperty('--game-cqw', '1vw');
+      node.style.setProperty('--game-cqh', win.CSS?.supports?.('height','100dvh')
+        ? 'calc(var(--game-viewport-height, 100dvh) / 100)'
+        : 'calc((100vh - var(--game-viewport-top, 0px) - var(--game-viewport-inset, 0px)) / 100)');
+      return;
+    }
     const rect = node.getBoundingClientRect(), css = win.getComputedStyle(node);
     const n = key => parseFloat(css[key]) || 0;
     const width = rect.width - n('borderLeftWidth') - n('borderRightWidth') - n('paddingLeft') - n('paddingRight');

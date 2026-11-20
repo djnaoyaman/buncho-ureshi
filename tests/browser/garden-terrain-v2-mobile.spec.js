@@ -38,8 +38,8 @@ for(const width of [375,402])test(`v2 no dynamic viewport unit feature branch ${
   await page.locator('.finch-garden-household').first().tap();await expect(page.locator('.game-bird-sheet[open]')).toBeVisible();await page.locator('[data-game-close-bird]').tap();
  }
 });
-for(const id of ids)for(const width of [375,402])test(`v2 five birds without container query units ${id} ${width}`,async({page},info)=>{
- await page.addInitScript(()=>{const supports=CSS.supports.bind(CSS);CSS.supports=(...args)=>args.some(v=>/cq[wh]/.test(v))?false:supports(...args);});
+for(const legacyViewport of [false,true])for(const id of ids)for(const width of [375,402])test(`v2 five birds without container query units ${id} ${width}${legacyViewport?' and dvh':''}`,async({page},info)=>{
+ await page.addInitScript(legacy=>{const supports=CSS.supports.bind(CSS);CSS.supports=(...args)=>args.some(v=>/cq[wh]/.test(v)||(legacy&&String(v).includes('100dvh')))?false:supports(...args);},legacyViewport);
  await page.route(/\/src\/(game\.css|encounter-ui\.css|encounter-ui\.js)(\?|$)/,async route=>{const r=await route.fetch();await route.fulfill({response:r,body:(await r.text()).replace(/(\d*\.?\d+)cq([wh])/g,'$1unsupported$2')});});
  const height=width===375?667:874;await setup(page,id,width,true,false,height);await page.clock.resume();
  expect((await readyGardenSnapshot(page,info,'initial-fallback-grounded')).motion).toBe('grounded');

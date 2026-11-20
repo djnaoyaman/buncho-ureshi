@@ -116,3 +116,28 @@ revision/connected/front metadata is now opt-in for the new diagnostic tests.
 All original geometry/style/hit comparisons and the new revision/tap/occlusion
 checks remain. This repair changes tests only; the fixed product bytes do not
 change. A final same-head CI and complete related browser run are still required.
+
+
+## CI 44691516652: actual fallback rotation defect
+
+The prior local fixed-build run passed 446/446 in 30.6 minutes. CI passed
+445/446 but failed the WebKit no-container-units bullfinch 402 case. The
+same-revision snapshot had a correct 402×874 overlay while the image plane
+still used landscape width 874 (height 1552.9375, top −577.28125). Three
+connected current bird centers were outside the viewport. This is an actual
+compatibility geometry gap, not the earlier detached-element measurement race.
+
+The local correction binds only fullscreen garden fallback units to the same
+viewport CSS dimensions as the fixed overlay. It does not wait for a resize
+callback to replace stale pixels. Nested previews retain measured content-box
+units. Native container-unit engines are unchanged. Added the combined no-dvh
+and no-cqw/cqh matrix for all four gardens; existing real-hit and tap assertions
+are retained. Unit coverage also rejects reading a stale rect for fullscreen
+fallback geometry. Updated verification results are recorded separately after
+completion; the prior successful run is not proof of this revision.
+
+Independent infrastructure blocker: downloading the standard GitHub verified
+artifact ZIP (14609376158) reached GitHub's redirect, then the storage endpoint
+returned Forbidden. No alternative download route was attempted. The artifact
+metadata and sanitized failure are retained in the external QA report directory.
+No merge or publication occurred.

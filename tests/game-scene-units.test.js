@@ -51,3 +51,14 @@ test('fresh visible scene has compatibility dimensions synchronously before medi
  scene.getBoundingClientRect=()=>({width:874,height:402});syncSceneUnits(scene);assert.equal(scene.style.getPropertyValue('--game-cqw'),'8.74px');assert.equal(scene.style.getPropertyValue('--game-cqh'),'4.02px');
  await win.happyDOM.close();
 });
+
+test('fullscreen legacy garden follows viewport CSS without a delayed pixel measurement',async()=>{
+ const {win,root}=fixture();root.innerHTML='<div class="game-panel-overlay" data-scene="true"><section class="finch-garden-stage"></section></div>';
+ const scene=root.querySelector('section');scene.getBoundingClientRect=()=>{throw new Error('fullscreen must not capture stale pixels');};
+ syncSceneUnits(scene);
+ assert.equal(scene.style.getPropertyValue('--game-cqw'),'1vw');
+ assert.equal(scene.style.getPropertyValue('--game-cqh'),'calc((100vh - var(--game-viewport-top, 0px) - var(--game-viewport-inset, 0px)) / 100)');
+ win.CSS.supports=(prop,value)=>value==='100dvh';syncSceneUnits(scene);
+ assert.equal(scene.style.getPropertyValue('--game-cqh'),'calc(var(--game-viewport-height, 100dvh) / 100)');
+ await win.happyDOM.close();
+});
