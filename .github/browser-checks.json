@@ -1,12 +1,14 @@
 {
-  "base": "ca3b8dc069873f7a649d235d0d81427ff9fd554d",
+  "base": "60f108cd574d7f0f7b258e03400b806bc9a5bcc8",
   "tests": [
     "tests/browser/garden-terrain-motion.spec.js",
     "tests/browser/garden-ground-motion.spec.js",
     "tests/browser/garden-about-booklet.spec.js",
     "tests/browser/encounter-pet-response.spec.js",
     "tests/browser/encounter-music.spec.js",
-    "tests/browser/game-music.spec.js"
+    "tests/browser/game-music.spec.js",
+    "tests/browser/garden-viewport-sync.spec.js",
+    "tests/browser/game-viewport.spec.js"
   ],
-  "reason": "第2弾4庭の実背景ごとの地上移動のみ追加。狭幅5種・密集静止・操作とfocus・非表示/軽減/横向き・先行4庭・冊子35庭・親しみ/効果音・BGM/遭遇復帰をChrome/WebKitで検査。原画、全音源、保存/得点/RNG不変。"
+  "reason": "横向き直後のviewport同期。旧pixel方式の画面外対照、実クリック、通常/密集・先行/非対象庭・縦横反復、軽減/非表示/focus、冊子/保存/効果音/BGM/遭遇復帰・設定をChrome/WebKitで検査。再描画時の現在DOMを同一処理で測定し、viewport・鳥の寸法・座標・手前の要素と重なりを保存。hit成功を待たず、遮蔽・幅0・画面外の対照で失敗検出を確認。今回の追加は検査のみ。ゲームルール・保存・RNG・地形・音源は不変。"
 }

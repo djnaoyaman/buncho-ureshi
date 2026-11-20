@@ -40,8 +40,8 @@ test('game removes general navigation/search and restores original nodes/handler
  assert.equal(submits,3);chrome.dispose();assert.equal(menu.innerHTML,before);assert.equal(doc.querySelector('.game-world-exit'),null);await window.happyDOM.close();
 });
 
-test('game visual viewport follows keyboard height and restores exact site custom properties',async()=>{
- const {window,doc}=fixture();const viewport=new window.EventTarget();Object.assign(viewport,{height:844,offsetTop:0,scale:1});Object.defineProperty(window,'visualViewport',{value:viewport,configurable:true});doc.body.style.setProperty('--game-viewport-height','77px');const chrome=createWorldChrome(doc);chrome.set(true);assert.equal(doc.body.style.getPropertyValue('--game-viewport-height'),'844px');viewport.height=390;viewport.dispatchEvent(new window.Event('resize'));assert.equal(doc.body.style.getPropertyValue('--game-viewport-height'),'390px');viewport.scale=2;viewport.dispatchEvent(new window.Event('resize'));assert.equal(doc.body.style.getPropertyValue('--game-viewport-height'),'100dvh');chrome.set(false);assert.equal(doc.body.style.getPropertyValue('--game-viewport-height'),'77px');assert.equal(doc.body.style.getPropertyValue('--game-viewport-top'),'');chrome.dispose();viewport.height=120;viewport.dispatchEvent(new window.Event('resize'));assert.equal(doc.body.style.getPropertyValue('--game-viewport-height'),'77px');await window.happyDOM.close();
+test('legacy game visual viewport follows keyboard height and restores exact site custom properties',async()=>{
+ const {window,doc}=fixture();Object.defineProperty(window,'CSS',{value:{supports:()=>false},configurable:true});const viewport=new window.EventTarget();Object.assign(viewport,{height:844,offsetTop:0,scale:1});Object.defineProperty(window,'visualViewport',{value:viewport,configurable:true});doc.body.style.setProperty('--game-viewport-height','77px');const chrome=createWorldChrome(doc);chrome.set(true);assert.equal(doc.body.style.getPropertyValue('--game-viewport-height'),'844px');viewport.height=390;viewport.dispatchEvent(new window.Event('resize'));assert.equal(doc.body.style.getPropertyValue('--game-viewport-height'),'390px');viewport.scale=2;viewport.dispatchEvent(new window.Event('resize'));assert.equal(doc.body.style.getPropertyValue('--game-viewport-height'),'100dvh');chrome.set(false);assert.equal(doc.body.style.getPropertyValue('--game-viewport-height'),'77px');assert.equal(doc.body.style.getPropertyValue('--game-viewport-top'),'');chrome.dispose();viewport.height=120;viewport.dispatchEvent(new window.Event('resize'));assert.equal(doc.body.style.getPropertyValue('--game-viewport-height'),'77px');await window.happyDOM.close();
 });
 
 
@@ -65,4 +65,16 @@ test('scene toggle pairs text-free pictograms with Japanese accessible names wit
   chrome.set(false);assert.equal(button.hidden,true);assert.equal(doc.body.hasAttribute('data-scene-controls'),false);
  }
  chrome.dispose();await window.happyDOM.close();
+});
+
+test('dynamic layout height does not freeze rotation; keyboard inset, zoom and route restoration remain independent',async()=>{
+ const {window,doc}=fixture();Object.defineProperty(window,'CSS',{value:{supports:()=>true},configurable:true});
+ Object.defineProperty(window,'innerHeight',{value:844,writable:true,configurable:true});
+ const viewport=new window.EventTarget();Object.assign(viewport,{height:844,offsetTop:0,scale:1});Object.defineProperty(window,'visualViewport',{value:viewport,configurable:true});
+ const chrome=createWorldChrome(doc);chrome.set(true);assert.equal(doc.body.style.getPropertyValue('--game-viewport-height'),'100dvh');
+ window.innerHeight=390;viewport.height=390;assert.equal(doc.body.style.getPropertyValue('--game-viewport-height'),'100dvh');
+ viewport.dispatchEvent(new window.Event('resize'));assert.equal(doc.body.style.getPropertyValue('--game-viewport-height'),'100dvh');
+ viewport.height=210;viewport.offsetTop=20;viewport.dispatchEvent(new window.Event('resize'));assert.equal(doc.body.style.getPropertyValue('--game-viewport-height'),'210px');assert.equal(doc.body.style.getPropertyValue('--game-viewport-top'),'20px');
+ viewport.scale=2;viewport.dispatchEvent(new window.Event('resize'));assert.equal(doc.body.style.getPropertyValue('--game-viewport-height'),'100dvh');assert.equal(doc.body.style.getPropertyValue('--game-viewport-top'),'0px');
+ chrome.set(false);assert.equal(doc.body.style.getPropertyValue('--game-viewport-height'),'');chrome.dispose();await window.happyDOM.close();
 });
