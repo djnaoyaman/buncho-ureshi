@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {Window} from 'happy-dom';
 import {readFileSync} from 'node:fs';
-import {mountSceneUnits} from '../src/game-scene-units.js';
+import {mountSceneUnits,syncSceneUnits} from '../src/game-scene-units.js';
 function fixture(native=false) {
  const win=new Window(); Object.defineProperty(win,'CSS',{value:{supports:()=>native}});
  win.document.body.innerHTML='<div id="root"><main class="game-main"><div class="game-room"></div></main></div>';
@@ -43,4 +43,22 @@ test('all game container units have a measured compatibility adapter, including 
   const withoutFallbacks=text.replace(/var\(--game-cq([wh]),1cq[wh]\)/g,'MEASURED');
   assert.doesNotMatch(withoutFallbacks,/\d+cq[wh]/,file);
  }
+});
+
+test('fresh visible scene has compatibility dimensions synchronously before media readiness',async()=>{
+ const {win,root}=fixture();const scene=win.document.createElement('section');scene.className='finch-garden-stage';scene.getBoundingClientRect=()=>({width:402,height:874});root.append(scene);
+ assert.equal(scene.style.getPropertyValue('--game-cqw'),'');syncSceneUnits(scene);assert.equal(scene.style.getPropertyValue('--game-cqw'),'4.02px');assert.equal(scene.style.getPropertyValue('--game-cqh'),'8.74px');
+ scene.getBoundingClientRect=()=>({width:874,height:402});syncSceneUnits(scene);assert.equal(scene.style.getPropertyValue('--game-cqw'),'8.74px');assert.equal(scene.style.getPropertyValue('--game-cqh'),'4.02px');
+ await win.happyDOM.close();
+});
+
+test('fullscreen legacy garden follows viewport CSS without a delayed pixel measurement',async()=>{
+ const {win,root}=fixture();root.innerHTML='<div class="game-panel-overlay" data-scene="true"><section class="finch-garden-stage"></section></div>';
+ const scene=root.querySelector('section');scene.getBoundingClientRect=()=>{throw new Error('fullscreen must not capture stale pixels');};
+ syncSceneUnits(scene);
+ assert.equal(scene.style.getPropertyValue('--game-cqw'),'1vw');
+ assert.equal(scene.style.getPropertyValue('--game-cqh'),'calc((100vh - var(--game-viewport-top, 0px) - var(--game-viewport-inset, 0px)) / 100)');
+ win.CSS.supports=(prop,value)=>value==='100dvh';syncSceneUnits(scene);
+ assert.equal(scene.style.getPropertyValue('--game-cqh'),'calc(var(--game-viewport-height, 100dvh) / 100)');
+ await win.happyDOM.close();
 });

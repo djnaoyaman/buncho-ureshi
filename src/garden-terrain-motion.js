@@ -5,13 +5,13 @@ const selector = ':scope > .finch-garden-friend,:scope > .finch-garden-household
 /** Presentation state only. Owned styles are restored on exit; native button,
  * image, label, handlers and focus are never replaced. */
 export function createGardenTerrainMotion(root) {
-  let stage = null, planeNode = null, roster = [], layout = null, plan = null, cycle = -1, signature = '', key = '', geometry = null;
+  let stage = null, planeNode = null, roster = [], layout = null, plan = null, cycle = -1, signature = '', key = '', geometry = null, routeClockStart = null, flightWait = 0;
   const owned = new Map(), decorations = new Set();
   const decoded = new Map();
   const set = (node, property, value) => {
     if (!owned.has(node)) owned.set(node, new Map());
     if (!owned.get(node).has(property)) owned.get(node).set(property, node.style.getPropertyValue(property));
-    node.style.setProperty(property, value);
+    if(node.style.getPropertyValue(property)!==value)node.style.setProperty(property, value);
   };
   const restore = () => {
     for (const [node, props] of owned) for (const [property, value] of props) value ? node.style.setProperty(property, value) : node.style.removeProperty(property);
@@ -62,11 +62,13 @@ export function createGardenTerrainMotion(root) {
         point:[(r.left+r.width*.54-plane.left)/plane.width,(r.top+r.height*.975-plane.top)/plane.height],
         movable:!!sprite,flight:node.dataset.gardenFlight==='white-adult'};
     });
-    layout=terrainLayout(stage.dataset.gardenId,roster,plane,clip,obstacles);
+    const retained=previous&&terrainFor(stage.dataset.gardenId).graph&&previous.length===roster.length&&previous.every(a=>roster.some(b=>a.id===b.id&&b.labelWidth<=a.labelWidth&&b.labelHeight<=a.labelHeight))
+      ? roster.map(a=>{const before=previous.find(b=>b.id===a.id);return {...a,width:before.width,height:before.height,point:before.point,surface:before.surface};}) : null;
+    layout=retained||terrainLayout(stage.dataset.gardenId,roster,plane,clip,obstacles);
     // Routine saved-world redraws do not restart a route or reshuffle birds.
     if (previous && layout && previous.every(a=>layout.some(b=>b.id===a.id))) {
-      layout=layout.map(a=>({...a,point:previous.find(b=>b.id===a.id).point}));
-    } else {plan=null;cycle=-1;}
+      layout=layout.map(a=>{const before=previous.find(b=>b.id===a.id);return {...a,point:before.point,surface:before.surface,width:before.width,height:before.height};});
+    } else {plan=null;cycle=-1;routeClockStart=null;flightWait=0;}
     if (!layout) {stage.dataset.terrainMotion='static';return;}
     stage.dataset.terrainMotion='grounded';
     const terrain=terrainFor(stage.dataset.gardenId);
@@ -104,25 +106,32 @@ export function createGardenTerrainMotion(root) {
       }
       if(!layout)return false;
       const blocked=nextStage.dataset.sceneState!=='ready'||!!root.querySelector('[data-crow-phase],.finch-raptor-scale-scene,.finch-crow-scale-scene');
-      const nextCycle=Math.floor(elapsed/TERRAIN_PERIOD);
+      if(terrain.graph&&active&&!blocked&&routeClockStart===null)routeClockStart=elapsed;
+      const routeElapsed=terrain.graph?Math.max(0,elapsed-(routeClockStart??elapsed)):elapsed;
+      const nextCycle=Math.floor(routeElapsed/TERRAIN_PERIOD);
       if(active&&!blocked&&cycle!==nextCycle){
         // A resize or newly usable crop must not join a flight halfway through.
-        plan=elapsed%TERRAIN_PERIOD<3000?terrainPlan(stage.dataset.gardenId,layout,p,clip,obstacles,nextCycle):null;cycle=nextCycle;
+        plan=routeElapsed%TERRAIN_PERIOD<(terrain.graph?1000:3000)?terrainPlan(stage.dataset.gardenId,layout,p,clip,obstacles,nextCycle):null;cycle=nextCycle;
         if(plan?.flight){
           const actor=layout.find(a=>a.id===plan.id);
           wing(actor,{wing:true,phase:0,pose:'right'});
           const images=actor.node.querySelectorAll('[data-flight-source]');
           if(images.length!==4||![...images].every(i=>decoded.get(i.dataset.flightSource)?.ready)){
-            plan=terrainPlan(stage.dataset.gardenId,layout.map(a=>({...a,flight:false})),p,clip,obstacles,nextCycle);
+            if(terrain.graph&&flightWait++<2){
+              // Decode on a stationary native pose, then start from phase zero.
+              // Never join a flight midway or wait a complete 26-second cycle.
+              plan=null;cycle=-1;routeClockStart=null;
+            }else plan=terrainPlan(stage.dataset.gardenId,layout.map(a=>({...a,flight:false})),p,clip,obstacles,nextCycle);
           }
         }
       }
-      const frame=terrainFrame(plan,elapsed);
+      const frame=terrainFrame(plan,routeElapsed);
       for(const a of layout){
         const f=plan?.id===a.id?frame:null,point=f?.point||a.point;
         // Motion holds at its exact point while hovered/focused or paused.
-        set(a.node,'left',(point[0]*100)+'%');set(a.node,'top',(point[1]*100)+'%');
-        set(a.node,'transform',`translate(-54%,-97.5%) translateY(${- (f?.lift||0)}px)`);
+        const anchor=terrain.graph?a.point:point;
+        set(a.node,'left',(anchor[0]*100)+'%');set(a.node,'top',(anchor[1]*100)+'%');
+        set(a.node,'transform',terrain.graph?`translate(-54%,-97.5%) translate(${(point[0]-anchor[0])*p.width}px,${(point[1]-anchor[1])*p.height-(f?.lift||0)}px)`:`translate(-54%,-97.5%) translateY(${- (f?.lift||0)}px)`);
         set(a.node,'z-index',String(Math.round(point[1]*1000)));
         const shadow=a.node.querySelector('.garden-terrain-shadow');
         if(shadow){
@@ -135,9 +144,9 @@ export function createGardenTerrainMotion(root) {
       }
       // Wake before the sub-second flight; a one-second idle poll must not skip
       // an entire takeoff/landing window.
-      const local=elapsed%TERRAIN_PERIOD;
-      return active&&!blocked&&!!plan&&((local>=3000&&local<6000)||(local>=13000&&local<16000));
+      const local=routeElapsed%TERRAIN_PERIOD;
+      return active&&!blocked&&!!plan&&(terrain.graph ? ((local>=0&&local<5000)||(local>=13000&&local<18000)) : ((local>=3000&&local<6000)||(local>=13000&&local<16000)));
     },
-    dispose(){restore();if(stage)delete stage.dataset.terrainMotion;stage=null;layout=null;plan=null;key='';signature='';cycle=-1;},
+    dispose(){restore();if(stage)delete stage.dataset.terrainMotion;stage=null;layout=null;plan=null;key='';signature='';cycle=-1;routeClockStart=null;flightWait=0;},
   };
 }

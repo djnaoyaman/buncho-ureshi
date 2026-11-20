@@ -1,5 +1,7 @@
+import {syncSceneUnits} from './game-scene-units.js';
 /** Select one decoded art source and its terrain coordinates together. No world changes. */
 export function syncGardenArtwork(scene) {
+  syncSceneUnits(scene);
   const image = scene?.querySelector('.finch-garden-background[data-garden-landscape]');
   const plane = image?.closest('.finch-garden-image-plane');
   if (!image || !plane) return false;

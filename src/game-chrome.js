@@ -6,15 +6,26 @@ export function createWorldChrome(doc) {
   const body=doc.body,menu=doc.querySelector('#menu'),toggle=doc.querySelector('#menu-toggle');
   const brand=doc.querySelector('#brand'),footer=doc.querySelector('.site-footer');
   const viewport=doc.defaultView.visualViewport,priorViewport=body.style.getPropertyValue('--game-viewport-height'),priorOffset=body.style.getPropertyValue('--game-viewport-top');
+  const priorFallback=body.getAttribute('data-game-viewport-fallback'),priorInset=body.style.getPropertyValue('--game-viewport-inset');
   // Native dynamic viewport units rotate with layout, before delayed WebKit
   // resize notifications. Keep measured pixels when the keyboard occludes the viewport;
   // older engines retain their existing measured-pixel fallback.
   const dynamicViewport=doc.defaultView.CSS?.supports?.('height','100dvh');
+  let measuredLayoutHeight=doc.defaultView.innerHeight,pendingLayoutHeight=null;
   const updateViewport=()=>{if(!active)return;const zoomed=viewport&&viewport.scale!==1;
-    const height=viewport?.height||doc.defaultView.innerHeight;
+    // visualViewport can report the previous portrait height during resize.
+    // Never let that stale value extend controls below the layout viewport.
+    const layoutHeight=doc.defaultView.innerHeight,layoutChanged=layoutHeight!==measuredLayoutHeight;
+    measuredLayoutHeight=layoutHeight;
+    const visualHeight=viewport?.height||layoutHeight;
+    if(layoutChanged)pendingLayoutHeight=layoutHeight;
+    if(Math.abs(visualHeight-layoutHeight)<1||doc.activeElement?.matches?.('input,textarea,[contenteditable="true"]'))pendingLayoutHeight=null;
+    const height=pendingLayoutHeight===layoutHeight?layoutHeight:Math.min(visualHeight,layoutHeight);
     const unobscured=Math.abs(doc.defaultView.innerHeight-height)<1;
     body.style.setProperty('--game-viewport-height',zoomed||(dynamicViewport&&unobscured)?'100dvh':`${height}px`);
     body.style.setProperty('--game-viewport-top',zoomed?'0px':`${viewport?.offsetTop||0}px`);
+    body.toggleAttribute('data-game-viewport-fallback',!dynamicViewport);
+    body.style.setProperty('--game-viewport-inset',`${zoomed?0:Math.max(0,layoutHeight-height-(viewport?.offsetTop||0))}px`);
   };
   viewport?.addEventListener('resize',updateViewport);viewport?.addEventListener('scroll',updateViewport);doc.defaultView.addEventListener('resize',updateViewport);
   const originalWorldControl=toggle.getAttribute('data-game-world-control');
@@ -56,7 +67,7 @@ export function createWorldChrome(doc) {
       brand.setAttribute('href',doc.querySelector('base').getAttribute('href')+'game/');brand.setAttribute('aria-label','おもちの文鳥ぐらし');
       for(const move of moves)move.target.append(move.node);extras.hidden=false;footer.hidden=true;
     }else{
-      clearIntro();sceneToggle.hidden=true;if(priorSceneControls===null)delete body.dataset.sceneControls;else body.setAttribute('data-scene-controls',priorSceneControls);delete body.dataset.world;for(const [key,value] of [['--game-viewport-height',priorViewport],['--game-viewport-top',priorOffset]]){if(value)body.style.setProperty(key,value);else body.style.removeProperty(key);}for(const entry of siteMenuNodes)entry.marker.after(entry.node);exit.hidden=true;if(originalWorldControl===null)toggle.removeAttribute('data-game-world-control');else toggle.setAttribute('data-game-world-control',originalWorldControl);toggle.innerHTML=original.html;toggle.setAttribute('aria-label',original.label);
+      clearIntro();sceneToggle.hidden=true;if(priorSceneControls===null)delete body.dataset.sceneControls;else body.setAttribute('data-scene-controls',priorSceneControls);delete body.dataset.world;if(priorFallback===null)body.removeAttribute('data-game-viewport-fallback');else body.setAttribute('data-game-viewport-fallback',priorFallback);for(const [key,value] of [['--game-viewport-height',priorViewport],['--game-viewport-top',priorOffset],['--game-viewport-inset',priorInset]]){if(value)body.style.setProperty(key,value);else body.style.removeProperty(key);}for(const entry of siteMenuNodes)entry.marker.after(entry.node);exit.hidden=true;if(originalWorldControl===null)toggle.removeAttribute('data-game-world-control');else toggle.setAttribute('data-game-world-control',originalWorldControl);toggle.innerHTML=original.html;toggle.setAttribute('aria-label',original.label);
       brand.setAttribute('href',original.href);brand.setAttribute('aria-label',original.brandLabel);
       for(const move of moves)move.marker.after(move.node);extras.hidden=true;about.open=false;footer.hidden=false;
     }

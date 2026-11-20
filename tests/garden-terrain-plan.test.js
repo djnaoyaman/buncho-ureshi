@@ -14,7 +14,7 @@ for(const id of ids) test(id+' routes stay grounded, separated and continuous wi
       assert.equal(JSON.stringify(input),before);
       if(count===10){assert.equal(layout,null);continue;}
       if(!layout)continue;
-      for(const a of layout){assert.ok(a.width>=44);assert.ok(inside(a.point,terrainFor(id).surfaces[terrainFor(id).primary]));}
+      for(const a of layout){assert.ok(a.width>=44);assert.ok(inside(a.point,terrainFor(id).surfaces[a.surface||terrainFor(id).primary]));}
       const saved=JSON.stringify(layout);
       for(let cycle=0;cycle<4;cycle++){
         const plan=terrainPlan(id,layout,plane,clip,[],cycle);

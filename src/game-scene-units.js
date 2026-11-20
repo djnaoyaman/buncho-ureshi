@@ -2,12 +2,19 @@
 // Keep the same artwork/foot geometry using measured CSS pixels, without
 // reading or modifying the player's save. Modern browsers retain native units.
 export const SCENE_CONTAINERS = '.game-main,.finch-garden-stage,.game-home-preview-viewport,.expedition-keepsake-art,.caretaker-recruitment-sign';
-export function mountSceneUnits(root) {
-  const doc = root.ownerDocument, win = doc.defaultView;
-  if (win.CSS?.supports?.('width', '1cqw') && win.CSS?.supports?.('height', '1cqh')) return () => {};
-  const scope = doc.body, tracked = new Map();
-  let alive = true, frame = 0;
-  function measure(node) {
+function measure(node) {
+    const win=node.ownerDocument.defaultView;
+    // The fullscreen garden is exactly the fixed viewport overlay. Bind its
+    // fallback units to that same CSS geometry, rather than a previous frame's
+    // pixel measurement. ResizeObserver/resize events may arrive after paint.
+    // Nested previews and other containers still require measured dimensions.
+    if (node.matches('.finch-garden-stage') && node.closest('.game-panel-overlay[data-scene="true"]')) {
+      node.style.setProperty('--game-cqw', '1vw');
+      node.style.setProperty('--game-cqh', win.CSS?.supports?.('height','100dvh')
+        ? 'calc(var(--game-viewport-height, 100dvh) / 100)'
+        : 'calc((100vh - var(--game-viewport-top, 0px) - var(--game-viewport-inset, 0px)) / 100)');
+      return;
+    }
     const rect = node.getBoundingClientRect(), css = win.getComputedStyle(node);
     const n = key => parseFloat(css[key]) || 0;
     const width = rect.width - n('borderLeftWidth') - n('borderRightWidth') - n('paddingLeft') - n('paddingRight');
@@ -16,6 +23,18 @@ export function mountSceneUnits(root) {
     if (width > 0) node.style.setProperty('--game-cqw', `${width / 100}px`);
     if (height > 0) node.style.setProperty('--game-cqh', `${height / 100}px`);
   }
+// Media readiness must not precede compatibility geometry on a fresh redraw.
+export function syncSceneUnits(node) {
+  if(!node)return;
+  const win=node.ownerDocument.defaultView;
+  if(win.CSS?.supports?.('width','1cqw')&&win.CSS?.supports?.('height','1cqh'))return;
+  measure(node);
+}
+export function mountSceneUnits(root) {
+  const doc = root.ownerDocument, win = doc.defaultView;
+  if (win.CSS?.supports?.('width', '1cqw') && win.CSS?.supports?.('height', '1cqh')) return () => {};
+  const scope = doc.body, tracked = new Map();
+  let alive = true, frame = 0;
   function restore(node, previous) {
     for (const [key, value] of previous) {
       if (value) node.style.setProperty(key, value); else node.style.removeProperty(key);

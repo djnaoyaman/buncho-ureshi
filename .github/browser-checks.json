@@ -1,6 +1,9 @@
 {
-  "base": "60f108cd574d7f0f7b258e03400b806bc9a5bcc8",
+  "base": "91b53af5eff91ebe3929c179db006bf18360b14e",
   "tests": [
+    "tests/browser/garden-terrain-v2.spec.js",
+    "tests/browser/garden-terrain-v2-mobile.spec.js",
+    "tests/browser/garden-terrain-v2-redraw.spec.js",
     "tests/browser/garden-terrain-motion.spec.js",
     "tests/browser/garden-ground-motion.spec.js",
     "tests/browser/garden-about-booklet.spec.js",
@@ -8,7 +11,8 @@
     "tests/browser/encounter-music.spec.js",
     "tests/browser/game-music.spec.js",
     "tests/browser/garden-viewport-sync.spec.js",
-    "tests/browser/game-viewport.spec.js"
+    "tests/browser/game-viewport.spec.js",
+    "tests/browser/iphone15-scene.spec.js"
   ],
-  "reason": "横向き直後のviewport同期。旧pixel方式の画面外対照、実クリック、通常/密集・先行/非対象庭・縦横反復、軽減/非表示/focus、冊子/保存/効果音/BGM/遭遇復帰・設定をChrome/WebKitで検査。再描画時の現在DOMを同一処理で測定し、viewport・鳥の寸法・座標・手前の要素と重なりを保存。hit成功を待たず、遮蔽・幅0・画面外の対照で失敗検出を確認。今回の追加は検査のみ。ゲームルール・保存・RNG・地形・音源は不変。"
+  "reason": "v2先行4庭の地形別配置と連続経路。通常5羽の足場・名前・44px操作・実タップ・focus・停止/復帰・軽減・縦横をChrome/WebKitで検査。375×667/402×874、dvh/CQ単位の非対応分岐、実保存再描画8回と同一revisionのヒット、遮蔽対照も確認。共通の高さ/準備完了時寸法のみ補正し、他31庭の動き・音源・保存/得点/RNGは不変。冊子・世話成功反応・BGMも回帰検査。 CQ/dvh両方非対応の組合せも全4庭で検査。全画面のCQ互換単位はCSS viewportに結び付け、ResizeObserver到着前の旧幅による画面外タップを防ぐ。"
 }

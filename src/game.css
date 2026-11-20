@@ -2236,3 +2236,11 @@ body[data-world="buncho"] .game-field-nav button { display:inline-flex; align-it
 body[data-world="buncho"] .game-field-nav .game-nav-miniature { display:block; width:26px; height:26px; object-fit:contain; flex:0 0 26px; pointer-events:none; }
 body[data-world="buncho"] .game-field-nav .game-nav-miniature-label { flex:0 0 auto; text-decoration:inherit; text-underline-offset:inherit; }
 @media (max-width:360px) { body[data-world="buncho"] .game-field-nav .game-nav-miniature { width:24px; height:24px; flex-basis:24px; } }
+
+/* Fixed edges follow layout before delayed resize events in engines without
+   dynamic viewport units. Measured inset still reserves the on-screen keyboard. */
+body[data-world="buncho"][data-game-viewport-fallback] #main,
+body[data-world="buncho"][data-game-viewport-fallback] .game-panel-overlay[data-scene="true"] {
+ top: var(--game-viewport-top, 0px); bottom: var(--game-viewport-inset, 0px);
+ height: auto; max-height: none;
+}
