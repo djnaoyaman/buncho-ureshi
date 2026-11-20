@@ -1,14 +1,16 @@
 {
-  "base": "60f108cd574d7f0f7b258e03400b806bc9a5bcc8",
+  "base": "91b53af5eff91ebe3929c179db006bf18360b14e",
   "tests": [
-    "tests/browser/garden-terrain-motion.spec.js",
+    "tests/browser/garden-actors.spec.js",
+    "tests/browser/garden-actors-natural.spec.js",
     "tests/browser/garden-ground-motion.spec.js",
+    "tests/browser/garden-terrain-motion.spec.js",
     "tests/browser/garden-about-booklet.spec.js",
     "tests/browser/encounter-pet-response.spec.js",
     "tests/browser/encounter-music.spec.js",
     "tests/browser/game-music.spec.js",
     "tests/browser/garden-viewport-sync.spec.js",
-    "tests/browser/game-viewport.spec.js"
+    "tests/browser/iphone15-scene.spec.js"
   ],
-  "reason": "横向き直後のviewport同期。旧pixel方式の画面外対照、実クリック、通常/密集・先行/非対象庭・縦横反復、軽減/非表示/focus、冊子/保存/効果音/BGM/遭遇復帰・設定をChrome/WebKitで検査。再描画時の現在DOMを同一処理で測定し、viewport・鳥の寸法・座標・手前の要素と重なりを保存。hit成功を待たず、遮蔽・幅0・画面外の対照で失敗検出を確認。今回の追加は検査のみ。ゲームルール・保存・RNG・地形・音源は不変。"
+  "reason": "型①の梅島公園と同型10庭だけに個体別表示FSM・4色の離着陸と庭別足場を統合。全対象庭の通常5羽、0/1/8/最大10羽、375/402/320幅、実タップ・focus・回転・復帰・軽減を検証。自然時間の通常入庭観測は時計/抽選介入なしで別検査。既存先行庭、冊子、撫でる保存成功/失敗/上限、4音、BGM/遭遇復帰、旧機能模擬を維持。固定ビルドでChrome/WebKitを実施し実機iPhone/GPUとは区別。"
 }

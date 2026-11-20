@@ -12,8 +12,9 @@ test('exactly two authorized IDs; other33, explicit booklet successor, Bach sour
  assert.deepEqual(rows.map(r=>r.gardenId),['paris-unrest','bird-hooded-siskin']);assert.deepEqual(rows.map(r=>r.original.sha256),['4ec15ddf05d0cf72be0a53ae4b3ff6be79a72f753c908a4fe5e01cd3057b1968','0d14e22b099d4324dc16e4713bc831a9378db18c46c6ded0392d75d8c8d588b7']);
  const audit=JSON.parse(read('docs/qa/gardens30-35-scope.json'));assert.equal(Object.keys(audit.otherGardenHashes).length,33);
  for(const [id,expected] of Object.entries(audit.otherGardenHashes))assert.equal(hash(JSON.stringify(GARDEN35_MUSIC[id])),expected,id);
- const ui=JSON.parse(read('docs/qa/garden-track-credit-scope.json')),motion=JSON.parse(read('docs/qa/garden-motion-four-scope.json'));
+ const ui=JSON.parse(read('docs/qa/garden-track-credit-scope.json')),motion=JSON.parse(read('docs/qa/garden-motion-four-scope.json')),actors=JSON.parse(read('docs/qa/garden-actors-scope.json'));
+ assert.deepEqual(Object.keys(actors.changedSource),['src/encounter-ui.js','src/garden-bird-motion.js']);
  assert.deepEqual(Object.keys(motion.changedSource),['src/encounter-ui.js','src/garden-bird-motion.js']);
- for(const [file,expected] of Object.entries(audit.unchangedSource)){const successor=ui.changedSource[file];if(successor)assert.equal(successor.before,expected,file);const next=motion.changedSource[file];if(next)assert.equal(next.before,successor?.after||expected,file);assert.equal(hash(read(file)),next?.after||successor?.after||expected,file);}
+ for(const [file,expected] of Object.entries(audit.unchangedSource)){const successor=ui.changedSource[file];if(successor)assert.equal(successor.before,expected,file);const next=motion.changedSource[file];if(next)assert.equal(next.before,successor?.after||expected,file);const actor=actors.changedSource[file];if(actor)assert.equal(actor.before,next?.after||successor?.after||expected,file);assert.equal(hash(read(file)),actor?.after||next?.after||successor?.after||expected,file);}
  assert.match(read('src/garden-about-booklet.js').toString(),/renderGardenTrackCredit/);
 });
