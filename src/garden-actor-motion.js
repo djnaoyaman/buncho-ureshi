@@ -10,7 +10,7 @@ const poseFor=a=>({rest:'rest',look:'tilt',peck:'peck',preen:'preen'})[a.state]|
 const reset='display:block;position:absolute;margin:0;padding:0;border:0;box-shadow:none;pointer-events:none;';
 /** DOM adapter for the explicitly surveyed open-ground gardens. Owns no game state. */
 export function createGardenActorMotion(root){
- const bindings=new Map(),routeCache=new WeakMap();let model=null,key='',geometryKey='',rosterKey='',footholds=[],geometry=null,terrain=null,overlayStyle=null;
+ const bindings=new Map(),routeCache=new WeakMap();let model=null,key='',geometryKey='',rosterKey='',footholds=[],layoutWidth=64,geometry=null,terrain=null,overlayStyle=null;
  const routeSamples=a=>{
   let samples=routeCache.get(a.route);
   if(!samples){samples=model.sampleRoute(a);routeCache.set(a.route,samples);}
@@ -99,7 +99,7 @@ export function createGardenActorMotion(root){
   for(const d of definitions)if(!bindings.has(d.id))binding(d.node,d.id);
   // A saved-world render creates fresh native CSS dimensions. Reapply the same
   // presentation size even when the image plane geometry did not change.
-  const actorWidth=definitions.length>6?44:64;
+  const actorWidth=layoutWidth;
   for(const b of bindings.values()){b.width=actorWidth;b.height=actorWidth*1000/850;}
   const p=rect(plane),s=rect(slide),r=rect(stage),win=root.ownerDocument.defaultView;
   geometry={plane:p,clip:{left:Math.max(0,s.left,r.left),right:Math.min(win.innerWidth,s.right,r.right),top:Math.max(0,s.top,r.top),bottom:Math.min(win.innerHeight,s.bottom,r.bottom)},
@@ -108,7 +108,7 @@ export function createGardenActorMotion(root){
   const resized=signature!==geometryKey;
   if(resized){
    geometryKey=signature;
-   const width=definitions.length>6?44:64,height=width*1000/850;
+   for(const width of definitions.length>6?[44]:[64,44]){const height=width*1000/850;
    for(const b of bindings.values()){b.width=width;b.height=height;}
    footholds=[];
    // Dense scenes may use intermediate points on the same surveyed surface,
@@ -119,7 +119,9 @@ export function createGardenActorMotion(root){
    // Select alternating depth positions, retaining space for a second row.
    const selected=[];
    for(const n of footholds)if(selected.every(q=>separated(n.p,q.p,width,height)))selected.push(n);
-   footholds=selected;
+   footholds=selected;layoutWidth=width;
+   if(footholds.length>=definitions.length)break;
+   }
   }
   if(footholds.length<definitions.length){stage.dataset.actorMotion='insufficient-space';return false;}
   model.reconcile(definitions.map(d=>({id:d.id,initialFlight:d.node.dataset.gardenActorLead==='true'&&d.node.dataset.gardenActorFlight==='adult',movable:!!bindings.get(d.id).sprite,canFly:!!bindings.get(d.id).flight?.ready})),footholds,(d,n,actors)=>{

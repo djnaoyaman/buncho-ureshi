@@ -1,0 +1,176 @@
+{
+  "approvedPrototype": {
+    "libraryId": "libfile_fde3_f-c123de44951481918f516600c4a73d04_1e5190e96ae0819195a4cad3042d859b",
+    "version": 0,
+    "sha256": "161ec5b0f5da0d5646439d2a85a4b91954cbe3e3db29de74a6924d0c7d972368"
+  },
+  "source": {
+    "commit": "f00da7598",
+    "path": "public/game-art/white-poses.webp",
+    "gitBlob": "9d5b781c885849786d5e2e968d931b5030fae5fe",
+    "sha256": "8e6c308ddeed1f6a2675b7f884fb01dddf99c3d85cee0e052ecc335fdbb4dec0",
+    "pose": "stretch",
+    "atlas": "src/data/pose-atlases.js",
+    "rawReferenceFile": "reference/whole-reference.png",
+    "rawReferenceSha256": "fd592d30c054e6b7afa39b3f2fc861825312e738e7540938c56e31abb58c4051"
+  },
+  "format": {
+    "mime": "image/webp",
+    "lossless": true,
+    "width": 280,
+    "height": 258,
+    "alpha": true,
+    "cssTransformOrigin": "52.615385% 87.916667%",
+    "outerFootTransformOrigin": "54% 97.5%"
+  },
+  "framesSha256": "a99ffb62652a4b6bddf90ccb51852d3a4d2f6095ff9a408731e4820ba377dc65",
+  "frames": [
+    {
+      "file": "frames/wing-0.webp",
+      "phase": "wing",
+      "index": 0,
+      "size": 30438,
+      "sha256": "9851be5125a1788ae8c860f4f2d8bac23bd3d86fdbe1f2b35a1a0996fbbbf703"
+    },
+    {
+      "file": "frames/wing-1.webp",
+      "phase": "wing",
+      "index": 1,
+      "size": 30994,
+      "sha256": "6fd476741647ac811f117998b2536f8b65ff6a0680ffd6358b0b407aa1c5dc81"
+    },
+    {
+      "file": "frames/wing-2.webp",
+      "phase": "wing",
+      "index": 2,
+      "size": 31484,
+      "sha256": "26c9fc357701004d61d9d7d936c30ab1e1884f087f10ee39ccf69cfd52ebce03"
+    },
+    {
+      "file": "frames/wing-3.webp",
+      "phase": "wing",
+      "index": 3,
+      "size": 31658,
+      "sha256": "c7b822adf80f6746e329df5a83a408a12b24cbf4678fb2cbb74a0bf27b1aa886"
+    },
+    {
+      "file": "frames/wing-4.webp",
+      "phase": "wing",
+      "index": 4,
+      "size": 32230,
+      "sha256": "09ae2dd1d8278dcb4e06c3fe5ad5004a1ff944544c3338eb7abd3163b4dd855c"
+    },
+    {
+      "file": "frames/wing-5.webp",
+      "phase": "wing",
+      "index": 5,
+      "size": 32712,
+      "sha256": "734df06e873141311a19147e2cbfc063c01354e8bd7ef75c2828ca28fe3301db"
+    },
+    {
+      "file": "frames/wing-6.webp",
+      "phase": "wing",
+      "index": 6,
+      "size": 32992,
+      "sha256": "e292179f48e7704d95f49101958d951f1c51bde7324b459f8f7e8f518271d048"
+    },
+    {
+      "file": "frames/brake-0.webp",
+      "phase": "brake",
+      "index": 0,
+      "size": 31596,
+      "sha256": "78b172d0f18682179e57fd63a4748326aacdb7284e182b169a99e2e1d1c5f0af"
+    },
+    {
+      "file": "frames/brake-1.webp",
+      "phase": "brake",
+      "index": 1,
+      "size": 31574,
+      "sha256": "49785935fd76b8fa85544107bfed71c8ac3d888e98fa99ec8f026422a7f20b2a"
+    },
+    {
+      "file": "frames/brake-2.webp",
+      "phase": "brake",
+      "index": 2,
+      "size": 32114,
+      "sha256": "80c8727f28279966adfde85c25d1824a9391299d2b0b10e2ad0162483d33cf41"
+    },
+    {
+      "file": "frames/brake-3.webp",
+      "phase": "brake",
+      "index": 3,
+      "size": 32362,
+      "sha256": "478c1eb9feb5591797474bf6c6c3f1151b1e92947996c51d2049c20d85565d40"
+    },
+    {
+      "file": "frames/brake-4.webp",
+      "phase": "brake",
+      "index": 4,
+      "size": 32774,
+      "sha256": "250309e98b8a138022311a4205b81d05f86cec5409f88a384cd56ad4e5d56de2"
+    },
+    {
+      "file": "frames/brake-5.webp",
+      "phase": "brake",
+      "index": 5,
+      "size": 33166,
+      "sha256": "c408a444e10a31e15472d45fa98cb3ef5c7dbe6315da43a8ba8d906cef895cdb"
+    },
+    {
+      "file": "frames/brake-6.webp",
+      "phase": "brake",
+      "index": 6,
+      "size": 32958,
+      "sha256": "3eaac1d75cd65bde631d350564b18e5f76bf18c8a77a98ea5c476966e201689e"
+    },
+    {
+      "file": "frames/feet-0.webp",
+      "phase": "feet",
+      "index": 0,
+      "size": 31342,
+      "sha256": "057e6e2145cf302b81d3b68a1cf1a125e1b1ddd9e32797d2deb5115f93bb13c0"
+    },
+    {
+      "file": "frames/feet-1.webp",
+      "phase": "feet",
+      "index": 1,
+      "size": 31666,
+      "sha256": "82fe4122d8a0990ab111a6459aeab95f53616b02df7600c4aee5b32d91896348"
+    },
+    {
+      "file": "frames/feet-2.webp",
+      "phase": "feet",
+      "index": 2,
+      "size": 32114,
+      "sha256": "b18cec71de858f4d458128cc17ba6e05027111a2b1624a3dde21f061ab3fa156"
+    },
+    {
+      "file": "frames/feet-3.webp",
+      "phase": "feet",
+      "index": 3,
+      "size": 32292,
+      "sha256": "78187ef962fe3e22f0b41cfc8d695c9d242100da7768da3fc473bfb88a861d32"
+    },
+    {
+      "file": "frames/feet-4.webp",
+      "phase": "feet",
+      "index": 4,
+      "size": 32662,
+      "sha256": "e423eebbc7bd58b08dd3a9d0e84ceb5679cddcd5becc1111215507fa190fa84d"
+    },
+    {
+      "file": "frames/feet-5.webp",
+      "phase": "feet",
+      "index": 5,
+      "size": 32966,
+      "sha256": "517fb20fe01718763cbd707fc200a47006c328f595da6673c69d45bb6d4a6a58"
+    },
+    {
+      "file": "frames/feet-6.webp",
+      "phase": "feet",
+      "index": 6,
+      "size": 33226,
+      "sha256": "ccbd6a8e434bd17b984aa08d47e15bd8719969e669f644f604755ad552a300c1"
+    }
+  ]
+}
