@@ -1,5 +1,7 @@
 import {expect} from '@playwright/test';
 import {worldFor,NOW,engine} from './garden-about-world.js';
+import {encounterSystem,getGardenVisitingBird} from '../../src/encounters.js';
+import {recordGardenVisit} from '../../src/garden-friends.js';
 export async function setup(page,id,width=390,motion=true,sparse=false){
   await page.setViewportSize({width,height:844});
   await page.route(/\/src\/game\.js(?:\?.*)?$/,async route=>{
@@ -12,9 +14,21 @@ export async function setup(page,id,width=390,motion=true,sparse=false){
   if(sparse)world.encounters.gardenFriends.visits=[{gardenId:id,visit:world.encounters.garden.visits[id],friendIds:[],returningIds:[]}];
   if(sparse==='chick')world.birds[0].stage='chick';
   if(sparse==='empty')world.encounters.gardenFriends.attendees=[];
-  if(sparse==='dense'){
+  if(['dense','maximum','colours'].includes(sparse)){
     world.encounters.gardenFriends.visits=[];
-    for(let i=0;i<3;i++){const b=engine.createBird(world,{home:'resident',stage:'adult'});world.encounters.gardenFriends.attendees.push(b.id);}
+    for(let i=0;i<3;i++){const b=engine.createBird(world,{home:'resident',stage:'adult',color:['sakura','cinnamon','silver'][i]});world.encounters.gardenFriends.attendees.push(b.id);}
+    if(sparse==='colours')world.encounters.gardenFriends.visits=[{gardenId:id,visit:world.encounters.garden.visits[id],friendIds:[],returningIds:[]}];
+    if(sparse==='maximum'){
+      const guest=encounterSystem.catalog.find(e=>e.gardenEvent.gardenIds.includes(id));
+      const returning=encounterSystem.catalog.find(e=>!e.gardenEvent.gardenIds.includes(id));
+      world.encounters.discoveries.push({id:returning.id,firstTick:world.tick,lastTick:world.tick,visits:6,instanceId:world.encounters.nextId++});
+      world.encounters.garden.guestGardenId=id;world.encounters.queue=[guest.id];
+      for(let visit=0;visit<100;visit++){
+        world.encounters.garden.visits[id]=visit;recordGardenVisit(world,[returning.id]);
+        if(getGardenVisitingBird(world))break;
+      }
+      if(!getGardenVisitingBird(world))throw Error('Maximum roster fixture has no returning bird');
+    }
   }
   engine.validateWorld(world);
   await page.evaluate(w=>new Promise((resolve,reject)=>{const r=indexedDB.open('buncho-ureshi-garden-v1',1);r.onupgradeneeded=()=>r.result.createObjectStore('world');r.onsuccess=()=>{const db=r.result,t=db.transaction('world','readwrite');t.objectStore('world').put(w,'current');t.oncomplete=()=>{db.close();resolve()};t.onerror=()=>reject(t.error)};}),world);
@@ -43,7 +57,7 @@ export async function measureReady(page){
   const p=e.getBoundingClientRect();return [...e.querySelectorAll(':scope > button')].map(n=>{
    const r=n.getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2),sprite=n.querySelector('.garden-bird-sprite');
    return {id:n.dataset.gardenFriend||n.dataset.gardenHousehold||n.dataset.encounterOpen,width:r.width,height:r.height,hit:!!hit&&n.contains(hit),
-    point:[parseFloat(n.style.left)/100,parseFloat(n.style.top)/100],style:n.getAttribute('style'),src:sprite?.querySelector('img')?.getAttribute('src'),filter:sprite?getComputedStyle(sprite).filter:'none',plane:[p.width,p.height],motion:stage.dataset.terrainMotion};
+    point:[parseFloat(n.style.left)/100,parseFloat(n.style.top)/100],style:n.getAttribute('style'),src:sprite?.querySelector('img')?.getAttribute('src'),filter:sprite?getComputedStyle(sprite).filter:'none',plane:[p.width,p.height],motion:stage.dataset.actorMotion||stage.dataset.terrainMotion};
   });
  });return result!==false;},{timeout:10000}).toBe(true);
  return result;
@@ -57,9 +71,9 @@ export async function snapshotGarden(page){return page.evaluate(()=>{
  const viewport={width:innerWidth,height:innerHeight,visualHeight:visualViewport?.height,visualTop:visualViewport?.offsetTop,scale:visualViewport?.scale};
  const birds=[...(plane?.querySelectorAll(':scope > button')||[])].map(n=>{
   const r=n.getBoundingClientRect(),x=r.x+r.width/2,y=r.y+r.height/2,hit=document.elementFromPoint(x,y),style=getComputedStyle(n);
-  return {id:n.dataset.gardenHousehold||n.dataset.gardenFriend||n.dataset.encounterOpen,connected:n.isConnected,rect:r.toJSON(),point:{x,y},centerInViewport:x>=0&&x<innerWidth&&y>=0&&y<innerHeight,hit:!!hit&&n.contains(hit),front:describe(hit),stack:document.elementsFromPoint(x,y).slice(0,5).map(describe),visibility:style.visibility,display:style.display,pointerEvents:style.pointerEvents};
+  return {actorState:n.dataset.actorState,actorPhase:n.dataset.actorPhase,actorNode:n.dataset.actorNode,actorStyle:n.getAttribute('style'),id:n.dataset.gardenHousehold||n.dataset.gardenFriend||n.dataset.encounterOpen,connected:n.isConnected,rect:r.toJSON(),point:{x,y},centerInViewport:x>=0&&x<innerWidth&&y>=0&&y<innerHeight,hit:!!hit&&n.contains(hit),front:describe(hit),stack:document.elementsFromPoint(x,y).slice(0,5).map(describe),visibility:style.visibility,display:style.display,pointerEvents:style.pointerEvents};
  });
- return {time:performance.now(),viewport,cssHeight:document.body.style.getPropertyValue('--game-viewport-height'),overlay:overlay?.getBoundingClientRect().toJSON(),plane:plane?.getBoundingClientRect().toJSON(),ready:stage?.dataset.sceneState,motion:stage?.dataset.terrainMotion,revision:document.querySelector('.finch-garden')?.dataset.gardenRevision,birds};
+ return {time:performance.now(),viewport,cssHeight:document.body.style.getPropertyValue('--game-viewport-height'),overlay:overlay?.getBoundingClientRect().toJSON(),plane:plane?.getBoundingClientRect().toJSON(),ready:stage?.dataset.sceneState,motion:stage?.dataset.actorMotion||stage?.dataset.terrainMotion,revision:document.querySelector('.finch-garden')?.dataset.gardenRevision,birds};
 });}
 export async function readyGardenSnapshot(page,info,label){
  const samples=[];let sample;

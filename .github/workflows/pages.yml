@@ -17,6 +17,7 @@ concurrency:
 jobs:
   build:
     outputs:
+      verify_live: ${{ steps.live_scope.outputs.enabled }}
       browser_tests: ${{ steps.browser_scope.outputs.tests }}
       browser_reason: ${{ steps.browser_scope.outputs.reason }}
     runs-on: ubuntu-24.04
@@ -29,6 +30,9 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      - name: Select this release only for published byte verification
+        id: live_scope
+        run: node scripts/pages-live-scope.mjs
       - name: Select only the browser checks reviewed for this change
         id: browser_scope
         run: node scripts/browser-scope.mjs
@@ -490,3 +494,32 @@ jobs:
         id: deployment
         with:
           timeout: 1800000
+  verify_live:
+    name: verify-published-bytes
+    needs: [build, verify, deploy]
+    if: needs.build.outputs.verify_live == 'true' && needs.verify.result == 'success' && needs.deploy.result == 'success' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/download-artifact@v4
+        with:
+          name: verified-build-${{ github.sha }}
+          path: .verified-build
+      - name: Verify and restore this run's sealed build
+        run: |
+          cd .verified-build
+          sha256sum --check SHA256SUMS
+          test "$(cat SOURCE_SHA)" = "$GITHUB_SHA"
+          tar -xf dist.tar -C ..
+          test -f ../dist/.nojekyll
+      - name: Compare every published file without exporting the build
+        run: node scripts/verify-pages-live.mjs
