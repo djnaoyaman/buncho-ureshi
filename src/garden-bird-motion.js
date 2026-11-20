@@ -92,6 +92,8 @@ export function mountGardenBirdMotion(root, { enabled = () => true, maxTravel = 
     pair = chooseGardenPair(actors, clip, { obstacles, cycle, maxTravel });
     pairCycle = cycle; invalid = false;
   };
+  let viewportKey='',watchViewport=false;
+  const viewport=()=>window.innerWidth+':'+window.innerHeight;
   const schedule = moving => {
     if (disposed || !allowed()) { clearSchedule(); return; }
     if (moving && window.requestAnimationFrame) {
@@ -99,13 +101,15 @@ export function mountGardenBirdMotion(root, { enabled = () => true, maxTravel = 
       timer = null;
       if (raf === null) raf = window.requestAnimationFrame(() => { raf = null; tick(); });
     } else {
-      if (raf !== null) window.cancelAnimationFrame(raf);
-      raf = null;
+      if (watchViewport && window.requestAnimationFrame) {
+        if(raf===null)raf=window.requestAnimationFrame(()=>{raf=null;if(viewport()!==viewportKey)tick();else schedule(false);});
+      }else{if(raf!==null)window.cancelAnimationFrame(raf);raf=null;}
       if (timer === null) timer = window.setInterval(tick, 1000);
     }
   };
   const tick = () => {
     if (disposed) return;
+    viewportKey=viewport();
     const nodes = [...root.querySelectorAll(selector)];
     const garden = root.matches?.('.finch-garden') ? root : root.querySelector('.finch-garden');
     const nextKey = JSON.stringify([
@@ -125,6 +129,7 @@ export function mountGardenBirdMotion(root, { enabled = () => true, maxTravel = 
     }
     const currentStage = root.querySelector('.finch-garden-stage');
     const individualGarden = actorTerrainFor(currentStage?.dataset.gardenId);
+    watchViewport=!!individualGarden;
     const surveyed = individualGarden || terrainFor(currentStage?.dataset.gardenId);
     const warning = surveyed && (currentStage.dataset.sceneState !== 'ready' || document.body.hasAttribute('data-game-view-blocked') || root.querySelector('[data-crow-phase],.finch-crow-scale-scene,.finch-raptor-scale-scene'));
     const active = allowed() && root.isConnected && !!enabled() && !interacting() && !sheetOpen() && !warning;
@@ -182,7 +187,7 @@ export function mountGardenBirdMotion(root, { enabled = () => true, maxTravel = 
   const modality = event => { keyboardFocus = event.type === 'keydown'; if (keyboardFocus) { clock.hold(); schedule(false); } };
   document.addEventListener('pointerdown', modality, true);
   document.addEventListener('keydown', modality, true);
-  const resize = () => { invalid = true; clock.hold(); };
+  const resize = () => { invalid = true; clock.hold(); if(actorTerrainFor(root.querySelector('.finch-garden-stage')?.dataset.gardenId))tick(); };
   document.addEventListener('visibilitychange', sync);
   const viewChanged = () => { if (surveyedGarden()) { clock.hold(); clearSchedule(); tick(); } };
   document.addEventListener('buncho-game-view-visibility', viewChanged);
@@ -192,7 +197,7 @@ export function mountGardenBirdMotion(root, { enabled = () => true, maxTravel = 
   window.addEventListener('resize', resize);
   // Stage replacement emits removal and initial-observation notifications even
   // at the same dimensions. Rebuild geometry without discarding active time.
-  const observer = window.ResizeObserver ? new window.ResizeObserver(() => { invalid = true; }) : null;
+  const observer = window.ResizeObserver ? new window.ResizeObserver(() => { invalid = true; if(watchViewport)resize(); }) : null;
   observedStage = root.querySelector('.finch-garden-stage'); if (observedStage) observer?.observe(observedStage);
   // Apply surveyed grounding while the replacement scene is still loading,
   // before it is exposed. Never wait a full idle tick to relocate visible art.
