@@ -1,5 +1,5 @@
 import {test,expect} from '@playwright/test';
-import {setup,measure,measureReady} from '../fixtures/garden-terrain-browser.js';
+import {setup,measure,measureReady,snapshotGarden,readyGardenSnapshot} from '../fixtures/garden-terrain-browser.js';
 import {terrainFor,inside} from '../../src/garden-terrain-plan.js';
 const ids=['java-rice','bird-diamond-firetail','bird-zebra-finch','kazaguruma'];
 async function setReducedMotion(page,reduced){
@@ -50,7 +50,7 @@ for(const id of ids)for(const density of [false,'dense'])test(`safe roster ${id}
  for(const b of await measure(page)){expect(b.hit,JSON.stringify(b)).toBe(true);expect(b.filter).toBe('none');}
  await expect(page.locator('.garden-terrain-flight')).toHaveCount(0);
 });
-for(const id of ids)test(`ground holds and resumes ${id}`,async({page})=>{
+for(const id of ids)test(`ground holds and resumes ${id}`,async({page},info)=>{
  await setup(page,id,390,true,true);
  await setReducedMotion(page,true);
  await page.clock.runFor(1000);
@@ -60,7 +60,8 @@ for(const id of ids)test(`ground holds and resumes ${id}`,async({page})=>{
  const hidden=await measure(page);await page.clock.runFor(6000);expect(await measure(page)).toEqual(hidden);
  await page.evaluate(()=>{delete document.hidden;document.dispatchEvent(new Event('visibilitychange'));});
  await page.setViewportSize({width:844,height:390});await page.clock.runFor(1500);
- for(const b of await measure(page))expect(b.hit).toBe(true);
+ const rotated=await readyGardenSnapshot(page,info,'rotation-samples');expect(rotated.birds).toHaveLength(1);expect(Math.abs(rotated.overlay.height-rotated.viewport.height)).toBeLessThan(2);for(const b of rotated.birds){expect(b.centerInViewport,JSON.stringify(rotated)).toBe(true);expect(b.hit,JSON.stringify(rotated)).toBe(true);}
+ await page.locator('.finch-garden-household').click();await expect(page.getByRole('dialog',{name:'エド',exact:true})).toBeVisible();await page.getByRole('button',{name:'文鳥の操作をとじる',exact:true}).click();
  await page.setViewportSize({width:390,height:844});await page.clock.runFor(1500);
  await page.locator('[data-garden-scroll=next]').click();await page.clock.runFor(1500);
  await expect(page.locator('.finch-garden-stage')).not.toHaveAttribute('data-garden-id',id);
@@ -90,3 +91,5 @@ test('ready geometry does not hide a real occluded hit failure',async({page})=>{
  await page.setContent('<section class="finch-garden-stage" data-scene-state="ready"><div class="finch-garden-image-plane" style="position:relative;width:200px;height:200px"><button data-garden-household="b1" style="position:absolute;left:20%;top:20%;width:44px;height:44px">bird</button></div></section><div style="position:fixed;inset:0;background:white;z-index:100"></div>');
  const rows=await measureReady(page);expect(rows).toHaveLength(1);expect(rows[0].width).toBe(44);expect(rows[0].hit).toBe(false);
 });
+
+test.afterEach(async({page},info)=>{if(info.status!==info.expectedStatus)await info.attach('failure-current-garden',{body:JSON.stringify(await snapshotGarden(page)),contentType:'application/json'});});

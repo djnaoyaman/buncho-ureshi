@@ -48,3 +48,21 @@ export async function measureReady(page){
  });return result!==false;},{timeout:10000}).toBe(true);
  return result;
 }
+
+// One synchronous browser task: never retry geometry or hit results. A ready
+// scene with a zero-size/offscreen/occluded bird must remain a failing sample.
+export async function snapshotGarden(page){return page.evaluate(()=>{
+ const stage=document.querySelector('.finch-garden-stage'),plane=stage?.querySelector('.finch-garden-image-plane'),overlay=document.querySelector('.game-panel-overlay[data-scene=true]');
+ const describe=n=>n?{tag:n.tagName,id:n.id,class:n.className,household:n.dataset?.gardenHousehold,friend:n.dataset?.gardenFriend}:null;
+ const viewport={width:innerWidth,height:innerHeight,visualHeight:visualViewport?.height,visualTop:visualViewport?.offsetTop,scale:visualViewport?.scale};
+ const birds=[...(plane?.querySelectorAll(':scope > button')||[])].map(n=>{
+  const r=n.getBoundingClientRect(),x=r.x+r.width/2,y=r.y+r.height/2,hit=document.elementFromPoint(x,y),style=getComputedStyle(n);
+  return {id:n.dataset.gardenHousehold||n.dataset.gardenFriend||n.dataset.encounterOpen,connected:n.isConnected,rect:r.toJSON(),point:{x,y},centerInViewport:x>=0&&x<innerWidth&&y>=0&&y<innerHeight,hit:!!hit&&n.contains(hit),front:describe(hit),stack:document.elementsFromPoint(x,y).slice(0,5).map(describe),visibility:style.visibility,display:style.display,pointerEvents:style.pointerEvents};
+ });
+ return {time:performance.now(),viewport,cssHeight:document.body.style.getPropertyValue('--game-viewport-height'),overlay:overlay?.getBoundingClientRect().toJSON(),plane:plane?.getBoundingClientRect().toJSON(),ready:stage?.dataset.sceneState,motion:stage?.dataset.terrainMotion,revision:document.querySelector('.finch-garden')?.dataset.gardenRevision,birds};
+});}
+export async function readyGardenSnapshot(page,info,label){
+ const samples=[];let sample;
+ try{await expect.poll(async()=>{sample=await snapshotGarden(page);samples.push(sample);return sample.ready==='ready';}).toBe(true);return sample;}
+ finally{await info.attach(label,{body:JSON.stringify(samples),contentType:'application/json'});}
+}
