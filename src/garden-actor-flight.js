@@ -8,17 +8,16 @@ export function createActorFlight(sprite,color){
  container.style.cssText=reset+'left:-26.470588%;top:-8%;width:152.941176%;height:120%;transform-origin:52.615385% 87.916667%;visibility:hidden;';
  const source=sprite.querySelector('img').src, decodeImages=[];
  if(color==='white'){
-  const id='garden-fringe-'+serial++,svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
-  svg.setAttribute('width','0');svg.setAttribute('height','0');svg.setAttribute('aria-hidden','true');
-  svg.innerHTML=`<defs><filter id="${id}" x="-5%" y="-5%" width="110%" height="110%" primitiveUnits="objectBoundingBox" color-interpolation-filters="sRGB"><feMorphology in="SourceAlpha" operator="erode" radius="0.0125 0.01355" result="inside"/><feComposite in="SourceAlpha" in2="inside" operator="out" result="edge"/><feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -0.2126 -0.7152 -0.0722 0 0.32" result="dark"/><feComponentTransfer in="dark" result="darkOnly"><feFuncA type="linear" slope="100" intercept="-2"/></feComponentTransfer><feComposite in="darkOnly" in2="edge" operator="in" result="darkEdge"/><feComposite in="SourceGraphic" in2="darkEdge" operator="out"/></filter></defs>`;
-  container.append(svg);
-  for(const key of ['far','body','near','feet']){
-   const image=document.createElement('span');image.dataset.part=key;
-   const decoded=new document.defaultView.Image();decoded.src=new URL('garden-flight/white-'+key+'.webp',source).href;decodeImages.push(decoded);
-   image.style.backgroundImage=`url("${decoded.src}")`;image.style.backgroundSize='100% 100%';
-   if(key!=='feet')image.style.filter=`url(#${id})`;
-   container.append(image);
-  }
+  // Safe whole-bird fallback: one original atlas image, one complete outline.
+  // Do not independently rotate wings/feet or apply SVG alpha filters here.
+  const atlas=POSE_ATLASES.white,p=atlas.poses.stretch,[x,y,w,h]=p.crop,[fx,fy]=p.foot;
+  const scale=atlas.scale/5,ox=45+Math.round((459-(fx-x)*atlas.scale)/5),oy=16+Math.round((975-(fy-y)*atlas.scale)/5);
+  const id='garden-whole-'+serial++,svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.setAttribute('viewBox','0 0 260 240');svg.setAttribute('aria-hidden','true');svg.dataset.wholeBird='white';
+  svg.style.cssText=reset+'left:0;top:0;width:100%;height:100%;';
+  const outline=p.clip.map(([px,py])=>`${x+px*w/100},${y+py*h/100}`).join(' ');
+  svg.innerHTML=`<defs><clipPath id="${id}"><polygon points="${outline}"/></clipPath></defs><g transform="translate(${ox-x*scale} ${oy-y*scale}) scale(${scale})" clip-path="url(#${id})"><image href="${source}" width="${atlas.width}" height="${atlas.height}"/></g>`;
+  container.append(svg);decodeImages.push(sprite.querySelector('img'));
  }else{
  const atlas=POSE_ATLASES[color],p=atlas.poses.stretch,[x,y,w,h]=p.crop,[fx,fy]=p.foot;
  const scale=atlas.scale/5,ox=45+Math.round((459-(fx-x)*atlas.scale)/5),oy=16+Math.round((975-(fy-y)*atlas.scale)/5);
