@@ -43,12 +43,20 @@ for(const id of gardens)test(`actor lifecycle and rotation ${id}`,async({page},i
  await page.locator('[data-garden-details=about] > summary').click();await expect(page.locator('[data-garden-track-credit]')).toHaveCount(1);
  await page.locator('[data-garden-details=about] > summary').click();
 });
-for(const id of gardens)for(const density of ['empty',true,'dense','maximum'])test(`actor population ${id} ${density}`,async({page})=>{
+for(const id of gardens)for(const density of ['empty',true,'dense','maximum'])test(`actor population ${id} ${density}`,async({page},info)=>{
  await setup(page,id,320,true,density);await page.clock.runFor(2000);
  const s=await snapshotGarden(page);expect(s.birds).toHaveLength(density==='empty'?0:density==='maximum'?10:density==='dense'?8:1);
  await expect(page.locator('[data-actor-state]')).toHaveCount(s.birds.length);
  for(const b of s.birds){expect(b.centerInViewport,JSON.stringify(b)).toBe(true);expect(b.hit,JSON.stringify(b)).toBe(true);}
  await page.clock.runFor(8000);for(const b of (await snapshotGarden(page)).birds){expect(b.centerInViewport,JSON.stringify(b)).toBe(true);expect(b.hit,JSON.stringify(b)).toBe(true);}
+ if(density==='maximum')for(const [width,height]of [[375,667],[667,375],[375,667],[402,874],[874,402],[402,874]]){
+  await page.setViewportSize({width,height});await page.clock.runFor(1000);
+  const r=await snapshotGarden(page);expect(r.birds).toHaveLength(10);
+  for(const b of r.birds){expect(b.centerInViewport,JSON.stringify(r)).toBe(true);expect(b.hit,JSON.stringify(r)).toBe(true);}
+  await page.screenshot({path:info.outputPath(`maximum-${width}-${height}.png`)});
+  const lead=r.birds.find(b=>b.id==='b1');await page.touchscreen.tap(lead.point.x,lead.point.y);
+  await expect(page.getByRole('dialog',{name:'エド',exact:true})).toBeVisible();await page.getByRole('button',{name:'文鳥の操作をとじる',exact:true}).click();
+ }
 });
 test('all four original colour textures fly through weighted choices and land',async({page},info)=>{
  test.setTimeout(180000);

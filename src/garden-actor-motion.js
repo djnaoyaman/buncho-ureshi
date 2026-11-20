@@ -103,7 +103,7 @@ export function createGardenActorMotion(root){
   for(const b of bindings.values()){b.width=actorWidth;b.height=actorWidth*1000/850;}
   const p=rect(plane),s=rect(slide),r=rect(stage),win=root.ownerDocument.defaultView;
   geometry={plane:p,clip:{left:Math.max(0,s.left,r.left),right:Math.min(win.innerWidth,s.right,r.right),top:Math.max(0,s.top,r.top),bottom:Math.min(win.innerHeight,s.bottom,r.bottom)},
-   obstacles:[...root.querySelectorAll('.finch-garden > header,.finch-garden-selector-wrap,.finch-garden-dock,.finch-garden-family')].map(rect)};
+   obstacles:[...root.querySelectorAll('.finch-garden > header,.finch-garden-selector-wrap,.finch-garden-dock,.finch-garden-family,.finch-garden > details > summary')].map(rect)};
   const signature=JSON.stringify([definitions.length,p.width,p.height,p.left,p.top,geometry.clip,geometry.obstacles.map(o=>[o.left,o.top,o.right,o.bottom])]);
   const resized=signature!==geometryKey;
   if(resized){
@@ -111,7 +111,9 @@ export function createGardenActorMotion(root){
    const width=definitions.length>6?44:64,height=width*1000/850;
    for(const b of bindings.values()){b.width=width;b.height=height;}
    footholds=[];
-   const rows=definitions.length>6?terrain.denseRows:terrain.rows;
+   // Dense scenes may use intermediate points on the same surveyed surface,
+   // retaining the identical physical footprint and obstacle checks.
+   const rows=definitions.length>6?terrain.denseRows.flatMap((y,i,all)=>i+1<all.length?[y,(y+all[i+1])/2]:[y]):terrain.rows;
    const order=definitions.length>6?rows.flatMap((_,r)=>[2,0,4,1,3].map(c=>[c,r])):[[2,0],[1,1],[3,1],[1,2],[3,2],[0,0],[4,0],[0,2],[4,2],[2,1],[2,2],[1,0],[3,0],[0,1],[4,1]];
    for(const [column,row]of order){const x=terrain.columns[column],y=rows[row],point=[x,y];if(safePoint(point,width,height))footholds.push({id:x+':'+y,p:point});}
    // Select alternating depth positions, retaining space for a second row.
