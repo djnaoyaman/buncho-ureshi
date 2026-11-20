@@ -1,0 +1,15 @@
+{
+  "base": "438763dfc7c52707afa7c073777b9e1aac2daadc",
+  "auditedProductHead": "b391b91caf5af07a8166b4fc2f0a8abf850d53a6",
+  "changedSource": {
+    "src/garden-actor-motion.js": {
+      "before": "afb095bc2869bfa2045fca840b31efce1c0750a3c8e03a4e6ee332546ed08400",
+      "after": "c8a2fea1163f6c94e6b68812032759c622f707307cca206dce590077e96a8535"
+    },
+    "src/garden-bird-motion.js": {
+      "before": "aae20e53793e91b686a271628afa472eca442976c9ee9b368576b27dbc00c411",
+      "after": "289fe5cc9d59c0e6d6bbc1ef3b780d0603b787673e506ee501454ef293da33ea"
+    }
+  },
+  "evidence": "rotation259-output-audit.json: 640 protected outputs; 569 unchanged, 69 exact cache-version changes, 2 substantive modules. Viewport/layout generation synchronization only. Historical Runway/music/booklet scope records are retained."
+}
