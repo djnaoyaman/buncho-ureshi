@@ -1,0 +1,299 @@
+{
+  "base": "91b53af5eff91ebe3929c179db006bf18360b14e",
+  "prototype": {
+    "libraryId": "libfile_fde3_f-52a3984210e081918a7baff7b55de621_1e5190e96ae0819195a4cad3042d859b",
+    "version": 0,
+    "sha256": "c31973b10312420b85b43ed961330e2a44f4133e2b8b422d8e9e961a860420d7"
+  },
+  "counts": {
+    "total": 35,
+    "lightMotionPublished": 8,
+    "prototypeGardens": 4,
+    "prototypeOverlapsLight": 4,
+    "remainingAfterFirstV2": 31,
+    "remainingLight": 4,
+    "withoutTerrainMotion": 27
+  },
+  "gardens": [
+    {
+      "number": 1,
+      "id": "java-rice",
+      "name": "足立区梅島公園",
+      "background": "game-art/gardens35/bird-garden-01.webp",
+      "publishedLight": true,
+      "v2Candidate": false
+    },
+    {
+      "number": 2,
+      "id": "bird-gouldian-finch",
+      "name": "虹の草原",
+      "background": "assets/gardens/bird-garden-02.webp",
+      "publishedLight": false,
+      "v2Candidate": false
+    },
+    {
+      "number": 3,
+      "id": "komorebi",
+      "name": "ふたつの輪の木陰",
+      "background": "assets/gardens/bird-garden-03.webp",
+      "publishedLight": false,
+      "v2Candidate": false
+    },
+    {
+      "number": 4,
+      "id": "bird-diamond-firetail",
+      "name": "白つぶの草庭",
+      "background": "assets/gardens/bird-garden-04.webp",
+      "publishedLight": true,
+      "v2Candidate": false
+    },
+    {
+      "number": 5,
+      "id": "mizukagami",
+      "name": "水辺の星くず",
+      "background": "assets/gardens/bird-garden-05.webp",
+      "publishedLight": false,
+      "v2Candidate": false
+    },
+    {
+      "number": 6,
+      "id": "bird-white-headed-munia",
+      "name": "白い帽子の穂道",
+      "background": "assets/gardens/bird-garden-06.webp",
+      "publishedLight": false,
+      "v2Candidate": false
+    },
+    {
+      "number": 7,
+      "id": "bird-zebra-finch",
+      "name": "しましま風の庭",
+      "background": "assets/gardens/bird-garden-07.webp",
+      "publishedLight": true,
+      "v2Candidate": false
+    },
+    {
+      "number": 8,
+      "id": "bird-red-avadavat",
+      "name": "葦の手紙",
+      "background": "assets/gardens/bird-garden-08.webp",
+      "publishedLight": false,
+      "v2Candidate": false
+    },
+    {
+      "number": 9,
+      "id": "komugi",
+      "name": "栗いろの実り庭",
+      "background": "assets/gardens/bird-garden-09.webp",
+      "publishedLight": false,
+      "v2Candidate": false
+    },
+    {
+      "number": 10,
+      "id": "bird-tricolored-munia",
+      "name": "三色の穂波",
+      "background": "assets/gardens/bird-garden-10.webp",
+      "publishedLight": false,
+      "v2Candidate": false
+    },
+    {
+      "number": 11,
+      "id": "bird-scaly-breasted-munia",
+      "name": "うろこ模様の草原",
+      "background": "assets/gardens/bird-garden-11.webp",
+      "publishedLight": false,
+      "v2Candidate": false
+    },
+    {
+      "number": 12,
+      "id": "bird-black-rumped-waxbill",
+      "name": "赤い線の草みち",
+      "background": "assets/gardens/bird-garden-12.webp",
+      "publishedLight": false,
+      "v2Candidate": false
+    },
+    {
+      "number": 13,
+      "id": "bird-pin-tailed-whydah",
+      "name": "長い尾の風舞台",
+      "background": "assets/gardens/bird-garden-13.webp",
+      "publishedLight": false,
+      "v2Candidate": false
+    },
+    {
+      "number": 14,
+      "id": "bird-long-tailed-paradise-whydah",
+      "name": "尾羽の夕風庭",
+      "background": "assets/gardens/bird-garden-14.webp",
+      "publishedLight": false,
+      "v2Candidate": false
+    },
+    {
+      "number": 15,
+      "id": "bird-red-crossbill",
+      "name": "松ぼっくりの回廊",
+      "background": "assets/gardens/bird-garden-15.webp",
+      "publishedLight": false,
+      "v2Candidate": false
+    },
+    {
+      "number": 16,
+      "id": "yuyake",
+      "name": "金いろの森の食卓",
+      "background": "assets/gardens/bird-garden-16.webp",
+      "publishedLight": true,
+      "v2Candidate": true
+    },
+    {
+      "number": 17,
+      "id": "bird-eurasian-siskin",
+      "name": "ハンノキの黄緑園",
+      "background": "assets/gardens/bird-garden-17.webp",
+      "publishedLight": false,
+      "v2Candidate": false
+    },
+    {
+      "number": 18,
+      "id": "bird-eurasian-bullfinch",
+      "name": "芽吹きの口笛庭",
+      "background": "assets/gardens/bird-garden-18.webp",
+      "publishedLight": true,
+      "v2Candidate": true
+    },
+    {
+      "number": 19,
+      "id": "bird-hawfinch",
+      "name": "木の実の石庭",
+      "background": "assets/gardens/bird-garden-19.webp",
+      "publishedLight": false,
+      "v2Candidate": false
+    },
+    {
+      "number": 20,
+      "id": "bird-japanese-grosbeak",
+      "name": "こだまの新緑庭",
+      "background": "assets/gardens/bird-garden-20.webp",
+      "publishedLight": false,
+      "v2Candidate": false
+    },
+    {
+      "number": 21,
+      "id": "shrine-grove",
+      "name": "落ち葉の小径",
+      "background": "assets/gardens/bird-garden-21.webp",
+      "publishedLight": false,
+      "v2Candidate": false
+    },
+    {
+      "number": 22,
+      "id": "bird-chinese-grosbeak",
+      "name": "木の実の小さな広場",
+      "background": "assets/gardens/bird-garden-22.webp",
+      "publishedLight": false,
+      "v2Candidate": false
+    },
+    {
+      "number": 23,
+      "id": "bird-oriental-greenfinch",
+      "name": "黄色い翼の河原",
+      "background": "assets/gardens/bird-garden-23.webp",
+      "publishedLight": false,
+      "v2Candidate": false
+    },
+    {
+      "number": 24,
+      "id": "kazaguruma",
+      "name": "紅の丘の庭",
+      "background": "assets/gardens/bird-garden-24.webp",
+      "publishedLight": true,
+      "v2Candidate": false
+    },
+    {
+      "number": 25,
+      "id": "bird-pine-grosbeak",
+      "name": "雪どけの実り庭",
+      "background": "assets/gardens/bird-garden-25.webp",
+      "publishedLight": false,
+      "v2Candidate": false
+    },
+    {
+      "number": 26,
+      "id": "bird-common-redpoll",
+      "name": "白樺の赤いしるし",
+      "background": "assets/gardens/bird-garden-26.webp",
+      "publishedLight": false,
+      "v2Candidate": false
+    },
+    {
+      "number": 27,
+      "id": "bird-white-winged-crossbill",
+      "name": "白い翼のトウヒ園",
+      "background": "assets/gardens/bird-garden-27.webp",
+      "publishedLight": true,
+      "v2Candidate": true
+    },
+    {
+      "number": 28,
+      "id": "bird-long-tailed-rosefinch",
+      "name": "紅の穂先の小道",
+      "background": "assets/gardens/bird-garden-28.webp",
+      "publishedLight": false,
+      "v2Candidate": false
+    },
+    {
+      "number": 29,
+      "id": "tsukiakari",
+      "name": "銀の額の山庭",
+      "background": "assets/gardens/bird-garden-29.webp",
+      "publishedLight": false,
+      "v2Candidate": false
+    },
+    {
+      "number": 30,
+      "id": "paris-unrest",
+      "name": "潮風の歌う丘",
+      "background": "assets/gardens/bird-garden-30.webp",
+      "publishedLight": false,
+      "v2Candidate": false
+    },
+    {
+      "number": 31,
+      "id": "hanadokei",
+      "name": "まるい冠の花庭",
+      "background": "assets/gardens/bird-garden-31.webp",
+      "publishedLight": false,
+      "v2Candidate": false
+    },
+    {
+      "number": 32,
+      "id": "onsen",
+      "name": "寄りそいの中庭",
+      "background": "assets/gardens/bird-garden-32.webp",
+      "publishedLight": false,
+      "v2Candidate": false
+    },
+    {
+      "number": 33,
+      "id": "bali-terrace",
+      "name": "赤と緑の島庭",
+      "background": "assets/gardens/bird-garden-33.webp",
+      "publishedLight": true,
+      "v2Candidate": true
+    },
+    {
+      "number": 34,
+      "id": "bird-masked-finch",
+      "name": "仮面の木陰",
+      "background": "assets/gardens/bird-garden-34.webp",
+      "publishedLight": false,
+      "v2Candidate": false
+    },
+    {
+      "number": 35,
+      "id": "bird-hooded-siskin",
+      "name": "金いろの高原窓",
+      "background": "assets/gardens/bird-garden-35.webp",
+      "publishedLight": false,
+      "v2Candidate": false
+    }
+  ]
+}

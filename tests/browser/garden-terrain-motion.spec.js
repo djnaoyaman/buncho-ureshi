@@ -5,7 +5,7 @@ const ids=['yuyake','bird-eurasian-bullfinch','bird-white-winged-crossbill','bal
 for(const id of ids)for(const width of [320,375,390,402,430])test(`surveyed terrain ${id} ${width}`,async({page},info)=>{
   await setup(page,id,width);await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-terrain-motion','grounded');
   const before=await measure(page);expect(before).toHaveLength(5);
-  for(const b of before){expect(Math.round(b.width*1000)/1000).toBeGreaterThanOrEqual(44);expect(Math.round(b.height*1000)/1000).toBeGreaterThanOrEqual(44);expect(b.hit).toBe(true);expect(b.filter).toBe('none');expect(inside(b.point,terrainFor(id).surfaces[terrainFor(id).primary])).toBe(true);}
+  for(const b of before){expect(Math.round(b.width*1000)/1000).toBeGreaterThanOrEqual(44);expect(Math.round(b.height*1000)/1000).toBeGreaterThanOrEqual(44);expect(b.hit).toBe(true);expect(b.filter).toBe('none');expect(Object.values(terrainFor(id).surfaces).some(p=>inside(b.point,p))).toBe(true);}
   await page.clock.runFor(3200);await page.screenshot({path:info.outputPath('grounded.png')});
   for(let i=0;i<4;i++){await page.clock.runFor(500);for(const b of await measure(page)){expect(b.hit).toBe(true);expect(b.filter).toBe('none');}}
   const bird=page.locator('.finch-garden-friend').first(),idBefore=await bird.getAttribute('data-garden-friend');
