@@ -6,7 +6,16 @@ export function createWorldChrome(doc) {
   const body=doc.body,menu=doc.querySelector('#menu'),toggle=doc.querySelector('#menu-toggle');
   const brand=doc.querySelector('#brand'),footer=doc.querySelector('.site-footer');
   const viewport=doc.defaultView.visualViewport,priorViewport=body.style.getPropertyValue('--game-viewport-height'),priorOffset=body.style.getPropertyValue('--game-viewport-top');
-  const updateViewport=()=>{if(!active)return;const zoomed=viewport&&viewport.scale!==1;body.style.setProperty('--game-viewport-height',zoomed?'100dvh':`${viewport?.height||doc.defaultView.innerHeight}px`);body.style.setProperty('--game-viewport-top',zoomed?'0px':`${viewport?.offsetTop||0}px`);};
+  // Native dynamic viewport units rotate with layout, before delayed WebKit
+  // resize notifications. Keep measured pixels when the keyboard occludes the viewport;
+  // older engines retain their existing measured-pixel fallback.
+  const dynamicViewport=doc.defaultView.CSS?.supports?.('height','100dvh');
+  const updateViewport=()=>{if(!active)return;const zoomed=viewport&&viewport.scale!==1;
+    const height=viewport?.height||doc.defaultView.innerHeight;
+    const unobscured=Math.abs(doc.defaultView.innerHeight-height)<1;
+    body.style.setProperty('--game-viewport-height',zoomed||(dynamicViewport&&unobscured)?'100dvh':`${height}px`);
+    body.style.setProperty('--game-viewport-top',zoomed?'0px':`${viewport?.offsetTop||0}px`);
+  };
   viewport?.addEventListener('resize',updateViewport);viewport?.addEventListener('scroll',updateViewport);doc.defaultView.addEventListener('resize',updateViewport);
   const originalWorldControl=toggle.getAttribute('data-game-world-control');
   const siteMenuFragment=doc.createDocumentFragment(),siteMenuNodes=[...menu.children].map(node=>{const marker=doc.createComment('site-menu-return');node.before(marker);return {node,marker};});

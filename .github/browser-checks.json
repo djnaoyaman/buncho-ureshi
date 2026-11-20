@@ -1,12 +1,14 @@
 {
-  "base": "ca3b8dc069873f7a649d235d0d81427ff9fd554d",
+  "base": "60f108cd574d7f0f7b258e03400b806bc9a5bcc8",
   "tests": [
     "tests/browser/garden-terrain-motion.spec.js",
     "tests/browser/garden-ground-motion.spec.js",
     "tests/browser/garden-about-booklet.spec.js",
     "tests/browser/encounter-pet-response.spec.js",
     "tests/browser/encounter-music.spec.js",
-    "tests/browser/game-music.spec.js"
+    "tests/browser/game-music.spec.js",
+    "tests/browser/garden-viewport-sync.spec.js",
+    "tests/browser/game-viewport.spec.js"
   ],
-  "reason": "第2弾4庭の実背景ごとの地上移動のみ追加。狭幅5種・密集静止・操作とfocus・非表示/軽減/横向き・先行4庭・冊子35庭・親しみ/効果音・BGM/遭遇復帰をChrome/WebKitで検査。原画、全音源、保存/得点/RNG不変。"
+  "reason": "横向き直後のviewport同期修正。旧pixel方式の対照、遅延通知中の実hitとクリック、縦横反復・通常/密集・先行/非対象庭、軽減/非表示/focus、冊子/保存/効果音/BGM/遭遇復帰、設定とサイト復帰をChrome/WebKitで検査。ゲームルール/保存/RNG/庭定義/音源は不変。"
 }
