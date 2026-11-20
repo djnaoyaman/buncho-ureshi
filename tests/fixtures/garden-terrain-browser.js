@@ -23,15 +23,15 @@ export async function setup(page,id,width=390,motion=true,sparse=false,height=84
   await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-scene-state','ready');
   await page.clock.runFor(1100);
 }
-export async function measure(page){return page.evaluate(()=>{
+export async function measure(page,{diagnostics=false}={}){return page.evaluate(diagnostics=>{
   const e=document.querySelector('.finch-garden-image-plane'),revision=document.querySelector('.finch-garden')?.dataset.gardenRevision;
   if(!e)throw new Error('Garden image plane missing during atomic measurement');
   const p=e.getBoundingClientRect();return [...e.querySelectorAll(':scope > button')].map(n=>{
     const r=n.getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2),sprite=n.querySelector('.garden-bird-sprite');
-    return {connected:n.isConnected,revision,front:hit?.className||null,id:n.dataset.gardenFriend||n.dataset.gardenHousehold||n.dataset.encounterOpen,width:r.width,height:r.height,hit:!!hit&&n.contains(hit),
+    return {...(diagnostics?{connected:n.isConnected,revision,front:hit?.className||null}:{}),id:n.dataset.gardenFriend||n.dataset.gardenHousehold||n.dataset.encounterOpen,width:r.width,height:r.height,hit:!!hit&&n.contains(hit),
       point:[parseFloat(n.style.left)/100,parseFloat(n.style.top)/100],style:n.getAttribute('style'),src:sprite?.querySelector('img')?.getAttribute('src'),filter:sprite?getComputedStyle(sprite).filter:'none',plane:[p.width,p.height]};
   });
-});}
+},diagnostics);}
 
 // Query readiness and geometry in one browser task. Locator.evaluate first
 // obtains an ElementHandle; a committed-world redraw can detach it before the

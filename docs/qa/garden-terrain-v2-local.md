@@ -107,3 +107,12 @@ Focused Chrome/WebKit mobile/redraw/compatibility tests:46/46 passed (6.9m).
 The repaired WebKit375x667 image shows five birds on the slab rather than the
 old floating fallback. The remaining400 browser cases are running on the same
 704-file build; no rebuild overlaps QA. PR CI must also pass before release.
+
+The subsequent full regression exposed a test-helper compatibility error:
+adding diagnostic revision to the ordinary geometry object made unchanged
+static scenes fail deep equality as normal saves advanced revision4→8.
+The trace's only differing field was revision. Atomic measurement remains;
+revision/connected/front metadata is now opt-in for the new diagnostic tests.
+All original geometry/style/hit comparisons and the new revision/tap/occlusion
+checks remain. This repair changes tests only; the fixed product bytes do not
+change. A final same-head CI and complete related browser run are still required.

@@ -7,7 +7,7 @@ for(const id of ids)for(const width of [320,375,390,402,430])test(`surveyed terr
   const before=await measure(page);expect(before).toHaveLength(5);
   for(const b of before){expect(Math.round(b.width*1000)/1000).toBeGreaterThanOrEqual(44);expect(Math.round(b.height*1000)/1000).toBeGreaterThanOrEqual(44);expect(b.hit,JSON.stringify(b)).toBe(true);expect(b.filter).toBe('none');expect(Object.values(terrainFor(id).surfaces).some(p=>inside(b.point,p))).toBe(true);}
   await page.clock.runFor(3200);await page.screenshot({path:info.outputPath('grounded.png')});
-  for(let i=0;i<4;i++){await page.clock.runFor(500);const sample=await measure(page);expect(sample).toHaveLength(5);expect(new Set(sample.map(b=>b.revision)).size).toBe(1);for(const b of sample){expect(b.hit,JSON.stringify(b)).toBe(true);expect(b.filter).toBe('none');}}
+  for(let i=0;i<4;i++){await page.clock.runFor(500);const sample=await measure(page,{diagnostics:true});expect(sample).toHaveLength(5);expect(new Set(sample.map(b=>b.revision)).size).toBe(1);for(const b of sample){expect(b.hit,JSON.stringify(b)).toBe(true);expect(b.filter).toBe('none');}}
   const bird=page.locator('.finch-garden-friend').first(),idBefore=await bird.getAttribute('data-garden-friend');
   await bird.focus();const held=await bird.getAttribute('style');await page.clock.runFor(3500);
   expect(await bird.getAttribute('data-garden-friend')).toBe(idBefore);expect(await bird.getAttribute('style')).toBe(held);await expect(bird).toBeFocused();
