@@ -1,6 +1,7 @@
 {
-  "base": "91b53af5eff91ebe3929c179db006bf18360b14e",
+  "base": "438763dfc7c52707afa7c073777b9e1aac2daadc",
   "tests": [
+    "tests/browser/flight-integrity.spec.js",
     "tests/browser/garden-actors.spec.js",
     "tests/browser/garden-actors-natural.spec.js",
     "tests/browser/garden-ground-motion.spec.js",
@@ -10,7 +11,9 @@
     "tests/browser/encounter-music.spec.js",
     "tests/browser/game-music.spec.js",
     "tests/browser/garden-viewport-sync.spec.js",
-    "tests/browser/iphone15-scene.spec.js"
+    "tests/browser/iphone15-scene.spec.js",
+    "tests/browser/white-flight-media.spec.js",
+    "tests/browser/white-flight-media-tap.spec.js"
   ],
-  "reason": "型①の梅島公園と同型10庭だけに個体別表示FSM・4色の離着陸と庭別足場を統合。全対象庭の通常5羽、0/1/8/最大10羽、375/402/320幅、実タップ・focus・回転・復帰・軽減を検証。自然時間の通常入庭観測は時計/抽選介入なしで別検査。既存先行庭、冊子、撫でる保存成功/失敗/上限、4音、BGM/遭遇復帰、旧機能模擬を維持。固定ビルドでChrome/WebKitを実施し実機iPhone/GPUとは区別。"
+  "reason": "白文鳥の全身21コマ・有限読込待ちと、飛行画像のみを庭の必須メディア判定から除外。既存の飛行整合、全庭actor・接地・回転・保存・BGMを保持し、白飛行画像の実表示、メディア到着順・再試行と実タップを追加検査。"
 }
