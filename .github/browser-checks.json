@@ -10,5 +10,5 @@
     "tests/browser/garden-viewport-sync.spec.js",
     "tests/browser/game-viewport.spec.js"
   ],
-  "reason": "横向き直後のviewport同期修正。旧pixel方式の対照、遅延通知中の実hitとクリック、縦横反復・通常/密集・先行/非対象庭、軽減/非表示/focus、冊子/保存/効果音/BGM/遭遇復帰、設定とサイト復帰をChrome/WebKitで検査。ゲームルール/保存/RNG/庭定義/音源は不変。"
+  "reason": "横向き直後のviewport同期修正。旧pixel方式の対照、遅延通知中の実hitとクリック、縦横反復・通常/密集・先行/非対象庭、軽減/非表示/focus、冊子/保存/効果音/BGM/遭遇復帰、設定とサイト復帰をChrome/WebKitで検査。ゲームルール/保存/RNG/庭定義/音源は不変。 CI 44647776951 returned zero-size geometry consistent with a detached plane after separate readiness checks; atomically sample readiness and geometry, retain hit assertions and add detached-node/occlusion controls."
 }

@@ -1,5 +1,5 @@
 import {test,expect} from '@playwright/test';
-import {setup,measure} from '../fixtures/garden-terrain-browser.js';
+import {setup,measure,measureReady} from '../fixtures/garden-terrain-browser.js';
 import {terrainFor,inside} from '../../src/garden-terrain-plan.js';
 const ids=['java-rice','bird-diamond-firetail','bird-zebra-finch','kazaguruma'];
 async function setReducedMotion(page,reduced){
@@ -13,7 +13,7 @@ async function setReducedMotion(page,reduced){
 for(const id of ids)for(const width of [320,375,390,402,430])test(`ground-only ${id} ${width}`,async({page},info)=>{
  await setup(page,id,width,true,true);
  await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-terrain-motion','grounded');
- const bird=page.locator('.finch-garden-household'),before=await measure(page);expect(before).toHaveLength(1);
+ const bird=page.locator('.finch-garden-household'),before=await measureReady(page);expect(before).toHaveLength(1);
  await page.mouse.move(0,0);await page.locator('#finch-garden-title').focus();
  const positions=new Set();
  for(let n=0;n<38;n++){
@@ -22,8 +22,8 @@ for(const id of ids)for(const width of [320,375,390,402,430])test(`ground-only $
   // Wait for real decode/layout; hidden replacement buttons are not interactive yet.
   await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-scene-state','ready');
   await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-terrain-motion','grounded');
-  for(const b of await measure(page)){
-   expect(b.hit,JSON.stringify(b)).toBe(true);expect(b.filter).toBe('none');expect(b.src).toBe(before[0].src);
+  for(const b of await measureReady(page)){
+   expect(b.motion).toBe('grounded');expect(b.hit,JSON.stringify(b)).toBe(true);expect(b.filter).toBe('none');expect(b.src).toBe(before[0].src);
    expect(Math.round(b.width*1000)/1000).toBeGreaterThanOrEqual(44);
    expect(inside(b.point,terrainFor(id).surfaces[terrainFor(id).primary])).toBe(true);
    positions.add(b.point.join(','));
@@ -39,7 +39,7 @@ for(const id of ids)for(const width of [320,375,390,402,430])test(`ground-only $
  await page.locator('[data-garden-details=about] > summary').click();
  await expect(page.locator('[data-garden-track-credit]')).toHaveCount(1);
  await page.locator('[data-garden-details=about] > summary').click();
- expect((await measure(page)).map(b=>b.id)).toEqual(before.map(b=>b.id));
+ expect((await measureReady(page)).map(b=>b.id)).toEqual(before.map(b=>b.id));
 });
 for(const id of ids)for(const density of [false,'dense'])test(`safe roster ${id} ${density||'normal'}`,async({page})=>{
  await setup(page,id,320,true,density);
@@ -76,4 +76,17 @@ for(const id of ids)test(`ground holds and resumes ${id}`,async({page})=>{
 for(const id of ids)test(`ground motion setting off ${id}`,async({page})=>{
  await setup(page,id,375,false,true);const held=await measure(page);
  await page.clock.runFor(30000);expect(await measure(page)).toEqual(held);
+});
+
+
+test('ready geometry samples the current plane after a detached-handle redraw',async({page})=>{
+ await page.setContent('<section class="finch-garden-stage" data-scene-state="ready"><div class="finch-garden-image-plane" style="position:relative;width:200px;height:200px"><button data-garden-household="b1" style="position:absolute;left:20%;top:20%;width:44px;height:44px">bird</button></div></section>');
+ const old=await page.locator('.finch-garden-image-plane').elementHandle();
+ await page.evaluate(()=>{const stage=document.querySelector('.finch-garden-stage');stage.replaceChildren(stage.firstElementChild.cloneNode(true));});
+ expect(await old.evaluate(e=>({connected:e.isConnected,width:e.getBoundingClientRect().width}))).toEqual({connected:false,width:0});
+ const rows=await measureReady(page);expect(rows).toHaveLength(1);expect(rows[0].width).toBe(44);expect(rows[0].hit).toBe(true);await old.dispose();
+});
+test('ready geometry does not hide a real occluded hit failure',async({page})=>{
+ await page.setContent('<section class="finch-garden-stage" data-scene-state="ready"><div class="finch-garden-image-plane" style="position:relative;width:200px;height:200px"><button data-garden-household="b1" style="position:absolute;left:20%;top:20%;width:44px;height:44px">bird</button></div></section><div style="position:fixed;inset:0;background:white;z-index:100"></div>');
+ const rows=await measureReady(page);expect(rows).toHaveLength(1);expect(rows[0].width).toBe(44);expect(rows[0].hit).toBe(false);
 });
