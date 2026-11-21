@@ -1,3 +1,5 @@
+import {writeFileSync} from 'node:fs';
+import {join} from 'node:path';
 import {test,expect} from '@playwright/test';
 import {setup,snapshotGarden,assertGardenIdentities} from '../fixtures/garden-terrain-browser.js';
 import {GARDEN_TRAIL_TERRAIN} from '../../src/data/garden-trail-terrain.js';
@@ -8,13 +10,22 @@ const stage=page=>page.locator('.finch-garden-stage');
 const pilot={nativeSource:true,height:874,afterOpenMs:0};
 test.use({hasTouch:true});
 test.setTimeout(150000);
-function assertNative(s,count,ids=null){
+function book(info,key){
+ let phase='setup';
+ return {set(v){phase=v;},save(){
+  const dir=process.env.TYPE2_HARD_DIR;
+  if(!dir||!['chrome','webkit'].includes(info.project.name))return;
+  writeFileSync(join(dir,info.project.name+'-'+key),phase+'\n',{mode:0o600,flag:'wx'});
+ }};
+}
+function assertNative(s,count,ids=null,mark=()=>{}){
+ mark('identity');
  assertGardenIdentities(s.birds,count,ids);
  for(const b of s.birds){
-  expect(b.rect.width,JSON.stringify(b)).toBeGreaterThanOrEqual(43.99);
-  expect(b.rect.height,JSON.stringify(b)).toBeGreaterThanOrEqual(43.99);
-  expect(b.centerInViewport,JSON.stringify(b)).toBe(true);
-  expect(b.hit,JSON.stringify({bird:b,motion:s.motion})).toBe(true);
+  mark('width');expect(b.rect.width,JSON.stringify(b)).toBeGreaterThanOrEqual(43.99);
+  mark('height');expect(b.rect.height,JSON.stringify(b)).toBeGreaterThanOrEqual(43.99);
+  mark('center');expect(b.centerInViewport,JSON.stringify(b)).toBe(true);
+  mark('hit');expect(b.hit,JSON.stringify({bird:b,motion:s.motion})).toBe(true);
  }
 }
 async function stable(page,width=402,height=874){
@@ -58,11 +69,13 @@ async function mutationInIndependentStore(page,{kind,id}){
 for(const [id,g] of Object.entries(GARDEN_TRAIL_TERRAIN)){
  const key='#'+String(g.number).padStart(2,'0');
  for(const [density,count] of [['empty',0],[true,1],['maximum',10]])
- test(`${key} native ${count}: real taps, two portraits, rotate without losing actors`,{tag:"@trail-roster"},async({page})=>{
+ test(`${key} native ${count}: real taps, two portraits, rotate without losing actors`,{tag:"@trail-roster"},async({page},info)=>{
+  const d=book(info,`${g.number}-roster-${count}`);try{
+  const c=(prefix,s,expected,ids=null)=>assertNative(s,expected,ids,k=>d.set(prefix+'-'+k));
   await setup(page,id,375,true,density,{...pilot,height:667});
-  await expect(stage(page)).toHaveAttribute('data-garden-trail','true');
-  const first=await stable(page,375,667);const ids=first.birds.map(b=>b.id);
-  assertNative(first,count);
+  d.set('native-enabled');await expect(stage(page)).toHaveAttribute('data-garden-trail','true');
+  d.set('first-ready');const first=await stable(page,375,667);const ids=first.birds.map(b=>b.id);
+  c('first',first,count);d.set('first-mode');
   expect(first.motion).toMatch(/^trail-(active|held|standing)$/);
   if(!count){
    await page.locator('[data-garden-details=about]>summary').tap();
@@ -70,79 +83,86 @@ for(const [id,g] of Object.entries(GARDEN_TRAIL_TERRAIN)){
    await page.locator('[data-garden-details=about]>summary').tap();
   }else{
    const b=first.birds.find(b=>b.id==='b1');
-   await page.touchscreen.tap(b.point.x,b.point.y);
+   d.set('entry-tap');await page.touchscreen.tap(b.point.x,b.point.y);
+   d.set('entry-dialog');
    await expect(page.getByRole('dialog',{name:'エド',exact:true})).toBeVisible();
-   await page.getByRole('button',{name:'文鳥の操作をとじる',exact:true}).tap();
+   d.set('entry-close');await page.getByRole('button',{name:'文鳥の操作をとじる',exact:true}).tap();
   }
-  assertNative(await stable(page,667,375),count,ids);
-  assertNative(await stable(page,402,874),count,ids);
+  d.set('landscape-ready');c('landscape',await stable(page,667,375),count,ids);
+  d.set('portrait-ready');c('portrait',await stable(page,402,874),count,ids);
   if(count){
    let moving=false;
    for(let i=0;i<90;i++){
-    await page.clock.runFor(180);const snap=await snapshotGarden(page);
-    assertNative(snap,count,ids);
+    d.set('movement-sample');await page.clock.runFor(180);const snap=await snapshotGarden(page);
+    c('movement',snap,count,ids);
     if(snap.birds.some(b=>['hop','fly'].includes(b.actorState))){moving=true;break;}
    }
-   expect(moving,'real safe movement required, not static fallback').toBe(true);
+   d.set('movement-visible');expect(moving,'real safe movement required, not static fallback').toBe(true);
   }
+  d.set('pass');}finally{d.save();}
  });
- test(`${key} ${g.pullouts.length?'yield reaches real bay before crossing':'wait outside with both gates taken'}`,{tag:"@trail-lane"},async({page})=>{
+ test(`${key} ${g.pullouts.length?'yield reaches real bay before crossing':'wait outside with both gates taken'}`,{tag:"@trail-lane"},async({page},info)=>{
+  const d=book(info,`${g.number}-lane`);try{
   await setup(page,id,402,true,true,{...pilot,prepareWorld:w=>{
    const b=engine.createBird(w,{home:'resident',stage:'adult',color:'cinnamon'});
    w.encounters.gardenFriends.attendees.push(b.id);
   }});
-  const before=await stable(page);assertNative(before,2);
-  expect(before.birds.map(b=>b.actorNode).sort()).toEqual(['A','B']);
+  d.set('gates-ready');const before=await stable(page);assertNative(before,2,null,k=>d.set('gates-'+k));
+  d.set('gates-ab');expect(before.birds.map(b=>b.actorNode).sort()).toEqual(['A','B']);
   let bay=false,cross=false,clearedGate=false;
   for(let i=0;i<72;i++){
-   await page.clock.runFor(180);const snap=await snapshotGarden(page);
-   assertNative(snap,2,before.birds.map(b=>b.id));
+   d.set('lane-sample');await page.clock.runFor(180);const snap=await snapshotGarden(page);
+   assertNative(snap,2,before.birds.map(b=>b.id),k=>d.set('lane-'+k));
    if(snap.birds.some(b=>b.actorNode==='bay'))bay=true;
    if(snap.birds.some(b=>b.actorNode&&!['A','B','bay'].includes(b.actorNode)&&!['fly','hop'].includes(b.actorState)))clearedGate=true;
    for(const b of snap.birds)if(b.actorState==='fly'){
-    expect(g.pullouts.length?bay:clearedGate,'no flight across a still-occupied opposite gate').toBe(true);cross=true;
+    d.set('occupied-cross');expect(g.pullouts.length?bay:clearedGate,'no flight across a still-occupied opposite gate').toBe(true);cross=true;
    }
   }
-  if(g.pullouts.length){expect(bay).toBe(true);expect(cross).toBe(true);}
-  else {expect(bay).toBe(false);if(cross)expect(clearedGate).toBe(true);}
+  if(g.pullouts.length){d.set('bay-unseen');expect(bay).toBe(true);d.set('cross-unseen');expect(cross).toBe(true);}
+  else {d.set('no-bay');expect(bay).toBe(false);if(cross)expect(clearedGate).toBe(true);}
+  d.set('pass');}finally{d.save();}
  });
- for(const [i,color] of colors.entries())test(`${key} ${color} exact native launch, flap and landing`,{tag:g.number===7||i===g.number%colors.length?"@trail-palette":"@trail-expanded-palette"},async({page})=>{
+ for(const [i,color] of colors.entries())test(`${key} ${color} exact native launch, flap and landing`,{tag:g.number===7||i===g.number%colors.length?"@trail-palette":"@trail-expanded-palette"},async({page},info)=>{
+  const d=book(info,`${g.number}-${color}`);try{
   await setup(page,id,402,true,true,{...pilot,leadColor:color});
-  await stable(page);
+  d.set('palette-ready');await stable(page);
   const bird=page.locator('[data-garden-household=b1]');
   const phases=new Set(),frames=new Set();let contact=null;
   for(let n=0;n<200;n++){
-   await page.clock.runFor(100);
+   d.set('palette-sample');await page.clock.runFor(100);
    const v=await bird.evaluate(b=>({state:b.dataset.actorState,phase:b.dataset.actorPhase,station:b.dataset.actorNode,
      color:b.querySelector('.garden-bird-sprite')?.dataset.color,
      parts:[...b.querySelectorAll('.garden-actor-flight [data-texture]')].map(p=>p.dataset.texture),
      white:b.querySelector('[data-white-flight-frame]')?.dataset.frame}));
-   expect(v.color).toBe(color);
+   d.set('palette-color');expect(v.color).toBe(color);
    if(v.state!=='fly')continue;
    phases.add(v.phase);if(color==='white'&&v.white)frames.add(v.white);
-   if(color!=='white')expect(new Set(v.parts)).toEqual(new Set([color]));
+   d.set('palette-texture');if(color!=='white')expect(new Set(v.parts)).toEqual(new Set([color]));
    if(v.phase==='contact')contact=v.station;
    if(['rise','flap','contact'].every(p=>phases.has(p)))break;
   }
-  expect([...phases]).toEqual(expect.arrayContaining(['rise','flap','contact']));
-  if(i===0)expect(frames.size).toBeGreaterThan(1);
+  d.set(!phases.has('rise')?'palette-rise':!phases.has('flap')?'palette-flap':'palette-contact');expect([...phases]).toEqual(expect.arrayContaining(['rise','flap','contact']));
+  d.set('palette-frames');if(i===0)expect(frames.size).toBeGreaterThan(1);
   await page.clock.runFor(700);
   const end=await snapshotGarden(page);
-  assertNative(end,1,['b1']);expect(end.birds[0].actorNode).not.toBe(contact);
+  assertNative(end,1,['b1'],k=>d.set('landing-'+k));d.set('landing-contact');expect(end.birds[0].actorNode).not.toBe(contact);
+  d.set('pass');}finally{d.save();}
  });
- for(const kind of ['visitor','predator'])test(`${key} real store ${kind} interrupts active native flight safely`,{tag:"@trail-events"},async({page})=>{
-  await setup(page,id,402,true,true,pilot);await stable(page);
-  const pending=await nextFly(page);
+ for(const kind of ['visitor','predator'])test(`${key} real store ${kind} interrupts active native flight safely`,{tag:"@trail-events"},async({page},info)=>{
+  const d=book(info,`${g.number}-${kind}`);try{
+  await setup(page,id,402,true,true,pilot);d.set('visitor-ready');await stable(page);
+  d.set('visitor-preflight');const pending=await nextFly(page);d.set('visitor-store-mutation');
   const result=await mutationInIndependentStore(page,{kind,id});
   expect(result.changed).toBe(true);
   if(kind==='visitor'){
-   expect(result.arrived).toBe(true);
-   await expect(stage(page).locator('.finch-garden-visitor')).toHaveCount(1);
-   const mixed=await snapshotGarden(page);assertNative(mixed,2);
-   expect(mixed.birds.find(b=>b.id==='b1')?.actorNode).toBe(pending.source);
+   d.set('visitor-arrival');expect(result.arrived).toBe(true);
+   d.set('visitor-dom');await expect(stage(page).locator('.finch-garden-visitor')).toHaveCount(1);
+   d.set('visitor-sample');const mixed=await snapshotGarden(page);assertNative(mixed,2,null,k=>d.set('visitor-'+k));
+   d.set('visitor-source');expect(mixed.birds.find(b=>b.id==='b1')?.actorNode).toBe(pending.source);
    const guest=mixed.birds.find(b=>b.id!=='b1');
-   await page.touchscreen.tap(guest.point.x,guest.point.y);
-   await expect(page.locator('[data-encounter-instance]')).toBeVisible();
+   d.set('visitor-tap');await page.touchscreen.tap(guest.point.x,guest.point.y);
+   d.set('visitor-dialog');await expect(page.locator('[data-encounter-instance]')).toBeVisible();
   }else{
    // True hostile arrival opens a blocking return-choice modal; the
    // background overlay button is intentionally not a tap target yet.
@@ -151,6 +171,7 @@ for(const [id,g] of Object.entries(GARDEN_TRAIL_TERRAIN)){
    await home.tap();await expect(page.locator('.game-room')).toBeVisible();
    await expect(page.locator('.game-panel-overlay>[data-raptor-notice]')).toHaveCount(0);
   }
+  d.set('pass');}finally{d.save();}
  });
 }
 

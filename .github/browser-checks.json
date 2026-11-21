@@ -1,9 +1,7 @@
 {
   "base": "934228a3e381a6608c5906c159e8422f4894be2d",
   "tests": [
-    "tests/browser/garden-viewport-sync.spec.js",
-    "tests/browser/garden-trail-maximum-34-receipt.spec.js",
-    "tests/browser/garden-actors-natural.spec.js"
+    "tests/browser/garden-trail-seven.spec.js"
   ],
-  "reason": "非公開の原因調査のみ。旧候補の製品コードを変えず、既存の #07 回転、#34 最大10羽、Type I #01 375px の失敗箇所を段階別の固定分類で確認する。正式検証や公開条件の代わりにはしない。"
+  "reason": "非公開の原因調査。#07、#08、#10、#12、#14の正規ブラウザ検査7件の失敗段階を、製品と既存アサーションを変えずに確認する。正式検証・公開判断ではない。"
 }
