@@ -1,0 +1,22 @@
+{
+  "output": "raptors-v5.mp4",
+  "bytes": 19451231,
+  "sha256": "6dfec74cf2396262a08daddcef163425b2818695822c35898fea2cc3818b6d1b",
+  "parts": [
+    {
+      "name": "approved-v5.part1",
+      "bytes": 6600000,
+      "sha256": "26457e5aa15dc7bf9f7ccfcf23f38da536056beace2c2c6d7c841328be0106f6"
+    },
+    {
+      "name": "approved-v5.part2",
+      "bytes": 6600000,
+      "sha256": "3cd2451bf2b2f2e7ee8b63424356d3fcdb6b7027e0d8a53cdb99936d6e6726ce"
+    },
+    {
+      "name": "approved-v5.part3",
+      "bytes": 6251231,
+      "sha256": "61e945cbfff8a43aec6db655537808c66538434769954256413e418a6b6edae3"
+    }
+  ]
+}
