@@ -1,0 +1,35 @@
+{
+  "baseCommit": "41bd702712ef9af1c1c80b6322f5351be1ef6bb8",
+  "baseTree": "578b65e9aba3aa9e6925ae41d4cf3db5554b97fc",
+  "purpose": "Seven false-by-default private trail profiles, atomic measured native tap reflow and safe solo flight recovery; no gameplay, predator, or release changes",
+  "changedSource": {
+    "src/encounter-controller.js": {
+      "before": "abb6da46ed67c7bd43834c438b0be224cbea9c646e116b6ee633dfcda51e82b4",
+      "after": "c8dc0c1f714424efea8801572fcd48c902a6340c0fe2249282c042f5697a895c"
+    },
+    "src/encounter-ui.js": {
+      "before": "7b3df2bbc75cc95a262763cc6cb79dc9c8cd9fecce08ae87eaf1348bd5594936",
+      "after": "727117f144adb52773995810003d640e4d86630136c9d8644893ecdc937c06d1"
+    },
+    "src/game.js": {
+      "before": "62c74dbcd2b7306f8556c221cee4aad45fb468b1624e9d511257922c762873a8",
+      "after": "7bd20e02dc1bde18df60b843f445e953438f4f31a9e935f612d1d6debb67b40b"
+    },
+    "src/garden-actor-flight.js": {
+      "before": "256f270a396a15374829257a8265216c20290a8a594977ce200412664d1a5e91",
+      "after": "419f6cf7647d7aa19bc672a1961fe1b34980fc106cc90d7d7364ede137a3c919"
+    },
+    "src/garden-actor-motion.js": {
+      "before": "2dfdb5f374f29fa1af3af667be36c9857714e2b849b2da34e67a615234a4dc7c",
+      "after": "c465fd94d6ce8d230cd194ba584751b1ffa495e7c186b638c8aac5b806d441e1"
+    },
+    "src/garden-actor-state.js": {
+      "before": "311bb2ced9b28ce172627f8ac81de9f647420e01d0d5f9706c925e2f86c42301",
+      "after": "c6a85ad17adf3023b30be3188747885841ec3fc9a83d5a369d4dbe67562c1afc"
+    },
+    "src/garden-bird-motion.js": {
+      "before": "1a7d3da97648b4e548c2223462e033a07552624597481f75ed47e7a9da6760c3",
+      "after": "f76680361753674e5691e6697f95fbf752f9e46c87413ecc2dab2a09613d9583"
+    }
+  }
+}
