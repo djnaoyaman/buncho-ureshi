@@ -59,7 +59,7 @@ export function createGardenTrailAdapter(id,{intersectsLane,validate,protects}){
  function enqueue(id,action){
    const a=raw.get(id);
    if(!['walk','fly'].includes(action)||(action==='fly'&&!a?.canFly)||!planner.request(id))return false;
-   if(!requested.has(id))requested.set(id,action);
+   if(!requested.has(id)||raw.size===1&&action==='fly'&&requested.get(id)==='walk')requested.set(id,action);
    return true;
  }
  function admit(){

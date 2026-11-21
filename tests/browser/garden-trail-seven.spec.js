@@ -24,12 +24,10 @@ async function stable(page,width=402,height=874){
 }
 async function nextFly(page,who='b1',ticks=140){
  const bird=page.locator('[data-garden-household='+who+']');
- let landed=null;
  for(let i=0;i<ticks;i++){
   await page.clock.runFor(120);
-  const phase=await bird.getAttribute('data-actor-phase');
-  if(i===0)landed=await bird.getAttribute('data-actor-node');
-  if(phase==='rise'||phase==='flap')return {source:await bird.getAttribute('data-actor-node'),landed};
+  const flight=await bird.evaluate(b=>({phase:b.dataset.actorPhase, source:b.dataset.actorNode, target:b.dataset.actorLanding}));
+  if(flight.phase==='rise'||flight.phase==='flap')return flight;
  }
  throw Error('no natural flight observed: '+await stage(page).getAttribute('data-actor-motion'));
 }
@@ -166,11 +164,12 @@ test('published Type① #01 remains independent with native touchdown control', 
 });
 test('#07 active reduced-motion toggle retains the same verified contact', {tag:'@trail-events'},async({page})=>{
  await setup(page,'bird-zebra-finch',402,true,true,pilot);await stable(page);
- const {source}=await nextFly(page);
- expect(['A','B']).toContain(source);
+ const {source,target}=await nextFly(page);
+ expect(target).toBeTruthy();expect(target).not.toBe(source);
  const b=page.locator('[data-garden-household=b1]');
  await page.emulateMedia({reducedMotion:'reduce'});await page.clock.runFor(800);
- await expect(b).toHaveAttribute('data-actor-node',source==='A'?'B':'A');
+ await expect(b).toHaveAttribute('data-actor-node',target);
+ await expect(b).not.toHaveAttribute('data-actor-landing',/./);
  await expect(b).not.toHaveAttribute('data-actor-state','fly');
  assertNative(await snapshotGarden(page),1,['b1']);
 });

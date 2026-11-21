@@ -10,7 +10,7 @@ export function createGardenTrailRuntime(id,model){
  const [A,B]=terrain.entryCandidates,[bay]=terrain.pullouts;
  const points=bay?{A,B,bay}:{A,B};
  const nodes=Object.fromEntries(Object.entries(points).map(([id,p])=>[id,{id,p}]));
- let current=null,proven=null,epoch=null,lastLocal=null;
+ let current=null,proven=null,epoch=null,lastLocal=null,localFlightId=null;
  const kind=action=>action==='fly'?'fly':'hop';
  const makeEnvironment=safe=>({safe,width:current.plane.width,planeHeight:current.plane.height,height:.043});
  const adapter=createGardenTrailAdapter(id,{
@@ -44,7 +44,15 @@ export function createGardenTrailRuntime(id,model){
    // a null/unsafe measurement pauses new movement, not natural game events.
    epoch=generation;current=measurement;
    proven=current?.envelope?createTrailClearance(id,current):null;
-   return adapter.sync({epoch,actors,predator:predator||!proven});
+   const state=adapter.sync({epoch,actors,predator:predator||!proven});
+   const local=actors.find(a=>a.id===localFlightId);
+   if(!local?.route)localFlightId=null;
+   // A bypass-free solo flight has no lane ticket; still recover it on
+   // interruption before it can continue under a newly blocked geometry.
+   if(localFlightId&&(predator||!proven||actors.length!==1)&&!state.disposition.some(x=>x.id===localFlightId)){
+    state.disposition.push({id:localFlightId,kind:'native-safe-recovery'});
+   }
+   return state;
   },
   request(id,action){return !!proven&&adapter.enqueue(id,action);},
   run(){
@@ -55,6 +63,28 @@ export function createGardenTrailRuntime(id,model){
      ?model.beginFlightPath(c.id,nodes[c.target],c.path,env)
      :model.beginHopPath(c.id,nodes[c.target],c.path,env);
    return adapter.commit(d,start,id=>model.actors.get(id))?d:null;
+  },
+  // Only in an otherwise empty garden: when the main gated route is
+  // unavailable, allow a shorter curved native flight between two measured
+  // dry contacts. It still owns a reservation and passes the same entire
+  // wing/body sweep, clipping, and native UI checks as a lane crossing.
+  singletonFlight(seats,{paintable=()=>true}={}){
+   const roster=[...model.actors.values()],a=roster[0];
+   if(!proven||roster.length!==1||!a.movable||!a.canFly||a.route||a.phase!=='ground')return null;
+   const plane=current.plane;
+   const distance=n=>Math.hypot((a.p[0]-n.p[0])*plane.width,(a.p[1]-n.p[1])*plane.height);
+   const targets=seats.filter(n=>n.id!==a.node&&n.id!=='bay'&&distance(n)>=64&&distance(n)<=148);
+   targets.sort((x,y)=>Math.abs(distance(x)-96)-Math.abs(distance(y)-96));
+   const env=makeEnvironment((candidate,node,k,others)=>{
+    if(!proven.safe(candidate,node,k,others)||!paintable(candidate))return false;
+    const spans=proven.sweptRoute(candidate);
+    return !!spans&&adapter.canPlace({spans});
+   });
+   for(const n of targets)if(model.beginFlightPath(a.id,n,[a.p,n.p],env)){
+    localFlightId=a.id;
+    return {id:a.id,target:n.id,action:'fly'};
+   }
+   return null;
   },
   // When the whole narrow crossing is unavailable, try a smaller native
   // ground route without stealing any protected corridor or landing point.

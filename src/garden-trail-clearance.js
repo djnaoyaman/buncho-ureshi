@@ -101,3 +101,37 @@ export function assignTrailSeats({actors,seats,retained,canPlace,maxTries=5000})
  }
  return assign(0)?plan:null;
 }
+
+// For a geometry-only reseat, retain each still legal preferred foot when a
+// full pack can coexist. A failure never moves an individual or a reservation.
+export function packTrailStandingSeats({actors,seats,preferred,canPlace,accept=()=>true,maxChecks=58000,maxProbes=4}){
+ const plan=new Map(),used=new Set(),safe=new Map(),choices=new Map();
+ let checks=0,probes=0;
+ const check=(a,n,others)=>++checks<=maxChecks&&canPlace(a,n,others);
+ for(const a of actors){
+  const wanted=preferred.get(a.id);
+  const ordered=wanted?[wanted,...seats.filter(n=>n.id!==wanted.id)
+   .sort((x,y)=>Math.hypot(x.p[0]-wanted.p[0],x.p[1]-wanted.p[1])-Math.hypot(y.p[0]-wanted.p[0],y.p[1]-wanted.p[1]))]:seats;
+  choices.set(a.id,ordered.filter(n=>check(a,n,safe)));
+ }
+ function fill(waiting){
+  if(!waiting.length)return ++probes<=maxProbes&&accept(plan);
+  if(checks>=maxChecks||probes>=maxProbes)return false;
+  // Avoid exponential permutations of equivalent small birds masking the
+  // only legal placement for an unusually wide/tall encounter visitor.
+  let picked=null,options=null;
+  for(const a of waiting){
+   const valid=choices.get(a.id).filter(n=>!used.has(n.id)&&check(a,n,plan));
+   if(!valid.length)return false;
+   if(!options||valid.length<options.length){picked=a;options=valid;}
+  }
+  const rest=waiting.filter(a=>a!==picked);
+  for(const n of options){
+   plan.set(picked.id,n);used.add(n.id);
+   if(fill(rest))return true;
+   plan.delete(picked.id);used.delete(n.id);
+  }
+  return false;
+ }
+ return fill(actors)?plan:null;
+}

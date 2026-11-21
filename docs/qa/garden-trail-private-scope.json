@@ -1,7 +1,7 @@
 {
   "baseCommit": "41bd702712ef9af1c1c80b6322f5351be1ef6bb8",
   "baseTree": "578b65e9aba3aa9e6925ae41d4cf3db5554b97fc",
-  "purpose": "Seven false-by-default private trail profiles and measured recovery/short hops; no gameplay, predator, or release changes",
+  "purpose": "Seven false-by-default private trail profiles, atomic measured native tap reflow and safe solo flight recovery; no gameplay, predator, or release changes",
   "changedSource": {
     "src/encounter-controller.js": {
       "before": "abb6da46ed67c7bd43834c438b0be224cbea9c646e116b6ee633dfcda51e82b4",
@@ -21,7 +21,7 @@
     },
     "src/garden-actor-motion.js": {
       "before": "2dfdb5f374f29fa1af3af667be36c9857714e2b849b2da34e67a615234a4dc7c",
-      "after": "b31a0d598c3503971860beed63fc5c6fdfcfaeabeb9e6e45bc6f8a49b5db5a65"
+      "after": "3263af1f5f9632898d19e632aeb0100b86e1e77fe75499b70436522ed554360e"
     },
     "src/garden-actor-state.js": {
       "before": "311bb2ced9b28ce172627f8ac81de9f647420e01d0d5f9706c925e2f86c42301",

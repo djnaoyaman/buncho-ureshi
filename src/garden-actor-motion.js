@@ -3,7 +3,7 @@ import {inside} from './garden-terrain-plan.js';
 import {createGardenActors} from './garden-actor-state.js';
 import {trailTerrainFor} from './data/garden-trail-terrain.js';
 import {createGardenTrailRuntime} from './garden-trail-runtime.js';
-import {assignTrailSeats} from './garden-trail-clearance.js';
+import {assignTrailSeats,packTrailStandingSeats} from './garden-trail-clearance.js';
 import {createActorFlight} from './garden-actor-flight.js';
 
 export function actorTerrainForStage(stage){
@@ -63,7 +63,7 @@ export function createGardenActorMotion(root){
   b.flight?.node.remove();b.shadow?.remove();
   for(const [node,style]of b.styles)style===null?node.removeAttribute('style'):node.setAttribute('style',style);
   if(b.pose){b.pose.style.visibility=b.poseVisibility;b.pose.removeAttribute('data-terrain-flight-active');}
-  for(const attr of ['data-actor-state','data-actor-phase','data-actor-node'])b.node.removeAttribute(attr);
+  for(const attr of ['data-actor-state','data-actor-phase','data-actor-node','data-actor-landing'])b.node.removeAttribute(attr);
  };
  const dispose=()=>{if(overlayStyle){const [node,value]=overlayStyle;value?node.style.setProperty('--game-viewport-height',value):node.style.removeProperty('--game-viewport-height');overlayStyle=null;}for(const b of bindings.values())restore(b);bindings.clear();model?.clear();model=null;trailRuntime=null;nextTrail=0;trailRetry=false;trailMeasurement=null;trailPads=[];key='';geometryKey='';rosterKey='';rejected=null;};
  const body=(p,width,height,lift=0)=>({left:geometry.plane.left+p[0]*geometry.plane.width-width*.54,top:geometry.plane.top+p[1]*geometry.plane.height-height*.975-lift,
@@ -141,6 +141,15 @@ export function createGardenActorMotion(root){
   const p=rect(plane),s=rect(slide),r=rect(stage),win=root.ownerDocument.defaultView;
   geometry={plane:p,clip:{left:Math.max(0,s.left,r.left),right:Math.min(win.innerWidth,s.right,r.right),top:Math.max(0,s.top,r.top),bottom:Math.min(win.innerHeight,s.bottom,r.bottom)},
    obstacles:[...root.querySelectorAll('.finch-garden > header,.finch-garden-selector-wrap,.garden-jog-cylinder > button[data-jog-center],.finch-garden-dock,.finch-garden-family,.finch-garden > details > summary,.leaf-gift > summary')].map(rect)};
+  if(trailRuntime){
+   // Controls outside the encounter root and expanded dock panels can sit
+   // above this plane. Reserve those native hit boxes too, only when visible.
+   const extra=[...root.querySelectorAll('.finch-garden-dock details[open],.finch-garden [data-garden-encounter-notice] button'),
+    ...root.ownerDocument.querySelectorAll('.game-scene-controls-toggle')];
+   for(const n of extra){const q=rect(n),style=win.getComputedStyle(n);
+    if(q.width>0&&q.height>0&&style.visibility!=='hidden'&&style.pointerEvents!=='none')geometry.obstacles.push(q);
+   }
+  }
   const signature=JSON.stringify([definitions.length,p.width,p.height,p.left,p.top,geometry.clip,geometry.obstacles.map(o=>[o.left,o.top,o.right,o.bottom]),trailRuntime?root.ownerDocument.fonts?.status:null]);
   const resized=signature!==geometryKey;
   // Native buttons retain their identity, events and focus. On a genuine
@@ -284,15 +293,42 @@ export function createGardenActorMotion(root){
    model.reconcile(roster.filter(d=>fixedFlight.has(d.id)),[]);
    trailRuntime.sync({generation:key,measurement,predator});
   }
+  const nativeTrailHits=plan=>{
+   // Only probe the interactive stage. Dialogs and device/user holds own
+   // pointer input until they close, not the resting bird arrangement.
+   if(!active||typeof root.ownerDocument.elementFromPoint!=='function')return true;
+   const saved=new Map();
+   try{
+    for(const [id,n]of plan){
+     const b=bindings.get(id);if(!b)return false;
+     saved.set(b.node,b.node.getAttribute('style'));
+     Object.assign(b.node.style,{width:b.width+'px',height:b.height+'px',
+      left:n.p[0]*100+'%',top:n.p[1]*100+'%',marginBlockStart:'0px',
+      transform:'translate(-54%,-97.5%)',zIndex:String(Math.round(n.p[1]*1000)),transition:'none'});
+    }
+    for(const [id]of plan){
+     const {node}=bindings.get(id),r=rect(node);
+     const hit=root.ownerDocument.elementFromPoint(r.left+r.width/2,r.top+r.height/2);
+     if(r.width<43.99||r.height<43.99||!hit||!node.contains(hit))return false;
+    }
+    return true;
+   }finally{
+    for(const [node,style]of saved)style===null?node.removeAttribute('style'):node.setAttribute('style',style);
+   }
+  };
   let planned=null;
   if(trailRuntime&&roster.some(d=>!fixedFlight.has(d.id))){
    const peers=new Map([...model.actors].filter(([id])=>ids.has(id))),byId=new Map(roster.map(d=>[d.id,d]));
    const retained=new Map([...peers].map(([id,a])=>[id,{id:a.node,p:a.p}]));
-   planned=assignTrailSeats({actors:roster,seats:[...footholds,...trailPads],retained,maxTries:3500,canPlace(d,n,partial){
+   // A first paint has no actors to retain; use measured search to solve the
+   // full pack together. A later arrival still preserves the existing roster
+   // and route reservations, rather than moving unrelated birds.
+   const input={actors:roster,seats:[...footholds,...trailPads],retained,preferred:new Map(),accept:nativeTrailHits,maxTries:3500,canPlace(d,n,partial){
     const placed=new Map(peers);
     for(const [id,s] of partial)if(!placed.has(id))placed.set(id,{...byId.get(id),p:s.p,route:null});
     return trailRuntime.canPlace(d,n,placed);
-   }});
+   }};
+   planned=peers.size?assignTrailSeats(input):packTrailStandingSeats(input);
    if(!planned)return reject('trail-blocked-placement');
   }
   model.reconcile(roster,trailRuntime?[...footholds,...trailPads]:footholds,(d,n,actors)=>{
@@ -302,7 +338,19 @@ export function createGardenActorMotion(root){
   });
   if(trailRuntime&&model.actors.size!==roster.length)return reject('trail-blocked-placement');
   const routeFits=a=>!a.route||routeSamples(a).every(f=>safePoint(f.p,bindings.get(a.id).width,bindings.get(a.id).height,f.height*p.height,a.state==='fly'));
-  const reflowed=!resized||trailRuntime&&hadTrail&&[...model.actors.values()].every(routeFits)||(!(trailRuntime&&hadTrail)&&model.reflow(layoutNodes,(a,n)=>{
+  const trailStandingReflow=()=>{
+   // First placement was already accepted against this generation's measured
+   // footprints; never run the Type I nominal-pixel reflow over that result.
+   if(planned&&fixedFlight.size===0)return true;
+   const actors=[...model.actors.values()],preferred=new Map(actors.map(a=>[a.id,{id:a.node,p:a.p}]));
+   const candidate=new Map(roster.map(d=>[d.id,d]));
+   const plan=packTrailStandingSeats({actors,seats:layoutNodes,preferred,accept:nativeTrailHits,canPlace(a,n,partial){
+    const occupied=new Map([...partial].map(([id,s])=>[id,{...candidate.get(id),p:s.p,route:null}]));
+    return trailRuntime.canPlace(a,n,occupied);
+   }});
+   return !!plan&&model.placeStanding(plan);
+  };
+  const reflowed=!resized||(trailRuntime?(hadTrail?[...model.actors.values()].every(routeFits):trailStandingReflow()):model.reflow(layoutNodes,(a,n)=>{
    const b=bindings.get(a.id);
    if(!safePoint(n.p,b.width,b.height))return false;
    // A paused flight remains a real occupied corridor. Responsive reflow may
@@ -367,10 +415,11 @@ export function createGardenActorMotion(root){
      if(elapsed>=nextTrail){
       for(const a of model.actors.values())if(!a.route&&a.movable&&(a.node==='A'||a.node==='B')){
        if(a.initialFlight&&!a.canFly&&model.time<a.initialFlightDeadline)continue;
-       if(a.canFly&&!trailRetry)trailRuntime.request(a.id,'fly');else trailRuntime.request(a.id,'walk');
+       if(a.canFly&&(!trailRetry||roster.length===1))trailRuntime.request(a.id,'fly');else trailRuntime.request(a.id,'walk');
        break;
       }
       let started=trailRuntime.run();
+      if(!started&&roster.length===1)started=trailRuntime.singletonFlight(layoutNodes,{paintable:routeFits});
       // A lone actor seated off the authored terminal (e.g. the dock blocks
       // it after reflow) can still take a measured short hop. Prefer an
       // eligible terminal so future flights use the normal lane admission.
@@ -393,6 +442,7 @@ export function createGardenActorMotion(root){
    b.node.style.left=a.p[0]*100+'%';b.node.style.top=a.p[1]*100+'%';
    b.node.style.transform=`translate(-54%,-97.5%) translateY(${-lift}px)`;b.node.style.zIndex=String(Math.round(a.p[1]*1000));
    b.node.dataset.actorState=a.state;b.node.dataset.actorPhase=a.phase;b.node.dataset.actorNode=a.node;
+   if(trailRuntime){if(a.route)b.node.dataset.actorLanding=a.route.target;else b.node.removeAttribute('data-actor-landing');}
    b.shadow.style.left=a.p[0]*100+'%';b.shadow.style.top=a.p[1]*100+'%';
    b.shadow.style.width=b.width*.54+'px';b.shadow.style.height=b.height*.07+'px';
    b.shadow.style.transform=`translate(-50%,-50%) scale(${Math.max(.65,1-lift/400)})`;b.shadow.style.opacity=String(Math.max(.25,1-lift/150));
