@@ -73,7 +73,7 @@ test('fresh ten-actor dry pack reaches a real plan where repeated measured searc
   ...[.32,.445,.57,.695].map(x=>[x,.687]),
   ...[.37,.49,.61].map(x=>[x,.789]),
  ];
- let seed=1;
+ let seed=9;
  const random=()=>((seed=1664525*seed+1013904223>>>0)/2**32);
  const decoys=Array.from({length:10},()=>[.34+random()*.34,.605+random()*.16]);
  const seats=[...decoys,...usable].map((p,i)=>({id:'seat'+i,p}));
@@ -89,14 +89,15 @@ test('fresh ten-actor dry pack reaches a real plan where repeated measured searc
  assert.equal(packTrailStandingSeats(input),null);
  assert.equal(checks,58000);
  checks=0;
- const measured=packTrailStandingSeats({...input,standingPairFits,accept(plan){probes++;return plan.size===10;}});
+ const sameMeasuredEnvelope=()=>envelope;
+ const measured=packTrailStandingSeats({...input,standingPairFits,standingClass:sameMeasuredEnvelope,accept(plan){probes++;return plan.size===10;}});
  assert.equal(measured?.size,10);
  assert.equal(probes,1);
  assert.ok(checks+pairs<4000);
  assert.equal(new Set([...measured.values()].map(n=>n.id)).size,10);
  assert.ok(actors.every(a=>canPlace(a,measured.get(a.id),measured)));
- assert.deepEqual(packTrailStandingSeats({...input,standingPairFits}),measured,'same geometry and preferences are deterministic');
- assert.equal(packTrailStandingSeats({...input,standingPairFits,maxBranches:1}),null,'bounded search cannot commit a partial layout');
+ assert.deepEqual(packTrailStandingSeats({...input,standingPairFits,standingClass:sameMeasuredEnvelope}),measured,'same geometry and preferences are deterministic');
+ assert.equal(packTrailStandingSeats({...input,standingPairFits,standingClass:sameMeasuredEnvelope,maxBranches:1}),null,'bounded search cannot commit a partial layout');
 });
 
 test('fresh fast pack never bypasses full measured admission or retries beyond native cap',()=>{
@@ -108,4 +109,20 @@ test('fresh fast pack never bypasses full measured admission or retries beyond n
  const canPlace=(x,n,full)=>c.canStand(x,n.p)&&[...full].every(([id,s])=>id===x.id||!c.placementConflicts({...x,p:n.p},{id,p:s.p}));
  assert.equal(packTrailStandingSeats({...checks,canPlace,maxProbes:1,accept(){probes++;return false;}}),null);
  assert.equal(probes,1);
+});
+
+
+test('equal measured standers do not hide actor-specific real hits; unequal unary seats are not symmetric',()=>{
+ const c=clearance(),actors=[a,b],seats=[{id:'left',p:a.p},{id:'right',p:b.p}];
+ const common={actors,seats,preferred:new Map(),standingClass:()=>envelope,
+  standingPairFits:(x,n,y,m)=>!c.placementConflicts({...x,p:n.p},{...y,p:m.p})};
+ let seen=[];
+ const plan=packTrailStandingSeats({...common,canPlace:()=>true,accept(layout){
+  seen.push(layout.get(a.id).id);return layout.get(a.id)===seats[1];
+ }});
+ assert.deepEqual(seen,['left','right'],'probe the rejected canonical assignment once and try real compatibility without symmetry');
+ assert.equal(plan.get(b.id),seats[0]);
+ const resolved=packTrailStandingSeats({...common,canPlace:(x,n)=>x.id!==a.id||n===seats[1]});
+ assert.equal(resolved.get(a.id),seats[1]);
+ assert.equal(resolved.get(b.id),seats[0]);
 });

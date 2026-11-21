@@ -132,7 +132,7 @@ export function assignTrailSeats({actors,seats,retained,canPlace,accept=()=>true
 
 // For a geometry-only reseat, retain each still legal preferred foot when a
 // full pack can coexist. A failure never moves an individual or a reservation.
-export function packTrailStandingSeats({actors,seats,preferred,canPlace,standingPairFits,accept=()=>true,maxChecks=58000,maxProbes=4,maxBranches=12000}){
+export function packTrailStandingSeats({actors,seats,preferred,canPlace,standingPairFits,standingClass,accept=()=>true,maxChecks=58000,maxProbes=4,maxBranches=12000}){
  const plan=new Map(),used=new Set(),safe=new Map(),choices=new Map();
  let checks=0,probes=0,branches=0;
  const check=(a,n,others)=>++checks<=maxChecks&&canPlace(a,n,others);
@@ -147,9 +147,23 @@ export function packTrailStandingSeats({actors,seats,preferred,canPlace,standing
  // collisions. Filter only against the newly assigned foot so deeper
  // states do not repeat the same geometry for every old assignment.
  if(standingPairFits){
-  const cache=new Map();
-  let serial=0;
-  const domains=new Map(actors.map(a=>[a,choices.get(a.id).map(n=>({a,n,i:serial++}))]));
+  const cache=new Map(),classes=new Map(),firstInClass=new Map(),rank=new Map(seats.map((n,i)=>[n.id,i]));
+  let serial=0,symmetry=true;
+  const rejected=new Set();
+  for(const a of actors){
+   const shape=standingClass?.(a);
+   const seats=choices.get(a.id);
+   if(!shape||seats.some(n=>!rank.has(n.id)))continue;
+   const key=JSON.stringify([shape,seats.map(n=>JSON.stringify([n.id,n.p])).sort()]);
+   classes.set(a,key);
+   if(!firstInClass.has(key))firstInClass.set(key,a);
+  }
+  const keyed=new Map();
+  const domains=new Map(actors.map(a=>[a,choices.get(a.id).map(n=>{
+   const key=JSON.stringify([classes.get(a)??null,classes.has(a)?null:a.id,n.id,n.p]);
+   if(!keyed.has(key))keyed.set(key,serial++);
+   return {a,n,i:keyed.get(key)};
+  })]));
   const compatible=(a,b)=>{
    if(a.n.id===b.n.id)return false;
    const key=Math.min(a.i,b.i)*serial+Math.max(a.i,b.i);
@@ -162,34 +176,57 @@ export function packTrailStandingSeats({actors,seats,preferred,canPlace,standing
   };
   function advance(open){
    if(!open.size){
-    // Recheck the complete plan using the original production predicates
-    // before probing native taps. No optimized result can bypass admission.
     if(probes>=maxProbes||actors.some(a=>!check(a,plan.get(a.id),plan)))return false;
-    return ++probes<=maxProbes&&accept(plan);
+    const signature=JSON.stringify(actors.map(a=>plan.get(a.id).id));
+    if(rejected.has(signature))return false;
+    if(++probes<=maxProbes&&accept(plan))return true;
+    rejected.add(signature);return false;
    }
-   if(checks>=maxChecks||probes>=maxProbes||++branches>maxBranches)return false;
+   // A real native mismatch is actor-specific. Stop the canonical pass,
+   // then retry unrestricted using the same remaining budgets/cache.
+   if(symmetry&&probes>0||checks>=maxChecks||probes>=maxProbes||++branches>maxBranches)return false;
    let actor=null,values=null;
+   const seenClasses=new Set();
    for(const [a,seats] of open){
     if(!seats.length)return false;
+    const group=classes.get(a);
+    if(symmetry&&group&&seenClasses.has(group))continue;
+    if(group)seenClasses.add(group);
     if(!values||seats.length<values.length){actor=a;values=seats;}
    }
+   // Rank branches by their smallest remaining domain, avoiding the old
+   // preference for center seats which block several neighbors at once.
+   const options=[];
+   const group=classes.get(actor);
    for(const seat of values){
     if(checks>=maxChecks||probes>=maxProbes||branches>maxBranches)return false;
-    const next=new Map();
+    const next=new Map();let scarce=Infinity,total=0;
     for(const [a,alternatives] of open){
      if(a===actor)continue;
-     const valid=alternatives.filter(other=>compatible(seat,other));
-     if(!valid.length)break;
-     next.set(a,valid);
+     const equivalent=symmetry&&group&&classes.get(a)===group;
+     const viable=alternatives.filter(other=>(!equivalent||rank.get(other.n.id)>rank.get(seat.n.id))&&compatible(seat,other));
+     if(!viable.length)break;
+     next.set(a,viable);scarce=Math.min(scarce,viable.length);total+=viable.length;
     }
-    if(next.size!==open.size-1)continue;
+    if(next.size===open.size-1)options.push({seat,next,scarce,total});
+   }
+   options.sort((a,b)=>b.scarce-a.scarce||b.total-a.total);
+   for(const {seat,next} of options){
+    if(symmetry&&probes>0||checks>=maxChecks||probes>=maxProbes||branches>maxBranches)return false;
     plan.set(actor.id,seat.n);
     if(advance(next))return true;
     plan.delete(actor.id);
    }
    return false;
   }
-  return advance(domains)?plan:null;
+  const hasSymmetry=firstInClass.size<classes.size;
+  symmetry=hasSymmetry;
+  if(advance(domains))return plan;
+  if(hasSymmetry&&probes>0){
+   symmetry=false;
+   if(advance(domains))return plan;
+  }
+  return null;
  }
  function fill(waiting){
   if(!waiting.length)return ++probes<=maxProbes&&accept(plan);

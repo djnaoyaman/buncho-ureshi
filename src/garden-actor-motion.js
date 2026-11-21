@@ -354,7 +354,7 @@ export function createGardenActorMotion(root){
     for(const [id,s] of partial)if(!placed.has(id))placed.set(id,{...byId.get(id),p:s.p,route:null});
     return trailRuntime.canPlace(d,n,placed);
    }};
-   planned=peers.size?assignTrailSeats(input):packTrailStandingSeats({...input,standingPairFits:trailRuntime.standingPairFits});
+   planned=peers.size?assignTrailSeats(input):packTrailStandingSeats({...input,standingPairFits:trailRuntime.standingPairFits,standingClass:a=>measurement?.footprints.get(a.id)});
    if(!planned)return reject('trail-blocked-placement');
   }
   model.reconcile(roster,trailRuntime?[...footholds,...trailPads]:footholds,(d,n,actors)=>{
