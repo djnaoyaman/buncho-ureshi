@@ -52,6 +52,36 @@ const runtime=[
     return false;
    }`],
 ];
+const alternateBay=[
+ [`return proven.safe(tentative,node,mode,actors,{prospectiveYieldId:phase==='cross'?prospectiveYieldId:null});`,
+  `const result=proven.safe(tentative,node,mode,actors,{prospectiveYieldId:phase==='cross'?prospectiveYieldId:null});
+   const held=globalThis.__bayFastReceipt?.held;
+   if(!result&&held?.fail==='held-sweep-peer'&&held.owner===id&&held.to===to&&!held.dispatch&&!held.alternate&&[10,12,14].includes(terrain.number)){
+    held.alternate='none';
+    held.mode=mode;
+    const peer=actors.get(held.partner);
+    if(bay&&peer?.slot==='bay'&&!peer.route&&peer.phase==='ground'){
+     const directions=terrain.number===10?[['front',0,1],['left',-1,0],['right',1,0]]:
+       terrain.number===12?[['right',1,0],['front',0,1],['left',-1,0]]:
+        [['left',-1,0],['front',0,1],['back',0,-1]];
+     const env=makeEnvironment(()=>false);
+     for(const [tag,dx,dy] of directions){
+      for(const [step,d] of [[2,.02],[3,.035],[5,.05]]){
+       const p=[bay[0]+dx*d,bay[1]+dy*d],bayNode={id:'bay',p},fromPoint=points[to];
+       if(!inside(p,terrain.surface)||!proven.canStand(peer,p))continue;
+       const leave=model.previewPath(peer.id,bayNode,[fromPoint,p],'hop',env,{id:to,p:fromPoint});
+       if(!leave||!proven.safe(leave,bayNode,'hop',actors)||!paintCurrent(leave))continue;
+       const parked={...peer,p,node:'bay',height:0,state:'rest',phase:'ground',route:null};
+       const placed=new Map(actors);placed.set(peer.id,parked);
+       if(!proven.safe(tentative,node,mode,placed)||!paintCurrent(tentative))continue;
+       held.alternate=tag+step;break;
+      }
+      if(held.alternate!=='none')break;
+     }
+    }else held.alternate='proof-incomplete';
+   }
+   return result;`],
+];
 const painting=[
  [`if(!fitsNow()){
    if(trailRuntime||!stand())return reject('geometry-blocked');
@@ -97,7 +127,7 @@ for(const [number,garden] of games)test(`#${number} measured bay handover and sa
  try{
  await probe(page,'garden-trail-lane.js',lane);
  await probe(page,'garden-trail-adapter.js',adapter);
- await probe(page,'garden-trail-runtime.js',runtime);
+ await probe(page,'garden-trail-runtime.js',[...runtime,...alternateBay]);
  await probe(page,'garden-trail-clearance.js',clearance);
  await probe(page,'garden-actor-motion.js',painting);
  await setup(page,garden,402,true,true,{trailPreview:true,height:874,afterOpenMs:0,prepareWorld:w=>{
@@ -141,7 +171,7 @@ for(const [number,garden] of games)test(`#${number} measured bay handover and sa
  expect(firstGates&&anyNative,'01 actual A/B and continuous native hit ownership').toBe(true);
  code=parked?'bay-receipt-missing':receipt.bayGround?'bay-dom-not-grounded':sampleYieldMissing();
  expect(receipt.bayGround&&parked,'02 same partner reached the actual bay').toBe(true);
- code=receipt.laneOccupied?'lane-occupied':receipt.measuredDenied?(held?.fail??'held-unclassified'):'held-ready';
+ code=receipt.laneOccupied?'lane-occupied':receipt.measuredDenied?(held?.fail==='held-sweep-peer'&&held?.mode&&held?.alternate?'held-peer-'+held.mode+'-'+held.alternate:held?.fail??'held-unclassified'):'held-ready';
  expect(receipt.ready,receipt.laneOccupied?'03 held bay blocked by occupied lane':receipt.measuredDenied?'03 held bay denied by unchanged measured check':'03 ready was not reached').toBe(true);
  code='dispatch';
  expect(receipt.dispatched,'04 same held owner dispatched').toBe(true);
