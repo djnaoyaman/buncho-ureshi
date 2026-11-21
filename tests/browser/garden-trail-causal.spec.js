@@ -123,3 +123,14 @@ test('#07 maximum: all native control centers are within viewport', {tag:'@causa
 test('#07 maximum: all household centers resolve to their native control', {tag:'@causal-max-household-hit'},async({page})=>{await hitsFor(page,'household');});
 test('#07 maximum: all regular friend centers resolve to their native control', {tag:'@causal-max-friend-hit'},async({page})=>{await hitsFor(page,'friend');});
 test('#07 maximum: all waiting or returning visitor centers resolve to their native control', {tag:'@causal-max-visitor-hit'},async({page})=>{await hitsFor(page,'visitor');});
+
+test('#07 maximum records a Type II motion result', {tag:'@causal-reason-present'},async({page})=>{
+ const s=await maximum(page);
+ expect(s.motion).toMatch(/^(?:trail-|insufficient-space$|geometry-blocked$)/);
+});
+for(const reason of ['insufficient-space','trail-blocked-placement','trail-blocked-geometry','trail-needs-recovery','geometry-blocked']){
+ test(`#07 maximum does not enter ${reason}`,{tag:`@causal-reason-${reason}`},async({page})=>{
+  const s=await maximum(page);
+  expect(s.motion).not.toBe(reason);
+ });
+}

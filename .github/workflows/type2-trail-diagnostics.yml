@@ -144,7 +144,7 @@ jobs:
         id: ready
         run: |
           set -eu
-          for probe in maximum-fit max-layout-valid max-width max-height max-centers max-household-hit max-friend-hit max-visitor-hit; do
+          for probe in maximum-fit reason-present reason-insufficient-space reason-trail-blocked-placement reason-trail-blocked-geometry reason-trail-needs-recovery reason-geometry-blocked; do
             report="$(npx playwright test tests/browser/garden-trail-causal.spec.js --grep "@causal-$probe" --project=chrome --project=webkit --list)"
             printf '%s\n' "$report" | grep -Eq "^Total: 2 tests in 1 file$"
           done
@@ -152,31 +152,27 @@ jobs:
         timeout-minutes: 4
         if: ${{ !cancelled() && steps.ready.outcome == 'success' }}
         run: npx playwright test tests/browser/garden-trail-causal.spec.js --grep '@causal-maximum-fit' --project=chrome --project=webkit --retries=0 --reporter=list > /tmp/type-ii-causal-maximum-fit.log 2>&1
-      - name: '09 qualified measured layout, rather than native fallback'
+      - name: '09 Type II motion result recorded'
         timeout-minutes: 4
         if: ${{ !cancelled() && steps.ready.outcome == 'success' }}
-        run: npx playwright test tests/browser/garden-trail-causal.spec.js --grep '@causal-max-layout-valid' --project=chrome --project=webkit --retries=0 --reporter=list > /tmp/type-ii-causal-max-layout-valid.log 2>&1
-      - name: '09 every native control is at least 44px wide'
+        run: npx playwright test tests/browser/garden-trail-causal.spec.js --grep '@causal-reason-present' --project=chrome --project=webkit --retries=0 --reporter=list > /tmp/type-ii-causal-reason-present.log 2>&1
+      - name: '09 does not enter insufficient-space'
         timeout-minutes: 4
         if: ${{ !cancelled() && steps.ready.outcome == 'success' }}
-        run: npx playwright test tests/browser/garden-trail-causal.spec.js --grep '@causal-max-width' --project=chrome --project=webkit --retries=0 --reporter=list > /tmp/type-ii-causal-max-width.log 2>&1
-      - name: '09 every native control is at least 44px high'
+        run: npx playwright test tests/browser/garden-trail-causal.spec.js --grep '@causal-reason-insufficient-space' --project=chrome --project=webkit --retries=0 --reporter=list > /tmp/type-ii-causal-reason-insufficient-space.log 2>&1
+      - name: '09 does not enter trail-blocked-placement'
         timeout-minutes: 4
         if: ${{ !cancelled() && steps.ready.outcome == 'success' }}
-        run: npx playwright test tests/browser/garden-trail-causal.spec.js --grep '@causal-max-height' --project=chrome --project=webkit --retries=0 --reporter=list > /tmp/type-ii-causal-max-height.log 2>&1
-      - name: '09 all native control centers are within viewport'
+        run: npx playwright test tests/browser/garden-trail-causal.spec.js --grep '@causal-reason-trail-blocked-placement' --project=chrome --project=webkit --retries=0 --reporter=list > /tmp/type-ii-causal-reason-trail-blocked-placement.log 2>&1
+      - name: '09 does not enter trail-blocked-geometry'
         timeout-minutes: 4
         if: ${{ !cancelled() && steps.ready.outcome == 'success' }}
-        run: npx playwright test tests/browser/garden-trail-causal.spec.js --grep '@causal-max-centers' --project=chrome --project=webkit --retries=0 --reporter=list > /tmp/type-ii-causal-max-centers.log 2>&1
-      - name: '09 all household centers resolve to their native control'
+        run: npx playwright test tests/browser/garden-trail-causal.spec.js --grep '@causal-reason-trail-blocked-geometry' --project=chrome --project=webkit --retries=0 --reporter=list > /tmp/type-ii-causal-reason-trail-blocked-geometry.log 2>&1
+      - name: '09 does not enter trail-needs-recovery'
         timeout-minutes: 4
         if: ${{ !cancelled() && steps.ready.outcome == 'success' }}
-        run: npx playwright test tests/browser/garden-trail-causal.spec.js --grep '@causal-max-household-hit' --project=chrome --project=webkit --retries=0 --reporter=list > /tmp/type-ii-causal-max-household-hit.log 2>&1
-      - name: '09 all regular friend centers resolve to their native control'
+        run: npx playwright test tests/browser/garden-trail-causal.spec.js --grep '@causal-reason-trail-needs-recovery' --project=chrome --project=webkit --retries=0 --reporter=list > /tmp/type-ii-causal-reason-trail-needs-recovery.log 2>&1
+      - name: '09 does not enter geometry-blocked'
         timeout-minutes: 4
         if: ${{ !cancelled() && steps.ready.outcome == 'success' }}
-        run: npx playwright test tests/browser/garden-trail-causal.spec.js --grep '@causal-max-friend-hit' --project=chrome --project=webkit --retries=0 --reporter=list > /tmp/type-ii-causal-max-friend-hit.log 2>&1
-      - name: '09 all waiting or returning visitor centers resolve to their native control'
-        timeout-minutes: 4
-        if: ${{ !cancelled() && steps.ready.outcome == 'success' }}
-        run: npx playwright test tests/browser/garden-trail-causal.spec.js --grep '@causal-max-visitor-hit' --project=chrome --project=webkit --retries=0 --reporter=list > /tmp/type-ii-causal-max-visitor-hit.log 2>&1
+        run: npx playwright test tests/browser/garden-trail-causal.spec.js --grep '@causal-reason-geometry-blocked' --project=chrome --project=webkit --retries=0 --reporter=list > /tmp/type-ii-causal-reason-geometry-blocked.log 2>&1
