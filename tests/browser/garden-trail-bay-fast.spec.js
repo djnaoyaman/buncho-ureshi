@@ -5,7 +5,7 @@ import {setup} from '../fixtures/garden-terrain-browser.js';
 import {engine} from '../fixtures/garden-about-world.js';
 
 test.use({hasTouch:true,trace:'off',screenshot:'off',video:'off'});
-const games=[['07','bird-zebra-finch'],['10','bird-tricolored-munia'],['12','bird-black-rumped-waxbill'],['14','bird-long-tailed-paradise-whydah'],['28','bird-long-tailed-rosefinch']];
+const games=[['07','bird-zebra-finch']];
 const lane=[
  ['let epoch=null,ticket=0,lock=null,paused=false,roster=new Map();',
   'let epoch=null,ticket=0,lock=null,paused=false,roster=new Map();\n  const receipt=globalThis.__bayFastReceipt??={};'],
@@ -76,6 +76,48 @@ const runtime=[
     return false;
    }`],
 ];
+const yieldGeometry=[
+ [`return proven.safe(tentative,node,mode,actors,{prospectiveYieldId:phase==='cross'?prospectiveYieldId:null});`,
+  `const result=proven.safe(tentative,node,mode,actors,{prospectiveYieldId:phase==='cross'?prospectiveYieldId:null});
+   const report=globalThis.__bayFastReceipt;
+   if(terrain.number===7&&phase==='yield'&&to==='bay'&&report&&!result&&!report.yieldGeometry){
+    try{
+    const {clip,controls}=current;
+    const boxes=proven.sweptRoute(tentative);
+    const boxInClip=b=>b.left>=clip.left+2&&b.right<=clip.right-2&&b.top>=clip.top+2&&b.bottom<=clip.bottom-2;
+    const intersectsControls=b=>conflictSweeps([b],controls);
+    report.yieldGeometry=!proven.canStand(a,a.p)?'start':!proven.canStand(a,node.p)?'destination':!boxes?'route':
+     boxes.some(b=>!boxInClip(b))?'clip':boxes.some(intersectsControls)?'controls':'peer';
+    report.yieldAlternate='none';
+    const owner=[...actors.values()].find(other=>other.id!==a.id&&(other.node==='A'||other.node==='B')&&!other.route);
+    if(owner&&actors.size===2&&(a.node==='A'||a.node==='B')){
+     const env=makeEnvironment(()=>false);
+     const [x,y]=bay;
+     const spine=owner.node==='A'?[A,...terrain.lane,B]:[B,...[...terrain.lane].reverse(),A];
+     for(const [label,dx,dy]of [['back2',0,-.02],['right2',.02,0],['front2',0,.02],['back3',0,-.035],['right3',.035,0],['front3',0,.035]]){
+      const p=[x+dx,y+dy],alt={id:'bay',p};
+      if(!inside(p,terrain.surface)||!proven.canStand(a,p))continue;
+      const hop=model.previewPath(id,alt,[a.p,p],'hop',env);
+      if(!hop||!proven.safe(hop,alt,'hop',actors)||!paintCurrent(hop))continue;
+      const parked=new Map(actors);
+      parked.set(id,{...a,p,node:'bay',state:'rest',phase:'ground',height:0,route:null});
+      const exit=nodes[a.node];
+      const modeFits=kind=>{
+       const crossing=model.previewPath(owner.id,exit,spine,kind,env);
+       return !!crossing&&proven.safe(crossing,exit,kind,parked)&&paintCurrent(crossing);
+      };
+      if(modeFits('fly')){report.yieldAlternate=label+'-fly';break;}
+      if(report.yieldAlternate==='none'&&modeFits('hop'))report.yieldAlternate=label+'-hop';
+     }
+    }
+    }catch(e){
+     report.yieldGeometry=e?.name==='TypeError'?'survey-type':
+       e?.name==='ReferenceError'?'survey-reference':e?.name==='RangeError'?'survey-range':'survey-other';
+     report.yieldAlternate='none';
+    }
+   }
+   return result;`],
+];
 const painting=[
  [`if(!fitsNow()){
    if(trailRuntime||!stand())return reject('geometry-blocked');
@@ -106,34 +148,49 @@ const clearance=[
  [`if(!other||conflictSweeps(s,other))return false;`,
   `if(!other||conflictSweeps(s,other))return fail(other?'held-sweep-peer':'held-peer-unmeasured');`],
 ];
-async function probe(page,name,hooks){
+async function probe(page,name,hooks,onFailure){
  await page.route(new RegExp('/src/'+name.replace('.','\\.')+'(?:\\?.*)?$'),async route=>{
+  try{
   const response=await route.fetch();let body=await response.text();
   for(const [a,b] of hooks){
    expect(body.split(a).length,'unique reviewed telemetry anchor').toBe(2);
    body=body.replace(a,b);
   }
   await route.fulfill({response,body});
+  }catch(e){
+   onFailure(name,e?.matcherResult?'anchor':'transport');
+   await route.abort().catch(()=>{});
+   throw e;
+  }
  });
 }
 for(const [number,garden] of games)test(`#${number} measured bay handover and same native owner landing`,{tag:`@bay-fast-${number}`},async({page},info)=>{
- let code='setup';
+ let code='route-register',routeFailure=null,pageFailure=null;
+ const routeNames={'garden-trail-lane.js':'lane','garden-trail-adapter.js':'adapter','garden-trail-runtime.js':'runtime','garden-trail-clearance.js':'clearance','garden-actor-motion.js':'paint'};
+ const reportRoute=(name,kind)=>{routeFailure??='hook-'+routeNames[name]+'-'+kind;};
+ page.on('pageerror',error=>{pageFailure??={
+  TypeError:'page-type',ReferenceError:'page-reference',SyntaxError:'page-syntax',RangeError:'page-range'
+ }[error.name]??'page-other';});
  try{
- await probe(page,'garden-trail-lane.js',lane);
- await probe(page,'garden-trail-adapter.js',[...adapter,...yieldTrace]);
- await probe(page,'garden-trail-runtime.js',runtime);
- await probe(page,'garden-trail-clearance.js',clearance);
- await probe(page,'garden-actor-motion.js',painting);
+ await probe(page,'garden-trail-lane.js',lane,reportRoute);
+ await probe(page,'garden-trail-adapter.js',[...adapter,...yieldTrace],reportRoute);
+ await probe(page,'garden-trail-runtime.js',[...runtime,...yieldGeometry],reportRoute);
+ await probe(page,'garden-trail-clearance.js',clearance,reportRoute);
+ await probe(page,'garden-actor-motion.js',painting,reportRoute);
+ code='fixture-setup';
  await setup(page,garden,402,true,true,{trailPreview:true,height:874,afterOpenMs:0,prepareWorld:w=>{
   const bird=engine.createBird(w,{home:'resident',stage:'adult',color:'cinnamon'});
   w.encounters.gardenFriends.attendees.push(bird.id);
  }});
  let ids=null,landed=false,changed=false,start=null,receipt={},yieldReceipt={},parked=false,firstGates=false,anyNative=true;
  let firstOwner=null,firstPartner=null,firstTo=null;
+ let surveyReason=null,surveyAlternate=null;
  let end=72,held=null,domFly=false,domFlyPartnerParked=false,yieldCommitted=false,yieldFitTried=false,prospectiveCrossTried=false;
  const sampleYieldMissing=()=>yieldFitTried&&!yieldCommitted?'bay-yield-fit-no-commit':prospectiveCrossTried&&!yieldFitTried?'bay-prospective-cross-denied':yieldCommitted?'bay-yield-committed-no-ground':'bay-yield-not-committed';
  for(let n=0;n<=end;n++){
+  code='sample-clock';
   await page.clock.runFor(n===0?1000:180);
+  code='sample-eval';
   const sample=await page.evaluate(()=>{
    const stage=document.querySelector('.finch-garden-stage');
    const birds=[...(stage?.querySelectorAll('.finch-garden-image-plane > button')||[])].map(b=>{
@@ -149,6 +206,8 @@ for(const [number,garden] of games)test(`#${number} measured bay handover and sa
   anyNative &&= sample.ready&&birds.length===2&&new Set(ids).size===2&&ids.every((id,i)=>!!id&&id===birds[i]?.id&&birds[i]?.hit);
   for(const k of ['bayGround','laneOccupied','measuredDenied','ready','dispatched','ownerConnected'])receipt[k] ||= sample.receipt[k]===true;
   if(!firstOwner&&sample.receipt.owner){firstOwner=sample.receipt.owner;firstPartner=sample.receipt.partner;firstTo=sample.receipt.to;}
+  surveyReason ||= sample.receipt.yieldGeometry;
+  surveyAlternate ||= sample.receipt.yieldAlternate;
   for(const k of ['yieldFit','yieldStart','yieldFinish'])yieldReceipt[k]=yieldReceipt[k]==='yes'?'yes':sample.receipt[k]??yieldReceipt[k];
   held=sample.receipt.held??held;yieldCommitted||=sample.receipt.yieldCommitted===true;yieldFitTried||=sample.receipt.yieldFitTried===true;prospectiveCrossTried||=sample.receipt.prospectiveCrossTried===true;
   const owner=birds.find(b=>b.id===firstOwner),partner=birds.find(b=>b.id===firstPartner);
@@ -165,7 +224,7 @@ for(const [number,garden] of games)test(`#${number} measured bay handover and sa
  code='native-gates';
  expect(firstGates&&anyNative,'01 actual A/B and continuous native hit ownership').toBe(true);
  code=parked?'bay-receipt-missing':receipt.bayGround?'bay-dom-not-grounded':
-  number==='07'&&yieldReceipt.yieldFit==='no'?'bay-yield-geometry-denied':
+  number==='07'&&yieldReceipt.yieldFit==='no'?(surveyReason?'bay-yield-'+surveyReason+'-alt-'+surveyAlternate:'bay-yield-geometry-denied'):
   number==='07'&&yieldReceipt.yieldFit==='yes'&&!yieldReceipt.yieldStart?'bay-yield-not-dispatched':
   number==='07'&&yieldReceipt.yieldStart==='no'?'bay-yield-native-start-refused':
   number==='07'&&yieldReceipt.yieldFinish==='no'?'bay-yield-token-finish-rejected':sampleYieldMissing();
@@ -182,6 +241,9 @@ for(const [number,garden] of games)test(`#${number} measured bay handover and sa
  code='same-landing';
  expect(landed,'07 same native owner landed at the freed gate').toBe(true);
  code='pass';
+ }catch(error){
+  if(['route-register','fixture-setup','sample-clock','sample-eval'].includes(code))code=routeFailure??pageFailure??code;
+  throw error;
  }finally{
   const out=process.env.TYPE2_CHECKPOINT_DIR;
   if(!out||!['chrome','webkit'].includes(info.project.name))throw Error('Draft targeted run only');

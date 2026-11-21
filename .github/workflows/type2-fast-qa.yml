@@ -1,16 +1,16 @@
-name: Type II fast bay-07-yield QA (no deployment)
-run-name: Type II focused bay-07-yield · ${{ github.sha }}
+name: Type II fast bay-07-dry QA (no deployment)
+run-name: Type II focused bay-07-dry · ${{ github.sha }}
 on:
   push:
     branches: [qa/type2-fast-bay-07]
 permissions:
   contents: read
 concurrency:
-  group: type2-fast-bay-07-yield-${{ github.ref }}
+  group: type2-fast-bay-07-dry-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   visitor:
-    name: 'Type II bay-07-yield · ${{ matrix.engine }}'
+    name: 'Type II bay-07-dry · ${{ matrix.engine }}'
     if: github.ref == 'refs/heads/qa/type2-fast-bay-07'
     runs-on: ubuntu-24.04
     timeout-minutes: 14
@@ -66,182 +66,682 @@ jobs:
           rc=0
           TYPE2_CHECKPOINT_DIR="$dir" npx playwright test tests/browser/garden-trail-bay-fast.spec.js --grep @bay-fast-07 --project="$ENGINE" --retries=0 --max-failures=0 --trace=off --reporter=dot || rc="$?"
           test "$rc" -le 1
-          node -e 'const f=require("fs");const [d,e,q]=process.argv.slice(1);for(const [k,choices] of JSON.parse(q))if(!choices.includes(f.readFileSync(d+"/"+e+"-"+k,"utf8").trim()))process.exit(1);' "$dir" "$ENGINE" '[["07-bay",["pass","setup","native-gates","bay-dom-not-grounded","bay-prospective-cross-denied","bay-receipt-missing","bay-yield-committed-no-ground","bay-yield-fit-no-commit","bay-yield-not-committed","bay-yield-geometry-denied","bay-yield-not-dispatched","bay-yield-native-start-refused","bay-yield-token-finish-rejected","held-ready","dispatch","commit","commit-action-unverified","commit-fly-render-rejected","commit-fly-unpainted","commit-native-hop","fly-dom-motionless","fly-dom-partner-lost","held-cannot-fly","held-destination","held-ineligible","held-peer-unmeasured","held-preview-constructor","held-preview-cooldown","held-sweep-clip","held-sweep-controls","held-sweep-peer","held-sweep-unavailable","held-unclassified","lane-occupied","same-landing"]]]'
-      - name: '#07 bay complete'
+          node -e 'const f=require("fs");const [d,e,q]=process.argv.slice(1);for(const [k,choices] of JSON.parse(q))if(!choices.includes(f.readFileSync(d+"/"+e+"-"+k,"utf8").trim()))process.exit(1);' "$dir" "$ENGINE" '[["07-bay",["pass","route-register","fixture-setup","sample-clock","sample-eval","page-type","page-reference","page-syntax","page-range","page-other","hook-lane-anchor","hook-lane-transport","hook-adapter-anchor","hook-adapter-transport","hook-runtime-anchor","hook-runtime-transport","hook-clearance-anchor","hook-clearance-transport","hook-paint-anchor","hook-paint-transport","native-gates","bay-dom-not-grounded","bay-prospective-cross-denied","bay-receipt-missing","bay-yield-committed-no-ground","bay-yield-fit-no-commit","bay-yield-not-committed","bay-yield-geometry-denied","bay-yield-not-dispatched","bay-yield-native-start-refused","bay-yield-token-finish-rejected","held-ready","dispatch","commit","commit-action-unverified","commit-fly-render-rejected","commit-fly-unpainted","commit-native-hop","fly-dom-motionless","fly-dom-partner-lost","held-cannot-fly","held-destination","held-ineligible","held-peer-unmeasured","held-preview-constructor","held-preview-cooldown","held-sweep-clip","held-sweep-controls","held-sweep-peer","held-sweep-unavailable","held-unclassified","lane-occupied","same-landing","bay-yield-start-alt-none","bay-yield-start-alt-front2-fly","bay-yield-start-alt-front2-hop","bay-yield-start-alt-front3-fly","bay-yield-start-alt-front3-hop","bay-yield-start-alt-back2-fly","bay-yield-start-alt-back2-hop","bay-yield-start-alt-back3-fly","bay-yield-start-alt-back3-hop","bay-yield-start-alt-right2-fly","bay-yield-start-alt-right2-hop","bay-yield-start-alt-right3-fly","bay-yield-start-alt-right3-hop","bay-yield-destination-alt-none","bay-yield-destination-alt-front2-fly","bay-yield-destination-alt-front2-hop","bay-yield-destination-alt-front3-fly","bay-yield-destination-alt-front3-hop","bay-yield-destination-alt-back2-fly","bay-yield-destination-alt-back2-hop","bay-yield-destination-alt-back3-fly","bay-yield-destination-alt-back3-hop","bay-yield-destination-alt-right2-fly","bay-yield-destination-alt-right2-hop","bay-yield-destination-alt-right3-fly","bay-yield-destination-alt-right3-hop","bay-yield-route-alt-none","bay-yield-route-alt-front2-fly","bay-yield-route-alt-front2-hop","bay-yield-route-alt-front3-fly","bay-yield-route-alt-front3-hop","bay-yield-route-alt-back2-fly","bay-yield-route-alt-back2-hop","bay-yield-route-alt-back3-fly","bay-yield-route-alt-back3-hop","bay-yield-route-alt-right2-fly","bay-yield-route-alt-right2-hop","bay-yield-route-alt-right3-fly","bay-yield-route-alt-right3-hop","bay-yield-clip-alt-none","bay-yield-clip-alt-front2-fly","bay-yield-clip-alt-front2-hop","bay-yield-clip-alt-front3-fly","bay-yield-clip-alt-front3-hop","bay-yield-clip-alt-back2-fly","bay-yield-clip-alt-back2-hop","bay-yield-clip-alt-back3-fly","bay-yield-clip-alt-back3-hop","bay-yield-clip-alt-right2-fly","bay-yield-clip-alt-right2-hop","bay-yield-clip-alt-right3-fly","bay-yield-clip-alt-right3-hop","bay-yield-controls-alt-none","bay-yield-controls-alt-front2-fly","bay-yield-controls-alt-front2-hop","bay-yield-controls-alt-front3-fly","bay-yield-controls-alt-front3-hop","bay-yield-controls-alt-back2-fly","bay-yield-controls-alt-back2-hop","bay-yield-controls-alt-back3-fly","bay-yield-controls-alt-back3-hop","bay-yield-controls-alt-right2-fly","bay-yield-controls-alt-right2-hop","bay-yield-controls-alt-right3-fly","bay-yield-controls-alt-right3-hop","bay-yield-peer-alt-none","bay-yield-peer-alt-front2-fly","bay-yield-peer-alt-front2-hop","bay-yield-peer-alt-front3-fly","bay-yield-peer-alt-front3-hop","bay-yield-peer-alt-back2-fly","bay-yield-peer-alt-back2-hop","bay-yield-peer-alt-back3-fly","bay-yield-peer-alt-back3-hop","bay-yield-peer-alt-right2-fly","bay-yield-peer-alt-right2-hop","bay-yield-peer-alt-right3-fly","bay-yield-peer-alt-right3-hop","bay-yield-survey-type-alt-none","bay-yield-survey-reference-alt-none","bay-yield-survey-range-alt-none","bay-yield-survey-other-alt-none"]]]'
+      - name: '#07 dry survey complete'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
         run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" = pass
-      - name: '#07 bay not setup'
+      - name: '#07 dry survey not route-register'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
-        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "setup"
-      - name: '#07 bay not native-gates'
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "route-register"
+      - name: '#07 dry survey not fixture-setup'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "fixture-setup"
+      - name: '#07 dry survey not sample-clock'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "sample-clock"
+      - name: '#07 dry survey not sample-eval'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "sample-eval"
+      - name: '#07 dry survey not page-type'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "page-type"
+      - name: '#07 dry survey not page-reference'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "page-reference"
+      - name: '#07 dry survey not page-syntax'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "page-syntax"
+      - name: '#07 dry survey not page-range'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "page-range"
+      - name: '#07 dry survey not page-other'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "page-other"
+      - name: '#07 dry survey not hook-lane-anchor'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "hook-lane-anchor"
+      - name: '#07 dry survey not hook-lane-transport'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "hook-lane-transport"
+      - name: '#07 dry survey not hook-adapter-anchor'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "hook-adapter-anchor"
+      - name: '#07 dry survey not hook-adapter-transport'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "hook-adapter-transport"
+      - name: '#07 dry survey not hook-runtime-anchor'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "hook-runtime-anchor"
+      - name: '#07 dry survey not hook-runtime-transport'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "hook-runtime-transport"
+      - name: '#07 dry survey not hook-clearance-anchor'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "hook-clearance-anchor"
+      - name: '#07 dry survey not hook-clearance-transport'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "hook-clearance-transport"
+      - name: '#07 dry survey not hook-paint-anchor'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "hook-paint-anchor"
+      - name: '#07 dry survey not hook-paint-transport'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "hook-paint-transport"
+      - name: '#07 dry survey not native-gates'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
         run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "native-gates"
-      - name: '#07 bay not bay-dom-not-grounded'
+      - name: '#07 dry survey not bay-dom-not-grounded'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
         run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-dom-not-grounded"
-      - name: '#07 bay not bay-prospective-cross-denied'
+      - name: '#07 dry survey not bay-prospective-cross-denied'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
         run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-prospective-cross-denied"
-      - name: '#07 bay not bay-receipt-missing'
+      - name: '#07 dry survey not bay-receipt-missing'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
         run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-receipt-missing"
-      - name: '#07 bay not bay-yield-committed-no-ground'
+      - name: '#07 dry survey not bay-yield-committed-no-ground'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
         run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-committed-no-ground"
-      - name: '#07 bay not bay-yield-fit-no-commit'
+      - name: '#07 dry survey not bay-yield-fit-no-commit'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
         run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-fit-no-commit"
-      - name: '#07 bay not bay-yield-not-committed'
+      - name: '#07 dry survey not bay-yield-not-committed'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
         run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-not-committed"
-      - name: '#07 bay not bay-yield-geometry-denied'
+      - name: '#07 dry survey not bay-yield-geometry-denied'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
         run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-geometry-denied"
-      - name: '#07 bay not bay-yield-not-dispatched'
+      - name: '#07 dry survey not bay-yield-not-dispatched'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
         run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-not-dispatched"
-      - name: '#07 bay not bay-yield-native-start-refused'
+      - name: '#07 dry survey not bay-yield-native-start-refused'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
         run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-native-start-refused"
-      - name: '#07 bay not bay-yield-token-finish-rejected'
+      - name: '#07 dry survey not bay-yield-token-finish-rejected'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
         run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-token-finish-rejected"
-      - name: '#07 bay not held-ready'
+      - name: '#07 dry survey not held-ready'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
         run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "held-ready"
-      - name: '#07 bay not dispatch'
+      - name: '#07 dry survey not dispatch'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
         run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "dispatch"
-      - name: '#07 bay not commit'
+      - name: '#07 dry survey not commit'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
         run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "commit"
-      - name: '#07 bay not commit-action-unverified'
+      - name: '#07 dry survey not commit-action-unverified'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
         run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "commit-action-unverified"
-      - name: '#07 bay not commit-fly-render-rejected'
+      - name: '#07 dry survey not commit-fly-render-rejected'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
         run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "commit-fly-render-rejected"
-      - name: '#07 bay not commit-fly-unpainted'
+      - name: '#07 dry survey not commit-fly-unpainted'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
         run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "commit-fly-unpainted"
-      - name: '#07 bay not commit-native-hop'
+      - name: '#07 dry survey not commit-native-hop'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
         run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "commit-native-hop"
-      - name: '#07 bay not fly-dom-motionless'
+      - name: '#07 dry survey not fly-dom-motionless'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
         run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "fly-dom-motionless"
-      - name: '#07 bay not fly-dom-partner-lost'
+      - name: '#07 dry survey not fly-dom-partner-lost'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
         run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "fly-dom-partner-lost"
-      - name: '#07 bay not held-cannot-fly'
+      - name: '#07 dry survey not held-cannot-fly'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
         run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "held-cannot-fly"
-      - name: '#07 bay not held-destination'
+      - name: '#07 dry survey not held-destination'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
         run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "held-destination"
-      - name: '#07 bay not held-ineligible'
+      - name: '#07 dry survey not held-ineligible'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
         run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "held-ineligible"
-      - name: '#07 bay not held-peer-unmeasured'
+      - name: '#07 dry survey not held-peer-unmeasured'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
         run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "held-peer-unmeasured"
-      - name: '#07 bay not held-preview-constructor'
+      - name: '#07 dry survey not held-preview-constructor'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
         run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "held-preview-constructor"
-      - name: '#07 bay not held-preview-cooldown'
+      - name: '#07 dry survey not held-preview-cooldown'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
         run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "held-preview-cooldown"
-      - name: '#07 bay not held-sweep-clip'
+      - name: '#07 dry survey not held-sweep-clip'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
         run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "held-sweep-clip"
-      - name: '#07 bay not held-sweep-controls'
+      - name: '#07 dry survey not held-sweep-controls'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
         run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "held-sweep-controls"
-      - name: '#07 bay not held-sweep-peer'
+      - name: '#07 dry survey not held-sweep-peer'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
         run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "held-sweep-peer"
-      - name: '#07 bay not held-sweep-unavailable'
+      - name: '#07 dry survey not held-sweep-unavailable'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
         run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "held-sweep-unavailable"
-      - name: '#07 bay not held-unclassified'
+      - name: '#07 dry survey not held-unclassified'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
         run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "held-unclassified"
-      - name: '#07 bay not lane-occupied'
+      - name: '#07 dry survey not lane-occupied'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
         run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "lane-occupied"
-      - name: '#07 bay not same-landing'
+      - name: '#07 dry survey not same-landing'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
         run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "same-landing"
+      - name: '#07 dry survey not bay-yield-start-alt-none'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-start-alt-none"
+      - name: '#07 dry survey not bay-yield-start-alt-front2-fly'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-start-alt-front2-fly"
+      - name: '#07 dry survey not bay-yield-start-alt-front2-hop'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-start-alt-front2-hop"
+      - name: '#07 dry survey not bay-yield-start-alt-front3-fly'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-start-alt-front3-fly"
+      - name: '#07 dry survey not bay-yield-start-alt-front3-hop'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-start-alt-front3-hop"
+      - name: '#07 dry survey not bay-yield-start-alt-back2-fly'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-start-alt-back2-fly"
+      - name: '#07 dry survey not bay-yield-start-alt-back2-hop'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-start-alt-back2-hop"
+      - name: '#07 dry survey not bay-yield-start-alt-back3-fly'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-start-alt-back3-fly"
+      - name: '#07 dry survey not bay-yield-start-alt-back3-hop'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-start-alt-back3-hop"
+      - name: '#07 dry survey not bay-yield-start-alt-right2-fly'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-start-alt-right2-fly"
+      - name: '#07 dry survey not bay-yield-start-alt-right2-hop'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-start-alt-right2-hop"
+      - name: '#07 dry survey not bay-yield-start-alt-right3-fly'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-start-alt-right3-fly"
+      - name: '#07 dry survey not bay-yield-start-alt-right3-hop'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-start-alt-right3-hop"
+      - name: '#07 dry survey not bay-yield-destination-alt-none'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-destination-alt-none"
+      - name: '#07 dry survey not bay-yield-destination-alt-front2-fly'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-destination-alt-front2-fly"
+      - name: '#07 dry survey not bay-yield-destination-alt-front2-hop'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-destination-alt-front2-hop"
+      - name: '#07 dry survey not bay-yield-destination-alt-front3-fly'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-destination-alt-front3-fly"
+      - name: '#07 dry survey not bay-yield-destination-alt-front3-hop'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-destination-alt-front3-hop"
+      - name: '#07 dry survey not bay-yield-destination-alt-back2-fly'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-destination-alt-back2-fly"
+      - name: '#07 dry survey not bay-yield-destination-alt-back2-hop'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-destination-alt-back2-hop"
+      - name: '#07 dry survey not bay-yield-destination-alt-back3-fly'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-destination-alt-back3-fly"
+      - name: '#07 dry survey not bay-yield-destination-alt-back3-hop'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-destination-alt-back3-hop"
+      - name: '#07 dry survey not bay-yield-destination-alt-right2-fly'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-destination-alt-right2-fly"
+      - name: '#07 dry survey not bay-yield-destination-alt-right2-hop'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-destination-alt-right2-hop"
+      - name: '#07 dry survey not bay-yield-destination-alt-right3-fly'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-destination-alt-right3-fly"
+      - name: '#07 dry survey not bay-yield-destination-alt-right3-hop'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-destination-alt-right3-hop"
+      - name: '#07 dry survey not bay-yield-route-alt-none'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-route-alt-none"
+      - name: '#07 dry survey not bay-yield-route-alt-front2-fly'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-route-alt-front2-fly"
+      - name: '#07 dry survey not bay-yield-route-alt-front2-hop'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-route-alt-front2-hop"
+      - name: '#07 dry survey not bay-yield-route-alt-front3-fly'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-route-alt-front3-fly"
+      - name: '#07 dry survey not bay-yield-route-alt-front3-hop'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-route-alt-front3-hop"
+      - name: '#07 dry survey not bay-yield-route-alt-back2-fly'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-route-alt-back2-fly"
+      - name: '#07 dry survey not bay-yield-route-alt-back2-hop'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-route-alt-back2-hop"
+      - name: '#07 dry survey not bay-yield-route-alt-back3-fly'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-route-alt-back3-fly"
+      - name: '#07 dry survey not bay-yield-route-alt-back3-hop'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-route-alt-back3-hop"
+      - name: '#07 dry survey not bay-yield-route-alt-right2-fly'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-route-alt-right2-fly"
+      - name: '#07 dry survey not bay-yield-route-alt-right2-hop'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-route-alt-right2-hop"
+      - name: '#07 dry survey not bay-yield-route-alt-right3-fly'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-route-alt-right3-fly"
+      - name: '#07 dry survey not bay-yield-route-alt-right3-hop'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-route-alt-right3-hop"
+      - name: '#07 dry survey not bay-yield-clip-alt-none'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-clip-alt-none"
+      - name: '#07 dry survey not bay-yield-clip-alt-front2-fly'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-clip-alt-front2-fly"
+      - name: '#07 dry survey not bay-yield-clip-alt-front2-hop'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-clip-alt-front2-hop"
+      - name: '#07 dry survey not bay-yield-clip-alt-front3-fly'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-clip-alt-front3-fly"
+      - name: '#07 dry survey not bay-yield-clip-alt-front3-hop'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-clip-alt-front3-hop"
+      - name: '#07 dry survey not bay-yield-clip-alt-back2-fly'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-clip-alt-back2-fly"
+      - name: '#07 dry survey not bay-yield-clip-alt-back2-hop'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-clip-alt-back2-hop"
+      - name: '#07 dry survey not bay-yield-clip-alt-back3-fly'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-clip-alt-back3-fly"
+      - name: '#07 dry survey not bay-yield-clip-alt-back3-hop'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-clip-alt-back3-hop"
+      - name: '#07 dry survey not bay-yield-clip-alt-right2-fly'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-clip-alt-right2-fly"
+      - name: '#07 dry survey not bay-yield-clip-alt-right2-hop'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-clip-alt-right2-hop"
+      - name: '#07 dry survey not bay-yield-clip-alt-right3-fly'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-clip-alt-right3-fly"
+      - name: '#07 dry survey not bay-yield-clip-alt-right3-hop'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-clip-alt-right3-hop"
+      - name: '#07 dry survey not bay-yield-controls-alt-none'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-controls-alt-none"
+      - name: '#07 dry survey not bay-yield-controls-alt-front2-fly'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-controls-alt-front2-fly"
+      - name: '#07 dry survey not bay-yield-controls-alt-front2-hop'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-controls-alt-front2-hop"
+      - name: '#07 dry survey not bay-yield-controls-alt-front3-fly'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-controls-alt-front3-fly"
+      - name: '#07 dry survey not bay-yield-controls-alt-front3-hop'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-controls-alt-front3-hop"
+      - name: '#07 dry survey not bay-yield-controls-alt-back2-fly'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-controls-alt-back2-fly"
+      - name: '#07 dry survey not bay-yield-controls-alt-back2-hop'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-controls-alt-back2-hop"
+      - name: '#07 dry survey not bay-yield-controls-alt-back3-fly'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-controls-alt-back3-fly"
+      - name: '#07 dry survey not bay-yield-controls-alt-back3-hop'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-controls-alt-back3-hop"
+      - name: '#07 dry survey not bay-yield-controls-alt-right2-fly'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-controls-alt-right2-fly"
+      - name: '#07 dry survey not bay-yield-controls-alt-right2-hop'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-controls-alt-right2-hop"
+      - name: '#07 dry survey not bay-yield-controls-alt-right3-fly'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-controls-alt-right3-fly"
+      - name: '#07 dry survey not bay-yield-controls-alt-right3-hop'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-controls-alt-right3-hop"
+      - name: '#07 dry survey not bay-yield-peer-alt-none'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-peer-alt-none"
+      - name: '#07 dry survey not bay-yield-peer-alt-front2-fly'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-peer-alt-front2-fly"
+      - name: '#07 dry survey not bay-yield-peer-alt-front2-hop'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-peer-alt-front2-hop"
+      - name: '#07 dry survey not bay-yield-peer-alt-front3-fly'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-peer-alt-front3-fly"
+      - name: '#07 dry survey not bay-yield-peer-alt-front3-hop'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-peer-alt-front3-hop"
+      - name: '#07 dry survey not bay-yield-peer-alt-back2-fly'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-peer-alt-back2-fly"
+      - name: '#07 dry survey not bay-yield-peer-alt-back2-hop'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-peer-alt-back2-hop"
+      - name: '#07 dry survey not bay-yield-peer-alt-back3-fly'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-peer-alt-back3-fly"
+      - name: '#07 dry survey not bay-yield-peer-alt-back3-hop'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-peer-alt-back3-hop"
+      - name: '#07 dry survey not bay-yield-peer-alt-right2-fly'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-peer-alt-right2-fly"
+      - name: '#07 dry survey not bay-yield-peer-alt-right2-hop'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-peer-alt-right2-hop"
+      - name: '#07 dry survey not bay-yield-peer-alt-right3-fly'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-peer-alt-right3-fly"
+      - name: '#07 dry survey not bay-yield-peer-alt-right3-hop'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-peer-alt-right3-hop"
+      - name: '#07 dry survey not bay-yield-survey-type-alt-none'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-survey-type-alt-none"
+      - name: '#07 dry survey not bay-yield-survey-reference-alt-none'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-survey-reference-alt-none"
+      - name: '#07 dry survey not bay-yield-survey-range-alt-none'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-survey-range-alt-none"
+      - name: '#07 dry survey not bay-yield-survey-other-alt-none'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-survey-other-alt-none"
       - name: Clear temporary receipts only
         if: ${{ always() }}
         run: rm -rf -- "$RUNNER_TEMP/type2-focused-receipts"
