@@ -73,12 +73,73 @@ test('08 opt-in #07 reaches all ten real native identities', {tag:'@causal-maxim
  const s=await snapshotGarden(page);
  assertGardenIdentities(s.birds,10);
 });
+// Diagnostic copy only: find a maximum compatible measured subset, never
+// pretending an incomplete search proves a capacity ceiling.
+function measuredCapacity({input,standingPairFits,standingShape,testNative=true,maxWork=1600000,maxPairs=100000,maxStates=18000}) {
+ const summary={started:true,best:0,proof:false,capped:false,fullGuard:false,nativeAttempted:false,nativeAccepted:false,work:0,pairs:0,states:0};
+ const verts=[],memo=new Map(),classes=new Map();
+ try{
+  for(const a of input.actors){
+   const shape=standingShape(a),klass=shape?JSON.stringify(shape):JSON.stringify(['unknown',a.id]);
+   for(const n of input.seats){
+    if(!input.canPlace(a,n,new Map()))continue;
+    const key=JSON.stringify([klass,n.id,n.p]);
+    if(!classes.has(key))classes.set(key,classes.size);
+    verts.push({a,n,key:classes.get(key)});
+   }
+  }
+  const compatible=(va,vb)=>{
+   if(++summary.work>maxWork){summary.capped=true;return false;}
+   if(va.a===vb.a||va.n.id===vb.n.id)return false;
+   const k=Math.min(va.key,vb.key)*classes.size+Math.max(va.key,vb.key);
+   if(memo.has(k))return memo.get(k);
+   if(++summary.pairs>maxPairs){summary.capped=true;return false;}
+   const ok=standingPairFits(va.a,va.n,vb.a,vb.n);
+   memo.set(k,ok);
+   return ok;
+  };
+  let best=[];
+  function color(list){
+   const sets=[],order=[],upper=[];
+   for(const v of list){
+    let i=0;
+    while(i<sets.length&&sets[i].some(p=>compatible(v,p)))i++;
+    if(summary.capped)return {order,upper};
+    (sets[i]??=[]).push(v);
+   }
+   for(const [i,group] of sets.entries())for(const v of group){order.push(v);upper.push(i+1);}
+   return {order,upper};
+  }
+  function seek(chosen,list) {
+   if(chosen.length>best.length)best=[...chosen];
+   if(best.length===input.actors.length||summary.capped)return;
+   if(++summary.states>maxStates){summary.capped=true;return;}
+   const {order,upper}=color(list);
+   for(let i=order.length-1;i>=0&&!summary.capped;i--){
+    if(chosen.length+upper[i]<=best.length||best.length===input.actors.length)return;
+    const v=order[i],next=[];
+    for(let j=0;j<i&&!summary.capped;j++)if(compatible(v,order[j]))next.push(order[j]);
+    if(!summary.capped)seek([...chosen,v],next);
+   }
+  }
+  seek([],verts);
+  summary.best=best.length;
+  summary.proof=!summary.capped||best.length===input.actors.length;
+  if(best.length===input.actors.length){
+   const plan=new Map(best.map(({a,n})=>[a.id,n]));
+   summary.fullGuard=input.actors.every(a=>input.canPlace(a,plan.get(a.id),plan));
+   if(summary.fullGuard&&testNative){summary.nativeAttempted=true;summary.nativeAccepted=input.accept(plan);}
+  }
+ }catch{summary.error=true;}
+ return summary;
+}
+
 async function instrumentMaximum(page,notes){
  await page.addInitScript(()=>{globalThis.__trailMaxProbe={runs:[],current:null};});
  const files={
   'garden-actor-motion':[
-   ["planned=peers.size?assignTrailSeats(input):packTrailStandingSeats({...input,standingPairFits:trailRuntime.standingPairFits});",
-    "const trace=globalThis.__trailMaxProbe; const probe={actors:roster.length,seats:input.seats.length,peers:peers.size, cacheHits:0, pairMisses:0, pairRejects:0, leaves:0, guardDenied:0, causes:{}, choices:[], native:[]}; trace.runs.push(probe); if(trace.runs.length>12)trace.runs.shift(); trace.current=probe; try{planned=peers.size?assignTrailSeats(input):packTrailStandingSeats({...input,standingPairFits:trailRuntime.standingPairFits});}finally{trace.current=null;} probe.planned=planned?.size??0;"],
+   ["planned=peers.size?assignTrailSeats(input):packTrailStandingSeats({...input,standingPairFits:trailRuntime.standingPairFits,standingClass:a=>measurement?.footprints.get(a.id)});",
+    "const trace=globalThis.__trailMaxProbe; const probe={actors:roster.length,seats:input.seats.length,peers:peers.size, cacheHits:0, pairMisses:0, pairRejects:0, leaves:0, guardDenied:0, causes:{}, choices:[], native:[]}; trace.runs.push(probe); if(trace.runs.length>12)trace.runs.shift(); trace.current=probe; try{planned=peers.size?assignTrailSeats(input):packTrailStandingSeats({...input,standingPairFits:trailRuntime.standingPairFits,standingClass:a=>measurement?.footprints.get(a.id)});}finally{trace.current=null;} probe.planned=planned?.size??0; if(!planned&&!peers.size&&roster.length===10){const proof=("+measuredCapacity.toString()+");probe.capacity=proof({input,standingPairFits:trailRuntime.standingPairFits,standingShape:a=>measurement?.footprints.get(a.id),testNative:active&&typeof root.ownerDocument.elementFromPoint==='function'});}"],
    ["if(trailRuntime&&model.actors.size!==roster.length)return reject('trail-blocked-placement');",
     "if(trailRuntime&&planned){const last=globalThis.__trailMaxProbe.runs.at(-1); if(last)last.reconciled=model.actors.size;} if(trailRuntime&&model.actors.size!==roster.length)return reject('trail-blocked-placement');"],
    ["if(r.width<43.99||r.height<43.99||!hit||!node.contains(hit))return false;",
@@ -95,8 +156,11 @@ async function instrumentMaximum(page,notes){
     'cache.set(key,fits); const t=globalThis.__trailMaxProbe.current;if(t){t.pairMisses++;if(!fits)t.pairRejects++;}'],
    ['if(probes>=maxProbes||actors.some(a=>!check(a,plan.get(a.id),plan)))return false;',
     'const t=globalThis.__trailMaxProbe.current;if(t)t.leaves++; if(probes>=maxProbes||actors.some(a=>!check(a,plan.get(a.id),plan))){if(t)t.guardDenied++; return false;}'],
-   ['return advance(domains)?plan:null;',
-    'const result=advance(domains)?plan:null; const t=globalThis.__trailMaxProbe.current;if(t)Object.assign(t,{solver:"forward",checks,probes,branches,maxBranches,maxChecks,maxProbes,cacheSize:cache.size}); return result;'],
+   ['const hasSymmetry=firstInClass.size<classes.size;',
+    'const hasSymmetry=firstInClass.size<classes.size; const report=()=>{const t=globalThis.__trailMaxProbe.current;if(t)Object.assign(t,{solver:"forward",checks,probes,branches,maxBranches,maxChecks,maxProbes,cacheSize:cache.size,symmetry:hasSymmetry,shapeClasses:firstInClass.size});};'],
+   ['symmetry=hasSymmetry;\n  if(advance(domains))return plan;', 'symmetry=hasSymmetry;\n  if(advance(domains)){report();return plan;}'],
+   ['symmetry=false;\n   if(advance(domains))return plan;', 'symmetry=false;\n   if(advance(domains)){report();return plan;}'],
+   ['  return null;\n }\n function fill(waiting){', '  report();return null;\n }\n function fill(waiting){'],
    ['return fill(actors)?plan:null;',
     'const result=fill(actors)?plan:null; const t=globalThis.__trailMaxProbe.current;if(t)Object.assign(t,{checks,probes,maxChecks,maxProbes}); return result;'],
    ['return assign(0)?plan:null;',
