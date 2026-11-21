@@ -1,4 +1,5 @@
 import {presentationSeed} from './bird-poses.js';
+import {createActorHopPath,createActorFlightPath,sampleActorFlightPath} from './garden-actor-path.js';
 
 const clamp=t=>Math.max(0,Math.min(1,t));
 const smooth=t=>t*t*(3-2*t);
@@ -41,15 +42,50 @@ export function createGardenActors(seed='',initialTime=0){
   a.state=kind;a.since=time;a.end=time+duration;if(kind==='fly')a.initialFlight=false;
   a.route={from:[...a.p],to:[...node.p],target:node.id,duration,height:kind==='fly'?height:.012,steps:Math.max(1,Math.ceil(distance(a.p,node.p)*width/24))};return true;
  }
+ // Opt-in admission for a geometry adapter. Validate and reserve the same
+ // candidate that frame()/sampleRoute() will paint; a rejected commit is inert.
+ function previewPath(id,node,path,kind,{width,planeHeight,height}){
+  const a=actors.get(id);
+  if(!a?.movable||a.route||!node||node.id===a.node)return null;
+  let route;
+  if(kind==='hop'){
+   const hops=createActorHopPath(a.p,node.p,path,width,planeHeight);
+   if(!hops)return null;
+   const steps=hops.length-1;
+   route={duration:Math.max(1150,steps*300),height:.012,steps,hops};
+  }else if(kind==='fly'){
+   if(!a.canFly||time<a.cooldown||!Number.isFinite(height)||height<=0)return null;
+   const flightPath=createActorFlightPath(a.p,node.p,path,width,planeHeight);
+   if(!flightPath)return null;
+   route={duration:Math.max(2300,Math.min(4300,1300+flightPath.distance*6)),height,flightPath};
+  }else return null;
+  Object.assign(route,{from:[...a.p],to:[...node.p],target:node.id});
+  return {...a,state:kind,since:time,end:time+route.duration,initialFlight:kind==='fly'?false:a.initialFlight,route};
+ }
+ function beginPath(id,node,path,kind,geometry){
+  if(!node||!free(node,id)||typeof geometry.safe!=='function')return false;
+  const candidate=previewPath(id,node,path,kind,geometry);
+  if(!candidate||!geometry.safe(candidate,node,kind,actors))return false;
+  reservations.set(node.id,id);Object.assign(actors.get(id),candidate);return true;
+ }
+ const beginHopPath=(id,node,path,geometry)=>beginPath(id,node,path,'hop',geometry);
+ const beginFlightPath=(id,node,path,geometry)=>beginPath(id,node,path,'fly',geometry);
  function frame(a,at=time){
   const r=a.route,t=clamp((at-a.since)/r.duration);
   if(r.reroute)return {p:r.from.map((v,i)=>hermite(v,r.to[i],r.velocity[i],t,r.duration)),height:Math.max(0,hermite(r.height0,0,r.heightVelocity,t,r.duration)),phase:t<.65?'brake':t<.9?'feet':'contact'};
   if(a.state==='hop'){
    const steps=r.steps||3,u=t*steps,part=u-Math.floor(u),progress=(Math.floor(u)+smooth(part))/steps;
+   if(r.hops){
+    if(t>=1)return {p:[...r.to],height:0,phase:'contact',dx:r.to[0]-r.hops.at(-2)[0]};
+    const i=Math.floor(u),from=r.hops[i],to=r.hops[i+1];
+    return {p:from.map((v,k)=>v+(to[k]-v)*smooth(part)),height:Math.sin(Math.PI*part)*r.height,dx:to[0]-from[0],
+     phase:part===0&&i>0?'contact':part<.2?'push':part<.72?'hop':'contact'};
+   }
    return {p:r.from.map((v,i)=>v+(r.to[i]-v)*progress),height:Math.sin(Math.PI*part)*r.height,phase:part<.2?'push':part<.72?'hop':'contact'};
   }
   const progress=smooth(clamp((t-.12)/.72));
-  return {p:r.from.map((v,i)=>v+(r.to[i]-v)*progress),height:t<.1||t>.88?0:r.height*Math.sin(Math.PI*clamp((t-.1)/.78)),phase:t<.1?'crouch':t<.2?'push':t<.36?'rise':t<.65?'flap':t<.8?'brake':t<.88?'feet':t<.96?'contact':'fold'};
+  const trajectory=r.flightPath?sampleActorFlightPath(r.flightPath,progress):null;
+  return {p:trajectory?.p??r.from.map((v,i)=>v+(r.to[i]-v)*progress),...(trajectory?{dx:trajectory.dx}:{}),height:t<.1||t>.88?0:r.height*Math.sin(Math.PI*clamp((t-.1)/.78)),phase:t<.1?'crouch':t<.2?'push':t<.36?'rise':t<.65?'flap':t<.8?'brake':t<.88?'feet':t<.96?'contact':'fold'};
  }
  function reroute(a,node,environment){
   if(!a?.route||!free(node,a.id))return false;
@@ -116,8 +152,17 @@ export function createGardenActors(seed='',initialTime=0){
   }
   return true;
  }
- return {actors,reservations,reconcile,advance,begin,frame,reflow,reroute,placeStanding,
-  sampleRoute(a,count=49){return Array.from({length:count},(_,i)=>frame(a,a.since+(i/(count-1))*a.route.duration));},
+ return {actors,reservations,reconcile,advance,begin,previewPath,beginHopPath,beginFlightPath,frame,reflow,reroute,placeStanding,
+  sampleRoute(a,count=49){
+   if(a.route.flightPath)count=Math.max(count,Math.ceil(a.route.flightPath.distance/2),97);
+   if(a.route.hops){
+    // Always include every contact and sample each arc; 49 global points can
+    // miss an entire arc when a lane has several dozen short hops.
+    const samplesPerHop=Math.max(12,Math.ceil((count-1)/a.route.steps));
+    count=a.route.steps*samplesPerHop+1;
+   }
+   return Array.from({length:count},(_,i)=>frame(a,a.since+(i/(count-1))*a.route.duration));
+  },
   settle(){for(const a of actors.values())if(a.route){a.p=[...a.route.to];a.node=a.route.target;release(a.id);a.cooldown=time+8000;rest(a,'rest',2000);}reactions.length=0;},
   clearReactions(){reactions.length=0;},
   clear(){actors.clear();reservations.clear();reactions.length=0;},
