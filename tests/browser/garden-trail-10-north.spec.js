@@ -11,7 +11,7 @@ async function overlay(page,pattern,edit){await page.route(pattern,async request
  await request.fulfill({response,body:edit(await response.text())});
 });}
 test('#10 pair on the measured north gates',async({page},info)=>{
- let early='setup',late='setup',mapped={terrain:0,order:0};
+ let code='setup',mapped={terrain:0,order:0};
  try{
   await overlay(page,/\/src\/data\/garden-trail-terrain\.js(?:\?.*)?$/,source=>{
    const decl=/^export const GARDEN_TRAIL_TERRAIN=Object\.freeze\((\{[^\n]+\})\);$/gm;
@@ -25,7 +25,10 @@ test('#10 pair on the measured north gates',async({page},info)=>{
   await overlay(page,/\/src\/garden-actor-motion\.js(?:\?.*)?$/,source=>{
    const a='if(!started&&!lane&&terrain.number===28&&bay&&roster.length===2){';
    expect(source.split(a)).toHaveLength(2);mapped.order++;
-   return source.replace(a,'if(!started&&!lane&&[10,28].includes(terrain.number)&&bay&&roster.length===2){');
+   source=source.replace(a,'if(!started&&!lane&&[10,28].includes(terrain.number)&&bay&&roster.length===2){');
+   const gateAnchor='if(!planned)planned=packTrailStandingSeats(measured);';
+   expect(source.split(gateAnchor)).toHaveLength(2);
+   return source.replace(gateAnchor,"if(!planned&&terrain.number===10&&peers.size===0&&roster.length===2&&roster.every(d=>d.movable)){const gates=input.seats.filter(n=>n.id==='A'||n.id==='B');let outcome='nominal-gate-missing';if(gates.length===2&&new Set(gates.map(n=>n.id)).size===2){outcome='measured-pair-denied';planned=assignTrailSeats({...input,seats:gates,accept(formalPlan){if(!roster.every(d=>formalPlan.has(d.id)&&input.canPlace(d,formalPlan.get(d.id),formalPlan)))return false;outcome='native-hit-denied';const okay=input.accept(formalPlan);if(okay)outcome='north-pair-accepted';return okay;}});}globalThis.__qa10GatePlacement??=outcome;} if(!planned)planned=packTrailStandingSeats(measured);");
   });
   await setup(page,garden,402,true,true,{trailPreview:true,height:874,afterOpenMs:0,prepareWorld:w=>{
    const bird=engine.createBird(w,{home:'resident',stage:'adult',color:'cinnamon'});
@@ -39,34 +42,45 @@ test('#10 pair on the measured north gates',async({page},info)=>{
     const wing=b.querySelector('.garden-actor-flight');
     return {id:d.gardenActorId,node:d.actorNode,target:d.actorLanding,state:d.actorState,phase:d.actorPhase,x,y,w:r.width,h:r.height,
      hit:b.contains(document.elementFromPoint(x,y)),paint:!!wing&&getComputedStyle(wing).visibility==='visible'&&!!b.querySelector('[data-terrain-flight-active]')};
-   });return {world:g?.dataset.gardenWorld,id:s?.dataset.gardenId,ready:s?.dataset.sceneState,motion:s?.dataset.actorMotion,birds};
+   });return {world:g?.dataset.gardenWorld,id:s?.dataset.gardenId,ready:s?.dataset.sceneState,birds};
   });
-  const classify=s=>{
-    if(s.ready!=='ready')return 'not-ready';
-    if(s.id!==garden||!s.world)return 'scene-identity';
-    if(s.birds.length!==2||s.birds.some(b=>!b.id)||new Set(s.birds.map(b=>b.id)).size!==2||!s.birds.some(b=>b.id==='b1'))return 'roster-mismatch';
-    if(s.birds.some(b=>!b.node)){
-     const states={'trail-blocked-placement':'unbound-placement','trail-blocked-geometry':'unbound-geometry','geometry-blocked':'unbound-frame','insufficient-space':'unbound-space','trail-needs-recovery':'unbound-recovery'};
-     return states[s.motion]??'actor-unbound';
-    }
-    if(s.birds.some(b=>b.node==='bay'))return 'already-bay';
-    const a=s.birds.find(b=>b.node==='A'),b=s.birds.find(b=>b.node==='B');
-    if(!a||!b)return !a&&!b?'both-gates-missing':!a?'gate-a-missing':'gate-b-missing';
-    const usable=b=>b.hit&&b.w>=43.99&&b.h>=43.99;
-    if(!usable(a)||!usable(b))return !usable(a)&&!usable(b)?'both-hits-denied':!usable(a)?'gate-a-hit-denied':'gate-b-hit-denied';
-    return 'pass';
-   };
-   let spent=0;
-   for(;spent<=320;spent+=16){
-    early=classify(await sample());
-    if(!['not-ready','actor-unbound','roster-mismatch'].includes(early)||spent===320)break;
-    await page.clock.runFor(16);
+  let first;
+  for(let i=0;i<=32;i++){
+   first=await sample();
+   if(first.ready==='ready'&&first.birds.map(b=>b.node).sort().join(',')==='A,B')break;
+   if(i!==32)await page.clock.runFor(16);
+  }
+  const ids=first.birds.map(b=>b.id);
+  if(first.birds.map(b=>b.node).sort().join(',')!=='A,B'){
+   const stage=await page.evaluate(()=>globalThis.__qa10GatePlacement);
+   code=['nominal-gate-missing','measured-pair-denied','native-hit-denied','north-pair-accepted'].includes(stage)?stage==='north-pair-accepted'?'accepted-but-not-seen':stage:'not-attempted';
+   throw Error(code);
+  }
+  code='native-gates';expect(first.ready).toBe('ready');expect(first.id).toBe(garden);
+  expect(first.birds.map(b=>b.node).sort()).toEqual(['A','B']);expect(new Set(ids).size).toBe(2);expect(ids.every(Boolean)).toBe(true);
+  let parked=null,flight=null,landed=null;const phases=new Set();let paint=false,moved=false;
+  for(let i=0;i<160;i++){
+   const now=await sample();code='native-hits';
+   expect([now.id,now.world,now.ready]).toEqual([garden,first.world,'ready']);expect(now.birds.map(b=>b.id)).toEqual(ids);
+   for(const b of now.birds){const f=first.birds.find(q=>q.id===b.id);expect(b.hit).toBe(true);expect(b.w).toBeGreaterThanOrEqual(43.99);expect(b.h).toBeGreaterThanOrEqual(43.99);expect(b.w).toBeCloseTo(f.w,2);expect(b.h).toBeCloseTo(f.h,2);}
+   const p=now.birds.find(b=>b.node==='bay'&&b.phase==='ground'&&!b.target),a=now.birds.find(b=>b.state==='fly'&&b.target);
+   if(p&&!parked)parked=p.id;
+   if(a){
+    code='fly-after-bay';expect(parked).toBeTruthy();expect(p?.id).toBe(parked);expect(a.id).not.toBe(parked);
+    if(!flight)flight={id:a.id,source:a.node,target:a.target,x:a.x,y:a.y};
+    expect([a.id,a.node,a.target]).toEqual([flight.id,flight.source,flight.target]);phases.add(a.phase);paint||=a.paint;moved||=Math.hypot(a.x-flight.x,a.y-flight.y)>2;
    }
-   await page.clock.runFor(1000-spent);
-   late=classify(await sample());
+   if(flight&&now.birds.some(b=>b.id===flight.id&&b.node===flight.target&&b.phase==='ground'&&!b.target)){landed=now;break;}
+   await page.clock.runFor(100);
+  }
+  code='bay-missing';expect(parked).toBeTruthy();
+  code='fly-missing';expect(flight).toBeTruthy();expect([flight.source,flight.target].sort()).toEqual(['A','B']);
+  code='fly-phases';expect([...phases]).toEqual(expect.arrayContaining(['rise','flap','contact']));expect(paint&&moved).toBe(true);
+  code='same-landing';expect(landed).toBeTruthy();expect(landed.birds.find(b=>b.id===parked)).toMatchObject({node:'bay',phase:'ground',hit:true});
+  code='landing-tap';const edo=landed.birds.find(b=>b.id==='b1');await page.touchscreen.tap(edo.x,edo.y);
+  await expect(page.getByRole('dialog',{name:'エド',exact:true})).toBeVisible();code='pass';
  }finally{
   const out=process.env.TYPE2_CHECKPOINT_DIR;
-  if(!out||!['chrome','webkit'].includes(info.project.name))throw Error('Named diagnostic');
-  for(const [t,v] of [['early',early],['late',late]])writeFileSync(join(out,info.project.name+'-10-'+t),v+'\n',{mode:0o600,flag:'wx'});
+  if(out&&['chrome','webkit'].includes(info.project.name))writeFileSync(join(out,info.project.name+'-10-north'),code+'\n',{mode:0o600,flag:'wx'});
  }
 });
