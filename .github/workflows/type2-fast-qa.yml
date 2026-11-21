@@ -1,17 +1,17 @@
-name: Type II fast bay-10-preferred-gates QA (no deployment)
-run-name: Type II focused bay-10-preferred-gates · ${{ github.sha }}
+name: Type II fast bay-14-inner QA (no deployment)
+run-name: Type II focused bay-14-inner · ${{ github.sha }}
 on:
   push:
-    branches: [qa/type2-fast-bay-10-north]
+    branches: [qa/type2-fast-bay-14-inner]
 permissions:
   contents: read
 concurrency:
-  group: type2-fast-bay-10-preferred-gates-${{ github.ref }}
+  group: type2-fast-bay-14-inner-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   visitor:
-    name: 'Type II bay-10-preferred-gates · ${{ matrix.engine }}'
-    if: github.ref == 'refs/heads/qa/type2-fast-bay-10-north'
+    name: 'Type II bay-14-inner · ${{ matrix.engine }}'
+    if: github.ref == 'refs/heads/qa/type2-fast-bay-14-inner'
     runs-on: ubuntu-24.04
     timeout-minutes: 14
     strategy:
@@ -36,7 +36,7 @@ jobs:
         run: |
           set -eu
           test "$SOURCE_SHA" = "$GITHUB_SHA"
-          node --check tests/browser/garden-trail-10-north.spec.js
+          node --check tests/browser/garden-trail-14-inner.spec.js
           node --check tests/browser/garden-trail-seven.spec.js
           npm ci
           node -e "if(require('@playwright/test/package.json').version !== '1.64.1') process.exit(1)"
@@ -61,87 +61,87 @@ jobs:
           set -eu
           dir="$RUNNER_TEMP/type2-focused-receipts"
           mkdir -m 700 "$dir"
-          report="$(npx playwright test tests/browser/garden-trail-10-north.spec.js --project="$ENGINE" --list)"
+          report="$(npx playwright test tests/browser/garden-trail-14-inner.spec.js --project="$ENGINE" --list)"
           printf '%s\n' "$report" | grep -Eq '^Total: 1 test in 1 file$'
           rc=0
-          TYPE2_CHECKPOINT_DIR="$dir" npx playwright test tests/browser/garden-trail-10-north.spec.js --project="$ENGINE" --retries=0 --max-failures=0 --trace=off --reporter=dot || rc="$?"
+          TYPE2_CHECKPOINT_DIR="$dir" npx playwright test tests/browser/garden-trail-14-inner.spec.js --project="$ENGINE" --retries=0 --max-failures=0 --trace=off --reporter=dot || rc="$?"
           test "$rc" -le 1
-          node -e 'const f=require("fs");const [d,e,q]=process.argv.slice(1);for(const [k,choices] of JSON.parse(q))if(!choices.includes(f.readFileSync(d+"/"+e+"-"+k,"utf8").trim()))process.exit(1);' "$dir" "$ENGINE" '[["10-north",["pass","setup","native-gates","native-hits","fly-after-bay","bay-missing","fly-missing","fly-phases","same-landing","landing-tap","nominal-gate-missing","measured-pair-denied","native-hit-denied","accepted-but-not-seen","not-attempted"]]]'
-      - name: '#10 measured exact gates complete'
+          node -e 'const f=require("fs");const [d,e,q]=process.argv.slice(1);for(const [k,choices] of JSON.parse(q))if(!choices.includes(f.readFileSync(d+"/"+e+"-"+k,"utf8").trim()))process.exit(1);' "$dir" "$ENGINE" '[["14-inner",["pass","setup","native-gates","native-hits","fly-after-bay","bay-missing","fly-missing","fly-phases","same-landing","landing-tap","nominal-gate-missing","measured-pair-denied","native-hit-denied","accepted-but-not-seen","not-attempted"]]]'
+      - name: '#14 inward measured gates complete'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
-        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-north")" = pass
-      - name: '#10 measured exact gates not setup'
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-14-inner")" = pass
+      - name: '#14 inward measured gates not setup'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
-        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-north")" != "setup"
-      - name: '#10 measured exact gates not native-gates'
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-14-inner")" != "setup"
+      - name: '#14 inward measured gates not native-gates'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
-        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-north")" != "native-gates"
-      - name: '#10 measured exact gates not native-hits'
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-14-inner")" != "native-gates"
+      - name: '#14 inward measured gates not native-hits'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
-        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-north")" != "native-hits"
-      - name: '#10 measured exact gates not fly-after-bay'
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-14-inner")" != "native-hits"
+      - name: '#14 inward measured gates not fly-after-bay'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
-        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-north")" != "fly-after-bay"
-      - name: '#10 measured exact gates not bay-missing'
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-14-inner")" != "fly-after-bay"
+      - name: '#14 inward measured gates not bay-missing'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
-        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-north")" != "bay-missing"
-      - name: '#10 measured exact gates not fly-missing'
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-14-inner")" != "bay-missing"
+      - name: '#14 inward measured gates not fly-missing'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
-        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-north")" != "fly-missing"
-      - name: '#10 measured exact gates not fly-phases'
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-14-inner")" != "fly-missing"
+      - name: '#14 inward measured gates not fly-phases'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
-        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-north")" != "fly-phases"
-      - name: '#10 measured exact gates not same-landing'
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-14-inner")" != "fly-phases"
+      - name: '#14 inward measured gates not same-landing'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
-        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-north")" != "same-landing"
-      - name: '#10 measured exact gates not landing-tap'
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-14-inner")" != "same-landing"
+      - name: '#14 inward measured gates not landing-tap'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
-        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-north")" != "landing-tap"
-      - name: '#10 measured exact gates not nominal-gate-missing'
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-14-inner")" != "landing-tap"
+      - name: '#14 inward measured gates not nominal-gate-missing'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
-        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-north")" != "nominal-gate-missing"
-      - name: '#10 measured exact gates not measured-pair-denied'
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-14-inner")" != "nominal-gate-missing"
+      - name: '#14 inward measured gates not measured-pair-denied'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
-        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-north")" != "measured-pair-denied"
-      - name: '#10 measured exact gates not native-hit-denied'
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-14-inner")" != "measured-pair-denied"
+      - name: '#14 inward measured gates not native-hit-denied'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
-        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-north")" != "native-hit-denied"
-      - name: '#10 measured exact gates not accepted-but-not-seen'
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-14-inner")" != "native-hit-denied"
+      - name: '#14 inward measured gates not accepted-but-not-seen'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
-        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-north")" != "accepted-but-not-seen"
-      - name: '#10 measured exact gates not not-attempted'
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-14-inner")" != "accepted-but-not-seen"
+      - name: '#14 inward measured gates not not-attempted'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
-        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-north")" != "not-attempted"
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-14-inner")" != "not-attempted"
       - name: Clear temporary receipts only
         if: ${{ always() }}
         run: rm -rf -- "$RUNNER_TEMP/type2-focused-receipts"
