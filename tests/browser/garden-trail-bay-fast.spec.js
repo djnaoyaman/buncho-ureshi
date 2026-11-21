@@ -43,6 +43,30 @@ const adapter=[
     return true;
    }`],
 ];
+const yieldTrace=[
+ [`return !!actor&&!actor.leaving&&!!action&&(action!=='fly'||actor.canFly)&&
+     validate({id,action,kind,path:copyPath(path),from,to,actors:raw,
+       prospectiveYieldId:exitOccupant.length===1?exitOccupant[0].id:null,
+       parkedBay:action==='fly'&&bay&&raw.size===2&&exitOccupant.length===1?
+        {actor:exitOccupant[0],p:[...bay]}:null});`,`const success=!!actor&&!actor.leaving&&!!action&&(action!=='fly'||actor.canFly)&&
+     validate({id,action,kind,path:copyPath(path),from,to,actors:raw,
+       prospectiveYieldId:exitOccupant.length===1?exitOccupant[0].id:null,
+       parkedBay:action==='fly'&&bay&&raw.size===2&&exitOccupant.length===1?
+        {actor:exitOccupant[0],p:[...bay]}:null});
+   if(terrain.number===7&&kind==='yield'&&!phase){
+    const r=globalThis.__bayFastReceipt;
+    if(r)r.yieldFit=success?'yes':r.yieldFit??'no';
+   }
+   return success;`],
+ [`if(start(command)===true&&finish(command.token,true,actorFor(command.id)))return true;`,`const started=start(command)===true;
+   const observe=terrain.number===7&&command.kind==='yield'?globalThis.__bayFastReceipt:null;
+   if(observe)observe.yieldStart=started?'yes':observe.yieldStart??'no';
+   if(started){
+    const finished=finish(command.token,true,actorFor(command.id));
+    if(observe)observe.yieldFinish=finished?'yes':observe.yieldFinish??'no';
+    if(finished)return true;
+   }`],
+];
 const runtime=[
  [`const tentative=model.previewPath(id,node,path,mode,makeEnvironment(()=>false));
    if(!tentative)return false;`,`const tentative=model.previewPath(id,node,path,mode,makeEnvironment(()=>false));
@@ -96,7 +120,7 @@ for(const [number,garden] of games)test(`#${number} measured bay handover and sa
  let code='setup';
  try{
  await probe(page,'garden-trail-lane.js',lane);
- await probe(page,'garden-trail-adapter.js',adapter);
+ await probe(page,'garden-trail-adapter.js',[...adapter,...yieldTrace]);
  await probe(page,'garden-trail-runtime.js',runtime);
  await probe(page,'garden-trail-clearance.js',clearance);
  await probe(page,'garden-actor-motion.js',painting);
@@ -104,7 +128,7 @@ for(const [number,garden] of games)test(`#${number} measured bay handover and sa
   const bird=engine.createBird(w,{home:'resident',stage:'adult',color:'cinnamon'});
   w.encounters.gardenFriends.attendees.push(bird.id);
  }});
- let ids=null,landed=false,changed=false,start=null,receipt={},parked=false,firstGates=false,anyNative=true;
+ let ids=null,landed=false,changed=false,start=null,receipt={},yieldReceipt={},parked=false,firstGates=false,anyNative=true;
  let firstOwner=null,firstPartner=null,firstTo=null;
  let end=72,held=null,domFly=false,domFlyPartnerParked=false,yieldCommitted=false,yieldFitTried=false,prospectiveCrossTried=false;
  const sampleYieldMissing=()=>yieldFitTried&&!yieldCommitted?'bay-yield-fit-no-commit':prospectiveCrossTried&&!yieldFitTried?'bay-prospective-cross-denied':yieldCommitted?'bay-yield-committed-no-ground':'bay-yield-not-committed';
@@ -125,6 +149,7 @@ for(const [number,garden] of games)test(`#${number} measured bay handover and sa
   anyNative &&= sample.ready&&birds.length===2&&new Set(ids).size===2&&ids.every((id,i)=>!!id&&id===birds[i]?.id&&birds[i]?.hit);
   for(const k of ['bayGround','laneOccupied','measuredDenied','ready','dispatched','ownerConnected'])receipt[k] ||= sample.receipt[k]===true;
   if(!firstOwner&&sample.receipt.owner){firstOwner=sample.receipt.owner;firstPartner=sample.receipt.partner;firstTo=sample.receipt.to;}
+  for(const k of ['yieldFit','yieldStart','yieldFinish'])yieldReceipt[k]=yieldReceipt[k]==='yes'?'yes':sample.receipt[k]??yieldReceipt[k];
   held=sample.receipt.held??held;yieldCommitted||=sample.receipt.yieldCommitted===true;yieldFitTried||=sample.receipt.yieldFitTried===true;prospectiveCrossTried||=sample.receipt.prospectiveCrossTried===true;
   const owner=birds.find(b=>b.id===firstOwner),partner=birds.find(b=>b.id===firstPartner);
   parked ||= !!partner&&partner.site==='bay'&&partner.phase==='ground'&&!partner.target;
@@ -139,7 +164,11 @@ for(const [number,garden] of games)test(`#${number} measured bay handover and sa
  // Only fixed labels, never raw positions, actor IDs, traces or artifacts.
  code='native-gates';
  expect(firstGates&&anyNative,'01 actual A/B and continuous native hit ownership').toBe(true);
- code=parked?'bay-receipt-missing':receipt.bayGround?'bay-dom-not-grounded':sampleYieldMissing();
+ code=parked?'bay-receipt-missing':receipt.bayGround?'bay-dom-not-grounded':
+  number==='07'&&yieldReceipt.yieldFit==='no'?'bay-yield-geometry-denied':
+  number==='07'&&yieldReceipt.yieldFit==='yes'&&!yieldReceipt.yieldStart?'bay-yield-not-dispatched':
+  number==='07'&&yieldReceipt.yieldStart==='no'?'bay-yield-native-start-refused':
+  number==='07'&&yieldReceipt.yieldFinish==='no'?'bay-yield-token-finish-rejected':sampleYieldMissing();
  expect(receipt.bayGround&&parked,'02 same partner reached the actual bay').toBe(true);
  code=receipt.laneOccupied?'lane-occupied':receipt.measuredDenied?(held?.fail??'held-unclassified'):'held-ready';
  expect(receipt.ready,receipt.laneOccupied?'03 held bay blocked by occupied lane':receipt.measuredDenied?'03 held bay denied by unchanged measured check':'03 ready was not reached').toBe(true);
