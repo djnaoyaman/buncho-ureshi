@@ -139,6 +139,9 @@ export function createGardenTrailRuntime(id,model){
    }
    return blocked;
   },
+  standingPairFits(a,aNode,b,bNode){
+   return !!proven&&!proven.placementConflicts({...a,p:aNode.p,route:null},{...b,p:bNode.p,route:null});
+  },
   canPlace(actor,node,peers){
    if(!proven||!proven.canStand(actor,node.p))return false;
    const candidate={...actor,p:node.p,route:null},s=proven.sweptRoute(candidate);

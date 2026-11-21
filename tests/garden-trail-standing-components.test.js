@@ -64,3 +64,48 @@ test('ten safe uneven rows fit measured parts, while the former filled envelope 
  assert.equal(fit(fullOnly),null);
  assert.deepEqual(fit(envelope),preferred);
 });
+
+test('fresh ten-actor dry pack reaches a real plan where repeated measured search spends all 58,000 comparisons',()=>{
+ const actors=Array.from({length:10},(_,i)=>({id:'bird'+i}));
+ const c=clearance(new Map(actors.map(a=>[a.id,envelope])));
+ const usable=[
+  ...[.37,.49,.61].map(x=>[x,.585]),
+  ...[.32,.445,.57,.695].map(x=>[x,.687]),
+  ...[.37,.49,.61].map(x=>[x,.789]),
+ ];
+ let seed=1;
+ const random=()=>((seed=1664525*seed+1013904223>>>0)/2**32);
+ const decoys=Array.from({length:10},()=>[.34+random()*.34,.605+random()*.16]);
+ const seats=[...decoys,...usable].map((p,i)=>({id:'seat'+i,p}));
+ const preferred=new Map(actors.map((a,i)=>[a.id,seats[i]]));
+ let checks=0,pairs=0,probes=0;
+ const canPlace=(a,n,placed)=>{
+  checks++;
+  const at={...a,p:n.p};
+  return c.canStand(at,n.p)&&[...placed].every(([id,s])=>id===a.id||!c.placementConflicts(at,{id,p:s.p}));
+ };
+ const standingPairFits=(a,n,b,m)=>{pairs++;return !c.placementConflicts({...a,p:n.p},{...b,p:m.p});};
+ const input={actors,seats,preferred,canPlace};
+ assert.equal(packTrailStandingSeats(input),null);
+ assert.equal(checks,58000);
+ checks=0;
+ const measured=packTrailStandingSeats({...input,standingPairFits,accept(plan){probes++;return plan.size===10;}});
+ assert.equal(measured?.size,10);
+ assert.equal(probes,1);
+ assert.ok(checks+pairs<4000);
+ assert.equal(new Set([...measured.values()].map(n=>n.id)).size,10);
+ assert.ok(actors.every(a=>canPlace(a,measured.get(a.id),measured)));
+ assert.deepEqual(packTrailStandingSeats({...input,standingPairFits}),measured,'same geometry and preferences are deterministic');
+ assert.equal(packTrailStandingSeats({...input,standingPairFits,maxBranches:1}),null,'bounded search cannot commit a partial layout');
+});
+
+test('fresh fast pack never bypasses full measured admission or retries beyond native cap',()=>{
+ const c=clearance(),actors=[a,b],seats=[{id:'a-seat',p:a.p},{id:'b-seat',p:b.p}];
+ const checks={actors,seats,preferred:new Map(),standingPairFits:()=>true};
+ let probes=0;
+ assert.equal(packTrailStandingSeats({...checks,canPlace(a,n,full){return full.size===0||!full.has(a.id);},accept(){probes++;return true;}}),null);
+ assert.equal(probes,0,'full runtime guard rejected a deliberately inaccurate cache predicate');
+ const canPlace=(x,n,full)=>c.canStand(x,n.p)&&[...full].every(([id,s])=>id===x.id||!c.placementConflicts({...x,p:n.p},{id,p:s.p}));
+ assert.equal(packTrailStandingSeats({...checks,canPlace,maxProbes:1,accept(){probes++;return false;}}),null);
+ assert.equal(probes,1);
+});

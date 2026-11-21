@@ -132,15 +132,64 @@ export function assignTrailSeats({actors,seats,retained,canPlace,accept=()=>true
 
 // For a geometry-only reseat, retain each still legal preferred foot when a
 // full pack can coexist. A failure never moves an individual or a reservation.
-export function packTrailStandingSeats({actors,seats,preferred,canPlace,accept=()=>true,maxChecks=58000,maxProbes=4}){
+export function packTrailStandingSeats({actors,seats,preferred,canPlace,standingPairFits,accept=()=>true,maxChecks=58000,maxProbes=4,maxBranches=12000}){
  const plan=new Map(),used=new Set(),safe=new Map(),choices=new Map();
- let checks=0,probes=0;
+ let checks=0,probes=0,branches=0;
  const check=(a,n,others)=>++checks<=maxChecks&&canPlace(a,n,others);
  for(const a of actors){
   const wanted=preferred.get(a.id);
   const ordered=wanted?[wanted,...seats.filter(n=>n.id!==wanted.id)
    .sort((x,y)=>Math.hypot(x.p[0]-wanted.p[0],x.p[1]-wanted.p[1])-Math.hypot(y.p[0]-wanted.p[0],y.p[1]-wanted.p[1]))]:seats;
   choices.set(a.id,ordered.filter(n=>check(a,n,safe)));
+ }
+ // On an empty stage the measured constraints separate into unary
+ // dry ground/clip/controls/lane checks and symmetric standing-peer
+ // collisions. Filter only against the newly assigned foot so deeper
+ // states do not repeat the same geometry for every old assignment.
+ if(standingPairFits){
+  const cache=new Map();
+  let serial=0;
+  const domains=new Map(actors.map(a=>[a,choices.get(a.id).map(n=>({a,n,i:serial++}))]));
+  const compatible=(a,b)=>{
+   if(a.n.id===b.n.id)return false;
+   const key=Math.min(a.i,b.i)*serial+Math.max(a.i,b.i);
+   if(cache.has(key))return cache.get(key);
+   if(checks>=maxChecks)return false;
+   checks++;
+   const fits=standingPairFits(a.a,a.n,b.a,b.n);
+   cache.set(key,fits);
+   return fits;
+  };
+  function advance(open){
+   if(!open.size){
+    // Recheck the complete plan using the original production predicates
+    // before probing native taps. No optimized result can bypass admission.
+    if(probes>=maxProbes||actors.some(a=>!check(a,plan.get(a.id),plan)))return false;
+    return ++probes<=maxProbes&&accept(plan);
+   }
+   if(checks>=maxChecks||probes>=maxProbes||++branches>maxBranches)return false;
+   let actor=null,values=null;
+   for(const [a,seats] of open){
+    if(!seats.length)return false;
+    if(!values||seats.length<values.length){actor=a;values=seats;}
+   }
+   for(const seat of values){
+    if(checks>=maxChecks||probes>=maxProbes||branches>maxBranches)return false;
+    const next=new Map();
+    for(const [a,alternatives] of open){
+     if(a===actor)continue;
+     const valid=alternatives.filter(other=>compatible(seat,other));
+     if(!valid.length)break;
+     next.set(a,valid);
+    }
+    if(next.size!==open.size-1)continue;
+    plan.set(actor.id,seat.n);
+    if(advance(next))return true;
+    plan.delete(actor.id);
+   }
+   return false;
+  }
+  return advance(domains)?plan:null;
  }
  function fill(waiting){
   if(!waiting.length)return ++probes<=maxProbes&&accept(plan);
