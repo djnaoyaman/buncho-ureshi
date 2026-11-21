@@ -1,0 +1,732 @@
+name: Type II fast dense QA (no deployment)
+run-name: Type II focused dense · ${{ github.sha }}
+on:
+  push:
+    branches: [qa/type2-fast-dense]
+permissions:
+  contents: read
+concurrency:
+  group: type2-fast-dense-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  visitor:
+    name: 'Type II dense · ${{ matrix.engine }}'
+    if: github.ref == 'refs/heads/qa/type2-fast-dense'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 14
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chrome, webkit]
+    container:
+      image: mcr.microsoft.com/playwright:v1.64.1-noble
+    steps:
+      - name: Check out the exact non-release source
+        id: source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify fixture and install pinned dependencies
+        env:
+          SOURCE_SHA: ${{ steps.source.outputs.commit }}
+        run: |
+          set -eu
+          test "$SOURCE_SHA" = "$GITHUB_SHA"
+          node --check tests/browser/garden-trail-dense-first.spec.js
+          node --check tests/browser/garden-trail-seven.spec.js
+          npm ci
+          node -e "if(require('@playwright/test/package.json').version !== '1.64.1') process.exit(1)"
+      - name: Build the exact game under test
+        run: npm run build
+      - name: Install only the actual Chrome binary when selected
+        if: matrix.engine == 'chrome'
+        timeout-minutes: 4
+        run: |
+          set -eu
+          curl --fail --location --retry 2 --max-time 100 https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb --output /tmp/google-chrome.deb
+          dpkg-deb --extract /tmp/google-chrome.deb /
+          ldd /opt/google/chrome/chrome > /tmp/chrome-libraries.txt
+          if grep -q 'not found' /tmp/chrome-libraries.txt; then exit 1; fi
+          /opt/google/chrome/chrome --version
+      - name: Discover and run only this affected cohort
+        id: focused
+        timeout-minutes: 7
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: |
+          set -eu
+          dir="$RUNNER_TEMP/type2-focused-receipts"
+          mkdir -m 700 "$dir"
+          report="$(npx playwright test tests/browser/garden-trail-dense-first.spec.js --project="$ENGINE" --list)"
+          printf '%s\n' "$report" | grep -Eq '^Total: 3 tests in 1 file$'
+          rc=0
+          TYPE2_CHECKPOINT_DIR="$dir" npx playwright test tests/browser/garden-trail-dense-first.spec.js --project="$ENGINE" --retries=0 --max-failures=0 --trace=off --reporter=dot || rc="$?"
+          test "$rc" -le 1
+          node -e 'const f=require("fs");const [d,e,q]=process.argv.slice(1);for(const [k,choices] of JSON.parse(q))if(!choices.includes(f.readFileSync(d+"/"+e+"-"+k,"utf8").trim()))process.exit(1);' "$dir" "$ENGINE" '[["08-dense",["pass","setup","hook-unverified","portrait1-ready","portrait1-native","tap-open","tap-close","landscape-ready","landscape-native","portrait2-ready","portrait2-native","sample-read","sample-native","placement-retained","placement-unary","placement-native","placement-no-pack","motion-no-scheduler","motion-no-local","motion-no-candidates","motion-sweep-denied","motion-route-not-painted","portrait-trail-active","motion-trail-active","portrait-trail-held","motion-trail-held","portrait-trail-standing","motion-trail-standing","portrait-insufficient-space","motion-insufficient-space","portrait-trail-blocked-placement","motion-trail-blocked-placement","portrait-trail-blocked-geometry","motion-trail-blocked-geometry","portrait-trail-needs-recovery","motion-trail-needs-recovery","portrait-geometry-blocked","motion-geometry-blocked","portrait-active","motion-active","portrait-held","motion-held","portrait-other","motion-other"]],["10-dense",["pass","setup","hook-unverified","portrait1-ready","portrait1-native","tap-open","tap-close","landscape-ready","landscape-native","portrait2-ready","portrait2-native","sample-read","sample-native","placement-retained","placement-unary","placement-native","placement-no-pack","motion-no-scheduler","motion-no-local","motion-no-candidates","motion-sweep-denied","motion-route-not-painted","portrait-trail-active","motion-trail-active","portrait-trail-held","motion-trail-held","portrait-trail-standing","motion-trail-standing","portrait-insufficient-space","motion-insufficient-space","portrait-trail-blocked-placement","motion-trail-blocked-placement","portrait-trail-blocked-geometry","motion-trail-blocked-geometry","portrait-trail-needs-recovery","motion-trail-needs-recovery","portrait-geometry-blocked","motion-geometry-blocked","portrait-active","motion-active","portrait-held","motion-held","portrait-other","motion-other"]],["34-dense",["pass","setup","hook-unverified","portrait1-ready","portrait1-native","tap-open","tap-close","landscape-ready","landscape-native","portrait2-ready","portrait2-native","sample-read","sample-native","placement-retained","placement-unary","placement-native","placement-no-pack","motion-no-scheduler","motion-no-local","motion-no-candidates","motion-sweep-denied","motion-route-not-painted","portrait-trail-active","motion-trail-active","portrait-trail-held","motion-trail-held","portrait-trail-standing","motion-trail-standing","portrait-insufficient-space","motion-insufficient-space","portrait-trail-blocked-placement","motion-trail-blocked-placement","portrait-trail-blocked-geometry","motion-trail-blocked-geometry","portrait-trail-needs-recovery","motion-trail-needs-recovery","portrait-geometry-blocked","motion-geometry-blocked","portrait-active","motion-active","portrait-held","motion-held","portrait-other","motion-other"]]]'
+      - name: '#08 dense ten complete'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-dense")" = pass
+      - name: '#08 dense ten not setup'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-dense")" != "setup"
+      - name: '#08 dense ten not hook-unverified'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-dense")" != "hook-unverified"
+      - name: '#08 dense ten not portrait1-ready'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-dense")" != "portrait1-ready"
+      - name: '#08 dense ten not portrait1-native'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-dense")" != "portrait1-native"
+      - name: '#08 dense ten not tap-open'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-dense")" != "tap-open"
+      - name: '#08 dense ten not tap-close'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-dense")" != "tap-close"
+      - name: '#08 dense ten not landscape-ready'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-dense")" != "landscape-ready"
+      - name: '#08 dense ten not landscape-native'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-dense")" != "landscape-native"
+      - name: '#08 dense ten not portrait2-ready'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-dense")" != "portrait2-ready"
+      - name: '#08 dense ten not portrait2-native'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-dense")" != "portrait2-native"
+      - name: '#08 dense ten not sample-read'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-dense")" != "sample-read"
+      - name: '#08 dense ten not sample-native'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-dense")" != "sample-native"
+      - name: '#08 dense ten not placement-retained'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-dense")" != "placement-retained"
+      - name: '#08 dense ten not placement-unary'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-dense")" != "placement-unary"
+      - name: '#08 dense ten not placement-native'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-dense")" != "placement-native"
+      - name: '#08 dense ten not placement-no-pack'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-dense")" != "placement-no-pack"
+      - name: '#08 dense ten not motion-no-scheduler'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-dense")" != "motion-no-scheduler"
+      - name: '#08 dense ten not motion-no-local'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-dense")" != "motion-no-local"
+      - name: '#08 dense ten not motion-no-candidates'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-dense")" != "motion-no-candidates"
+      - name: '#08 dense ten not motion-sweep-denied'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-dense")" != "motion-sweep-denied"
+      - name: '#08 dense ten not motion-route-not-painted'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-dense")" != "motion-route-not-painted"
+      - name: '#08 dense ten not portrait-trail-active'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-dense")" != "portrait-trail-active"
+      - name: '#08 dense ten not motion-trail-active'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-dense")" != "motion-trail-active"
+      - name: '#08 dense ten not portrait-trail-held'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-dense")" != "portrait-trail-held"
+      - name: '#08 dense ten not motion-trail-held'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-dense")" != "motion-trail-held"
+      - name: '#08 dense ten not portrait-trail-standing'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-dense")" != "portrait-trail-standing"
+      - name: '#08 dense ten not motion-trail-standing'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-dense")" != "motion-trail-standing"
+      - name: '#08 dense ten not portrait-insufficient-space'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-dense")" != "portrait-insufficient-space"
+      - name: '#08 dense ten not motion-insufficient-space'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-dense")" != "motion-insufficient-space"
+      - name: '#08 dense ten not portrait-trail-blocked-placement'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-dense")" != "portrait-trail-blocked-placement"
+      - name: '#08 dense ten not motion-trail-blocked-placement'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-dense")" != "motion-trail-blocked-placement"
+      - name: '#08 dense ten not portrait-trail-blocked-geometry'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-dense")" != "portrait-trail-blocked-geometry"
+      - name: '#08 dense ten not motion-trail-blocked-geometry'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-dense")" != "motion-trail-blocked-geometry"
+      - name: '#08 dense ten not portrait-trail-needs-recovery'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-dense")" != "portrait-trail-needs-recovery"
+      - name: '#08 dense ten not motion-trail-needs-recovery'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-dense")" != "motion-trail-needs-recovery"
+      - name: '#08 dense ten not portrait-geometry-blocked'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-dense")" != "portrait-geometry-blocked"
+      - name: '#08 dense ten not motion-geometry-blocked'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-dense")" != "motion-geometry-blocked"
+      - name: '#08 dense ten not portrait-active'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-dense")" != "portrait-active"
+      - name: '#08 dense ten not motion-active'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-dense")" != "motion-active"
+      - name: '#08 dense ten not portrait-held'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-dense")" != "portrait-held"
+      - name: '#08 dense ten not motion-held'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-dense")" != "motion-held"
+      - name: '#08 dense ten not portrait-other'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-dense")" != "portrait-other"
+      - name: '#08 dense ten not motion-other'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-dense")" != "motion-other"
+      - name: '#10 dense ten complete'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-dense")" = pass
+      - name: '#10 dense ten not setup'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-dense")" != "setup"
+      - name: '#10 dense ten not hook-unverified'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-dense")" != "hook-unverified"
+      - name: '#10 dense ten not portrait1-ready'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-dense")" != "portrait1-ready"
+      - name: '#10 dense ten not portrait1-native'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-dense")" != "portrait1-native"
+      - name: '#10 dense ten not tap-open'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-dense")" != "tap-open"
+      - name: '#10 dense ten not tap-close'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-dense")" != "tap-close"
+      - name: '#10 dense ten not landscape-ready'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-dense")" != "landscape-ready"
+      - name: '#10 dense ten not landscape-native'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-dense")" != "landscape-native"
+      - name: '#10 dense ten not portrait2-ready'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-dense")" != "portrait2-ready"
+      - name: '#10 dense ten not portrait2-native'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-dense")" != "portrait2-native"
+      - name: '#10 dense ten not sample-read'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-dense")" != "sample-read"
+      - name: '#10 dense ten not sample-native'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-dense")" != "sample-native"
+      - name: '#10 dense ten not placement-retained'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-dense")" != "placement-retained"
+      - name: '#10 dense ten not placement-unary'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-dense")" != "placement-unary"
+      - name: '#10 dense ten not placement-native'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-dense")" != "placement-native"
+      - name: '#10 dense ten not placement-no-pack'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-dense")" != "placement-no-pack"
+      - name: '#10 dense ten not motion-no-scheduler'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-dense")" != "motion-no-scheduler"
+      - name: '#10 dense ten not motion-no-local'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-dense")" != "motion-no-local"
+      - name: '#10 dense ten not motion-no-candidates'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-dense")" != "motion-no-candidates"
+      - name: '#10 dense ten not motion-sweep-denied'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-dense")" != "motion-sweep-denied"
+      - name: '#10 dense ten not motion-route-not-painted'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-dense")" != "motion-route-not-painted"
+      - name: '#10 dense ten not portrait-trail-active'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-dense")" != "portrait-trail-active"
+      - name: '#10 dense ten not motion-trail-active'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-dense")" != "motion-trail-active"
+      - name: '#10 dense ten not portrait-trail-held'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-dense")" != "portrait-trail-held"
+      - name: '#10 dense ten not motion-trail-held'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-dense")" != "motion-trail-held"
+      - name: '#10 dense ten not portrait-trail-standing'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-dense")" != "portrait-trail-standing"
+      - name: '#10 dense ten not motion-trail-standing'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-dense")" != "motion-trail-standing"
+      - name: '#10 dense ten not portrait-insufficient-space'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-dense")" != "portrait-insufficient-space"
+      - name: '#10 dense ten not motion-insufficient-space'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-dense")" != "motion-insufficient-space"
+      - name: '#10 dense ten not portrait-trail-blocked-placement'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-dense")" != "portrait-trail-blocked-placement"
+      - name: '#10 dense ten not motion-trail-blocked-placement'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-dense")" != "motion-trail-blocked-placement"
+      - name: '#10 dense ten not portrait-trail-blocked-geometry'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-dense")" != "portrait-trail-blocked-geometry"
+      - name: '#10 dense ten not motion-trail-blocked-geometry'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-dense")" != "motion-trail-blocked-geometry"
+      - name: '#10 dense ten not portrait-trail-needs-recovery'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-dense")" != "portrait-trail-needs-recovery"
+      - name: '#10 dense ten not motion-trail-needs-recovery'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-dense")" != "motion-trail-needs-recovery"
+      - name: '#10 dense ten not portrait-geometry-blocked'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-dense")" != "portrait-geometry-blocked"
+      - name: '#10 dense ten not motion-geometry-blocked'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-dense")" != "motion-geometry-blocked"
+      - name: '#10 dense ten not portrait-active'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-dense")" != "portrait-active"
+      - name: '#10 dense ten not motion-active'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-dense")" != "motion-active"
+      - name: '#10 dense ten not portrait-held'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-dense")" != "portrait-held"
+      - name: '#10 dense ten not motion-held'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-dense")" != "motion-held"
+      - name: '#10 dense ten not portrait-other'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-dense")" != "portrait-other"
+      - name: '#10 dense ten not motion-other'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-dense")" != "motion-other"
+      - name: '#34 dense ten complete'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-dense")" = pass
+      - name: '#34 dense ten not setup'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-dense")" != "setup"
+      - name: '#34 dense ten not hook-unverified'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-dense")" != "hook-unverified"
+      - name: '#34 dense ten not portrait1-ready'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-dense")" != "portrait1-ready"
+      - name: '#34 dense ten not portrait1-native'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-dense")" != "portrait1-native"
+      - name: '#34 dense ten not tap-open'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-dense")" != "tap-open"
+      - name: '#34 dense ten not tap-close'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-dense")" != "tap-close"
+      - name: '#34 dense ten not landscape-ready'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-dense")" != "landscape-ready"
+      - name: '#34 dense ten not landscape-native'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-dense")" != "landscape-native"
+      - name: '#34 dense ten not portrait2-ready'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-dense")" != "portrait2-ready"
+      - name: '#34 dense ten not portrait2-native'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-dense")" != "portrait2-native"
+      - name: '#34 dense ten not sample-read'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-dense")" != "sample-read"
+      - name: '#34 dense ten not sample-native'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-dense")" != "sample-native"
+      - name: '#34 dense ten not placement-retained'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-dense")" != "placement-retained"
+      - name: '#34 dense ten not placement-unary'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-dense")" != "placement-unary"
+      - name: '#34 dense ten not placement-native'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-dense")" != "placement-native"
+      - name: '#34 dense ten not placement-no-pack'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-dense")" != "placement-no-pack"
+      - name: '#34 dense ten not motion-no-scheduler'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-dense")" != "motion-no-scheduler"
+      - name: '#34 dense ten not motion-no-local'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-dense")" != "motion-no-local"
+      - name: '#34 dense ten not motion-no-candidates'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-dense")" != "motion-no-candidates"
+      - name: '#34 dense ten not motion-sweep-denied'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-dense")" != "motion-sweep-denied"
+      - name: '#34 dense ten not motion-route-not-painted'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-dense")" != "motion-route-not-painted"
+      - name: '#34 dense ten not portrait-trail-active'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-dense")" != "portrait-trail-active"
+      - name: '#34 dense ten not motion-trail-active'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-dense")" != "motion-trail-active"
+      - name: '#34 dense ten not portrait-trail-held'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-dense")" != "portrait-trail-held"
+      - name: '#34 dense ten not motion-trail-held'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-dense")" != "motion-trail-held"
+      - name: '#34 dense ten not portrait-trail-standing'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-dense")" != "portrait-trail-standing"
+      - name: '#34 dense ten not motion-trail-standing'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-dense")" != "motion-trail-standing"
+      - name: '#34 dense ten not portrait-insufficient-space'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-dense")" != "portrait-insufficient-space"
+      - name: '#34 dense ten not motion-insufficient-space'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-dense")" != "motion-insufficient-space"
+      - name: '#34 dense ten not portrait-trail-blocked-placement'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-dense")" != "portrait-trail-blocked-placement"
+      - name: '#34 dense ten not motion-trail-blocked-placement'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-dense")" != "motion-trail-blocked-placement"
+      - name: '#34 dense ten not portrait-trail-blocked-geometry'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-dense")" != "portrait-trail-blocked-geometry"
+      - name: '#34 dense ten not motion-trail-blocked-geometry'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-dense")" != "motion-trail-blocked-geometry"
+      - name: '#34 dense ten not portrait-trail-needs-recovery'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-dense")" != "portrait-trail-needs-recovery"
+      - name: '#34 dense ten not motion-trail-needs-recovery'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-dense")" != "motion-trail-needs-recovery"
+      - name: '#34 dense ten not portrait-geometry-blocked'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-dense")" != "portrait-geometry-blocked"
+      - name: '#34 dense ten not motion-geometry-blocked'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-dense")" != "motion-geometry-blocked"
+      - name: '#34 dense ten not portrait-active'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-dense")" != "portrait-active"
+      - name: '#34 dense ten not motion-active'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-dense")" != "motion-active"
+      - name: '#34 dense ten not portrait-held'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-dense")" != "portrait-held"
+      - name: '#34 dense ten not motion-held'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-dense")" != "motion-held"
+      - name: '#34 dense ten not portrait-other'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-dense")" != "portrait-other"
+      - name: '#34 dense ten not motion-other'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-dense")" != "motion-other"
+      - name: Clear temporary receipts only
+        if: ${{ always() }}
+        run: rm -rf -- "$RUNNER_TEMP/type2-focused-receipts"
