@@ -434,3 +434,49 @@ export function contourTrailStandingSeats({actors,plane,clip,surface,footprints,
  }
  return null;
 }
+
+// Only guide the shape of the first search. These anchors trace surveyed dry
+// bands in image space, not permission to stand on any of them. The clipped
+// scene, measured art/label/tap rectangles and actual native tap still veto.
+const TRAIL_TEN_BANDS={
+ 8:[
+  [[171,388],[219,388],[267,380]],
+  [[91,428],[179,460],[227,460],[275,452]],
+  [[131,500],[179,532],[227,532]],
+ ],
+ 10:[
+  [[115,436],[163,436],[211,436],[259,436],[307,436]],
+  [[99,508],[147,508],[195,508],[243,508],[291,508]],
+ ],
+};
+export function surveyedBandTrailSeats(number,{actors,plane,footprints,knownSeats=[],canPlace,standingPairFits,accept,safePoint,maxProbes=3}){
+ const bands=TRAIL_TEN_BANDS[number];
+ if(!bands||actors.length!==10||!plane?.width||!plane?.height||actors.some(a=>!footprints.has(a.id)))return null;
+ const known=new Map(knownSeats.map(n=>[n.p.join(':'),n])),empty=new Map(),tested=new Set();
+ let probed=0;
+ // The first pattern preserves survey coordinates. Subsequent small
+ // screen-pixel shifts fit scroll clipping and irregular label widths.
+ for(const [x,y,spread,stagger] of [
+  [0,0,0,0],[0,-6,0,0],[0,6,0,0],[-6,0,0,0],[6,0,0,0],
+  [0,-12,0,0],[0,12,0,0],[-10,0,0,0],[10,0,0,0],
+  [0,0,4,0],[0,-6,4,0],[0,6,4,0],[0,0,-3,0],
+  [0,0,0,6],[0,0,0,-6],[-6,-6,0,6],[6,-6,0,-6],
+ ]){
+  if(probed>=maxProbes)break;
+  const seats=bands.flatMap((row,i)=>row.map(([u,v],j)=>{
+   const p=[u/375+(x+(j-(row.length-1)/2)*spread)/plane.width,v/667+(y+(i%2?stagger:-stagger))/plane.height];
+   const key=p.join(':');return known.get(key)??{id:'band:'+key,p};
+  }));
+  if(seats.some(n=>!safePoint(n.p)))continue;
+  const preferred=new Map(actors.map((a,i)=>[a.id,seats[i]]));
+  const plan=packTrailStandingSeats({actors,seats,preferred,canPlace,standingPairFits,
+   standingClass:a=>footprints.get(a.id),maxChecks:3000,maxBranches:150,
+   maxProbes:maxProbes-probed,accept(plan){
+    const key=JSON.stringify(actors.map(a=>plan.get(a.id).id));
+    if(tested.has(key)||probed>=maxProbes)return false;
+    tested.add(key);probed++;return accept(plan);
+   }});
+  if(plan)return plan;
+ }
+ return null;
+}
