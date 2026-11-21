@@ -459,7 +459,21 @@ export function createGardenActorMotion(root){
       if(admitted){trailRetry=false;nextTrail=elapsed+9000;}
      }else if(elapsed>=nextTrail){
       let started=roster.length===1?trailRuntime.singletonInterior({paintable:routeFits,resumeOnly:true}):null;
-      if(!started)for(const a of model.actors.values())if(!a.route&&a.movable&&(a.node==='A'||a.node==='B')){
+      // #28's two grounded terminal occupants can choose a ready flyer first.
+      // Do not start a ground handover solely because flight art is still decoding.
+      // Respect the existing readiness deadline; do not mutate an active ticket.
+      let requestOrder=model.actors.values();
+      if(!started&&!lane&&terrain.number===28&&bay&&roster.length===2){
+       const pair=[...model.actors.values()];
+       if(pair.length===2&&new Set(pair.map(a=>a.node)).size===2&&pair.every(a=>
+         (a.node==='A'||a.node==='B')&&a.movable&&!a.route&&a.phase==='ground'&&a.height===0)){
+        const ready=pair.filter(a=>a.canFly&&model.time>=a.cooldown);
+        if(ready.length)requestOrder=ready;
+        else if(pair.some(a=>!a.canFly&&bindings.get(a.id)?.flight&&model.time<a.initialFlightDeadline))
+         requestOrder=[];
+       }
+      }
+      if(!started)for(const a of requestOrder)if(!a.route&&a.movable&&(a.node==='A'||a.node==='B')){
        if(a.initialFlight&&!a.canFly&&model.time<a.initialFlightDeadline)continue;
        const pairedBay=bay&&roster.length===2&&[...model.actors.values()].some(b=>b.id!==a.id&&b.node===(a.node==='A'?'B':'A')&&!b.route);
        if(pairedBay&&a.canFly&&model.time>=a.cooldown)trailRuntime.request(a.id,'fly');

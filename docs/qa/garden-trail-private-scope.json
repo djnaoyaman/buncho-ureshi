@@ -21,7 +21,7 @@
     },
     "src/garden-actor-motion.js": {
       "before": "2dfdb5f374f29fa1af3af667be36c9857714e2b849b2da34e67a615234a4dc7c",
-      "after": "41d88a032d27faee050e513af89983be5d2fe30f21925d4152265b9975fa561a"
+      "after": "cae424608f8ed409e74770fc452c1d915719159712b8a7ce9cfdefb7a73465c3"
     },
     "src/garden-actor-state.js": {
       "before": "311bb2ced9b28ce172627f8ac81de9f647420e01d0d5f9706c925e2f86c42301",
@@ -49,5 +49,16 @@
         "after": "90f7b992c84b891a4fe56ebd12943c268c215a7c407e926c812cec3bdd75c0e8"
       }
     }
+  },
+  "isolatedQaBay28Readiness": {
+    "basisCacheVersion": "a2424856caf7",
+    "changedSource": {
+      "src/garden-actor-motion.js": {
+        "before": "41d88a032d27faee050e513af89983be5d2fe30f21925d4152265b9975fa561a",
+        "after": "cae424608f8ed409e74770fc452c1d915719159712b8a7ce9cfdefb7a73465c3"
+      }
+    },
+    "basis": "Same two authoritative grounded A/B occupants; existing decode deadline and no active lane ticket.",
+    "browserProofPending": true
   }
 }
