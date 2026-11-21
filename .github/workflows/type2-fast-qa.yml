@@ -1,0 +1,107 @@
+name: Type II fast visitor QA (no deployment)
+run-name: Type II visitor readiness · ${{ github.sha }}
+on:
+  push:
+    branches: [qa/type2-fast-visitor]
+permissions:
+  contents: read
+concurrency:
+  group: type2-fast-visitor-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  visitor:
+    name: 'Type II visitor · ${{ matrix.engine }}'
+    if: github.ref == 'refs/heads/qa/type2-fast-visitor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 14
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chrome, webkit]
+    container:
+      image: mcr.microsoft.com/playwright:v1.64.1-noble
+    steps:
+      - name: Check out the exact non-release source
+        id: source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify fixture and install pinned dependencies
+        env:
+          SOURCE_SHA: ${{ steps.source.outputs.commit }}
+        run: |
+          set -eu
+          test "$SOURCE_SHA" = "$GITHUB_SHA"
+          node --check tests/browser/garden-trail-seven-checkpoints.spec.js
+          node --check tests/browser/garden-trail-seven.spec.js
+          npm ci
+          node -e "if(require('@playwright/test/package.json').version !== '1.64.1') process.exit(1)"
+      - name: Build the exact game under test
+        run: npm run build
+      - name: Install only the actual Chrome binary when selected
+        if: matrix.engine == 'chrome'
+        timeout-minutes: 4
+        run: |
+          set -eu
+          curl --fail --location --retry 2 --max-time 100 https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb --output /tmp/google-chrome.deb
+          dpkg-deb --extract /tmp/google-chrome.deb /
+          ldd /opt/google/chrome/chrome > /tmp/chrome-libraries.txt
+          if grep -q 'not found' /tmp/chrome-libraries.txt; then exit 1; fi
+          /opt/google/chrome/chrome --version
+      - name: Run only the seven real arrival and interaction cases
+        id: focused
+        timeout-minutes: 7
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: |
+          set -eu
+          dir="$RUNNER_TEMP/type2-visitor-checkpoints"
+          mkdir -m 700 "$dir"
+          report="$(npx playwright test tests/browser/garden-trail-seven-checkpoints.spec.js --grep 'exact visitor mutation and native tap' --project="$ENGINE" --list)"
+          printf '%s\n' "$report" | grep -Eq '^Total: 7 tests in 1 file$'
+          rc=0
+          TYPE2_CHECKPOINT_DIR="$dir" npx playwright test tests/browser/garden-trail-seven-checkpoints.spec.js --grep 'exact visitor mutation and native tap' --project="$ENGINE" --retries=0 --max-failures=0 --trace=off --reporter=dot || rc="$?"
+          test "$rc" -le 1
+          node -e 'const f=require("fs");const [d,e]=process.argv.slice(1);const k=["setup","flight-before","store-change","store-queue","visitor-dom","visitor-ready","mixed-loading","mixed-qualified","mixed-unqualified","incumbent-contact","visitor-tap","pass"];for(const g of ["07","08","10","12","14","28","34"]){if(!k.includes(f.readFileSync(d+"/"+e+"-"+g+"-visitor","utf8").trim()))process.exit(1);}' "$dir" "$ENGINE"
+      - name: '07: arriving bird and incumbent retained, actual tap opens encounter'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-visitor-checkpoints/$ENGINE-07-visitor")" = pass
+      - name: '08: arriving bird and incumbent retained, actual tap opens encounter'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-visitor-checkpoints/$ENGINE-08-visitor")" = pass
+      - name: '10: arriving bird and incumbent retained, actual tap opens encounter'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-visitor-checkpoints/$ENGINE-10-visitor")" = pass
+      - name: '12: arriving bird and incumbent retained, actual tap opens encounter'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-visitor-checkpoints/$ENGINE-12-visitor")" = pass
+      - name: '14: arriving bird and incumbent retained, actual tap opens encounter'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-visitor-checkpoints/$ENGINE-14-visitor")" = pass
+      - name: '28: arriving bird and incumbent retained, actual tap opens encounter'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-visitor-checkpoints/$ENGINE-28-visitor")" = pass
+      - name: '34: arriving bird and incumbent retained, actual tap opens encounter'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-visitor-checkpoints/$ENGINE-34-visitor")" = pass
+      - name: Remove fixed test receipts only
+        if: ${{ always() }}
+        run: rm -rf -- "$RUNNER_TEMP/type2-visitor-checkpoints"

@@ -138,7 +138,12 @@ for(const [id,g] of Object.entries(GARDEN_TRAIL_TERRAIN)){
   if(kind==='visitor'){
    expect(result.arrived).toBe(true);
    await expect(stage(page).locator('.finch-garden-visitor')).toHaveCount(1);
-   const mixed=await snapshotGarden(page);assertNative(mixed,2);
+   // Arrival rebuilds the native scene and decodes the visitor artwork. The
+   // loading view intentionally blocks input. Keep its paused virtual clock
+   // and evaluate all native hit targets only on the first ready presentation.
+   await expect(stage(page)).toHaveAttribute('data-scene-state','ready');
+   const mixed=await snapshotGarden(page);
+   expect(mixed.ready).toBe('ready');assertNative(mixed,2);
    expect(mixed.birds.find(b=>b.id==='b1')?.actorNode).toBe(pending.source);
    const guest=mixed.birds.find(b=>b.id!=='b1');
    await page.touchscreen.tap(guest.point.x,guest.point.y);

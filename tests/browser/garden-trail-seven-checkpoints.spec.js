@@ -167,9 +167,11 @@ for(const [id,g] of Object.entries(GARDEN_TRAIL_TERRAIN)){
   mark('visitor-dom');
    await expect(stage(page).locator('.finch-garden-visitor')).toHaveCount(1);
   mark('mixed-native');
+   mark('visitor-ready');
+   await expect(stage(page)).toHaveAttribute('data-scene-state','ready');
    const mixed=await snapshotGarden(page);
    mark(mixed.ready!=='ready'?'mixed-loading':/^trail-(active|held|standing)$/.test(mixed.motion??'')?'mixed-qualified':'mixed-unqualified');
-   assertNative(mixed,2);
+   expect(mixed.ready).toBe('ready');assertNative(mixed,2);
   mark('incumbent-contact');
    expect(mixed.birds.find(b=>b.id==='b1')?.actorNode).toBe(pending.source);
   mark('visitor-tap');
