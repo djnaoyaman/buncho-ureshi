@@ -79,16 +79,27 @@ export function createTrailClearance(id,{plane,clip,controls,footprints,flightFo
  return {canStand,safe,sweptRoute,intersectsLane};
 }
 
+// Adopt a painted native candidate only after the same caller that admits a
+// new standing seat verifies its dry surface, viewport and controls. It is a
+// preference for the measured solver, not registration or proof of a fit.
+export function measuredNativeFoot(plane,hit,admits){
+ if(!(plane?.width>0&&plane?.height>0&&hit?.width>=43.99&&hit?.height>=43.99))return null;
+ const p=[(hit.left+.54*hit.width-plane.left)/plane.width,(hit.top+.975*hit.height-plane.top)/plane.height];
+ if(!p.every(Number.isFinite)||!admits(p))return null;
+ return p;
+}
+
 // Only assign unplaced native IDs. Existing valid seats (including an exact
 // authored gate) never move to make room for arrivals. A blocked newcomer can
 // keep the old display until the host finds a verified placement.
-export function assignTrailSeats({actors,seats,retained,canPlace,maxTries=5000}){
+export function assignTrailSeats({actors,seats,retained,canPlace,accept=()=>true,maxTries=5000,maxProbes=4}){
  const plan=new Map(retained),used=new Set([...retained.values()].map(n=>n.id));
  if(used.size!==retained.size)return null;
- let tries=0;
+ let tries=0,probes=0;
  const waiting=actors.filter(a=>!plan.has(a.id));
  function assign(i){
-  if(i===waiting.length)return true;
+  if(probes>=maxProbes)return false;
+  if(i===waiting.length){probes++;return accept(plan);}
   const a=waiting[i];
   for(const n of seats){
    if(++tries>maxTries)return false;

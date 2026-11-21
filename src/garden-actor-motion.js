@@ -3,7 +3,7 @@ import {inside} from './garden-terrain-plan.js';
 import {createGardenActors} from './garden-actor-state.js';
 import {trailTerrainFor} from './data/garden-trail-terrain.js';
 import {createGardenTrailRuntime} from './garden-trail-runtime.js';
-import {assignTrailSeats,packTrailStandingSeats} from './garden-trail-clearance.js';
+import {assignTrailSeats,measuredNativeFoot,packTrailStandingSeats} from './garden-trail-clearance.js';
 import {createActorFlight} from './garden-actor-flight.js';
 
 export function actorTerrainForStage(stage){
@@ -227,6 +227,24 @@ export function createGardenActorMotion(root){
      for(let x=bounds[0]+(row%2?dx/2:0);x<=bounds[1];x+=dx)add([x,y]);
    }
   }
+  const nativePreferred=new Map();
+  if(trailRuntime&&definitions.length>6){
+   const width=layoutWidth,height=width*1000/850;
+   const known=new Map([...footholds,...trailPads].map(n=>[n.p.join(':'),n]));
+   // On a fresh world render the native markup already places real interactive
+   // buttons. Seed the measured pack with those painted contacts rather than
+   // discarding them in favour of a quantized grid. Existing model actors keep
+   // priority during updates; never use an airborne paint as a ground anchor.
+   for(const {id,node} of definitions){
+    if(model.actors.has(id)||node.dataset.actorState)continue;
+    const q=measuredNativeFoot(p,rect(node),f=>safePoint(f,width,height));
+    if(!q)continue;
+    const point=q.join(':');
+    let seat=known.get(point);
+    if(!seat){seat={id:'native:'+point,p:q};known.set(point,seat);trailPads.push(seat);}
+    nativePreferred.set(id,seat);
+   }
+  }
   if(footholds.length+(trailRuntime?trailPads.length:0)<definitions.length)return reject('insufficient-space');
   let changedBindings=false;
   for(const [id,b]of bindings)if(!ids.has(id)||definitions.find(d=>d.id===id)?.node!==b.node){restore(b);bindings.delete(id);changedBindings=true;}
@@ -323,7 +341,7 @@ export function createGardenActorMotion(root){
    // A first paint has no actors to retain; use measured search to solve the
    // full pack together. A later arrival still preserves the existing roster
    // and route reservations, rather than moving unrelated birds.
-   const input={actors:roster,seats:[...footholds,...trailPads],retained,preferred:new Map(),accept:nativeTrailHits,maxTries:3500,canPlace(d,n,partial){
+   const input={actors:roster,seats:[...footholds,...trailPads],retained,preferred:nativePreferred,accept:nativeTrailHits,maxTries:3500,canPlace(d,n,partial){
     const placed=new Map(peers);
     for(const [id,s] of partial)if(!placed.has(id))placed.set(id,{...byId.get(id),p:s.p,route:null});
     return trailRuntime.canPlace(d,n,placed);
