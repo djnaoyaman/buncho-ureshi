@@ -1,5 +1,5 @@
 {
-  "base": "438763dfc7c52707afa7c073777b9e1aac2daadc",
+  "base": "41bd702712ef9af1c1c80b6322f5351be1ef6bb8",
   "tests": [
     "tests/browser/flight-integrity.spec.js",
     "tests/browser/garden-actors.spec.js",
@@ -14,7 +14,9 @@
     "tests/browser/iphone15-scene.spec.js",
     "tests/browser/white-flight-media.spec.js",
     "tests/browser/white-flight-media-tap.spec.js",
-    "tests/browser/garden-compact-rotation-identity.spec.js"
+    "tests/browser/garden-compact-rotation-identity.spec.js",
+    "tests/browser/garden-trail-seven.spec.js",
+    "tests/browser/garden-trail-maximum-native.spec.js"
   ],
-  "reason": "白文鳥の全身21コマ・有限読込待ちと、飛行画像のみを庭の必須メディア判定から除外。既存の飛行整合、全庭actor・接地・回転・保存・BGMを保持し、白飛行画像の実表示、メディア到着順・再試行と実タップを追加検査。 おにわの回転時は実ノードと行動時計を保持し、軽減設定の最大10羽実タップとおうち短画面の既存動作を追加検査。 回転後の実UIとの干渉、44px着地点の再探索、配置と予約の一括更新、旧観測の解放を追加。選定済みの全14ブラウザ検査は保持。"
+  "reason": "既存の14検査は変更せず維持。調査済みの狭い道7庭だけを通常起動で有効化し、実タップ・回転・譲り合い・4色の飛行・来訪や天敵の割り込みを検査。縦画面の最大10羽では全羽のタップ領域と、移動中の実座標、予約先への着地、家族・友達・来訪鳥への実タップも確認。試験用の画面やスクリプト差し替えなし。"
 }
