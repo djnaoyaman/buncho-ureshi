@@ -458,7 +458,7 @@ export function createGardenActorMotion(root){
        if(a.canFly&&(!trailRetry||roster.length===1))trailRuntime.request(a.id,'fly');else trailRuntime.request(a.id,'walk');
        break;
       }
-      if(!started)started=trailRuntime.run();
+      if(!started)started=trailRuntime.run(terrain.number===10&&roster.length===1?{paintable:routeFits}:undefined);
       if(!started&&roster.length===1)started=trailRuntime.singletonFlight(layoutNodes,{paintable:routeFits});
       if(!started&&roster.length===1)started=trailRuntime.singletonInterior({paintable:routeFits});
       // A lone actor seated off the authored terminal (e.g. the dock blocks

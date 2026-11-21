@@ -146,3 +146,48 @@ test('pending solo flight rechecks changed native controls and can never commit 
  assert.deepEqual(a,before);
  assert.equal(m.reservations.size,0);
 });
+
+test('#10 authored edge flight must pass renderer before reservation; normal refusal frees the safe interior fallback',()=>{
+ const geometry=()=>{
+  const run=edgeSingleton('bird-tricolored-munia');
+  const wings={left:-45,right:45,top:-68,bottom:24};
+  const measurement={...run.measurement,envelope:wings,flightFootprints:new Map([[id,wings]])};
+  run.rt.sync({generation:1,measurement});
+  return run;
+ };
+ // The real authored #10 lane can pass the measured wing sweep while the
+ // inherited 64px sampled renderer adds a larger side margin at the gate.
+ const paint=(m,route)=>route.state!=='fly'||m.sampleRoute(route).every(f=>{
+  const x=-45+492*f.p[0];
+  return x-64*.54-64*.65>=2&&x+64*.46+64*.65<=400;
+ });
+ const base=geometry();
+ assert.equal(base.rt.request(id,'fly'),true);
+ const lane=base.rt.run();
+ assert.equal(lane?.action,'fly');
+ assert.equal(paint(base.m,base.a),false);
+ assert.equal(base.m.reservations.get(lane.target),id);
+
+ const {m,rt,a}=geometry();
+ const before=structuredClone(a);
+ assert.equal(rt.request(id,'fly'),true);
+ let invoked=0;
+ const guard=route=>{invoked++;return paint(m,route);};
+ assert.equal(rt.run({paintable:guard}),null);
+ assert.equal(invoked,1);
+ assert.deepEqual(a,before);assert.equal(m.reservations.size,0);
+ const ingress=rt.singletonInterior({paintable:guard});
+ assert.ok(ingress?.ingress,'normal lane refusal must not block a proven interior place');
+ assert.equal(m.reservations.get(ingress.target),id);
+ assert.equal(a.node,before.node,'only its native route may move the source');
+ m.advance(2000,[],{safe:()=>false});
+ assert.equal(a.node,ingress.target);
+ assert.equal(rt.singletonInterior({paintable:guard,resumeOnly:true})?.action,'wait');
+ m.advance(10000,[],{safe:()=>false});
+ const flight=rt.singletonInterior({paintable:guard,resumeOnly:true});
+ assert.equal(flight?.action,'fly');
+ assert.equal(m.reservations.get(flight.target),id);
+ m.advance(14600,[],{safe:()=>false});
+ assert.equal(a.node,flight.target);
+ assert.equal(m.reservations.size,0);
+});

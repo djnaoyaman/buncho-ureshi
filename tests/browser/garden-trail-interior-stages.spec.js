@@ -33,8 +33,18 @@ const schedulerHooks=[
        m.grounded ||= !!a?.movable&&!a.route&&a.phase==='ground';
        m.flightWindow ||= !!a?.movable&&a.canFly&&!a.route&&a.phase==='ground'&&model.time>=a.cooldown;
       }`],
- ['if(!started)started=trailRuntime.run();',
-  "if(!started){started=trailRuntime.run();if(started?.action==='walk'&&globalThis.__trialSchedulerMarks)globalThis.__trialSchedulerMarks.laneWalk=true;}"],
+ ['if(!started)started=trailRuntime.run(terrain.number===10&&roster.length===1?{paintable:routeFits}:undefined);',
+  `if(!started){
+       const m=globalThis.__trialSchedulerMarks;
+       started=trailRuntime.run(terrain.number===10&&roster.length===1?{paintable:a=>{
+        const pass=routeFits(a);
+        if(m){m.laneSampled=true;m.laneRefused ||= !pass;}
+        return pass;
+       }}:undefined);
+       if(m){m.laneWalk ||= started?.action==='walk';m.laneFlight ||= started?.action==='fly';}
+      }`],
+ ['if(!started&&roster.length===1)started=trailRuntime.singletonFlight(layoutNodes,{paintable:routeFits});',
+  "if(!started&&roster.length===1){started=trailRuntime.singletonFlight(layoutNodes,{paintable:routeFits});if(started?.action==='fly'&&globalThis.__trialSchedulerMarks)globalThis.__trialSchedulerMarks.localFlight=true;}"],
  ['if(!started&&roster.length===1)started=trailRuntime.localHop(layoutNodes,{singletonIngress:true});',
   "if(!started&&roster.length===1){started=trailRuntime.localHop(layoutNodes,{singletonIngress:true});if(started?.action==='hop'&&globalThis.__trialSchedulerMarks)globalThis.__trialSchedulerMarks.genericHop=true;}"],
 ];
@@ -95,6 +105,10 @@ for(const [n,garden] of gardens)test(`#${n} one play, bounded private stage verd
   'grounded':status(marks.grounded,marks.decision),
   'flight-window':status(marks.flightWindow,marks.decision),
   'lane-walk':status(marks.laneWalk,marks.decision),
+  'lane-sampled':status(marks.laneSampled,marks.decision),
+  'lane-refused':status(marks.laneRefused,marks.laneSampled),
+  'lane-flight':status(marks.laneFlight,marks.decision),
+  'local-flight':status(marks.localFlight,marks.decision),
   'generic-hop':status(marks.genericHop,marks.decision),
   eligible:status(marks.eligible||direct,ready),
   'pair-offered':status(marks.pair||direct,marks.eligible),

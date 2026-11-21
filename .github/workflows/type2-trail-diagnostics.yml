@@ -213,16 +213,28 @@ jobs:
           TYPE2_CHECK_KEY: 'flight-window'
         if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
         run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#10 chrome lane-walk'
+      - name: '#10 chrome lane-sampled'
         env:
           TYPE2_CHECK_FILE: '10-chrome.json'
-          TYPE2_CHECK_KEY: 'lane-walk'
+          TYPE2_CHECK_KEY: 'lane-sampled'
         if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
         run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#10 chrome generic-hop'
+      - name: '#10 chrome lane-refused'
         env:
           TYPE2_CHECK_FILE: '10-chrome.json'
-          TYPE2_CHECK_KEY: 'generic-hop'
+          TYPE2_CHECK_KEY: 'lane-refused'
+        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
+        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
+      - name: '#10 chrome lane-flight'
+        env:
+          TYPE2_CHECK_FILE: '10-chrome.json'
+          TYPE2_CHECK_KEY: 'lane-flight'
+        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
+        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
+      - name: '#10 chrome local-flight'
+        env:
+          TYPE2_CHECK_FILE: '10-chrome.json'
+          TYPE2_CHECK_KEY: 'local-flight'
         if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
         run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
       - name: '#10 chrome ready'
@@ -339,16 +351,28 @@ jobs:
           TYPE2_CHECK_KEY: 'flight-window'
         if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
         run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#10 webkit lane-walk'
+      - name: '#10 webkit lane-sampled'
         env:
           TYPE2_CHECK_FILE: '10-webkit.json'
-          TYPE2_CHECK_KEY: 'lane-walk'
+          TYPE2_CHECK_KEY: 'lane-sampled'
         if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
         run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#10 webkit generic-hop'
+      - name: '#10 webkit lane-refused'
         env:
           TYPE2_CHECK_FILE: '10-webkit.json'
-          TYPE2_CHECK_KEY: 'generic-hop'
+          TYPE2_CHECK_KEY: 'lane-refused'
+        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
+        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
+      - name: '#10 webkit lane-flight'
+        env:
+          TYPE2_CHECK_FILE: '10-webkit.json'
+          TYPE2_CHECK_KEY: 'lane-flight'
+        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
+        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
+      - name: '#10 webkit local-flight'
+        env:
+          TYPE2_CHECK_FILE: '10-webkit.json'
+          TYPE2_CHECK_KEY: 'local-flight'
         if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
         run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
       - name: '#10 webkit ready'
