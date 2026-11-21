@@ -61,10 +61,10 @@ jobs:
           set -eu
           dir="$RUNNER_TEMP/type2-focused-receipts"
           mkdir -m 700 "$dir"
-          report="$(npx playwright test tests/browser/garden-trail-seven-checkpoints.spec.js --grep '^(07|08|12|28|34) exact visitor mutation and native tap' --project="$ENGINE" --list)"
+          report="$(npx playwright test tests/browser/garden-trail-seven-checkpoints.spec.js --grep '(07|08|12|28|34) exact visitor mutation and native tap' --project="$ENGINE" --list)"
           printf '%s\n' "$report" | grep -Eq '^Total: 5 tests in 1 file$'
           rc=0
-          TYPE2_CHECKPOINT_DIR="$dir" npx playwright test tests/browser/garden-trail-seven-checkpoints.spec.js --grep '^(07|08|12|28|34) exact visitor mutation and native tap' --project="$ENGINE" --retries=0 --max-failures=0 --trace=off --reporter=dot || rc="$?"
+          TYPE2_CHECKPOINT_DIR="$dir" npx playwright test tests/browser/garden-trail-seven-checkpoints.spec.js --grep '(07|08|12|28|34) exact visitor mutation and native tap' --project="$ENGINE" --retries=0 --max-failures=0 --trace=off --reporter=dot || rc="$?"
           test "$rc" -le 1
           node -e 'const f=require("fs");const [d,e,q]=process.argv.slice(1);for(const [k,choices] of JSON.parse(q))if(!choices.includes(f.readFileSync(d+"/"+e+"-"+k,"utf8").trim()))process.exit(1);' "$dir" "$ENGINE" '[["07-visitor",["pass","setup","flight-before","store-change","store-queue","visitor-dom","visitor-ready","mixed-loading","mixed-qualified","mixed-unqualified","incumbent-contact","visitor-tap"]],["08-visitor",["pass","setup","flight-before","store-change","store-queue","visitor-dom","visitor-ready","mixed-loading","mixed-qualified","mixed-unqualified","incumbent-contact","visitor-tap"]],["12-visitor",["pass","setup","flight-before","store-change","store-queue","visitor-dom","visitor-ready","mixed-loading","mixed-qualified","mixed-unqualified","incumbent-contact","visitor-tap"]],["28-visitor",["pass","setup","flight-before","store-change","store-queue","visitor-dom","visitor-ready","mixed-loading","mixed-qualified","mixed-unqualified","incumbent-contact","visitor-tap"]],["34-visitor",["pass","setup","flight-before","store-change","store-queue","visitor-dom","visitor-ready","mixed-loading","mixed-qualified","mixed-unqualified","incumbent-contact","visitor-tap"]]]'
       - name: '#07 visitor complete'
