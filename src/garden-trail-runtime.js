@@ -1,0 +1,118 @@
+import {trailTerrainFor} from './data/garden-trail-terrain.js';
+import {createGardenTrailAdapter} from './garden-trail-adapter.js';
+import {createTrailClearance} from './garden-trail-clearance.js';
+import {conflictSweeps,sweptHopSpans} from './garden-actor-path.js';
+
+// Native host coordinator, before renderer activation. Uses the same native
+// state machine, render timings and individual object references as Type①.
+export function createGardenTrailRuntime(id,model){
+ const terrain=trailTerrainFor(id);if(!terrain)throw Error('Unsuitable garden');
+ const [A,B]=terrain.entryCandidates,[bay]=terrain.pullouts;
+ const points=bay?{A,B,bay}:{A,B};
+ const nodes=Object.fromEntries(Object.entries(points).map(([id,p])=>[id,{id,p}]));
+ let current=null,proven=null,epoch=null,lastLocal=null;
+ const kind=action=>action==='fly'?'fly':'hop';
+ const makeEnvironment=safe=>({safe,width:current.plane.width,planeHeight:current.plane.height,height:.043});
+ const adapter=createGardenTrailAdapter(id,{
+  intersectsLane(a){
+   // Reserve against the largest observed shape, not a fixed nominal 44px.
+   return !proven||proven.intersectsLane(a,current.envelope);
+  },
+  validate({id,action,kind:phase,path,to,actors,prospectiveYieldId}){
+   if(!proven)return false;
+   const a=actors.get(id),node=nodes[to],mode=kind(action);
+   if(!a||!node)return false;
+   if(a.route) return a.route.target===to&&proven.safe(a,node,mode,actors);
+   const tentative=model.previewPath(id,node,path,mode,makeEnvironment(()=>false));
+   return !!tentative&&proven.safe(tentative,node,mode,actors,{prospectiveYieldId:phase==='cross'?prospectiveYieldId:null});
+  },
+  protects(proposal,{path,lock}){
+   if(!lock)return false;
+   if(!proposal?.spans)return true;
+   const e=current.envelope,plane=current.plane;
+   const box=([x,y],lift)=>({left:plane.left+x*plane.width+e.left,right:plane.left+x*plane.width+e.right,
+    top:plane.top+y*plane.height+e.top-lift,bottom:plane.top+y*plane.height+e.bottom-lift});
+   const lane=sweptHopSpans(path,box,.043*plane.height);
+   for(const s of [lock.from,lock.to,lock.partner?'bay':null])if(points[s])lane.push(box(points[s],0));
+   return conflictSweeps(lane,proposal.spans);
+  }
+ });
+ return {
+  nodes:Object.values(nodes),
+  sync({generation,measurement,actors=[...model.actors.values()],predator=false}){
+   // Host must disposition any prior active routes before advancing epochs;
+   // a null/unsafe measurement pauses new movement, not natural game events.
+   epoch=generation;current=measurement;
+   proven=current?.envelope?createTrailClearance(id,current):null;
+   return adapter.sync({epoch,actors,predator:predator||!proven});
+  },
+  request(id,action){return !!proven&&adapter.enqueue(id,action);},
+  run(){
+   if(!proven)return null;
+   const d=adapter.admit();if(!d)return null;
+   const env=makeEnvironment((a,n,k,others)=>proven.safe(a,n,k,others));
+   const start=c=>kind(c.action)==='fly'
+     ?model.beginFlightPath(c.id,nodes[c.target],c.path,env)
+     :model.beginHopPath(c.id,nodes[c.target],c.path,env);
+   return adapter.commit(d,start,id=>model.actors.get(id))?d:null;
+  },
+  // When the whole narrow crossing is unavailable, try a smaller native
+  // ground route without stealing any protected corridor or landing point.
+  // There is no hop if no actual idle actor, alternate seat, or UI clearance.
+  localHop(seats,{minDistance=16,maxDistance=68}={}){
+   if(!proven)return null;
+   const roster=[...model.actors.values()];
+   if(!roster.length)return null;
+   const first=(roster.findIndex(a=>a.id===lastLocal)+1)%roster.length;
+   const rotated=roster.slice(first).concat(roster.slice(0,first));
+   const delta=(a,b)=>Math.hypot((a[0]-b[0])*current.plane.width,(a[1]-b[1])*current.plane.height);
+   const env=makeEnvironment((candidate,node,k,others)=>{
+    if(!proven.safe(candidate,node,k,others))return false;
+    const spans=proven.sweptRoute(candidate);
+    return !!spans&&adapter.canPlace({spans});
+   });
+   for(const a of rotated){
+    if(!a.movable||a.route||a.phase!=='ground')continue;
+    const alternatives=seats.filter(n=>n.id!==a.node&&n.id!=='bay'&&
+      !(nodes[n.id]&&nodes[a.node])&&delta(a.p,n.p)>=minDistance&&delta(a.p,n.p)<=maxDistance)
+      .sort((a1,b1)=>delta(a.p,a1.p)-delta(a.p,b1.p));
+    for(const n of alternatives)if(model.beginHopPath(a.id,n,[a.p,n.p],env)){lastLocal=a.id;return {id:a.id,target:n.id,action:'hop'};}
+   }
+   return null;
+  },
+  standingFits(){
+   if(!proven)return false;
+   const existing=[...model.actors.values()];
+   const spans=[];
+   for(const a of existing){
+    if(a.route||!proven.canStand(a,a.p))return false;
+    const s=proven.sweptRoute(a);
+    if(!s||conflictSweeps(s,spans))return false;
+    spans.push(...s);
+   }
+   return true;
+  },
+  recover(actorIds,{reduced=false}={}){
+   if(!proven)return actorIds.slice();
+   const blocked=[];
+   for(const id of actorIds){
+    const a=model.actors.get(id);
+    if(!a?.route||a.route.trailRecovery&&!reduced)continue;
+    const byId=s=>nodes[s];
+    const choices=reduced?[byId(a.route.target)]:[byId(a.route.target),byId(a.node)];
+    if(!choices.filter(Boolean).some(n=>model.recoverTrailPath(id,n,{reduced,safe:(b,node,k,peers)=>proven.safe(b,node,k,peers)})))blocked.push(id);
+   }
+   return blocked;
+  },
+  canPlace(actor,node,peers){
+   if(!proven||!proven.canStand(actor,node.p))return false;
+   const s=proven.sweptRoute({...actor,p:node.p,route:null});
+   if(!s)return false;
+   for(const p of peers.values())if(p.id!==actor.id){
+    const span=proven.sweptRoute(p);
+    if(!span||conflictSweeps(s,span))return false;
+   }
+   return adapter.canPlace({spans:s});
+  }
+ };
+}

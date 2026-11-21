@@ -105,7 +105,7 @@ export function careFloorOpacity(cleanliness) {
   const value = Number.isFinite(cleanliness) ? Math.max(0, Math.min(100, cleanliness)) : 100;
   return Math.min(.22, Math.max(0, (100 - value) / 100 * .22));
 }
-export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () => {}, goArt = () => {}, audioFactory = createCareAudio, raptorRandom = Math.random, predatorRandom = Math.random } = {}) {
+export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () => {}, goArt = () => {}, audioFactory = createCareAudio, raptorRandom = Math.random, predatorRandom = Math.random, previewGardenTrail = false } = {}) {
   let raptorReturnPrompt=null,endingPlayer=null,crowMusicWarning=false;
   function syncEncounterMusic(){
     const outside=world.encounters.garden.open;
@@ -795,7 +795,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     if(['outdoors','notebook'].includes(panel)){
       if(!encounterRoot){
         encounterRoot=document.createElement('div');encounterRoot.className='game-encounter-host';
-        encounterController=mountEncounterPanel(encounterRoot,{sharedPredatorClock:true,onCrowWarning:value=>{crowMusicWarning=value;syncEncounterMusic();},initialMode:panel==='outdoors'?'garden':'notebook',getSound:careSoundEnabled,getWorld:()=>world,getSelectedBirdId:()=>selected,onHouseholdBird:id=>openBirdSheet(id),meetFriend:(w,id,action,token)=>meetGardenFriendReward(w,id,action,token),completeEncounter:(w,id,action,token)=>completeEncounterReward(w,id,action,token),onReward:amount=>showGemReward(amount),onHome:returnRaptorHome,onDiary:()=>{fieldViewRequest++;cancelCareEffects();setMessage('');sheetOpen=false;panel='diary';render();focusPanel();},base:new URL('../',GAME_ART).href,transact:async (operation,options={})=>{
+        encounterController=mountEncounterPanel(encounterRoot,{previewGardenTrail,sharedPredatorClock:true,onCrowWarning:value=>{crowMusicWarning=value;syncEncounterMusic();},initialMode:panel==='outdoors'?'garden':'notebook',getSound:careSoundEnabled,getWorld:()=>world,getSelectedBirdId:()=>selected,onHouseholdBird:id=>openBirdSheet(id),meetFriend:(w,id,action,token)=>meetGardenFriendReward(w,id,action,token),completeEncounter:(w,id,action,token)=>completeEncounterReward(w,id,action,token),onReward:amount=>showGemReward(amount),onHome:returnRaptorHome,onDiary:()=>{fieldViewRequest++;cancelCareEffects();setMessage('');sheetOpen=false;panel='diary';render();focusPanel();},base:new URL('../',GAME_ART).href,transact:async (operation,options={})=>{
           const committed=await mutate(operation,'',()=>alive,{bump:false,advanceCurrent:false,renderAfter:!options.gesture});
           if(!committed)throw new Error('記録できませんでした。');return world;
         },onGardenChanged:({gardenId,worldId})=>document.dispatchEvent(new document.defaultView.CustomEvent('buncho-game-garden',{detail:{gardenId,worldId}}))});
