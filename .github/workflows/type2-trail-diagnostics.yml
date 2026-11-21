@@ -33,7 +33,7 @@ jobs:
           import { readFileSync, appendFileSync } from 'node:fs';
           const files = ['.github/browser-checks.json','.github/workflows/pages.yml','package.json','package-lock.json',
             'scripts/build.mjs','src/encounter-ui.js','src/garden-actor-motion.js','src/garden-trail-runtime.js','src/garden-trail-clearance.js',
-            'tests/browser/garden-trail-causal.spec.js','tests/browser/garden-trail-interior-native.spec.js','tests/browser/garden-trail-interior-stages.spec.js','tests/browser/garden-trail-seven.spec.js','tests/fixtures/type2-ordinary-verdict-reporter.mjs','tests/fixtures/garden-terrain-browser.js'];
+            'tests/browser/garden-trail-causal.spec.js','tests/browser/garden-trail-interior-native.spec.js','tests/browser/garden-trail-interior-stages.spec.js','tests/browser/garden-trail-seven.spec.js','tests/browser/garden-trail-seven-checkpoints.spec.js','tests/fixtures/type2-ordinary-verdict-reporter.mjs','tests/fixtures/garden-terrain-browser.js'];
           const hash = createHash('sha256');
           for (const path of files) {
             const bytes = readFileSync(path);
@@ -106,7 +106,7 @@ jobs:
           import { readFileSync, appendFileSync } from 'node:fs';
           const files = ['.github/browser-checks.json','.github/workflows/pages.yml','package.json','package-lock.json',
             'scripts/build.mjs','src/encounter-ui.js','src/garden-actor-motion.js','src/garden-trail-runtime.js','src/garden-trail-clearance.js',
-            'tests/browser/garden-trail-causal.spec.js','tests/browser/garden-trail-interior-native.spec.js','tests/browser/garden-trail-interior-stages.spec.js','tests/browser/garden-trail-seven.spec.js','tests/fixtures/type2-ordinary-verdict-reporter.mjs','tests/fixtures/garden-terrain-browser.js'];
+            'tests/browser/garden-trail-causal.spec.js','tests/browser/garden-trail-interior-native.spec.js','tests/browser/garden-trail-interior-stages.spec.js','tests/browser/garden-trail-seven.spec.js','tests/browser/garden-trail-seven-checkpoints.spec.js','tests/fixtures/type2-ordinary-verdict-reporter.mjs','tests/fixtures/garden-terrain-browser.js'];
           const hash = createHash('sha256');
           for (const path of files) {
             const bytes = readFileSync(path);
@@ -141,925 +141,1130 @@ jobs:
           pactl load-module module-null-sink sink_name=ci_audio sink_properties=device.description=CI_Audio
           pactl set-default-sink ci_audio
 
-      - name: Verify original gate discovery in both engines
-        id: ready
+      - name: Read the original failing scenarios once with named assertions
+        timeout-minutes: 18
+        id: checkpoints
         run: |
           set -eu
-          report="$(npx playwright test tests/browser/garden-trail-causal.spec.js --grep '@causal-maximum-fit' --project=chrome --project=webkit --list)"
-          printf '%s\n' "$report" | grep -Eq "^Total: 2 tests in 1 file$"
-
-          for garden in 10 14; do
-            report="$(npx playwright test tests/browser/garden-trail-interior-stages.spec.js --grep "@interior-stages-$garden" --project=chrome --project=webkit --list)"
-            printf '%s\n' "$report" | grep -Eq "^Total: 2 tests in 1 file$"
-          done
-
-      - name: '09 original strict acceptance in Chrome and WebKit'
-        timeout-minutes: 4
-        if: ${{ !cancelled() && steps.ready.outcome == 'success' }}
-        run: npx playwright test tests/browser/garden-trail-causal.spec.js --grep '@causal-maximum-fit' --project=chrome --project=webkit --retries=0 --reporter=list
-      - name: '#10 actual white flight and same-route landing'
-        timeout-minutes: 4
-        if: ${{ !cancelled() && steps.ready.outcome == 'success' }}
-        run: npx playwright test tests/browser/garden-trail-interior-native.spec.js --grep '@interior-10' --project=chrome --project=webkit --retries=0 --reporter=list
-      - name: '#14 actual white flight and same-route landing'
-        timeout-minutes: 4
-        if: ${{ !cancelled() && steps.ready.outcome == 'success' }}
-        run: npx playwright test tests/browser/garden-trail-interior-native.spec.js --grep '@interior-14' --project=chrome --project=webkit --retries=0 --reporter=list
-
-      - name: '#10 and #14 collect one play per real engine, fixed stage verdicts only'
-        id: interior_stages
-        timeout-minutes: 6
-        if: ${{ !cancelled() && steps.ready.outcome == 'success' }}
-        run: |
-          set -eu
-          stage_dir="$RUNNER_TEMP/type2-interior-stage-verdicts"
-          test ! -e "$stage_dir"
-          mkdir -m 700 "$stage_dir"
-          TYPE2_STAGE_STATUS_DIR="$stage_dir" npx playwright test tests/browser/garden-trail-interior-stages.spec.js --project=chrome --project=webkit --retries=0 --reporter=list
-          for pair in 10-chrome 10-webkit 14-chrome 14-webkit; do test -s "$stage_dir/$pair.json"; done
-      - name: '#10 chrome called'
-        env:
-          TYPE2_CHECK_FILE: '10-chrome.json'
-          TYPE2_CHECK_KEY: 'called'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#10 chrome decision'
-        env:
-          TYPE2_CHECK_FILE: '10-chrome.json'
-          TYPE2_CHECK_KEY: 'decision'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#10 chrome adult'
-        env:
-          TYPE2_CHECK_FILE: '10-chrome.json'
-          TYPE2_CHECK_KEY: 'adult'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#10 chrome asset-ready'
-        env:
-          TYPE2_CHECK_FILE: '10-chrome.json'
-          TYPE2_CHECK_KEY: 'asset-ready'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#10 chrome grounded'
-        env:
-          TYPE2_CHECK_FILE: '10-chrome.json'
-          TYPE2_CHECK_KEY: 'grounded'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#10 chrome flight-window'
-        env:
-          TYPE2_CHECK_FILE: '10-chrome.json'
-          TYPE2_CHECK_KEY: 'flight-window'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#10 chrome lane-sampled'
-        env:
-          TYPE2_CHECK_FILE: '10-chrome.json'
-          TYPE2_CHECK_KEY: 'lane-sampled'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#10 chrome lane-refused'
-        env:
-          TYPE2_CHECK_FILE: '10-chrome.json'
-          TYPE2_CHECK_KEY: 'lane-refused'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#10 chrome lane-flight'
-        env:
-          TYPE2_CHECK_FILE: '10-chrome.json'
-          TYPE2_CHECK_KEY: 'lane-flight'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#10 chrome local-flight'
-        env:
-          TYPE2_CHECK_FILE: '10-chrome.json'
-          TYPE2_CHECK_KEY: 'local-flight'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#10 chrome ready'
-        env:
-          TYPE2_CHECK_FILE: '10-chrome.json'
-          TYPE2_CHECK_KEY: 'ready'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#10 chrome native'
-        env:
-          TYPE2_CHECK_FILE: '10-chrome.json'
-          TYPE2_CHECK_KEY: 'native'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#10 chrome eligible'
-        env:
-          TYPE2_CHECK_FILE: '10-chrome.json'
-          TYPE2_CHECK_KEY: 'eligible'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#10 chrome pair-offered'
-        env:
-          TYPE2_CHECK_FILE: '10-chrome.json'
-          TYPE2_CHECK_KEY: 'pair-offered'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#10 chrome swept'
-        env:
-          TYPE2_CHECK_FILE: '10-chrome.json'
-          TYPE2_CHECK_KEY: 'swept'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#10 chrome sampled'
-        env:
-          TYPE2_CHECK_FILE: '10-chrome.json'
-          TYPE2_CHECK_KEY: 'sampled'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#10 chrome adapter'
-        env:
-          TYPE2_CHECK_FILE: '10-chrome.json'
-          TYPE2_CHECK_KEY: 'adapter'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#10 chrome ingress-reserved'
-        env:
-          TYPE2_CHECK_FILE: '10-chrome.json'
-          TYPE2_CHECK_KEY: 'ingress-reserved'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#10 chrome ingress-grounded'
-        env:
-          TYPE2_CHECK_FILE: '10-chrome.json'
-          TYPE2_CHECK_KEY: 'ingress-grounded'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#10 chrome flight-reserved'
-        env:
-          TYPE2_CHECK_FILE: '10-chrome.json'
-          TYPE2_CHECK_KEY: 'flight-reserved'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#10 chrome phases'
-        env:
-          TYPE2_CHECK_FILE: '10-chrome.json'
-          TYPE2_CHECK_KEY: 'phases'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#10 chrome paint'
-        env:
-          TYPE2_CHECK_FILE: '10-chrome.json'
-          TYPE2_CHECK_KEY: 'paint'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#10 chrome landing'
-        env:
-          TYPE2_CHECK_FILE: '10-chrome.json'
-          TYPE2_CHECK_KEY: 'landing'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#10 webkit called'
-        env:
-          TYPE2_CHECK_FILE: '10-webkit.json'
-          TYPE2_CHECK_KEY: 'called'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#10 webkit decision'
-        env:
-          TYPE2_CHECK_FILE: '10-webkit.json'
-          TYPE2_CHECK_KEY: 'decision'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#10 webkit adult'
-        env:
-          TYPE2_CHECK_FILE: '10-webkit.json'
-          TYPE2_CHECK_KEY: 'adult'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#10 webkit asset-ready'
-        env:
-          TYPE2_CHECK_FILE: '10-webkit.json'
-          TYPE2_CHECK_KEY: 'asset-ready'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#10 webkit grounded'
-        env:
-          TYPE2_CHECK_FILE: '10-webkit.json'
-          TYPE2_CHECK_KEY: 'grounded'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#10 webkit flight-window'
-        env:
-          TYPE2_CHECK_FILE: '10-webkit.json'
-          TYPE2_CHECK_KEY: 'flight-window'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#10 webkit lane-sampled'
-        env:
-          TYPE2_CHECK_FILE: '10-webkit.json'
-          TYPE2_CHECK_KEY: 'lane-sampled'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#10 webkit lane-refused'
-        env:
-          TYPE2_CHECK_FILE: '10-webkit.json'
-          TYPE2_CHECK_KEY: 'lane-refused'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#10 webkit lane-flight'
-        env:
-          TYPE2_CHECK_FILE: '10-webkit.json'
-          TYPE2_CHECK_KEY: 'lane-flight'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#10 webkit local-flight'
-        env:
-          TYPE2_CHECK_FILE: '10-webkit.json'
-          TYPE2_CHECK_KEY: 'local-flight'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#10 webkit ready'
-        env:
-          TYPE2_CHECK_FILE: '10-webkit.json'
-          TYPE2_CHECK_KEY: 'ready'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#10 webkit native'
-        env:
-          TYPE2_CHECK_FILE: '10-webkit.json'
-          TYPE2_CHECK_KEY: 'native'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#10 webkit eligible'
-        env:
-          TYPE2_CHECK_FILE: '10-webkit.json'
-          TYPE2_CHECK_KEY: 'eligible'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#10 webkit pair-offered'
-        env:
-          TYPE2_CHECK_FILE: '10-webkit.json'
-          TYPE2_CHECK_KEY: 'pair-offered'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#10 webkit swept'
-        env:
-          TYPE2_CHECK_FILE: '10-webkit.json'
-          TYPE2_CHECK_KEY: 'swept'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#10 webkit sampled'
-        env:
-          TYPE2_CHECK_FILE: '10-webkit.json'
-          TYPE2_CHECK_KEY: 'sampled'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#10 webkit adapter'
-        env:
-          TYPE2_CHECK_FILE: '10-webkit.json'
-          TYPE2_CHECK_KEY: 'adapter'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#10 webkit ingress-reserved'
-        env:
-          TYPE2_CHECK_FILE: '10-webkit.json'
-          TYPE2_CHECK_KEY: 'ingress-reserved'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#10 webkit ingress-grounded'
-        env:
-          TYPE2_CHECK_FILE: '10-webkit.json'
-          TYPE2_CHECK_KEY: 'ingress-grounded'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#10 webkit flight-reserved'
-        env:
-          TYPE2_CHECK_FILE: '10-webkit.json'
-          TYPE2_CHECK_KEY: 'flight-reserved'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#10 webkit phases'
-        env:
-          TYPE2_CHECK_FILE: '10-webkit.json'
-          TYPE2_CHECK_KEY: 'phases'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#10 webkit paint'
-        env:
-          TYPE2_CHECK_FILE: '10-webkit.json'
-          TYPE2_CHECK_KEY: 'paint'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#10 webkit landing'
-        env:
-          TYPE2_CHECK_FILE: '10-webkit.json'
-          TYPE2_CHECK_KEY: 'landing'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#14 chrome ready'
-        env:
-          TYPE2_CHECK_FILE: '14-chrome.json'
-          TYPE2_CHECK_KEY: 'ready'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#14 chrome native'
-        env:
-          TYPE2_CHECK_FILE: '14-chrome.json'
-          TYPE2_CHECK_KEY: 'native'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#14 chrome eligible'
-        env:
-          TYPE2_CHECK_FILE: '14-chrome.json'
-          TYPE2_CHECK_KEY: 'eligible'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#14 chrome pair-offered'
-        env:
-          TYPE2_CHECK_FILE: '14-chrome.json'
-          TYPE2_CHECK_KEY: 'pair-offered'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#14 chrome swept'
-        env:
-          TYPE2_CHECK_FILE: '14-chrome.json'
-          TYPE2_CHECK_KEY: 'swept'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#14 chrome sampled'
-        env:
-          TYPE2_CHECK_FILE: '14-chrome.json'
-          TYPE2_CHECK_KEY: 'sampled'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#14 chrome adapter'
-        env:
-          TYPE2_CHECK_FILE: '14-chrome.json'
-          TYPE2_CHECK_KEY: 'adapter'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#14 chrome ingress-reserved'
-        env:
-          TYPE2_CHECK_FILE: '14-chrome.json'
-          TYPE2_CHECK_KEY: 'ingress-reserved'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#14 chrome ingress-grounded'
-        env:
-          TYPE2_CHECK_FILE: '14-chrome.json'
-          TYPE2_CHECK_KEY: 'ingress-grounded'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#14 chrome flight-reserved'
-        env:
-          TYPE2_CHECK_FILE: '14-chrome.json'
-          TYPE2_CHECK_KEY: 'flight-reserved'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#14 chrome phases'
-        env:
-          TYPE2_CHECK_FILE: '14-chrome.json'
-          TYPE2_CHECK_KEY: 'phases'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#14 chrome paint'
-        env:
-          TYPE2_CHECK_FILE: '14-chrome.json'
-          TYPE2_CHECK_KEY: 'paint'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#14 chrome landing'
-        env:
-          TYPE2_CHECK_FILE: '14-chrome.json'
-          TYPE2_CHECK_KEY: 'landing'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#14 webkit ready'
-        env:
-          TYPE2_CHECK_FILE: '14-webkit.json'
-          TYPE2_CHECK_KEY: 'ready'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#14 webkit native'
-        env:
-          TYPE2_CHECK_FILE: '14-webkit.json'
-          TYPE2_CHECK_KEY: 'native'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#14 webkit eligible'
-        env:
-          TYPE2_CHECK_FILE: '14-webkit.json'
-          TYPE2_CHECK_KEY: 'eligible'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#14 webkit pair-offered'
-        env:
-          TYPE2_CHECK_FILE: '14-webkit.json'
-          TYPE2_CHECK_KEY: 'pair-offered'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#14 webkit swept'
-        env:
-          TYPE2_CHECK_FILE: '14-webkit.json'
-          TYPE2_CHECK_KEY: 'swept'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#14 webkit sampled'
-        env:
-          TYPE2_CHECK_FILE: '14-webkit.json'
-          TYPE2_CHECK_KEY: 'sampled'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#14 webkit adapter'
-        env:
-          TYPE2_CHECK_FILE: '14-webkit.json'
-          TYPE2_CHECK_KEY: 'adapter'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#14 webkit ingress-reserved'
-        env:
-          TYPE2_CHECK_FILE: '14-webkit.json'
-          TYPE2_CHECK_KEY: 'ingress-reserved'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#14 webkit ingress-grounded'
-        env:
-          TYPE2_CHECK_FILE: '14-webkit.json'
-          TYPE2_CHECK_KEY: 'ingress-grounded'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#14 webkit flight-reserved'
-        env:
-          TYPE2_CHECK_FILE: '14-webkit.json'
-          TYPE2_CHECK_KEY: 'flight-reserved'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#14 webkit phases'
-        env:
-          TYPE2_CHECK_FILE: '14-webkit.json'
-          TYPE2_CHECK_KEY: 'phases'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#14 webkit paint'
-        env:
-          TYPE2_CHECK_FILE: '14-webkit.json'
-          TYPE2_CHECK_KEY: 'paint'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-      - name: '#14 webkit landing'
-        env:
-          TYPE2_CHECK_FILE: '14-webkit.json'
-          TYPE2_CHECK_KEY: 'landing'
-        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
-        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
-
-      - name: Remove the bounded scratch verdicts
+          out="$RUNNER_TEMP/type2-checkpoints"
+          test ! -e "$out"
+          mkdir -m 700 "$out"
+          report="$(npx playwright test tests/browser/garden-trail-seven-checkpoints.spec.js --project=chrome --project=webkit --list)"
+          printf '%s\n' "$report" | grep -Eq "^Total: 38 tests in 1 file$"
+          rc=0
+          TYPE2_CHECKPOINT_DIR="$out" npx playwright test tests/browser/garden-trail-seven-checkpoints.spec.js --project=chrome --project=webkit --retries=0 --max-failures=0 --trace=off --reporter=dot || rc="$?"
+          test "$rc" -le 1
+          node -e 'const f=require("fs"),d=process.argv[1];const cases=JSON.parse(process.argv[2]); if(f.readdirSync(d).length!==cases.length)process.exit(1);for(const [name,opts] of cases){const v=f.readFileSync(d+"/"+name,"utf8").trim();if(!opts.includes(v))process.exit(1);}' "$out" '[["chrome-08-dense",["pass","setup","preview","portrait-one-ready","portrait-one-native","portrait-one-qualified","tap-open","tap-close","landscape-native","portrait-two-native","motion-native","motion-unseen"]],["chrome-10-dense",["pass","setup","preview","portrait-one-ready","portrait-one-native","portrait-one-qualified","tap-open","tap-close","landscape-native","portrait-two-native","motion-native","motion-unseen"]],["chrome-34-dense",["pass","setup","preview","portrait-one-ready","portrait-one-native","portrait-one-qualified","tap-open","tap-close","landscape-native","portrait-two-native","motion-native","motion-unseen"]],["chrome-07-lane",["pass","setup","initial-native","native-gates","enroute-native","premature-cross","bay-not-grounded","cross-unseen"]],["chrome-10-lane",["pass","setup","initial-native","native-gates","enroute-native","premature-cross","bay-not-grounded","cross-unseen"]],["chrome-12-lane",["pass","setup","initial-native","native-gates","enroute-native","premature-cross","bay-not-grounded","cross-unseen"]],["chrome-14-lane",["pass","setup","initial-native","native-gates","enroute-native","premature-cross","bay-not-grounded","cross-unseen"]],["chrome-28-lane",["pass","setup","initial-native","native-gates","enroute-native","premature-cross","bay-not-grounded","cross-unseen"]],["chrome-07-visitor",["pass","setup","flight-before","store-change","store-queue","visitor-dom","mixed-native","mixed-loading","mixed-qualified","mixed-unqualified","incumbent-contact","visitor-tap"]],["chrome-08-visitor",["pass","setup","flight-before","store-change","store-queue","visitor-dom","mixed-native","mixed-loading","mixed-qualified","mixed-unqualified","incumbent-contact","visitor-tap"]],["chrome-10-visitor",["pass","setup","flight-before","store-change","store-queue","visitor-dom","mixed-native","mixed-loading","mixed-qualified","mixed-unqualified","incumbent-contact","visitor-tap"]],["chrome-12-visitor",["pass","setup","flight-before","store-change","store-queue","visitor-dom","mixed-native","mixed-loading","mixed-qualified","mixed-unqualified","incumbent-contact","visitor-tap"]],["chrome-14-visitor",["pass","setup","flight-before","store-change","store-queue","visitor-dom","mixed-native","mixed-loading","mixed-qualified","mixed-unqualified","incumbent-contact","visitor-tap"]],["chrome-28-visitor",["pass","setup","flight-before","store-change","store-queue","visitor-dom","mixed-native","mixed-loading","mixed-qualified","mixed-unqualified","incumbent-contact","visitor-tap"]],["chrome-34-visitor",["pass","setup","flight-before","store-change","store-queue","visitor-dom","mixed-native","mixed-loading","mixed-qualified","mixed-unqualified","incumbent-contact","visitor-tap"]],["chrome-08-white",["pass","setup","sample","color","texture","phase-rise","phase-flap","phase-contact","white-frames","landing-native","landing-node"]],["chrome-08-sakura",["pass","setup","sample","color","texture","phase-rise","phase-flap","phase-contact","white-frames","landing-native","landing-node"]],["chrome-08-cinnamon",["pass","setup","sample","color","texture","phase-rise","phase-flap","phase-contact","white-frames","landing-native","landing-node"]],["chrome-08-silver",["pass","setup","sample","color","texture","phase-rise","phase-flap","phase-contact","white-frames","landing-native","landing-node"]],["webkit-08-dense",["pass","setup","preview","portrait-one-ready","portrait-one-native","portrait-one-qualified","tap-open","tap-close","landscape-native","portrait-two-native","motion-native","motion-unseen"]],["webkit-10-dense",["pass","setup","preview","portrait-one-ready","portrait-one-native","portrait-one-qualified","tap-open","tap-close","landscape-native","portrait-two-native","motion-native","motion-unseen"]],["webkit-34-dense",["pass","setup","preview","portrait-one-ready","portrait-one-native","portrait-one-qualified","tap-open","tap-close","landscape-native","portrait-two-native","motion-native","motion-unseen"]],["webkit-07-lane",["pass","setup","initial-native","native-gates","enroute-native","premature-cross","bay-not-grounded","cross-unseen"]],["webkit-10-lane",["pass","setup","initial-native","native-gates","enroute-native","premature-cross","bay-not-grounded","cross-unseen"]],["webkit-12-lane",["pass","setup","initial-native","native-gates","enroute-native","premature-cross","bay-not-grounded","cross-unseen"]],["webkit-14-lane",["pass","setup","initial-native","native-gates","enroute-native","premature-cross","bay-not-grounded","cross-unseen"]],["webkit-28-lane",["pass","setup","initial-native","native-gates","enroute-native","premature-cross","bay-not-grounded","cross-unseen"]],["webkit-07-visitor",["pass","setup","flight-before","store-change","store-queue","visitor-dom","mixed-native","mixed-loading","mixed-qualified","mixed-unqualified","incumbent-contact","visitor-tap"]],["webkit-08-visitor",["pass","setup","flight-before","store-change","store-queue","visitor-dom","mixed-native","mixed-loading","mixed-qualified","mixed-unqualified","incumbent-contact","visitor-tap"]],["webkit-10-visitor",["pass","setup","flight-before","store-change","store-queue","visitor-dom","mixed-native","mixed-loading","mixed-qualified","mixed-unqualified","incumbent-contact","visitor-tap"]],["webkit-12-visitor",["pass","setup","flight-before","store-change","store-queue","visitor-dom","mixed-native","mixed-loading","mixed-qualified","mixed-unqualified","incumbent-contact","visitor-tap"]],["webkit-14-visitor",["pass","setup","flight-before","store-change","store-queue","visitor-dom","mixed-native","mixed-loading","mixed-qualified","mixed-unqualified","incumbent-contact","visitor-tap"]],["webkit-28-visitor",["pass","setup","flight-before","store-change","store-queue","visitor-dom","mixed-native","mixed-loading","mixed-qualified","mixed-unqualified","incumbent-contact","visitor-tap"]],["webkit-34-visitor",["pass","setup","flight-before","store-change","store-queue","visitor-dom","mixed-native","mixed-loading","mixed-qualified","mixed-unqualified","incumbent-contact","visitor-tap"]],["webkit-08-white",["pass","setup","sample","color","texture","phase-rise","phase-flap","phase-contact","white-frames","landing-native","landing-node"]],["webkit-08-sakura",["pass","setup","sample","color","texture","phase-rise","phase-flap","phase-contact","white-frames","landing-native","landing-node"]],["webkit-08-cinnamon",["pass","setup","sample","color","texture","phase-rise","phase-flap","phase-contact","white-frames","landing-native","landing-node"]],["webkit-08-silver",["pass","setup","sample","color","texture","phase-rise","phase-flap","phase-contact","white-frames","landing-native","landing-node"]]]'
+      - name: 'chrome #08 dense setup'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-dense")" != "setup"
+      - name: 'chrome #08 dense preview'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-dense")" != "preview"
+      - name: 'chrome #08 dense portrait-one-ready'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-dense")" != "portrait-one-ready"
+      - name: 'chrome #08 dense portrait-one-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-dense")" != "portrait-one-native"
+      - name: 'chrome #08 dense portrait-one-qualified'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-dense")" != "portrait-one-qualified"
+      - name: 'chrome #08 dense tap-open'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-dense")" != "tap-open"
+      - name: 'chrome #08 dense tap-close'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-dense")" != "tap-close"
+      - name: 'chrome #08 dense landscape-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-dense")" != "landscape-native"
+      - name: 'chrome #08 dense portrait-two-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-dense")" != "portrait-two-native"
+      - name: 'chrome #08 dense motion-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-dense")" != "motion-native"
+      - name: 'chrome #08 dense motion-unseen'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-dense")" != "motion-unseen"
+      - name: 'chrome #10 dense setup'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-10-dense")" != "setup"
+      - name: 'chrome #10 dense preview'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-10-dense")" != "preview"
+      - name: 'chrome #10 dense portrait-one-ready'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-10-dense")" != "portrait-one-ready"
+      - name: 'chrome #10 dense portrait-one-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-10-dense")" != "portrait-one-native"
+      - name: 'chrome #10 dense portrait-one-qualified'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-10-dense")" != "portrait-one-qualified"
+      - name: 'chrome #10 dense tap-open'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-10-dense")" != "tap-open"
+      - name: 'chrome #10 dense tap-close'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-10-dense")" != "tap-close"
+      - name: 'chrome #10 dense landscape-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-10-dense")" != "landscape-native"
+      - name: 'chrome #10 dense portrait-two-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-10-dense")" != "portrait-two-native"
+      - name: 'chrome #10 dense motion-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-10-dense")" != "motion-native"
+      - name: 'chrome #10 dense motion-unseen'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-10-dense")" != "motion-unseen"
+      - name: 'chrome #34 dense setup'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-34-dense")" != "setup"
+      - name: 'chrome #34 dense preview'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-34-dense")" != "preview"
+      - name: 'chrome #34 dense portrait-one-ready'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-34-dense")" != "portrait-one-ready"
+      - name: 'chrome #34 dense portrait-one-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-34-dense")" != "portrait-one-native"
+      - name: 'chrome #34 dense portrait-one-qualified'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-34-dense")" != "portrait-one-qualified"
+      - name: 'chrome #34 dense tap-open'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-34-dense")" != "tap-open"
+      - name: 'chrome #34 dense tap-close'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-34-dense")" != "tap-close"
+      - name: 'chrome #34 dense landscape-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-34-dense")" != "landscape-native"
+      - name: 'chrome #34 dense portrait-two-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-34-dense")" != "portrait-two-native"
+      - name: 'chrome #34 dense motion-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-34-dense")" != "motion-native"
+      - name: 'chrome #34 dense motion-unseen'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-34-dense")" != "motion-unseen"
+      - name: 'chrome #07 lane setup'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-07-lane")" != "setup"
+      - name: 'chrome #07 lane initial-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-07-lane")" != "initial-native"
+      - name: 'chrome #07 lane native-gates'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-07-lane")" != "native-gates"
+      - name: 'chrome #07 lane enroute-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-07-lane")" != "enroute-native"
+      - name: 'chrome #07 lane premature-cross'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-07-lane")" != "premature-cross"
+      - name: 'chrome #07 lane bay-not-grounded'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-07-lane")" != "bay-not-grounded"
+      - name: 'chrome #07 lane cross-unseen'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-07-lane")" != "cross-unseen"
+      - name: 'chrome #10 lane setup'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-10-lane")" != "setup"
+      - name: 'chrome #10 lane initial-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-10-lane")" != "initial-native"
+      - name: 'chrome #10 lane native-gates'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-10-lane")" != "native-gates"
+      - name: 'chrome #10 lane enroute-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-10-lane")" != "enroute-native"
+      - name: 'chrome #10 lane premature-cross'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-10-lane")" != "premature-cross"
+      - name: 'chrome #10 lane bay-not-grounded'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-10-lane")" != "bay-not-grounded"
+      - name: 'chrome #10 lane cross-unseen'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-10-lane")" != "cross-unseen"
+      - name: 'chrome #12 lane setup'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-12-lane")" != "setup"
+      - name: 'chrome #12 lane initial-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-12-lane")" != "initial-native"
+      - name: 'chrome #12 lane native-gates'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-12-lane")" != "native-gates"
+      - name: 'chrome #12 lane enroute-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-12-lane")" != "enroute-native"
+      - name: 'chrome #12 lane premature-cross'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-12-lane")" != "premature-cross"
+      - name: 'chrome #12 lane bay-not-grounded'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-12-lane")" != "bay-not-grounded"
+      - name: 'chrome #12 lane cross-unseen'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-12-lane")" != "cross-unseen"
+      - name: 'chrome #14 lane setup'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-14-lane")" != "setup"
+      - name: 'chrome #14 lane initial-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-14-lane")" != "initial-native"
+      - name: 'chrome #14 lane native-gates'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-14-lane")" != "native-gates"
+      - name: 'chrome #14 lane enroute-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-14-lane")" != "enroute-native"
+      - name: 'chrome #14 lane premature-cross'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-14-lane")" != "premature-cross"
+      - name: 'chrome #14 lane bay-not-grounded'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-14-lane")" != "bay-not-grounded"
+      - name: 'chrome #14 lane cross-unseen'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-14-lane")" != "cross-unseen"
+      - name: 'chrome #28 lane setup'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-28-lane")" != "setup"
+      - name: 'chrome #28 lane initial-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-28-lane")" != "initial-native"
+      - name: 'chrome #28 lane native-gates'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-28-lane")" != "native-gates"
+      - name: 'chrome #28 lane enroute-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-28-lane")" != "enroute-native"
+      - name: 'chrome #28 lane premature-cross'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-28-lane")" != "premature-cross"
+      - name: 'chrome #28 lane bay-not-grounded'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-28-lane")" != "bay-not-grounded"
+      - name: 'chrome #28 lane cross-unseen'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-28-lane")" != "cross-unseen"
+      - name: 'chrome #07 visitor setup'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-07-visitor")" != "setup"
+      - name: 'chrome #07 visitor flight-before'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-07-visitor")" != "flight-before"
+      - name: 'chrome #07 visitor store-change'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-07-visitor")" != "store-change"
+      - name: 'chrome #07 visitor store-queue'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-07-visitor")" != "store-queue"
+      - name: 'chrome #07 visitor visitor-dom'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-07-visitor")" != "visitor-dom"
+      - name: 'chrome #07 visitor mixed-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-07-visitor")" != "mixed-native"
+      - name: 'chrome #07 visitor mixed-loading'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-07-visitor")" != "mixed-loading"
+      - name: 'chrome #07 visitor mixed-qualified'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-07-visitor")" != "mixed-qualified"
+      - name: 'chrome #07 visitor mixed-unqualified'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-07-visitor")" != "mixed-unqualified"
+      - name: 'chrome #07 visitor incumbent-contact'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-07-visitor")" != "incumbent-contact"
+      - name: 'chrome #07 visitor visitor-tap'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-07-visitor")" != "visitor-tap"
+      - name: 'chrome #08 visitor setup'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-visitor")" != "setup"
+      - name: 'chrome #08 visitor flight-before'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-visitor")" != "flight-before"
+      - name: 'chrome #08 visitor store-change'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-visitor")" != "store-change"
+      - name: 'chrome #08 visitor store-queue'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-visitor")" != "store-queue"
+      - name: 'chrome #08 visitor visitor-dom'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-visitor")" != "visitor-dom"
+      - name: 'chrome #08 visitor mixed-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-visitor")" != "mixed-native"
+      - name: 'chrome #08 visitor mixed-loading'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-visitor")" != "mixed-loading"
+      - name: 'chrome #08 visitor mixed-qualified'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-visitor")" != "mixed-qualified"
+      - name: 'chrome #08 visitor mixed-unqualified'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-visitor")" != "mixed-unqualified"
+      - name: 'chrome #08 visitor incumbent-contact'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-visitor")" != "incumbent-contact"
+      - name: 'chrome #08 visitor visitor-tap'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-visitor")" != "visitor-tap"
+      - name: 'chrome #10 visitor setup'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-10-visitor")" != "setup"
+      - name: 'chrome #10 visitor flight-before'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-10-visitor")" != "flight-before"
+      - name: 'chrome #10 visitor store-change'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-10-visitor")" != "store-change"
+      - name: 'chrome #10 visitor store-queue'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-10-visitor")" != "store-queue"
+      - name: 'chrome #10 visitor visitor-dom'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-10-visitor")" != "visitor-dom"
+      - name: 'chrome #10 visitor mixed-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-10-visitor")" != "mixed-native"
+      - name: 'chrome #10 visitor mixed-loading'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-10-visitor")" != "mixed-loading"
+      - name: 'chrome #10 visitor mixed-qualified'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-10-visitor")" != "mixed-qualified"
+      - name: 'chrome #10 visitor mixed-unqualified'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-10-visitor")" != "mixed-unqualified"
+      - name: 'chrome #10 visitor incumbent-contact'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-10-visitor")" != "incumbent-contact"
+      - name: 'chrome #10 visitor visitor-tap'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-10-visitor")" != "visitor-tap"
+      - name: 'chrome #12 visitor setup'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-12-visitor")" != "setup"
+      - name: 'chrome #12 visitor flight-before'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-12-visitor")" != "flight-before"
+      - name: 'chrome #12 visitor store-change'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-12-visitor")" != "store-change"
+      - name: 'chrome #12 visitor store-queue'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-12-visitor")" != "store-queue"
+      - name: 'chrome #12 visitor visitor-dom'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-12-visitor")" != "visitor-dom"
+      - name: 'chrome #12 visitor mixed-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-12-visitor")" != "mixed-native"
+      - name: 'chrome #12 visitor mixed-loading'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-12-visitor")" != "mixed-loading"
+      - name: 'chrome #12 visitor mixed-qualified'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-12-visitor")" != "mixed-qualified"
+      - name: 'chrome #12 visitor mixed-unqualified'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-12-visitor")" != "mixed-unqualified"
+      - name: 'chrome #12 visitor incumbent-contact'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-12-visitor")" != "incumbent-contact"
+      - name: 'chrome #12 visitor visitor-tap'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-12-visitor")" != "visitor-tap"
+      - name: 'chrome #14 visitor setup'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-14-visitor")" != "setup"
+      - name: 'chrome #14 visitor flight-before'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-14-visitor")" != "flight-before"
+      - name: 'chrome #14 visitor store-change'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-14-visitor")" != "store-change"
+      - name: 'chrome #14 visitor store-queue'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-14-visitor")" != "store-queue"
+      - name: 'chrome #14 visitor visitor-dom'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-14-visitor")" != "visitor-dom"
+      - name: 'chrome #14 visitor mixed-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-14-visitor")" != "mixed-native"
+      - name: 'chrome #14 visitor mixed-loading'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-14-visitor")" != "mixed-loading"
+      - name: 'chrome #14 visitor mixed-qualified'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-14-visitor")" != "mixed-qualified"
+      - name: 'chrome #14 visitor mixed-unqualified'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-14-visitor")" != "mixed-unqualified"
+      - name: 'chrome #14 visitor incumbent-contact'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-14-visitor")" != "incumbent-contact"
+      - name: 'chrome #14 visitor visitor-tap'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-14-visitor")" != "visitor-tap"
+      - name: 'chrome #28 visitor setup'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-28-visitor")" != "setup"
+      - name: 'chrome #28 visitor flight-before'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-28-visitor")" != "flight-before"
+      - name: 'chrome #28 visitor store-change'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-28-visitor")" != "store-change"
+      - name: 'chrome #28 visitor store-queue'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-28-visitor")" != "store-queue"
+      - name: 'chrome #28 visitor visitor-dom'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-28-visitor")" != "visitor-dom"
+      - name: 'chrome #28 visitor mixed-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-28-visitor")" != "mixed-native"
+      - name: 'chrome #28 visitor mixed-loading'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-28-visitor")" != "mixed-loading"
+      - name: 'chrome #28 visitor mixed-qualified'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-28-visitor")" != "mixed-qualified"
+      - name: 'chrome #28 visitor mixed-unqualified'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-28-visitor")" != "mixed-unqualified"
+      - name: 'chrome #28 visitor incumbent-contact'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-28-visitor")" != "incumbent-contact"
+      - name: 'chrome #28 visitor visitor-tap'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-28-visitor")" != "visitor-tap"
+      - name: 'chrome #34 visitor setup'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-34-visitor")" != "setup"
+      - name: 'chrome #34 visitor flight-before'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-34-visitor")" != "flight-before"
+      - name: 'chrome #34 visitor store-change'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-34-visitor")" != "store-change"
+      - name: 'chrome #34 visitor store-queue'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-34-visitor")" != "store-queue"
+      - name: 'chrome #34 visitor visitor-dom'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-34-visitor")" != "visitor-dom"
+      - name: 'chrome #34 visitor mixed-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-34-visitor")" != "mixed-native"
+      - name: 'chrome #34 visitor mixed-loading'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-34-visitor")" != "mixed-loading"
+      - name: 'chrome #34 visitor mixed-qualified'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-34-visitor")" != "mixed-qualified"
+      - name: 'chrome #34 visitor mixed-unqualified'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-34-visitor")" != "mixed-unqualified"
+      - name: 'chrome #34 visitor incumbent-contact'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-34-visitor")" != "incumbent-contact"
+      - name: 'chrome #34 visitor visitor-tap'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-34-visitor")" != "visitor-tap"
+      - name: 'chrome #08 white setup'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-white")" != "setup"
+      - name: 'chrome #08 white sample'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-white")" != "sample"
+      - name: 'chrome #08 white color'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-white")" != "color"
+      - name: 'chrome #08 white texture'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-white")" != "texture"
+      - name: 'chrome #08 white phase-rise'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-white")" != "phase-rise"
+      - name: 'chrome #08 white phase-flap'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-white")" != "phase-flap"
+      - name: 'chrome #08 white phase-contact'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-white")" != "phase-contact"
+      - name: 'chrome #08 white white-frames'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-white")" != "white-frames"
+      - name: 'chrome #08 white landing-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-white")" != "landing-native"
+      - name: 'chrome #08 white landing-node'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-white")" != "landing-node"
+      - name: 'chrome #08 sakura setup'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-sakura")" != "setup"
+      - name: 'chrome #08 sakura sample'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-sakura")" != "sample"
+      - name: 'chrome #08 sakura color'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-sakura")" != "color"
+      - name: 'chrome #08 sakura texture'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-sakura")" != "texture"
+      - name: 'chrome #08 sakura phase-rise'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-sakura")" != "phase-rise"
+      - name: 'chrome #08 sakura phase-flap'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-sakura")" != "phase-flap"
+      - name: 'chrome #08 sakura phase-contact'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-sakura")" != "phase-contact"
+      - name: 'chrome #08 sakura white-frames'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-sakura")" != "white-frames"
+      - name: 'chrome #08 sakura landing-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-sakura")" != "landing-native"
+      - name: 'chrome #08 sakura landing-node'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-sakura")" != "landing-node"
+      - name: 'chrome #08 cinnamon setup'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-cinnamon")" != "setup"
+      - name: 'chrome #08 cinnamon sample'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-cinnamon")" != "sample"
+      - name: 'chrome #08 cinnamon color'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-cinnamon")" != "color"
+      - name: 'chrome #08 cinnamon texture'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-cinnamon")" != "texture"
+      - name: 'chrome #08 cinnamon phase-rise'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-cinnamon")" != "phase-rise"
+      - name: 'chrome #08 cinnamon phase-flap'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-cinnamon")" != "phase-flap"
+      - name: 'chrome #08 cinnamon phase-contact'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-cinnamon")" != "phase-contact"
+      - name: 'chrome #08 cinnamon white-frames'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-cinnamon")" != "white-frames"
+      - name: 'chrome #08 cinnamon landing-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-cinnamon")" != "landing-native"
+      - name: 'chrome #08 cinnamon landing-node'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-cinnamon")" != "landing-node"
+      - name: 'chrome #08 silver setup'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-silver")" != "setup"
+      - name: 'chrome #08 silver sample'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-silver")" != "sample"
+      - name: 'chrome #08 silver color'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-silver")" != "color"
+      - name: 'chrome #08 silver texture'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-silver")" != "texture"
+      - name: 'chrome #08 silver phase-rise'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-silver")" != "phase-rise"
+      - name: 'chrome #08 silver phase-flap'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-silver")" != "phase-flap"
+      - name: 'chrome #08 silver phase-contact'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-silver")" != "phase-contact"
+      - name: 'chrome #08 silver white-frames'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-silver")" != "white-frames"
+      - name: 'chrome #08 silver landing-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-silver")" != "landing-native"
+      - name: 'chrome #08 silver landing-node'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/chrome-08-silver")" != "landing-node"
+      - name: 'webkit #08 dense setup'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-dense")" != "setup"
+      - name: 'webkit #08 dense preview'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-dense")" != "preview"
+      - name: 'webkit #08 dense portrait-one-ready'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-dense")" != "portrait-one-ready"
+      - name: 'webkit #08 dense portrait-one-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-dense")" != "portrait-one-native"
+      - name: 'webkit #08 dense portrait-one-qualified'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-dense")" != "portrait-one-qualified"
+      - name: 'webkit #08 dense tap-open'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-dense")" != "tap-open"
+      - name: 'webkit #08 dense tap-close'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-dense")" != "tap-close"
+      - name: 'webkit #08 dense landscape-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-dense")" != "landscape-native"
+      - name: 'webkit #08 dense portrait-two-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-dense")" != "portrait-two-native"
+      - name: 'webkit #08 dense motion-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-dense")" != "motion-native"
+      - name: 'webkit #08 dense motion-unseen'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-dense")" != "motion-unseen"
+      - name: 'webkit #10 dense setup'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-10-dense")" != "setup"
+      - name: 'webkit #10 dense preview'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-10-dense")" != "preview"
+      - name: 'webkit #10 dense portrait-one-ready'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-10-dense")" != "portrait-one-ready"
+      - name: 'webkit #10 dense portrait-one-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-10-dense")" != "portrait-one-native"
+      - name: 'webkit #10 dense portrait-one-qualified'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-10-dense")" != "portrait-one-qualified"
+      - name: 'webkit #10 dense tap-open'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-10-dense")" != "tap-open"
+      - name: 'webkit #10 dense tap-close'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-10-dense")" != "tap-close"
+      - name: 'webkit #10 dense landscape-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-10-dense")" != "landscape-native"
+      - name: 'webkit #10 dense portrait-two-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-10-dense")" != "portrait-two-native"
+      - name: 'webkit #10 dense motion-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-10-dense")" != "motion-native"
+      - name: 'webkit #10 dense motion-unseen'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-10-dense")" != "motion-unseen"
+      - name: 'webkit #34 dense setup'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-34-dense")" != "setup"
+      - name: 'webkit #34 dense preview'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-34-dense")" != "preview"
+      - name: 'webkit #34 dense portrait-one-ready'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-34-dense")" != "portrait-one-ready"
+      - name: 'webkit #34 dense portrait-one-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-34-dense")" != "portrait-one-native"
+      - name: 'webkit #34 dense portrait-one-qualified'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-34-dense")" != "portrait-one-qualified"
+      - name: 'webkit #34 dense tap-open'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-34-dense")" != "tap-open"
+      - name: 'webkit #34 dense tap-close'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-34-dense")" != "tap-close"
+      - name: 'webkit #34 dense landscape-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-34-dense")" != "landscape-native"
+      - name: 'webkit #34 dense portrait-two-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-34-dense")" != "portrait-two-native"
+      - name: 'webkit #34 dense motion-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-34-dense")" != "motion-native"
+      - name: 'webkit #34 dense motion-unseen'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-34-dense")" != "motion-unseen"
+      - name: 'webkit #07 lane setup'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-07-lane")" != "setup"
+      - name: 'webkit #07 lane initial-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-07-lane")" != "initial-native"
+      - name: 'webkit #07 lane native-gates'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-07-lane")" != "native-gates"
+      - name: 'webkit #07 lane enroute-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-07-lane")" != "enroute-native"
+      - name: 'webkit #07 lane premature-cross'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-07-lane")" != "premature-cross"
+      - name: 'webkit #07 lane bay-not-grounded'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-07-lane")" != "bay-not-grounded"
+      - name: 'webkit #07 lane cross-unseen'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-07-lane")" != "cross-unseen"
+      - name: 'webkit #10 lane setup'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-10-lane")" != "setup"
+      - name: 'webkit #10 lane initial-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-10-lane")" != "initial-native"
+      - name: 'webkit #10 lane native-gates'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-10-lane")" != "native-gates"
+      - name: 'webkit #10 lane enroute-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-10-lane")" != "enroute-native"
+      - name: 'webkit #10 lane premature-cross'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-10-lane")" != "premature-cross"
+      - name: 'webkit #10 lane bay-not-grounded'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-10-lane")" != "bay-not-grounded"
+      - name: 'webkit #10 lane cross-unseen'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-10-lane")" != "cross-unseen"
+      - name: 'webkit #12 lane setup'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-12-lane")" != "setup"
+      - name: 'webkit #12 lane initial-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-12-lane")" != "initial-native"
+      - name: 'webkit #12 lane native-gates'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-12-lane")" != "native-gates"
+      - name: 'webkit #12 lane enroute-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-12-lane")" != "enroute-native"
+      - name: 'webkit #12 lane premature-cross'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-12-lane")" != "premature-cross"
+      - name: 'webkit #12 lane bay-not-grounded'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-12-lane")" != "bay-not-grounded"
+      - name: 'webkit #12 lane cross-unseen'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-12-lane")" != "cross-unseen"
+      - name: 'webkit #14 lane setup'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-14-lane")" != "setup"
+      - name: 'webkit #14 lane initial-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-14-lane")" != "initial-native"
+      - name: 'webkit #14 lane native-gates'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-14-lane")" != "native-gates"
+      - name: 'webkit #14 lane enroute-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-14-lane")" != "enroute-native"
+      - name: 'webkit #14 lane premature-cross'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-14-lane")" != "premature-cross"
+      - name: 'webkit #14 lane bay-not-grounded'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-14-lane")" != "bay-not-grounded"
+      - name: 'webkit #14 lane cross-unseen'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-14-lane")" != "cross-unseen"
+      - name: 'webkit #28 lane setup'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-28-lane")" != "setup"
+      - name: 'webkit #28 lane initial-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-28-lane")" != "initial-native"
+      - name: 'webkit #28 lane native-gates'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-28-lane")" != "native-gates"
+      - name: 'webkit #28 lane enroute-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-28-lane")" != "enroute-native"
+      - name: 'webkit #28 lane premature-cross'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-28-lane")" != "premature-cross"
+      - name: 'webkit #28 lane bay-not-grounded'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-28-lane")" != "bay-not-grounded"
+      - name: 'webkit #28 lane cross-unseen'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-28-lane")" != "cross-unseen"
+      - name: 'webkit #07 visitor setup'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-07-visitor")" != "setup"
+      - name: 'webkit #07 visitor flight-before'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-07-visitor")" != "flight-before"
+      - name: 'webkit #07 visitor store-change'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-07-visitor")" != "store-change"
+      - name: 'webkit #07 visitor store-queue'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-07-visitor")" != "store-queue"
+      - name: 'webkit #07 visitor visitor-dom'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-07-visitor")" != "visitor-dom"
+      - name: 'webkit #07 visitor mixed-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-07-visitor")" != "mixed-native"
+      - name: 'webkit #07 visitor mixed-loading'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-07-visitor")" != "mixed-loading"
+      - name: 'webkit #07 visitor mixed-qualified'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-07-visitor")" != "mixed-qualified"
+      - name: 'webkit #07 visitor mixed-unqualified'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-07-visitor")" != "mixed-unqualified"
+      - name: 'webkit #07 visitor incumbent-contact'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-07-visitor")" != "incumbent-contact"
+      - name: 'webkit #07 visitor visitor-tap'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-07-visitor")" != "visitor-tap"
+      - name: 'webkit #08 visitor setup'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-visitor")" != "setup"
+      - name: 'webkit #08 visitor flight-before'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-visitor")" != "flight-before"
+      - name: 'webkit #08 visitor store-change'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-visitor")" != "store-change"
+      - name: 'webkit #08 visitor store-queue'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-visitor")" != "store-queue"
+      - name: 'webkit #08 visitor visitor-dom'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-visitor")" != "visitor-dom"
+      - name: 'webkit #08 visitor mixed-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-visitor")" != "mixed-native"
+      - name: 'webkit #08 visitor mixed-loading'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-visitor")" != "mixed-loading"
+      - name: 'webkit #08 visitor mixed-qualified'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-visitor")" != "mixed-qualified"
+      - name: 'webkit #08 visitor mixed-unqualified'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-visitor")" != "mixed-unqualified"
+      - name: 'webkit #08 visitor incumbent-contact'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-visitor")" != "incumbent-contact"
+      - name: 'webkit #08 visitor visitor-tap'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-visitor")" != "visitor-tap"
+      - name: 'webkit #10 visitor setup'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-10-visitor")" != "setup"
+      - name: 'webkit #10 visitor flight-before'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-10-visitor")" != "flight-before"
+      - name: 'webkit #10 visitor store-change'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-10-visitor")" != "store-change"
+      - name: 'webkit #10 visitor store-queue'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-10-visitor")" != "store-queue"
+      - name: 'webkit #10 visitor visitor-dom'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-10-visitor")" != "visitor-dom"
+      - name: 'webkit #10 visitor mixed-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-10-visitor")" != "mixed-native"
+      - name: 'webkit #10 visitor mixed-loading'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-10-visitor")" != "mixed-loading"
+      - name: 'webkit #10 visitor mixed-qualified'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-10-visitor")" != "mixed-qualified"
+      - name: 'webkit #10 visitor mixed-unqualified'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-10-visitor")" != "mixed-unqualified"
+      - name: 'webkit #10 visitor incumbent-contact'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-10-visitor")" != "incumbent-contact"
+      - name: 'webkit #10 visitor visitor-tap'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-10-visitor")" != "visitor-tap"
+      - name: 'webkit #12 visitor setup'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-12-visitor")" != "setup"
+      - name: 'webkit #12 visitor flight-before'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-12-visitor")" != "flight-before"
+      - name: 'webkit #12 visitor store-change'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-12-visitor")" != "store-change"
+      - name: 'webkit #12 visitor store-queue'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-12-visitor")" != "store-queue"
+      - name: 'webkit #12 visitor visitor-dom'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-12-visitor")" != "visitor-dom"
+      - name: 'webkit #12 visitor mixed-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-12-visitor")" != "mixed-native"
+      - name: 'webkit #12 visitor mixed-loading'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-12-visitor")" != "mixed-loading"
+      - name: 'webkit #12 visitor mixed-qualified'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-12-visitor")" != "mixed-qualified"
+      - name: 'webkit #12 visitor mixed-unqualified'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-12-visitor")" != "mixed-unqualified"
+      - name: 'webkit #12 visitor incumbent-contact'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-12-visitor")" != "incumbent-contact"
+      - name: 'webkit #12 visitor visitor-tap'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-12-visitor")" != "visitor-tap"
+      - name: 'webkit #14 visitor setup'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-14-visitor")" != "setup"
+      - name: 'webkit #14 visitor flight-before'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-14-visitor")" != "flight-before"
+      - name: 'webkit #14 visitor store-change'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-14-visitor")" != "store-change"
+      - name: 'webkit #14 visitor store-queue'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-14-visitor")" != "store-queue"
+      - name: 'webkit #14 visitor visitor-dom'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-14-visitor")" != "visitor-dom"
+      - name: 'webkit #14 visitor mixed-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-14-visitor")" != "mixed-native"
+      - name: 'webkit #14 visitor mixed-loading'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-14-visitor")" != "mixed-loading"
+      - name: 'webkit #14 visitor mixed-qualified'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-14-visitor")" != "mixed-qualified"
+      - name: 'webkit #14 visitor mixed-unqualified'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-14-visitor")" != "mixed-unqualified"
+      - name: 'webkit #14 visitor incumbent-contact'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-14-visitor")" != "incumbent-contact"
+      - name: 'webkit #14 visitor visitor-tap'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-14-visitor")" != "visitor-tap"
+      - name: 'webkit #28 visitor setup'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-28-visitor")" != "setup"
+      - name: 'webkit #28 visitor flight-before'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-28-visitor")" != "flight-before"
+      - name: 'webkit #28 visitor store-change'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-28-visitor")" != "store-change"
+      - name: 'webkit #28 visitor store-queue'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-28-visitor")" != "store-queue"
+      - name: 'webkit #28 visitor visitor-dom'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-28-visitor")" != "visitor-dom"
+      - name: 'webkit #28 visitor mixed-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-28-visitor")" != "mixed-native"
+      - name: 'webkit #28 visitor mixed-loading'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-28-visitor")" != "mixed-loading"
+      - name: 'webkit #28 visitor mixed-qualified'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-28-visitor")" != "mixed-qualified"
+      - name: 'webkit #28 visitor mixed-unqualified'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-28-visitor")" != "mixed-unqualified"
+      - name: 'webkit #28 visitor incumbent-contact'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-28-visitor")" != "incumbent-contact"
+      - name: 'webkit #28 visitor visitor-tap'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-28-visitor")" != "visitor-tap"
+      - name: 'webkit #34 visitor setup'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-34-visitor")" != "setup"
+      - name: 'webkit #34 visitor flight-before'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-34-visitor")" != "flight-before"
+      - name: 'webkit #34 visitor store-change'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-34-visitor")" != "store-change"
+      - name: 'webkit #34 visitor store-queue'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-34-visitor")" != "store-queue"
+      - name: 'webkit #34 visitor visitor-dom'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-34-visitor")" != "visitor-dom"
+      - name: 'webkit #34 visitor mixed-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-34-visitor")" != "mixed-native"
+      - name: 'webkit #34 visitor mixed-loading'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-34-visitor")" != "mixed-loading"
+      - name: 'webkit #34 visitor mixed-qualified'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-34-visitor")" != "mixed-qualified"
+      - name: 'webkit #34 visitor mixed-unqualified'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-34-visitor")" != "mixed-unqualified"
+      - name: 'webkit #34 visitor incumbent-contact'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-34-visitor")" != "incumbent-contact"
+      - name: 'webkit #34 visitor visitor-tap'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-34-visitor")" != "visitor-tap"
+      - name: 'webkit #08 white setup'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-white")" != "setup"
+      - name: 'webkit #08 white sample'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-white")" != "sample"
+      - name: 'webkit #08 white color'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-white")" != "color"
+      - name: 'webkit #08 white texture'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-white")" != "texture"
+      - name: 'webkit #08 white phase-rise'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-white")" != "phase-rise"
+      - name: 'webkit #08 white phase-flap'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-white")" != "phase-flap"
+      - name: 'webkit #08 white phase-contact'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-white")" != "phase-contact"
+      - name: 'webkit #08 white white-frames'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-white")" != "white-frames"
+      - name: 'webkit #08 white landing-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-white")" != "landing-native"
+      - name: 'webkit #08 white landing-node'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-white")" != "landing-node"
+      - name: 'webkit #08 sakura setup'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-sakura")" != "setup"
+      - name: 'webkit #08 sakura sample'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-sakura")" != "sample"
+      - name: 'webkit #08 sakura color'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-sakura")" != "color"
+      - name: 'webkit #08 sakura texture'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-sakura")" != "texture"
+      - name: 'webkit #08 sakura phase-rise'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-sakura")" != "phase-rise"
+      - name: 'webkit #08 sakura phase-flap'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-sakura")" != "phase-flap"
+      - name: 'webkit #08 sakura phase-contact'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-sakura")" != "phase-contact"
+      - name: 'webkit #08 sakura white-frames'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-sakura")" != "white-frames"
+      - name: 'webkit #08 sakura landing-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-sakura")" != "landing-native"
+      - name: 'webkit #08 sakura landing-node'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-sakura")" != "landing-node"
+      - name: 'webkit #08 cinnamon setup'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-cinnamon")" != "setup"
+      - name: 'webkit #08 cinnamon sample'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-cinnamon")" != "sample"
+      - name: 'webkit #08 cinnamon color'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-cinnamon")" != "color"
+      - name: 'webkit #08 cinnamon texture'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-cinnamon")" != "texture"
+      - name: 'webkit #08 cinnamon phase-rise'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-cinnamon")" != "phase-rise"
+      - name: 'webkit #08 cinnamon phase-flap'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-cinnamon")" != "phase-flap"
+      - name: 'webkit #08 cinnamon phase-contact'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-cinnamon")" != "phase-contact"
+      - name: 'webkit #08 cinnamon white-frames'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-cinnamon")" != "white-frames"
+      - name: 'webkit #08 cinnamon landing-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-cinnamon")" != "landing-native"
+      - name: 'webkit #08 cinnamon landing-node'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-cinnamon")" != "landing-node"
+      - name: 'webkit #08 silver setup'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-silver")" != "setup"
+      - name: 'webkit #08 silver sample'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-silver")" != "sample"
+      - name: 'webkit #08 silver color'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-silver")" != "color"
+      - name: 'webkit #08 silver texture'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-silver")" != "texture"
+      - name: 'webkit #08 silver phase-rise'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-silver")" != "phase-rise"
+      - name: 'webkit #08 silver phase-flap'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-silver")" != "phase-flap"
+      - name: 'webkit #08 silver phase-contact'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-silver")" != "phase-contact"
+      - name: 'webkit #08 silver white-frames'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-silver")" != "white-frames"
+      - name: 'webkit #08 silver landing-native'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-silver")" != "landing-native"
+      - name: 'webkit #08 silver landing-node'
+        if: ${{ !cancelled() && steps.checkpoints.outcome == 'success' }}
+        run: test "$(cat "$RUNNER_TEMP/type2-checkpoints/webkit-08-silver")" != "landing-node"
+      - name: Remove scratch checkpoint receipts
         if: ${{ always() }}
-        run: rm -f "$RUNNER_TEMP/type2-interior-stage-verdicts/10-chrome.json" "$RUNNER_TEMP/type2-interior-stage-verdicts/10-webkit.json" "$RUNNER_TEMP/type2-interior-stage-verdicts/14-chrome.json" "$RUNNER_TEMP/type2-interior-stage-verdicts/14-webkit.json"
-
-      - name: Run exact ordinary seven once in both engines and retain fixed verdicts only
-        id: ordinary_verdicts
-        timeout-minutes: 25
-        if: ${{ !cancelled() && steps.ready.outcome == 'success' }}
-        run: |
-          set -eu
-          verdicts="$RUNNER_TEMP/type2-ordinary-verdicts.json"
-          test ! -e "$verdicts"
-          code=0
-          TYPE2_ORDINARY_VERDICTS="$verdicts" npx playwright test tests/browser/garden-trail-seven.spec.js --project=chrome --project=webkit --retries=0 --max-failures=0 --trace=off --reporter=./tests/fixtures/type2-ordinary-verdict-reporter.mjs || code="$?"
-          test "$code" -le 1
-          test -s "$verdicts"
-          node -e 'const fs=require("fs");const v=JSON.parse(fs.readFileSync(process.argv[1],"utf8"));if(Object.keys(v).length!==144||!Object.values(v).every(x=>["pass","fail","not-run"].includes(x))||(process.argv[2]==="1"&&Object.values(v).every(x=>x==="pass")))process.exit(1);' "$verdicts" "$code"
-      - name: 'ordinary chrome #07 native-0'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-07-native-0'
-      - name: 'ordinary chrome #07 native-1'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-07-native-1'
-      - name: 'ordinary chrome #07 native-10'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-07-native-10'
-      - name: 'ordinary chrome #07 lane'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-07-lane'
-      - name: 'ordinary chrome #07 white'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-07-white'
-      - name: 'ordinary chrome #07 sakura'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-07-sakura'
-      - name: 'ordinary chrome #07 cinnamon'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-07-cinnamon'
-      - name: 'ordinary chrome #07 silver'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-07-silver'
-      - name: 'ordinary chrome #07 visitor'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-07-visitor'
-      - name: 'ordinary chrome #07 predator'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-07-predator'
-      - name: 'ordinary chrome #08 native-0'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-08-native-0'
-      - name: 'ordinary chrome #08 native-1'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-08-native-1'
-      - name: 'ordinary chrome #08 native-10'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-08-native-10'
-      - name: 'ordinary chrome #08 lane'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-08-lane'
-      - name: 'ordinary chrome #08 white'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-08-white'
-      - name: 'ordinary chrome #08 sakura'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-08-sakura'
-      - name: 'ordinary chrome #08 cinnamon'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-08-cinnamon'
-      - name: 'ordinary chrome #08 silver'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-08-silver'
-      - name: 'ordinary chrome #08 visitor'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-08-visitor'
-      - name: 'ordinary chrome #08 predator'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-08-predator'
-      - name: 'ordinary chrome #10 native-0'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-10-native-0'
-      - name: 'ordinary chrome #10 native-1'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-10-native-1'
-      - name: 'ordinary chrome #10 native-10'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-10-native-10'
-      - name: 'ordinary chrome #10 lane'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-10-lane'
-      - name: 'ordinary chrome #10 white'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-10-white'
-      - name: 'ordinary chrome #10 sakura'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-10-sakura'
-      - name: 'ordinary chrome #10 cinnamon'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-10-cinnamon'
-      - name: 'ordinary chrome #10 silver'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-10-silver'
-      - name: 'ordinary chrome #10 visitor'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-10-visitor'
-      - name: 'ordinary chrome #10 predator'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-10-predator'
-      - name: 'ordinary chrome #12 native-0'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-12-native-0'
-      - name: 'ordinary chrome #12 native-1'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-12-native-1'
-      - name: 'ordinary chrome #12 native-10'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-12-native-10'
-      - name: 'ordinary chrome #12 lane'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-12-lane'
-      - name: 'ordinary chrome #12 white'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-12-white'
-      - name: 'ordinary chrome #12 sakura'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-12-sakura'
-      - name: 'ordinary chrome #12 cinnamon'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-12-cinnamon'
-      - name: 'ordinary chrome #12 silver'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-12-silver'
-      - name: 'ordinary chrome #12 visitor'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-12-visitor'
-      - name: 'ordinary chrome #12 predator'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-12-predator'
-      - name: 'ordinary chrome #14 native-0'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-14-native-0'
-      - name: 'ordinary chrome #14 native-1'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-14-native-1'
-      - name: 'ordinary chrome #14 native-10'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-14-native-10'
-      - name: 'ordinary chrome #14 lane'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-14-lane'
-      - name: 'ordinary chrome #14 white'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-14-white'
-      - name: 'ordinary chrome #14 sakura'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-14-sakura'
-      - name: 'ordinary chrome #14 cinnamon'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-14-cinnamon'
-      - name: 'ordinary chrome #14 silver'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-14-silver'
-      - name: 'ordinary chrome #14 visitor'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-14-visitor'
-      - name: 'ordinary chrome #14 predator'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-14-predator'
-      - name: 'ordinary chrome #28 native-0'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-28-native-0'
-      - name: 'ordinary chrome #28 native-1'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-28-native-1'
-      - name: 'ordinary chrome #28 native-10'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-28-native-10'
-      - name: 'ordinary chrome #28 lane'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-28-lane'
-      - name: 'ordinary chrome #28 white'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-28-white'
-      - name: 'ordinary chrome #28 sakura'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-28-sakura'
-      - name: 'ordinary chrome #28 cinnamon'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-28-cinnamon'
-      - name: 'ordinary chrome #28 silver'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-28-silver'
-      - name: 'ordinary chrome #28 visitor'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-28-visitor'
-      - name: 'ordinary chrome #28 predator'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-28-predator'
-      - name: 'ordinary chrome #34 native-0'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-34-native-0'
-      - name: 'ordinary chrome #34 native-1'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-34-native-1'
-      - name: 'ordinary chrome #34 native-10'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-34-native-10'
-      - name: 'ordinary chrome #34 lane'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-34-lane'
-      - name: 'ordinary chrome #34 white'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-34-white'
-      - name: 'ordinary chrome #34 sakura'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-34-sakura'
-      - name: 'ordinary chrome #34 cinnamon'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-34-cinnamon'
-      - name: 'ordinary chrome #34 silver'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-34-silver'
-      - name: 'ordinary chrome #34 visitor'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-34-visitor'
-      - name: 'ordinary chrome #34 predator'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-34-predator'
-      - name: 'ordinary chrome #01 type-one-control'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-01-type-one-control'
-      - name: 'ordinary chrome #07 reduced-motion'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-07-reduced-motion'
-      - name: 'ordinary webkit #07 native-0'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-07-native-0'
-      - name: 'ordinary webkit #07 native-1'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-07-native-1'
-      - name: 'ordinary webkit #07 native-10'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-07-native-10'
-      - name: 'ordinary webkit #07 lane'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-07-lane'
-      - name: 'ordinary webkit #07 white'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-07-white'
-      - name: 'ordinary webkit #07 sakura'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-07-sakura'
-      - name: 'ordinary webkit #07 cinnamon'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-07-cinnamon'
-      - name: 'ordinary webkit #07 silver'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-07-silver'
-      - name: 'ordinary webkit #07 visitor'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-07-visitor'
-      - name: 'ordinary webkit #07 predator'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-07-predator'
-      - name: 'ordinary webkit #08 native-0'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-08-native-0'
-      - name: 'ordinary webkit #08 native-1'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-08-native-1'
-      - name: 'ordinary webkit #08 native-10'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-08-native-10'
-      - name: 'ordinary webkit #08 lane'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-08-lane'
-      - name: 'ordinary webkit #08 white'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-08-white'
-      - name: 'ordinary webkit #08 sakura'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-08-sakura'
-      - name: 'ordinary webkit #08 cinnamon'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-08-cinnamon'
-      - name: 'ordinary webkit #08 silver'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-08-silver'
-      - name: 'ordinary webkit #08 visitor'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-08-visitor'
-      - name: 'ordinary webkit #08 predator'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-08-predator'
-      - name: 'ordinary webkit #10 native-0'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-10-native-0'
-      - name: 'ordinary webkit #10 native-1'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-10-native-1'
-      - name: 'ordinary webkit #10 native-10'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-10-native-10'
-      - name: 'ordinary webkit #10 lane'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-10-lane'
-      - name: 'ordinary webkit #10 white'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-10-white'
-      - name: 'ordinary webkit #10 sakura'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-10-sakura'
-      - name: 'ordinary webkit #10 cinnamon'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-10-cinnamon'
-      - name: 'ordinary webkit #10 silver'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-10-silver'
-      - name: 'ordinary webkit #10 visitor'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-10-visitor'
-      - name: 'ordinary webkit #10 predator'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-10-predator'
-      - name: 'ordinary webkit #12 native-0'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-12-native-0'
-      - name: 'ordinary webkit #12 native-1'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-12-native-1'
-      - name: 'ordinary webkit #12 native-10'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-12-native-10'
-      - name: 'ordinary webkit #12 lane'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-12-lane'
-      - name: 'ordinary webkit #12 white'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-12-white'
-      - name: 'ordinary webkit #12 sakura'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-12-sakura'
-      - name: 'ordinary webkit #12 cinnamon'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-12-cinnamon'
-      - name: 'ordinary webkit #12 silver'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-12-silver'
-      - name: 'ordinary webkit #12 visitor'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-12-visitor'
-      - name: 'ordinary webkit #12 predator'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-12-predator'
-      - name: 'ordinary webkit #14 native-0'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-14-native-0'
-      - name: 'ordinary webkit #14 native-1'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-14-native-1'
-      - name: 'ordinary webkit #14 native-10'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-14-native-10'
-      - name: 'ordinary webkit #14 lane'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-14-lane'
-      - name: 'ordinary webkit #14 white'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-14-white'
-      - name: 'ordinary webkit #14 sakura'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-14-sakura'
-      - name: 'ordinary webkit #14 cinnamon'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-14-cinnamon'
-      - name: 'ordinary webkit #14 silver'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-14-silver'
-      - name: 'ordinary webkit #14 visitor'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-14-visitor'
-      - name: 'ordinary webkit #14 predator'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-14-predator'
-      - name: 'ordinary webkit #28 native-0'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-28-native-0'
-      - name: 'ordinary webkit #28 native-1'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-28-native-1'
-      - name: 'ordinary webkit #28 native-10'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-28-native-10'
-      - name: 'ordinary webkit #28 lane'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-28-lane'
-      - name: 'ordinary webkit #28 white'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-28-white'
-      - name: 'ordinary webkit #28 sakura'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-28-sakura'
-      - name: 'ordinary webkit #28 cinnamon'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-28-cinnamon'
-      - name: 'ordinary webkit #28 silver'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-28-silver'
-      - name: 'ordinary webkit #28 visitor'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-28-visitor'
-      - name: 'ordinary webkit #28 predator'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-28-predator'
-      - name: 'ordinary webkit #34 native-0'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-34-native-0'
-      - name: 'ordinary webkit #34 native-1'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-34-native-1'
-      - name: 'ordinary webkit #34 native-10'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-34-native-10'
-      - name: 'ordinary webkit #34 lane'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-34-lane'
-      - name: 'ordinary webkit #34 white'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-34-white'
-      - name: 'ordinary webkit #34 sakura'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-34-sakura'
-      - name: 'ordinary webkit #34 cinnamon'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-34-cinnamon'
-      - name: 'ordinary webkit #34 silver'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-34-silver'
-      - name: 'ordinary webkit #34 visitor'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-34-visitor'
-      - name: 'ordinary webkit #34 predator'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-34-predator'
-      - name: 'ordinary webkit #01 type-one-control'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-01-type-one-control'
-      - name: 'ordinary webkit #07 reduced-motion'
-        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
-        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-07-reduced-motion'
-
-      - name: Erase fixed ordinary verdicts after named checks
-        if: ${{ always() }}
-        run: rm -f "$RUNNER_TEMP/type2-ordinary-verdicts.json"
+        run: rm -rf -- "$RUNNER_TEMP/type2-checkpoints"
