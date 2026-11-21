@@ -1,16 +1,16 @@
-name: Type II fast bay-10-north QA (no deployment)
-run-name: Type II focused bay-10-north · ${{ github.sha }}
+name: Type II fast bay-10-census QA (no deployment)
+run-name: Type II focused bay-10-census · ${{ github.sha }}
 on:
   push:
     branches: [qa/type2-fast-bay-10-north]
 permissions:
   contents: read
 concurrency:
-  group: type2-fast-bay-10-north-${{ github.ref }}
+  group: type2-fast-bay-10-census-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   visitor:
-    name: 'Type II bay-10-north · ${{ matrix.engine }}'
+    name: 'Type II bay-10-census · ${{ matrix.engine }}'
     if: github.ref == 'refs/heads/qa/type2-fast-bay-10-north'
     runs-on: ubuntu-24.04
     timeout-minutes: 14
@@ -66,57 +66,187 @@ jobs:
           rc=0
           TYPE2_CHECKPOINT_DIR="$dir" npx playwright test tests/browser/garden-trail-10-north.spec.js --project="$ENGINE" --retries=0 --max-failures=0 --trace=off --reporter=dot || rc="$?"
           test "$rc" -le 1
-          node -e 'const f=require("fs");const [d,e,q]=process.argv.slice(1);for(const [k,choices] of JSON.parse(q))if(!choices.includes(f.readFileSync(d+"/"+e+"-"+k,"utf8").trim()))process.exit(1);' "$dir" "$ENGINE" '[["10-north",["pass","setup","native-gates","native-hits","fly-after-bay","bay-missing","fly-missing","fly-phases","same-landing","landing-tap"]]]'
-      - name: '#10 north pair complete'
+          node -e 'const f=require("fs");const [d,e,q]=process.argv.slice(1);for(const [k,choices] of JSON.parse(q))if(!choices.includes(f.readFileSync(d+"/"+e+"-"+k,"utf8").trim()))process.exit(1);' "$dir" "$ENGINE" '[["10-early",["pass","setup","not-ready","scene-identity","roster-mismatch","actor-unbound","unbound-placement","unbound-geometry","unbound-frame","unbound-space","unbound-recovery","already-bay","both-gates-missing","gate-a-missing","gate-b-missing","both-hits-denied","gate-a-hit-denied","gate-b-hit-denied"]],["10-late",["pass","setup","not-ready","scene-identity","roster-mismatch","actor-unbound","unbound-placement","unbound-geometry","unbound-frame","unbound-space","unbound-recovery","already-bay","both-gates-missing","gate-a-missing","gate-b-missing","both-hits-denied","gate-a-hit-denied","gate-b-hit-denied"]]]'
+      - name: '#10 early census complete'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
-        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-north")" = pass
-      - name: '#10 north pair not setup'
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-early")" = pass
+      - name: '#10 early census not setup'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
-        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-north")" != "setup"
-      - name: '#10 north pair not native-gates'
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-early")" != "setup"
+      - name: '#10 early census not not-ready'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
-        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-north")" != "native-gates"
-      - name: '#10 north pair not native-hits'
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-early")" != "not-ready"
+      - name: '#10 early census not scene-identity'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
-        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-north")" != "native-hits"
-      - name: '#10 north pair not fly-after-bay'
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-early")" != "scene-identity"
+      - name: '#10 early census not roster-mismatch'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
-        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-north")" != "fly-after-bay"
-      - name: '#10 north pair not bay-missing'
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-early")" != "roster-mismatch"
+      - name: '#10 early census not actor-unbound'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
-        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-north")" != "bay-missing"
-      - name: '#10 north pair not fly-missing'
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-early")" != "actor-unbound"
+      - name: '#10 early census not unbound-placement'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
-        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-north")" != "fly-missing"
-      - name: '#10 north pair not fly-phases'
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-early")" != "unbound-placement"
+      - name: '#10 early census not unbound-geometry'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
-        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-north")" != "fly-phases"
-      - name: '#10 north pair not same-landing'
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-early")" != "unbound-geometry"
+      - name: '#10 early census not unbound-frame'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
-        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-north")" != "same-landing"
-      - name: '#10 north pair not landing-tap'
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-early")" != "unbound-frame"
+      - name: '#10 early census not unbound-space'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
-        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-north")" != "landing-tap"
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-early")" != "unbound-space"
+      - name: '#10 early census not unbound-recovery'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-early")" != "unbound-recovery"
+      - name: '#10 early census not already-bay'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-early")" != "already-bay"
+      - name: '#10 early census not both-gates-missing'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-early")" != "both-gates-missing"
+      - name: '#10 early census not gate-a-missing'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-early")" != "gate-a-missing"
+      - name: '#10 early census not gate-b-missing'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-early")" != "gate-b-missing"
+      - name: '#10 early census not both-hits-denied'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-early")" != "both-hits-denied"
+      - name: '#10 early census not gate-a-hit-denied'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-early")" != "gate-a-hit-denied"
+      - name: '#10 early census not gate-b-hit-denied'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-early")" != "gate-b-hit-denied"
+      - name: '#10 late census complete'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-late")" = pass
+      - name: '#10 late census not setup'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-late")" != "setup"
+      - name: '#10 late census not not-ready'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-late")" != "not-ready"
+      - name: '#10 late census not scene-identity'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-late")" != "scene-identity"
+      - name: '#10 late census not roster-mismatch'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-late")" != "roster-mismatch"
+      - name: '#10 late census not actor-unbound'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-late")" != "actor-unbound"
+      - name: '#10 late census not unbound-placement'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-late")" != "unbound-placement"
+      - name: '#10 late census not unbound-geometry'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-late")" != "unbound-geometry"
+      - name: '#10 late census not unbound-frame'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-late")" != "unbound-frame"
+      - name: '#10 late census not unbound-space'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-late")" != "unbound-space"
+      - name: '#10 late census not unbound-recovery'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-late")" != "unbound-recovery"
+      - name: '#10 late census not already-bay'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-late")" != "already-bay"
+      - name: '#10 late census not both-gates-missing'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-late")" != "both-gates-missing"
+      - name: '#10 late census not gate-a-missing'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-late")" != "gate-a-missing"
+      - name: '#10 late census not gate-b-missing'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-late")" != "gate-b-missing"
+      - name: '#10 late census not both-hits-denied'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-late")" != "both-hits-denied"
+      - name: '#10 late census not gate-a-hit-denied'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-late")" != "gate-a-hit-denied"
+      - name: '#10 late census not gate-b-hit-denied'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-late")" != "gate-b-hit-denied"
       - name: Clear temporary receipts only
         if: ${{ always() }}
         run: rm -rf -- "$RUNNER_TEMP/type2-focused-receipts"
