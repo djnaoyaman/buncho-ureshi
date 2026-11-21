@@ -3,7 +3,7 @@ import {inside} from './garden-terrain-plan.js';
 import {createGardenActors} from './garden-actor-state.js';
 import {trailTerrainFor} from './data/garden-trail-terrain.js';
 import {createGardenTrailRuntime} from './garden-trail-runtime.js';
-import {assignTrailSeats,measuredNativeFoot,packTrailStandingSeats} from './garden-trail-clearance.js';
+import {assignTrailSeats,measuredNativeFoot,packTrailStandingSeats,pitchTrailStandingSeats} from './garden-trail-clearance.js';
 import {createActorFlight} from './garden-actor-flight.js';
 
 export function actorTerrainForStage(stage){
@@ -354,7 +354,20 @@ export function createGardenActorMotion(root){
     for(const [id,s] of partial)if(!placed.has(id))placed.set(id,{...byId.get(id),p:s.p,route:null});
     return trailRuntime.canPlace(d,n,placed);
    }};
-   planned=peers.size?assignTrailSeats(input):packTrailStandingSeats({...input,standingPairFits:trailRuntime.standingPairFits,standingClass:a=>measurement?.footprints.get(a.id)});
+   if(peers.size){
+    planned=assignTrailSeats(input);
+   }else{
+    const measured={...input,standingPairFits:trailRuntime.standingPairFits,standingClass:a=>measurement?.footprints.get(a.id)};
+    if(roster.length>=7&&measurement){
+     planned=pitchTrailStandingSeats({...measured,...measurement,knownSeats:input.seats,surface:terrain.surface,baseWidth:actorWidth,baseHeight:actorWidth*1000/850,
+      safePoint:q=>safePoint(q,actorWidth,actorWidth*1000/850)});
+     if(planned){
+      const existing=new Set(layoutNodes.map(n=>n.id));
+      for(const n of planned.values())if(!existing.has(n.id)){trailPads.push(n);layoutNodes.push(n);existing.add(n.id);}
+     }
+    }
+    if(!planned)planned=packTrailStandingSeats(measured);
+   }
    if(!planned)return reject('trail-blocked-placement');
   }
   model.reconcile(roster,trailRuntime?[...footholds,...trailPads]:footholds,(d,n,actors)=>{

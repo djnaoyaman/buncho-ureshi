@@ -249,3 +249,103 @@ export function packTrailStandingSeats({actors,seats,preferred,canPlace,standing
  }
  return fill(actors)?plan:null;
 }
+
+// Try coherent dense layouts before the much larger fine lattice. Pitches
+// come from current native controls, not a wider website viewport or a
+// smaller effective tap target. These points are suggestions: every seat,
+// every peer pair, and the final complete native admission are unchanged.
+export function pitchTrailStandingSeats({actors,plane,clip,surface,footprints,baseWidth,baseHeight,canPlace,standingPairFits,accept,safePoint,knownSeats=[],maxChecks=18000,maxProbes=3}){
+ if(actors.length<7||!Number.isFinite(baseWidth+baseHeight)||!(baseWidth>=44&&baseHeight>=44)||!(plane.width>0&&plane.height>0))return null;
+ if(actors.some(a=>!footprints.has(a.id)))return null;
+ const minX=Math.max(clip.left,Math.min(...surface.map(p=>plane.left+p[0]*plane.width)));
+ const minY=Math.max(clip.top,Math.min(...surface.map(p=>plane.top+p[1]*plane.height)));
+ const maxX=Math.min(clip.right,Math.max(...surface.map(p=>plane.left+p[0]*plane.width)));
+ const maxY=Math.min(clip.bottom,Math.max(...surface.map(p=>plane.top+p[1]*plane.height)));
+ const typical=(list,fallback)=>{
+  const values=list.filter(Number.isFinite).sort((a,b)=>a-b);
+  return values[Math.floor(values.length/2)]??fallback;
+ };
+ const shapes=actors.map(a=>footprints.get(a.id)),width=typical(shapes.map(s=>s.right-s.left),baseWidth);
+ // The lower invisible skirt remains protected for clip, controls, and
+ // moving birds, but is not part of the resting peer measurement.
+ const paintedHeight=typical(shapes.map(s=>s.parts?.length?
+  Math.max(...s.parts.map(q=>q.bottom))-Math.min(...s.parts.map(q=>q.top)):s.bottom-s.top),baseHeight);
+ const pointKey=p=>p.map(x=>x.toFixed(8)).join(':');
+ const seeds=[],seen=new Set(),known=new Map(knownSeats.map(n=>[pointKey(n.p),n]));
+ // Offset both axes relative to this garden's visible terrain, not the
+ // viewport origin. A stagger explores diagonal space left between rows.
+ for(const [dx,dy,stagger] of [
+  [baseWidth+1,baseHeight+1,0],[baseWidth+1,baseHeight+1,.5],
+  [baseWidth+1,paintedHeight+1,0],[baseWidth+1,paintedHeight+1,.5],
+  [width+1,baseHeight+1,.5],[width+1,paintedHeight+1,0],
+  [baseWidth+1,Math.max(37,baseHeight*.86),.5],[width+1,Math.max(37,baseHeight*.86),.5],
+ ]){
+  for(const fy of [0,.25,.5,.75])for(const fx of [0,.25,.5,.75]){
+   const seats=[];
+   for(let row=0,y=minY+dy*fy;y<=maxY;row++,y+=dy){
+    const phase=(fx+(row%2)*stagger)%1;
+    for(let x=minX+dx*phase;x<=maxX;x+=dx){
+     const p=[+((x-plane.left)/plane.width).toFixed(8),+((y-plane.top)/plane.height).toFixed(8)];
+     if(!inside(p,surface)||!safePoint(p))continue;
+     const key=pointKey(p);
+     if(!known.has(key))known.set(key,{id:'pitch:'+key,p});
+     seats.push(known.get(key));
+    }
+   }
+   if(seats.length<actors.length)continue;
+   const signature=seats.map(n=>n.id).join('|');
+   if(!seen.has(signature)){seen.add(signature);seeds.push(seats);}
+  }
+ }
+ // Fewer candidates per phase makes a fit fast; stable phase order is the
+ // second tie-break. The existing fine pack remains the final fallback.
+ seeds.sort((a,b)=>a.length-b.length);
+ const empty=new Map(),unary=new Map(),pair=new Map(),plan=new Map(),rejected=new Set();
+ let checks=0,probes=0,branches=0;
+ const admitted=(a,n)=>{
+  const key=JSON.stringify([a.id,n.id]);
+  if(unary.has(key))return unary.get(key);
+  if(++checks>maxChecks)return false;
+  const value=canPlace(a,n,empty);unary.set(key,value);return value;
+ };
+ const compatible=(a,n,b,m)=>{
+  if(n===m)return false;
+  const key=JSON.stringify([a.id,n.id,b.id,m.id]);
+  if(pair.has(key))return pair.get(key);
+  if(++checks>maxChecks)return false;
+  const value=standingPairFits(a,n,b,m);pair.set(key,value);return value;
+ };
+ function fill(open){
+  if(checks>=maxChecks||probes>=maxProbes||++branches>7000)return false;
+  if(!open.size){
+   const signature=JSON.stringify(actors.map(a=>plan.get(a.id).id));
+   if(rejected.has(signature)||actors.some(a=>++checks>maxChecks||!canPlace(a,plan.get(a.id),plan)))return false;
+   if(++probes<=maxProbes&&accept(plan))return true;
+   rejected.add(signature);return false;
+  }
+  let actor=null,choices=null;
+  for(const [a,ns] of open){
+   if(!ns.length)return false;
+   if(!choices||ns.length<choices.length){actor=a;choices=ns;}
+  }
+  for(const n of choices){
+   if(checks>=maxChecks||probes>=maxProbes||branches>7000)return false;
+   const next=new Map();
+   for(const [a,ns] of open)if(a!==actor){
+    const remaining=ns.filter(m=>compatible(actor,n,a,m));
+    if(!remaining.length)break;
+    next.set(a,remaining);
+   }
+   if(next.size!==open.size-1)continue;
+   plan.set(actor.id,n);
+   if(fill(next))return true;
+   plan.delete(actor.id);
+  }
+  return false;
+ }
+ for(const seedsOfPhase of seeds){
+  if(checks>=maxChecks||probes>=maxProbes||branches>7000)break;
+  if(fill(new Map(actors.map(a=>[a,seedsOfPhase.filter(n=>admitted(a,n))]))))return plan;
+ }
+ return null;
+}

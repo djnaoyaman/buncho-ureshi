@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import {createTrailClearance,packTrailStandingSeats} from '../src/garden-trail-clearance.js';
+import {trailTerrainFor} from '../src/data/garden-trail-terrain.js';
+import {createTrailClearance,packTrailStandingSeats,pitchTrailStandingSeats} from '../src/garden-trail-clearance.js';
 const plane={left:0,top:0,width:375,height:667};
 const part=(left,right,top,bottom)=>({left,right,top,bottom});
 const hit=part(-24,20,-50,2),label=part(15,35,3,14);
@@ -125,4 +126,25 @@ test('equal measured standers do not hide actor-specific real hits; unequal unar
  const resolved=packTrailStandingSeats({...common,canPlace:(x,n)=>x.id!==a.id||n===seats[1]});
  assert.equal(resolved.get(a.id),seats[1]);
  assert.equal(resolved.get(b.id),seats[0]);
+});
+
+
+test('measured standing pitch admits ten exact dry contacts while a misphased fine grid has none',()=>{
+ const actors=Array.from({length:10},(_,i)=>({id:'bird'+i}));
+ const calibrated=envelope;
+ const footprints=new Map(actors.map(a=>[a.id,calibrated]));
+ const scene=clearance(footprints),clip=part(0,375,0,667),surface=trailTerrainFor('bird-zebra-finch').surface;
+ const standingPairFits=(a,n,b,m)=>!scene.placementConflicts({...a,p:n.p},{...b,p:m.p});
+ const canPlace=(a,n,others)=>scene.canStand(a,n.p)&&[...others].every(([id,b])=>id===a.id||standingPairFits(a,n,{id},b));
+ const misphased=[.359,.423,.487,.551,.615,.679].flatMap(x=>[.634,.673,.712,.751].map(y=>[x,y])).map((p,i)=>({id:'fine:'+i,p}));
+ assert.equal(packTrailStandingSeats({actors,seats:misphased,preferred:new Map(),standingPairFits,standingClass:()=>calibrated,canPlace}),null);
+ let nativeChecks=0;
+ const input={actors,plane,clip,surface,footprints,baseWidth:44,baseHeight:52,canPlace,standingPairFits,safePoint:p=>scene.canStand(actors[0],p)};
+ const plan=pitchTrailStandingSeats({...input,accept(full){nativeChecks++;return full.size===10;}});
+ assert.equal(plan?.size,10);
+ assert.ok(actors.every(a=>canPlace(a,plan.get(a.id),plan)));
+ assert.equal(nativeChecks,1);
+ assert.deepEqual(pitchTrailStandingSeats({...input,accept:()=>true}),plan);
+ assert.equal(pitchTrailStandingSeats({...input,maxProbes:1,accept:()=>false}),null);
+ assert.equal(pitchTrailStandingSeats({...input,safePoint:()=>false,accept:()=>true}),null);
 });
