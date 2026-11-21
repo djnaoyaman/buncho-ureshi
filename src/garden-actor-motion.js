@@ -452,12 +452,13 @@ export function createGardenActorMotion(root){
      model.advance(elapsed,layoutNodes,{...environment,safe:()=>false});
      trailRuntime.sync({generation:key,measurement,predator});
      if(elapsed>=nextTrail){
-      for(const a of model.actors.values())if(!a.route&&a.movable&&(a.node==='A'||a.node==='B')){
+      let started=roster.length===1?trailRuntime.singletonInterior({paintable:routeFits,resumeOnly:true}):null;
+      if(!started)for(const a of model.actors.values())if(!a.route&&a.movable&&(a.node==='A'||a.node==='B')){
        if(a.initialFlight&&!a.canFly&&model.time<a.initialFlightDeadline)continue;
        if(a.canFly&&(!trailRetry||roster.length===1))trailRuntime.request(a.id,'fly');else trailRuntime.request(a.id,'walk');
        break;
       }
-      let started=trailRuntime.run();
+      if(!started)started=trailRuntime.run();
       if(!started&&roster.length===1)started=trailRuntime.singletonFlight(layoutNodes,{paintable:routeFits});
       if(!started&&roster.length===1)started=trailRuntime.singletonInterior({paintable:routeFits});
       // A lone actor seated off the authored terminal (e.g. the dock blocks

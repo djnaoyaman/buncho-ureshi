@@ -104,3 +104,45 @@ test('interior remedy is solo-only and untouched off #10/#14; explicit paint fai
  assert.equal(rt.singletonInterior({paintable:()=>false}),null);
  assert.deepEqual(a,before);assert.equal(m.reservations.size,0);
 });
+
+test('#14 pending solo pair survives fresh measured bindings and native hop cooldown',()=>{
+ const {m,rt,measurement,a}=edgeSingleton('bird-long-tailed-paradise-whydah');
+ const ingress=rt.singletonInterior();
+ assert.ok(ingress?.ingress);
+ // New rendered DOM delivers fresh measured maps in the same garden both
+ // during ingress and while the original native eight-second cooldown runs.
+ rt.sync({generation:1,measurement:structuredClone(measurement)});
+ assert.equal(rt.singletonInterior({resumeOnly:true})?.action,'wait');
+ m.advance(2000,[],{safe:()=>false});
+ assert.equal(a.node,ingress.target);
+ assert.equal(a.phase,'ground');
+ assert.equal(a.cooldown,10000);
+ for(const now of [3100,6100,9100]){
+  m.advance(now,[],{safe:()=>false});
+  rt.sync({generation:1,measurement:structuredClone(measurement)});
+  assert.equal(rt.singletonInterior({resumeOnly:true})?.action,'wait');
+  assert.equal(a.node,ingress.target);
+  assert.equal(m.reservations.size,0);
+ }
+ m.advance(10000,[],{safe:()=>false});
+ const takeoff=rt.singletonInterior({resumeOnly:true});
+ assert.equal(takeoff?.action,'fly');
+ assert.equal(m.reservations.get(takeoff.target),id);
+ const phases=new Set();
+ for(let t=10000;t<=14500&&a.route;t+=40){m.advance(t,[],{safe:()=>false});if(a.state==='fly')phases.add(a.phase);}
+ assert.ok(['rise','flap','contact'].every(phase=>phases.has(phase)));
+ assert.equal(a.node,takeoff.target);
+ assert.equal(m.reservations.size,0);
+});
+test('pending solo flight rechecks changed native controls and can never commit an unsafe cached reservation',()=>{
+ const {m,rt,measurement,a}=edgeSingleton('bird-long-tailed-paradise-whydah');
+ const ingress=rt.singletonInterior();assert.ok(ingress?.ingress);
+ m.advance(2000,[],{safe:()=>false});assert.equal(a.node,ingress.target);
+ m.advance(10000,[],{safe:()=>false});
+ const changed={...measurement,controls:[{left:0,top:0,right:402,bottom:874}]};
+ rt.sync({generation:1,measurement:changed});
+ const before=structuredClone(a);
+ assert.equal(rt.singletonInterior({resumeOnly:true}),null);
+ assert.deepEqual(a,before);
+ assert.equal(m.reservations.size,0);
+});

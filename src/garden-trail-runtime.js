@@ -44,7 +44,12 @@ export function createGardenTrailRuntime(id,model){
   sync({generation,measurement,actors=[...model.actors.values()],predator=false}){
    // Host must disposition any prior active routes before advancing epochs;
    // a null/unsafe measurement pauses new movement, not natural game events.
-   if(current!==measurement||actors.length!==1||predator){interior=null;interiorMiss=null;}
+   if(current!==measurement||actors.length!==1||predator)interiorMiss=null;
+   // A routine native redraw may resample the identical standing contact.
+   // Keep the plan for the same bird until it can revalidate the latest layout.
+   const [solo]=actors;
+   if(interior&&(actors.length!==1||predator||!measurement?.envelope||solo.id!==interior.id||
+      (solo.route?solo.route.target!==interior.source:solo.node!==interior.source)))interior=null;
    epoch=generation;current=measurement;
    proven=current?.envelope?createTrailClearance(id,current):null;
    const state=adapter.sync({epoch,actors,predator:predator||!proven});
@@ -92,9 +97,12 @@ export function createGardenTrailRuntime(id,model){
   // Two edge-gated surveys can have a legal standing contact where their
   // full flight envelope cannot launch. Find a dry interior pair, optionally
   // moving the same bird there via a separately reserved native ingress hop.
-  singletonInterior({paintable=()=>true}={}){
+  singletonInterior({paintable=()=>true,resumeOnly=false}={}){
    const [a]=model.actors.values();
-   if(!allowInterior||!proven||model.actors.size!==1||!a?.movable||!a.canFly||a.route||a.phase!=='ground')return null;
+   if(!allowInterior||!proven||model.actors.size!==1||!a?.movable)return null;
+   const pending=interior?.id===a.id&&(a.route?.target??a.node)===interior.source;
+   if(pending&&(a.route||!a.canFly||a.phase!=='ground'||model.time<a.cooldown))return {id:a.id,action:'wait'};
+   if((resumeOnly&&!pending)||!a.canFly||a.route||a.phase!=='ground')return null;
    const plane=current.plane,here={id:a.node,p:a.p};
    const delta=(u,v)=>Math.hypot((u.p[0]-v.p[0])*plane.width,(u.p[1]-v.p[1])*plane.height);
    const permitted=(c,n,k,peers)=>{
@@ -107,10 +115,9 @@ export function createGardenTrailRuntime(id,model){
     if(!model.beginFlightPath(a.id,n,[a.p,n.p],env))return null;
     localFlightId=a.id;return {id:a.id,target:n.id,action:'fly'};
    };
-   if(interior?.source===a.node){
-    if(model.time<a.cooldown)return {id:a.id,action:'wait'};
+   if(pending){
     const {target}=interior;interior=null;
-    const launched=fly(target);if(launched)return launched;
+    const launched=fly(target);if(launched||resumeOnly)return launched;
    }
    if(model.time<a.cooldown||interiorMiss===a.node)return null;
    const xs=terrain.surface.map(p=>p[0]*plane.width),ys=terrain.surface.map(p=>p[1]*plane.height);
@@ -136,7 +143,7 @@ export function createGardenTrailRuntime(id,model){
      if(!flight||!permitted(flight,target,'fly',model.actors))continue;
      if(!model.beginHopPath(a.id,ingress,[a.p,ingress.p],env))continue;
      localFlightId=a.id;
-     interior={source:ingress.id,target};
+     interior={id:a.id,source:ingress.id,target};
      return {id:a.id,target:ingress.id,action:'hop',ingress:true};
     }
    }

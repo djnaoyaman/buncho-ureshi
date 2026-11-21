@@ -9,8 +9,8 @@ const gardens=[['10','bird-tricolored-munia'],['14','bird-long-tailed-paradise-w
 const hooks=[
  ['let current=null,proven=null,epoch=null,lastLocal=null,localFlightId=null,interior=null,interiorMiss=null;',
   "let current=null,proven=null,epoch=null,lastLocal=null,localFlightId=null,interior=null,interiorMiss=null;\n const marks=globalThis.__trialStageMarks={called:false,eligible:false,pair:false,sweep:false,sampled:false,adapter:false,ingress:false,flight:false};"],
- ['singletonInterior({paintable=()=>true}={}){\n   const [a]=model.actors.values();',
-  'singletonInterior({paintable=()=>true}={}){\n   marks.called=true;const [a]=model.actors.values();'],
+ ['singletonInterior({paintable=()=>true,resumeOnly=false}={}){\n   const [a]=model.actors.values();',
+  'singletonInterior({paintable=()=>true,resumeOnly=false}={}){\n   marks.called=true;const [a]=model.actors.values();'],
  ['   const plane=current.plane,here={id:a.node,p:a.p};',
   '   marks.eligible=true;const plane=current.plane,here={id:a.node,p:a.p};'],
  ['if(!proven.safe(c,n,k,peers)||!paintable(c))return false;\n    const spans=proven.sweptRoute(c);\n    return !!spans&&adapter.canPlace({spans});',
@@ -22,8 +22,24 @@ const hooks=[
  ['     if(!model.beginHopPath(a.id,ingress,[a.p,ingress.p],env))continue;\n     localFlightId=a.id;',
   '     if(!model.beginHopPath(a.id,ingress,[a.p,ingress.p],env))continue;\n     marks.ingress=true;localFlightId=a.id;'],
 ];
-function overlay(source){
- for(const [before,after] of hooks){
+const schedulerHooks=[
+ ['if(elapsed>=nextTrail){',
+  `if(elapsed>=nextTrail){
+      if(roster.length===1&&stage.dataset.gardenId==='bird-tricolored-munia'){
+       const [a]=model.actors.values(),m=globalThis.__trialSchedulerMarks??={};
+       m.decision=true;
+       m.adult ||= roster[0]?.initialFlight===true;
+       m.assetReady ||= a?.canFly===true;
+       m.grounded ||= !!a?.movable&&!a.route&&a.phase==='ground';
+       m.flightWindow ||= !!a?.movable&&a.canFly&&!a.route&&a.phase==='ground'&&model.time>=a.cooldown;
+      }`],
+ ['if(!started)started=trailRuntime.run();',
+  "if(!started){started=trailRuntime.run();if(started?.action==='walk'&&globalThis.__trialSchedulerMarks)globalThis.__trialSchedulerMarks.laneWalk=true;}"],
+ ['if(!started&&roster.length===1)started=trailRuntime.localHop(layoutNodes,{singletonIngress:true});',
+  "if(!started&&roster.length===1){started=trailRuntime.localHop(layoutNodes,{singletonIngress:true});if(started?.action==='hop'&&globalThis.__trialSchedulerMarks)globalThis.__trialSchedulerMarks.genericHop=true;}"],
+];
+function overlay(source,points=hooks){
+ for(const [before,after] of points){
   expect(source.split(before).length,'exact reviewed runtime hook').toBe(2);
   source=source.replace(before,after);
  }
@@ -38,6 +54,9 @@ for(const [n,garden] of gardens)test(`#${n} one play, bounded private stage verd
  await page.route(/\/src\/garden-trail-runtime\.js(?:\?.*)?$/,async route=>{
   const response=await route.fetch();await route.fulfill({response,body:overlay(await response.text())});
  });
+ if(n==='10')await page.route(/\/src\/garden-actor-motion\.js(?:\?.*)?$/,async route=>{
+  const response=await route.fetch();await route.fulfill({response,body:overlay(await response.text(),schedulerHooks)});
+ });
  await setup(page,garden,402,true,true,{trailPreview:true,leadColor:'white',height:874,afterOpenMs:0});
  for(let step=0;step<240;step++){
   await page.clock.runFor(100);
@@ -49,9 +68,9 @@ for(const [n,garden] of gardens)test(`#${n} one play, bounded private stage verd
     native:!!hit&&bird.contains(hit)&&bird.dataset.gardenActorId==='b1'&&rect.width>=43.99&&rect.height>=43.99&&stage.querySelectorAll('.finch-garden-image-plane > button').length===1,
     state:bird?.dataset.actorState,phase:bird?.dataset.actorPhase,site:bird?.dataset.actorNode,target:bird?.dataset.actorLanding,
     frame:art&&white&&getComputedStyle(art).visibility==='visible'&&getComputedStyle(white).visibility==='visible'&&white.complete&&white.naturalWidth>0?white.getAttribute('data-frame'):null,
-    marks:globalThis.__trialStageMarks};
+    marks:globalThis.__trialStageMarks,scheduler:globalThis.__trialSchedulerMarks};
   });
-  for(const [key,v] of Object.entries(s.marks??{}))marks[key] ||= v===true;
+  for(const [key,v] of Object.entries({...s.marks,...s.scheduler}))marks[key] ||= v===true;
   ready ||= s.ready===true;
   if(ready)native &&= s.native===true;
   if(!ingress&&s.state==='hop'&&s.target?.startsWith('interior:'))ingress=s.target;
@@ -69,6 +88,14 @@ for(const [n,garden] of gardens)test(`#${n} one play, bounded private stage verd
  const direct=flight&&!ingress&&!marks.ingress;
  const result={
   ready:status(ready),native:status(ready&&native,ready),
+  called:status(marks.called,ready),
+  'decision':status(marks.decision,ready),
+  'adult':status(marks.adult,marks.decision),
+  'asset-ready':status(marks.assetReady,marks.decision),
+  'grounded':status(marks.grounded,marks.decision),
+  'flight-window':status(marks.flightWindow,marks.decision),
+  'lane-walk':status(marks.laneWalk,marks.decision),
+  'generic-hop':status(marks.genericHop,marks.decision),
   eligible:status(marks.eligible||direct,ready),
   'pair-offered':status(marks.pair||direct,marks.eligible),
   swept:status(marks.sweep||direct,marks.pair),
