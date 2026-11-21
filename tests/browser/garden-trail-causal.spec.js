@@ -72,9 +72,56 @@ test('08 opt-in #07 reaches all ten real native identities', {tag:'@causal-maxim
  const s=await snapshotGarden(page);
  assertGardenIdentities(s.birds,10);
 });
+async function instrumentMaximum(page){
+ await page.addInitScript(()=>{globalThis.__trailMaxProbe={runs:[],current:null};});
+ const files={
+  'garden-actor-motion':[
+   ["planned=peers.size?assignTrailSeats(input):packTrailStandingSeats(input);",
+    "const trace=globalThis.__trailMaxProbe; const probe={actors:roster.length,seats:input.seats.length,peers:peers.size, causes:{}, choices:[], native:[]}; trace.runs.push(probe); trace.current=probe; try{planned=peers.size?assignTrailSeats(input):packTrailStandingSeats(input);}finally{trace.current=null;} probe.planned=planned?.size??0;"],
+   ["if(trailRuntime&&model.actors.size!==roster.length)return reject('trail-blocked-placement');",
+    "if(trailRuntime&&planned){const last=globalThis.__trailMaxProbe.runs.at(-1); if(last)last.reconciled=model.actors.size;} if(trailRuntime&&model.actors.size!==roster.length)return reject('trail-blocked-placement');"],
+   ["if(r.width<43.99||r.height<43.99||!hit||!node.contains(hit))return false;",
+    "if(r.width<43.99||r.height<43.99||!hit||!node.contains(hit)){globalThis.__trailMaxProbe.current?.native.push(r.width<43.99||r.height<43.99?'size':!hit?'no-hit':hit.closest('.finch-garden-image-plane > button')?'bird-hit':'other-hit'); return false;}"],
+   ["return true;\n   }finally{\n    for(const [node,style]of saved)",
+    "globalThis.__trailMaxProbe.current?.native.push('accepted'); return true;\n   }finally{\n    for(const [node,style]of saved)"],
+  ],
+  'garden-trail-clearance':[
+   ['choices.set(a.id,ordered.filter(n=>check(a,n,safe)));',
+    'choices.set(a.id,ordered.filter(n=>check(a,n,safe))); globalThis.__trailMaxProbe.current?.choices.push(choices.get(a.id).length);'],
+   ['return fill(actors)?plan:null;',
+    'const result=fill(actors)?plan:null; const t=globalThis.__trailMaxProbe.current;if(t)Object.assign(t,{checks,probes,maxChecks,maxProbes}); return result;'],
+   ['return assign(0)?plan:null;',
+    'const result=assign(0)?plan:null; const t=globalThis.__trailMaxProbe.current;if(t)Object.assign(t,{checks:tries,probes,maxChecks:maxTries,maxProbes}); return result;'],
+  ],
+  'garden-trail-runtime':[
+   ['if(!proven||!proven.canStand(actor,node.p))return false;',
+    "const mark=kind=>{const t=globalThis.__trailMaxProbe.current;if(t){const k=(peers.size?'partial-':'empty-')+kind;t.causes[k]=(t.causes[k]??0)+1;}}; if(!proven||!proven.canStand(actor,node.p)){mark('canStand'); return false;}"],
+   ['if(!s)return false;','if(!s){mark("swept"); return false;}'],
+   ['for(const p of peers.values())if(p.id!==actor.id&&proven.placementConflicts(candidate,p))return false;',
+    "for(const p of peers.values())if(p.id!==actor.id&&proven.placementConflicts(candidate,p)){mark('peer'); return false;}"],
+   ['return adapter.canPlace({spans:s});',
+    "const ok=adapter.canPlace({spans:s}); mark(ok?'accepted':'lane'); return ok;"],
+  ],
+ };
+ for(const [name,replacements] of Object.entries(files))await page.route(new RegExp('/src/'+name+'\\.js(?:\\?.*)?$'),async route=>{
+  const response=await route.fetch();let body=await response.text();
+  for(const [before,after] of replacements){
+   expect(body.split(before),name+' exact instrumentation anchor '+before).toHaveLength(2);
+   body=body.replace(before,after);
+  }
+  await route.fulfill({response,body});
+ });
+}
+
 test('09 opt-in #07 maximum measured unobstructed 44px hits', {tag:'@causal-maximum-fit'},async({page})=>{
+ if(process.env.TRAIL_STAGE_TELEMETRY==='1')await instrumentMaximum(page);
  await setup(page,trail,375,true,'maximum',{...config,height:667});await page.clock.runFor(1000);
  const s=await snapshotGarden(page);
+ if(process.env.TRAIL_STAGE_TELEMETRY==='1'){
+  const runs=await page.evaluate(()=>globalThis.__trailMaxProbe.runs);
+  expect(runs.some(r=>r.actors===10),'instrumented a full native roster').toBe(true);
+  test.info().annotations.push({type:'trail-stage',description:JSON.stringify({motion:s.motion,runs:runs.filter(r=>r.actors===10)})});
+ }
  assertGardenIdentities(s.birds,10);
  expect(s.motion).toMatch(/^trail-(active|held|standing)$/);
  for(const b of s.birds)checkHit(b);
