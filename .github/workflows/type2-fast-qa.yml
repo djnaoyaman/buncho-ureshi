@@ -1,0 +1,312 @@
+name: Type II fast palette QA (no deployment)
+run-name: Type II focused palette · ${{ github.sha }}
+on:
+  push:
+    branches: [qa/type2-fast-palette]
+permissions:
+  contents: read
+concurrency:
+  group: type2-fast-palette-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  visitor:
+    name: 'Type II palette · ${{ matrix.engine }}'
+    if: github.ref == 'refs/heads/qa/type2-fast-palette'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 14
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chrome, webkit]
+    container:
+      image: mcr.microsoft.com/playwright:v1.64.1-noble
+    steps:
+      - name: Check out the exact non-release source
+        id: source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify fixture and install pinned dependencies
+        env:
+          SOURCE_SHA: ${{ steps.source.outputs.commit }}
+        run: |
+          set -eu
+          test "$SOURCE_SHA" = "$GITHUB_SHA"
+          node --check tests/browser/garden-trail-08-flight-route.spec.js
+          node --check tests/browser/garden-trail-seven.spec.js
+          npm ci
+          node -e "if(require('@playwright/test/package.json').version !== '1.64.1') process.exit(1)"
+      - name: Build the exact game under test
+        run: npm run build
+      - name: Install only the actual Chrome binary when selected
+        if: matrix.engine == 'chrome'
+        timeout-minutes: 4
+        run: |
+          set -eu
+          curl --fail --location --retry 2 --max-time 100 https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb --output /tmp/google-chrome.deb
+          dpkg-deb --extract /tmp/google-chrome.deb /
+          ldd /opt/google/chrome/chrome > /tmp/chrome-libraries.txt
+          if grep -q 'not found' /tmp/chrome-libraries.txt; then exit 1; fi
+          /opt/google/chrome/chrome --version
+      - name: Discover and run only this affected cohort
+        id: focused
+        timeout-minutes: 7
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: |
+          set -eu
+          dir="$RUNNER_TEMP/type2-focused-receipts"
+          mkdir -m 700 "$dir"
+          report="$(npx playwright test tests/browser/garden-trail-08-flight-route.spec.js --project="$ENGINE" --list)"
+          printf '%s\n' "$report" | grep -Eq '^Total: 4 tests in 1 file$'
+          rc=0
+          TYPE2_CHECKPOINT_DIR="$dir" npx playwright test tests/browser/garden-trail-08-flight-route.spec.js --project="$ENGINE" --retries=0 --max-failures=0 --trace=off --reporter=dot || rc="$?"
+          test "$rc" -le 1
+          node -e 'const f=require("fs");const [d,e,q]=process.argv.slice(1);for(const [k,choices] of JSON.parse(q))if(!choices.includes(f.readFileSync(d+"/"+e+"-"+k,"utf8").trim()))process.exit(1);' "$dir" "$ENGINE" '[["08-route-white",["pass","setup","launch-timeout","completion-timeout","geometry-rejected","scene-replaced","rerouted","wrong-contact","phase-absent","paint-not-visible-decoded","landing-native","pass-late-contact"]],["08-route-sakura",["pass","setup","launch-timeout","completion-timeout","geometry-rejected","scene-replaced","rerouted","wrong-contact","phase-absent","paint-not-visible-decoded","landing-native","pass-late-contact"]],["08-route-cinnamon",["pass","setup","launch-timeout","completion-timeout","geometry-rejected","scene-replaced","rerouted","wrong-contact","phase-absent","paint-not-visible-decoded","landing-native","pass-late-contact"]],["08-route-silver",["pass","setup","launch-timeout","completion-timeout","geometry-rejected","scene-replaced","rerouted","wrong-contact","phase-absent","paint-not-visible-decoded","landing-native","pass-late-contact"]]]'
+      - name: '#08 white complete'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-white")" = pass || test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-white")" = pass-late-contact
+      - name: '#08 white not setup'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-white")" != "setup"
+      - name: '#08 white not launch-timeout'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-white")" != "launch-timeout"
+      - name: '#08 white not completion-timeout'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-white")" != "completion-timeout"
+      - name: '#08 white not geometry-rejected'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-white")" != "geometry-rejected"
+      - name: '#08 white not scene-replaced'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-white")" != "scene-replaced"
+      - name: '#08 white not rerouted'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-white")" != "rerouted"
+      - name: '#08 white not wrong-contact'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-white")" != "wrong-contact"
+      - name: '#08 white not phase-absent'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-white")" != "phase-absent"
+      - name: '#08 white not paint-not-visible-decoded'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-white")" != "paint-not-visible-decoded"
+      - name: '#08 white not landing-native'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-white")" != "landing-native"
+      - name: '#08 white not pass-late-contact'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-white")" != "pass-late-contact"
+      - name: '#08 sakura complete'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-sakura")" = pass || test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-sakura")" = pass-late-contact
+      - name: '#08 sakura not setup'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-sakura")" != "setup"
+      - name: '#08 sakura not launch-timeout'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-sakura")" != "launch-timeout"
+      - name: '#08 sakura not completion-timeout'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-sakura")" != "completion-timeout"
+      - name: '#08 sakura not geometry-rejected'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-sakura")" != "geometry-rejected"
+      - name: '#08 sakura not scene-replaced'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-sakura")" != "scene-replaced"
+      - name: '#08 sakura not rerouted'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-sakura")" != "rerouted"
+      - name: '#08 sakura not wrong-contact'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-sakura")" != "wrong-contact"
+      - name: '#08 sakura not phase-absent'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-sakura")" != "phase-absent"
+      - name: '#08 sakura not paint-not-visible-decoded'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-sakura")" != "paint-not-visible-decoded"
+      - name: '#08 sakura not landing-native'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-sakura")" != "landing-native"
+      - name: '#08 sakura not pass-late-contact'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-sakura")" != "pass-late-contact"
+      - name: '#08 cinnamon complete'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-cinnamon")" = pass || test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-cinnamon")" = pass-late-contact
+      - name: '#08 cinnamon not setup'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-cinnamon")" != "setup"
+      - name: '#08 cinnamon not launch-timeout'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-cinnamon")" != "launch-timeout"
+      - name: '#08 cinnamon not completion-timeout'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-cinnamon")" != "completion-timeout"
+      - name: '#08 cinnamon not geometry-rejected'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-cinnamon")" != "geometry-rejected"
+      - name: '#08 cinnamon not scene-replaced'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-cinnamon")" != "scene-replaced"
+      - name: '#08 cinnamon not rerouted'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-cinnamon")" != "rerouted"
+      - name: '#08 cinnamon not wrong-contact'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-cinnamon")" != "wrong-contact"
+      - name: '#08 cinnamon not phase-absent'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-cinnamon")" != "phase-absent"
+      - name: '#08 cinnamon not paint-not-visible-decoded'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-cinnamon")" != "paint-not-visible-decoded"
+      - name: '#08 cinnamon not landing-native'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-cinnamon")" != "landing-native"
+      - name: '#08 cinnamon not pass-late-contact'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-cinnamon")" != "pass-late-contact"
+      - name: '#08 silver complete'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-silver")" = pass || test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-silver")" = pass-late-contact
+      - name: '#08 silver not setup'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-silver")" != "setup"
+      - name: '#08 silver not launch-timeout'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-silver")" != "launch-timeout"
+      - name: '#08 silver not completion-timeout'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-silver")" != "completion-timeout"
+      - name: '#08 silver not geometry-rejected'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-silver")" != "geometry-rejected"
+      - name: '#08 silver not scene-replaced'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-silver")" != "scene-replaced"
+      - name: '#08 silver not rerouted'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-silver")" != "rerouted"
+      - name: '#08 silver not wrong-contact'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-silver")" != "wrong-contact"
+      - name: '#08 silver not phase-absent'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-silver")" != "phase-absent"
+      - name: '#08 silver not paint-not-visible-decoded'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-silver")" != "paint-not-visible-decoded"
+      - name: '#08 silver not landing-native'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-silver")" != "landing-native"
+      - name: '#08 silver not pass-late-contact'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-silver")" != "pass-late-contact"
+      - name: Clear temporary receipts only
+        if: ${{ always() }}
+        run: rm -rf -- "$RUNNER_TEMP/type2-focused-receipts"
