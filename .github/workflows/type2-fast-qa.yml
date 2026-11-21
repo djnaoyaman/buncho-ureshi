@@ -62,7 +62,7 @@ jobs:
           dir="$RUNNER_TEMP/type2-focused-receipts"
           mkdir -m 700 "$dir"
           report="$(npx playwright test tests/browser/garden-trail-08-visitor-proof.spec.js --project="$ENGINE" --list)"
-          printf '%s\n' "$report" | grep -Eq '^Total: 1 tests in 1 file$'
+          printf '%s\n' "$report" | grep -Eq '^Total: 1 test in 1 file$'
           rc=0
           TYPE2_CHECKPOINT_DIR="$dir" npx playwright test tests/browser/garden-trail-08-visitor-proof.spec.js --project="$ENGINE" --retries=0 --max-failures=0 --trace=off --reporter=dot || rc="$?"
           test "$rc" -le 1
