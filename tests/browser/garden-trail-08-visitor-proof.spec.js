@@ -86,6 +86,8 @@ test('#08 exact visitor while original route is reserved',fixed('08-arrival',asy
  mark('initial-flight');
  const pending=await nextFly(page);
  const kind=['A','B'].includes(pending.source)&&['A','B'].includes(pending.target)?'lane':'local';
+ mark('preferred-short-not-observed');
+ expect(kind).toBe('local');
  const identity=()=>page.evaluate(()=>{
   const s=document.querySelector('.finch-garden-stage'),b=s?.querySelector('[data-garden-household=b1]');
   return {world:s?.closest('.finch-garden')?.dataset.gardenWorld??null,garden:s?.dataset.gardenId??null,id:b?.dataset.gardenActorId??null,

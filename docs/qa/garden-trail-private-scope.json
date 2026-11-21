@@ -53,5 +53,12 @@
         "after": "06faf839e64e4bcc1f3c410cd29af214b9ff3c124c4f007b80913a2343c9f850"
       }
     }
+  },
+  "verifiedQaVisitorSafeLocalFlight": {
+    "baseCommit": "68dd69d2119666b3d27e5ee3f47a5455bf9b9d94",
+    "changedSource": {
+      "src/garden-actor-motion.js": "54b50f3793167324c9c9f619e0342f4c4bb32eaed33a6b33cdd1b96138230244",
+      "src/garden-trail-runtime.js": "e732df9d4110f0e5764ec7947bdcdba6ede4e215f82e3a6407fc6ee319be6895"
+    }
   }
 }

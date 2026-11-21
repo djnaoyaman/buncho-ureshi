@@ -11,7 +11,7 @@ export function createGardenTrailRuntime(id,model){
  const [A,B]=terrain.entryCandidates,[bay]=terrain.pullouts;
  const points=bay?{A,B,bay}:{A,B};
  const nodes=Object.fromEntries(Object.entries(points).map(([id,p])=>[id,{id,p}]));
- let current=null,proven=null,epoch=null,lastLocal=null,localFlightId=null,interior=null,interiorMiss=null;
+ let current=null,proven=null,epoch=null,lastLocal=null,localFlightId=null,visitorReadyFlight=null,interior=null,interiorMiss=null;
  const allowInterior=terrain.number===10||terrain.number===14;
  const kind=action=>action==='fly'?'fly':'hop';
  const makeEnvironment=safe=>({safe,width:current.plane.width,planeHeight:current.plane.height,height:.043});
@@ -55,9 +55,13 @@ export function createGardenTrailRuntime(id,model){
    const state=adapter.sync({epoch,actors,predator:predator||!proven});
    const local=actors.find(a=>a.id===localFlightId);
    if(!local?.route)localFlightId=null;
-   // A bypass-free solo flight has no lane ticket; still recover it on
-   // interruption before it can continue under a newly blocked geometry.
-   if(localFlightId&&(predator||!proven||actors.length!==1)&&!state.disposition.some(x=>x.id===localFlightId)){
+   if(local?.route!==visitorReadyFlight)visitorReadyFlight=null;
+   // Only the exact #08 short reservation may survive one stationary
+   // visitor joining. Recheck the whole preserved sweep using real shapes.
+   const lawfulVisitor=!predator&&terrain.number===8&&!!visitorReadyFlight&&actors.length===2&&!!proven&&
+    actors.some(a=>a.id!==local.id&&a.id.startsWith('guest:')&&!a.route)&&
+    proven.safe(local,{id:local.route.target,p:local.route.to},'fly',new Map(actors.map(a=>[a.id,a])));
+   if(localFlightId&&(predator||!proven||actors.length!==1&&!lawfulVisitor)&&!state.disposition.some(x=>x.id===localFlightId)){
     state.disposition.push({id:localFlightId,kind:'native-safe-recovery'});
    }
    return state;
@@ -80,20 +84,34 @@ export function createGardenTrailRuntime(id,model){
   // unavailable, allow a shorter curved native flight between two measured
   // dry contacts. It still owns a reservation and passes the same entire
   // wing/body sweep, clipping, and native UI checks as a lane crossing.
-  singletonFlight(seats,{paintable=()=>true}={}){
+  singletonFlight(seats,{paintable=()=>true,keepVisitorSeat=false}={}){
    const roster=[...model.actors.values()],a=roster[0];
    if(!proven||roster.length!==1||!a.movable||!a.canFly||a.route||a.phase!=='ground')return null;
    const plane=current.plane;
    const distance=n=>Math.hypot((a.p[0]-n.p[0])*plane.width,(a.p[1]-n.p[1])*plane.height);
    const targets=seats.filter(n=>n.id!==a.node&&n.id!=='bay'&&distance(n)>=64&&distance(n)<=148);
    targets.sort((x,y)=>Math.abs(distance(x)-96)-Math.abs(distance(y)-96));
+   // A conservative geometry-only forecast: do not add a bird, reserve the
+   // spare spot, or change the world's independent guest arrival decision.
+   const forecastId='__trail08-forecast-only';
+   const forecast=keepVisitorSeat&&terrain.number===8&&createTrailClearance(id,{
+    ...current,footprints:new Map([...current.footprints,[forecastId,current.envelope]])
+   });
+   if(keepVisitorSeat&&!forecast)return null;
    const env=makeEnvironment((candidate,node,k,others)=>{
     if(!proven.safe(candidate,node,k,others)||!paintable(candidate))return false;
     const spans=proven.sweptRoute(candidate);
-    return !!spans&&adapter.canPlace({spans});
+    if(!spans||!adapter.canPlace({spans}))return false;
+    return !forecast||seats.some(seat=>{
+     if([a.node,node.id,'bay'].includes(seat.id))return false;
+     const spare={id:forecastId,p:seat.p,route:null};
+     const sweep=forecast.sweptRoute(spare);
+     return !!sweep&&forecast.canStand(spare,seat.p)&&!conflictSweeps(spans,sweep);
+    });
    });
    for(const n of targets)if(model.beginFlightPath(a.id,n,[a.p,n.p],env)){
     localFlightId=a.id;
+    visitorReadyFlight=forecast?model.actors.get(a.id).route:null;
     return {id:a.id,target:n.id,action:'fly'};
    }
    return null;

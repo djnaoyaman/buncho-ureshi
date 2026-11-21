@@ -453,6 +453,7 @@ export function createGardenActorMotion(root){
      trailRuntime.sync({generation:key,measurement,predator});
      if(elapsed>=nextTrail){
       let started=roster.length===1?trailRuntime.singletonInterior({paintable:routeFits,resumeOnly:true}):null;
+      if(!started&&terrain.number===8&&roster.length===1)started=trailRuntime.singletonFlight(layoutNodes,{paintable:routeFits,keepVisitorSeat:true});
       if(!started)for(const a of model.actors.values())if(!a.route&&a.movable&&(a.node==='A'||a.node==='B')){
        if(a.initialFlight&&!a.canFly&&model.time<a.initialFlightDeadline)continue;
        if(a.canFly&&(!trailRetry||roster.length===1))trailRuntime.request(a.id,'fly');else trailRuntime.request(a.id,'walk');
