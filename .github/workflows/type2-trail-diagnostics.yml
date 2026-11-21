@@ -1,4 +1,4 @@
-name: Type II seven-garden diagnostics only
+name: Type II causal native probes (draft only)
 on:
   pull_request:
     types: [opened, synchronize, reopened]
@@ -33,7 +33,7 @@ jobs:
           import { readFileSync, appendFileSync } from 'node:fs';
           const files = ['.github/browser-checks.json','.github/workflows/pages.yml','package.json','package-lock.json',
             'scripts/build.mjs','src/encounter-ui.js','src/garden-actor-motion.js','src/garden-trail-runtime.js',
-            'tests/browser/garden-trail-seven.spec.js','tests/fixtures/garden-terrain-browser.js'];
+            'tests/browser/garden-trail-causal.spec.js','tests/fixtures/garden-terrain-browser.js'];
           const hash = createHash('sha256');
           for (const path of files) {
             const bytes = readFileSync(path);
@@ -106,7 +106,7 @@ jobs:
           import { readFileSync, appendFileSync } from 'node:fs';
           const files = ['.github/browser-checks.json','.github/workflows/pages.yml','package.json','package-lock.json',
             'scripts/build.mjs','src/encounter-ui.js','src/garden-actor-motion.js','src/garden-trail-runtime.js',
-            'tests/browser/garden-trail-seven.spec.js','tests/fixtures/garden-terrain-browser.js'];
+            'tests/browser/garden-trail-causal.spec.js','tests/fixtures/garden-terrain-browser.js'];
           const hash = createHash('sha256');
           for (const path of files) {
             const bytes = readFileSync(path);
@@ -140,37 +140,51 @@ jobs:
           HOME=/tmp/ci-pulse-home pulseaudio --daemonize=yes --exit-idle-time=-1 --log-target=stderr
           pactl load-module module-null-sink sink_name=ci_audio sink_properties=device.description=CI_Audio
           pactl set-default-sink ci_audio
-      - name: Verify the 108 reviewed browser case declarations
+      - name: Verify each causal probe has exactly a Chrome and WebKit case
         id: ready
         run: |
           set -eu
-          for entry in roster:44 lane:14 palette:20 events:30; do
-            group="${entry%:*}"
-            count="${entry#*:}"
-            report="$(npx playwright test tests/browser/garden-trail-seven.spec.js --grep "@trail-$group" --project=chrome --project=webkit --list)"
-            printf '%s\n' "$report" | grep -Eq "^Total: $count tests in 1 file$"
+          for probe in module control-ready control-tap trail-ordinary gate clock solo-fit maximum-id maximum-fit flight; do
+            report="$(npx playwright test tests/browser/garden-trail-causal.spec.js --grep "@causal-$probe" --project=chrome --project=webkit --list)"
+            printf '%s\n' "$report" | grep -Eq "^Total: 2 tests in 1 file$"
           done
-      - name: 'Type II roster: both portraits, rotation and native touch'
-        timeout-minutes: 15
+      - name: '01 served module has its exact single replacement token'
+        timeout-minutes: 4
         if: ${{ !cancelled() && steps.ready.outcome == 'success' }}
-        run: |
-          # Keep test output and any failed fixture details runner-local.
-          npx playwright test tests/browser/garden-trail-seven.spec.js --grep '@trail-roster' --project=chrome --project=webkit --retries=0 --reporter=list > /tmp/type-ii-roster.log 2>&1
-      - name: 'Type II lane: surveyed dry bays and waiting'
-        timeout-minutes: 10
+        run: npx playwright test tests/browser/garden-trail-causal.spec.js --grep '@causal-module' --project=chrome --project=webkit --retries=0 --reporter=list > /tmp/type-ii-causal-module.log 2>&1
+      - name: '02 Type I control garden reaches ready'
+        timeout-minutes: 4
         if: ${{ !cancelled() && steps.ready.outcome == 'success' }}
-        run: |
-          # Keep test output and any failed fixture details runner-local.
-          npx playwright test tests/browser/garden-trail-seven.spec.js --grep '@trail-lane' --project=chrome --project=webkit --retries=0 --reporter=list > /tmp/type-ii-lane.log 2>&1
-      - name: 'Type II flight: four original color assets and contact'
-        timeout-minutes: 12
+        run: npx playwright test tests/browser/garden-trail-causal.spec.js --grep '@causal-control-ready' --project=chrome --project=webkit --retries=0 --reporter=list > /tmp/type-ii-causal-control-ready.log 2>&1
+      - name: '03 Type I control has a genuine native tap'
+        timeout-minutes: 4
         if: ${{ !cancelled() && steps.ready.outcome == 'success' }}
-        run: |
-          # Keep test output and any failed fixture details runner-local.
-          npx playwright test tests/browser/garden-trail-seven.spec.js --grep '@trail-palette' --project=chrome --project=webkit --retries=0 --reporter=list > /tmp/type-ii-palette.log 2>&1
-      - name: 'Type II events: visitor, predator and reduced motion'
-        timeout-minutes: 15
+        run: npx playwright test tests/browser/garden-trail-causal.spec.js --grep '@causal-control-tap' --project=chrome --project=webkit --retries=0 --reporter=list > /tmp/type-ii-causal-control-tap.log 2>&1
+      - name: '04 Type II ordinary garden reaches ready'
+        timeout-minutes: 4
         if: ${{ !cancelled() && steps.ready.outcome == 'success' }}
-        run: |
-          # Keep test output and any failed fixture details runner-local.
-          npx playwright test tests/browser/garden-trail-seven.spec.js --grep '@trail-events' --project=chrome --project=webkit --retries=0 --reporter=list > /tmp/type-ii-events.log 2>&1
+        run: npx playwright test tests/browser/garden-trail-causal.spec.js --grep '@causal-trail-ordinary' --project=chrome --project=webkit --retries=0 --reporter=list > /tmp/type-ii-causal-trail-ordinary.log 2>&1
+      - name: '05 Type II opt-in mount reaches native stage'
+        timeout-minutes: 4
+        if: ${{ !cancelled() && steps.ready.outcome == 'success' }}
+        run: npx playwright test tests/browser/garden-trail-causal.spec.js --grep '@causal-gate' --project=chrome --project=webkit --retries=0 --reporter=list > /tmp/type-ii-causal-gate.log 2>&1
+      - name: '06 Type II fixture clock advances exactly 500 ms'
+        timeout-minutes: 4
+        if: ${{ !cancelled() && steps.ready.outcome == 'success' }}
+        run: npx playwright test tests/browser/garden-trail-causal.spec.js --grep '@causal-clock' --project=chrome --project=webkit --retries=0 --reporter=list > /tmp/type-ii-causal-clock.log 2>&1
+      - name: '07 Type II one bird fits and can be tapped'
+        timeout-minutes: 4
+        if: ${{ !cancelled() && steps.ready.outcome == 'success' }}
+        run: npx playwright test tests/browser/garden-trail-causal.spec.js --grep '@causal-solo-fit' --project=chrome --project=webkit --retries=0 --reporter=list > /tmp/type-ii-causal-solo-fit.log 2>&1
+      - name: '08 Type II maximum fixture provides ten unique native identities'
+        timeout-minutes: 4
+        if: ${{ !cancelled() && steps.ready.outcome == 'success' }}
+        run: npx playwright test tests/browser/garden-trail-causal.spec.js --grep '@causal-maximum-id' --project=chrome --project=webkit --retries=0 --reporter=list > /tmp/type-ii-causal-maximum-id.log 2>&1
+      - name: '09 Type II ten unobstructed native 44px hit targets'
+        timeout-minutes: 4
+        if: ${{ !cancelled() && steps.ready.outcome == 'success' }}
+        run: npx playwright test tests/browser/garden-trail-causal.spec.js --grep '@causal-maximum-fit' --project=chrome --project=webkit --retries=0 --reporter=list > /tmp/type-ii-causal-maximum-fit.log 2>&1
+      - name: '10 Type II white bird genuinely rises flaps and contacts'
+        timeout-minutes: 4
+        if: ${{ !cancelled() && steps.ready.outcome == 'success' }}
+        run: npx playwright test tests/browser/garden-trail-causal.spec.js --grep '@causal-flight' --project=chrome --project=webkit --retries=0 --reporter=list > /tmp/type-ii-causal-flight.log 2>&1
