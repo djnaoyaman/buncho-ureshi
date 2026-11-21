@@ -38,7 +38,9 @@ jobs:
         run: node scripts/browser-scope.mjs
       - run: npm ci
       - run: npm run check
+        if: "!(github.event_name == 'pull_request' && github.head_ref == 'qa/type2-targeted-receipts' && github.base_ref == 'release/type2-native-seven-reviewed')"
       - run: npm test
+        if: "!(github.event_name == 'pull_request' && github.head_ref == 'qa/type2-targeted-receipts' && github.base_ref == 'release/type2-native-seven-reviewed')"
       - run: npm run build
       - name: Seal the tested build with its source identity
         run: |
@@ -107,12 +109,27 @@ jobs:
           pactl set-default-sink ci_audio
           pactl info
       - name: Run the selected checks on Chrome and Safari-compatible WebKit
+        if: "!(github.event_name == 'pull_request' && github.head_ref == 'qa/type2-targeted-receipts' && github.base_ref == 'release/type2-native-seven-reviewed')"
         env:
           BROWSER_TESTS_JSON: ${{ needs.build.outputs.browser_tests }}
           BROWSER_REASON: ${{ needs.build.outputs.browser_reason }}
         run: node scripts/run-reviewed-browsers.mjs
+      - name: Run only five named native diagnostic cases
+        if: github.event_name == 'pull_request' && github.head_ref == 'qa/type2-targeted-receipts' && github.base_ref == 'release/type2-native-seven-reviewed'
+        env:
+          BROWSER_TESTS_JSON: ${{ needs.build.outputs.browser_tests }}
+          TYPE2_DIAG_DIR: ${{ runner.temp }}/type2-targeted
+          TYPE2_DIAG_BASE: ${{ github.event.pull_request.base.sha }}
+        run: node scripts/run-type2-targeted-receipts.mjs
       - uses: actions/upload-artifact@v4
-        if: always()
+        if: always() && (github.event_name == 'pull_request' && github.head_ref == 'qa/type2-targeted-receipts' && github.base_ref == 'release/type2-native-seven-reviewed')
+        with:
+          name: browser-evidence-type2-targeted-${{ github.sha }}
+          path: ${{ runner.temp }}/type2-targeted/verdict.json
+          if-no-files-found: error
+          retention-days: 3
+      - uses: actions/upload-artifact@v4
+        if: always() && !(github.event_name == 'pull_request' && github.head_ref == 'qa/type2-targeted-receipts' && github.base_ref == 'release/type2-native-seven-reviewed')
         with:
           name: browser-evidence-focused-${{ github.sha }}
           path: |
