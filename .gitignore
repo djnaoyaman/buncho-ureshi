@@ -7,3 +7,6 @@ test-results/
 # Reassembled byte-identical approved film; checked source parts live in media-source.
 public/game-endings/omochi-ending02-revised-87.mp4
 focused-test-results/
+
+# Reassembled exact Ending 4 movie is generated from approved source parts.
+/public/game-endings/raptors-v5.mp4

@@ -1,5 +1,5 @@
 import {collectionEndingStatus,pendingCollectionEnding,claimCollectionEnding,recordCollectionEndingPlayback,releaseCollectionEnding} from './collection-endings.js';
-const MOVIES=Object.freeze({garden:'omochi-ending02-revised-87.mp4',crows:'omochi-ending03-approved-40.mp4',raptors:'raptors-v1.mp4','garden-tour':'buncho-ending-01-rich-final-review.mp4'});
+const MOVIES=Object.freeze({garden:'omochi-ending02-revised-87.mp4',crows:'omochi-ending03-approved-40.mp4',raptors:'raptors-v5.mp4','garden-tour':'buncho-ending-01-rich-final-review.mp4'});
 const TITLES={'garden-tour':'どこへ行っても、帰る場所',garden:'<ruby>庭<rt>にわ</rt></ruby>の<ruby>鳥<rt>とり</rt></ruby>との<ruby>出会<rt>であ</rt></ruby>い',crows:'カラスたちとの<ruby>出会<rt>であ</rt></ruby>い',raptors:'<ruby>大空<rt>おおぞら</rt></ruby>の<ruby>鳥<rt>とり</rt></ruby>たちとの<ruby>出会<rt>であ</rt></ruby>い'};
 export function renderEndingDiary(world){
  const entries=collectionEndingStatus(world).filter(e=>e.unlocked);

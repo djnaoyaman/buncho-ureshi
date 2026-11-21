@@ -1,20 +1,5 @@
 {
-  "base": "438763dfc7c52707afa7c073777b9e1aac2daadc",
-  "tests": [
-    "tests/browser/flight-integrity.spec.js",
-    "tests/browser/garden-actors.spec.js",
-    "tests/browser/garden-actors-natural.spec.js",
-    "tests/browser/garden-ground-motion.spec.js",
-    "tests/browser/garden-terrain-motion.spec.js",
-    "tests/browser/garden-about-booklet.spec.js",
-    "tests/browser/encounter-pet-response.spec.js",
-    "tests/browser/encounter-music.spec.js",
-    "tests/browser/game-music.spec.js",
-    "tests/browser/garden-viewport-sync.spec.js",
-    "tests/browser/iphone15-scene.spec.js",
-    "tests/browser/white-flight-media.spec.js",
-    "tests/browser/white-flight-media-tap.spec.js",
-    "tests/browser/garden-compact-rotation-identity.spec.js"
-  ],
-  "reason": "白文鳥の全身21コマ・有限読込待ちと、飛行画像のみを庭の必須メディア判定から除外。既存の飛行整合、全庭actor・接地・回転・保存・BGMを保持し、白飛行画像の実表示、メディア到着順・再試行と実タップを追加検査。 おにわの回転時は実ノードと行動時計を保持し、軽減設定の最大10羽実タップとおうち短画面の既存動作を追加検査。 回転後の実UIとの干渉、44px着地点の再探索、配置と予約の一括更新、旧観測の解放を追加。選定済みの全14ブラウザ検査は保持。"
+  "base": "41bd702712ef9af1c1c80b6322f5351be1ef6bb8",
+  "tests": ["tests/browser/raptor-collection-film.spec.js"],
+  "reason": "第4作の動画だけを差し替え、9種の既存条件、8種の未解除、達成済み日記からの再生、承認済み動画の実デコード・シークをChromeとWebKitで確認する。庭・保存仕様は変更しない。"
 }
