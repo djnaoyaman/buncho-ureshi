@@ -1,16 +1,16 @@
-name: Type II fast dense-landscape-hit QA (no deployment)
-run-name: Type II focused dense-landscape-hit · ${{ github.sha }}
+name: Type II fast dense-landscape-true-block QA (no deployment)
+run-name: Type II focused dense-landscape-true-block · ${{ github.sha }}
 on:
   push:
     branches: [qa/type2-fast-dense]
 permissions:
   contents: read
 concurrency:
-  group: type2-fast-dense-landscape-hit-${{ github.ref }}
+  group: type2-fast-dense-landscape-true-block-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   visitor:
-    name: 'Type II dense-landscape-hit · ${{ matrix.engine }}'
+    name: 'Type II dense-landscape-true-block · ${{ matrix.engine }}'
     if: github.ref == 'refs/heads/qa/type2-fast-dense'
     runs-on: ubuntu-24.04
     timeout-minutes: 14
@@ -77,14 +77,14 @@ jobs:
         run: |
           node --input-type=module <<'NODE'
           import {readFileSync,appendFileSync} from 'node:fs';
-          const kinds=['stale','unavailable','noninteractive','none','overlay','peer','garden-ui','scene-other','other'];
+          const kinds=['stale','unavailable','noninteractive','none','device-notice','bird-sheet','real-modal','peer','garden-ui','scene-other','other'];
           const modes=['trail-active','trail-held','trail-standing','trail-blocked-placement','trail-blocked-geometry','trail-needs-recovery','geometry-blocked','insufficient-space','other'];
           for(const garden of ['08','10']){
            const path=process.env.RUNNER_TEMP+'/type2-focused-receipts/'+process.env.ENGINE+'-'+garden+'-dense';
            if(readFileSync(path,'utf8').trim()!=='landscape-hit')continue;
            const d=JSON.parse(readFileSync(path+'.hit.json','utf8'));
-           if(!kinds.includes(d.kind)||!modes.includes(d.mode)||!['bound','unbound'].includes(d.rendered)||typeof d.blocked!=='boolean')throw Error('Unknown fixed sidecar enum');
-           for(const k of ['kind','mode','rendered','blocked'])appendFileSync(process.env.GITHUB_OUTPUT,'g'+garden+'_'+k+'='+d[k]+'\n');
+           if(!kinds.includes(d.kind)||!modes.includes(d.mode)||!['bound','unbound'].includes(d.rendered)||typeof d.blocked!=='boolean'||!['none','orientation','device'].includes(d.persistent))throw Error('Unknown fixed sidecar enum');
+           for(const k of ['kind','mode','rendered','blocked','persistent'])appendFileSync(process.env.GITHUB_OUTPUT,'g'+garden+'_'+k+'='+d[k]+'\n');
           }
           NODE
       - name: '#08 failed landscape hit not kind-peer'
@@ -97,11 +97,21 @@ jobs:
         env:
           OBSERVED: ${{ steps.hit_focus.outputs.g08_kind }}
         run: test "$OBSERVED" != "garden-ui"
-      - name: '#08 failed landscape hit not kind-overlay'
+      - name: '#08 failed landscape hit not kind-device-notice'
         if: ${{ !cancelled() && steps.hit_focus.outcome == 'success' && steps.hit_focus.outputs.g08_kind != '' }}
         env:
           OBSERVED: ${{ steps.hit_focus.outputs.g08_kind }}
-        run: test "$OBSERVED" != "overlay"
+        run: test "$OBSERVED" != "device-notice"
+      - name: '#08 failed landscape hit not kind-bird-sheet'
+        if: ${{ !cancelled() && steps.hit_focus.outcome == 'success' && steps.hit_focus.outputs.g08_kind != '' }}
+        env:
+          OBSERVED: ${{ steps.hit_focus.outputs.g08_kind }}
+        run: test "$OBSERVED" != "bird-sheet"
+      - name: '#08 failed landscape hit not kind-real-modal'
+        if: ${{ !cancelled() && steps.hit_focus.outcome == 'success' && steps.hit_focus.outputs.g08_kind != '' }}
+        env:
+          OBSERVED: ${{ steps.hit_focus.outputs.g08_kind }}
+        run: test "$OBSERVED" != "real-modal"
       - name: '#08 failed landscape hit not kind-noninteractive'
         if: ${{ !cancelled() && steps.hit_focus.outcome == 'success' && steps.hit_focus.outputs.g08_kind != '' }}
         env:
@@ -187,6 +197,16 @@ jobs:
         env:
           OBSERVED: ${{ steps.hit_focus.outputs.g08_blocked }}
         run: test "$OBSERVED" != "true"
+      - name: '#08 failed landscape hit not persistent-orientation'
+        if: ${{ !cancelled() && steps.hit_focus.outcome == 'success' && steps.hit_focus.outputs.g08_kind != '' }}
+        env:
+          OBSERVED: ${{ steps.hit_focus.outputs.g08_persistent }}
+        run: test "$OBSERVED" != "orientation"
+      - name: '#08 failed landscape hit not persistent-device'
+        if: ${{ !cancelled() && steps.hit_focus.outcome == 'success' && steps.hit_focus.outputs.g08_kind != '' }}
+        env:
+          OBSERVED: ${{ steps.hit_focus.outputs.g08_persistent }}
+        run: test "$OBSERVED" != "device"
       - name: '#10 failed landscape hit not kind-peer'
         if: ${{ !cancelled() && steps.hit_focus.outcome == 'success' && steps.hit_focus.outputs.g10_kind != '' }}
         env:
@@ -197,11 +217,21 @@ jobs:
         env:
           OBSERVED: ${{ steps.hit_focus.outputs.g10_kind }}
         run: test "$OBSERVED" != "garden-ui"
-      - name: '#10 failed landscape hit not kind-overlay'
+      - name: '#10 failed landscape hit not kind-device-notice'
         if: ${{ !cancelled() && steps.hit_focus.outcome == 'success' && steps.hit_focus.outputs.g10_kind != '' }}
         env:
           OBSERVED: ${{ steps.hit_focus.outputs.g10_kind }}
-        run: test "$OBSERVED" != "overlay"
+        run: test "$OBSERVED" != "device-notice"
+      - name: '#10 failed landscape hit not kind-bird-sheet'
+        if: ${{ !cancelled() && steps.hit_focus.outcome == 'success' && steps.hit_focus.outputs.g10_kind != '' }}
+        env:
+          OBSERVED: ${{ steps.hit_focus.outputs.g10_kind }}
+        run: test "$OBSERVED" != "bird-sheet"
+      - name: '#10 failed landscape hit not kind-real-modal'
+        if: ${{ !cancelled() && steps.hit_focus.outcome == 'success' && steps.hit_focus.outputs.g10_kind != '' }}
+        env:
+          OBSERVED: ${{ steps.hit_focus.outputs.g10_kind }}
+        run: test "$OBSERVED" != "real-modal"
       - name: '#10 failed landscape hit not kind-noninteractive'
         if: ${{ !cancelled() && steps.hit_focus.outcome == 'success' && steps.hit_focus.outputs.g10_kind != '' }}
         env:
@@ -287,6 +317,16 @@ jobs:
         env:
           OBSERVED: ${{ steps.hit_focus.outputs.g10_blocked }}
         run: test "$OBSERVED" != "true"
+      - name: '#10 failed landscape hit not persistent-orientation'
+        if: ${{ !cancelled() && steps.hit_focus.outcome == 'success' && steps.hit_focus.outputs.g10_kind != '' }}
+        env:
+          OBSERVED: ${{ steps.hit_focus.outputs.g10_persistent }}
+        run: test "$OBSERVED" != "orientation"
+      - name: '#10 failed landscape hit not persistent-device'
+        if: ${{ !cancelled() && steps.hit_focus.outcome == 'success' && steps.hit_focus.outputs.g10_kind != '' }}
+        env:
+          OBSERVED: ${{ steps.hit_focus.outputs.g10_persistent }}
+        run: test "$OBSERVED" != "device"
       - name: '#08 strict ten birds complete'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:

@@ -75,15 +75,21 @@ async function observeLandscapeOccluder(page,{ordinal,x,y,previousMode}){
   const modes=['trail-active','trail-held','trail-standing','trail-blocked-placement','trail-blocked-geometry','trail-needs-recovery','geometry-blocked','insufficient-space'];
   const mode=modes.includes(motion)?motion:'other';
   const rendered=button?.hasAttribute('data-actor-node')?'bound':'unbound';
-  const held=document.body.hasAttribute('data-game-view-blocked')||!!document.querySelector('dialog[open],.game-bird-sheet[open],.finch-garden details[open]')||!!button?.closest('[inert]');
-  const report=kind=>({kind,mode,rendered,blocked:!!held});
+  // The ordinary outdoors scene itself is an open NONmodal dialog.
+  // Only a real browser modal, inert target, or owned device notice blocks.
+  const device=document.body.dataset.gameViewBlocked;
+  const persistent=device==='orientation'?'orientation':device==='device'?'device':'none';
+  const modal=document.querySelector('dialog:modal');
+  const report=kind=>({kind,mode,rendered,blocked:persistent!=='none'||!!modal||!!button?.closest('[inert]'),persistent});
   if(!r||motion!==previousMode||Math.abs(r.x+r.width/2-x)>.5||Math.abs(r.y+r.height/2-y)>.5)return report('stale');
   const top=document.elementFromPoint(x,y);
   if(top&&button.contains(top))return report('stale');
   const style=getComputedStyle(button);
   if(style.visibility!=='visible'||style.display==='none'||style.pointerEvents==='none')return report('noninteractive');
   if(!top)return report('none');
-  if(top.closest('dialog[open],.game-bird-sheet[open],.finch-garden details[open],[role=dialog],[inert]'))return report('overlay');
+  if(top.closest('.game-environment-notice:modal'))return report('device-notice');
+  if(top.closest('.game-bird-sheet:modal'))return report('bird-sheet');
+  if(top.closest('dialog:modal'))return report('real-modal');
   if(top.closest('.finch-garden-image-plane > button'))return report('peer');
   if(top.closest('.finch-garden-dock,.finch-garden-selector,.finch-garden > header,.finch-garden-family,.game-scene-controls-toggle,.finch-garden [data-garden-encounter-notice]'))return report('garden-ui');
   if(top.closest('.finch-garden-loading,.game-panel-overlay'))return report('scene-other');
@@ -120,7 +126,7 @@ for(const [id,g] of Object.entries(GARDEN_TRAIL_TERRAIN)){
    mark('landscape-hit');
    if(!bird.hit){
     const detail=await observeLandscapeOccluder(page,{ordinal,x:bird.point.x,y:bird.point.y,previousMode:landscape.motion})
-     .catch(()=>({kind:'unavailable',mode:'other',rendered:'unbound',blocked:false}));
+     .catch(()=>({kind:'unavailable',mode:'other',rendered:'unbound',blocked:false,persistent:'none'}));
     mark('landscape-hit',detail);
    }
    expect(bird.hit).toBe(true);
