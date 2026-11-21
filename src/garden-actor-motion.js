@@ -51,9 +51,19 @@ export function selectFootholds(candidates,capacity,compatible){
  return solve(0)?chosen:greedy;
 }
 /** DOM adapter for the explicitly surveyed open-ground gardens. Owns no game state. */
+// Layout re-housing is only valid at a genuine cover-axis boundary where
+// no old active route can still paint and at least one current bird is
+// already hidden by the new clip/controls. Never snap a visibly valid route.
+export function clippedDenseCoverRecovery({changedAxis,actors,routeFits,currentFits,replace}){
+ if(!changedAxis||actors.length!==10)return false;
+ const moving=actors.filter(a=>!!a.route);
+ if(!moving.length||moving.some(routeFits)||!actors.some(a=>!currentFits(a)))return false;
+ return replace();
+}
+
 export function createGardenActorMotion(root){
  let trailRuntime=null,nextTrail=0,trailRetry=false,trailMeasurement=null,trailPads=[];
- const bindings=new Map(),routeCache=new WeakMap();let model=null,key='',geometryKey='',rosterKey='',footholds=[],layoutWidth=64,standingOnly=false,geometry=null,terrain=null,overlayStyle=null,rejected=null;
+ const bindings=new Map(),routeCache=new WeakMap();let model=null,key='',geometryKey='',rosterKey='',footholds=[],layoutWidth=64,standingOnly=false,geometry=null,terrain=null,overlayStyle=null,rejected=null,paintedWideCrop=null;
  const routeSamples=a=>{
   let samples=routeCache.get(a.route);
   if(!samples){samples=model.sampleRoute(a);routeCache.set(a.route,samples);}
@@ -65,7 +75,7 @@ export function createGardenActorMotion(root){
   if(b.pose){b.pose.style.visibility=b.poseVisibility;b.pose.removeAttribute('data-terrain-flight-active');}
   for(const attr of ['data-actor-state','data-actor-phase','data-actor-node','data-actor-landing'])b.node.removeAttribute(attr);
  };
- const dispose=()=>{if(overlayStyle){const [node,value]=overlayStyle;value?node.style.setProperty('--game-viewport-height',value):node.style.removeProperty('--game-viewport-height');overlayStyle=null;}for(const b of bindings.values())restore(b);bindings.clear();model?.clear();model=null;trailRuntime=null;nextTrail=0;trailRetry=false;trailMeasurement=null;trailPads=[];key='';geometryKey='';rosterKey='';rejected=null;};
+ const dispose=()=>{if(overlayStyle){const [node,value]=overlayStyle;value?node.style.setProperty('--game-viewport-height',value):node.style.removeProperty('--game-viewport-height');overlayStyle=null;}for(const b of bindings.values())restore(b);bindings.clear();model?.clear();model=null;trailRuntime=null;nextTrail=0;trailRetry=false;trailMeasurement=null;trailPads=[];key='';geometryKey='';rosterKey='';rejected=null;paintedWideCrop=null;};
  const body=(p,width,height,lift=0)=>({left:geometry.plane.left+p[0]*geometry.plane.width-width*.54,top:geometry.plane.top+p[1]*geometry.plane.height-height*.975-lift,
   right:geometry.plane.left+p[0]*geometry.plane.width+width*.46,bottom:geometry.plane.top+p[1]*geometry.plane.height+height*.025-lift});
  function safePoint(p,width,height,lift=0,flight=false){
@@ -321,10 +331,13 @@ export function createGardenActorMotion(root){
    model.reconcile(roster.filter(d=>fixedFlight.has(d.id)),[]);
    trailRuntime.sync({generation:key,measurement,predator});
   }
-  const nativeTrailHits=plan=>{
-   // Only probe the interactive stage. Dialogs and device/user holds own
-   // pointer input until they close, not the resting bird arrangement.
-   if(!active||typeof root.ownerDocument.elementFromPoint!=='function')return true;
+  const nativeTrailHits=(plan,{requireNative=false}={})=>{
+   // Regular motion may defer while blocked. An emergency cover replacement
+   // must get a real input verdict, even if the animation clock is held.
+   const doc=root.ownerDocument,hitApi=typeof doc.elementFromPoint==='function';
+   if(requireNative){
+    if(!hitApi||doc.hidden||doc.body.hasAttribute('data-game-view-blocked')||doc.querySelector('dialog:modal')||stage.closest('[inert]'))return false;
+   }else if(!active||!hitApi)return true;
    const saved=new Map();
    try{
     for(const [id,n]of plan){
@@ -389,17 +402,18 @@ export function createGardenActorMotion(root){
   });
   if(trailRuntime&&model.actors.size!==roster.length)return reject('trail-blocked-placement');
   const routeFits=a=>!a.route||routeSamples(a).every(f=>safePoint(f.p,bindings.get(a.id).width,bindings.get(a.id).height,f.height*p.height,a.state==='fly'));
-  const trailStandingReflow=()=>{
+  const trailStandingReflow=({requireNative=false}={})=>{
    // First placement was already accepted against this generation's measured
    // footprints; never run the Type I nominal-pixel reflow over that result.
-   if(planned&&fixedFlight.size===0)return true;
+   if(!requireNative&&planned&&fixedFlight.size===0)return true;
    const actors=[...model.actors.values()],preferred=new Map(actors.map(a=>[a.id,{id:a.node,p:a.p}]));
    const candidate=new Map(roster.map(d=>[d.id,d]));
-   const input={actors,seats:layoutNodes,preferred,accept:nativeTrailHits,canPlace(a,n,partial){
+   const input={actors,seats:layoutNodes,preferred,accept:plan=>nativeTrailHits(plan,{requireNative}),canPlace(a,n,partial){
+    if(requireNative&&!safePoint(n.p,actorWidth,actorWidth*1000/850))return false;
     const occupied=new Map([...partial].map(([id,s])=>[id,{...candidate.get(id),p:s.p,route:null}]));
     return trailRuntime.canPlace(a,n,occupied);
    }};
-   if(denseResponsive&&new Set([...preferred.values()].map(n=>n.id)).size===actors.length&&
+   if(!requireNative&&denseResponsive&&new Set([...preferred.values()].map(n=>n.id)).size===actors.length&&
     actors.every(a=>{const n=preferred.get(a.id);return safePoint(n.p,actorWidth,actorWidth*1000/850)&&input.canPlace(a,n,preferred);})&&
     nativeTrailHits(preferred))return true;
    const responsive=denseResponsive?findResponsiveBands({...input,standingPairFits:trailRuntime.standingPairFits}):null;
@@ -451,9 +465,19 @@ export function createGardenActorMotion(root){
    if(settle||hadTrail&&resized&&!routesFit)for(const a of model.actors.values())if(a.route&&(settle||!routeFits(a)))recoveryIds.add(a.id);
    if(recoveryIds.size){
     const blocked=trailRuntime.recover([...recoveryIds],{reduced:settle});
-    if(blocked.length){stage.dataset.actorMotion='trail-needs-recovery';return false;}
     routesFit=[...model.actors.values()].every(routeFits);
-    if(!routesFit||!fitsNow()){stage.dataset.actorMotion='trail-needs-recovery';return false;}
+    if(blocked.length||!routesFit||!fitsNow()){
+     const fallback=clippedDenseCoverRecovery({
+      changedAxis:denseResponsive&&resized&&paintedWideCrop!==null&&paintedWideCrop!==wideCrop&&!predator,
+      actors:[...model.actors.values()],routeFits,
+      currentFits(a){const b=bindings.get(a.id);return !!b&&safePoint(a.p,b.width,b.height,a.height*p.height,a.state==='fly');},
+      replace:()=>trailStandingReflow({requireNative:true}),
+     });
+     if(!fallback){stage.dataset.actorMotion='trail-needs-recovery';return false;}
+     routesFit=true;
+     if(wideCrop)standingOnly=true;
+     nextTrail=Math.min(nextTrail,elapsed+1600);
+    }
    }else if(!reflowed||!fitsNow())return reject('trail-blocked-geometry');
    // A measured successful dense fit may animate actual safe short contacts.
    // The Type① heuristic "standing only" flag is not evidence here.
@@ -518,7 +542,7 @@ export function createGardenActorMotion(root){
    b.flight?.paint(a,model.time);
    if(b.label){b.label.style.visibility=a.state==='fly'?'hidden':'';b.label.style.maxWidth=b.width+'px';}
   }
-  geometryKey=signature;rosterKey=nextRosterKey;
+  geometryKey=signature;rosterKey=nextRosterKey;paintedWideCrop=wideCrop;
   stage.dataset.actorMotion=trailRuntime?(standingOnly?'trail-standing':active?'trail-active':'trail-held'):active?'active':'held';
   return active&&!standingOnly; // one existing RAF drives every actor; no per-bird scheduler.
  }};

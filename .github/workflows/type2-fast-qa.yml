@@ -1,16 +1,16 @@
-name: Type II fast dense-landscape-true-block QA (no deployment)
-run-name: Type II focused dense-landscape-true-block · ${{ github.sha }}
+name: Type II fast dense-rotate-recover QA (no deployment)
+run-name: Type II focused dense-rotate-recover · ${{ github.sha }}
 on:
   push:
     branches: [qa/type2-fast-dense]
 permissions:
   contents: read
 concurrency:
-  group: type2-fast-dense-landscape-true-block-${{ github.ref }}
+  group: type2-fast-dense-rotate-recover-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   visitor:
-    name: 'Type II dense-landscape-true-block · ${{ matrix.engine }}'
+    name: 'Type II dense-rotate-recover · ${{ matrix.engine }}'
     if: github.ref == 'refs/heads/qa/type2-fast-dense'
     runs-on: ubuntu-24.04
     timeout-minutes: 14

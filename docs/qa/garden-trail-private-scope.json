@@ -1,7 +1,7 @@
 {
   "baseCommit": "41bd702712ef9af1c1c80b6322f5351be1ef6bb8",
   "baseTree": "578b65e9aba3aa9e6925ae41d4cf3db5554b97fc",
-  "purpose": "Seven false-by-default private trail profiles, atomic measured native tap reflow and safe solo flight recovery; no gameplay, predator, or release changes; bounded measured contour contacts (#08/#10) and measured pocket hops (#34), draft QA only; deterministic surveyed #08/#10 dense bands as first-plan probes, draft QA only; measured #08/#10 landscape cover and atomic portrait-return reflow, draft QA only",
+  "purpose": "Seven false-by-default private trail profiles, atomic measured native tap reflow and safe solo flight recovery; no gameplay, predator, or release changes; bounded measured contour contacts (#08/#10) and measured pocket hops (#34), draft QA only; deterministic surveyed #08/#10 dense bands as first-plan probes, draft QA only; measured #08/#10 landscape cover and atomic portrait-return reflow, draft QA only; only fully verified #08/#10 clipped dense cover-route recovery, draft QA only",
   "changedSource": {
     "src/encounter-controller.js": {
       "before": "abb6da46ed67c7bd43834c438b0be224cbea9c646e116b6ee633dfcda51e82b4",
@@ -21,7 +21,7 @@
     },
     "src/garden-actor-motion.js": {
       "before": "2dfdb5f374f29fa1af3af667be36c9857714e2b849b2da34e67a615234a4dc7c",
-      "after": "fcee6a562cbc558d1629e75e3c81fedd04360df3a0e2de0d4710d784f7d4411d"
+      "after": "82c997e66cddba5e441580de82f8ae4509a6fbc1e70f0a0f2566a685e1c37793"
     },
     "src/garden-actor-state.js": {
       "before": "311bb2ced9b28ce172627f8ac81de9f647420e01d0d5f9706c925e2f86c42301",
