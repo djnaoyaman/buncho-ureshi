@@ -18,6 +18,25 @@ function book(info,key){
   writeFileSync(join(dir,info.project.name+'-'+key),phase+'\n',{mode:0o600,flag:'wx'});
  }};
 }
+function watchIdentity(info,tag){
+ let captured=null;
+ const enabled=info.project.name==='webkit'&&['8-lane','10-lane','14-roster-10'].includes(tag);
+ return {take(s,count,prior){
+  if(!enabled||captured)return;
+  const ids=s.birds.map(b=>b.id),unique=new Set(ids);
+  const failure=ids.length<count?'count-down':ids.length>count?'count-up':
+   ids.some(id=>typeof id!=='string'||id.trim()==='')?'blank':unique.size!==count?'duplicate':
+   prior.birds.some((b,i)=>b.id!==ids[i])?
+    (prior.birds.every(b=>unique.has(b.id))?'order':'replacement'):null;
+  if(failure)captured={failure,stage:s.ready==='ready'?'ready':s.ready==='loading'?'loading':s.ready?'other':'missing',
+   predator:s.predator,shelter:s.shelter,
+   revision:s.revision==null||prior.revision==null?'missing':s.revision===prior.revision?'same':'changed'};
+ },save(){
+  const out=process.env.TYPE2_HARD_DIR;
+  if(enabled&&out)writeFileSync(join(out,'webkit-'+tag+'-identity-audit'),
+   JSON.stringify(captured)+'\n',{mode:0o600,flag:'wx'});
+ }};
+}
 function assertNative(s,count,ids=null,mark=()=>{}){
  mark('identity');
  assertGardenIdentities(s.birds,count,ids);
@@ -66,11 +85,21 @@ async function mutationInIndependentStore(page,{kind,id}){
  },{kind,id});
 }
 
+function describeVisitorAudit(sample,phase){
+ const victim=sample.birds.find(b=>!b.hit);
+ return {ready:sample.ready==='ready'?'ready':sample.ready==='loading'?'loading':'other',
+  phase,victim:victim?.nativeKind??'none',front:victim?.frontKind??'none'};
+}
+function saveVisitorAudit(info,audit){
+ const dir=process.env.TYPE2_HARD_DIR;
+ if(!dir||!['chrome','webkit'].includes(info.project.name))return;
+ writeFileSync(join(dir,info.project.name+'-08-visitor-audit'),JSON.stringify(audit)+'\n',{mode:0o600,flag:'wx'});
+}
 for(const [id,g] of Object.entries(GARDEN_TRAIL_TERRAIN)){
  const key='#'+String(g.number).padStart(2,'0');
  for(const [density,count] of [['empty',0],[true,1],['maximum',10]])
  test(`${key} native ${count}: real taps, two portraits, rotate without losing actors`,{tag:"@trail-roster"},async({page},info)=>{
-  const d=book(info,`${g.number}-roster-${count}`);try{
+  const d=book(info,`${g.number}-roster-${count}`),audit=watchIdentity(info,`${g.number}-roster-${count}`);try{
   const c=(prefix,s,expected,ids=null)=>assertNative(s,expected,ids,k=>d.set(prefix+'-'+k));
   await setup(page,id,375,true,density,{...pilot,height:667});
   d.set('native-enabled');await expect(stage(page)).toHaveAttribute('data-garden-trail','true');
@@ -94,15 +123,15 @@ for(const [id,g] of Object.entries(GARDEN_TRAIL_TERRAIN)){
    let moving=false;
    for(let i=0;i<90;i++){
     d.set('movement-sample');await page.clock.runFor(180);const snap=await snapshotGarden(page);
-    c('movement',snap,count,ids);
+    audit.take(snap,count,first);c('movement',snap,count,ids);
     if(snap.birds.some(b=>['hop','fly'].includes(b.actorState))){moving=true;break;}
    }
    d.set('movement-visible');expect(moving,'real safe movement required, not static fallback').toBe(true);
   }
-  d.set('pass');}finally{d.save();}
+  d.set('pass');}finally{audit.save();d.save();}
  });
  test(`${key} ${g.pullouts.length?'yield reaches real bay before crossing':'wait outside with both gates taken'}`,{tag:"@trail-lane"},async({page},info)=>{
-  const d=book(info,`${g.number}-lane`);try{
+  const d=book(info,`${g.number}-lane`),audit=watchIdentity(info,`${g.number}-lane`);try{
   await setup(page,id,402,true,true,{...pilot,prepareWorld:w=>{
    const b=engine.createBird(w,{home:'resident',stage:'adult',color:'cinnamon'});
    w.encounters.gardenFriends.attendees.push(b.id);
@@ -112,7 +141,7 @@ for(const [id,g] of Object.entries(GARDEN_TRAIL_TERRAIN)){
   let bay=false,cross=false,clearedGate=false;
   for(let i=0;i<72;i++){
    d.set('lane-sample');await page.clock.runFor(180);const snap=await snapshotGarden(page);
-   assertNative(snap,2,before.birds.map(b=>b.id),k=>d.set('lane-'+k));
+   audit.take(snap,2,before);assertNative(snap,2,before.birds.map(b=>b.id),k=>d.set('lane-'+k));
    if(snap.birds.some(b=>b.actorNode==='bay'))bay=true;
    if(snap.birds.some(b=>b.actorNode&&!['A','B','bay'].includes(b.actorNode)&&!['fly','hop'].includes(b.actorState)))clearedGate=true;
    for(const b of snap.birds)if(b.actorState==='fly'){
@@ -121,7 +150,7 @@ for(const [id,g] of Object.entries(GARDEN_TRAIL_TERRAIN)){
   }
   if(g.pullouts.length){d.set('bay-unseen');expect(bay).toBe(true);d.set('cross-unseen');expect(cross).toBe(true);}
   else {d.set('no-bay');expect(bay).toBe(false);if(cross)expect(clearedGate).toBe(true);}
-  d.set('pass');}finally{d.save();}
+  d.set('pass');}finally{audit.save();d.save();}
  });
  for(const [i,color] of colors.entries())test(`${key} ${color} exact native launch, flap and landing`,{tag:g.number===7||i===g.number%colors.length?"@trail-palette":"@trail-expanded-palette"},async({page},info)=>{
   const d=book(info,`${g.number}-${color}`);try{
@@ -150,15 +179,35 @@ for(const [id,g] of Object.entries(GARDEN_TRAIL_TERRAIN)){
   d.set('pass');}finally{d.save();}
  });
  for(const kind of ['visitor','predator'])test(`${key} real store ${kind} interrupts active native flight safely`,{tag:"@trail-events"},async({page},info)=>{
-  const d=book(info,`${g.number}-${kind}`);try{
+  const d=book(info,`${g.number}-${kind}`),audit=g.number===8&&kind==='visitor'?{immediate:null,ready:null}:null;try{
   await setup(page,id,402,true,true,pilot);d.set('visitor-ready');await stable(page);
-  d.set('visitor-preflight');const pending=await nextFly(page);d.set('visitor-store-mutation');
+  d.set('visitor-preflight');const pending=await nextFly(page);
+  const original=audit?await snapshotGarden(page):null;
+  if(audit)expect(original.birds.find(b=>b.id==='b1')).toMatchObject({actorNode:pending.source,actorTarget:pending.target,actorState:'fly'});
+  d.set('visitor-store-mutation');
   const result=await mutationInIndependentStore(page,{kind,id});
   expect(result.changed).toBe(true);
   if(kind==='visitor'){
    d.set('visitor-arrival');expect(result.arrived).toBe(true);
    d.set('visitor-dom');await expect(stage(page).locator('.finch-garden-visitor')).toHaveCount(1);
-   d.set('visitor-sample');const mixed=await snapshotGarden(page);assertNative(mixed,2,null,k=>d.set('visitor-'+k));
+   d.set('visitor-sample');let mixed=await snapshotGarden(page);
+   if(audit){
+    let immediatePhase='pass',immediateError,marked;
+    try{assertNative(mixed,2,null,k=>{marked=k;d.set('visitor-'+k);});}
+    catch(error){immediateError=error;immediatePhase=marked==='hit'?'hit':'other';}
+    audit.immediate=describeVisitorAudit(mixed,immediatePhase);
+    // Only wait on the documented media-ready boundary; never poll for a good hit.
+    d.set('visitor-media-ready');
+    await expect(stage(page)).toHaveAttribute('data-scene-state','ready');
+    mixed=await snapshotGarden(page);
+    audit.ready=describeVisitorAudit(mixed,mixed.birds.some(b=>!b.hit)?'hit':'single');
+    d.set('visitor-ready-state');expect(mixed.ready).toBe('ready');
+    assertNative(mixed,2,null,k=>d.set('visitor-'+k));
+    if(immediateError&&!(audit.immediate.ready==='loading'&&audit.immediate.phase==='hit'&&audit.immediate.front==='loading-overlay'))
+     throw immediateError; // A real ready-frame or other unexpected failure stays hard-failing.
+    expect([mixed.worldId,mixed.gardenId]).toEqual([original.worldId,original.gardenId]);
+    d.set('visitor-reservation');expect(mixed.birds.find(b=>b.id==='b1')).toMatchObject({actorNode:pending.source,actorTarget:pending.target,actorState:'fly'});
+   }else assertNative(mixed,2,null,k=>d.set('visitor-'+k));
    d.set('visitor-source');expect(mixed.birds.find(b=>b.id==='b1')?.actorNode).toBe(pending.source);
    const guest=mixed.birds.find(b=>b.id!=='b1');
    d.set('visitor-tap');await page.touchscreen.tap(guest.point.x,guest.point.y);
@@ -171,7 +220,7 @@ for(const [id,g] of Object.entries(GARDEN_TRAIL_TERRAIN)){
    await home.tap();await expect(page.locator('.game-room')).toBeVisible();
    await expect(page.locator('.game-panel-overlay>[data-raptor-notice]')).toHaveCount(0);
   }
-  d.set('pass');}finally{d.save();}
+  d.set('pass');}finally{if(audit)saveVisitorAudit(info,audit);d.save();}
  });
 }
 
