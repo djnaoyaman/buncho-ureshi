@@ -450,8 +450,14 @@ export function createGardenActorMotion(root){
    if(active&&!recovered&&!standingOnly){
     if(trailRuntime){
      model.advance(elapsed,layoutNodes,{...environment,safe:()=>false});
-     trailRuntime.sync({generation:key,measurement,predator});
-     if(elapsed>=nextTrail){
+     const lane=trailRuntime.sync({generation:key,measurement,predator}).active;
+     if(lane?.phase==='ready'&&elapsed<nextTrail){
+      // The partner has actually grounded at the bay and the planner has
+      // rechecked the occupied-bay sweep. Finish this same admitted handover
+      // now; this does not make another lane request or shorten native cooldown.
+      const admitted=trailRuntime.run(terrain.number===10&&roster.length===1?{paintable:routeFits}:undefined);
+      if(admitted){trailRetry=false;nextTrail=elapsed+9000;}
+     }else if(elapsed>=nextTrail){
       let started=roster.length===1?trailRuntime.singletonInterior({paintable:routeFits,resumeOnly:true}):null;
       if(!started)for(const a of model.actors.values())if(!a.route&&a.movable&&(a.node==='A'||a.node==='B')){
        if(a.initialFlight&&!a.canFly&&model.time<a.initialFlightDeadline)continue;
