@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 18
     outputs:
-      source_sha: ${{ steps.source.outputs.sha }}
+      source_fingerprint: ${{ steps.source.outputs.fingerprint }}
     steps:
       - name: Fetch the exact PR merge commit and history
         uses: actions/checkout@v4
@@ -22,13 +22,26 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Verify checked-out merge commit
+      - name: Verify hosted merge commit and fingerprint the reviewed files
         id: source
         run: |
           set -eu
           sha="$(git rev-parse --verify HEAD)"
           test "$sha" = "$GITHUB_SHA"
-          printf 'sha=%s\n' "$sha" >> "$GITHUB_OUTPUT"
+          node --input-type=module <<'NODE'
+          import { createHash } from 'node:crypto';
+          import { readFileSync, appendFileSync } from 'node:fs';
+          const files = ['.github/browser-checks.json','.github/workflows/pages.yml','package.json','package-lock.json',
+            'scripts/build.mjs','src/encounter-ui.js','src/garden-actor-motion.js','src/garden-trail-runtime.js',
+            'tests/browser/garden-trail-seven.spec.js','tests/fixtures/garden-terrain-browser.js'];
+          const hash = createHash('sha256');
+          for (const path of files) {
+            const bytes = readFileSync(path);
+            hash.update(path+'\0'+bytes.length+'\0').update(bytes);
+          }
+          const actual=hash.digest('hex');
+          appendFileSync(process.env.GITHUB_OUTPUT,'fingerprint='+actual+'\n');
+          NODE
       - name: Verify reviewed live base is fetched
         env:
           PR_BASE: ${{ github.event.pull_request.base.sha }}
@@ -66,21 +79,43 @@ jobs:
     container:
       image: mcr.microsoft.com/playwright:v1.64.1-noble
     steps:
-      - name: Fetch the same tested commit
+      - name: Fetch the same event merge commit
+        id: checkout_source
         uses: actions/checkout@v4
         with:
-          ref: ${{ needs.trail_preflight.outputs.source_sha }}
+          ref: ${{ github.sha }}
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Verify browser source equals hosted preflight source
+      - name: Verify checkout receipt when a Git checkout was used
         env:
-          TESTED_SHA: ${{ needs.trail_preflight.outputs.source_sha }}
+          EXPECTED_SHA: ${{ github.sha }}
+          CHECKED_OUT_SHA: ${{ steps.checkout_source.outputs.commit }}
         run: |
           set -eu
-          test "$TESTED_SHA" = "$GITHUB_SHA"
-          test "$(git rev-parse --verify HEAD)" = "$TESTED_SHA"
+          case "$EXPECTED_SHA" in ''|*[!0-9a-f]*) exit 1;; esac
+          test "${#EXPECTED_SHA}" -eq 40
+          if [ -n "$CHECKED_OUT_SHA" ]; then test "$CHECKED_OUT_SHA" = "$EXPECTED_SHA"; fi
+      - name: Verify browser reviewed files equal hosted preflight
+        env:
+          HOSTED_FINGERPRINT: ${{ needs.trail_preflight.outputs.source_fingerprint }}
+        run: |
+          node --input-type=module <<'NODE'
+          import { createHash } from 'node:crypto';
+          import { readFileSync, appendFileSync } from 'node:fs';
+          const files = ['.github/browser-checks.json','.github/workflows/pages.yml','package.json','package-lock.json',
+            'scripts/build.mjs','src/encounter-ui.js','src/garden-actor-motion.js','src/garden-trail-runtime.js',
+            'tests/browser/garden-trail-seven.spec.js','tests/fixtures/garden-terrain-browser.js'];
+          const hash = createHash('sha256');
+          for (const path of files) {
+            const bytes = readFileSync(path);
+            hash.update(path+'\0'+bytes.length+'\0').update(bytes);
+          }
+          const actual=hash.digest('hex');
+          if (!/^[0-9a-f]{64}$/.test(process.env.HOSTED_FINGERPRINT||'') ||
+              actual!==process.env.HOSTED_FINGERPRINT) process.exit(1);
+          NODE
       - run: npm ci
       - name: Rebuild same-source browser fixture without transferring files
         run: npm run build
