@@ -1,7 +1,7 @@
 {
   "baseCommit": "41bd702712ef9af1c1c80b6322f5351be1ef6bb8",
   "baseTree": "578b65e9aba3aa9e6925ae41d4cf3db5554b97fc",
-  "purpose": "Seven false-by-default private trail profiles, atomic measured native tap reflow and safe solo flight recovery; no gameplay, predator, or release changes",
+  "purpose": "Seven false-by-default private trail profiles, atomic measured native tap reflow and safe solo flight recovery and equivalent verified solo edge-flight route admission for #08 and #10; no gameplay, predator, or release changes",
   "changedSource": {
     "src/encounter-controller.js": {
       "before": "abb6da46ed67c7bd43834c438b0be224cbea9c646e116b6ee633dfcda51e82b4",
@@ -21,7 +21,7 @@
     },
     "src/garden-actor-motion.js": {
       "before": "2dfdb5f374f29fa1af3af667be36c9857714e2b849b2da34e67a615234a4dc7c",
-      "after": "72fbfa6c9b088eefc5dcf07c72fbdf0eb0c7d574015fb9be4e40755c7afd3e42"
+      "after": "205f3c4be0cd3980dfb2f8caf31d85f66e3334da29043e1fc510908a9b1c0d41"
     },
     "src/garden-actor-state.js": {
       "before": "311bb2ced9b28ce172627f8ac81de9f647420e01d0d5f9706c925e2f86c42301",
@@ -30,6 +30,19 @@
     "src/garden-bird-motion.js": {
       "before": "1a7d3da97648b4e548c2223462e033a07552624597481f75ed47e7a9da6760c3",
       "after": "f76680361753674e5691e6697f95fbf752f9e46c87413ecc2dab2a09613d9583"
+    }
+  },
+  "verifiedQaSuccessor": {
+    "baseCommit": "8b23b4d588af2aefea8e3ae91feab1efcfae55fd",
+    "changedSource": {
+      "src/garden-actor-motion.js": {
+        "before": "72fbfa6c9b088eefc5dcf07c72fbdf0eb0c7d574015fb9be4e40755c7afd3e42",
+        "after": "205f3c4be0cd3980dfb2f8caf31d85f66e3334da29043e1fc510908a9b1c0d41"
+      },
+      "src/garden-trail-runtime.js": {
+        "before": "3638cdc1d3453a7511d14df439727c487e4f596aeb278418bd40d25026f5c088",
+        "after": "5b412fdbf0095909f64f2f954967a0a329c7a8520989ed3c7a414bf0d81af422"
+      }
     }
   }
 }

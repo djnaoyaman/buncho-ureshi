@@ -66,7 +66,7 @@ export function createGardenTrailRuntime(id,model){
   run({paintable=()=>true}={}){
    if(!proven)return null;
    const d=adapter.admit();if(!d)return null;
-   const isEdgeSoloFlight=terrain.number===10&&model.actors.size===1&&d.action==='fly';
+   const isEdgeSoloFlight=[8,10].includes(terrain.number)&&model.actors.size===1&&d.action==='fly';
    // In #10 the measured wing sweep can fit while the existing sampled
    // renderer box cannot. Refuse through the normal lane handshake before
    // any reservation; the host can then try its measured interior fallback.

@@ -9,7 +9,9 @@ for(const color of ['white','sakura','cinnamon','silver'])test('#08 real path an
  let verdict='setup';
  try{
   await page.addInitScript(()=>{
-   let bird=null,stage=null,route=null,queued=false;
+   let bird=null,stage=null,route=null,queued=false,reboundSince=null,rank=-1;
+   const order=['ground','crouch','push','rise','flap','brake','feet','contact','fold'];
+   const identity=(b,s)=>[s?.dataset.gardenId,s?.closest('.finch-garden')?.dataset.gardenWorld,b?.dataset.gardenActorId].join(':');
    const decode=new Map(),visible=e=>!!e&&getComputedStyle(e).visibility==='visible'&&e.getBoundingClientRect().width>0;
    const remember=(img,key)=>{
     if(!img.complete||!img.naturalWidth||decode.has(key))return;
@@ -20,15 +22,24 @@ for(const color of ['white','sakura','cinnamon','silver'])test('#08 real path an
     const b=document.querySelector('[data-garden-household=b1]'),s=document.querySelector('.finch-garden-stage');
     const state=b?.dataset.actorState,phase=b?.dataset.actorPhase,target=b?.dataset.actorLanding;
     if(!route&&state==='fly'&&target){
-     bird=b;stage=s;route={source:b.dataset.actorNode,target,phases:{},result:null};
+     bird=b;stage=s;route={source:b.dataset.actorNode,target,logical:identity(b,s),phases:{},result:null};
     }
     if(!route||route.result)return route;
     if(/geometry-blocked|trail-blocked-geometry|trail-needs-recovery/.test(s?.dataset.actorMotion??'')){route.result='geometry-rejected';return route;}
-    if(b!==bird||s!==stage){route.result='scene-replaced';return route;}
+    if(b!==bird||s!==stage){
+     reboundSince??=performance.now();
+     if(performance.now()-reboundSince>350){route.result='scene-replaced';return route;}
+     if(!b||s?.dataset.sceneState!=='ready'||!b.dataset.gardenActorId)return route;
+     if(identity(b,s)!==route.logical||s.querySelectorAll('[data-garden-household=b1]').length!==1){route.result='scene-replaced';return route;}
+     const continuous=state==='fly'&&b.dataset.actorNode===route.source&&target===route.target&&order.indexOf(phase)>=rank;
+     const settled=!target&&phase==='ground'&&b.dataset.actorNode===route.target&&Object.hasOwn(route.phases,'contact');
+     if(!continuous&&!settled){if(state==='fly'||b.dataset.actorNode!==undefined)route.result='scene-replaced';return route;}
+     bird=b;stage=s;reboundSince=null;
+    }
     if(target&&target!==route.target){route.result='rerouted';return route;}
     if(!target&&phase==='ground'){route.result=b.dataset.actorNode===route.target?'landed':'wrong-contact';return route;}
     if(state!=='fly'||!target)return route;
-    if(phase)route.phases[phase]??=performance.now();
+    if(phase){rank=Math.max(rank,order.indexOf(phase));route.phases[phase]??=performance.now();}
     if(!['rise','flap'].includes(phase))return route;
     const sp=b.querySelector('.garden-bird-sprite'),canvas=sp?.querySelector('.garden-actor-flight');
     if(!visible(canvas)||!sp?.querySelector('[data-terrain-flight-active]'))return route;
@@ -73,7 +84,12 @@ for(const color of ['white','sakura','cinnamon','silver'])test('#08 real path an
   const {birds}=await snapshotGarden(page);
   expect(birds).toHaveLength(1);
   expect(birds[0]).toMatchObject({id:'b1',actorNode:route.target,hit:true,centerInViewport:true});
+  expect(birds[0].rect.width).toBeGreaterThanOrEqual(43.99);
+  expect(birds[0].rect.height).toBeGreaterThanOrEqual(43.99);
   expect(route.target).not.toBe(route.source);
+  verdict='landing-tap';
+  await page.touchscreen.tap(birds[0].point.x,birds[0].point.y);
+  await expect(page.getByRole('dialog',{name:'エド',exact:true})).toBeVisible();
   verdict=route.phases.contact-beginning>21000?'pass-late-contact':'pass';
  }finally{
   const dir=process.env.TYPE2_CHECKPOINT_DIR,project=info.project.name;

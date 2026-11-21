@@ -66,7 +66,7 @@ jobs:
           rc=0
           TYPE2_CHECKPOINT_DIR="$dir" npx playwright test tests/browser/garden-trail-08-flight-route.spec.js --project="$ENGINE" --retries=0 --max-failures=0 --trace=off --reporter=dot || rc="$?"
           test "$rc" -le 1
-          node -e 'const f=require("fs");const [d,e,q]=process.argv.slice(1);for(const [k,choices] of JSON.parse(q))if(!choices.includes(f.readFileSync(d+"/"+e+"-"+k,"utf8").trim()))process.exit(1);' "$dir" "$ENGINE" '[["08-route-white",["pass","setup","launch-timeout","completion-timeout","geometry-rejected","scene-replaced","rerouted","wrong-contact","phase-absent","paint-not-visible-decoded","landing-native","pass-late-contact"]],["08-route-sakura",["pass","setup","launch-timeout","completion-timeout","geometry-rejected","scene-replaced","rerouted","wrong-contact","phase-absent","paint-not-visible-decoded","landing-native","pass-late-contact"]],["08-route-cinnamon",["pass","setup","launch-timeout","completion-timeout","geometry-rejected","scene-replaced","rerouted","wrong-contact","phase-absent","paint-not-visible-decoded","landing-native","pass-late-contact"]],["08-route-silver",["pass","setup","launch-timeout","completion-timeout","geometry-rejected","scene-replaced","rerouted","wrong-contact","phase-absent","paint-not-visible-decoded","landing-native","pass-late-contact"]]]'
+          node -e 'const f=require("fs");const [d,e,q]=process.argv.slice(1);for(const [k,choices] of JSON.parse(q))if(!choices.includes(f.readFileSync(d+"/"+e+"-"+k,"utf8").trim()))process.exit(1);' "$dir" "$ENGINE" '[["08-route-white",["pass","setup","launch-timeout","completion-timeout","geometry-rejected","scene-replaced","rerouted","wrong-contact","phase-absent","paint-not-visible-decoded","landing-native","landing-tap","pass-late-contact"]],["08-route-sakura",["pass","setup","launch-timeout","completion-timeout","geometry-rejected","scene-replaced","rerouted","wrong-contact","phase-absent","paint-not-visible-decoded","landing-native","landing-tap","pass-late-contact"]],["08-route-cinnamon",["pass","setup","launch-timeout","completion-timeout","geometry-rejected","scene-replaced","rerouted","wrong-contact","phase-absent","paint-not-visible-decoded","landing-native","landing-tap","pass-late-contact"]],["08-route-silver",["pass","setup","launch-timeout","completion-timeout","geometry-rejected","scene-replaced","rerouted","wrong-contact","phase-absent","paint-not-visible-decoded","landing-native","landing-tap","pass-late-contact"]]]'
       - name: '#08 white complete'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
@@ -122,6 +122,11 @@ jobs:
         env:
           ENGINE: ${{ matrix.engine }}
         run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-white")" != "landing-native"
+      - name: '#08 white not landing-tap'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-white")" != "landing-tap"
       - name: '#08 white not pass-late-contact'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
@@ -182,6 +187,11 @@ jobs:
         env:
           ENGINE: ${{ matrix.engine }}
         run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-sakura")" != "landing-native"
+      - name: '#08 sakura not landing-tap'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-sakura")" != "landing-tap"
       - name: '#08 sakura not pass-late-contact'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
@@ -242,6 +252,11 @@ jobs:
         env:
           ENGINE: ${{ matrix.engine }}
         run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-cinnamon")" != "landing-native"
+      - name: '#08 cinnamon not landing-tap'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-cinnamon")" != "landing-tap"
       - name: '#08 cinnamon not pass-late-contact'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
@@ -302,6 +317,11 @@ jobs:
         env:
           ENGINE: ${{ matrix.engine }}
         run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-silver")" != "landing-native"
+      - name: '#08 silver not landing-tap'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-silver")" != "landing-tap"
       - name: '#08 silver not pass-late-contact'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
