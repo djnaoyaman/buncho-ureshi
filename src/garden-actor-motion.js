@@ -459,11 +459,11 @@ export function createGardenActorMotion(root){
       if(admitted){trailRetry=false;nextTrail=elapsed+9000;}
      }else if(elapsed>=nextTrail){
       let started=roster.length===1?trailRuntime.singletonInterior({paintable:routeFits,resumeOnly:true}):null;
-      // #28's two grounded terminal occupants can choose a ready flyer first.
+      // Reviewed dry bays: two grounded terminal occupants choose a ready flyer first.
       // Do not start a ground handover solely because flight art is still decoding.
       // Respect the existing readiness deadline; do not mutate an active ticket.
       let requestOrder=model.actors.values();
-      if(!started&&!lane&&terrain.number===28&&bay&&roster.length===2){
+      if(!started&&!lane&&[12,14,28].includes(terrain.number)&&bay&&roster.length===2){
        const pair=[...model.actors.values()];
        if(pair.length===2&&new Set(pair.map(a=>a.node)).size===2&&pair.every(a=>
          (a.node==='A'||a.node==='B')&&a.movable&&!a.route&&a.phase==='ground'&&a.height===0)){

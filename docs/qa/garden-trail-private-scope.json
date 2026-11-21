@@ -21,7 +21,7 @@
     },
     "src/garden-actor-motion.js": {
       "before": "2dfdb5f374f29fa1af3af667be36c9857714e2b849b2da34e67a615234a4dc7c",
-      "after": "cae424608f8ed409e74770fc452c1d915719159712b8a7ce9cfdefb7a73465c3"
+      "after": "cf692af79523f99c7be77ba53f7c4605a17242b88eee2d854c1afe55f45a1df3"
     },
     "src/garden-actor-state.js": {
       "before": "311bb2ced9b28ce172627f8ac81de9f647420e01d0d5f9706c925e2f86c42301",
@@ -95,6 +95,17 @@
       ]
     },
     "basis": "Both engines selected dry positions in read-only measurement of a proposed hop. True flight at these points is not yet proven.",
+    "browserProofPending": true
+  },
+  "isolatedQaBay12And14Readiness": {
+    "basisCacheVersion": "3fe1634a171c",
+    "changedSource": {
+      "src/garden-actor-motion.js": {
+        "before": "cae424608f8ed409e74770fc452c1d915719159712b8a7ce9cfdefb7a73465c3",
+        "after": "cf692af79523f99c7be77ba53f7c4605a17242b88eee2d854c1afe55f45a1df3"
+      }
+    },
+    "basis": "Extends the proven #28 readiness order only to the same exact authoritative grounded A/B pair for #12/#14 after their amended dry bay held same native hop in 44931562247; earlier asset deadline and active ticket unchanged.",
     "browserProofPending": true
   }
 }

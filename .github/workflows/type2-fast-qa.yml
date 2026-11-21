@@ -1,16 +1,16 @@
-name: Type II fast bay-12-14-away QA (no deployment)
-run-name: Type II focused bay-12-14-away · ${{ github.sha }}
+name: Type II fast bay-12-14-as-fly QA (no deployment)
+run-name: Type II focused bay-12-14-as-fly · ${{ github.sha }}
 on:
   push:
     branches: [qa/type2-fast-bay-12-14]
 permissions:
   contents: read
 concurrency:
-  group: type2-fast-bay-12-14-away-${{ github.ref }}
+  group: type2-fast-bay-12-14-as-fly-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   visitor:
-    name: 'Type II bay-12-14-away · ${{ matrix.engine }}'
+    name: 'Type II bay-12-14-as-fly · ${{ matrix.engine }}'
     if: github.ref == 'refs/heads/qa/type2-fast-bay-12-14'
     runs-on: ubuntu-24.04
     timeout-minutes: 14
