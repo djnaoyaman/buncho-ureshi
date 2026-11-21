@@ -1,16 +1,16 @@
-name: Type II fast bay QA (no deployment)
-run-name: Type II focused bay · ${{ github.sha }}
+name: Type II fast bay-receipts QA (no deployment)
+run-name: Type II focused bay-receipts · ${{ github.sha }}
 on:
   push:
     branches: [qa/type2-fast-bay]
 permissions:
   contents: read
 concurrency:
-  group: type2-fast-bay-${{ github.ref }}
+  group: type2-fast-bay-receipts-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   visitor:
-    name: 'Type II bay · ${{ matrix.engine }}'
+    name: 'Type II bay-receipts · ${{ matrix.engine }}'
     if: github.ref == 'refs/heads/qa/type2-fast-bay'
     runs-on: ubuntu-24.04
     timeout-minutes: 14
@@ -38,7 +38,6 @@ jobs:
           test "$SOURCE_SHA" = "$GITHUB_SHA"
           node --check tests/browser/garden-trail-bay-fast.spec.js
           node --check tests/browser/garden-trail-seven.spec.js
-          node --check src/garden-actor-motion.js
           npm ci
           node -e "if(require('@playwright/test/package.json').version !== '1.64.1') process.exit(1)"
       - name: Build the exact game under test
@@ -67,7 +66,7 @@ jobs:
           rc=0
           TYPE2_CHECKPOINT_DIR="$dir" npx playwright test tests/browser/garden-trail-bay-fast.spec.js --project="$ENGINE" --retries=0 --max-failures=0 --trace=off --reporter=dot || rc="$?"
           test "$rc" -le 1
-          node -e 'const f=require("fs");const [d,e,q]=process.argv.slice(1);for(const [k,choices] of JSON.parse(q))if(!choices.includes(f.readFileSync(d+"/"+e+"-"+k,"utf8").trim()))process.exit(1);' "$dir" "$ENGINE" '[["07-bay",["pass","setup","native-gates","bay-ground","held-ready","dispatch","commit","native-flight","same-landing","lane-occupied","measured-denied"]],["10-bay",["pass","setup","native-gates","bay-ground","held-ready","dispatch","commit","native-flight","same-landing","lane-occupied","measured-denied"]],["12-bay",["pass","setup","native-gates","bay-ground","held-ready","dispatch","commit","native-flight","same-landing","lane-occupied","measured-denied"]],["14-bay",["pass","setup","native-gates","bay-ground","held-ready","dispatch","commit","native-flight","same-landing","lane-occupied","measured-denied"]],["28-bay",["pass","setup","native-gates","bay-ground","held-ready","dispatch","commit","native-flight","same-landing","lane-occupied","measured-denied"]]]'
+          node -e 'const f=require("fs");const [d,e,q]=process.argv.slice(1);for(const [k,choices] of JSON.parse(q))if(!choices.includes(f.readFileSync(d+"/"+e+"-"+k,"utf8").trim()))process.exit(1);' "$dir" "$ENGINE" '[["07-bay",["pass","setup","native-gates","bay-dom-not-grounded","bay-prospective-cross-denied","bay-receipt-missing","bay-yield-committed-no-ground","bay-yield-fit-no-commit","bay-yield-not-committed","held-ready","dispatch","commit","commit-action-unverified","commit-fly-render-rejected","commit-fly-unpainted","commit-native-hop","fly-dom-motionless","fly-dom-partner-lost","held-cannot-fly","held-destination","held-ineligible","held-peer-unmeasured","held-preview-constructor","held-preview-cooldown","held-sweep-clip","held-sweep-controls","held-sweep-peer","held-sweep-unavailable","held-unclassified","lane-occupied","same-landing"]],["10-bay",["pass","setup","native-gates","bay-dom-not-grounded","bay-prospective-cross-denied","bay-receipt-missing","bay-yield-committed-no-ground","bay-yield-fit-no-commit","bay-yield-not-committed","held-ready","dispatch","commit","commit-action-unverified","commit-fly-render-rejected","commit-fly-unpainted","commit-native-hop","fly-dom-motionless","fly-dom-partner-lost","held-cannot-fly","held-destination","held-ineligible","held-peer-unmeasured","held-preview-constructor","held-preview-cooldown","held-sweep-clip","held-sweep-controls","held-sweep-peer","held-sweep-unavailable","held-unclassified","lane-occupied","same-landing"]],["12-bay",["pass","setup","native-gates","bay-dom-not-grounded","bay-prospective-cross-denied","bay-receipt-missing","bay-yield-committed-no-ground","bay-yield-fit-no-commit","bay-yield-not-committed","held-ready","dispatch","commit","commit-action-unverified","commit-fly-render-rejected","commit-fly-unpainted","commit-native-hop","fly-dom-motionless","fly-dom-partner-lost","held-cannot-fly","held-destination","held-ineligible","held-peer-unmeasured","held-preview-constructor","held-preview-cooldown","held-sweep-clip","held-sweep-controls","held-sweep-peer","held-sweep-unavailable","held-unclassified","lane-occupied","same-landing"]],["14-bay",["pass","setup","native-gates","bay-dom-not-grounded","bay-prospective-cross-denied","bay-receipt-missing","bay-yield-committed-no-ground","bay-yield-fit-no-commit","bay-yield-not-committed","held-ready","dispatch","commit","commit-action-unverified","commit-fly-render-rejected","commit-fly-unpainted","commit-native-hop","fly-dom-motionless","fly-dom-partner-lost","held-cannot-fly","held-destination","held-ineligible","held-peer-unmeasured","held-preview-constructor","held-preview-cooldown","held-sweep-clip","held-sweep-controls","held-sweep-peer","held-sweep-unavailable","held-unclassified","lane-occupied","same-landing"]],["28-bay",["pass","setup","native-gates","bay-dom-not-grounded","bay-prospective-cross-denied","bay-receipt-missing","bay-yield-committed-no-ground","bay-yield-fit-no-commit","bay-yield-not-committed","held-ready","dispatch","commit","commit-action-unverified","commit-fly-render-rejected","commit-fly-unpainted","commit-native-hop","fly-dom-motionless","fly-dom-partner-lost","held-cannot-fly","held-destination","held-ineligible","held-peer-unmeasured","held-preview-constructor","held-preview-cooldown","held-sweep-clip","held-sweep-controls","held-sweep-peer","held-sweep-unavailable","held-unclassified","lane-occupied","same-landing"]]]'
       - name: '#07 bay complete'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
@@ -83,11 +82,36 @@ jobs:
         env:
           ENGINE: ${{ matrix.engine }}
         run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "native-gates"
-      - name: '#07 bay not bay-ground'
+      - name: '#07 bay not bay-dom-not-grounded'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
-        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-ground"
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-dom-not-grounded"
+      - name: '#07 bay not bay-prospective-cross-denied'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-prospective-cross-denied"
+      - name: '#07 bay not bay-receipt-missing'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-receipt-missing"
+      - name: '#07 bay not bay-yield-committed-no-ground'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-committed-no-ground"
+      - name: '#07 bay not bay-yield-fit-no-commit'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-fit-no-commit"
+      - name: '#07 bay not bay-yield-not-committed'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "bay-yield-not-committed"
       - name: '#07 bay not held-ready'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
@@ -103,26 +127,101 @@ jobs:
         env:
           ENGINE: ${{ matrix.engine }}
         run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "commit"
-      - name: '#07 bay not native-flight'
+      - name: '#07 bay not commit-action-unverified'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
-        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "native-flight"
-      - name: '#07 bay not same-landing'
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "commit-action-unverified"
+      - name: '#07 bay not commit-fly-render-rejected'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
-        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "same-landing"
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "commit-fly-render-rejected"
+      - name: '#07 bay not commit-fly-unpainted'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "commit-fly-unpainted"
+      - name: '#07 bay not commit-native-hop'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "commit-native-hop"
+      - name: '#07 bay not fly-dom-motionless'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "fly-dom-motionless"
+      - name: '#07 bay not fly-dom-partner-lost'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "fly-dom-partner-lost"
+      - name: '#07 bay not held-cannot-fly'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "held-cannot-fly"
+      - name: '#07 bay not held-destination'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "held-destination"
+      - name: '#07 bay not held-ineligible'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "held-ineligible"
+      - name: '#07 bay not held-peer-unmeasured'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "held-peer-unmeasured"
+      - name: '#07 bay not held-preview-constructor'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "held-preview-constructor"
+      - name: '#07 bay not held-preview-cooldown'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "held-preview-cooldown"
+      - name: '#07 bay not held-sweep-clip'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "held-sweep-clip"
+      - name: '#07 bay not held-sweep-controls'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "held-sweep-controls"
+      - name: '#07 bay not held-sweep-peer'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "held-sweep-peer"
+      - name: '#07 bay not held-sweep-unavailable'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "held-sweep-unavailable"
+      - name: '#07 bay not held-unclassified'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "held-unclassified"
       - name: '#07 bay not lane-occupied'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
         run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "lane-occupied"
-      - name: '#07 bay not measured-denied'
+      - name: '#07 bay not same-landing'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
-        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "measured-denied"
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-bay")" != "same-landing"
       - name: '#10 bay complete'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
@@ -138,11 +237,36 @@ jobs:
         env:
           ENGINE: ${{ matrix.engine }}
         run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-bay")" != "native-gates"
-      - name: '#10 bay not bay-ground'
+      - name: '#10 bay not bay-dom-not-grounded'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
-        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-bay")" != "bay-ground"
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-bay")" != "bay-dom-not-grounded"
+      - name: '#10 bay not bay-prospective-cross-denied'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-bay")" != "bay-prospective-cross-denied"
+      - name: '#10 bay not bay-receipt-missing'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-bay")" != "bay-receipt-missing"
+      - name: '#10 bay not bay-yield-committed-no-ground'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-bay")" != "bay-yield-committed-no-ground"
+      - name: '#10 bay not bay-yield-fit-no-commit'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-bay")" != "bay-yield-fit-no-commit"
+      - name: '#10 bay not bay-yield-not-committed'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-bay")" != "bay-yield-not-committed"
       - name: '#10 bay not held-ready'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
@@ -158,26 +282,101 @@ jobs:
         env:
           ENGINE: ${{ matrix.engine }}
         run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-bay")" != "commit"
-      - name: '#10 bay not native-flight'
+      - name: '#10 bay not commit-action-unverified'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
-        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-bay")" != "native-flight"
-      - name: '#10 bay not same-landing'
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-bay")" != "commit-action-unverified"
+      - name: '#10 bay not commit-fly-render-rejected'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
-        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-bay")" != "same-landing"
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-bay")" != "commit-fly-render-rejected"
+      - name: '#10 bay not commit-fly-unpainted'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-bay")" != "commit-fly-unpainted"
+      - name: '#10 bay not commit-native-hop'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-bay")" != "commit-native-hop"
+      - name: '#10 bay not fly-dom-motionless'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-bay")" != "fly-dom-motionless"
+      - name: '#10 bay not fly-dom-partner-lost'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-bay")" != "fly-dom-partner-lost"
+      - name: '#10 bay not held-cannot-fly'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-bay")" != "held-cannot-fly"
+      - name: '#10 bay not held-destination'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-bay")" != "held-destination"
+      - name: '#10 bay not held-ineligible'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-bay")" != "held-ineligible"
+      - name: '#10 bay not held-peer-unmeasured'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-bay")" != "held-peer-unmeasured"
+      - name: '#10 bay not held-preview-constructor'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-bay")" != "held-preview-constructor"
+      - name: '#10 bay not held-preview-cooldown'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-bay")" != "held-preview-cooldown"
+      - name: '#10 bay not held-sweep-clip'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-bay")" != "held-sweep-clip"
+      - name: '#10 bay not held-sweep-controls'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-bay")" != "held-sweep-controls"
+      - name: '#10 bay not held-sweep-peer'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-bay")" != "held-sweep-peer"
+      - name: '#10 bay not held-sweep-unavailable'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-bay")" != "held-sweep-unavailable"
+      - name: '#10 bay not held-unclassified'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-bay")" != "held-unclassified"
       - name: '#10 bay not lane-occupied'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
         run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-bay")" != "lane-occupied"
-      - name: '#10 bay not measured-denied'
+      - name: '#10 bay not same-landing'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
-        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-bay")" != "measured-denied"
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-bay")" != "same-landing"
       - name: '#12 bay complete'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
@@ -193,11 +392,36 @@ jobs:
         env:
           ENGINE: ${{ matrix.engine }}
         run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-12-bay")" != "native-gates"
-      - name: '#12 bay not bay-ground'
+      - name: '#12 bay not bay-dom-not-grounded'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
-        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-12-bay")" != "bay-ground"
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-12-bay")" != "bay-dom-not-grounded"
+      - name: '#12 bay not bay-prospective-cross-denied'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-12-bay")" != "bay-prospective-cross-denied"
+      - name: '#12 bay not bay-receipt-missing'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-12-bay")" != "bay-receipt-missing"
+      - name: '#12 bay not bay-yield-committed-no-ground'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-12-bay")" != "bay-yield-committed-no-ground"
+      - name: '#12 bay not bay-yield-fit-no-commit'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-12-bay")" != "bay-yield-fit-no-commit"
+      - name: '#12 bay not bay-yield-not-committed'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-12-bay")" != "bay-yield-not-committed"
       - name: '#12 bay not held-ready'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
@@ -213,26 +437,101 @@ jobs:
         env:
           ENGINE: ${{ matrix.engine }}
         run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-12-bay")" != "commit"
-      - name: '#12 bay not native-flight'
+      - name: '#12 bay not commit-action-unverified'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
-        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-12-bay")" != "native-flight"
-      - name: '#12 bay not same-landing'
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-12-bay")" != "commit-action-unverified"
+      - name: '#12 bay not commit-fly-render-rejected'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
-        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-12-bay")" != "same-landing"
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-12-bay")" != "commit-fly-render-rejected"
+      - name: '#12 bay not commit-fly-unpainted'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-12-bay")" != "commit-fly-unpainted"
+      - name: '#12 bay not commit-native-hop'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-12-bay")" != "commit-native-hop"
+      - name: '#12 bay not fly-dom-motionless'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-12-bay")" != "fly-dom-motionless"
+      - name: '#12 bay not fly-dom-partner-lost'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-12-bay")" != "fly-dom-partner-lost"
+      - name: '#12 bay not held-cannot-fly'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-12-bay")" != "held-cannot-fly"
+      - name: '#12 bay not held-destination'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-12-bay")" != "held-destination"
+      - name: '#12 bay not held-ineligible'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-12-bay")" != "held-ineligible"
+      - name: '#12 bay not held-peer-unmeasured'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-12-bay")" != "held-peer-unmeasured"
+      - name: '#12 bay not held-preview-constructor'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-12-bay")" != "held-preview-constructor"
+      - name: '#12 bay not held-preview-cooldown'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-12-bay")" != "held-preview-cooldown"
+      - name: '#12 bay not held-sweep-clip'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-12-bay")" != "held-sweep-clip"
+      - name: '#12 bay not held-sweep-controls'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-12-bay")" != "held-sweep-controls"
+      - name: '#12 bay not held-sweep-peer'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-12-bay")" != "held-sweep-peer"
+      - name: '#12 bay not held-sweep-unavailable'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-12-bay")" != "held-sweep-unavailable"
+      - name: '#12 bay not held-unclassified'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-12-bay")" != "held-unclassified"
       - name: '#12 bay not lane-occupied'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
         run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-12-bay")" != "lane-occupied"
-      - name: '#12 bay not measured-denied'
+      - name: '#12 bay not same-landing'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
-        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-12-bay")" != "measured-denied"
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-12-bay")" != "same-landing"
       - name: '#14 bay complete'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
@@ -248,11 +547,36 @@ jobs:
         env:
           ENGINE: ${{ matrix.engine }}
         run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-14-bay")" != "native-gates"
-      - name: '#14 bay not bay-ground'
+      - name: '#14 bay not bay-dom-not-grounded'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
-        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-14-bay")" != "bay-ground"
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-14-bay")" != "bay-dom-not-grounded"
+      - name: '#14 bay not bay-prospective-cross-denied'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-14-bay")" != "bay-prospective-cross-denied"
+      - name: '#14 bay not bay-receipt-missing'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-14-bay")" != "bay-receipt-missing"
+      - name: '#14 bay not bay-yield-committed-no-ground'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-14-bay")" != "bay-yield-committed-no-ground"
+      - name: '#14 bay not bay-yield-fit-no-commit'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-14-bay")" != "bay-yield-fit-no-commit"
+      - name: '#14 bay not bay-yield-not-committed'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-14-bay")" != "bay-yield-not-committed"
       - name: '#14 bay not held-ready'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
@@ -268,26 +592,101 @@ jobs:
         env:
           ENGINE: ${{ matrix.engine }}
         run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-14-bay")" != "commit"
-      - name: '#14 bay not native-flight'
+      - name: '#14 bay not commit-action-unverified'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
-        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-14-bay")" != "native-flight"
-      - name: '#14 bay not same-landing'
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-14-bay")" != "commit-action-unverified"
+      - name: '#14 bay not commit-fly-render-rejected'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
-        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-14-bay")" != "same-landing"
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-14-bay")" != "commit-fly-render-rejected"
+      - name: '#14 bay not commit-fly-unpainted'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-14-bay")" != "commit-fly-unpainted"
+      - name: '#14 bay not commit-native-hop'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-14-bay")" != "commit-native-hop"
+      - name: '#14 bay not fly-dom-motionless'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-14-bay")" != "fly-dom-motionless"
+      - name: '#14 bay not fly-dom-partner-lost'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-14-bay")" != "fly-dom-partner-lost"
+      - name: '#14 bay not held-cannot-fly'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-14-bay")" != "held-cannot-fly"
+      - name: '#14 bay not held-destination'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-14-bay")" != "held-destination"
+      - name: '#14 bay not held-ineligible'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-14-bay")" != "held-ineligible"
+      - name: '#14 bay not held-peer-unmeasured'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-14-bay")" != "held-peer-unmeasured"
+      - name: '#14 bay not held-preview-constructor'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-14-bay")" != "held-preview-constructor"
+      - name: '#14 bay not held-preview-cooldown'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-14-bay")" != "held-preview-cooldown"
+      - name: '#14 bay not held-sweep-clip'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-14-bay")" != "held-sweep-clip"
+      - name: '#14 bay not held-sweep-controls'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-14-bay")" != "held-sweep-controls"
+      - name: '#14 bay not held-sweep-peer'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-14-bay")" != "held-sweep-peer"
+      - name: '#14 bay not held-sweep-unavailable'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-14-bay")" != "held-sweep-unavailable"
+      - name: '#14 bay not held-unclassified'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-14-bay")" != "held-unclassified"
       - name: '#14 bay not lane-occupied'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
         run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-14-bay")" != "lane-occupied"
-      - name: '#14 bay not measured-denied'
+      - name: '#14 bay not same-landing'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
-        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-14-bay")" != "measured-denied"
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-14-bay")" != "same-landing"
       - name: '#28 bay complete'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
@@ -303,11 +702,36 @@ jobs:
         env:
           ENGINE: ${{ matrix.engine }}
         run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-28-bay")" != "native-gates"
-      - name: '#28 bay not bay-ground'
+      - name: '#28 bay not bay-dom-not-grounded'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
-        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-28-bay")" != "bay-ground"
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-28-bay")" != "bay-dom-not-grounded"
+      - name: '#28 bay not bay-prospective-cross-denied'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-28-bay")" != "bay-prospective-cross-denied"
+      - name: '#28 bay not bay-receipt-missing'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-28-bay")" != "bay-receipt-missing"
+      - name: '#28 bay not bay-yield-committed-no-ground'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-28-bay")" != "bay-yield-committed-no-ground"
+      - name: '#28 bay not bay-yield-fit-no-commit'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-28-bay")" != "bay-yield-fit-no-commit"
+      - name: '#28 bay not bay-yield-not-committed'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-28-bay")" != "bay-yield-not-committed"
       - name: '#28 bay not held-ready'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
@@ -323,26 +747,101 @@ jobs:
         env:
           ENGINE: ${{ matrix.engine }}
         run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-28-bay")" != "commit"
-      - name: '#28 bay not native-flight'
+      - name: '#28 bay not commit-action-unverified'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
-        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-28-bay")" != "native-flight"
-      - name: '#28 bay not same-landing'
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-28-bay")" != "commit-action-unverified"
+      - name: '#28 bay not commit-fly-render-rejected'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
-        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-28-bay")" != "same-landing"
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-28-bay")" != "commit-fly-render-rejected"
+      - name: '#28 bay not commit-fly-unpainted'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-28-bay")" != "commit-fly-unpainted"
+      - name: '#28 bay not commit-native-hop'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-28-bay")" != "commit-native-hop"
+      - name: '#28 bay not fly-dom-motionless'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-28-bay")" != "fly-dom-motionless"
+      - name: '#28 bay not fly-dom-partner-lost'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-28-bay")" != "fly-dom-partner-lost"
+      - name: '#28 bay not held-cannot-fly'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-28-bay")" != "held-cannot-fly"
+      - name: '#28 bay not held-destination'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-28-bay")" != "held-destination"
+      - name: '#28 bay not held-ineligible'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-28-bay")" != "held-ineligible"
+      - name: '#28 bay not held-peer-unmeasured'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-28-bay")" != "held-peer-unmeasured"
+      - name: '#28 bay not held-preview-constructor'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-28-bay")" != "held-preview-constructor"
+      - name: '#28 bay not held-preview-cooldown'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-28-bay")" != "held-preview-cooldown"
+      - name: '#28 bay not held-sweep-clip'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-28-bay")" != "held-sweep-clip"
+      - name: '#28 bay not held-sweep-controls'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-28-bay")" != "held-sweep-controls"
+      - name: '#28 bay not held-sweep-peer'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-28-bay")" != "held-sweep-peer"
+      - name: '#28 bay not held-sweep-unavailable'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-28-bay")" != "held-sweep-unavailable"
+      - name: '#28 bay not held-unclassified'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-28-bay")" != "held-unclassified"
       - name: '#28 bay not lane-occupied'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
         run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-28-bay")" != "lane-occupied"
-      - name: '#28 bay not measured-denied'
+      - name: '#28 bay not same-landing'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
-        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-28-bay")" != "measured-denied"
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-28-bay")" != "same-landing"
       - name: Clear temporary receipts only
         if: ${{ always() }}
         run: rm -rf -- "$RUNNER_TEMP/type2-focused-receipts"
