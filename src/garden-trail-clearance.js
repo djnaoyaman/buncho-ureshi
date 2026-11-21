@@ -70,13 +70,30 @@ export function createTrailClearance(id,{plane,clip,controls,footprints,flightFo
   }
   return true;
  }
+ // Only standing peers use real measured rectangles instead of their
+ // filled bounding union. A malformed component set or any route is
+ // conservatively checked with the pre-existing upper envelope.
+ function standingSpans(actor){
+  const shape=footprints.get(actor.id);
+  if(actor.route||!shape||!usable(shape))return sweptRoute(actor);
+  const parts=shape.parts;
+  if(!Array.isArray(parts)||!parts.length||!parts.every(p=>usable(p)&&
+     p.left>=shape.left&&p.right<=shape.right&&p.top>=shape.top&&p.bottom<=shape.bottom))
+   return sweptRoute(actor);
+  return parts.map(part=>at(actor,actor.p,part));
+ }
+ function placementConflicts(a,b){
+  const spans=a.route||b.route?sweptRoute:standingSpans;
+  const first=spans(a),second=spans(b);
+  return !first||!second||conflictSweeps(first,second);
+ }
  function intersectsLane(actor,ownerShape){
   if(!footprints.has(actor.id)||!usable(ownerShape))return true;
   const corridor=sweptHopSpans(path,(p,h)=>bodyAt(plane,ownerShape,p,h),.012*plane.height);
   const actorSweep=sweptRoute(actor);
   return !actorSweep||conflictSweeps(corridor,actorSweep);
  }
- return {canStand,safe,sweptRoute,intersectsLane};
+ return {canStand,safe,sweptRoute,intersectsLane,placementConflicts};
 }
 
 // Adopt a painted native candidate only after the same caller that admits a

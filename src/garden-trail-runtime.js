@@ -116,12 +116,10 @@ export function createGardenTrailRuntime(id,model){
   standingFits(){
    if(!proven)return false;
    const existing=[...model.actors.values()];
-   const spans=[];
+   const placed=[];
    for(const a of existing){
-    if(a.route||!proven.canStand(a,a.p))return false;
-    const s=proven.sweptRoute(a);
-    if(!s||conflictSweeps(s,spans))return false;
-    spans.push(...s);
+    if(a.route||!proven.canStand(a,a.p)||placed.some(p=>proven.placementConflicts(a,p)))return false;
+    placed.push(a);
    }
    return true;
   },
@@ -143,12 +141,9 @@ export function createGardenTrailRuntime(id,model){
   },
   canPlace(actor,node,peers){
    if(!proven||!proven.canStand(actor,node.p))return false;
-   const s=proven.sweptRoute({...actor,p:node.p,route:null});
+   const candidate={...actor,p:node.p,route:null},s=proven.sweptRoute(candidate);
    if(!s)return false;
-   for(const p of peers.values())if(p.id!==actor.id){
-    const span=proven.sweptRoute(p);
-    if(!span||conflictSweeps(s,span))return false;
-   }
+   for(const p of peers.values())if(p.id!==actor.id&&proven.placementConflicts(candidate,p))return false;
    return adapter.canPlace({spans:s});
   }
  };

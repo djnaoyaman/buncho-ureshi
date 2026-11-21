@@ -267,10 +267,18 @@ export function createGardenActorMotion(root){
    // Idle birds don't have wings open. Preserve the full native hit box and
    // real label; union the larger visible art only for the moving pose.
    const box=inflate?rect(inflate):null;
-   return {left:Math.min(-normal,(label?.left??x)-x,(sprite?.left??x)-x,(box?.left??x)-x),
+   const envelope={left:Math.min(-normal,(label?.left??x)-x,(sprite?.left??x)-x,(box?.left??x)-x),
     right:Math.max(b.width-normal,(label?.right??x)-x,(sprite?.right??x)-x,(box?.right??x)-x),
     top:Math.min(-vertical,(label?.top??y)-y,(sprite?.top??y)-y,(box?.top??y)-y),
     bottom:Math.max(b.height-vertical,(label?.bottom??y)-y,(sprite?.bottom??y)-y,(box?.bottom??y)-y,20)};
+   // Below seven actors keep the original geometry. For a compact pack only,
+   // retain each actual stationary rectangle: do not treat empty corners
+   // or the artificial clearance skirt as a second bird's painted body.
+   // Clip, controls, and any route still receive the full envelope.
+   if(!inflate&&definitions.length>6&&r.width>=43.99&&r.height>=43.99)
+    envelope.parts=[r,label,sprite].filter(q=>q&&q.width>0&&q.height>0)
+     .map(q=>({left:q.left-x,right:q.right-x,top:q.top-y,bottom:q.bottom-y}));
+   return envelope;
   };
   const measureTrail=()=>{
    // Probe the actual final-size layout synchronously. Otherwise a compact
@@ -285,7 +293,7 @@ export function createGardenActorMotion(root){
     for(const b of bindings.values()){
      probe(b.node,{width:b.width+'px',height:b.height+'px',marginBlockStart:'0px',transform:'translate(-54%,-97.5%)',transition:'none'});
      probe(b.sprite,{transform:'none'});
-     probe(b.label,{visibility:'visible',maxWidth:b.width+'px'});
+     probe(b.label,{visibility:definitions.length>6?'':'visible',maxWidth:b.width+'px'});
      probe(b.flight?.node,{transform:'none'});
     }
     const footprints=new Map([...bindings].map(([id,b])=>[id,footprint(b)]));
