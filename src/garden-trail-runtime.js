@@ -11,7 +11,7 @@ export function createGardenTrailRuntime(id,model){
  const [A,B]=terrain.entryCandidates,[bay]=terrain.pullouts;
  const points=bay?{A,B,bay}:{A,B};
  const nodes=Object.fromEntries(Object.entries(points).map(([id,p])=>[id,{id,p}]));
- let current=null,proven=null,epoch=null,lastLocal=null,localFlightId=null,interior=null,interiorMiss=null;
+ let current=null,proven=null,epoch=null,lastLocal=null,localFlightId=null,interior=null,interiorMiss=null,paintCurrent=()=>true;
  const allowInterior=terrain.number===10||terrain.number===14;
  const kind=action=>action==='fly'?'fly':'hop';
  const makeEnvironment=safe=>({safe,width:current.plane.width,planeHeight:current.plane.height,height:.043});
@@ -20,13 +20,21 @@ export function createGardenTrailRuntime(id,model){
    // Reserve against the largest observed shape, not a fixed nominal 44px.
    return !proven||proven.intersectsLane(a,current.envelope);
   },
-  validate({id,action,kind:phase,path,to,actors,prospectiveYieldId}){
+  validate({id,action,kind:phase,path,to,actors,prospectiveYieldId,parkedBay}){
    if(!proven)return false;
    const a=actors.get(id),node=nodes[to],mode=kind(action);
    if(!a||!node)return false;
    if(a.route) return a.route.target===to&&proven.safe(a,node,mode,actors);
    const tentative=model.previewPath(id,node,path,mode,makeEnvironment(()=>false));
-   return !!tentative&&proven.safe(tentative,node,mode,actors,{prospectiveYieldId:phase==='cross'?prospectiveYieldId:null});
+   if(!tentative)return false;
+   if(parkedBay){
+    const peer={...parkedBay.actor,p:parkedBay.p,node:'bay',state:'rest',phase:'ground',height:0,route:null};
+    const projected=new Map(actors);projected.set(peer.id,peer);
+    // Before starting the real yield check the full flight with the same
+    // partner's projected grounded body; do not exempt the future occupant.
+    return proven.canStand(peer,peer.p)&&proven.safe(tentative,node,mode,projected)&&paintCurrent(tentative);
+   }
+   return proven.safe(tentative,node,mode,actors,{prospectiveYieldId:phase==='cross'?prospectiveYieldId:null});
   },
   protects(proposal,{path,lock}){
    if(!lock)return false;
@@ -41,7 +49,7 @@ export function createGardenTrailRuntime(id,model){
  });
  return {
   nodes:Object.values(nodes),
-  sync({generation,measurement,actors=[...model.actors.values()],predator=false}){
+  sync({generation,measurement,actors=[...model.actors.values()],predator=false,paintable=()=>true}){
    // Host must disposition any prior active routes before advancing epochs;
    // a null/unsafe measurement pauses new movement, not natural game events.
    if(current!==measurement||actors.length!==1||predator)interiorMiss=null;
@@ -50,7 +58,7 @@ export function createGardenTrailRuntime(id,model){
    const [solo]=actors;
    if(interior&&(actors.length!==1||predator||!measurement?.envelope||solo.id!==interior.id||
       (solo.route?solo.route.target!==interior.source:solo.node!==interior.source)))interior=null;
-   epoch=generation;current=measurement;
+   epoch=generation;current=measurement;paintCurrent=paintable;
    proven=current?.envelope?createTrailClearance(id,current):null;
    const state=adapter.sync({epoch,actors,predator:predator||!proven});
    const local=actors.find(a=>a.id===localFlightId);
@@ -70,7 +78,10 @@ export function createGardenTrailRuntime(id,model){
    // In #10 the measured wing sweep can fit while the existing sampled
    // renderer box cannot. Refuse through the normal lane handshake before
    // any reservation; the host can then try its measured interior fallback.
-   const env=makeEnvironment((a,n,k,others)=>proven.safe(a,n,k,others)&&(!isEdgeSoloFlight||paintable(a)));
+   const pairedBayFlight=!!bay&&model.actors.size===2&&d.kind==='cross'&&d.action==='fly'&&
+    [...model.actors.values()].some(a=>a.id!==d.id&&a.node==='bay'&&!a.route);
+   const env=makeEnvironment((a,n,k,others)=>proven.safe(a,n,k,others)&&
+    (!isEdgeSoloFlight||paintable(a))&&(!pairedBayFlight||paintCurrent(a)));
    const start=c=>kind(c.action)==='fly'
      ?model.beginFlightPath(c.id,nodes[c.target],c.path,env)
      :model.beginHopPath(c.id,nodes[c.target],c.path,env);

@@ -427,7 +427,7 @@ export function createGardenActorMotion(root){
    }
   }
   if(trailRuntime){
-   const state=trailRuntime.sync({generation:key,measurement,predator:predator||settle});
+   const state=trailRuntime.sync({generation:key,measurement,predator:predator||settle,paintable:routeFits});
    const recoveryIds=new Set(state.disposition.map(x=>x.id));
    if(settle||hadTrail&&resized&&!routesFit)for(const a of model.actors.values())if(a.route&&(settle||!routeFits(a)))recoveryIds.add(a.id);
    if(recoveryIds.size){
@@ -450,7 +450,7 @@ export function createGardenActorMotion(root){
    if(active&&!recovered&&!standingOnly){
     if(trailRuntime){
      model.advance(elapsed,layoutNodes,{...environment,safe:()=>false});
-     const lane=trailRuntime.sync({generation:key,measurement,predator}).active;
+     const lane=trailRuntime.sync({generation:key,measurement,predator,paintable:routeFits}).active;
      if(lane?.phase==='ready'&&elapsed<nextTrail){
       // The partner has actually grounded at the bay and the planner has
       // rechecked the occupied-bay sweep. Finish this same admitted handover
@@ -461,7 +461,11 @@ export function createGardenActorMotion(root){
       let started=roster.length===1?trailRuntime.singletonInterior({paintable:routeFits,resumeOnly:true}):null;
       if(!started)for(const a of model.actors.values())if(!a.route&&a.movable&&(a.node==='A'||a.node==='B')){
        if(a.initialFlight&&!a.canFly&&model.time<a.initialFlightDeadline)continue;
-       if(a.canFly&&(!trailRetry||roster.length===1))trailRuntime.request(a.id,'fly');else trailRuntime.request(a.id,'walk');
+       const pairedBay=bay&&roster.length===2&&[...model.actors.values()].some(b=>b.id!==a.id&&b.node===(a.node==='A'?'B':'A')&&!b.route);
+       if(pairedBay&&a.canFly&&model.time>=a.cooldown)trailRuntime.request(a.id,'fly');
+       else if(!pairedBay||!a.canFly){
+        if(a.canFly&&(!trailRetry||roster.length===1))trailRuntime.request(a.id,'fly');else trailRuntime.request(a.id,'walk');
+       }
        break;
       }
       if(!started)started=trailRuntime.run(terrain.number===10&&roster.length===1?{paintable:routeFits}:undefined);

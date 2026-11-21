@@ -23,7 +23,9 @@ export function createGardenTrailAdapter(id,{intersectsLane,validate,protects}){
    const exitOccupant=kind==='cross'&&!phase?[...raw.values()].filter(a=>a.slot===to&&a.id!==id):[];
    return !!actor&&!actor.leaving&&!!action&&(action!=='fly'||actor.canFly)&&
      validate({id,action,kind,path:copyPath(path),from,to,actors:raw,
-       prospectiveYieldId:exitOccupant.length===1?exitOccupant[0].id:null});
+       prospectiveYieldId:exitOccupant.length===1?exitOccupant[0].id:null,
+       parkedBay:action==='fly'&&bay&&raw.size===2&&exitOccupant.length===1?
+        {actor:exitOccupant[0],p:[...bay]}:null});
  }});
  function sync({epoch,actors,predator=false}){
    if(epoch!==key){key=epoch;requested.clear();recovering.clear();pending=null;}
@@ -59,7 +61,9 @@ export function createGardenTrailAdapter(id,{intersectsLane,validate,protects}){
  function enqueue(id,action){
    const a=raw.get(id);
    if(!['walk','fly'].includes(action)||(action==='fly'&&!a?.canFly)||!planner.request(id))return false;
-   if(!requested.has(id)||raw.size===1&&action==='fly'&&requested.get(id)==='walk')requested.set(id,action);
+   const pairedUncommitted=bay&&raw.size===2&&!planner.snapshot().lock&&[...raw.values()].some(b=>
+    b.id!==id&&b.slot===(a.slot==='A'?'B':'A'));
+   if(!requested.has(id)||(raw.size===1||pairedUncommitted)&&action==='fly'&&requested.get(id)==='walk')requested.set(id,action);
    return true;
  }
  function admit(){

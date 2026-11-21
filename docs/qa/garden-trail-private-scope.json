@@ -21,7 +21,7 @@
     },
     "src/garden-actor-motion.js": {
       "before": "2dfdb5f374f29fa1af3af667be36c9857714e2b849b2da34e67a615234a4dc7c",
-      "after": "7c81db12f4523fbf4add5f9dd117480d8b9146dd1db2e27e8ca58b59317fab8e"
+      "after": "41d88a032d27faee050e513af89983be5d2fe30f21925d4152265b9975fa561a"
     },
     "src/garden-actor-state.js": {
       "before": "311bb2ced9b28ce172627f8ac81de9f647420e01d0d5f9706c925e2f86c42301",
@@ -30,6 +30,24 @@
     "src/garden-bird-motion.js": {
       "before": "1a7d3da97648b4e548c2223462e033a07552624597481f75ed47e7a9da6760c3",
       "after": "f76680361753674e5691e6697f95fbf752f9e46c87413ecc2dab2a09613d9583"
+    }
+  },
+  "verifiedQaBayHandoverFlight": {
+    "baseCommit": "ff87c4c8c84301588639cf3eb9e3ba9ed3e719a6",
+    "equivalentBaseProductTree": "b3b5c3f62d6d4c42b34761ca18656adb5a24d3f9",
+    "changedSource": {
+      "src/garden-actor-motion.js": {
+        "before": "7c81db12f4523fbf4add5f9dd117480d8b9146dd1db2e27e8ca58b59317fab8e",
+        "after": "41d88a032d27faee050e513af89983be5d2fe30f21925d4152265b9975fa561a"
+      },
+      "src/garden-trail-adapter.js": {
+        "before": "af2cf3ef4d12396430e8ed7e7a931cf35097d008fb84bf175ef203cdd0cfa6b4",
+        "after": "c1640f8905a3b2766fe683ce62c00a26ae66d9ea185973dc6814a2b44cc231fb"
+      },
+      "src/garden-trail-runtime.js": {
+        "before": "3638cdc1d3453a7511d14df439727c487e4f596aeb278418bd40d25026f5c088",
+        "after": "90f7b992c84b891a4fe56ebd12943c268c215a7c407e926c812cec3bdd75c0e8"
+      }
     }
   }
 }
