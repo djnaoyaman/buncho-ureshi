@@ -1,3 +1,5 @@
+import {writeFileSync} from 'node:fs';
+import {join} from 'node:path';
 import {test,expect} from '@playwright/test';
 import {setup,snapshotGarden,readyGardenSnapshot} from '../fixtures/garden-terrain-browser.js';
 // Delay only the shell's real resize notification, reproducing the observed
@@ -13,16 +15,32 @@ async function delayViewport(page){await page.addInitScript(()=>{
  window.__releaseViewport=()=>{window.__holdViewport=false;for(const call of window.__pendingViewport||[])call();window.__pendingViewport=[];};
 });}
 for(const id of ['java-rice','bird-diamond-firetail','bird-zebra-finch','kazaguruma','yuyake','bird-gouldian-finch'])for(const density of [true,false,'dense'])test(`viewport synchronization ${id} ${density}`,async({page},info)=>{
- await delayViewport(page);await setup(page,id,390,true,density);await page.clock.resume();
- for(const width of [844,390,844,390]){
-  await page.evaluate(()=>window.__holdViewport=true);
-  await page.setViewportSize({width,height:width===844?390:844});
-  const sample=await readyGardenSnapshot(page,info,'viewport-samples');
-  expect(Math.abs(sample.overlay.height-sample.viewport.height)).toBeLessThan(2);
-  for(const b of sample.birds){expect(b.centerInViewport,JSON.stringify(sample)).toBe(true);expect(b.hit,JSON.stringify(sample)).toBe(true);}
-  await page.locator('.finch-garden-household').first().click();await expect(page.getByRole('dialog',{name:'エド',exact:true})).toBeVisible();
-  await page.getByRole('button',{name:'文鳥の操作をとじる',exact:true}).click();
-  await page.evaluate(()=>window.__releaseViewport());
+ let phase='setup',cycle=-1,motion='unobserved';
+ try{
+  await delayViewport(page);await setup(page,id,390,true,density);await page.clock.resume();
+  for(const width of [844,390,844,390]){
+   cycle++;phase='viewport-set';motion='unobserved';
+   await page.evaluate(()=>window.__holdViewport=true);
+   await page.setViewportSize({width,height:width===844?390:844});
+   phase='scene-ready';
+   const sample=await readyGardenSnapshot(page,info,'viewport-samples');
+   const allowed=['trail-active','trail-held','trail-standing','trail-needs-recovery','trail-blocked-geometry','trail-blocked-placement','geometry-blocked','insufficient-space'];
+   motion=allowed.includes(sample.motion)?sample.motion:'other';
+   phase='overlay';expect(Math.abs(sample.overlay.height-sample.viewport.height)).toBeLessThan(2);
+   for(const b of sample.birds){
+    phase='center';expect(b.centerInViewport,JSON.stringify(sample)).toBe(true);
+    phase='hit';expect(b.hit,JSON.stringify(sample)).toBe(true);
+   }
+   phase='click';await page.locator('.finch-garden-household').first().click();
+   phase='dialog';await expect(page.getByRole('dialog',{name:'エド',exact:true})).toBeVisible();
+   phase='dismiss';await page.getByRole('button',{name:'文鳥の操作をとじる',exact:true}).click();
+   phase='notification';await page.evaluate(()=>window.__releaseViewport());
+  }
+  phase='pass';
+ }finally{
+  const dest=process.env.TYPE2_CHECKPOINT_DIR;
+  if(dest&&id==='bird-zebra-finch'&&['chrome','webkit'].includes(info.project.name)&&[false,'dense'].includes(density))
+   writeFileSync(join(dest,info.project.name+'-07-viewport-'+density),JSON.stringify({phase,cycle,motion})+'\n',{mode:0o600,flag:'wx'});
  }
 });
 
