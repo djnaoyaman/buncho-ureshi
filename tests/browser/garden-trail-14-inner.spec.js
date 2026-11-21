@@ -11,7 +11,7 @@ async function overlay(page,pattern,edit){await page.route(pattern,async request
  await request.fulfill({response,body:edit(await response.text())});
 });}
 test('#14 pair on the inward dry gates',async({page},info)=>{
- let code='setup',mapped={terrain:0,order:0};
+ let code='setup',mapped={terrain:0,order:0,dispatch:0};
  try{
   await overlay(page,/\/src\/data\/garden-trail-terrain\.js(?:\?.*)?$/,source=>{
    const decl=/^export const GARDEN_TRAIL_TERRAIN=Object\.freeze\((\{[^\n]+\})\);$/gm;
@@ -30,11 +30,18 @@ test('#14 pair on the inward dry gates',async({page},info)=>{
    expect(source.split(gateAnchor)).toHaveLength(2);
    return source.replace(gateAnchor,"if(!planned&&terrain.number===14&&peers.size===0&&roster.length===2&&roster.every(d=>d.movable)){const gates=input.seats.filter(n=>n.id==='A'||n.id==='B');let outcome='nominal-gate-missing';if(gates.length===2&&new Set(gates.map(n=>n.id)).size===2){outcome='measured-pair-denied';planned=assignTrailSeats({...input,seats:gates,accept(formalPlan){if(!roster.every(d=>formalPlan.has(d.id)&&input.canPlace(d,formalPlan.get(d.id),formalPlan)))return false;outcome='native-hit-denied';const okay=input.accept(formalPlan);if(okay)outcome='north-pair-accepted';return okay;}});}globalThis.__qa14GatePlacement??=outcome;} if(!planned)planned=packTrailStandingSeats(measured);");
   });
+  await overlay(page,/\/src\/garden-trail-lane\.js(?:\?.*)?$/,source=>{
+   const ready="if(lock.phase==='ready'){\n        lock={...lock,phase:'cross'};";
+   const open="if(exits.length===0){\n        lock={...r,phase:'cross',exit:r.to};";
+   expect(source.split(ready)).toHaveLength(2);expect(source.split(open)).toHaveLength(2);mapped.dispatch++;
+   return source.replace(ready,ready.replace("lock={","globalThis.__qa14HeldDispatch={id:lock.id,to:lock.to};lock={"))
+    .replace(open,open.replace("lock={","globalThis.__qa14HeldDispatch=null;lock={"));
+  });
   await setup(page,garden,402,true,true,{trailPreview:true,height:874,afterOpenMs:0,prepareWorld:w=>{
    const bird=engine.createBird(w,{home:'resident',stage:'adult',color:'cinnamon'});
    w.encounters.gardenFriends.attendees.push(bird.id);
   }});
-  expect(mapped.terrain).toBeGreaterThan(0);expect(mapped.order).toBeGreaterThan(0);
+  expect(mapped.terrain).toBeGreaterThan(0);expect(mapped.order).toBeGreaterThan(0);expect(mapped.dispatch).toBeGreaterThan(0);
   const sample=()=>page.evaluate(()=>{
    const s=document.querySelector('.finch-garden-stage'),g=s?.closest('.finch-garden');
    const birds=[...(s?.querySelectorAll('.finch-garden-image-plane > button')||[])].map(b=>{
@@ -42,7 +49,7 @@ test('#14 pair on the inward dry gates',async({page},info)=>{
     const wing=b.querySelector('.garden-actor-flight');
     return {id:d.gardenActorId,node:d.actorNode,target:d.actorLanding,state:d.actorState,phase:d.actorPhase,x,y,w:r.width,h:r.height,
      hit:b.contains(document.elementFromPoint(x,y)),paint:!!wing&&getComputedStyle(wing).visibility==='visible'&&!!b.querySelector('[data-terrain-flight-active]')};
-   });return {world:g?.dataset.gardenWorld,id:s?.dataset.gardenId,ready:s?.dataset.sceneState,birds};
+   });return {world:g?.dataset.gardenWorld,id:s?.dataset.gardenId,ready:s?.dataset.sceneState,birds,held:globalThis.__qa14HeldDispatch??null};
   });
   let first;
   for(let i=0;i<=32;i++){
@@ -66,7 +73,12 @@ test('#14 pair on the inward dry gates',async({page},info)=>{
    const p=now.birds.find(b=>b.node==='bay'&&b.phase==='ground'&&!b.target),a=now.birds.find(b=>b.state==='fly'&&b.target);
    if(p&&!parked)parked=p.id;
    if(a){
-    code='fly-after-bay';expect(parked).toBeTruthy();expect(p?.id).toBe(parked);expect(a.id).not.toBe(parked);
+    const held=now.held?.id===a.id&&now.held.to===a.target?'held':'unheld';
+    code='fly-before-any-park-'+held;expect(parked).toBeTruthy();
+    code='fly-partner-not-currently-parked-'+held;
+    if(!p)expect(p?.id).toBe(parked);
+    code='fly-partner-different';expect(p?.id).toBe(parked);
+    code='parked-is-owner';expect(a.id).not.toBe(parked);
     if(!flight)flight={id:a.id,source:a.node,target:a.target,x:a.x,y:a.y};
     expect([a.id,a.node,a.target]).toEqual([flight.id,flight.source,flight.target]);phases.add(a.phase);paint||=a.paint;moved||=Math.hypot(a.x-flight.x,a.y-flight.y)>2;
    }
