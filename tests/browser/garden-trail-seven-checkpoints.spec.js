@@ -172,8 +172,12 @@ for(const [id,g] of Object.entries(GARDEN_TRAIL_TERRAIN)){
    const mixed=await snapshotGarden(page);
    mark(mixed.ready!=='ready'?'mixed-loading':/^trail-(active|held|standing)$/.test(mixed.motion??'')?'mixed-qualified':'mixed-unqualified');
    expect(mixed.ready).toBe('ready');assertNative(mixed,2);
-  mark('incumbent-contact');
-   expect(mixed.birds.find(b=>b.id==='b1')?.actorNode).toBe(pending.source);
+   const incumbent=mixed.birds.find(b=>b.id==='b1');
+   if(!incumbent?.actorNode){
+    const known=['trail-blocked-placement','trail-blocked-geometry','trail-needs-recovery','geometry-blocked','insufficient-space','trail-held','trail-active','trail-standing'];
+    mark('contact-missing-'+(known.includes(mixed.motion)?mixed.motion:'other'));
+   }else mark(incumbent.actorNode===pending.target?'contact-advanced-to-target':'contact-different');
+   expect(incumbent?.actorNode).toBe(pending.source);
   mark('visitor-tap');
    const guest=mixed.birds.find(b=>b.id!=='b1');
    await page.touchscreen.tap(guest.point.x,guest.point.y);
