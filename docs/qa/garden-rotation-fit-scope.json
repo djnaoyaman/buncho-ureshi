@@ -1,0 +1,19 @@
+{
+  "baseTree": "74132a50674b3d935e04beed9f861487844ff620",
+  "productTree": "c07aade1c13964868ba2f8d4f0576eafd0adde9b",
+  "changedSource": {
+    "src/garden-actor-motion.js": {
+      "before": "699e4a882e139b68d34be359978529dbc796859817fdfa523ea09fe43c879b9a",
+      "after": "2dfdb5f374f29fa1af3af667be36c9857714e2b849b2da34e67a615234a4dc7c"
+    },
+    "src/garden-actor-state.js": {
+      "before": "b3bcf8cb3c4a52a535a1b5d84c835f680af8d3dbdaadc3ed7c1f287a6ae87fbf",
+      "after": "311bb2ced9b28ce172627f8ac81de9f647420e01d0d5f9706c925e2f86c42301"
+    },
+    "src/garden-bird-motion.js": {
+      "before": "74d82788d8937b0f595a17c5e94682007675f7bd61d79c49d2017ccef5d794d2",
+      "after": "1a7d3da97648b4e548c2223462e033a07552624597481f75ed47e7a9da6760c3"
+    }
+  },
+  "scope": "Local successor for measured garden actor fit, authored and in-polygon compact footing, transactional whole-roster recovery and coalesced geometry. No gameplay, art or browser settings changes. These are implementation tree IDs, not production releases. Focused regressions model layout and scheduling without a real browser."
+}

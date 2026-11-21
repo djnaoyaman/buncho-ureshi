@@ -1,0 +1,19 @@
+{
+  "baseTree": "30c8cfebf0196ff5d2f6f47385e1c2a1ea01122b",
+  "productTree": "ea1b6b972b9551b86f428036f303ddc86f9a355f",
+  "changedSource": {
+    "src/game.js": {
+      "before": "3fe8520c06ede90d45f1f5fc757bbad3ddc5e8aa2ce35216f980de2109880772",
+      "after": "62c74dbcd2b7306f8556c221cee4aad45fb468b1624e9d511257922c762873a8"
+    },
+    "src/garden-actor-motion.js": {
+      "before": "afb095bc2869bfa2045fca840b31efce1c0750a3c8e03a4e6ee332546ed08400",
+      "after": "699e4a882e139b68d34be359978529dbc796859817fdfa523ea09fe43c879b9a"
+    },
+    "src/garden-bird-motion.js": {
+      "before": "aae20e53793e91b686a271628afa472eca442976c9ee9b368576b27dbc00c411",
+      "after": "74d82788d8937b0f595a17c5e94682007675f7bd61d79c49d2017ccef5d794d2"
+    }
+  },
+  "scope": "Keep the outdoors encounter DOM through compact-height changes and apply garden geometry on visible resize without advancing motion; retain other compact views, gameplay and assets."
+}

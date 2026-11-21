@@ -13,8 +13,12 @@ test('exactly two authorized IDs; other33, explicit booklet successor, Bach sour
  const audit=JSON.parse(read('docs/qa/gardens30-35-scope.json'));assert.equal(Object.keys(audit.otherGardenHashes).length,33);
  for(const [id,expected] of Object.entries(audit.otherGardenHashes))assert.equal(hash(JSON.stringify(GARDEN35_MUSIC[id])),expected,id);
  const ui=JSON.parse(read('docs/qa/garden-track-credit-scope.json')),motion=JSON.parse(read('docs/qa/garden-motion-four-scope.json')),actors=JSON.parse(read('docs/qa/garden-actors-scope.json'));
+ const rotation=JSON.parse(read('docs/qa/garden-rotation-input-scope.json'));
+ const fit=JSON.parse(read('docs/qa/garden-rotation-fit-scope.json'));
+ assert.deepEqual(Object.keys(fit.changedSource),['src/garden-actor-motion.js', 'src/garden-actor-state.js', 'src/garden-bird-motion.js']);
+ assert.deepEqual(Object.keys(rotation.changedSource),['src/game.js','src/garden-actor-motion.js','src/garden-bird-motion.js']);
  assert.deepEqual(Object.keys(actors.changedSource),['src/encounter-ui.js','src/garden-bird-motion.js']);
  assert.deepEqual(Object.keys(motion.changedSource),['src/encounter-ui.js','src/garden-bird-motion.js']);
- for(const [file,expected] of Object.entries(audit.unchangedSource)){const successor=ui.changedSource[file];if(successor)assert.equal(successor.before,expected,file);const next=motion.changedSource[file];if(next)assert.equal(next.before,successor?.after||expected,file);const actor=actors.changedSource[file];if(actor)assert.equal(actor.before,next?.after||successor?.after||expected,file);assert.equal(hash(read(file)),actor?.after||next?.after||successor?.after||expected,file);}
+ for(const [file,expected] of Object.entries(audit.unchangedSource)){const successor=ui.changedSource[file];if(successor)assert.equal(successor.before,expected,file);const next=motion.changedSource[file];if(next)assert.equal(next.before,successor?.after||expected,file);const actor=actors.changedSource[file];if(actor)assert.equal(actor.before,next?.after||successor?.after||expected,file);const prior=actor?.after||next?.after||successor?.after||expected;const rotationStep=rotation.changedSource[file];if(rotationStep)assert.equal(rotationStep.before,prior,file);const intermediate=rotationStep?.after||prior;const fitStep=fit.changedSource[file];if(fitStep)assert.equal(fitStep.before,intermediate,file);assert.equal(hash(read(file)),fitStep?.after||intermediate,file);}
  assert.match(read('src/garden-about-booklet.js').toString(),/renderGardenTrackCredit/);
 });
