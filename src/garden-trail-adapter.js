@@ -19,9 +19,16 @@ export function createGardenTrailAdapter(id,{intersectsLane,validate,protects}){
    const actor=raw.get(id), path=paths(from,to), action=kind==='yield'?'hop':requested.get(id);
    // Renderer checks actual actors-in-route and UI; a legitimate terminal occupant is the
    // planner's sole yield candidate and may be ignored ONLY for prospective crossing.
-   const phase=planner.snapshot().lock?.phase;
+   const lock=planner.snapshot().lock,phase=lock?.phase;
    const exitOccupant=kind==='cross'&&!phase?[...raw.values()].filter(a=>a.slot===to&&a.id!==id):[];
-   return !!actor&&!actor.leaving&&!!action&&(action!=='fly'||actor.canFly)&&
+   // Readiness gates departure, not a #14 crossing already committed by
+   // this adapter. A fresh DOM binding may temporarily lack decoded wings;
+   // keep this exact reservation only subject to the unchanged live sweep.
+   const route=actor?.route;
+   const committed14=terrain.number===14&&!pending&&phase==='cross'&&lock.id===id&&lock.to===to&&
+    actor?.state==='fly'&&route?.target===to&&Array.isArray(route.from)&&Array.isArray(route.to)&&
+    same(route.from,slots[lock.from])&&same(route.to,slots[to]);
+   return !!actor&&!actor.leaving&&!!action&&(action!=='fly'||actor.canFly||committed14)&&
      validate({id,action,kind,path:copyPath(path),from,to,actors:raw,
        prospectiveYieldId:exitOccupant.length===1?exitOccupant[0].id:null,
        parkedBay:action==='fly'&&bay&&raw.size===2&&exitOccupant.length===1?
