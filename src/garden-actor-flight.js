@@ -75,7 +75,8 @@ export function createActorFlight(sprite,color){
   pose.style.visibility=air?'hidden':'visible';pose.toggleAttribute('data-terrain-flight-active',air);
   if(whiteSet){whiteImage.style.visibility=air&&flightMode==='ready'?'visible':'hidden';whiteFallback.style.visibility=air&&flightMode==='fallback'?'visible':'hidden';}
   if(!air)return;
-  container.style.transform=a.route.to[0]<a.route.from[0]?'scaleX(-1)':'none';
+  const left=a.route.flightPath&&Math.abs(a.dx??0)>.00004?a.dx<0:a.route.to[0]<a.route.from[0];
+  container.style.transform=left?'scaleX(-1)':'none';
   if(whiteSet){
    const useFrames=flightMode==='ready';
    whiteImage.style.visibility=useFrames?'visible':'hidden';whiteFallback.style.visibility=useFrames?'hidden':'visible';
