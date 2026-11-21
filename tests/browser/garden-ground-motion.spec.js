@@ -2,7 +2,30 @@ import {test,expect} from '@playwright/test';
 import {setup,measure,measureReady,snapshotGarden,readyGardenSnapshot} from '../fixtures/garden-terrain-browser.js';
 import {terrainFor,inside} from '../../src/garden-terrain-plan.js';
 import {actorTerrainFor} from '../../src/data/garden-actor-terrain.js';
+import {trailTerrainFor} from '../../src/data/garden-trail-terrain.js';
 const ids=['java-rice','bird-diamond-firetail','bird-zebra-finch','kazaguruma'];
+const expectedMotion=(id,legacy,{survey=false}={})=>trailTerrainFor(id)
+ ?['data-actor-motion',survey?'trail-active':/^trail-(active|held|standing)$/]
+ :actorTerrainFor(id)?['data-actor-motion','active']:['data-terrain-motion',legacy];
+async function expectGardenPresentation(page,id,legacy,options){
+ const stage=page.locator('.finch-garden-stage');
+ if(trailTerrainFor(id))await expect(stage).toHaveAttribute('data-garden-trail','true');
+ await expect(stage).toHaveAttribute(...expectedMotion(id,legacy,options));
+}
+function verifyTrailRoster(sample,before,id){
+ expect(sample).toHaveLength(before.length);
+ expect(sample.map(b=>b.id)).toEqual(before.map(b=>b.id));
+ expect(new Set(sample.map(b=>b.id)).size).toBe(before.length);
+ expect(new Set(sample.map(b=>b.point.join(','))).size).toBe(before.length);
+ for(const b of sample){
+  expect(b.hit,JSON.stringify(b)).toBe(true);
+  expect(b.width+0.01).toBeGreaterThanOrEqual(44);
+  expect(b.height+0.01).toBeGreaterThanOrEqual(44);
+  expect(b.filter).toBe('none');
+  expect(inside(b.point,trailTerrainFor(id).surface),JSON.stringify(b)).toBe(true);
+ }
+}
+
 async function setReducedMotion(page,reduced){
  // Existing MediaQueryList objects update on WebKit's real media-change event,
  // later than a fresh matchMedia query. Do not advance the fake clock before it.
@@ -13,7 +36,7 @@ async function setReducedMotion(page,reduced){
 }
 for(const id of ids)for(const width of [320,375,390,402,430])test(`surveyed motion ${id} ${width}`,async({page},info)=>{
  await setup(page,id,width,true,true);
- await expect(page.locator('.finch-garden-stage')).toHaveAttribute(actorTerrainFor(id)?'data-actor-motion':'data-terrain-motion',actorTerrainFor(id)?'active':'grounded');
+ await expectGardenPresentation(page,id,'grounded',{survey:true});
  const bird=page.locator('.finch-garden-household'),before=await measureReady(page);expect(before).toHaveLength(1);
  await page.mouse.move(0,0);await page.locator('#finch-garden-title').focus();
  const positions=new Set();
@@ -22,17 +45,17 @@ for(const id of ids)for(const width of [320,375,390,402,430])test(`surveyed moti
   // A committed-world redraw briefly closes the existing image readiness gate.
   // Wait for real decode/layout; hidden replacement buttons are not interactive yet.
   await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-scene-state','ready');
-  await expect(page.locator('.finch-garden-stage')).toHaveAttribute(actorTerrainFor(id)?'data-actor-motion':'data-terrain-motion',actorTerrainFor(id)?'active':'grounded');
+  await expectGardenPresentation(page,id,'grounded',{survey:true});
   for(const b of await measureReady(page)){
-   expect(b.motion).toBe(actorTerrainFor(id)?'active':'grounded');expect(b.hit,JSON.stringify(b)).toBe(true);expect(b.filter).toBe('none');expect(b.src).toBe(before[0].src);
+   expect(b.motion).toBe(expectedMotion(id,'grounded',{survey:true})[1]);expect(b.hit,JSON.stringify(b)).toBe(true);expect(b.filter).toBe('none');expect(b.src).toBe(before[0].src);
    expect(Math.round(b.width*1000)/1000).toBeGreaterThanOrEqual(44);
-   expect(inside(b.point,actorTerrainFor(id)?.surface||terrainFor(id).surfaces[terrainFor(id).primary])).toBe(true);
+   expect(inside(b.point,trailTerrainFor(id)?.surface||actorTerrainFor(id)?.surface||terrainFor(id).surfaces[terrainFor(id).primary])).toBe(true);
    positions.add(b.point.join(','));
   }
  }
  expect(positions.size).toBeGreaterThan(2);
  await expect(page.locator('.garden-terrain-flight,.garden-terrain-mask')).toHaveCount(0);
- if(actorTerrainFor(id))await expect(page.locator('.garden-actor-flight')).toHaveCount(1);
+ if(actorTerrainFor(id)||trailTerrainFor(id))await expect(page.locator('.garden-actor-flight')).toHaveCount(1);
  await page.screenshot({path:info.outputPath('ground.png')});
  await bird.focus();const held=await bird.getAttribute('style');await page.clock.runFor(6000);
  expect(await bird.getAttribute('style')).toBe(held);await expect(bird).toBeFocused();
@@ -47,11 +70,20 @@ for(const id of ids)for(const density of [false,'dense'])test(`safe roster ${id}
  await setup(page,id,320,true,density);
  // Legacy gardens retain static fallback; individually surveyed open grounds
  // now support the same whole roster without changing game presence.
- await expect(page.locator('.finch-garden-stage')).toHaveAttribute(actorTerrainFor(id)?'data-actor-motion':'data-terrain-motion',actorTerrainFor(id)?'active':'static');
+ await expectGardenPresentation(page,id,'static');
  const before=await measure(page);expect(before).toHaveLength(density?8:5);
- await page.clock.runFor(30000);
- if(!actorTerrainFor(id))expect((await measure(page)).map(b=>b.style)).toEqual(before.map(b=>b.style));
- else {expect((await measure(page)).map(b=>b.id)).toEqual(before.map(b=>b.id));expect(await page.locator('[data-actor-state]').count()).toBe(before.length);}
+ if(trailTerrainFor(id)){
+  verifyTrailRoster(before,before,id);
+  for(let elapsed=0;elapsed<30000;elapsed+=1500){
+   await page.clock.runFor(1500);
+   verifyTrailRoster(await measureReady(page),before,id);
+  }
+  expect(await page.locator('[data-actor-state]').count()).toBe(before.length);
+ }else{
+  await page.clock.runFor(30000);
+  if(!actorTerrainFor(id))expect((await measure(page)).map(b=>b.style)).toEqual(before.map(b=>b.style));
+  else {expect((await measure(page)).map(b=>b.id)).toEqual(before.map(b=>b.id));expect(await page.locator('[data-actor-state]').count()).toBe(before.length);}
+ }
  for(const b of await measure(page)){expect(b.hit,JSON.stringify(b)).toBe(true);expect(b.filter).toBe('none');}
  await expect(page.locator('.garden-terrain-flight')).toHaveCount(0);
 });
@@ -75,7 +107,7 @@ for(const id of ids)test(`ground holds and resumes ${id}`,async({page},info)=>{
  await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-scene-state','ready');
  // A new visit restores the ordinary four friends alongside the companion.
  // Preserve that game rule and each garden's appropriate presentation.
- await expect(page.locator('.finch-garden-stage')).toHaveAttribute(actorTerrainFor(id)?'data-actor-motion':'data-terrain-motion',actorTerrainFor(id)?'active':'static');
+ await expectGardenPresentation(page,id,'static');
  expect(await measure(page)).toHaveLength(5);
  for(const b of await measure(page))expect(b.hit).toBe(true);
 });

@@ -1,0 +1,76 @@
+{
+  "baseCommit": "41736e849645a97ad334a731a0044ce1e5814f0e",
+  "baseTree": "7d15ce555a5e6a840bc43cc14e246e2d0116d6d1",
+  "reviewedDraft": "No single reviewed draft; mixed source composition recorded below.",
+  "purpose": "Default presentation only for the seven surveyed Type II trail profiles. Enables scoped native motion and touch validation without changing game rules or storage. Candidate, not release evidence.",
+  "gardens": [
+    7,
+    8,
+    10,
+    12,
+    14,
+    28,
+    34
+  ],
+  "changedSource": {
+    "src/encounter-ui.js": {
+      "before": "7b3df2bbc75cc95a262763cc6cb79dc9c8cd9fecce08ae87eaf1348bd5594936",
+      "after": "673425871ce9f89d79365a3fbbb8707570addc1b1fe014f0832044b4f8152833"
+    },
+    "src/garden-actor-flight.js": {
+      "before": "256f270a396a15374829257a8265216c20290a8a594977ce200412664d1a5e91",
+      "after": "419f6cf7647d7aa19bc672a1961fe1b34980fc106cc90d7d7364ede137a3c919"
+    },
+    "src/garden-actor-motion.js": {
+      "before": "2dfdb5f374f29fa1af3af667be36c9857714e2b849b2da34e67a615234a4dc7c",
+      "after": "6903dbc958d1dff872ef2504c988d07f61f9f952a1df0ea25b7e49d9ef9bd70d"
+    },
+    "src/garden-actor-state.js": {
+      "before": "311bb2ced9b28ce172627f8ac81de9f647420e01d0d5f9706c925e2f86c42301",
+      "after": "c6a85ad17adf3023b30be3188747885841ec3fc9a83d5a369d4dbe67562c1afc"
+    },
+    "src/garden-bird-motion.js": {
+      "before": "1a7d3da97648b4e548c2223462e033a07552624597481f75ed47e7a9da6760c3",
+      "after": "f76680361753674e5691e6697f95fbf752f9e46c87413ecc2dab2a09613d9583"
+    }
+  },
+  "newSource": {
+    "src/data/garden-trail-terrain.js": "d12803d98d1cf64f0d51f915290d3f81ebdafb2ff64040625b5c56bce66f8278",
+    "src/garden-actor-path.js": "42b64539ccd88cb8af3484a4b6ce78c5688259f77f4fee502759b175afd4a805",
+    "src/garden-trail-adapter.js": "f5bafebee0ba6a85b3c1dc2da95feaa71dca4685c2ef03dc89a1e9db607f05a5",
+    "src/garden-trail-clearance.js": "11d79a1a758fa0e7c6d3bd51f3fd87f5d0eea0b1e0bd53ae8c6d4b2a9c737c90",
+    "src/garden-trail-lane.js": "b7fc52dd1335bf6166b1f6e03d49eeeb4c715c5034cc8e3dbd4965d2870178e5",
+    "src/garden-trail-runtime.js": "b709b1a671b67a2151def0e544c669452739ab1873066a42c8a6897b2b3a68d4"
+  },
+  "historicalFormalReviewedDraft": "4caaccc2cef57a62c51c25d0e5c4803098ef1d3d",
+  "compositionStatus": "Exact final formal candidate on published post-film main; verification required; not release evidence.",
+  "sourceComposition": {
+    "historicalFormalTree": "cf40829b4e427137d83f5babf0ace8b5083dd7d3",
+    "fourVerifiedFormalDonorBlobs": {
+      "src/garden-actor-motion.js": "7fc2d60e7c9a881abe623c38954edaaf6b992ad7",
+      "src/garden-trail-adapter.js": "11804d41d609345b628eb85330ba390c9faaad22",
+      "src/garden-trail-clearance.js": "2687aa0fee933a4ead1fae21bc0e35e389a156c1",
+      "src/garden-trail-runtime.js": "8551a02bdc3c062649327b6a1a30c52e61edd684"
+    },
+    "exactStateDonor": "8b23b4d588af2aefea8e3ae91feab1efcfae55fd",
+    "mixed08FourPaintsPending": true,
+    "bayAmendmentsIncluded": true,
+    "isolatedBay14Witness": {
+      "head": "e2283f09316a39a205bdc08b08fefb0baf35d757",
+      "run": "44942993439",
+      "engines": [
+        "chrome",
+        "webkit"
+      ],
+      "formalSuiteEvidence": false
+    },
+    "historicalMandatoryBrowserManifestSha256": "0d2e12c16be0dc8c7911123c62658150393a8423e1b8ebc3100447d04d76a8df",
+    "postFilmCore": {
+      "exactMain": "41736e849645a97ad334a731a0044ce1e5814f0e",
+      "protectedBaseline": 663,
+      "projectedProtected": 669,
+      "formalBrowsersPending": true
+    },
+    "mandatoryBrowserManifestSha256": "255a9d6afdf612d71cd848ae34a0680c68fc61b5149902fc8eb8ecbc4fd22726"
+  }
+}
