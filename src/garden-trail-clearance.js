@@ -349,3 +349,88 @@ export function pitchTrailStandingSeats({actors,plane,clip,surface,footprints,ba
  }
  return null;
 }
+
+// A sloping shoreline can require different vertical phases at neighboring
+// contacts. Color-prune a bounded projected sample rather than assuming any
+// single global pitch. An unfinished search never licenses a placement.
+export function contourTrailStandingSeats({actors,plane,clip,surface,footprints,canPlace,standingPairFits,accept,safePoint,knownSeats=[],maxChecks=64000,maxWork=1100000,maxStates=3500,maxProbes=3}){
+ if(actors.length!==10||!plane?.width||!plane?.height||actors.some(a=>!footprints.has(a.id)))return null;
+ const xs=surface.map(q=>plane.left+q[0]*plane.width),ys=surface.map(q=>plane.top+q[1]*plane.height);
+ const bounds=[Math.max(clip.left,Math.min(...xs)),Math.min(clip.right,Math.max(...xs)),
+  Math.max(clip.top,Math.min(...ys)),Math.min(clip.bottom,Math.max(...ys))];
+ let checks=0,work=0,states=0,probes=0;
+ const budget=()=>checks<maxChecks&&work<maxWork&&states<maxStates&&probes<maxProbes;
+ const empty=new Map(),failed=new Set(),known=new Map(knownSeats.map(n=>[n.p.join(':'),n]));
+ for(const [shiftX,shiftY] of [[3,4],[1,0],[5,2],[7,6]]){
+  if(!budget())break;
+  const seats=[];
+  for(let y=Math.floor(bounds[2]/8)*8+shiftY;y<=bounds[3]&&seats.length<440;y+=8)
+   for(let x=Math.floor(bounds[0]/8)*8+shiftX;x<=bounds[1]&&seats.length<440;x+=8){
+    const p=[(x-plane.left)/plane.width,(y-plane.top)/plane.height];
+    if(inside(p,surface)&&safePoint(p)){const key=p.join(':');seats.push(known.get(key)??{id:'contour:'+key,p});}
+   }
+  if(seats.length<actors.length)continue;
+  const groups=new Map();
+  for(const a of actors){
+   const ns=seats.filter(n=>checks++<maxChecks&&canPlace(a,n,empty));
+   const key=JSON.stringify([footprints.get(a.id),ns.map(n=>n.id)]);
+   if(!groups.has(key))groups.set(key,{members:[],ns});
+   groups.get(key).members.push(a);
+  }
+  if([...groups.values()].some(g=>g.ns.length<g.members.length))continue;
+  const verts=[...groups.values()].flatMap(g=>g.ns.map(n=>({g,n})));
+  const width=verts.length,memo=new Map(),demand=new Map();
+  function fit(i,j){
+   work++;
+   if(work>=maxWork||verts[i].n===verts[j].n)return false;
+   const key=Math.min(i,j)*width+Math.max(i,j);
+   if(memo.has(key))return memo.get(key);
+   if(checks++>=maxChecks)return false;
+   const a=verts[i],b=verts[j];
+   const ok=standingPairFits(a.g.members[0],a.n,b.g.members[0],b.n);
+   memo.set(key,ok);return ok;
+  }
+  function order(list){
+   const classes=[],sorted=[],bounds=[];
+   for(const i of list){
+    let k=0;
+    while(k<classes.length&&classes[k].some(j=>fit(i,j)))k++;
+    if(!budget())break;
+    (classes[k]??=[]).push(i);
+   }
+   for(const [i,c] of classes.entries())for(const v of c){sorted.push(v);bounds.push(i+1);}
+   return [sorted,bounds];
+  }
+  function seek(path,list){
+   if(!budget())return null;
+   if(path.length===actors.length){
+    const used=new Map(),plan=new Map();
+    for(const i of path){
+     const {g,n}=verts[i],idx=used.get(g)??0;
+     plan.set(g.members[idx].id,n);used.set(g,idx+1);
+    }
+    const signature=JSON.stringify(actors.map(a=>plan.get(a.id).id));
+    if(failed.has(signature)||actors.some(a=>checks++>=maxChecks||!canPlace(a,plan.get(a.id),plan)))return null;
+    probes++;
+    if(accept(plan))return plan;
+    failed.add(signature);return null;
+   }
+   states++;
+   const [sorted,caps]=order(list);
+   for(let k=sorted.length-1;k>=0&&budget();k--){
+    if(path.length+caps[k]<actors.length)return null;
+    const v=sorted[k],g=verts[v].g,count=demand.get(g)??0;
+    if(count>=g.members.length)continue;
+    demand.set(g,count+1);
+    const next=sorted.slice(0,k).filter(i=>(verts[i].g!==g||count+1<g.members.length)&&fit(v,i));
+    const plan=seek([...path,v],next);
+    if(plan)return plan;
+    count?demand.set(g,count):demand.delete(g);
+   }
+   return null;
+  }
+  const result=seek([],verts.map((_,i)=>i));
+  if(result)return result;
+ }
+ return null;
+}

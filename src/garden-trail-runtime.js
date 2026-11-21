@@ -157,23 +157,35 @@ export function createGardenTrailRuntime(id,model){
   // When the whole narrow crossing is unavailable, try a smaller native
   // ground route without stealing any protected corridor or landing point.
   // There is no hop if no actual idle actor, alternate seat, or UI clearance.
-  localHop(seats,{minDistance=16,maxDistance=68,singletonIngress=false}={}){
+  localHop(seats,{minDistance=16,maxDistance=68,singletonIngress=false,pocket=false,paintable=()=>true}={}){
    if(!proven)return null;
    const roster=[...model.actors.values()];
-   if(!roster.length)return null;
+   if(!roster.length||pocket&&(terrain.number!==34||roster.length!==10))return null;
    const terminal=id=>id==='A'||id==='B';
    if(singletonIngress&&(roster.length!==1||terminal(roster[0].node)))return null;
    const first=(roster.findIndex(a=>a.id===lastLocal)+1)%roster.length;
    const rotated=roster.slice(first).concat(roster.slice(0,first));
    const delta=(a,b)=>Math.hypot((a[0]-b[0])*current.plane.width,(a[1]-b[1])*current.plane.height);
    const env=makeEnvironment((candidate,node,k,others)=>{
-    if(!proven.safe(candidate,node,k,others))return false;
+    if(!proven.safe(candidate,node,k,others)||pocket&&!paintable(candidate))return false;
     const spans=proven.sweptRoute(candidate);
     return !!spans&&adapter.canPlace({spans});
    });
    for(const a of rotated){
     if(!a.movable||a.route||a.phase!=='ground')continue;
-    const alternatives=seats.filter(n=>n.id!==a.node&&n.id!=='bay'&&
+    // If the authored 24px pad sampling misses a tight pocket, offer short
+    // native contacts in live screen space. Nothing is reserved until the
+    // same measured whole sweep (and renderer preflight) succeeds.
+    const contacts=pocket?[]:seats;
+    if(pocket){
+     const {width,height}=current.plane;
+     for(const d of [8,12,16,20,24,28,32,36])for(let i=0;i<16;i++){
+      const angle=i*Math.PI/8,p=[a.p[0]+Math.cos(angle)*d/width,a.p[1]+Math.sin(angle)*d/height];
+      if(!proven.canStand(a,p))continue;
+      contacts.push({id:'pocket:'+p.join(':'),p});
+     }
+    }
+    const alternatives=contacts.filter(n=>n.id!==a.node&&n.id!=='bay'&&
       !(nodes[n.id]&&nodes[a.node]&&!(singletonIngress&&terminal(n.id)))&&delta(a.p,n.p)>=minDistance&&delta(a.p,n.p)<=maxDistance)
       .sort((a1,b1)=>(singletonIngress?Number(terminal(b1.id))-Number(terminal(a1.id)):0)||
         delta(a.p,a1.p)-delta(a.p,b1.p));

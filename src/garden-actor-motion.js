@@ -3,7 +3,7 @@ import {inside} from './garden-terrain-plan.js';
 import {createGardenActors} from './garden-actor-state.js';
 import {trailTerrainFor} from './data/garden-trail-terrain.js';
 import {createGardenTrailRuntime} from './garden-trail-runtime.js';
-import {assignTrailSeats,measuredNativeFoot,packTrailStandingSeats,pitchTrailStandingSeats} from './garden-trail-clearance.js';
+import {assignTrailSeats,contourTrailStandingSeats,measuredNativeFoot,packTrailStandingSeats,pitchTrailStandingSeats} from './garden-trail-clearance.js';
 import {createActorFlight} from './garden-actor-flight.js';
 
 export function actorTerrainForStage(stage){
@@ -361,6 +361,9 @@ export function createGardenActorMotion(root){
     if(roster.length>=7&&measurement){
      planned=pitchTrailStandingSeats({...measured,...measurement,knownSeats:input.seats,surface:terrain.surface,baseWidth:actorWidth,baseHeight:actorWidth*1000/850,
       safePoint:q=>safePoint(q,actorWidth,actorWidth*1000/850)});
+     if(!planned&&roster.length===10&&(terrain.number===8||terrain.number===10))
+      planned=contourTrailStandingSeats({...measured,...measurement,knownSeats:input.seats,surface:terrain.surface,
+       safePoint:q=>safePoint(q,actorWidth,actorWidth*1000/850)});
      if(planned){
       const existing=new Set(layoutNodes.map(n=>n.id));
       for(const n of planned.values())if(!existing.has(n.id)){trailPads.push(n);layoutNodes.push(n);existing.add(n.id);}
@@ -466,6 +469,8 @@ export function createGardenActorMotion(root){
       // eligible terminal so future flights use the normal lane admission.
       if(!started&&roster.length===1)started=trailRuntime.localHop(layoutNodes,{singletonIngress:true});
       if(!started&&(roster.length>=7||(!bay&&roster.length>1)))started=trailRuntime.localHop(layoutNodes);
+      if(!started&&terrain.number===34&&roster.length===10)started=trailRuntime.localHop([],
+       {minDistance:7.99,maxDistance:36.01,pocket:true,paintable:routeFits});
       trailRetry=!started&&!trailRetry;nextTrail=elapsed+(started&&!started.ingress&&started.action!=='wait'?9000:1600);
      }
     }else model.advance(elapsed,footholds,environment);
