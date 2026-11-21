@@ -60,5 +60,41 @@
     },
     "basis": "Same two authoritative grounded A/B occupants; existing decode deadline and no active lane ticket.",
     "browserProofPending": true
+  },
+  "isolatedQaDryAwayAnchors": {
+    "basisCacheVersion": "5f0a59b6e709",
+    "changedSource": {
+      "src/data/garden-trail-terrain.js": {
+        "before": "002967be79b802cacaabced1a71acecb2ac2456ac2d5da271ec903deaeb37415",
+        "after": "19f7ad1787d2aa229fbf8a925d24017a86abb7e1fb38658d285f8caeb90ec606"
+      }
+    },
+    "observedBasisRun": "44931109175",
+    "garden12": {
+      "pullout": [
+        [
+          0.632,
+          0.65
+        ],
+        [
+          0.652,
+          0.65
+        ]
+      ]
+    },
+    "garden14": {
+      "pullout": [
+        [
+          0.367,
+          0.611
+        ],
+        [
+          0.317,
+          0.611
+        ]
+      ]
+    },
+    "basis": "Both engines selected dry positions in read-only measurement of a proposed hop. True flight at these points is not yet proven.",
+    "browserProofPending": true
   }
 }
