@@ -58,11 +58,38 @@ import {writeFileSync} from 'node:fs';
 import {join} from 'node:path';
 test.use({trace:'off',screenshot:'off',video:'off'});
 function fixed(name,body){return async({page},info)=>{
- let state='setup'; const mark=next=>{state=next;};
+ let state='setup',hitProbe=null; const mark=(next,detail=null)=>{state=next;if(detail)hitProbe=detail;};
  try{await body(page,mark);mark('pass');}
  finally{if(!process.env.TYPE2_CHECKPOINT_DIR||!['chrome','webkit'].includes(info.project.name))throw Error('Draft named runs only');
- writeFileSync(join(process.env.TYPE2_CHECKPOINT_DIR,info.project.name+'-'+name),state+'\n',{mode:0o600,flag:'wx'});}
+ const path=join(process.env.TYPE2_CHECKPOINT_DIR,info.project.name+'-'+name);
+ if(hitProbe)writeFileSync(path+'.hit.json',JSON.stringify(hitProbe),{mode:0o600,flag:'wx'});
+ writeFileSync(path,state+'\n',{mode:0o600,flag:'wx'});}
 };}
+async function observeLandscapeOccluder(page,{ordinal,x,y,previousMode}){
+ // The strict assertion below still uses the original one-shot snapshot.
+ // A second read only labels the failed occluder; if it changed, say stale.
+ return page.evaluate(({ordinal,x,y,previousMode})=>{
+  const stage=document.querySelector('.finch-garden-stage'),plane=stage?.querySelector('.finch-garden-image-plane');
+  const button=plane?.querySelectorAll(':scope > button')[ordinal],r=button?.getBoundingClientRect();
+  const motion=stage?.dataset.actorMotion||stage?.dataset.terrainMotion;
+  const modes=['trail-active','trail-held','trail-standing','trail-blocked-placement','trail-blocked-geometry','trail-needs-recovery','geometry-blocked','insufficient-space'];
+  const mode=modes.includes(motion)?motion:'other';
+  const rendered=button?.hasAttribute('data-actor-node')?'bound':'unbound';
+  const held=document.body.hasAttribute('data-game-view-blocked')||!!document.querySelector('dialog[open],.game-bird-sheet[open],.finch-garden details[open]')||!!button?.closest('[inert]');
+  const report=kind=>({kind,mode,rendered,blocked:!!held});
+  if(!r||motion!==previousMode||Math.abs(r.x+r.width/2-x)>.5||Math.abs(r.y+r.height/2-y)>.5)return report('stale');
+  const top=document.elementFromPoint(x,y);
+  if(top&&button.contains(top))return report('stale');
+  const style=getComputedStyle(button);
+  if(style.visibility!=='visible'||style.display==='none'||style.pointerEvents==='none')return report('noninteractive');
+  if(!top)return report('none');
+  if(top.closest('dialog[open],.game-bird-sheet[open],.finch-garden details[open],[role=dialog],[inert]'))return report('overlay');
+  if(top.closest('.finch-garden-image-plane > button'))return report('peer');
+  if(top.closest('.finch-garden-dock,.finch-garden-selector,.finch-garden > header,.finch-garden-family,.game-scene-controls-toggle,.finch-garden [data-garden-encounter-notice]'))return report('garden-ui');
+  if(top.closest('.finch-garden-loading,.game-panel-overlay'))return report('scene-other');
+  return report('other');
+ },{ordinal,x,y,previousMode});
+}
 for(const [id,g] of Object.entries(GARDEN_TRAIL_TERRAIN)){
  const key=String(g.number).padStart(2,'0');
  if(['08','10','34'].includes(key))test(key+' dense exact bounds',fixed(key+'-dense',async(page,mark)=>{
@@ -86,11 +113,17 @@ for(const [id,g] of Object.entries(GARDEN_TRAIL_TERRAIN)){
   const landscape=await stable(page,667,375);
   mark('landscape-identities');
   assertGardenIdentities(landscape.birds,count,ids);
-  for(const bird of landscape.birds){
+  for(const [ordinal,bird] of landscape.birds.entries()){
    mark('landscape-width'); expect(bird.rect.width).toBeGreaterThanOrEqual(43.99);
    mark('landscape-height'); expect(bird.rect.height).toBeGreaterThanOrEqual(43.99);
    mark('landscape-viewport'); expect(bird.centerInViewport).toBe(true);
-   mark('landscape-hit'); expect(bird.hit).toBe(true);
+   mark('landscape-hit');
+   if(!bird.hit){
+    const detail=await observeLandscapeOccluder(page,{ordinal,x:bird.point.x,y:bird.point.y,previousMode:landscape.motion})
+     .catch(()=>({kind:'unavailable',mode:'other',rendered:'unbound',blocked:false}));
+    mark('landscape-hit',detail);
+   }
+   expect(bird.hit).toBe(true);
   }
   mark('portrait-two-native');
   assertNative(await stable(page,402,874),count,ids);

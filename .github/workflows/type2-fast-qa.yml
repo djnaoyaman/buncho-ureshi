@@ -1,16 +1,16 @@
-name: Type II fast dense-landscape QA (no deployment)
-run-name: Type II focused dense-landscape · ${{ github.sha }}
+name: Type II fast dense-landscape-hit QA (no deployment)
+run-name: Type II focused dense-landscape-hit · ${{ github.sha }}
 on:
   push:
     branches: [qa/type2-fast-dense]
 permissions:
   contents: read
 concurrency:
-  group: type2-fast-dense-landscape-${{ github.ref }}
+  group: type2-fast-dense-landscape-hit-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   visitor:
-    name: 'Type II dense-landscape · ${{ matrix.engine }}'
+    name: 'Type II dense-landscape-hit · ${{ matrix.engine }}'
     if: github.ref == 'refs/heads/qa/type2-fast-dense'
     runs-on: ubuntu-24.04
     timeout-minutes: 14
@@ -69,6 +69,224 @@ jobs:
           TYPE2_CHECKPOINT_DIR="$dir" npx playwright test tests/browser/garden-trail-seven-checkpoints.spec.js --grep '(08|10) dense exact bounds' --project="$ENGINE" --retries=0 --max-failures=0 --trace=off --reporter=dot >/dev/null 2>&1 || rc="$?"
           test "$rc" -le 1
           node -e 'const f=require("fs");const [d,e,q]=process.argv.slice(1);for(const [k,choices] of JSON.parse(q))if(!choices.includes(f.readFileSync(d+"/"+e+"-"+k,"utf8").trim()))process.exit(1);' "$dir" "$ENGINE" '[["08-dense",["pass","setup","preview","portrait-one-ready","portrait-one-native","portrait-one-qualified","tap-open","tap-close","landscape-ready","landscape-identities","landscape-width","landscape-height","landscape-viewport","landscape-hit","portrait-two-native","motion-native","motion-unseen"]],["10-dense",["pass","setup","preview","portrait-one-ready","portrait-one-native","portrait-one-qualified","tap-open","tap-close","landscape-ready","landscape-identities","landscape-width","landscape-height","landscape-viewport","landscape-hit","portrait-two-native","motion-native","motion-unseen"]]]'
+      - name: Validate failed-hit sidecars when the original assertion failed
+        id: hit_focus
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: |
+          node --input-type=module <<'NODE'
+          import {readFileSync,appendFileSync} from 'node:fs';
+          const kinds=['stale','unavailable','noninteractive','none','overlay','peer','garden-ui','scene-other','other'];
+          const modes=['trail-active','trail-held','trail-standing','trail-blocked-placement','trail-blocked-geometry','trail-needs-recovery','geometry-blocked','insufficient-space','other'];
+          for(const garden of ['08','10']){
+           const path=process.env.RUNNER_TEMP+'/type2-focused-receipts/'+process.env.ENGINE+'-'+garden+'-dense';
+           if(readFileSync(path,'utf8').trim()!=='landscape-hit')continue;
+           const d=JSON.parse(readFileSync(path+'.hit.json','utf8'));
+           if(!kinds.includes(d.kind)||!modes.includes(d.mode)||!['bound','unbound'].includes(d.rendered)||typeof d.blocked!=='boolean')throw Error('Unknown fixed sidecar enum');
+           for(const k of ['kind','mode','rendered','blocked'])appendFileSync(process.env.GITHUB_OUTPUT,'g'+garden+'_'+k+'='+d[k]+'\n');
+          }
+          NODE
+      - name: '#08 failed landscape hit not kind-peer'
+        if: ${{ !cancelled() && steps.hit_focus.outcome == 'success' && steps.hit_focus.outputs.g08_kind != '' }}
+        env:
+          OBSERVED: ${{ steps.hit_focus.outputs.g08_kind }}
+        run: test "$OBSERVED" != "peer"
+      - name: '#08 failed landscape hit not kind-garden-ui'
+        if: ${{ !cancelled() && steps.hit_focus.outcome == 'success' && steps.hit_focus.outputs.g08_kind != '' }}
+        env:
+          OBSERVED: ${{ steps.hit_focus.outputs.g08_kind }}
+        run: test "$OBSERVED" != "garden-ui"
+      - name: '#08 failed landscape hit not kind-overlay'
+        if: ${{ !cancelled() && steps.hit_focus.outcome == 'success' && steps.hit_focus.outputs.g08_kind != '' }}
+        env:
+          OBSERVED: ${{ steps.hit_focus.outputs.g08_kind }}
+        run: test "$OBSERVED" != "overlay"
+      - name: '#08 failed landscape hit not kind-noninteractive'
+        if: ${{ !cancelled() && steps.hit_focus.outcome == 'success' && steps.hit_focus.outputs.g08_kind != '' }}
+        env:
+          OBSERVED: ${{ steps.hit_focus.outputs.g08_kind }}
+        run: test "$OBSERVED" != "noninteractive"
+      - name: '#08 failed landscape hit not kind-none'
+        if: ${{ !cancelled() && steps.hit_focus.outcome == 'success' && steps.hit_focus.outputs.g08_kind != '' }}
+        env:
+          OBSERVED: ${{ steps.hit_focus.outputs.g08_kind }}
+        run: test "$OBSERVED" != "none"
+      - name: '#08 failed landscape hit not kind-scene-other'
+        if: ${{ !cancelled() && steps.hit_focus.outcome == 'success' && steps.hit_focus.outputs.g08_kind != '' }}
+        env:
+          OBSERVED: ${{ steps.hit_focus.outputs.g08_kind }}
+        run: test "$OBSERVED" != "scene-other"
+      - name: '#08 failed landscape hit not kind-other'
+        if: ${{ !cancelled() && steps.hit_focus.outcome == 'success' && steps.hit_focus.outputs.g08_kind != '' }}
+        env:
+          OBSERVED: ${{ steps.hit_focus.outputs.g08_kind }}
+        run: test "$OBSERVED" != "other"
+      - name: '#08 failed landscape hit not kind-stale'
+        if: ${{ !cancelled() && steps.hit_focus.outcome == 'success' && steps.hit_focus.outputs.g08_kind != '' }}
+        env:
+          OBSERVED: ${{ steps.hit_focus.outputs.g08_kind }}
+        run: test "$OBSERVED" != "stale"
+      - name: '#08 failed landscape hit not kind-unavailable'
+        if: ${{ !cancelled() && steps.hit_focus.outcome == 'success' && steps.hit_focus.outputs.g08_kind != '' }}
+        env:
+          OBSERVED: ${{ steps.hit_focus.outputs.g08_kind }}
+        run: test "$OBSERVED" != "unavailable"
+      - name: '#08 failed landscape hit not mode-trail-active'
+        if: ${{ !cancelled() && steps.hit_focus.outcome == 'success' && steps.hit_focus.outputs.g08_kind != '' }}
+        env:
+          OBSERVED: ${{ steps.hit_focus.outputs.g08_mode }}
+        run: test "$OBSERVED" != "trail-active"
+      - name: '#08 failed landscape hit not mode-trail-held'
+        if: ${{ !cancelled() && steps.hit_focus.outcome == 'success' && steps.hit_focus.outputs.g08_kind != '' }}
+        env:
+          OBSERVED: ${{ steps.hit_focus.outputs.g08_mode }}
+        run: test "$OBSERVED" != "trail-held"
+      - name: '#08 failed landscape hit not mode-trail-standing'
+        if: ${{ !cancelled() && steps.hit_focus.outcome == 'success' && steps.hit_focus.outputs.g08_kind != '' }}
+        env:
+          OBSERVED: ${{ steps.hit_focus.outputs.g08_mode }}
+        run: test "$OBSERVED" != "trail-standing"
+      - name: '#08 failed landscape hit not mode-trail-blocked-placement'
+        if: ${{ !cancelled() && steps.hit_focus.outcome == 'success' && steps.hit_focus.outputs.g08_kind != '' }}
+        env:
+          OBSERVED: ${{ steps.hit_focus.outputs.g08_mode }}
+        run: test "$OBSERVED" != "trail-blocked-placement"
+      - name: '#08 failed landscape hit not mode-trail-blocked-geometry'
+        if: ${{ !cancelled() && steps.hit_focus.outcome == 'success' && steps.hit_focus.outputs.g08_kind != '' }}
+        env:
+          OBSERVED: ${{ steps.hit_focus.outputs.g08_mode }}
+        run: test "$OBSERVED" != "trail-blocked-geometry"
+      - name: '#08 failed landscape hit not mode-trail-needs-recovery'
+        if: ${{ !cancelled() && steps.hit_focus.outcome == 'success' && steps.hit_focus.outputs.g08_kind != '' }}
+        env:
+          OBSERVED: ${{ steps.hit_focus.outputs.g08_mode }}
+        run: test "$OBSERVED" != "trail-needs-recovery"
+      - name: '#08 failed landscape hit not mode-geometry-blocked'
+        if: ${{ !cancelled() && steps.hit_focus.outcome == 'success' && steps.hit_focus.outputs.g08_kind != '' }}
+        env:
+          OBSERVED: ${{ steps.hit_focus.outputs.g08_mode }}
+        run: test "$OBSERVED" != "geometry-blocked"
+      - name: '#08 failed landscape hit not mode-insufficient-space'
+        if: ${{ !cancelled() && steps.hit_focus.outcome == 'success' && steps.hit_focus.outputs.g08_kind != '' }}
+        env:
+          OBSERVED: ${{ steps.hit_focus.outputs.g08_mode }}
+        run: test "$OBSERVED" != "insufficient-space"
+      - name: '#08 failed landscape hit not mode-other'
+        if: ${{ !cancelled() && steps.hit_focus.outcome == 'success' && steps.hit_focus.outputs.g08_kind != '' }}
+        env:
+          OBSERVED: ${{ steps.hit_focus.outputs.g08_mode }}
+        run: test "$OBSERVED" != "other"
+      - name: '#08 failed landscape hit not rendered-unbound'
+        if: ${{ !cancelled() && steps.hit_focus.outcome == 'success' && steps.hit_focus.outputs.g08_kind != '' }}
+        env:
+          OBSERVED: ${{ steps.hit_focus.outputs.g08_rendered }}
+        run: test "$OBSERVED" != "unbound"
+      - name: '#08 failed landscape hit not blocked-true'
+        if: ${{ !cancelled() && steps.hit_focus.outcome == 'success' && steps.hit_focus.outputs.g08_kind != '' }}
+        env:
+          OBSERVED: ${{ steps.hit_focus.outputs.g08_blocked }}
+        run: test "$OBSERVED" != "true"
+      - name: '#10 failed landscape hit not kind-peer'
+        if: ${{ !cancelled() && steps.hit_focus.outcome == 'success' && steps.hit_focus.outputs.g10_kind != '' }}
+        env:
+          OBSERVED: ${{ steps.hit_focus.outputs.g10_kind }}
+        run: test "$OBSERVED" != "peer"
+      - name: '#10 failed landscape hit not kind-garden-ui'
+        if: ${{ !cancelled() && steps.hit_focus.outcome == 'success' && steps.hit_focus.outputs.g10_kind != '' }}
+        env:
+          OBSERVED: ${{ steps.hit_focus.outputs.g10_kind }}
+        run: test "$OBSERVED" != "garden-ui"
+      - name: '#10 failed landscape hit not kind-overlay'
+        if: ${{ !cancelled() && steps.hit_focus.outcome == 'success' && steps.hit_focus.outputs.g10_kind != '' }}
+        env:
+          OBSERVED: ${{ steps.hit_focus.outputs.g10_kind }}
+        run: test "$OBSERVED" != "overlay"
+      - name: '#10 failed landscape hit not kind-noninteractive'
+        if: ${{ !cancelled() && steps.hit_focus.outcome == 'success' && steps.hit_focus.outputs.g10_kind != '' }}
+        env:
+          OBSERVED: ${{ steps.hit_focus.outputs.g10_kind }}
+        run: test "$OBSERVED" != "noninteractive"
+      - name: '#10 failed landscape hit not kind-none'
+        if: ${{ !cancelled() && steps.hit_focus.outcome == 'success' && steps.hit_focus.outputs.g10_kind != '' }}
+        env:
+          OBSERVED: ${{ steps.hit_focus.outputs.g10_kind }}
+        run: test "$OBSERVED" != "none"
+      - name: '#10 failed landscape hit not kind-scene-other'
+        if: ${{ !cancelled() && steps.hit_focus.outcome == 'success' && steps.hit_focus.outputs.g10_kind != '' }}
+        env:
+          OBSERVED: ${{ steps.hit_focus.outputs.g10_kind }}
+        run: test "$OBSERVED" != "scene-other"
+      - name: '#10 failed landscape hit not kind-other'
+        if: ${{ !cancelled() && steps.hit_focus.outcome == 'success' && steps.hit_focus.outputs.g10_kind != '' }}
+        env:
+          OBSERVED: ${{ steps.hit_focus.outputs.g10_kind }}
+        run: test "$OBSERVED" != "other"
+      - name: '#10 failed landscape hit not kind-stale'
+        if: ${{ !cancelled() && steps.hit_focus.outcome == 'success' && steps.hit_focus.outputs.g10_kind != '' }}
+        env:
+          OBSERVED: ${{ steps.hit_focus.outputs.g10_kind }}
+        run: test "$OBSERVED" != "stale"
+      - name: '#10 failed landscape hit not kind-unavailable'
+        if: ${{ !cancelled() && steps.hit_focus.outcome == 'success' && steps.hit_focus.outputs.g10_kind != '' }}
+        env:
+          OBSERVED: ${{ steps.hit_focus.outputs.g10_kind }}
+        run: test "$OBSERVED" != "unavailable"
+      - name: '#10 failed landscape hit not mode-trail-active'
+        if: ${{ !cancelled() && steps.hit_focus.outcome == 'success' && steps.hit_focus.outputs.g10_kind != '' }}
+        env:
+          OBSERVED: ${{ steps.hit_focus.outputs.g10_mode }}
+        run: test "$OBSERVED" != "trail-active"
+      - name: '#10 failed landscape hit not mode-trail-held'
+        if: ${{ !cancelled() && steps.hit_focus.outcome == 'success' && steps.hit_focus.outputs.g10_kind != '' }}
+        env:
+          OBSERVED: ${{ steps.hit_focus.outputs.g10_mode }}
+        run: test "$OBSERVED" != "trail-held"
+      - name: '#10 failed landscape hit not mode-trail-standing'
+        if: ${{ !cancelled() && steps.hit_focus.outcome == 'success' && steps.hit_focus.outputs.g10_kind != '' }}
+        env:
+          OBSERVED: ${{ steps.hit_focus.outputs.g10_mode }}
+        run: test "$OBSERVED" != "trail-standing"
+      - name: '#10 failed landscape hit not mode-trail-blocked-placement'
+        if: ${{ !cancelled() && steps.hit_focus.outcome == 'success' && steps.hit_focus.outputs.g10_kind != '' }}
+        env:
+          OBSERVED: ${{ steps.hit_focus.outputs.g10_mode }}
+        run: test "$OBSERVED" != "trail-blocked-placement"
+      - name: '#10 failed landscape hit not mode-trail-blocked-geometry'
+        if: ${{ !cancelled() && steps.hit_focus.outcome == 'success' && steps.hit_focus.outputs.g10_kind != '' }}
+        env:
+          OBSERVED: ${{ steps.hit_focus.outputs.g10_mode }}
+        run: test "$OBSERVED" != "trail-blocked-geometry"
+      - name: '#10 failed landscape hit not mode-trail-needs-recovery'
+        if: ${{ !cancelled() && steps.hit_focus.outcome == 'success' && steps.hit_focus.outputs.g10_kind != '' }}
+        env:
+          OBSERVED: ${{ steps.hit_focus.outputs.g10_mode }}
+        run: test "$OBSERVED" != "trail-needs-recovery"
+      - name: '#10 failed landscape hit not mode-geometry-blocked'
+        if: ${{ !cancelled() && steps.hit_focus.outcome == 'success' && steps.hit_focus.outputs.g10_kind != '' }}
+        env:
+          OBSERVED: ${{ steps.hit_focus.outputs.g10_mode }}
+        run: test "$OBSERVED" != "geometry-blocked"
+      - name: '#10 failed landscape hit not mode-insufficient-space'
+        if: ${{ !cancelled() && steps.hit_focus.outcome == 'success' && steps.hit_focus.outputs.g10_kind != '' }}
+        env:
+          OBSERVED: ${{ steps.hit_focus.outputs.g10_mode }}
+        run: test "$OBSERVED" != "insufficient-space"
+      - name: '#10 failed landscape hit not mode-other'
+        if: ${{ !cancelled() && steps.hit_focus.outcome == 'success' && steps.hit_focus.outputs.g10_kind != '' }}
+        env:
+          OBSERVED: ${{ steps.hit_focus.outputs.g10_mode }}
+        run: test "$OBSERVED" != "other"
+      - name: '#10 failed landscape hit not rendered-unbound'
+        if: ${{ !cancelled() && steps.hit_focus.outcome == 'success' && steps.hit_focus.outputs.g10_kind != '' }}
+        env:
+          OBSERVED: ${{ steps.hit_focus.outputs.g10_rendered }}
+        run: test "$OBSERVED" != "unbound"
+      - name: '#10 failed landscape hit not blocked-true'
+        if: ${{ !cancelled() && steps.hit_focus.outcome == 'success' && steps.hit_focus.outputs.g10_kind != '' }}
+        env:
+          OBSERVED: ${{ steps.hit_focus.outputs.g10_blocked }}
+        run: test "$OBSERVED" != "true"
       - name: '#08 strict ten birds complete'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
