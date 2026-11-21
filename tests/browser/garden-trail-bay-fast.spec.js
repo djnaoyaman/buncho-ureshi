@@ -5,7 +5,7 @@ import {setup} from '../fixtures/garden-terrain-browser.js';
 import {engine} from '../fixtures/garden-about-world.js';
 
 test.use({hasTouch:true,trace:'off',screenshot:'off',video:'off'});
-const games=[['07','bird-zebra-finch'],['10','bird-tricolored-munia'],['12','bird-black-rumped-waxbill'],['14','bird-long-tailed-paradise-whydah'],['28','bird-long-tailed-rosefinch']];
+const games=[['07','bird-zebra-finch'],['10','bird-tricolored-munia']];
 const lane=[
  ['let epoch=null,ticket=0,lock=null,paused=false,roster=new Map();',
   'let epoch=null,ticket=0,lock=null,paused=false,roster=new Map();\n  const receipt=globalThis.__bayFastReceipt??={};'],
@@ -78,9 +78,61 @@ const alternateBay=[
       }
       if(held.alternate!=='none')break;
      }
+     if(held.alternate==='none'){
+      const {width,height}=current.plane;
+      for(const px of [6,12]){
+       const variant=path.map((p,i)=>{
+        if(!i||i===path.length-1)return p;
+        const x=(p[0]-bay[0])*width,y=(p[1]-bay[1])*height,len=Math.hypot(x,y);
+        return len>0?[p[0]+x/len*px/width,p[1]+y/len*px/height]:p;
+       });
+       if(variant.some(p=>!inside(p,terrain.surface)))continue;
+       const trial=model.previewPath(id,node,variant,mode,env);
+       // No new lane lock or route is started. Any future authored variant
+       // must protect this same spine, not apply it outside old protection.
+       if(trial&&proven.safe(trial,node,mode,actors)&&paintCurrent(trial)){
+        held.alternate='spine'+px;break;
+       }
+      }
+     }
     }else held.alternate='proof-incomplete';
    }
    return result;`],
+];
+const yieldGeometry=[
+ [`const result=proven.safe(tentative,node,mode,actors,{prospectiveYieldId:phase==='cross'?prospectiveYieldId:null});`,
+  `const result=proven.safe(tentative,node,mode,actors,{prospectiveYieldId:phase==='cross'?prospectiveYieldId:null});
+   const report=globalThis.__bayFastReceipt;
+   if(terrain.number===7&&phase==='yield'&&to==='bay'&&report&&!result&&!report.yieldGeometry){
+    const {clip,controls}=current;
+    const boxes=proven.sweptRoute(tentative);
+    const boxInClip=b=>b.left>=clip.left+2&&b.right<=clip.right-2&&b.top>=clip.top+2&&b.bottom<=clip.bottom-2;
+    const intersectsControls=b=>conflictSweeps([b],controls);
+    report.yieldGeometry=!proven.canStand(a,a.p)?'start':!proven.canStand(a,node.p)?'destination':!boxes?'route':
+     boxes.some(b=>!boxInClip(b))?'clip':boxes.some(intersectsControls)?'controls':'peer';
+    report.yieldAlternate='none';
+    const owner=[...actors.values()].find(other=>other.id!==a.id&&(other.node==='A'||other.node==='B')&&!other.route);
+    if(owner&&actors.size===2&&(a.node==='A'||a.node==='B')){
+     const env=makeEnvironment(()=>false);
+     const [x,y]=bay;
+     const spine=owner.node==='A'?[A,...terrain.lane,B]:[B,...[...terrain.lane].reverse(),A];
+     for(const [label,dx,dy]of [['back2',0,-.02],['right2',.02,0],['front2',0,.02],['back3',0,-.035],['right3',.035,0],['front3',0,.035]]){
+      const p=[x+dx,y+dy],alt={id:'bay',p};
+      if(!inside(p,terrain.surface)||!proven.canStand(a,p))continue;
+      const hop=model.previewPath(id,alt,[a.p,p],'hop',env);
+      if(!hop||!proven.safe(hop,alt,'hop',actors)||!paintCurrent(hop))continue;
+      const parked=new Map(actors);
+      parked.set(id,{...a,p,node:'bay',state:'rest',phase:'ground',height:0,route:null});
+      const exit=nodes[a.node];
+      const modeFits=kind=>{
+       const crossing=model.previewPath(owner.id,exit,spine,kind,env);
+       return !!crossing&&proven.safe(crossing,exit,kind,parked)&&paintCurrent(crossing);
+      };
+      if(modeFits('fly')){report.yieldAlternate=label+'-fly';break;}
+      if(report.yieldAlternate==='none'&&modeFits('hop'))report.yieldAlternate=label+'-hop';
+     }
+    }
+   }`],
 ];
 const painting=[
  [`if(!fitsNow()){
@@ -127,7 +179,7 @@ for(const [number,garden] of games)test(`#${number} measured bay handover and sa
  try{
  await probe(page,'garden-trail-lane.js',lane);
  await probe(page,'garden-trail-adapter.js',adapter);
- await probe(page,'garden-trail-runtime.js',[...runtime,...alternateBay]);
+ await probe(page,'garden-trail-runtime.js',[...runtime,...alternateBay,...yieldGeometry]);
  await probe(page,'garden-trail-clearance.js',clearance);
  await probe(page,'garden-actor-motion.js',painting);
  await setup(page,garden,402,true,true,{trailPreview:true,height:874,afterOpenMs:0,prepareWorld:w=>{
@@ -136,7 +188,7 @@ for(const [number,garden] of games)test(`#${number} measured bay handover and sa
  }});
  let ids=null,landed=false,changed=false,start=null,receipt={},parked=false,firstGates=false,anyNative=true;
  let firstOwner=null,firstPartner=null,firstTo=null;
- let end=72,held=null,domFly=false,domFlyPartnerParked=false,yieldCommitted=false,yieldFitTried=false,prospectiveCrossTried=false;
+ let end=72,held=null,domFly=false,domFlyPartnerParked=false,yieldGeometry=null,yieldAlternate=null,yieldCommitted=false,yieldFitTried=false,prospectiveCrossTried=false;
  const sampleYieldMissing=()=>yieldFitTried&&!yieldCommitted?'bay-yield-fit-no-commit':prospectiveCrossTried&&!yieldFitTried?'bay-prospective-cross-denied':yieldCommitted?'bay-yield-committed-no-ground':'bay-yield-not-committed';
  for(let n=0;n<=end;n++){
   await page.clock.runFor(n===0?1000:180);
@@ -155,6 +207,8 @@ for(const [number,garden] of games)test(`#${number} measured bay handover and sa
   anyNative &&= sample.ready&&birds.length===2&&new Set(ids).size===2&&ids.every((id,i)=>!!id&&id===birds[i]?.id&&birds[i]?.hit);
   for(const k of ['bayGround','laneOccupied','measuredDenied','ready','dispatched','ownerConnected'])receipt[k] ||= sample.receipt[k]===true;
   if(!firstOwner&&sample.receipt.owner){firstOwner=sample.receipt.owner;firstPartner=sample.receipt.partner;firstTo=sample.receipt.to;}
+  yieldGeometry ||= sample.receipt.yieldGeometry;
+  yieldAlternate ||= sample.receipt.yieldAlternate;
   held=sample.receipt.held??held;yieldCommitted||=sample.receipt.yieldCommitted===true;yieldFitTried||=sample.receipt.yieldFitTried===true;prospectiveCrossTried||=sample.receipt.prospectiveCrossTried===true;
   const owner=birds.find(b=>b.id===firstOwner),partner=birds.find(b=>b.id===firstPartner);
   parked ||= !!partner&&partner.site==='bay'&&partner.phase==='ground'&&!partner.target;
@@ -169,7 +223,7 @@ for(const [number,garden] of games)test(`#${number} measured bay handover and sa
  // Only fixed labels, never raw positions, actor IDs, traces or artifacts.
  code='native-gates';
  expect(firstGates&&anyNative,'01 actual A/B and continuous native hit ownership').toBe(true);
- code=parked?'bay-receipt-missing':receipt.bayGround?'bay-dom-not-grounded':sampleYieldMissing();
+ code=parked?'bay-receipt-missing':receipt.bayGround?'bay-dom-not-grounded':yieldGeometry?'bay-yield-'+yieldGeometry+'-alt-'+yieldAlternate:sampleYieldMissing();
  expect(receipt.bayGround&&parked,'02 same partner reached the actual bay').toBe(true);
  code=receipt.laneOccupied?'lane-occupied':receipt.measuredDenied?(held?.fail==='held-sweep-peer'&&held?.mode&&held?.alternate?'held-peer-'+held.mode+'-'+held.alternate:held?.fail??'held-unclassified'):'held-ready';
  expect(receipt.ready,receipt.laneOccupied?'03 held bay blocked by occupied lane':receipt.measuredDenied?'03 held bay denied by unchanged measured check':'03 ready was not reached').toBe(true);
