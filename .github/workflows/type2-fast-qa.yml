@@ -1,16 +1,16 @@
-name: Type II fast dense-bands QA (no deployment)
-run-name: Type II focused dense-bands · ${{ github.sha }}
+name: Type II fast dense-landscape QA (no deployment)
+run-name: Type II focused dense-landscape · ${{ github.sha }}
 on:
   push:
     branches: [qa/type2-fast-dense]
 permissions:
   contents: read
 concurrency:
-  group: type2-fast-dense-bands-${{ github.ref }}
+  group: type2-fast-dense-landscape-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   visitor:
-    name: 'Type II dense-bands · ${{ matrix.engine }}'
+    name: 'Type II dense-landscape · ${{ matrix.engine }}'
     if: github.ref == 'refs/heads/qa/type2-fast-dense'
     runs-on: ubuntu-24.04
     timeout-minutes: 14
@@ -66,9 +66,9 @@ jobs:
           report="$(npx playwright test tests/browser/garden-trail-seven-checkpoints.spec.js --grep '(08|10) dense exact bounds' --project="$ENGINE" --list)"
           printf '%s\n' "$report" | grep -Eq '^Total: 2 tests in 1 file$'
           rc=0
-          TYPE2_CHECKPOINT_DIR="$dir" npx playwright test tests/browser/garden-trail-seven-checkpoints.spec.js --grep '(08|10) dense exact bounds' --project="$ENGINE" --retries=0 --max-failures=0 --trace=off --reporter=dot || rc="$?"
+          TYPE2_CHECKPOINT_DIR="$dir" npx playwright test tests/browser/garden-trail-seven-checkpoints.spec.js --grep '(08|10) dense exact bounds' --project="$ENGINE" --retries=0 --max-failures=0 --trace=off --reporter=dot >/dev/null 2>&1 || rc="$?"
           test "$rc" -le 1
-          node -e 'const f=require("fs");const [d,e,q]=process.argv.slice(1);for(const [k,choices] of JSON.parse(q))if(!choices.includes(f.readFileSync(d+"/"+e+"-"+k,"utf8").trim()))process.exit(1);' "$dir" "$ENGINE" '[["08-dense",["pass","setup","preview","portrait-one-ready","portrait-one-native","portrait-one-qualified","tap-open","tap-close","landscape-native","portrait-two-native","motion-native","motion-unseen"]],["10-dense",["pass","setup","preview","portrait-one-ready","portrait-one-native","portrait-one-qualified","tap-open","tap-close","landscape-native","portrait-two-native","motion-native","motion-unseen"]]]'
+          node -e 'const f=require("fs");const [d,e,q]=process.argv.slice(1);for(const [k,choices] of JSON.parse(q))if(!choices.includes(f.readFileSync(d+"/"+e+"-"+k,"utf8").trim()))process.exit(1);' "$dir" "$ENGINE" '[["08-dense",["pass","setup","preview","portrait-one-ready","portrait-one-native","portrait-one-qualified","tap-open","tap-close","landscape-ready","landscape-identities","landscape-width","landscape-height","landscape-viewport","landscape-hit","portrait-two-native","motion-native","motion-unseen"]],["10-dense",["pass","setup","preview","portrait-one-ready","portrait-one-native","portrait-one-qualified","tap-open","tap-close","landscape-ready","landscape-identities","landscape-width","landscape-height","landscape-viewport","landscape-hit","portrait-two-native","motion-native","motion-unseen"]]]'
       - name: '#08 strict ten birds complete'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
@@ -109,11 +109,36 @@ jobs:
         env:
           ENGINE: ${{ matrix.engine }}
         run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-dense")" != "tap-close"
-      - name: '#08 strict ten birds not landscape-native'
+      - name: '#08 strict ten birds not landscape-ready'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
-        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-dense")" != "landscape-native"
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-dense")" != "landscape-ready"
+      - name: '#08 strict ten birds not landscape-identities'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-dense")" != "landscape-identities"
+      - name: '#08 strict ten birds not landscape-width'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-dense")" != "landscape-width"
+      - name: '#08 strict ten birds not landscape-height'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-dense")" != "landscape-height"
+      - name: '#08 strict ten birds not landscape-viewport'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-dense")" != "landscape-viewport"
+      - name: '#08 strict ten birds not landscape-hit'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-dense")" != "landscape-hit"
       - name: '#08 strict ten birds not portrait-two-native'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
@@ -169,11 +194,36 @@ jobs:
         env:
           ENGINE: ${{ matrix.engine }}
         run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-dense")" != "tap-close"
-      - name: '#10 strict ten birds not landscape-native'
+      - name: '#10 strict ten birds not landscape-ready'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
-        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-dense")" != "landscape-native"
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-dense")" != "landscape-ready"
+      - name: '#10 strict ten birds not landscape-identities'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-dense")" != "landscape-identities"
+      - name: '#10 strict ten birds not landscape-width'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-dense")" != "landscape-width"
+      - name: '#10 strict ten birds not landscape-height'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-dense")" != "landscape-height"
+      - name: '#10 strict ten birds not landscape-viewport'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-dense")" != "landscape-viewport"
+      - name: '#10 strict ten birds not landscape-hit'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-10-dense")" != "landscape-hit"
       - name: '#10 strict ten birds not portrait-two-native'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:

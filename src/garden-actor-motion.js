@@ -3,7 +3,7 @@ import {inside} from './garden-terrain-plan.js';
 import {createGardenActors} from './garden-actor-state.js';
 import {trailTerrainFor} from './data/garden-trail-terrain.js';
 import {createGardenTrailRuntime} from './garden-trail-runtime.js';
-import {assignTrailSeats,contourTrailStandingSeats,measuredNativeFoot,packTrailStandingSeats,pitchTrailStandingSeats,surveyedBandTrailSeats} from './garden-trail-clearance.js';
+import {assignTrailSeats,contourTrailStandingSeats,landscapeTrailStandingSeats,measuredNativeFoot,packTrailStandingSeats,pitchTrailStandingSeats,surveyedBandTrailSeats} from './garden-trail-clearance.js';
 import {createActorFlight} from './garden-actor-flight.js';
 
 export function actorTerrainForStage(stage){
@@ -245,7 +245,9 @@ export function createGardenActorMotion(root){
     nativePreferred.set(id,seat);
    }
   }
-  if(footholds.length+(trailRuntime?trailPads.length:0)<definitions.length)return reject('insufficient-space');
+  const denseResponsive=!!trailRuntime&&definitions.length===10&&(terrain.number===8||terrain.number===10);
+  const wideCrop=geometry.clip.right-geometry.clip.left>geometry.clip.bottom-geometry.clip.top;
+  if(footholds.length+(trailRuntime?trailPads.length:0)<definitions.length&&!(denseResponsive&&wideCrop))return reject('insufficient-space');
   let changedBindings=false;
   for(const [id,b]of bindings)if(!ids.has(id)||definitions.find(d=>d.id===id)?.node!==b.node){restore(b);bindings.delete(id);changedBindings=true;}
   for(const d of definitions)if(!bindings.has(d.id)){binding(d.node,d.id);changedBindings=true;}
@@ -342,6 +344,15 @@ export function createGardenActorMotion(root){
     for(const [node,style]of saved)style===null?node.removeAttribute('style'):node.setAttribute('style',style);
    }
   };
+  const addTrailContacts=plan=>{
+   const existing=new Set(layoutNodes.map(n=>n.id));
+   for(const n of plan.values())if(!existing.has(n.id)){trailPads.push(n);layoutNodes.push(n);existing.add(n.id);}
+  };
+  const findResponsiveBands=measured=>denseResponsive&&measurement?(wideCrop?
+   landscapeTrailStandingSeats(terrain.number,{...measured,...measurement,knownSeats:layoutNodes,surface:terrain.surface,
+    safePoint:q=>safePoint(q,actorWidth,actorWidth*1000/850)}):
+   surveyedBandTrailSeats(terrain.number,{...measured,...measurement,knownSeats:layoutNodes,
+    safePoint:q=>safePoint(q,actorWidth,actorWidth*1000/850)})):null;
   let planned=null;
   if(trailRuntime&&roster.some(d=>!fixedFlight.has(d.id))){
    const peers=new Map([...model.actors].filter(([id])=>ids.has(id))),byId=new Map(roster.map(d=>[d.id,d]));
@@ -359,17 +370,13 @@ export function createGardenActorMotion(root){
    }else{
     const measured={...input,standingPairFits:trailRuntime.standingPairFits,standingClass:a=>measurement?.footprints.get(a.id)};
     if(roster.length>=7&&measurement){
-     if(roster.length===10&&(terrain.number===8||terrain.number===10))planned=surveyedBandTrailSeats(terrain.number,{...measured,...measurement,knownSeats:input.seats,
-      safePoint:q=>safePoint(q,actorWidth,actorWidth*1000/850)});
+     planned=findResponsiveBands(measured);
      if(!planned)planned=pitchTrailStandingSeats({...measured,...measurement,knownSeats:input.seats,surface:terrain.surface,baseWidth:actorWidth,baseHeight:actorWidth*1000/850,
       safePoint:q=>safePoint(q,actorWidth,actorWidth*1000/850)});
      if(!planned&&roster.length===10&&(terrain.number===8||terrain.number===10))
       planned=contourTrailStandingSeats({...measured,...measurement,knownSeats:input.seats,surface:terrain.surface,
        safePoint:q=>safePoint(q,actorWidth,actorWidth*1000/850)});
-     if(planned){
-      const existing=new Set(layoutNodes.map(n=>n.id));
-      for(const n of planned.values())if(!existing.has(n.id)){trailPads.push(n);layoutNodes.push(n);existing.add(n.id);}
-     }
+     if(planned)addTrailContacts(planned);
     }
     if(!planned)planned=packTrailStandingSeats(measured);
    }
@@ -388,11 +395,18 @@ export function createGardenActorMotion(root){
    if(planned&&fixedFlight.size===0)return true;
    const actors=[...model.actors.values()],preferred=new Map(actors.map(a=>[a.id,{id:a.node,p:a.p}]));
    const candidate=new Map(roster.map(d=>[d.id,d]));
-   const plan=packTrailStandingSeats({actors,seats:layoutNodes,preferred,accept:nativeTrailHits,canPlace(a,n,partial){
+   const input={actors,seats:layoutNodes,preferred,accept:nativeTrailHits,canPlace(a,n,partial){
     const occupied=new Map([...partial].map(([id,s])=>[id,{...candidate.get(id),p:s.p,route:null}]));
     return trailRuntime.canPlace(a,n,occupied);
-   }});
-   return !!plan&&model.placeStanding(plan);
+   }};
+   if(denseResponsive&&new Set([...preferred.values()].map(n=>n.id)).size===actors.length&&
+    actors.every(a=>{const n=preferred.get(a.id);return safePoint(n.p,actorWidth,actorWidth*1000/850)&&input.canPlace(a,n,preferred);})&&
+    nativeTrailHits(preferred))return true;
+   const responsive=denseResponsive?findResponsiveBands({...input,standingPairFits:trailRuntime.standingPairFits}):null;
+   const plan=responsive||packTrailStandingSeats(input);
+   if(!plan||!model.placeStanding(plan))return false;
+   if(responsive)addTrailContacts(plan);
+   return true;
   };
   const reflowed=!resized||(trailRuntime?(hadTrail?[...model.actors.values()].every(routeFits):trailStandingReflow()):model.reflow(layoutNodes,(a,n)=>{
    const b=bindings.get(a.id);

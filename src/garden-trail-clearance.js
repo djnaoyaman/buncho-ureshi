@@ -480,3 +480,47 @@ export function surveyedBandTrailSeats(number,{actors,plane,footprints,knownSeat
  }
  return null;
 }
+
+// Horizontally wide cover crops can hide the upper portrait banks. Work in
+// the *measured screen-space projection* of this crop, then convert each
+// proposed foot back into the same surveyed image polygon. This is a
+// responsive standing layout, never an alternate ground or a motion path.
+export function landscapeTrailStandingSeats(number,{actors,plane,clip,surface,footprints,knownSeats=[],canPlace,standingPairFits,accept,safePoint,maxProbes=3}){
+ if(![8,10].includes(number)||actors.length!==10||clip.right-clip.left<=clip.bottom-clip.top||
+    !(plane.width>0&&plane.height>0)||actors.some(a=>!footprints.has(a.id)))return null;
+ const xs=surface.map(v=>plane.left+v[0]*plane.width),ys=surface.map(v=>plane.top+v[1]*plane.height);
+ const minX=Math.max(clip.left,Math.min(...xs)),maxX=Math.min(clip.right,Math.max(...xs));
+ const minY=Math.max(clip.top,Math.min(...ys)),maxY=Math.min(clip.bottom,Math.max(...ys));
+ const known=new Map(knownSeats.map(n=>[n.p.join(':'),n])),tested=new Set(),banks=new Map();
+ const middle=(minX+maxX)/2;
+ const contact=(x,y)=>{
+  const p=[(x-plane.left)/plane.width,(y-plane.top)/plane.height];
+  if(!inside(p,surface)||!safePoint(p))return null;
+  const key=p.join(':');return known.get(key)??{id:'landscape-band:'+key,p};
+ };
+ // Bounded rows: 8px vertical sampling, a few offsets around the painted
+ // center, and 44px-and-up spacing proposals. Original measured guards
+ // below decide the actual width required by each individual.
+ for(let y=Math.ceil(minY/8)*8;y<=maxY&&banks.size<48;y+=8){
+  for(const dx of [46,52,58])for(const offset of [0,-12,12,-24,24])for(const size of [5,4,6]){
+   const row=Array.from({length:size},(_,j)=>contact(middle+offset+(j-(size-1)/2)*dx,y));
+   const rows=banks.get(y)??[];
+   if(row.every(Boolean)&&rows.filter(r=>r.length===size).length<6){rows.push(row);banks.set(y,rows);}
+  }
+ }
+ let probes=0,attempts=0;
+ for(const dy of [72,80,88,64,56])for(const [y,rows] of banks)for(const row of rows)for(const lower of banks.get(y+dy)??[]){
+  if(lower.length+row.length!==actors.length)continue;
+  if(++attempts>70||probes>=maxProbes)return null;
+  const seats=row.concat(lower);
+  const preferred=new Map(actors.map((a,i)=>[a.id,seats[i]]));
+  const plan=packTrailStandingSeats({actors,seats,preferred,canPlace,standingPairFits,
+   standingClass:a=>footprints.get(a.id),maxChecks:1300,maxBranches:100,maxProbes:maxProbes-probes,accept(plan){
+    const key=JSON.stringify(actors.map(a=>plan.get(a.id).id));
+    if(tested.has(key)||probes>=maxProbes)return false;
+    tested.add(key);probes++;return accept(plan);
+   }});
+  if(plan)return plan;
+ }
+ return null;
+}

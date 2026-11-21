@@ -82,8 +82,16 @@ for(const [id,g] of Object.entries(GARDEN_TRAIL_TERRAIN)){
    await expect(page.getByRole('dialog',{name:'エド',exact:true})).toBeVisible();
   mark('tap-close');
    await page.getByRole('button',{name:'文鳥の操作をとじる',exact:true}).tap();
-  mark('landscape-native');
-  assertNative(await stable(page,667,375),count,ids);
+  mark('landscape-ready');
+  const landscape=await stable(page,667,375);
+  mark('landscape-identities');
+  assertGardenIdentities(landscape.birds,count,ids);
+  for(const bird of landscape.birds){
+   mark('landscape-width'); expect(bird.rect.width).toBeGreaterThanOrEqual(43.99);
+   mark('landscape-height'); expect(bird.rect.height).toBeGreaterThanOrEqual(43.99);
+   mark('landscape-viewport'); expect(bird.centerInViewport).toBe(true);
+   mark('landscape-hit'); expect(bird.hit).toBe(true);
+  }
   mark('portrait-two-native');
   assertNative(await stable(page,402,874),count,ids);
   mark('motion-native');
