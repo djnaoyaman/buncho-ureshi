@@ -1,3 +1,4 @@
+import {writeFileSync} from 'node:fs';
 import {test,expect} from '@playwright/test';
 import {setup,snapshotGarden,assertGardenIdentities} from '../fixtures/garden-terrain-browser.js';
 
@@ -72,12 +73,12 @@ test('08 opt-in #07 reaches all ten real native identities', {tag:'@causal-maxim
  const s=await snapshotGarden(page);
  assertGardenIdentities(s.birds,10);
 });
-async function instrumentMaximum(page){
+async function instrumentMaximum(page,notes){
  await page.addInitScript(()=>{globalThis.__trailMaxProbe={runs:[],current:null};});
  const files={
   'garden-actor-motion':[
    ["planned=peers.size?assignTrailSeats(input):packTrailStandingSeats(input);",
-    "const trace=globalThis.__trailMaxProbe; const probe={actors:roster.length,seats:input.seats.length,peers:peers.size, causes:{}, choices:[], native:[]}; trace.runs.push(probe); trace.current=probe; try{planned=peers.size?assignTrailSeats(input):packTrailStandingSeats(input);}finally{trace.current=null;} probe.planned=planned?.size??0;"],
+    "const trace=globalThis.__trailMaxProbe; const probe={actors:roster.length,seats:input.seats.length,peers:peers.size, causes:{}, choices:[], native:[]}; trace.runs.push(probe); if(trace.runs.length>12)trace.runs.shift(); trace.current=probe; try{planned=peers.size?assignTrailSeats(input):packTrailStandingSeats(input);}finally{trace.current=null;} probe.planned=planned?.size??0;"],
    ["if(trailRuntime&&model.actors.size!==roster.length)return reject('trail-blocked-placement');",
     "if(trailRuntime&&planned){const last=globalThis.__trailMaxProbe.runs.at(-1); if(last)last.reconciled=model.actors.size;} if(trailRuntime&&model.actors.size!==roster.length)return reject('trail-blocked-placement');"],
    ["if(r.width<43.99||r.height<43.99||!hit||!node.contains(hit))return false;",
@@ -104,27 +105,47 @@ async function instrumentMaximum(page){
   ],
  };
  for(const [name,replacements] of Object.entries(files))await page.route(new RegExp('/src/'+name+'\\.js(?:\\?.*)?$'),async route=>{
+  const seen=notes.routes[name]??={seen:0,fulfilled:0,bad:false}; seen.seen++;
   const response=await route.fetch();let body=await response.text();
   for(const [before,after] of replacements){
-   expect(body.split(before),name+' exact instrumentation anchor '+before).toHaveLength(2);
+   if(body.split(before).length!==2){seen.bad=true; break;}
    body=body.replace(before,after);
   }
-  await route.fulfill({response,body});
+  if(seen.bad){await route.fulfill({response});return;}
+  await route.fulfill({response,body});seen.fulfilled++;
  });
 }
 
 test('09 opt-in #07 maximum measured unobstructed 44px hits', {tag:'@causal-maximum-fit'},async({page})=>{
- if(process.env.TRAIL_STAGE_TELEMETRY==='1')await instrumentMaximum(page);
- await setup(page,trail,375,true,'maximum',{...config,height:667});await page.clock.runFor(1000);
- const s=await snapshotGarden(page);
- if(process.env.TRAIL_STAGE_TELEMETRY==='1'){
-  const runs=await page.evaluate(()=>globalThis.__trailMaxProbe.runs);
-  expect(runs.some(r=>r.actors===10),'instrumented a full native roster').toBe(true);
-  test.info().annotations.push({type:'trail-stage',description:JSON.stringify({motion:s.motion,runs:runs.filter(r=>r.actors===10)})});
+ const observed=process.env.TRAIL_STAGE_TELEMETRY==='1';
+ const info=test.info(), notes={project:info.project.name,routes:{},trace:false,setup:false,snapshot:false,strict:false};
+ try{
+  if(observed)await instrumentMaximum(page,notes);
+  await setup(page,trail,375,true,'maximum',{...config,height:667});notes.setup=true;
+  await page.clock.runFor(1000);
+  const s=await snapshotGarden(page);notes.snapshot=true;
+  assertGardenIdentities(s.birds,10);
+  expect(s.motion).toMatch(/^trail-(active|held|standing)$/);
+  for(const b of s.birds)checkHit(b);
+  notes.strict=true;
+ }finally{
+  if(observed){
+   try{
+    if(!page.isClosed()){
+     const sample=await page.evaluate(()=>{
+      const stage=document.querySelector('.finch-garden-stage'), t=globalThis.__trailMaxProbe;
+      const probe=t?.runs.at(-1);
+      return {trace:!!t,motion:(stage?.dataset.actorMotion||stage?.dataset.terrainMotion)??null,probe:probe??null};
+     });
+     Object.assign(notes,sample);
+    }
+   }finally{
+    info.annotations.push({type:'trail-stage',description:JSON.stringify(notes)});
+    if(['chrome','webkit'].includes(notes.project))writeFileSync('/tmp/type-ii-stage-'+notes.project+'.json',JSON.stringify(notes),'utf8');
+   }
+  }
  }
- assertGardenIdentities(s.birds,10);
- expect(s.motion).toMatch(/^trail-(active|held|standing)$/);
- for(const b of s.birds)checkHit(b);
+
 });
 
 test('10 opt-in #07 single bird performs a genuine rise, flap and contact', {tag:'@causal-flight'},async({page})=>{

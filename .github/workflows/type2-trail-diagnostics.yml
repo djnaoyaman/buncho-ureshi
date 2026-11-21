@@ -152,159 +152,255 @@ jobs:
         timeout-minutes: 4
         env:
           TRAIL_STAGE_TELEMETRY: '1'
-        run: npx playwright test tests/browser/garden-trail-causal.spec.js --grep '@causal-maximum-fit' --project=chrome --project=webkit --retries=0 --reporter=json > /tmp/type-ii-stage-report.json
-      - name: Read verified observations from both executed browser cases
+        run: |
+          rm -f /tmp/type-ii-stage-chrome.json /tmp/type-ii-stage-webkit.json
+          npx playwright test tests/browser/garden-trail-causal.spec.js --grep '@causal-maximum-fit' --project=chrome --project=webkit --retries=0 --reporter=line
+
+      - name: Collect each browser checkpoint independently
         id: verify
         if: ${{ !cancelled() && steps.ready.outcome == 'success' }}
         run: |
           node --input-type=module <<'NODE'
           import {readFileSync,appendFileSync} from 'node:fs';
-          const data=JSON.parse(readFileSync('/tmp/type-ii-stage-report.json','utf8'));
-          const specs=s=>[...(s.specs||[]),...(s.suites||[]).flatMap(specs)];
-          const [spec]=data.suites.flatMap(specs);
+          const routes=['garden-actor-motion','garden-trail-clearance','garden-trail-runtime'];
           for(const engine of ['chrome','webkit']){
-            const execution=spec?.tests.find(t=>t.projectName===engine);
-            const [run]=execution?.results||[];
-            const a=(run?.annotations||execution?.annotations||[]).find(a=>a.type==='trail-stage');
-            if(!a||execution.results.length!==1||!['passed','failed'].includes(run.status))throw Error('Missing executed original case '+engine);
-            const {motion,runs}=JSON.parse(a.description);
-            const latest=runs.at(-1);
-            if(!latest||latest.actors!==10||!Number.isInteger(latest.checks)||!Number.isInteger(latest.probes)||!Array.isArray(latest.native))throw Error('Missing measured solver telemetry '+engine);
-            const failed=runs.filter(r=>r.planned!==r.actors);
-            const flags={
-              strict:run.status==='passed',
-              fallback:motion==='trail-blocked-placement',
-              no_seat:failed.some(r=>r.choices.some(n=>n===0)),
-              check_cap:failed.some(r=>r.checks>=r.maxChecks),
-              probe_cap:failed.some(r=>r.probes>=r.maxProbes),
-              native_rejected:failed.some(r=>r.native.some(n=>n!=='accepted')),
-              native_other_hit:failed.some(r=>r.native.includes('other-hit')),
-              native_bird_hit:failed.some(r=>r.native.includes('bird-hit')),
-              peer_rejected:failed.some(r=>r.causes['partial-peer']>0),
-              standing_rejected:failed.some(r=>r.causes['empty-canStand']>0),
-              no_complete_plan:failed.some(r=>r.probes===0&&r.native.length===0),
-              reconcile_short:runs.some(r=>r.planned===r.actors&&Number.isInteger(r.reconciled)&&r.reconciled!==r.actors),
+            let note;
+            try { note=JSON.parse(readFileSync('/tmp/type-ii-stage-'+engine+'.json','utf8')); } catch { note={}; }
+            const p=note.probe, flags={
+              receipt:note.project===engine,
+              routes:routes.every(key=>note.routes?.[key]?.fulfilled>0&&!note.routes[key].bad),
+              setup:note.setup===true,
+              snapshot:note.snapshot===true,
+              trace:note.trace===true,
+              probe:!!p&&Number.isInteger(p.actors)&&Number.isInteger(p.checks)&&Number.isInteger(p.probes)&&Array.isArray(p.native)&&Array.isArray(p.choices)&&typeof p.causes==='object',
+              strict:note.strict===true,
             };
+            flags.exact=flags.receipt&&flags.routes&&flags.setup&&flags.snapshot&&flags.trace&&flags.probe&&p.actors===10;
+            if(flags.exact)Object.assign(flags,{
+              fallback:note.motion==='trail-blocked-placement',
+              retained:p.peers>0,
+              no_seat:p.choices.some(n=>n===0),
+              check_cap:p.checks>=p.maxChecks,
+              probe_cap:p.probes>=p.maxProbes,
+              native_rejected:p.native.some(n=>n!=='accepted'),
+              native_other_hit:p.native.includes('other-hit'),
+              native_bird_hit:p.native.includes('bird-hit'),
+              peer_rejected:p.causes['partial-peer']>0,
+              standing_rejected:p.causes['empty-canStand']>0,
+              complete_plan:p.probes>0||p.native.length>0||p.planned===p.actors,
+              accepted:p.planned===p.actors,
+              reconcile_short:p.planned===p.actors&&Number.isInteger(p.reconciled)&&p.reconciled!==p.actors,
+            });
             for(const [key,value] of Object.entries(flags))appendFileSync(process.env.GITHUB_OUTPUT,engine+'_'+key+'='+value+'\n');
           }
           NODE
+      - name: 'chrome: test-side checkpoint exists'
+        if: ${{ !cancelled() && steps.verify.outcome == 'success' }}
+        env:
+          OBSERVED: ${{ steps.verify.outputs.chrome_receipt }}
+        run: test "$OBSERVED" = 'true'
+      - name: 'chrome: all exact served route anchors fulfilled'
+        if: ${{ !cancelled() && steps.verify.outcome == 'success' }}
+        env:
+          OBSERVED: ${{ steps.verify.outputs.chrome_routes }}
+        run: test "$OBSERVED" = 'true'
+      - name: 'chrome: maximum fixture reached ready'
+        if: ${{ !cancelled() && steps.verify.outcome == 'success' }}
+        env:
+          OBSERVED: ${{ steps.verify.outputs.chrome_setup }}
+        run: test "$OBSERVED" = 'true'
+      - name: 'chrome: strict snapshot captured'
+        if: ${{ !cancelled() && steps.verify.outcome == 'success' }}
+        env:
+          OBSERVED: ${{ steps.verify.outputs.chrome_snapshot }}
+        run: test "$OBSERVED" = 'true'
+      - name: 'chrome: browser trace initialized'
+        if: ${{ !cancelled() && steps.verify.outcome == 'success' }}
+        env:
+          OBSERVED: ${{ steps.verify.outputs.chrome_trace }}
+        run: test "$OBSERVED" = 'true'
+      - name: 'chrome: terminal solver counters captured'
+        if: ${{ !cancelled() && steps.verify.outcome == 'success' }}
+        env:
+          OBSERVED: ${{ steps.verify.outputs.chrome_probe }}
+        run: test "$OBSERVED" = 'true'
       - name: 'chrome: individually passed original 09'
         if: ${{ !cancelled() && steps.verify.outcome == 'success' }}
         env:
           OBSERVED: ${{ steps.verify.outputs.chrome_strict }}
         run: test "$OBSERVED" = 'true'
-      - name: 'chrome: did not finish in placement fallback'
+      - name: 'chrome: terminal probe belongs to the ten native birds'
         if: ${{ !cancelled() && steps.verify.outcome == 'success' }}
+        env:
+          OBSERVED: ${{ steps.verify.outputs.chrome_exact }}
+        run: test "$OBSERVED" = 'true'
+      - name: 'chrome: not in placement fallback'
+        if: ${{ !cancelled() && steps.verify.outcome == 'success' && steps.verify.outputs.chrome_exact == 'true' }}
         env:
           OBSERVED: ${{ steps.verify.outputs.chrome_fallback }}
         run: test "$OBSERVED" = 'false'
-      - name: 'chrome: all actors had a unary admissible seat whenever a plan failed'
-        if: ${{ !cancelled() && steps.verify.outcome == 'success' }}
+      - name: 'chrome: terminal pack had no retained peers'
+        if: ${{ !cancelled() && steps.verify.outcome == 'success' && steps.verify.outputs.chrome_exact == 'true' }}
+        env:
+          OBSERVED: ${{ steps.verify.outputs.chrome_retained }}
+        run: test "$OBSERVED" = 'false'
+      - name: 'chrome: no actor lacked a unary seat'
+        if: ${{ !cancelled() && steps.verify.outcome == 'success' && steps.verify.outputs.chrome_exact == 'true' }}
         env:
           OBSERVED: ${{ steps.verify.outputs.chrome_no_seat }}
         run: test "$OBSERVED" = 'false'
-      - name: 'chrome: did not hit the sealed search comparison bound'
-        if: ${{ !cancelled() && steps.verify.outcome == 'success' }}
+      - name: 'chrome: comparison bound not hit'
+        if: ${{ !cancelled() && steps.verify.outcome == 'success' && steps.verify.outputs.chrome_exact == 'true' }}
         env:
           OBSERVED: ${{ steps.verify.outputs.chrome_check_cap }}
         run: test "$OBSERVED" = 'false'
-      - name: 'chrome: did not hit the sealed native probe bound'
-        if: ${{ !cancelled() && steps.verify.outcome == 'success' }}
+      - name: 'chrome: native probe bound not hit'
+        if: ${{ !cancelled() && steps.verify.outcome == 'success' && steps.verify.outputs.chrome_exact == 'true' }}
         env:
           OBSERVED: ${{ steps.verify.outputs.chrome_probe_cap }}
         run: test "$OBSERVED" = 'false'
-      - name: 'chrome: no full plan was rejected by native DOM probing'
-        if: ${{ !cancelled() && steps.verify.outcome == 'success' }}
+      - name: 'chrome: no complete plan rejected by native hit test'
+        if: ${{ !cancelled() && steps.verify.outcome == 'success' && steps.verify.outputs.chrome_exact == 'true' }}
         env:
           OBSERVED: ${{ steps.verify.outputs.chrome_native_rejected }}
         run: test "$OBSERVED" = 'false'
       - name: 'chrome: no failed native probe hit a non-bird element'
-        if: ${{ !cancelled() && steps.verify.outcome == 'success' }}
+        if: ${{ !cancelled() && steps.verify.outcome == 'success' && steps.verify.outputs.chrome_exact == 'true' }}
         env:
           OBSERVED: ${{ steps.verify.outputs.chrome_native_other_hit }}
         run: test "$OBSERVED" = 'false'
-      - name: 'chrome: no failed native probe hit a different bird'
-        if: ${{ !cancelled() && steps.verify.outcome == 'success' }}
+      - name: 'chrome: no failed native probe hit another bird'
+        if: ${{ !cancelled() && steps.verify.outcome == 'success' && steps.verify.outputs.chrome_exact == 'true' }}
         env:
           OBSERVED: ${{ steps.verify.outputs.chrome_native_bird_hit }}
         run: test "$OBSERVED" = 'false'
-      - name: 'chrome: no failed pack encountered a peer collision'
-        if: ${{ !cancelled() && steps.verify.outcome == 'success' }}
+      - name: 'chrome: no peer collision encountered'
+        if: ${{ !cancelled() && steps.verify.outcome == 'success' && steps.verify.outputs.chrome_exact == 'true' }}
         env:
           OBSERVED: ${{ steps.verify.outputs.chrome_peer_rejected }}
         run: test "$OBSERVED" = 'false'
-      - name: 'chrome: no failed pack encountered a unary standing rejection'
-        if: ${{ !cancelled() && steps.verify.outcome == 'success' }}
+      - name: 'chrome: no unary standing rejection'
+        if: ${{ !cancelled() && steps.verify.outcome == 'success' && steps.verify.outputs.chrome_exact == 'true' }}
         env:
           OBSERVED: ${{ steps.verify.outputs.chrome_standing_rejected }}
         run: test "$OBSERVED" = 'false'
-      - name: 'chrome: every failed pack reached a complete geometric plan'
-        if: ${{ !cancelled() && steps.verify.outcome == 'success' }}
+      - name: 'chrome: reached a complete geometric plan'
+        if: ${{ !cancelled() && steps.verify.outcome == 'success' && steps.verify.outputs.chrome_exact == 'true' }}
         env:
-          OBSERVED: ${{ steps.verify.outputs.chrome_no_complete_plan }}
-        run: test "$OBSERVED" = 'false'
-      - name: 'chrome: every complete planned roster reconciled to full actor count'
-        if: ${{ !cancelled() && steps.verify.outcome == 'success' }}
+          OBSERVED: ${{ steps.verify.outputs.chrome_complete_plan }}
+        run: test "$OBSERVED" = 'true'
+      - name: 'chrome: accepted a measured plan for all ten'
+        if: ${{ !cancelled() && steps.verify.outcome == 'success' && steps.verify.outputs.chrome_exact == 'true' }}
+        env:
+          OBSERVED: ${{ steps.verify.outputs.chrome_accepted }}
+        run: test "$OBSERVED" = 'true'
+      - name: 'chrome: no accepted complete plan reconciled short'
+        if: ${{ !cancelled() && steps.verify.outcome == 'success' && steps.verify.outputs.chrome_exact == 'true' }}
         env:
           OBSERVED: ${{ steps.verify.outputs.chrome_reconcile_short }}
         run: test "$OBSERVED" = 'false'
+      - name: 'webkit: test-side checkpoint exists'
+        if: ${{ !cancelled() && steps.verify.outcome == 'success' }}
+        env:
+          OBSERVED: ${{ steps.verify.outputs.webkit_receipt }}
+        run: test "$OBSERVED" = 'true'
+      - name: 'webkit: all exact served route anchors fulfilled'
+        if: ${{ !cancelled() && steps.verify.outcome == 'success' }}
+        env:
+          OBSERVED: ${{ steps.verify.outputs.webkit_routes }}
+        run: test "$OBSERVED" = 'true'
+      - name: 'webkit: maximum fixture reached ready'
+        if: ${{ !cancelled() && steps.verify.outcome == 'success' }}
+        env:
+          OBSERVED: ${{ steps.verify.outputs.webkit_setup }}
+        run: test "$OBSERVED" = 'true'
+      - name: 'webkit: strict snapshot captured'
+        if: ${{ !cancelled() && steps.verify.outcome == 'success' }}
+        env:
+          OBSERVED: ${{ steps.verify.outputs.webkit_snapshot }}
+        run: test "$OBSERVED" = 'true'
+      - name: 'webkit: browser trace initialized'
+        if: ${{ !cancelled() && steps.verify.outcome == 'success' }}
+        env:
+          OBSERVED: ${{ steps.verify.outputs.webkit_trace }}
+        run: test "$OBSERVED" = 'true'
+      - name: 'webkit: terminal solver counters captured'
+        if: ${{ !cancelled() && steps.verify.outcome == 'success' }}
+        env:
+          OBSERVED: ${{ steps.verify.outputs.webkit_probe }}
+        run: test "$OBSERVED" = 'true'
       - name: 'webkit: individually passed original 09'
         if: ${{ !cancelled() && steps.verify.outcome == 'success' }}
         env:
           OBSERVED: ${{ steps.verify.outputs.webkit_strict }}
         run: test "$OBSERVED" = 'true'
-      - name: 'webkit: did not finish in placement fallback'
+      - name: 'webkit: terminal probe belongs to the ten native birds'
         if: ${{ !cancelled() && steps.verify.outcome == 'success' }}
+        env:
+          OBSERVED: ${{ steps.verify.outputs.webkit_exact }}
+        run: test "$OBSERVED" = 'true'
+      - name: 'webkit: not in placement fallback'
+        if: ${{ !cancelled() && steps.verify.outcome == 'success' && steps.verify.outputs.webkit_exact == 'true' }}
         env:
           OBSERVED: ${{ steps.verify.outputs.webkit_fallback }}
         run: test "$OBSERVED" = 'false'
-      - name: 'webkit: all actors had a unary admissible seat whenever a plan failed'
-        if: ${{ !cancelled() && steps.verify.outcome == 'success' }}
+      - name: 'webkit: terminal pack had no retained peers'
+        if: ${{ !cancelled() && steps.verify.outcome == 'success' && steps.verify.outputs.webkit_exact == 'true' }}
+        env:
+          OBSERVED: ${{ steps.verify.outputs.webkit_retained }}
+        run: test "$OBSERVED" = 'false'
+      - name: 'webkit: no actor lacked a unary seat'
+        if: ${{ !cancelled() && steps.verify.outcome == 'success' && steps.verify.outputs.webkit_exact == 'true' }}
         env:
           OBSERVED: ${{ steps.verify.outputs.webkit_no_seat }}
         run: test "$OBSERVED" = 'false'
-      - name: 'webkit: did not hit the sealed search comparison bound'
-        if: ${{ !cancelled() && steps.verify.outcome == 'success' }}
+      - name: 'webkit: comparison bound not hit'
+        if: ${{ !cancelled() && steps.verify.outcome == 'success' && steps.verify.outputs.webkit_exact == 'true' }}
         env:
           OBSERVED: ${{ steps.verify.outputs.webkit_check_cap }}
         run: test "$OBSERVED" = 'false'
-      - name: 'webkit: did not hit the sealed native probe bound'
-        if: ${{ !cancelled() && steps.verify.outcome == 'success' }}
+      - name: 'webkit: native probe bound not hit'
+        if: ${{ !cancelled() && steps.verify.outcome == 'success' && steps.verify.outputs.webkit_exact == 'true' }}
         env:
           OBSERVED: ${{ steps.verify.outputs.webkit_probe_cap }}
         run: test "$OBSERVED" = 'false'
-      - name: 'webkit: no full plan was rejected by native DOM probing'
-        if: ${{ !cancelled() && steps.verify.outcome == 'success' }}
+      - name: 'webkit: no complete plan rejected by native hit test'
+        if: ${{ !cancelled() && steps.verify.outcome == 'success' && steps.verify.outputs.webkit_exact == 'true' }}
         env:
           OBSERVED: ${{ steps.verify.outputs.webkit_native_rejected }}
         run: test "$OBSERVED" = 'false'
       - name: 'webkit: no failed native probe hit a non-bird element'
-        if: ${{ !cancelled() && steps.verify.outcome == 'success' }}
+        if: ${{ !cancelled() && steps.verify.outcome == 'success' && steps.verify.outputs.webkit_exact == 'true' }}
         env:
           OBSERVED: ${{ steps.verify.outputs.webkit_native_other_hit }}
         run: test "$OBSERVED" = 'false'
-      - name: 'webkit: no failed native probe hit a different bird'
-        if: ${{ !cancelled() && steps.verify.outcome == 'success' }}
+      - name: 'webkit: no failed native probe hit another bird'
+        if: ${{ !cancelled() && steps.verify.outcome == 'success' && steps.verify.outputs.webkit_exact == 'true' }}
         env:
           OBSERVED: ${{ steps.verify.outputs.webkit_native_bird_hit }}
         run: test "$OBSERVED" = 'false'
-      - name: 'webkit: no failed pack encountered a peer collision'
-        if: ${{ !cancelled() && steps.verify.outcome == 'success' }}
+      - name: 'webkit: no peer collision encountered'
+        if: ${{ !cancelled() && steps.verify.outcome == 'success' && steps.verify.outputs.webkit_exact == 'true' }}
         env:
           OBSERVED: ${{ steps.verify.outputs.webkit_peer_rejected }}
         run: test "$OBSERVED" = 'false'
-      - name: 'webkit: no failed pack encountered a unary standing rejection'
-        if: ${{ !cancelled() && steps.verify.outcome == 'success' }}
+      - name: 'webkit: no unary standing rejection'
+        if: ${{ !cancelled() && steps.verify.outcome == 'success' && steps.verify.outputs.webkit_exact == 'true' }}
         env:
           OBSERVED: ${{ steps.verify.outputs.webkit_standing_rejected }}
         run: test "$OBSERVED" = 'false'
-      - name: 'webkit: every failed pack reached a complete geometric plan'
-        if: ${{ !cancelled() && steps.verify.outcome == 'success' }}
+      - name: 'webkit: reached a complete geometric plan'
+        if: ${{ !cancelled() && steps.verify.outcome == 'success' && steps.verify.outputs.webkit_exact == 'true' }}
         env:
-          OBSERVED: ${{ steps.verify.outputs.webkit_no_complete_plan }}
-        run: test "$OBSERVED" = 'false'
-      - name: 'webkit: every complete planned roster reconciled to full actor count'
-        if: ${{ !cancelled() && steps.verify.outcome == 'success' }}
+          OBSERVED: ${{ steps.verify.outputs.webkit_complete_plan }}
+        run: test "$OBSERVED" = 'true'
+      - name: 'webkit: accepted a measured plan for all ten'
+        if: ${{ !cancelled() && steps.verify.outcome == 'success' && steps.verify.outputs.webkit_exact == 'true' }}
+        env:
+          OBSERVED: ${{ steps.verify.outputs.webkit_accepted }}
+        run: test "$OBSERVED" = 'true'
+      - name: 'webkit: no accepted complete plan reconciled short'
+        if: ${{ !cancelled() && steps.verify.outcome == 'success' && steps.verify.outputs.webkit_exact == 'true' }}
         env:
           OBSERVED: ${{ steps.verify.outputs.webkit_reconcile_short }}
         run: test "$OBSERVED" = 'false'
