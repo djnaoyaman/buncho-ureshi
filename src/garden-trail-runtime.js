@@ -1,3 +1,4 @@
+import {inside} from './garden-terrain-plan.js';
 import {trailTerrainFor} from './data/garden-trail-terrain.js';
 import {createGardenTrailAdapter} from './garden-trail-adapter.js';
 import {createTrailClearance} from './garden-trail-clearance.js';
@@ -10,7 +11,8 @@ export function createGardenTrailRuntime(id,model){
  const [A,B]=terrain.entryCandidates,[bay]=terrain.pullouts;
  const points=bay?{A,B,bay}:{A,B};
  const nodes=Object.fromEntries(Object.entries(points).map(([id,p])=>[id,{id,p}]));
- let current=null,proven=null,epoch=null,lastLocal=null,localFlightId=null;
+ let current=null,proven=null,epoch=null,lastLocal=null,localFlightId=null,interior=null,interiorMiss=null;
+ const allowInterior=terrain.number===10||terrain.number===14;
  const kind=action=>action==='fly'?'fly':'hop';
  const makeEnvironment=safe=>({safe,width:current.plane.width,planeHeight:current.plane.height,height:.043});
  const adapter=createGardenTrailAdapter(id,{
@@ -42,6 +44,7 @@ export function createGardenTrailRuntime(id,model){
   sync({generation,measurement,actors=[...model.actors.values()],predator=false}){
    // Host must disposition any prior active routes before advancing epochs;
    // a null/unsafe measurement pauses new movement, not natural game events.
+   if(current!==measurement||actors.length!==1||predator){interior=null;interiorMiss=null;}
    epoch=generation;current=measurement;
    proven=current?.envelope?createTrailClearance(id,current):null;
    const state=adapter.sync({epoch,actors,predator:predator||!proven});
@@ -84,6 +87,60 @@ export function createGardenTrailRuntime(id,model){
     localFlightId=a.id;
     return {id:a.id,target:n.id,action:'fly'};
    }
+   return null;
+  },
+  // Two edge-gated surveys can have a legal standing contact where their
+  // full flight envelope cannot launch. Find a dry interior pair, optionally
+  // moving the same bird there via a separately reserved native ingress hop.
+  singletonInterior({paintable=()=>true}={}){
+   const [a]=model.actors.values();
+   if(!allowInterior||!proven||model.actors.size!==1||!a?.movable||!a.canFly||a.route||a.phase!=='ground')return null;
+   const plane=current.plane,here={id:a.node,p:a.p};
+   const delta=(u,v)=>Math.hypot((u.p[0]-v.p[0])*plane.width,(u.p[1]-v.p[1])*plane.height);
+   const permitted=(c,n,k,peers)=>{
+    if(!proven.safe(c,n,k,peers)||!paintable(c))return false;
+    const spans=proven.sweptRoute(c);
+    return !!spans&&adapter.canPlace({spans});
+   };
+   const env=makeEnvironment(permitted);
+   const fly=n=>{
+    if(!model.beginFlightPath(a.id,n,[a.p,n.p],env))return null;
+    localFlightId=a.id;return {id:a.id,target:n.id,action:'fly'};
+   };
+   if(interior?.source===a.node){
+    if(model.time<a.cooldown)return {id:a.id,action:'wait'};
+    const {target}=interior;interior=null;
+    const launched=fly(target);if(launched)return launched;
+   }
+   if(model.time<a.cooldown||interiorMiss===a.node)return null;
+   const xs=terrain.surface.map(p=>p[0]*plane.width),ys=terrain.surface.map(p=>p[1]*plane.height);
+   const sites=[];
+   // The 24px projection is deterministic and only produces contacts inside
+   // the existing survey. Keep at most two interleaved projected grids.
+   for(const offset of [0,12])
+    for(let y=Math.min(...ys)+offset;y<Math.max(...ys);y+=24)
+     for(let x=Math.min(...xs)+offset;x<Math.max(...xs);x+=24){
+      const p=[x/plane.width,y/plane.height];
+      if(inside(p,terrain.surface)&&proven.canStand(a,p))sites.push({id:'interior:'+p.join(':'),p});
+     }
+   const sources=sites.filter(n=>delta(here,n)>=16&&delta(here,n)<=68)
+    .sort((u,v)=>delta(here,u)-delta(here,v));
+   const targets=from=>sites.filter(n=>delta(from,n)>=64&&delta(from,n)<=148)
+    .sort((u,v)=>Math.abs(delta(from,u)-96)-Math.abs(delta(from,v)-96));
+   for(const n of targets(here)){const direct=fly(n);if(direct)return direct;}
+   for(const ingress of sources){
+    const hop=model.previewPath(a.id,ingress,[a.p,ingress.p],'hop',env);
+    if(!hop||!permitted(hop,ingress,'hop',model.actors))continue;
+    for(const target of targets(ingress)){
+     const flight=model.previewPath(a.id,target,[ingress.p,target.p],'fly',env,ingress);
+     if(!flight||!permitted(flight,target,'fly',model.actors))continue;
+     if(!model.beginHopPath(a.id,ingress,[a.p,ingress.p],env))continue;
+     localFlightId=a.id;
+     interior={source:ingress.id,target};
+     return {id:a.id,target:ingress.id,action:'hop',ingress:true};
+    }
+   }
+   interiorMiss=a.node;
    return null;
   },
   // When the whole narrow crossing is unavailable, try a smaller native

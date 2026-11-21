@@ -459,12 +459,13 @@ export function createGardenActorMotion(root){
       }
       let started=trailRuntime.run();
       if(!started&&roster.length===1)started=trailRuntime.singletonFlight(layoutNodes,{paintable:routeFits});
+      if(!started&&roster.length===1)started=trailRuntime.singletonInterior({paintable:routeFits});
       // A lone actor seated off the authored terminal (e.g. the dock blocks
       // it after reflow) can still take a measured short hop. Prefer an
       // eligible terminal so future flights use the normal lane admission.
       if(!started&&roster.length===1)started=trailRuntime.localHop(layoutNodes,{singletonIngress:true});
       if(!started&&(roster.length>=7||(!bay&&roster.length>1)))started=trailRuntime.localHop(layoutNodes);
-      trailRetry=!started&&!trailRetry;nextTrail=elapsed+(started?9000:1600);
+      trailRetry=!started&&!trailRetry;nextTrail=elapsed+(started&&!started.ingress&&started.action!=='wait'?9000:1600);
      }
     }else model.advance(elapsed,footholds,environment);
    }else model.clearReactions();

@@ -33,7 +33,7 @@ jobs:
           import { readFileSync, appendFileSync } from 'node:fs';
           const files = ['.github/browser-checks.json','.github/workflows/pages.yml','package.json','package-lock.json',
             'scripts/build.mjs','src/encounter-ui.js','src/garden-actor-motion.js','src/garden-trail-runtime.js','src/garden-trail-clearance.js',
-            'tests/browser/garden-trail-causal.spec.js','tests/browser/garden-trail-flight-causal.spec.js','tests/fixtures/garden-terrain-browser.js'];
+            'tests/browser/garden-trail-causal.spec.js','tests/browser/garden-trail-interior-native.spec.js','tests/fixtures/garden-terrain-browser.js'];
           const hash = createHash('sha256');
           for (const path of files) {
             const bytes = readFileSync(path);
@@ -106,7 +106,7 @@ jobs:
           import { readFileSync, appendFileSync } from 'node:fs';
           const files = ['.github/browser-checks.json','.github/workflows/pages.yml','package.json','package-lock.json',
             'scripts/build.mjs','src/encounter-ui.js','src/garden-actor-motion.js','src/garden-trail-runtime.js','src/garden-trail-clearance.js',
-            'tests/browser/garden-trail-causal.spec.js','tests/browser/garden-trail-flight-causal.spec.js','tests/fixtures/garden-terrain-browser.js'];
+            'tests/browser/garden-trail-causal.spec.js','tests/browser/garden-trail-interior-native.spec.js','tests/fixtures/garden-terrain-browser.js'];
           const hash = createHash('sha256');
           for (const path of files) {
             const bytes = readFileSync(path);
@@ -152,51 +152,11 @@ jobs:
         timeout-minutes: 4
         if: ${{ !cancelled() && steps.ready.outcome == 'success' }}
         run: npx playwright test tests/browser/garden-trail-causal.spec.js --grep '@causal-maximum-fit' --project=chrome --project=webkit --retries=0 --reporter=list
-      - name: '#10 ready and active white singleton'
+      - name: '#10 actual white flight and same-route landing'
         timeout-minutes: 4
         if: ${{ !cancelled() && steps.ready.outcome == 'success' }}
-        run: npx playwright test tests/browser/garden-trail-flight-causal.spec.js --grep '@flight-10-preflight' --project=chrome --project=webkit --retries=0 --reporter=list > /tmp/type-ii-flight-10-preflight.log 2>&1
-      - name: '#10 gate route or bounded singleton landing was offered'
+        run: npx playwright test tests/browser/garden-trail-interior-native.spec.js --grep '@interior-10' --project=chrome --project=webkit --retries=0 --reporter=list
+      - name: '#14 actual white flight and same-route landing'
         timeout-minutes: 4
         if: ${{ !cancelled() && steps.ready.outcome == 'success' }}
-        run: npx playwright test tests/browser/garden-trail-flight-causal.spec.js --grep '@flight-10-target-offered' --project=chrome --project=webkit --retries=0 --reporter=list > /tmp/type-ii-flight-10-target-offered.log 2>&1
-      - name: '#10 gate route or measured flight sweep fits'
-        timeout-minutes: 4
-        if: ${{ !cancelled() && steps.ready.outcome == 'success' }}
-        run: npx playwright test tests/browser/garden-trail-flight-causal.spec.js --grep '@flight-10-measured-clearance' --project=chrome --project=webkit --retries=0 --reporter=list > /tmp/type-ii-flight-10-measured-clearance.log 2>&1
-      - name: '#10 gate route or sampled paint box also fits'
-        timeout-minutes: 4
-        if: ${{ !cancelled() && steps.ready.outcome == 'success' }}
-        run: npx playwright test tests/browser/garden-trail-flight-causal.spec.js --grep '@flight-10-legacy-envelope' --project=chrome --project=webkit --retries=0 --reporter=list > /tmp/type-ii-flight-10-legacy-envelope.log 2>&1
-      - name: '#10 genuine flight reserved a distinct landing'
-        timeout-minutes: 4
-        if: ${{ !cancelled() && steps.ready.outcome == 'success' }}
-        run: npx playwright test tests/browser/garden-trail-flight-causal.spec.js --grep '@flight-10-natural-route' --project=chrome --project=webkit --retries=0 --reporter=list > /tmp/type-ii-flight-10-natural-route.log 2>&1
-      - name: '#10 same route phases, decoded white frames and landing'
-        timeout-minutes: 4
-        if: ${{ !cancelled() && steps.ready.outcome == 'success' }}
-        run: npx playwright test tests/browser/garden-trail-flight-causal.spec.js --grep '@flight-10-phases-visible' --project=chrome --project=webkit --retries=0 --reporter=list > /tmp/type-ii-flight-10-phases-visible.log 2>&1
-      - name: '#14 ready and active white singleton'
-        timeout-minutes: 4
-        if: ${{ !cancelled() && steps.ready.outcome == 'success' }}
-        run: npx playwright test tests/browser/garden-trail-flight-causal.spec.js --grep '@flight-14-preflight' --project=chrome --project=webkit --retries=0 --reporter=list > /tmp/type-ii-flight-14-preflight.log 2>&1
-      - name: '#14 gate route or bounded singleton landing was offered'
-        timeout-minutes: 4
-        if: ${{ !cancelled() && steps.ready.outcome == 'success' }}
-        run: npx playwright test tests/browser/garden-trail-flight-causal.spec.js --grep '@flight-14-target-offered' --project=chrome --project=webkit --retries=0 --reporter=list > /tmp/type-ii-flight-14-target-offered.log 2>&1
-      - name: '#14 gate route or measured flight sweep fits'
-        timeout-minutes: 4
-        if: ${{ !cancelled() && steps.ready.outcome == 'success' }}
-        run: npx playwright test tests/browser/garden-trail-flight-causal.spec.js --grep '@flight-14-measured-clearance' --project=chrome --project=webkit --retries=0 --reporter=list > /tmp/type-ii-flight-14-measured-clearance.log 2>&1
-      - name: '#14 gate route or sampled paint box also fits'
-        timeout-minutes: 4
-        if: ${{ !cancelled() && steps.ready.outcome == 'success' }}
-        run: npx playwright test tests/browser/garden-trail-flight-causal.spec.js --grep '@flight-14-legacy-envelope' --project=chrome --project=webkit --retries=0 --reporter=list > /tmp/type-ii-flight-14-legacy-envelope.log 2>&1
-      - name: '#14 genuine flight reserved a distinct landing'
-        timeout-minutes: 4
-        if: ${{ !cancelled() && steps.ready.outcome == 'success' }}
-        run: npx playwright test tests/browser/garden-trail-flight-causal.spec.js --grep '@flight-14-natural-route' --project=chrome --project=webkit --retries=0 --reporter=list > /tmp/type-ii-flight-14-natural-route.log 2>&1
-      - name: '#14 same route phases, decoded white frames and landing'
-        timeout-minutes: 4
-        if: ${{ !cancelled() && steps.ready.outcome == 'success' }}
-        run: npx playwright test tests/browser/garden-trail-flight-causal.spec.js --grep '@flight-14-phases-visible' --project=chrome --project=webkit --retries=0 --reporter=list > /tmp/type-ii-flight-14-phases-visible.log 2>&1
+        run: npx playwright test tests/browser/garden-trail-interior-native.spec.js --grep '@interior-14' --project=chrome --project=webkit --retries=0 --reporter=list

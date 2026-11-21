@@ -21,11 +21,11 @@
     },
     "src/garden-actor-motion.js": {
       "before": "2dfdb5f374f29fa1af3af667be36c9857714e2b849b2da34e67a615234a4dc7c",
-      "after": "df6d4c4ad751b6bf0c51c21ade1e0b485ed2821dacbc8bc567a159dc6f96b109"
+      "after": "c465fd94d6ce8d230cd194ba584751b1ffa495e7c186b638c8aac5b806d441e1"
     },
     "src/garden-actor-state.js": {
       "before": "311bb2ced9b28ce172627f8ac81de9f647420e01d0d5f9706c925e2f86c42301",
-      "after": "83a3f77f1ea4ca155c47f6d653315119e485d809bc274011fd85a2314640c376"
+      "after": "c6a85ad17adf3023b30be3188747885841ec3fc9a83d5a369d4dbe67562c1afc"
     },
     "src/garden-bird-motion.js": {
       "before": "1a7d3da97648b4e548c2223462e033a07552624597481f75ed47e7a9da6760c3",

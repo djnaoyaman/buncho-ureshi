@@ -60,3 +60,47 @@ test('sampled renderer guard can decline a valid swept path before any native re
  assert.equal(rt.singletonFlight([seat],{paintable:candidate=>{saw=candidate.route.target===seat.id;return false;}}),null);
  assert.equal(saw,true);assert.deepEqual(a,before);assert.equal(m.reservations.size,0);
 });
+
+function edgeSingleton(garden,extra=[]){
+ const m=createGardenActors('edge-interior-flight'),rt=createGardenTrailRuntime(garden,m);
+ const wings={left:-76,right:76,top:-68,bottom:24},defs=[{id,movable:true,canFly:true},...extra];
+ const plane={left:-45,top:0,width:492,height:874};
+ const measurement={plane,clip:{left:0,top:0,right:402,bottom:874},controls:[],envelope:wings,
+  footprints:new Map(defs.map(a=>[a.id,shape])),flightFootprints:new Map(defs.map(a=>[a.id,wings]))};
+ m.reconcile(defs,rt.nodes);rt.sync({generation:1,measurement});
+ return {m,rt,measurement,a:m.actors.get(id)};
+}
+for(const [id2,catalogue,old] of [
+ [10,'bird-tricolored-munia',[{id:'near',p:[.27,.65]}]],
+ [14,'bird-long-tailed-paradise-whydah',[{id:'offered',p:[.64,.52]}]],
+])test('#'+id2+' reserves an actual interior hop before a safe whole flight if its existing single route is unavailable',()=>{
+ const {m,rt,measurement,a}=edgeSingleton(catalogue),origin=a.node;
+ const d=Math.hypot((old[0].p[0]-a.p[0])*492,(old[0].p[1]-a.p[1])*874);
+ assert.equal(d>=64&&d<=148,id2===14);
+ assert.equal(rt.singletonFlight(old),null);
+ let probes=0;
+ const admit={paintable:()=>{probes++;return true;}};
+ const first=rt.singletonInterior(admit);
+ assert.ok(first?.ingress);assert.ok(probes>1);
+ assert.equal(a.node,origin);assert.equal(m.reservations.get(first.target),id);
+ m.advance(2000,[],{safe:()=>false});
+ assert.equal(a.node,first.target);assert.equal(m.reservations.size,0);
+ rt.sync({generation:1,measurement});
+ assert.equal(rt.singletonInterior(admit)?.action,'wait');
+ m.advance(10001,[],{safe:()=>false});
+ const second=rt.singletonInterior(admit);
+ assert.equal(second?.action,'fly');assert.notEqual(second.target,a.node);
+ assert.equal(m.reservations.get(second.target),id);
+ const phases=new Set();
+ for(let t=10001;t<=15000&&a.route;t+=40){m.advance(t,[],{safe:()=>false});if(a.state==='fly')phases.add(a.phase);}
+ assert.ok(['rise','flap','contact'].every(phase=>phases.has(phase)));
+ assert.equal(a.node,second.target);assert.equal(m.reservations.size,0);
+});
+test('interior remedy is solo-only and untouched off #10/#14; explicit paint failure commits nothing',()=>{
+ assert.equal(edgeSingleton('bird-zebra-finch').rt.singletonInterior(),null);
+ assert.equal(edgeSingleton('bird-tricolored-munia',[{id:'other',movable:true,canFly:true}]).rt.singletonInterior(),null);
+ const {rt,m,a}=edgeSingleton('bird-long-tailed-paradise-whydah');
+ const before=structuredClone(a);
+ assert.equal(rt.singletonInterior({paintable:()=>false}),null);
+ assert.deepEqual(a,before);assert.equal(m.reservations.size,0);
+});

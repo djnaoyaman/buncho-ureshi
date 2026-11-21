@@ -44,8 +44,9 @@ export function createGardenActors(seed='',initialTime=0){
  }
  // Opt-in admission for a geometry adapter. Validate and reserve the same
  // candidate that frame()/sampleRoute() will paint; a rejected commit is inert.
- function previewPath(id,node,path,kind,{width,planeHeight,height}){
-  const a=actors.get(id);
+ function previewPath(id,node,path,kind,{width,planeHeight,height},origin=null){
+  const live=actors.get(id);
+  const a=origin&&live?{...live,p:origin.p,node:origin.id}:live;
   if(!a?.movable||a.route||!node||node.id===a.node)return null;
   let route;
   if(kind==='hop'){
