@@ -55,9 +55,12 @@ jobs:
           if-no-files-found: error
           retention-days: 14
   focused_browser:
-    name: reviewed-chrome-and-webkit
+    name: reviewed-${{ matrix.label }}
     needs: build
     if: needs.build.outputs.browser_tests != '[]'
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON((github.head_ref == 'qa/type2-formal-verdict') && '{"include":[{"group":"actors","engine":"chrome","label":"chrome-actors"},{"group":"trail","engine":"chrome","label":"chrome-trail"},{"group":"max","engine":"chrome","label":"chrome-max"},{"group":"booklet","engine":"chrome","label":"chrome-booklet"},{"group":"movement","engine":"chrome","label":"chrome-movement"},{"group":"geometry","engine":"chrome","label":"chrome-geometry"},{"group":"actors","engine":"webkit","label":"webkit-actors"},{"group":"trail","engine":"webkit","label":"webkit-trail"},{"group":"max","engine":"webkit","label":"webkit-max"},{"group":"booklet","engine":"webkit","label":"webkit-booklet"},{"group":"movement","engine":"webkit","label":"webkit-movement"},{"group":"geometry","engine":"webkit","label":"webkit-geometry"}]}' || '{"include":[{"group":"all","engine":"both","label":"chrome-and-webkit"}]}') }}
     runs-on: ubuntu-24.04
     container:
       image: mcr.microsoft.com/playwright:v1.64.1-noble
@@ -110,9 +113,22 @@ jobs:
         env:
           BROWSER_TESTS_JSON: ${{ needs.build.outputs.browser_tests }}
           BROWSER_REASON: ${{ needs.build.outputs.browser_reason }}
+          TYPE2_DIAG_GROUP: ${{ matrix.group }}
+          TYPE2_DIAG_ENGINE: ${{ matrix.engine }}
+          TYPE2_VERDICT_PATH: ${{ (github.head_ref == 'qa/type2-formal-verdict') && format('{0}/type2-formal-verdict.json', runner.temp) || '' }}
         run: node scripts/run-reviewed-browsers.mjs
+      - name: Require complete compact browser verdict
+        if: always() && (github.head_ref == 'qa/type2-formal-verdict')
+        run: node -e 'const a=require(process.argv[1]);if(!a.unionCoverage||!a.total||a.nonpass.length||a.status!=="passed")process.exit(1);' "$RUNNER_TEMP/type2-formal-verdict.json"
       - uses: actions/upload-artifact@v4
-        if: always()
+        if: always() && (github.head_ref == 'qa/type2-formal-verdict')
+        with:
+          name: browser-evidence-type2-formal-verdict-${{ matrix.label }}-${{ github.sha }}
+          path: ${{ runner.temp }}/type2-formal-verdict.json
+          if-no-files-found: error
+          retention-days: 3
+      - uses: actions/upload-artifact@v4
+        if: always() && !(github.head_ref == 'qa/type2-formal-verdict')
         with:
           name: browser-evidence-focused-${{ github.sha }}
           path: |
