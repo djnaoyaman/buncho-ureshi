@@ -104,7 +104,19 @@ export function createGardenActors(seed='',initialTime=0){
   for(const [a,n]of plans){release(a.id);a.p=[...n.p];a.node=n.id;a.route=null;a.height=0;a.state='rest';a.phase='ground';}
   return true;
  }
- return {actors,reservations,reconcile,advance,begin,frame,reflow,reroute,
+ // Last-resort responsive reflow after the caller has proved a complete,
+ // separated standing layout. Do not let obsolete landing locks veto it.
+ function placeStanding(placements){
+  const plan=[...actors.values()].map(a=>[a,placements.get(a.id)]);
+  if(plan.some(([,n])=>!n)||new Set(plan.map(([,n])=>n.id)).size!==plan.length)return false;
+  for(const [a,n]of plan){
+   release(a.id);
+   if(a.route)rest(a,'rest',2000);
+   a.p=[...n.p];a.node=n.id;
+  }
+  return true;
+ }
+ return {actors,reservations,reconcile,advance,begin,frame,reflow,reroute,placeStanding,
   sampleRoute(a,count=49){return Array.from({length:count},(_,i)=>frame(a,a.since+(i/(count-1))*a.route.duration));},
   settle(){for(const a of actors.values())if(a.route){a.p=[...a.route.to];a.node=a.route.target;release(a.id);a.cooldown=time+8000;rest(a,'rest',2000);}reactions.length=0;},
   clearReactions(){reactions.length=0;},

@@ -32,7 +32,7 @@ export function mountEncounterMedia(root) {
     if (retryButton) retryButton.hidden = !root.querySelector('.finch-media[data-media-state=error]');
     const scene = root.querySelector('.finch-garden-stage');
     if (!scene) return;
-    const images = [...scene.querySelectorAll('img')];
+    const images = [...scene.querySelectorAll('img:not([data-white-flight-frame])')];
     const failed = images.some(img => img.dataset.mediaResult === 'error');
     const ready = images.every(img => img.dataset.mediaResult === 'ready');
     scene.dataset.sceneState = failed ? 'error' : ready ? 'ready' : 'loading';
@@ -91,7 +91,7 @@ export function mountEncounterMedia(root) {
     if (win.IntersectionObserver) observer = new win.IntersectionObserver(entries => {
       for (const entry of entries) if (entry.isIntersecting) { observer.unobserve(entry.target); entry.target._startEncounterMedia?.(); }
     }, { root: root.querySelector('.finch-catalog') || root, rootMargin: '120px' });
-    for (let img of root.querySelectorAll('img[data-media-src], .finch-garden-stage img')) {
+    for (let img of root.querySelectorAll('img[data-media-src]:not([data-white-flight-frame]), .finch-garden-stage img:not([data-white-flight-frame])')) {
       const key = img.dataset.mediaSrc || img.getAttribute('src');
       const old = retained.get(key)?.shift();
       if (old && old !== img) {
@@ -116,7 +116,7 @@ export function mountEncounterMedia(root) {
     const button = event.target.closest('[data-media-retry]');
     if (!button || !root.contains(button)) return;
     const scene = button.closest('.finch-garden-stage') || root;
-    for (const img of scene.querySelectorAll('img')) if (img.dataset.mediaResult === 'error') {
+    for (const img of scene.querySelectorAll('img:not([data-white-flight-frame])')) if (img.dataset.mediaResult === 'error') {
       const src = img.dataset.mediaSrc || img.getAttribute('src');
       delete img.dataset.mediaResult; delete img.dataset.mediaStarted;
       img.removeAttribute('src'); img.src = src;
@@ -127,7 +127,7 @@ export function mountEncounterMedia(root) {
   return {
     preserve() {
       retained.clear();
-      for (const img of root.querySelectorAll('img[data-media-src], .finch-garden-stage img')) {
+      for (const img of root.querySelectorAll('img[data-media-src]:not([data-white-flight-frame]), .finch-garden-stage img:not([data-white-flight-frame])')) {
         const key = img.dataset.mediaSrc || img.getAttribute('src');
         if (!retained.has(key)) retained.set(key, []);
         retained.get(key).push(img);

@@ -225,7 +225,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     refreshPoseSubtrees(root,birds,bird=>poseFor(bird,positions,birds),birdSvg);
   }
   const reframePoses=()=>updatePoses(true);
-  const reframeCompact=()=>{if(alive)render();};
+  const reframeCompact=()=>{if(alive&&panel!=='outdoors')render();};
   const audio = audioFactory();
   let lastInteractionAt=Date.now();
   const noteInteraction=()=>{lastInteractionAt=Date.now();};
