@@ -23,7 +23,7 @@
     },
     "src/garden-actor-motion.js": {
       "before": "2dfdb5f374f29fa1af3af667be36c9857714e2b849b2da34e67a615234a4dc7c",
-      "after": "fee3ffeb67f81721f2a4640c5800b2fd0f5d5baa62479b87cd48438035f2d258"
+      "after": "6903dbc958d1dff872ef2504c988d07f61f9f952a1df0ea25b7e49d9ef9bd70d"
     },
     "src/garden-actor-state.js": {
       "before": "311bb2ced9b28ce172627f8ac81de9f647420e01d0d5f9706c925e2f86c42301",
@@ -43,7 +43,7 @@
     "src/garden-trail-runtime.js": "b709b1a671b67a2151def0e544c669452739ab1873066a42c8a6897b2b3a68d4"
   },
   "historicalFormalReviewedDraft": "4caaccc2cef57a62c51c25d0e5c4803098ef1d3d",
-  "compositionStatus": "Formal composed source scope; exact combined Chrome and WebKit gate evidence is required for release.",
+  "compositionStatus": "Diagnostic derivative of unreleased v2 #267, targets #07/#34 only; not release evidence or approval.",
   "sourceComposition": {
     "historicalFormalTree": "cf40829b4e427137d83f5babf0ace8b5083dd7d3",
     "fourVerifiedFormalDonorBlobs": {
@@ -64,6 +64,11 @@
         "webkit"
       ],
       "formalSuiteEvidence": false
+    },
+    "diagnosticAxisPocket": {
+      "staleV2Tree": "a0ce2299c68fe2aae2e07d964a2b7718220adb71",
+      "publishedMainExcluded": true,
+      "fullFormalSuiteFailed": true
     }
   }
 }

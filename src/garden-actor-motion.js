@@ -6,6 +6,36 @@ import {createGardenTrailRuntime} from './garden-trail-runtime.js';
 import {assignTrailSeats,contourTrailStandingSeats,landscapeTrailStandingSeats,measuredNativeFoot,packTrailStandingSeats,pitchTrailStandingSeats,surveyedBandTrailSeats} from './garden-trail-clearance.js';
 import {createActorFlight} from './garden-actor-flight.js';
 
+// Cold #34 only: a tap-safe standing pack can still leave no pocket because
+// native motion uses the larger swept shapes. Try a bounded one-seat
+// alternative before first paint, and never displace a live occupant.
+export function preferColdPocketPlan(plan,actors,seats,{canPlace,nativeHits,hasPocket,maxTrials=24}){
+ if(!plan||actors.length!==10||hasPocket(plan))return plan;
+ const selected=new Set([...plan.values()].map(n=>n.id));
+ const entries=new Map(plan);
+ const spacing=n=>Math.min(...[...plan.values()].map(q=>Math.hypot(q.p[0]-n.p[0],q.p[1]-n.p[1])));
+ const open=seats.filter(n=>!selected.has(n.id)).map(n=>({n,gap:spacing(n)}))
+  .sort((a,b)=>b.gap-a.gap);
+ let trials=0,nativeTrials=0;
+ // A single different contact preserves the other nine positions and each
+ // solver verdict. Only inspect geometrically feasible standing candidates.
+ for(const {n} of open)for(const a of actors){
+  if(!a.movable)continue;
+  entries.delete(a.id);
+  const fits=canPlace(a,n,entries);
+  entries.set(a.id,n);
+  if(fits){
+   if(++trials>maxTrials)return plan;
+   if(hasPocket(entries,a.id)){
+    if(++nativeTrials>3)return plan;
+    if(nativeHits(entries))return new Map(entries);
+   }
+  }
+  entries.set(a.id,plan.get(a.id));
+ }
+ return plan;
+}
+
 export function actorTerrainForStage(stage){
  const existing=actorTerrainFor(stage?.dataset.gardenId);
  if(existing)return existing;
@@ -58,6 +88,16 @@ export function clippedDenseCoverRecovery({changedAxis,actors,routeFits,currentF
  if(!changedAxis||actors.length!==10)return false;
  const moving=actors.filter(a=>!!a.route);
  if(!moving.length||moving.some(routeFits)||!actors.some(a=>!currentFits(a)))return false;
+ return replace();
+}
+
+// #07's existing eight-bird layout can rehouse only after landscape already
+// clipped the moving controls. Do not cancel any route still paintable or
+// visibly tracked at its live center. All placements must commit together.
+export function clippedTrail7CoverRecovery({gardenNumber,changedAxis,actors,routeFits,currentCenterVisible,replace}){
+ if(gardenNumber!==7||!changedAxis||actors.length!==8)return false;
+ const moving=actors.filter(a=>!!a.route);
+ if(!moving.length||moving.some(a=>routeFits(a)||currentCenterVisible(a)))return false;
  return replace();
 }
 
@@ -386,6 +426,7 @@ export function createGardenActorMotion(root){
     safePoint:q=>safePoint(q,actorWidth,actorWidth*1000/850)}):
    surveyedBandTrailSeats(terrain.number,{...measured,...measurement,knownSeats:layoutNodes,
     safePoint:q=>safePoint(q,actorWidth,actorWidth*1000/850)})):null;
+  const routeFits=a=>!a.route||routeSamples(a).every(f=>safePoint(f.p,bindings.get(a.id).width,bindings.get(a.id).height,f.height*p.height,a.state==='fly'));
   let planned=null;
   if(trailRuntime&&roster.some(d=>!fixedFlight.has(d.id))){
    const peers=new Map([...model.actors].filter(([id])=>ids.has(id))),byId=new Map(roster.map(d=>[d.id,d]));
@@ -420,6 +461,23 @@ export function createGardenActorMotion(root){
      if(!planned)return retryCanonical();
     }
     if(!planned)planned=packTrailStandingSeats(measured);
+    if(planned&&terrain.number===34&&roster.length===10&&!wideCrop&&!predator&&!settle){
+     // A scratch model exercises the same pocket scheduler and route as a
+     // live actor. There is no live seat, route, or reservation during this
+     // optional first-placement preference.
+     const findPocket=(seats,onlyId)=>{
+      const probe=createGardenActors(key,elapsed);
+      probe.reconcile(onlyId?roster.map(d=>d.id===onlyId?d:{...d,movable:false}):roster,
+       [...seats.values()],(a,n)=>seats.get(a.id)===n);
+      if(probe.actors.size!==10)return false;
+      const run=createGardenTrailRuntime(stage.dataset.gardenId,probe,terrain);
+      run.sync({generation:key,measurement});
+      return !!run.localHop([],{minDistance:7.99,maxDistance:36.01,pocket:true,paintable:routeFits});
+     };
+     planned=preferColdPocketPlan(planned,roster,[...footholds,...trailPads],{
+      canPlace:input.canPlace,hasPocket:findPocket,nativeHits:s=>nativeTrailHits(s,{requireNative:true}),
+     });
+    }
    }
    if(!planned)return reject('trail-blocked-placement');
   }
@@ -429,7 +487,6 @@ export function createGardenActorMotion(root){
    return [...actors.values()].every(other=>!other.route||routeSamples(other).every(f=>separated(n.p,[f.p[0],f.p[1]-f.height],b.width,b.height)));
   });
   if(trailRuntime&&model.actors.size!==roster.length)return reject('trail-blocked-placement');
-  const routeFits=a=>!a.route||routeSamples(a).every(f=>safePoint(f.p,bindings.get(a.id).width,bindings.get(a.id).height,f.height*p.height,a.state==='fly'));
   const trailStandingReflow=({requireNative=false}={})=>{
    // First placement was already accepted against this generation's measured
    // footprints; never run the Type I nominal-pixel reflow over that result.
@@ -502,7 +559,21 @@ export function createGardenActorMotion(root){
       currentFits(a){const b=bindings.get(a.id);return !!b&&safePoint(a.p,b.width,b.height,a.height*p.height,a.state==='fly');},
       replace:()=>trailStandingReflow({requireNative:true}),
      });
-     if(!fallback){stage.dataset.actorMotion='trail-needs-recovery';return false;}
+     const trail7Fallback=!fallback&&clippedTrail7CoverRecovery({
+      gardenNumber:terrain.number,
+      changedAxis:resized&&paintedWideCrop===false&&wideCrop&&!predator&&!settle&&!populationChanged,
+      actors:[...model.actors.values()],routeFits,
+      currentCenterVisible(a){
+       const b=bindings.get(a.id),c=geometry.clip;
+       if(!b)return true; // Unknown hit geometry is not proof that a bird disappeared.
+       const r=body(a.p,b.width,b.height,a.height*p.height);
+       const x=(r.left+r.right)/2,y=(r.top+r.bottom)/2;
+       if(!Number.isFinite(x+y))return true;
+       return x>=c.left&&x<c.right&&y>=c.top&&y<c.bottom;
+      },
+      replace:()=>trailStandingReflow({requireNative:true}),
+     });
+     if(!fallback&&!trail7Fallback){stage.dataset.actorMotion='trail-needs-recovery';return false;}
      routesFit=true;
      if(wideCrop)standingOnly=true;
      nextTrail=Math.min(nextTrail,elapsed+1600);
