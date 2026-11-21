@@ -83,9 +83,20 @@ export async function snapshotGarden(page){return page.evaluate(()=>{
  const viewport={width:innerWidth,height:innerHeight,visualHeight:visualViewport?.height,visualTop:visualViewport?.offsetTop,scale:visualViewport?.scale};
  const birds=[...(plane?.querySelectorAll(':scope > button')||[])].map(n=>{
   const r=n.getBoundingClientRect(),x=r.x+r.width/2,y=r.y+r.height/2,hit=document.elementFromPoint(x,y),style=getComputedStyle(n);
-  return {actorState:n.dataset.actorState,actorPhase:n.dataset.actorPhase,actorNode:n.dataset.actorNode,actorStyle:n.getAttribute('style'),id:n.dataset.gardenHousehold||n.dataset.gardenFriend||n.dataset.encounterOpen||n.dataset.gardenVisitingFriend||n.dataset.encounterPage,connected:n.isConnected,rect:r.toJSON(),point:{x,y},centerInViewport:x>=0&&x<innerWidth&&y>=0&&y<innerHeight,hit:!!hit&&n.contains(hit),front:describe(hit),stack:document.elementsFromPoint(x,y).slice(0,5).map(describe),visibility:style.visibility,display:style.display,pointerEvents:style.pointerEvents};
+  const frontKind=!hit?'none':hit.closest('.finch-garden-loading')?'loading-overlay':
+   hit.closest('[data-crow-phase],.finch-crow-scale-scene,.finch-raptor-scale-scene,[data-raptor-choice]')?'predator':
+   hit.closest('.finch-garden-household,.finch-garden-friend,.finch-garden-visitor')?'peer':
+   hit.closest('.finch-garden-dock,.finch-garden>header,.finch-garden-selector-wrap,.game-scene-controls-toggle,[role=dialog]')?'menu':'other';
+
+  return {actorTarget:n.dataset.actorLanding,frontKind,nativeKind:n.matches('.finch-garden-visitor')?'visitor':'incumbent',actorState:n.dataset.actorState,actorPhase:n.dataset.actorPhase,actorNode:n.dataset.actorNode,actorStyle:n.getAttribute('style'),id:n.dataset.gardenHousehold||n.dataset.gardenFriend||n.dataset.encounterOpen||n.dataset.gardenVisitingFriend||n.dataset.encounterPage,connected:n.isConnected,rect:r.toJSON(),point:{x,y},centerInViewport:x>=0&&x<innerWidth&&y>=0&&y<innerHeight,hit:!!hit&&n.contains(hit),front:describe(hit),stack:document.elementsFromPoint(x,y).slice(0,5).map(describe),visibility:style.visibility,display:style.display,pointerEvents:style.pointerEvents};
  });
- return {time:performance.now(),viewport,cssHeight:document.body.style.getPropertyValue('--game-viewport-height'),overlay:overlay?.getBoundingClientRect().toJSON(),plane:plane?.getBoundingClientRect().toJSON(),ready:stage?.dataset.sceneState,motion:stage?.dataset.actorMotion||stage?.dataset.terrainMotion,revision:document.querySelector('.finch-garden')?.dataset.gardenRevision,birds};
+ const crow=document.querySelector('[data-crow-phase]')?.dataset.crowPhase;
+ const raptor=document.querySelector('[data-raptor-notice]')?.dataset.raptorPhase;
+ const predator=raptor==='warning'||document.querySelector('.game-raptor-return-dialog[open]')?'raptor-warning':
+  raptor==='visiting'||stage?.querySelector('.finch-raptor-scale-scene')?'raptor-present':
+  crow==='warning'?'crow-warning':crow==='quiet'?'crow-quiet':crow==='visiting'||stage?.querySelector('.finch-crow-scale-scene')?'crow-visiting':'none';
+ const shelter=!!document.querySelector('[data-garden-encounter-notice="sheltering"]');
+ return {predator,shelter,gardenId:stage?.dataset.gardenId,worldId:stage?.closest('.finch-garden')?.dataset.gardenWorld,time:performance.now(),viewport,cssHeight:document.body.style.getPropertyValue('--game-viewport-height'),overlay:overlay?.getBoundingClientRect().toJSON(),plane:plane?.getBoundingClientRect().toJSON(),ready:stage?.dataset.sceneState,motion:stage?.dataset.actorMotion||stage?.dataset.terrainMotion,revision:document.querySelector('.finch-garden')?.dataset.gardenRevision,birds};
 });}
 export async function readyGardenSnapshot(page,info,label){
  const samples=[];let sample;

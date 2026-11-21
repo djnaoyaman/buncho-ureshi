@@ -1,22 +1,7 @@
 {
-  "base": "41bd702712ef9af1c1c80b6322f5351be1ef6bb8",
+  "base": "934228a3e381a6608c5906c159e8422f4894be2d",
   "tests": [
-    "tests/browser/flight-integrity.spec.js",
-    "tests/browser/garden-actors.spec.js",
-    "tests/browser/garden-actors-natural.spec.js",
-    "tests/browser/garden-ground-motion.spec.js",
-    "tests/browser/garden-terrain-motion.spec.js",
-    "tests/browser/garden-about-booklet.spec.js",
-    "tests/browser/encounter-pet-response.spec.js",
-    "tests/browser/encounter-music.spec.js",
-    "tests/browser/game-music.spec.js",
-    "tests/browser/garden-viewport-sync.spec.js",
-    "tests/browser/iphone15-scene.spec.js",
-    "tests/browser/white-flight-media.spec.js",
-    "tests/browser/white-flight-media-tap.spec.js",
-    "tests/browser/garden-compact-rotation-identity.spec.js",
-    "tests/browser/garden-trail-seven.spec.js",
-    "tests/browser/garden-trail-maximum-native.spec.js"
+    "tests/browser/garden-trail-seven.spec.js"
   ],
-  "reason": "既存の14検査は変更せず維持。調査済みの狭い道7庭だけを通常起動で有効化し、実タップ・回転・譲り合い・4色の飛行・来訪や天敵の割り込みを検査。縦画面の最大10羽では全羽のタップ領域と、移動中の実座標、予約先への着地、家族・友達・来訪鳥への実タップも確認。試験用の画面やスクリプト差し替えなし。"
+  "reason": "非公開の原因調査。#07、#08、#10、#12、#14の正規ブラウザ検査7件の失敗段階を、製品と既存アサーションを変えずに確認する。正式検証・公開判断ではない。"
 }

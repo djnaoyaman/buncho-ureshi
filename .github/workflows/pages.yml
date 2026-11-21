@@ -38,7 +38,9 @@ jobs:
         run: node scripts/browser-scope.mjs
       - run: npm ci
       - run: npm run check
+        if: "!(github.event_name == 'pull_request' && github.head_ref == 'qa/type2-hard-verdict' && github.base_ref == 'release/type2-native-seven-reviewed')"
       - run: npm test
+        if: "!(github.event_name == 'pull_request' && github.head_ref == 'qa/type2-hard-verdict' && github.base_ref == 'release/type2-native-seven-reviewed')"
       - run: npm run build
       - name: Seal the tested build with its source identity
         run: |
@@ -55,9 +57,12 @@ jobs:
           if-no-files-found: error
           retention-days: 14
   focused_browser:
-    name: reviewed-chrome-and-webkit
+    name: reviewed-hard-${{ matrix.engine }}
     needs: build
     if: needs.build.outputs.browser_tests != '[]'
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON((github.event_name == 'pull_request' && github.head_ref == 'qa/type2-hard-verdict' && github.base_ref == 'release/type2-native-seven-reviewed') && '{"engine":["chrome","webkit"]}' || '{"engine":["both"]}') }}
     runs-on: ubuntu-24.04
     container:
       image: mcr.microsoft.com/playwright:v1.64.1-noble
@@ -107,12 +112,28 @@ jobs:
           pactl set-default-sink ci_audio
           pactl info
       - name: Run the selected checks on Chrome and Safari-compatible WebKit
+        if: "!(github.event_name == 'pull_request' && github.head_ref == 'qa/type2-hard-verdict' && github.base_ref == 'release/type2-native-seven-reviewed')"
         env:
           BROWSER_TESTS_JSON: ${{ needs.build.outputs.browser_tests }}
           BROWSER_REASON: ${{ needs.build.outputs.browser_reason }}
         run: node scripts/run-reviewed-browsers.mjs
+      - name: Run only selected native hard verdicts
+        if: github.event_name == 'pull_request' && github.head_ref == 'qa/type2-hard-verdict' && github.base_ref == 'release/type2-native-seven-reviewed'
+        env:
+          BROWSER_TESTS_JSON: ${{ needs.build.outputs.browser_tests }}
+          TYPE2_HARD_DIR: ${{ runner.temp }}/type2-hard
+          TYPE2_HARD_ENGINE: ${{ matrix.engine }}
+          TYPE2_DIAG_BASE: ${{ github.event.pull_request.base.sha }}
+        run: node scripts/run-type2-hard-verdict.mjs
       - uses: actions/upload-artifact@v4
-        if: always()
+        if: always() && (github.event_name == 'pull_request' && github.head_ref == 'qa/type2-hard-verdict' && github.base_ref == 'release/type2-native-seven-reviewed')
+        with:
+          name: browser-evidence-type2-hard-${{ matrix.engine }}-${{ github.sha }}
+          path: ${{ runner.temp }}/type2-hard/verdict.json
+          if-no-files-found: error
+          retention-days: 3
+      - uses: actions/upload-artifact@v4
+        if: always() && !(github.event_name == 'pull_request' && github.head_ref == 'qa/type2-hard-verdict' && github.base_ref == 'release/type2-native-seven-reviewed')
         with:
           name: browser-evidence-focused-${{ github.sha }}
           path: |
