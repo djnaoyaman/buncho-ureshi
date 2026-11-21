@@ -33,7 +33,7 @@ jobs:
           import { readFileSync, appendFileSync } from 'node:fs';
           const files = ['.github/browser-checks.json','.github/workflows/pages.yml','package.json','package-lock.json',
             'scripts/build.mjs','src/encounter-ui.js','src/garden-actor-motion.js','src/garden-trail-runtime.js','src/garden-trail-clearance.js',
-            'tests/browser/garden-trail-causal.spec.js','tests/browser/garden-trail-interior-native.spec.js','tests/browser/garden-trail-interior-stages.spec.js','tests/fixtures/garden-terrain-browser.js'];
+            'tests/browser/garden-trail-causal.spec.js','tests/browser/garden-trail-interior-native.spec.js','tests/browser/garden-trail-interior-stages.spec.js','tests/browser/garden-trail-seven.spec.js','tests/fixtures/type2-ordinary-verdict-reporter.mjs','tests/fixtures/garden-terrain-browser.js'];
           const hash = createHash('sha256');
           for (const path of files) {
             const bytes = readFileSync(path);
@@ -75,7 +75,7 @@ jobs:
     name: Type II browser diagnostics (not deployable)
     needs: trail_preflight
     runs-on: ubuntu-24.04
-    timeout-minutes: 65
+    timeout-minutes: 85
     container:
       image: mcr.microsoft.com/playwright:v1.64.1-noble
     steps:
@@ -106,7 +106,7 @@ jobs:
           import { readFileSync, appendFileSync } from 'node:fs';
           const files = ['.github/browser-checks.json','.github/workflows/pages.yml','package.json','package-lock.json',
             'scripts/build.mjs','src/encounter-ui.js','src/garden-actor-motion.js','src/garden-trail-runtime.js','src/garden-trail-clearance.js',
-            'tests/browser/garden-trail-causal.spec.js','tests/browser/garden-trail-interior-native.spec.js','tests/browser/garden-trail-interior-stages.spec.js','tests/fixtures/garden-terrain-browser.js'];
+            'tests/browser/garden-trail-causal.spec.js','tests/browser/garden-trail-interior-native.spec.js','tests/browser/garden-trail-interior-stages.spec.js','tests/browser/garden-trail-seven.spec.js','tests/fixtures/type2-ordinary-verdict-reporter.mjs','tests/fixtures/garden-terrain-browser.js'];
           const hash = createHash('sha256');
           for (const path of files) {
             const bytes = readFileSync(path);
@@ -613,3 +613,453 @@ jobs:
       - name: Remove the bounded scratch verdicts
         if: ${{ always() }}
         run: rm -f "$RUNNER_TEMP/type2-interior-stage-verdicts/10-chrome.json" "$RUNNER_TEMP/type2-interior-stage-verdicts/10-webkit.json" "$RUNNER_TEMP/type2-interior-stage-verdicts/14-chrome.json" "$RUNNER_TEMP/type2-interior-stage-verdicts/14-webkit.json"
+
+      - name: Run exact ordinary seven once in both engines and retain fixed verdicts only
+        id: ordinary_verdicts
+        timeout-minutes: 25
+        if: ${{ !cancelled() && steps.ready.outcome == 'success' }}
+        run: |
+          set -eu
+          verdicts="$RUNNER_TEMP/type2-ordinary-verdicts.json"
+          test ! -e "$verdicts"
+          code=0
+          TYPE2_ORDINARY_VERDICTS="$verdicts" npx playwright test tests/browser/garden-trail-seven.spec.js --project=chrome --project=webkit --retries=0 --max-failures=0 --trace=off --reporter=./tests/fixtures/type2-ordinary-verdict-reporter.mjs || code="$?"
+          test "$code" -le 1
+          test -s "$verdicts"
+          node -e 'const fs=require("fs");const v=JSON.parse(fs.readFileSync(process.argv[1],"utf8"));if(Object.keys(v).length!==144||!Object.values(v).every(x=>["pass","fail","not-run"].includes(x))||(process.argv[2]==="1"&&Object.values(v).every(x=>x==="pass")))process.exit(1);' "$verdicts" "$code"
+      - name: 'ordinary chrome #07 native-0'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-07-native-0'
+      - name: 'ordinary chrome #07 native-1'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-07-native-1'
+      - name: 'ordinary chrome #07 native-10'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-07-native-10'
+      - name: 'ordinary chrome #07 lane'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-07-lane'
+      - name: 'ordinary chrome #07 white'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-07-white'
+      - name: 'ordinary chrome #07 sakura'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-07-sakura'
+      - name: 'ordinary chrome #07 cinnamon'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-07-cinnamon'
+      - name: 'ordinary chrome #07 silver'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-07-silver'
+      - name: 'ordinary chrome #07 visitor'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-07-visitor'
+      - name: 'ordinary chrome #07 predator'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-07-predator'
+      - name: 'ordinary chrome #08 native-0'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-08-native-0'
+      - name: 'ordinary chrome #08 native-1'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-08-native-1'
+      - name: 'ordinary chrome #08 native-10'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-08-native-10'
+      - name: 'ordinary chrome #08 lane'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-08-lane'
+      - name: 'ordinary chrome #08 white'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-08-white'
+      - name: 'ordinary chrome #08 sakura'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-08-sakura'
+      - name: 'ordinary chrome #08 cinnamon'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-08-cinnamon'
+      - name: 'ordinary chrome #08 silver'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-08-silver'
+      - name: 'ordinary chrome #08 visitor'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-08-visitor'
+      - name: 'ordinary chrome #08 predator'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-08-predator'
+      - name: 'ordinary chrome #10 native-0'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-10-native-0'
+      - name: 'ordinary chrome #10 native-1'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-10-native-1'
+      - name: 'ordinary chrome #10 native-10'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-10-native-10'
+      - name: 'ordinary chrome #10 lane'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-10-lane'
+      - name: 'ordinary chrome #10 white'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-10-white'
+      - name: 'ordinary chrome #10 sakura'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-10-sakura'
+      - name: 'ordinary chrome #10 cinnamon'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-10-cinnamon'
+      - name: 'ordinary chrome #10 silver'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-10-silver'
+      - name: 'ordinary chrome #10 visitor'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-10-visitor'
+      - name: 'ordinary chrome #10 predator'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-10-predator'
+      - name: 'ordinary chrome #12 native-0'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-12-native-0'
+      - name: 'ordinary chrome #12 native-1'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-12-native-1'
+      - name: 'ordinary chrome #12 native-10'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-12-native-10'
+      - name: 'ordinary chrome #12 lane'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-12-lane'
+      - name: 'ordinary chrome #12 white'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-12-white'
+      - name: 'ordinary chrome #12 sakura'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-12-sakura'
+      - name: 'ordinary chrome #12 cinnamon'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-12-cinnamon'
+      - name: 'ordinary chrome #12 silver'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-12-silver'
+      - name: 'ordinary chrome #12 visitor'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-12-visitor'
+      - name: 'ordinary chrome #12 predator'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-12-predator'
+      - name: 'ordinary chrome #14 native-0'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-14-native-0'
+      - name: 'ordinary chrome #14 native-1'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-14-native-1'
+      - name: 'ordinary chrome #14 native-10'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-14-native-10'
+      - name: 'ordinary chrome #14 lane'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-14-lane'
+      - name: 'ordinary chrome #14 white'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-14-white'
+      - name: 'ordinary chrome #14 sakura'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-14-sakura'
+      - name: 'ordinary chrome #14 cinnamon'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-14-cinnamon'
+      - name: 'ordinary chrome #14 silver'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-14-silver'
+      - name: 'ordinary chrome #14 visitor'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-14-visitor'
+      - name: 'ordinary chrome #14 predator'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-14-predator'
+      - name: 'ordinary chrome #28 native-0'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-28-native-0'
+      - name: 'ordinary chrome #28 native-1'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-28-native-1'
+      - name: 'ordinary chrome #28 native-10'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-28-native-10'
+      - name: 'ordinary chrome #28 lane'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-28-lane'
+      - name: 'ordinary chrome #28 white'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-28-white'
+      - name: 'ordinary chrome #28 sakura'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-28-sakura'
+      - name: 'ordinary chrome #28 cinnamon'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-28-cinnamon'
+      - name: 'ordinary chrome #28 silver'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-28-silver'
+      - name: 'ordinary chrome #28 visitor'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-28-visitor'
+      - name: 'ordinary chrome #28 predator'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-28-predator'
+      - name: 'ordinary chrome #34 native-0'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-34-native-0'
+      - name: 'ordinary chrome #34 native-1'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-34-native-1'
+      - name: 'ordinary chrome #34 native-10'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-34-native-10'
+      - name: 'ordinary chrome #34 lane'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-34-lane'
+      - name: 'ordinary chrome #34 white'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-34-white'
+      - name: 'ordinary chrome #34 sakura'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-34-sakura'
+      - name: 'ordinary chrome #34 cinnamon'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-34-cinnamon'
+      - name: 'ordinary chrome #34 silver'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-34-silver'
+      - name: 'ordinary chrome #34 visitor'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-34-visitor'
+      - name: 'ordinary chrome #34 predator'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-34-predator'
+      - name: 'ordinary chrome #01 type-one-control'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-01-type-one-control'
+      - name: 'ordinary chrome #07 reduced-motion'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'chrome-07-reduced-motion'
+      - name: 'ordinary webkit #07 native-0'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-07-native-0'
+      - name: 'ordinary webkit #07 native-1'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-07-native-1'
+      - name: 'ordinary webkit #07 native-10'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-07-native-10'
+      - name: 'ordinary webkit #07 lane'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-07-lane'
+      - name: 'ordinary webkit #07 white'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-07-white'
+      - name: 'ordinary webkit #07 sakura'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-07-sakura'
+      - name: 'ordinary webkit #07 cinnamon'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-07-cinnamon'
+      - name: 'ordinary webkit #07 silver'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-07-silver'
+      - name: 'ordinary webkit #07 visitor'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-07-visitor'
+      - name: 'ordinary webkit #07 predator'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-07-predator'
+      - name: 'ordinary webkit #08 native-0'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-08-native-0'
+      - name: 'ordinary webkit #08 native-1'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-08-native-1'
+      - name: 'ordinary webkit #08 native-10'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-08-native-10'
+      - name: 'ordinary webkit #08 lane'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-08-lane'
+      - name: 'ordinary webkit #08 white'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-08-white'
+      - name: 'ordinary webkit #08 sakura'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-08-sakura'
+      - name: 'ordinary webkit #08 cinnamon'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-08-cinnamon'
+      - name: 'ordinary webkit #08 silver'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-08-silver'
+      - name: 'ordinary webkit #08 visitor'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-08-visitor'
+      - name: 'ordinary webkit #08 predator'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-08-predator'
+      - name: 'ordinary webkit #10 native-0'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-10-native-0'
+      - name: 'ordinary webkit #10 native-1'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-10-native-1'
+      - name: 'ordinary webkit #10 native-10'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-10-native-10'
+      - name: 'ordinary webkit #10 lane'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-10-lane'
+      - name: 'ordinary webkit #10 white'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-10-white'
+      - name: 'ordinary webkit #10 sakura'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-10-sakura'
+      - name: 'ordinary webkit #10 cinnamon'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-10-cinnamon'
+      - name: 'ordinary webkit #10 silver'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-10-silver'
+      - name: 'ordinary webkit #10 visitor'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-10-visitor'
+      - name: 'ordinary webkit #10 predator'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-10-predator'
+      - name: 'ordinary webkit #12 native-0'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-12-native-0'
+      - name: 'ordinary webkit #12 native-1'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-12-native-1'
+      - name: 'ordinary webkit #12 native-10'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-12-native-10'
+      - name: 'ordinary webkit #12 lane'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-12-lane'
+      - name: 'ordinary webkit #12 white'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-12-white'
+      - name: 'ordinary webkit #12 sakura'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-12-sakura'
+      - name: 'ordinary webkit #12 cinnamon'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-12-cinnamon'
+      - name: 'ordinary webkit #12 silver'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-12-silver'
+      - name: 'ordinary webkit #12 visitor'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-12-visitor'
+      - name: 'ordinary webkit #12 predator'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-12-predator'
+      - name: 'ordinary webkit #14 native-0'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-14-native-0'
+      - name: 'ordinary webkit #14 native-1'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-14-native-1'
+      - name: 'ordinary webkit #14 native-10'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-14-native-10'
+      - name: 'ordinary webkit #14 lane'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-14-lane'
+      - name: 'ordinary webkit #14 white'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-14-white'
+      - name: 'ordinary webkit #14 sakura'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-14-sakura'
+      - name: 'ordinary webkit #14 cinnamon'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-14-cinnamon'
+      - name: 'ordinary webkit #14 silver'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-14-silver'
+      - name: 'ordinary webkit #14 visitor'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-14-visitor'
+      - name: 'ordinary webkit #14 predator'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-14-predator'
+      - name: 'ordinary webkit #28 native-0'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-28-native-0'
+      - name: 'ordinary webkit #28 native-1'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-28-native-1'
+      - name: 'ordinary webkit #28 native-10'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-28-native-10'
+      - name: 'ordinary webkit #28 lane'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-28-lane'
+      - name: 'ordinary webkit #28 white'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-28-white'
+      - name: 'ordinary webkit #28 sakura'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-28-sakura'
+      - name: 'ordinary webkit #28 cinnamon'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-28-cinnamon'
+      - name: 'ordinary webkit #28 silver'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-28-silver'
+      - name: 'ordinary webkit #28 visitor'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-28-visitor'
+      - name: 'ordinary webkit #28 predator'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-28-predator'
+      - name: 'ordinary webkit #34 native-0'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-34-native-0'
+      - name: 'ordinary webkit #34 native-1'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-34-native-1'
+      - name: 'ordinary webkit #34 native-10'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-34-native-10'
+      - name: 'ordinary webkit #34 lane'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-34-lane'
+      - name: 'ordinary webkit #34 white'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-34-white'
+      - name: 'ordinary webkit #34 sakura'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-34-sakura'
+      - name: 'ordinary webkit #34 cinnamon'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-34-cinnamon'
+      - name: 'ordinary webkit #34 silver'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-34-silver'
+      - name: 'ordinary webkit #34 visitor'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-34-visitor'
+      - name: 'ordinary webkit #34 predator'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-34-predator'
+      - name: 'ordinary webkit #01 type-one-control'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-01-type-one-control'
+      - name: 'ordinary webkit #07 reduced-motion'
+        if: ${{ !cancelled() && steps.ordinary_verdicts.outcome == 'success' }}
+        run: node -e 'const d=require(process.env.RUNNER_TEMP+"/type2-ordinary-verdicts.json");process.exit(d[process.argv[1]]==="pass"?0:1);' 'webkit-07-reduced-motion'
+
+      - name: Erase fixed ordinary verdicts after named checks
+        if: ${{ always() }}
+        run: rm -f "$RUNNER_TEMP/type2-ordinary-verdicts.json"
