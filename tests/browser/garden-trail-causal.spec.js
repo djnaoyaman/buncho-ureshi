@@ -92,3 +92,34 @@ test('10 opt-in #07 single bird performs a genuine rise, flap and contact', {tag
  }
  expect([...phases]).toEqual(expect.arrayContaining(['rise','flap','contact']));
 });
+
+async function maximum(page){
+ await setup(page,trail,375,true,'maximum',{...config,height:667});await page.clock.runFor(1000);
+ const result=await snapshotGarden(page);
+ assertGardenIdentities(result.birds,10);
+ return result;
+}
+async function hitsFor(page,role){
+ await maximum(page);
+ const results=await page.evaluate(()=>{
+  const plane=document.querySelector('.finch-garden-image-plane');
+  return [...plane.querySelectorAll(':scope > button')].map(button=>{
+   const r=button.getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2;
+   const hit=document.elementFromPoint(x,y);
+   const role=button.matches('.finch-garden-household')?'household':button.matches('.finch-garden-friend')?'friend':button.matches('.finch-garden-visitor')?'visitor':'unknown';
+   return {role,hit:!!hit&&button.contains(hit)};
+  });
+ });
+ expect(results).toHaveLength(10);
+ expect(results.some(b=>b.role==='unknown')).toBe(false);
+ const chosen=results.filter(b=>b.role===role);
+ expect(chosen.length).toBeGreaterThan(0);
+ for(const b of chosen)expect(b.hit).toBe(true);
+}
+test('#07 maximum: qualified measured layout, rather than native fallback', {tag:'@causal-max-layout-valid'},async({page})=>{const s=await maximum(page); expect(s.motion).toMatch(/^trail-(active|held|standing)$/);});
+test('#07 maximum: every native control is at least 44px wide', {tag:'@causal-max-width'},async({page})=>{const {birds}=await maximum(page);for(const b of birds)expect(b.rect.width).toBeGreaterThanOrEqual(43.99);});
+test('#07 maximum: every native control is at least 44px high', {tag:'@causal-max-height'},async({page})=>{const {birds}=await maximum(page);for(const b of birds)expect(b.rect.height).toBeGreaterThanOrEqual(43.99);});
+test('#07 maximum: all native control centers are within viewport', {tag:'@causal-max-centers'},async({page})=>{const {birds}=await maximum(page);for(const b of birds)expect(b.centerInViewport).toBe(true);});
+test('#07 maximum: all household centers resolve to their native control', {tag:'@causal-max-household-hit'},async({page})=>{await hitsFor(page,'household');});
+test('#07 maximum: all regular friend centers resolve to their native control', {tag:'@causal-max-friend-hit'},async({page})=>{await hitsFor(page,'friend');});
+test('#07 maximum: all waiting or returning visitor centers resolve to their native control', {tag:'@causal-max-visitor-hit'},async({page})=>{await hitsFor(page,'visitor');});
