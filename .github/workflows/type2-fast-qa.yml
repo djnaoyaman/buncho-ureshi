@@ -1,23 +1,23 @@
-name: Type II fast bay-14-inner-cause QA (no deployment)
-run-name: Type II focused bay-14-inner-cause · ${{ github.sha }}
+name: Type II fast bay-14-rebind QA (no deployment)
+run-name: Type II focused bay-14-rebind · ${{ github.sha }}
 on:
   push:
-    branches: [qa/type2-fast-bay-14-inner-cause]
+    branches: [qa/type2-fast-bay-14-rebind]
 permissions:
   contents: read
 concurrency:
-  group: type2-fast-bay-14-inner-cause-${{ github.ref }}
+  group: type2-fast-bay-14-rebind-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   visitor:
-    name: 'Type II bay-14-inner-cause · ${{ matrix.engine }}'
-    if: github.ref == 'refs/heads/qa/type2-fast-bay-14-inner-cause'
+    name: 'Type II bay-14-rebind · ${{ matrix.engine }}'
+    if: github.ref == 'refs/heads/qa/type2-fast-bay-14-rebind'
     runs-on: ubuntu-24.04
     timeout-minutes: 14
     strategy:
       fail-fast: false
       matrix:
-        engine: [chrome]
+        engine: [chrome, webkit]
     container:
       image: mcr.microsoft.com/playwright:v1.64.1-noble
     steps:
