@@ -1,16 +1,16 @@
-name: Type II fast palette QA (no deployment)
-run-name: Type II focused palette · ${{ github.sha }}
+name: Type II fast route-rebind QA (no deployment)
+run-name: Type II focused route-rebind · ${{ github.sha }}
 on:
   push:
     branches: [qa/type2-fast-palette]
 permissions:
   contents: read
 concurrency:
-  group: type2-fast-palette-${{ github.ref }}
+  group: type2-fast-route-rebind-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   visitor:
-    name: 'Type II palette · ${{ matrix.engine }}'
+    name: 'Type II route-rebind · ${{ matrix.engine }}'
     if: github.ref == 'refs/heads/qa/type2-fast-palette'
     runs-on: ubuntu-24.04
     timeout-minutes: 14
@@ -38,6 +38,8 @@ jobs:
           test "$SOURCE_SHA" = "$GITHUB_SHA"
           node --check tests/browser/garden-trail-08-flight-route.spec.js
           node --check tests/browser/garden-trail-seven.spec.js
+          node --check src/garden-trail-adapter.js
+          node --check tests/browser/garden-trail-seven-checkpoints.spec.js
           npm ci
           node -e "if(require('@playwright/test/package.json').version !== '1.64.1') process.exit(1)"
       - name: Build the exact game under test
@@ -61,12 +63,12 @@ jobs:
           set -eu
           dir="$RUNNER_TEMP/type2-focused-receipts"
           mkdir -m 700 "$dir"
-          report="$(npx playwright test tests/browser/garden-trail-08-flight-route.spec.js --project="$ENGINE" --list)"
-          printf '%s\n' "$report" | grep -Eq '^Total: 4 tests in 1 file$'
+          report="$(npx playwright test tests/browser/garden-trail-08-flight-route.spec.js tests/browser/garden-trail-seven-checkpoints.spec.js --grep '(08 real path and paint|(07|08|12|28|34) exact visitor mutation and native tap)' --project="$ENGINE" --list)"
+          printf '%s\n' "$report" | grep -Eq '^Total: 9 tests in 2 files$'
           rc=0
-          TYPE2_CHECKPOINT_DIR="$dir" npx playwright test tests/browser/garden-trail-08-flight-route.spec.js --project="$ENGINE" --retries=0 --max-failures=0 --trace=off --reporter=dot || rc="$?"
+          TYPE2_CHECKPOINT_DIR="$dir" npx playwright test tests/browser/garden-trail-08-flight-route.spec.js tests/browser/garden-trail-seven-checkpoints.spec.js --grep '(08 real path and paint|(07|08|12|28|34) exact visitor mutation and native tap)' --project="$ENGINE" --retries=0 --max-failures=0 --trace=off --reporter=dot || rc="$?"
           test "$rc" -le 1
-          node -e 'const f=require("fs");const [d,e,q]=process.argv.slice(1);for(const [k,choices] of JSON.parse(q))if(!choices.includes(f.readFileSync(d+"/"+e+"-"+k,"utf8").trim()))process.exit(1);' "$dir" "$ENGINE" '[["08-route-white",["pass","setup","launch-timeout","completion-timeout","geometry-rejected","scene-replaced","rerouted","wrong-contact","phase-absent","paint-not-visible-decoded","landing-native","landing-tap","pass-late-contact"]],["08-route-sakura",["pass","setup","launch-timeout","completion-timeout","geometry-rejected","scene-replaced","rerouted","wrong-contact","phase-absent","paint-not-visible-decoded","landing-native","landing-tap","pass-late-contact"]],["08-route-cinnamon",["pass","setup","launch-timeout","completion-timeout","geometry-rejected","scene-replaced","rerouted","wrong-contact","phase-absent","paint-not-visible-decoded","landing-native","landing-tap","pass-late-contact"]],["08-route-silver",["pass","setup","launch-timeout","completion-timeout","geometry-rejected","scene-replaced","rerouted","wrong-contact","phase-absent","paint-not-visible-decoded","landing-native","landing-tap","pass-late-contact"]]]'
+          node -e 'const f=require("fs");const [d,e,q]=process.argv.slice(1);for(const [k,choices] of JSON.parse(q))if(!choices.includes(f.readFileSync(d+"/"+e+"-"+k,"utf8").trim()))process.exit(1);' "$dir" "$ENGINE" '[["08-route-white",["pass","setup","launch-timeout","completion-timeout","geometry-rejected","scene-replaced","rerouted","wrong-contact","phase-absent","paint-not-visible-decoded","landing-native","landing-tap","pass-late-contact"]],["08-route-sakura",["pass","setup","launch-timeout","completion-timeout","geometry-rejected","scene-replaced","rerouted","wrong-contact","phase-absent","paint-not-visible-decoded","landing-native","landing-tap","pass-late-contact"]],["08-route-cinnamon",["pass","setup","launch-timeout","completion-timeout","geometry-rejected","scene-replaced","rerouted","wrong-contact","phase-absent","paint-not-visible-decoded","landing-native","landing-tap","pass-late-contact"]],["08-route-silver",["pass","setup","launch-timeout","completion-timeout","geometry-rejected","scene-replaced","rerouted","wrong-contact","phase-absent","paint-not-visible-decoded","landing-native","landing-tap","pass-late-contact"]],["07-visitor",["pass","setup","flight-before","store-change","store-queue","visitor-dom","visitor-ready","mixed-loading","mixed-qualified","mixed-unqualified","contact-missing-trail-blocked-placement","contact-missing-trail-blocked-geometry","contact-missing-trail-needs-recovery","contact-missing-geometry-blocked","contact-missing-insufficient-space","contact-missing-trail-held","contact-missing-trail-active","contact-missing-trail-standing","contact-missing-other","contact-advanced-to-target","contact-different","visitor-tap"]],["08-visitor",["pass","setup","flight-before","store-change","store-queue","visitor-dom","visitor-ready","mixed-loading","mixed-qualified","mixed-unqualified","contact-missing-trail-blocked-placement","contact-missing-trail-blocked-geometry","contact-missing-trail-needs-recovery","contact-missing-geometry-blocked","contact-missing-insufficient-space","contact-missing-trail-held","contact-missing-trail-active","contact-missing-trail-standing","contact-missing-other","contact-advanced-to-target","contact-different","visitor-tap"]],["12-visitor",["pass","setup","flight-before","store-change","store-queue","visitor-dom","visitor-ready","mixed-loading","mixed-qualified","mixed-unqualified","contact-missing-trail-blocked-placement","contact-missing-trail-blocked-geometry","contact-missing-trail-needs-recovery","contact-missing-geometry-blocked","contact-missing-insufficient-space","contact-missing-trail-held","contact-missing-trail-active","contact-missing-trail-standing","contact-missing-other","contact-advanced-to-target","contact-different","visitor-tap"]],["28-visitor",["pass","setup","flight-before","store-change","store-queue","visitor-dom","visitor-ready","mixed-loading","mixed-qualified","mixed-unqualified","contact-missing-trail-blocked-placement","contact-missing-trail-blocked-geometry","contact-missing-trail-needs-recovery","contact-missing-geometry-blocked","contact-missing-insufficient-space","contact-missing-trail-held","contact-missing-trail-active","contact-missing-trail-standing","contact-missing-other","contact-advanced-to-target","contact-different","visitor-tap"]],["34-visitor",["pass","setup","flight-before","store-change","store-queue","visitor-dom","visitor-ready","mixed-loading","mixed-qualified","mixed-unqualified","contact-missing-trail-blocked-placement","contact-missing-trail-blocked-geometry","contact-missing-trail-needs-recovery","contact-missing-geometry-blocked","contact-missing-insufficient-space","contact-missing-trail-held","contact-missing-trail-active","contact-missing-trail-standing","contact-missing-other","contact-advanced-to-target","contact-different","visitor-tap"]]]'
       - name: '#08 white complete'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
@@ -327,6 +329,556 @@ jobs:
         env:
           ENGINE: ${{ matrix.engine }}
         run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-route-silver")" != "pass-late-contact"
+      - name: '#07 visitor complete'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-visitor")" = pass
+      - name: '#07 visitor not setup'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-visitor")" != "setup"
+      - name: '#07 visitor not flight-before'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-visitor")" != "flight-before"
+      - name: '#07 visitor not store-change'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-visitor")" != "store-change"
+      - name: '#07 visitor not store-queue'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-visitor")" != "store-queue"
+      - name: '#07 visitor not visitor-dom'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-visitor")" != "visitor-dom"
+      - name: '#07 visitor not visitor-ready'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-visitor")" != "visitor-ready"
+      - name: '#07 visitor not mixed-loading'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-visitor")" != "mixed-loading"
+      - name: '#07 visitor not mixed-qualified'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-visitor")" != "mixed-qualified"
+      - name: '#07 visitor not mixed-unqualified'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-visitor")" != "mixed-unqualified"
+      - name: '#07 visitor not contact-missing-trail-blocked-placement'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-visitor")" != "contact-missing-trail-blocked-placement"
+      - name: '#07 visitor not contact-missing-trail-blocked-geometry'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-visitor")" != "contact-missing-trail-blocked-geometry"
+      - name: '#07 visitor not contact-missing-trail-needs-recovery'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-visitor")" != "contact-missing-trail-needs-recovery"
+      - name: '#07 visitor not contact-missing-geometry-blocked'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-visitor")" != "contact-missing-geometry-blocked"
+      - name: '#07 visitor not contact-missing-insufficient-space'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-visitor")" != "contact-missing-insufficient-space"
+      - name: '#07 visitor not contact-missing-trail-held'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-visitor")" != "contact-missing-trail-held"
+      - name: '#07 visitor not contact-missing-trail-active'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-visitor")" != "contact-missing-trail-active"
+      - name: '#07 visitor not contact-missing-trail-standing'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-visitor")" != "contact-missing-trail-standing"
+      - name: '#07 visitor not contact-missing-other'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-visitor")" != "contact-missing-other"
+      - name: '#07 visitor not contact-advanced-to-target'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-visitor")" != "contact-advanced-to-target"
+      - name: '#07 visitor not contact-different'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-visitor")" != "contact-different"
+      - name: '#07 visitor not visitor-tap'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-07-visitor")" != "visitor-tap"
+      - name: '#08 visitor complete'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-visitor")" = pass
+      - name: '#08 visitor not setup'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-visitor")" != "setup"
+      - name: '#08 visitor not flight-before'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-visitor")" != "flight-before"
+      - name: '#08 visitor not store-change'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-visitor")" != "store-change"
+      - name: '#08 visitor not store-queue'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-visitor")" != "store-queue"
+      - name: '#08 visitor not visitor-dom'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-visitor")" != "visitor-dom"
+      - name: '#08 visitor not visitor-ready'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-visitor")" != "visitor-ready"
+      - name: '#08 visitor not mixed-loading'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-visitor")" != "mixed-loading"
+      - name: '#08 visitor not mixed-qualified'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-visitor")" != "mixed-qualified"
+      - name: '#08 visitor not mixed-unqualified'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-visitor")" != "mixed-unqualified"
+      - name: '#08 visitor not contact-missing-trail-blocked-placement'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-visitor")" != "contact-missing-trail-blocked-placement"
+      - name: '#08 visitor not contact-missing-trail-blocked-geometry'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-visitor")" != "contact-missing-trail-blocked-geometry"
+      - name: '#08 visitor not contact-missing-trail-needs-recovery'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-visitor")" != "contact-missing-trail-needs-recovery"
+      - name: '#08 visitor not contact-missing-geometry-blocked'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-visitor")" != "contact-missing-geometry-blocked"
+      - name: '#08 visitor not contact-missing-insufficient-space'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-visitor")" != "contact-missing-insufficient-space"
+      - name: '#08 visitor not contact-missing-trail-held'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-visitor")" != "contact-missing-trail-held"
+      - name: '#08 visitor not contact-missing-trail-active'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-visitor")" != "contact-missing-trail-active"
+      - name: '#08 visitor not contact-missing-trail-standing'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-visitor")" != "contact-missing-trail-standing"
+      - name: '#08 visitor not contact-missing-other'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-visitor")" != "contact-missing-other"
+      - name: '#08 visitor not contact-advanced-to-target'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-visitor")" != "contact-advanced-to-target"
+      - name: '#08 visitor not contact-different'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-visitor")" != "contact-different"
+      - name: '#08 visitor not visitor-tap'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-08-visitor")" != "visitor-tap"
+      - name: '#12 visitor complete'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-12-visitor")" = pass
+      - name: '#12 visitor not setup'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-12-visitor")" != "setup"
+      - name: '#12 visitor not flight-before'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-12-visitor")" != "flight-before"
+      - name: '#12 visitor not store-change'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-12-visitor")" != "store-change"
+      - name: '#12 visitor not store-queue'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-12-visitor")" != "store-queue"
+      - name: '#12 visitor not visitor-dom'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-12-visitor")" != "visitor-dom"
+      - name: '#12 visitor not visitor-ready'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-12-visitor")" != "visitor-ready"
+      - name: '#12 visitor not mixed-loading'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-12-visitor")" != "mixed-loading"
+      - name: '#12 visitor not mixed-qualified'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-12-visitor")" != "mixed-qualified"
+      - name: '#12 visitor not mixed-unqualified'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-12-visitor")" != "mixed-unqualified"
+      - name: '#12 visitor not contact-missing-trail-blocked-placement'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-12-visitor")" != "contact-missing-trail-blocked-placement"
+      - name: '#12 visitor not contact-missing-trail-blocked-geometry'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-12-visitor")" != "contact-missing-trail-blocked-geometry"
+      - name: '#12 visitor not contact-missing-trail-needs-recovery'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-12-visitor")" != "contact-missing-trail-needs-recovery"
+      - name: '#12 visitor not contact-missing-geometry-blocked'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-12-visitor")" != "contact-missing-geometry-blocked"
+      - name: '#12 visitor not contact-missing-insufficient-space'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-12-visitor")" != "contact-missing-insufficient-space"
+      - name: '#12 visitor not contact-missing-trail-held'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-12-visitor")" != "contact-missing-trail-held"
+      - name: '#12 visitor not contact-missing-trail-active'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-12-visitor")" != "contact-missing-trail-active"
+      - name: '#12 visitor not contact-missing-trail-standing'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-12-visitor")" != "contact-missing-trail-standing"
+      - name: '#12 visitor not contact-missing-other'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-12-visitor")" != "contact-missing-other"
+      - name: '#12 visitor not contact-advanced-to-target'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-12-visitor")" != "contact-advanced-to-target"
+      - name: '#12 visitor not contact-different'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-12-visitor")" != "contact-different"
+      - name: '#12 visitor not visitor-tap'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-12-visitor")" != "visitor-tap"
+      - name: '#28 visitor complete'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-28-visitor")" = pass
+      - name: '#28 visitor not setup'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-28-visitor")" != "setup"
+      - name: '#28 visitor not flight-before'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-28-visitor")" != "flight-before"
+      - name: '#28 visitor not store-change'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-28-visitor")" != "store-change"
+      - name: '#28 visitor not store-queue'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-28-visitor")" != "store-queue"
+      - name: '#28 visitor not visitor-dom'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-28-visitor")" != "visitor-dom"
+      - name: '#28 visitor not visitor-ready'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-28-visitor")" != "visitor-ready"
+      - name: '#28 visitor not mixed-loading'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-28-visitor")" != "mixed-loading"
+      - name: '#28 visitor not mixed-qualified'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-28-visitor")" != "mixed-qualified"
+      - name: '#28 visitor not mixed-unqualified'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-28-visitor")" != "mixed-unqualified"
+      - name: '#28 visitor not contact-missing-trail-blocked-placement'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-28-visitor")" != "contact-missing-trail-blocked-placement"
+      - name: '#28 visitor not contact-missing-trail-blocked-geometry'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-28-visitor")" != "contact-missing-trail-blocked-geometry"
+      - name: '#28 visitor not contact-missing-trail-needs-recovery'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-28-visitor")" != "contact-missing-trail-needs-recovery"
+      - name: '#28 visitor not contact-missing-geometry-blocked'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-28-visitor")" != "contact-missing-geometry-blocked"
+      - name: '#28 visitor not contact-missing-insufficient-space'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-28-visitor")" != "contact-missing-insufficient-space"
+      - name: '#28 visitor not contact-missing-trail-held'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-28-visitor")" != "contact-missing-trail-held"
+      - name: '#28 visitor not contact-missing-trail-active'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-28-visitor")" != "contact-missing-trail-active"
+      - name: '#28 visitor not contact-missing-trail-standing'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-28-visitor")" != "contact-missing-trail-standing"
+      - name: '#28 visitor not contact-missing-other'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-28-visitor")" != "contact-missing-other"
+      - name: '#28 visitor not contact-advanced-to-target'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-28-visitor")" != "contact-advanced-to-target"
+      - name: '#28 visitor not contact-different'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-28-visitor")" != "contact-different"
+      - name: '#28 visitor not visitor-tap'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-28-visitor")" != "visitor-tap"
+      - name: '#34 visitor complete'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-visitor")" = pass
+      - name: '#34 visitor not setup'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-visitor")" != "setup"
+      - name: '#34 visitor not flight-before'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-visitor")" != "flight-before"
+      - name: '#34 visitor not store-change'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-visitor")" != "store-change"
+      - name: '#34 visitor not store-queue'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-visitor")" != "store-queue"
+      - name: '#34 visitor not visitor-dom'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-visitor")" != "visitor-dom"
+      - name: '#34 visitor not visitor-ready'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-visitor")" != "visitor-ready"
+      - name: '#34 visitor not mixed-loading'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-visitor")" != "mixed-loading"
+      - name: '#34 visitor not mixed-qualified'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-visitor")" != "mixed-qualified"
+      - name: '#34 visitor not mixed-unqualified'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-visitor")" != "mixed-unqualified"
+      - name: '#34 visitor not contact-missing-trail-blocked-placement'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-visitor")" != "contact-missing-trail-blocked-placement"
+      - name: '#34 visitor not contact-missing-trail-blocked-geometry'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-visitor")" != "contact-missing-trail-blocked-geometry"
+      - name: '#34 visitor not contact-missing-trail-needs-recovery'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-visitor")" != "contact-missing-trail-needs-recovery"
+      - name: '#34 visitor not contact-missing-geometry-blocked'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-visitor")" != "contact-missing-geometry-blocked"
+      - name: '#34 visitor not contact-missing-insufficient-space'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-visitor")" != "contact-missing-insufficient-space"
+      - name: '#34 visitor not contact-missing-trail-held'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-visitor")" != "contact-missing-trail-held"
+      - name: '#34 visitor not contact-missing-trail-active'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-visitor")" != "contact-missing-trail-active"
+      - name: '#34 visitor not contact-missing-trail-standing'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-visitor")" != "contact-missing-trail-standing"
+      - name: '#34 visitor not contact-missing-other'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-visitor")" != "contact-missing-other"
+      - name: '#34 visitor not contact-advanced-to-target'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-visitor")" != "contact-advanced-to-target"
+      - name: '#34 visitor not contact-different'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-visitor")" != "contact-different"
+      - name: '#34 visitor not visitor-tap'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-34-visitor")" != "visitor-tap"
       - name: Clear temporary receipts only
         if: ${{ always() }}
         run: rm -rf -- "$RUNNER_TEMP/type2-focused-receipts"

@@ -44,5 +44,14 @@
         "after": "5b412fdbf0095909f64f2f954967a0a329c7a8520989ed3c7a414bf0d81af422"
       }
     }
+  },
+  "verifiedQaCommittedFlightRebind": {
+    "baseCommit": "c41333b3e2a0f576d396346e1e306fcd9fc0762e",
+    "changedSource": {
+      "src/garden-trail-adapter.js": {
+        "before": "af2cf3ef4d12396430e8ed7e7a931cf35097d008fb84bf175ef203cdd0cfa6b4",
+        "after": "06faf839e64e4bcc1f3c410cd29af214b9ff3c124c4f007b80913a2343c9f850"
+      }
+    }
   }
 }
