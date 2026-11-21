@@ -1,3 +1,4 @@
+import assert from 'node:assert/strict';
 import {expect} from '@playwright/test';
 import {worldFor,NOW,engine} from './garden-about-world.js';
 import {encounterSystem,getGardenVisitingBird} from '../../src/encounters.js';
@@ -46,7 +47,7 @@ export async function setup(page,id,width=390,motion=true,sparse=false,{trailPre
 export async function measure(page){return page.locator('.finch-garden-image-plane').evaluate(e=>{
   const p=e.getBoundingClientRect();return [...e.querySelectorAll(':scope > button')].map(n=>{
     const r=n.getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2),sprite=n.querySelector('.garden-bird-sprite');
-    return {id:n.dataset.gardenFriend||n.dataset.gardenHousehold||n.dataset.encounterOpen,width:r.width,height:r.height,hit:!!hit&&n.contains(hit),
+    return {id:n.dataset.gardenFriend||n.dataset.gardenHousehold||n.dataset.encounterOpen||n.dataset.gardenVisitingFriend||n.dataset.encounterPage,width:r.width,height:r.height,hit:!!hit&&n.contains(hit),
       point:[parseFloat(n.style.left)/100,parseFloat(n.style.top)/100],style:n.getAttribute('style'),src:sprite?.querySelector('img')?.getAttribute('src'),filter:sprite?getComputedStyle(sprite).filter:'none',plane:[p.width,p.height]};
   });
 });}
@@ -62,13 +63,22 @@ export async function measureReady(page){
   const e=stage.querySelector('.finch-garden-image-plane');if(!e)return false;
   const p=e.getBoundingClientRect();return [...e.querySelectorAll(':scope > button')].map(n=>{
    const r=n.getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2),sprite=n.querySelector('.garden-bird-sprite');
-   return {id:n.dataset.gardenFriend||n.dataset.gardenHousehold||n.dataset.encounterOpen,width:r.width,height:r.height,hit:!!hit&&n.contains(hit),
+   return {id:n.dataset.gardenFriend||n.dataset.gardenHousehold||n.dataset.encounterOpen||n.dataset.gardenVisitingFriend||n.dataset.encounterPage,width:r.width,height:r.height,hit:!!hit&&n.contains(hit),
     point:[parseFloat(n.style.left)/100,parseFloat(n.style.top)/100],style:n.getAttribute('style'),src:sprite?.querySelector('img')?.getAttribute('src'),filter:sprite?getComputedStyle(sprite).filter:'none',plane:[p.width,p.height],motion:stage.dataset.actorMotion||stage.dataset.terrainMotion};
   });
  });return result!==false;},{timeout:10000}).toBe(true);
  return result;
 }
 
+// Gate native render identities independently from tap/geometry; an unknown
+// control remains a failing sample, not an invented placeholder ID.
+export function assertGardenIdentities(birds,count,previousIds=null){
+ assert.equal(birds.length,count,'native rendered count changed');
+ const ids=birds.map(b=>b.id);
+ assert.ok(ids.every(id=>typeof id==='string'&&id.trim()!==''),'anonymous native bird control');
+ assert.equal(new Set(ids).size,count,'duplicate native bird identity');
+ if(previousIds)assert.deepEqual(ids,previousIds,'native bird identities or order changed');
+}
 // One synchronous browser task: never retry geometry or hit results. A ready
 // scene with a zero-size/offscreen/occluded bird must remain a failing sample.
 export async function snapshotGarden(page){return page.evaluate(()=>{
@@ -77,7 +87,7 @@ export async function snapshotGarden(page){return page.evaluate(()=>{
  const viewport={width:innerWidth,height:innerHeight,visualHeight:visualViewport?.height,visualTop:visualViewport?.offsetTop,scale:visualViewport?.scale};
  const birds=[...(plane?.querySelectorAll(':scope > button')||[])].map(n=>{
   const r=n.getBoundingClientRect(),x=r.x+r.width/2,y=r.y+r.height/2,hit=document.elementFromPoint(x,y),style=getComputedStyle(n);
-  return {actorState:n.dataset.actorState,actorPhase:n.dataset.actorPhase,actorNode:n.dataset.actorNode,actorStyle:n.getAttribute('style'),id:n.dataset.gardenHousehold||n.dataset.gardenFriend||n.dataset.encounterOpen,connected:n.isConnected,rect:r.toJSON(),point:{x,y},centerInViewport:x>=0&&x<innerWidth&&y>=0&&y<innerHeight,hit:!!hit&&n.contains(hit),front:describe(hit),stack:document.elementsFromPoint(x,y).slice(0,5).map(describe),visibility:style.visibility,display:style.display,pointerEvents:style.pointerEvents};
+  return {actorState:n.dataset.actorState,actorPhase:n.dataset.actorPhase,actorNode:n.dataset.actorNode,actorStyle:n.getAttribute('style'),id:n.dataset.gardenHousehold||n.dataset.gardenFriend||n.dataset.encounterOpen||n.dataset.gardenVisitingFriend||n.dataset.encounterPage,connected:n.isConnected,rect:r.toJSON(),point:{x,y},centerInViewport:x>=0&&x<innerWidth&&y>=0&&y<innerHeight,hit:!!hit&&n.contains(hit),front:describe(hit),stack:document.elementsFromPoint(x,y).slice(0,5).map(describe),visibility:style.visibility,display:style.display,pointerEvents:style.pointerEvents};
  });
  return {time:performance.now(),viewport,cssHeight:document.body.style.getPropertyValue('--game-viewport-height'),overlay:overlay?.getBoundingClientRect().toJSON(),plane:plane?.getBoundingClientRect().toJSON(),ready:stage?.dataset.sceneState,motion:stage?.dataset.actorMotion||stage?.dataset.terrainMotion,revision:document.querySelector('.finch-garden')?.dataset.gardenRevision,birds};
 });}

@@ -59,10 +59,12 @@ export function createGardenTrailRuntime(id,model){
   // When the whole narrow crossing is unavailable, try a smaller native
   // ground route without stealing any protected corridor or landing point.
   // There is no hop if no actual idle actor, alternate seat, or UI clearance.
-  localHop(seats,{minDistance=16,maxDistance=68}={}){
+  localHop(seats,{minDistance=16,maxDistance=68,singletonIngress=false}={}){
    if(!proven)return null;
    const roster=[...model.actors.values()];
    if(!roster.length)return null;
+   const terminal=id=>id==='A'||id==='B';
+   if(singletonIngress&&(roster.length!==1||terminal(roster[0].node)))return null;
    const first=(roster.findIndex(a=>a.id===lastLocal)+1)%roster.length;
    const rotated=roster.slice(first).concat(roster.slice(0,first));
    const delta=(a,b)=>Math.hypot((a[0]-b[0])*current.plane.width,(a[1]-b[1])*current.plane.height);
@@ -74,8 +76,9 @@ export function createGardenTrailRuntime(id,model){
    for(const a of rotated){
     if(!a.movable||a.route||a.phase!=='ground')continue;
     const alternatives=seats.filter(n=>n.id!==a.node&&n.id!=='bay'&&
-      !(nodes[n.id]&&nodes[a.node])&&delta(a.p,n.p)>=minDistance&&delta(a.p,n.p)<=maxDistance)
-      .sort((a1,b1)=>delta(a.p,a1.p)-delta(a.p,b1.p));
+      !(nodes[n.id]&&nodes[a.node]&&!(singletonIngress&&terminal(n.id)))&&delta(a.p,n.p)>=minDistance&&delta(a.p,n.p)<=maxDistance)
+      .sort((a1,b1)=>(singletonIngress?Number(terminal(b1.id))-Number(terminal(a1.id)):0)||
+        delta(a.p,a1.p)-delta(a.p,b1.p));
     for(const n of alternatives)if(model.beginHopPath(a.id,n,[a.p,n.p],env)){lastLocal=a.id;return {id:a.id,target:n.id,action:'hop'};}
    }
    return null;
@@ -98,8 +101,12 @@ export function createGardenTrailRuntime(id,model){
    for(const id of actorIds){
     const a=model.actors.get(id);
     if(!a?.route||a.route.trailRecovery&&!reduced)continue;
-    const byId=s=>nodes[s];
-    const choices=reduced?[byId(a.route.target)]:[byId(a.route.target),byId(a.node)];
+    // Short presentation hops can reserve a surveyed pad outside A/B/bay.
+    // Its coordinates are frozen into the native route when it is admitted;
+    // the current measured clearance below still validates any recovery.
+    const target=nodes[a.route.target]??{id:a.route.target,p:a.route.to};
+    const contact=nodes[a.node]??{id:a.node,p:a.route.from};
+    const choices=reduced?[target]:[target,contact];
     if(!choices.filter(Boolean).some(n=>model.recoverTrailPath(id,n,{reduced,safe:(b,node,k,peers)=>proven.safe(b,node,k,peers)})))blocked.push(id);
    }
    return blocked;

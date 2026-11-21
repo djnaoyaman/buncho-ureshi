@@ -157,3 +157,77 @@ test('dense/narrow fallback uses a guarded short alternate contact and never tou
  assert.equal(rt.localHop([n]),null);
  assert.equal(m.actors.get(peer),staticActor);assert.deepEqual(staticActor,before);
 });
+
+test('single off-gate actor takes a short measured ingress, preferring the available authored gate before native flight',async()=>{
+ const {createGardenActors}=await import('../src/garden-actor-state.js');
+ const {createGardenTrailRuntime}=await import('../src/garden-trail-runtime.js');
+ const m=createGardenActors('off-gate-ingress'),rt=createGardenTrailRuntime('bird-zebra-finch',m);
+ const id='lead',start={id:'safe-ordinary-seat',p:[.391,.612]},pad={id:'closer-ordinary',p:[.432,.612]},A=rt.nodes.find(n=>n.id==='A');
+ const a={id,movable:true,canFly:true},shape={left:-10,top:-23,right:10,bottom:12};
+ const geometry={plane:{left:0,top:0,width:430,height:740},clip:{left:0,top:0,right:430,bottom:740},controls:[],envelope:shape,footprints:new Map([[id,shape]])};
+ m.reconcile([a],[start]);rt.sync({generation:1,measurement:geometry});
+ assert.equal(rt.request(id,'fly'),false);
+ assert.equal(rt.localHop([pad,A],{singletonIngress:true}).target,'A');
+ assert.equal(m.reservations.get('A'),id);
+ assert.equal(m.actors.get(id).node,start.id);
+ assert.deepEqual(rt.recover([id],{reduced:true}),[]);
+ assert.equal(m.actors.get(id).node,'A');
+ assert.equal(rt.localHop([pad,A],{singletonIngress:true}),null);
+ rt.sync({generation:1,measurement:geometry});m.advance(9000,[],{safe:()=>false});
+ rt.sync({generation:1,measurement:geometry});assert.equal(rt.request(id,'fly'),true);
+ assert.equal(rt.run()?.action,'fly');
+});
+
+test('single off-gate actor refuses an unsafe hop, then accepts a measured dry pad and preserves same-target reduced-motion recovery',async()=>{
+ const {createGardenActors}=await import('../src/garden-actor-state.js');
+ const {createGardenTrailRuntime}=await import('../src/garden-trail-runtime.js');
+ const m=createGardenActors('unsafe-off-gate'),rt=createGardenTrailRuntime('bird-zebra-finch',m);
+ const id='lead',start={id:'safe-ordinary-seat',p:[.391,.612]},pad={id:'ordinary-pad',p:[.432,.612]},
+   unsafe={id:'above-dry-surface',p:[.4,.53]},A=rt.nodes.find(n=>n.id==='A');
+ const a={id,movable:true,canFly:true},shape={left:-10,top:-23,right:10,bottom:12};
+ const geometry={plane:{left:0,top:0,width:430,height:740},clip:{left:0,top:0,right:430,bottom:740},controls:[{left:130,top:440,right:156,bottom:482}],envelope:shape,footprints:new Map([[id,shape]])};
+ m.reconcile([a],[start]);rt.sync({generation:1,measurement:geometry});
+ const prior=structuredClone(m.actors.get(id));
+ assert.equal(rt.localHop([unsafe,A],{singletonIngress:true}),null);
+ assert.deepEqual(m.actors.get(id),prior);
+ assert.equal(m.reservations.size,0);
+ assert.equal(rt.localHop([unsafe,A,pad],{singletonIngress:true}).target,pad.id);
+ assert.equal(m.reservations.get(pad.id),id);
+ assert.deepEqual(rt.recover([id],{reduced:true}),[]);
+ assert.equal(m.actors.get(id).node,pad.id);
+ assert.equal(m.reservations.size,0);
+});
+
+test('native snapshot identifies returning and previously met visitors, but rejects anonymous, duplicate, or swapped controls',async()=>{
+ const {Window}=await import('happy-dom');
+ const {runInNewContext}=await import('node:vm');
+ const {snapshotGarden,assertGardenIdentities}=await import('./fixtures/garden-terrain-browser.js');
+ const win=new Window({width:402,height:874});
+ const doc=win.document;
+ const buttons=attrs=>`<div class="finch-garden-stage"><div class="finch-garden-image-plane">${attrs.map(a=>`<button ${a}></button>`).join('')}</div></div>`;
+ const sandbox={
+  document:doc,getComputedStyle:el=>win.getComputedStyle(el),visualViewport:null,
+  innerWidth:402,innerHeight:874,performance:{now:()=>123},
+ };
+ doc.elementFromPoint=()=>null;
+ doc.elementsFromPoint=()=>[];
+ const page={evaluate:fn=>runInNewContext('('+fn.toString()+')()',sandbox)};
+ try{
+  doc.body.innerHTML=buttons(['data-garden-household="b1"','data-garden-friend="f2"',
+    'data-encounter-open="pending-guest"','data-garden-visiting-friend="returning-guest" data-encounter-page="returning-guest"',
+    'data-encounter-page="known-guest"']);
+  const valid=await snapshotGarden(page);
+  const ids=['b1','f2','pending-guest','returning-guest','known-guest'];
+  // Serialize only to normalize VM realm prototypes; values stay untouched.
+  const normalized=JSON.parse(JSON.stringify(valid.birds));
+  assert.doesNotThrow(()=>assertGardenIdentities(normalized,5,ids));
+  assert.throws(()=>assertGardenIdentities(normalized,5,[...ids].reverse()),/identities or order/);
+  doc.body.innerHTML=buttons(['data-garden-household="b1"','']);
+  const anonymous=awaitedIdentity(await snapshotGarden(page));
+  assert.throws(()=>assertGardenIdentities(anonymous,2),/anonymous native bird control/);
+  doc.body.innerHTML=buttons(['data-garden-household="b1"','data-encounter-page="b1"']);
+  const duplicate=awaitedIdentity(await snapshotGarden(page));
+  assert.throws(()=>assertGardenIdentities(duplicate,2),/duplicate native bird identity/);
+ }finally{await win.happyDOM.close();}
+ function awaitedIdentity(snapshot){return JSON.parse(JSON.stringify(snapshot.birds));}
+});

@@ -1,5 +1,5 @@
 import {test,expect} from '@playwright/test';
-import {setup,snapshotGarden} from '../fixtures/garden-terrain-browser.js';
+import {setup,snapshotGarden,assertGardenIdentities} from '../fixtures/garden-terrain-browser.js';
 import {GARDEN_TRAIL_TERRAIN} from '../../src/data/garden-trail-terrain.js';
 import {encounterSystem} from '../../src/encounters.js';
 import {engine} from '../fixtures/garden-about-world.js';
@@ -9,11 +9,8 @@ const pilot={trailPreview:true,height:874,afterOpenMs:0};
 test.use({hasTouch:true});
 test.setTimeout(150000);
 function assertNative(s,count,ids=null){
- expect(s.birds).toHaveLength(count);
- expect(new Set(s.birds.map(b=>b.id)).size).toBe(count);
- if(ids)expect(s.birds.map(b=>b.id)).toEqual(ids);
+ assertGardenIdentities(s.birds,count,ids);
  for(const b of s.birds){
-  expect(b.id).toBeTruthy();
   expect(b.rect.width,JSON.stringify(b)).toBeGreaterThanOrEqual(43.99);
   expect(b.rect.height,JSON.stringify(b)).toBeGreaterThanOrEqual(43.99);
   expect(b.centerInViewport,JSON.stringify(b)).toBe(true);

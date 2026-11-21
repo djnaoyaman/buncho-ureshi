@@ -371,6 +371,10 @@ export function createGardenActorMotion(root){
        break;
       }
       let started=trailRuntime.run();
+      // A lone actor seated off the authored terminal (e.g. the dock blocks
+      // it after reflow) can still take a measured short hop. Prefer an
+      // eligible terminal so future flights use the normal lane admission.
+      if(!started&&roster.length===1)started=trailRuntime.localHop(layoutNodes,{singletonIngress:true});
       if(!started&&(roster.length>=7||(!bay&&roster.length>1)))started=trailRuntime.localHop(layoutNodes);
       trailRetry=!started&&!trailRetry;nextTrail=elapsed+(started?9000:1600);
      }
