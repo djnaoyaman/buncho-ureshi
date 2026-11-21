@@ -2,15 +2,20 @@ import {expect} from '@playwright/test';
 import {worldFor,NOW,engine} from './garden-about-world.js';
 import {encounterSystem,getGardenVisitingBird} from '../../src/encounters.js';
 import {recordGardenVisit} from '../../src/garden-friends.js';
-export async function setup(page,id,width=390,motion=true,sparse=false){
+export async function setup(page,id,width=390,motion=true,sparse=false,{trailPreview=false,leadColor=null}={}){
   await page.setViewportSize({width,height:844});
   await page.route(/\/src\/game\.js(?:\?.*)?$/,async route=>{
     const response=await route.fetch(),source=await response.text();expect(source.split('predatorRandom = Math.random')).toHaveLength(2);
-    await route.fulfill({response,body:source.replace('predatorRandom = Math.random','predatorRandom = () => 1')});
+    let body=source.replace('predatorRandom = Math.random','predatorRandom = () => 1');
+    if(trailPreview){
+      expect(body.split('previewGardenTrail = false')).toHaveLength(2);
+      body=body.replace('previewGardenTrail = false','previewGardenTrail = true');
+    }
+    await route.fulfill({response,body});
   });
   await page.addInitScript(()=>{localStorage.setItem('buncho.music.v1',JSON.stringify({enabled:false}));localStorage.setItem('buncho.care-sound-choice.v1',JSON.stringify({explicit:true,enabled:false}));});
   await page.goto('');await page.clock.install({time:NOW});await page.clock.pauseAt(NOW+1000);
-  const world=worldFor('attending',id);world.settings.motion=motion;
+  const world=worldFor('attending',id);world.settings.motion=motion;if(leadColor)world.birds[0].color=leadColor;
   if(sparse)world.encounters.gardenFriends.visits=[{gardenId:id,visit:world.encounters.garden.visits[id],friendIds:[],returningIds:[]}];
   if(sparse==='chick')world.birds[0].stage='chick';
   if(sparse==='empty')world.encounters.gardenFriends.attendees=[];

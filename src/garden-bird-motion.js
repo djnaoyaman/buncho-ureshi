@@ -2,8 +2,7 @@ import { chooseGardenPair, gardenPairFrame, SOCIAL_PERIOD } from './garden-socia
 import { createPoseClock, poseGeometry, presentationSeed } from './bird-poses.js';
 import { terrainFor } from './garden-terrain-plan.js';
 import { createGardenTerrainMotion } from './garden-terrain-motion.js';
-import { actorTerrainFor } from './data/garden-actor-terrain.js';
-import { createGardenActorMotion } from './garden-actor-motion.js';
+import { actorTerrainForStage, createGardenActorMotion } from './garden-actor-motion.js';
 
 const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
 const sequence = Object.freeze(['left', 'tilt', 'preen', 'right', 'back', 'peck', 'rest']);
@@ -58,7 +57,7 @@ export function mountGardenBirdMotion(root, { enabled = () => true, maxTravel = 
   const clock = createPoseClock(() => window?.performance?.now?.() ?? Date.now());
   const terrain = createGardenTerrainMotion(root);
   const individual = createGardenActorMotion(root);
-  const surveyedGarden = () => actorTerrainFor(root.querySelector('.finch-garden-stage')?.dataset.gardenId) || terrainFor(root.querySelector('.finch-garden-stage')?.dataset.gardenId);
+  const surveyedGarden = () => actorTerrainForStage(root.querySelector('.finch-garden-stage')) || terrainFor(root.querySelector('.finch-garden-stage')?.dataset.gardenId);
   const selector = '.finch-garden-image-plane > .finch-garden-friend, .finch-garden-image-plane > .finch-garden-household';
   const hover = new Set(), pressed = new Set(), owned = new Map();
   let timer = null, raf = null, disposed = false, pair = null, actors = [], pairCycle = -1, invalid = true, semanticKey = null, observedStage = null, observedPlane = null, geometryRAF = null, geometryPending = false, keyboardFocus = true;
@@ -127,11 +126,11 @@ export function mountGardenBirdMotion(root, { enabled = () => true, maxTravel = 
   const requestGeometry = () => {
     invalid=true;
     if(disposed||document.hidden||!root.isConnected)return;
-    if(!actorTerrainFor(root.querySelector('.finch-garden-stage')?.dataset.gardenId))return;
+    if(!actorTerrainForStage(root.querySelector('.finch-garden-stage')))return;
     geometryPending=true;if(raf!==null||geometryRAF!==null)return;
     const measure=()=>{
       geometryRAF=null;geometryPending=false;
-      if(!disposed&&!document.hidden&&root.isConnected&&actorTerrainFor(root.querySelector('.finch-garden-stage')?.dataset.gardenId))tick(true);
+      if(!disposed&&!document.hidden&&root.isConnected&&actorTerrainForStage(root.querySelector('.finch-garden-stage')))tick(true);
     };
     if(window.requestAnimationFrame)geometryRAF=window.requestAnimationFrame(measure);else measure();
   };
@@ -152,10 +151,10 @@ export function mountGardenBirdMotion(root, { enabled = () => true, maxTravel = 
       for (const node of pressed) if (!nodes.includes(node)) pressed.delete(node);
       actors = nodes.map(node => ({ node })); invalid = true;
       // Routine world renders replace DOM, not the ongoing social presentation.
-      if (sceneChanged && !actorTerrainFor(root.querySelector('.finch-garden-stage')?.dataset.gardenId)) clock.reset();
+      if (sceneChanged && !actorTerrainForStage(root.querySelector('.finch-garden-stage'))) clock.reset();
     }
     const currentStage = root.querySelector('.finch-garden-stage');
-    const individualGarden = actorTerrainFor(currentStage?.dataset.gardenId);
+    const individualGarden = actorTerrainForStage(currentStage);
     if(individualGarden)observeActorGeometry(currentStage);
     const surveyed = individualGarden || terrainFor(currentStage?.dataset.gardenId);
     const warning = surveyed && (currentStage.dataset.sceneState !== 'ready' || document.body.hasAttribute('data-game-view-blocked') || root.querySelector('[data-crow-phase],.finch-crow-scale-scene,.finch-raptor-scale-scene'));
@@ -163,7 +162,7 @@ export function mountGardenBirdMotion(root, { enabled = () => true, maxTravel = 
     const elapsed = geometryOnly ? clock.elapsed : clock.advance(active);
     if (individualGarden) {
       terrain.dispose();
-      const overrides=new Map(),moving=individual.step(elapsed,active,overrides,{settle:!!motion?.matches||!enabled(),geometryOnly});
+      const overrides=new Map(),moving=individual.step(elapsed,active,overrides,{settle:!!motion?.matches||!enabled(),geometryOnly,predator:!!root.querySelector('[data-crow-phase],.finch-crow-scale-scene,.finch-raptor-scale-scene')});
       refresh(root,elapsed,overrides);
       if(!geometryOnly)schedule(moving);return;
     }
@@ -196,7 +195,7 @@ export function mountGardenBirdMotion(root, { enabled = () => true, maxTravel = 
     const moving = !!frame && ((local >= 4000 && local < 8000) || (local >= 13000 && local < 13500) || (local >= 16000 && local < 20000));
     schedule(moving);
   };
-  const sync = () => { if (!disposed) { clock.hold(); clearSchedule(); if(actorTerrainFor(root.querySelector('.finch-garden-stage')?.dataset.gardenId))tick();else if (allowed()) { clock.advance(root.isConnected && !!enabled() && !interacting() && !sheetOpen()); schedule(false); } } };
+  const sync = () => { if (!disposed) { clock.hold(); clearSchedule(); if(actorTerrainForStage(root.querySelector('.finch-garden-stage')))tick();else if (allowed()) { clock.advance(root.isConnected && !!enabled() && !interacting() && !sheetOpen()); schedule(false); } } };
   const target = event => event.target?.closest?.(selector);
   const lock = event => {
     const node = target(event); if (!node) return;
@@ -214,7 +213,7 @@ export function mountGardenBirdMotion(root, { enabled = () => true, maxTravel = 
   const modality = event => { keyboardFocus = event.type === 'keydown'; if (keyboardFocus) { clock.hold(); schedule(false); } };
   document.addEventListener('pointerdown', modality, true);
   document.addEventListener('keydown', modality, true);
-  const resize = () => { invalid=true; if(actorTerrainFor(root.querySelector('.finch-garden-stage')?.dataset.gardenId)&&!document.hidden)requestGeometry();else clock.hold(); };
+  const resize = () => { invalid=true; if(actorTerrainForStage(root.querySelector('.finch-garden-stage'))&&!document.hidden)requestGeometry();else clock.hold(); };
   document.addEventListener('visibilitychange', sync);
   const viewChanged = () => { if (surveyedGarden()) { clock.hold(); clearSchedule(); tick(); } };
   document.addEventListener('buncho-game-view-visibility', viewChanged);
@@ -226,7 +225,7 @@ export function mountGardenBirdMotion(root, { enabled = () => true, maxTravel = 
   // at the same dimensions. Rebuild geometry without discarding active time.
   const measuredResize=new WeakMap();
   const observer = window.ResizeObserver ? new window.ResizeObserver(entries=>{
-    const actorStage=actorTerrainFor(root.querySelector('.finch-garden-stage')?.dataset.gardenId);
+    const actorStage=actorTerrainForStage(root.querySelector('.finch-garden-stage'));
     if(!actorStage){invalid=true;return;}
     let changed=false;
     for(const {target,contentRect} of entries){
@@ -238,13 +237,13 @@ export function mountGardenBirdMotion(root, { enabled = () => true, maxTravel = 
     if(changed)requestGeometry();
   }) : null;
   const initialStage=root.querySelector('.finch-garden-stage');
-  if(actorTerrainFor(initialStage?.dataset.gardenId))observeActorGeometry(initialStage);
+  if(actorTerrainForStage(initialStage))observeActorGeometry(initialStage);
   else {observedStage=initialStage;if(observedStage)observer?.observe(observedStage);}
   // Apply surveyed grounding while the replacement scene is still loading,
   // before it is exposed. Never wait a full idle tick to relocate visible art.
   const sceneObserver = window.MutationObserver && root.nodeType ? new window.MutationObserver(records => {
     if(!surveyedGarden())return;
-    const isActor=actorTerrainFor(root.querySelector('.finch-garden-stage')?.dataset.gardenId);
+    const isActor=actorTerrainForStage(root.querySelector('.finch-garden-stage'));
     // Fit itself adds/removes its owned visual siblings. Do not let those
     // mutations turn a geometry-only frame into an extra playback tick.
     if(isActor){
