@@ -207,7 +207,13 @@ export function packTrailStandingSeats({actors,seats,preferred,canPlace,standing
      if(!viable.length)break;
      next.set(a,viable);scarce=Math.min(scarce,viable.length);total+=viable.length;
     }
-    if(next.size===open.size-1)options.push({seat,next,scarce,total});
+    if(next.size!==open.size-1)continue;
+    if(!standingClass){
+     // Without class equivalence proofs, try the first viable option before evaluating all alternatives.
+     plan.set(actor.id,seat.n);
+     if(advance(next))return true;
+     plan.delete(actor.id);
+    }else options.push({seat,next,scarce,total});
    }
    options.sort((a,b)=>b.scarce-a.scarce||b.total-a.total);
    for(const {seat,next} of options){

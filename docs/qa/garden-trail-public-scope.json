@@ -38,7 +38,7 @@
     "src/data/garden-trail-terrain.js": "d12803d98d1cf64f0d51f915290d3f81ebdafb2ff64040625b5c56bce66f8278",
     "src/garden-actor-path.js": "42b64539ccd88cb8af3484a4b6ce78c5688259f77f4fee502759b175afd4a805",
     "src/garden-trail-adapter.js": "f5bafebee0ba6a85b3c1dc2da95feaa71dca4685c2ef03dc89a1e9db607f05a5",
-    "src/garden-trail-clearance.js": "5c3ae38126f662ea4733af8d5ae306b0ccca60320ce7e6e9559e0a4277873a45",
+    "src/garden-trail-clearance.js": "11d79a1a758fa0e7c6d3bd51f3fd87f5d0eea0b1e0bd53ae8c6d4b2a9c737c90",
     "src/garden-trail-lane.js": "b7fc52dd1335bf6166b1f6e03d49eeeb4c715c5034cc8e3dbd4965d2870178e5",
     "src/garden-trail-runtime.js": "b709b1a671b67a2151def0e544c669452739ab1873066a42c8a6897b2b3a68d4"
   },
