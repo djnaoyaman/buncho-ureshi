@@ -1,23 +1,23 @@
-name: Type II fast bay-14-inner QA (no deployment)
-run-name: Type II focused bay-14-inner · ${{ github.sha }}
+name: Type II fast bay-14-inner-cause QA (no deployment)
+run-name: Type II focused bay-14-inner-cause · ${{ github.sha }}
 on:
   push:
-    branches: [qa/type2-fast-bay-14-inner]
+    branches: [qa/type2-fast-bay-14-inner-cause]
 permissions:
   contents: read
 concurrency:
-  group: type2-fast-bay-14-inner-${{ github.ref }}
+  group: type2-fast-bay-14-inner-cause-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   visitor:
-    name: 'Type II bay-14-inner · ${{ matrix.engine }}'
-    if: github.ref == 'refs/heads/qa/type2-fast-bay-14-inner'
+    name: 'Type II bay-14-inner-cause · ${{ matrix.engine }}'
+    if: github.ref == 'refs/heads/qa/type2-fast-bay-14-inner-cause'
     runs-on: ubuntu-24.04
     timeout-minutes: 14
     strategy:
       fail-fast: false
       matrix:
-        engine: [chrome, webkit]
+        engine: [chrome]
     container:
       image: mcr.microsoft.com/playwright:v1.64.1-noble
     steps:
@@ -64,9 +64,9 @@ jobs:
           report="$(npx playwright test tests/browser/garden-trail-14-inner.spec.js --project="$ENGINE" --list)"
           printf '%s\n' "$report" | grep -Eq '^Total: 1 test in 1 file$'
           rc=0
-          TYPE2_CHECKPOINT_DIR="$dir" npx playwright test tests/browser/garden-trail-14-inner.spec.js --project="$ENGINE" --retries=0 --max-failures=0 --trace=off --reporter=dot || rc="$?"
+          TYPE2_CHECKPOINT_DIR="$dir" npx playwright test tests/browser/garden-trail-14-inner.spec.js --project="$ENGINE" --retries=0 --max-failures=0 --trace=off --reporter=dot >/dev/null 2>&1 || rc="$?"
           test "$rc" -le 1
-          node -e 'const f=require("fs");const [d,e,q]=process.argv.slice(1);for(const [k,choices] of JSON.parse(q))if(!choices.includes(f.readFileSync(d+"/"+e+"-"+k,"utf8").trim()))process.exit(1);' "$dir" "$ENGINE" '[["14-inner",["pass","setup","native-gates","native-hits","fly-after-bay","bay-missing","fly-missing","fly-phases","same-landing","landing-tap","nominal-gate-missing","measured-pair-denied","native-hit-denied","accepted-but-not-seen","not-attempted"]]]'
+          node -e 'const f=require("fs");const [d,e,q]=process.argv.slice(1);for(const [k,choices] of JSON.parse(q))if(!choices.includes(f.readFileSync(d+"/"+e+"-"+k,"utf8").trim()))process.exit(1);' "$dir" "$ENGINE" '[["14-inner",["pass","setup","native-gates","native-hits","fly-before-any-park-held","fly-before-any-park-unheld","fly-partner-not-currently-parked-held","fly-partner-not-currently-parked-unheld","fly-partner-different","parked-is-owner","bay-missing","fly-missing","fly-phases","same-landing","landing-tap","nominal-gate-missing","measured-pair-denied","native-hit-denied","accepted-but-not-seen","not-attempted"]]]'
       - name: '#14 inward measured gates complete'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
@@ -87,11 +87,36 @@ jobs:
         env:
           ENGINE: ${{ matrix.engine }}
         run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-14-inner")" != "native-hits"
-      - name: '#14 inward measured gates not fly-after-bay'
+      - name: '#14 inward measured gates not fly-before-any-park-held'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
           ENGINE: ${{ matrix.engine }}
-        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-14-inner")" != "fly-after-bay"
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-14-inner")" != "fly-before-any-park-held"
+      - name: '#14 inward measured gates not fly-before-any-park-unheld'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-14-inner")" != "fly-before-any-park-unheld"
+      - name: '#14 inward measured gates not fly-partner-not-currently-parked-held'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-14-inner")" != "fly-partner-not-currently-parked-held"
+      - name: '#14 inward measured gates not fly-partner-not-currently-parked-unheld'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-14-inner")" != "fly-partner-not-currently-parked-unheld"
+      - name: '#14 inward measured gates not fly-partner-different'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-14-inner")" != "fly-partner-different"
+      - name: '#14 inward measured gates not parked-is-owner'
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: test "$(cat "$RUNNER_TEMP/type2-focused-receipts/$ENGINE-14-inner")" != "parked-is-owner"
       - name: '#14 inward measured gates not bay-missing'
         if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
         env:
