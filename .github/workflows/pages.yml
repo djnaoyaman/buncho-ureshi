@@ -1,103 +1,103 @@
-name: Type II seven-garden diagnostics only
+name: Verify and publish
 on:
+  push:
+    branches: [main]
   pull_request:
-    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      full_browser:
+        description: '必要な場合のみ既存の広範なChrome/WebKit検査も実行'
+        type: boolean
+        default: false
 permissions:
   contents: read
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
-  trail_preflight:
-    name: Type II normal hosted preflight (not deployable)
-    if: github.event.pull_request.draft && startsWith(github.head_ref, 'qa/type2-seven-')
-    runs-on: ubuntu-24.04
-    timeout-minutes: 18
+  build:
     outputs:
-      source_sha: ${{ steps.source.outputs.sha }}
+      verify_live: ${{ steps.live_scope.outputs.enabled }}
+      browser_tests: ${{ steps.browser_scope.outputs.tests }}
+      browser_reason: ${{ steps.browser_scope.outputs.reason }}
+    runs-on: ubuntu-24.04
     steps:
-      - name: Fetch the exact PR merge commit and history
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           ref: ${{ github.sha }}
           fetch-depth: 0
-          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Verify checked-out merge commit
-        id: source
-        run: |
-          set -eu
-          sha="$(git rev-parse --verify HEAD)"
-          test "$sha" = "$GITHUB_SHA"
-          printf 'sha=%s\n' "$sha" >> "$GITHUB_OUTPUT"
-      - name: Verify reviewed live base is fetched
-        env:
-          PR_BASE: ${{ github.event.pull_request.base.sha }}
-        run: |
-          set -eu
-          test "$PR_BASE" = '41bd702712ef9af1c1c80b6322f5351be1ef6bb8'
-          git cat-file -e "$PR_BASE^{commit}"
-      - name: Verify reviewed manifest path and exact seven-garden case
-        env:
-          PR_BASE: ${{ github.event.pull_request.base.sha }}
-        run: |
-          node --input-type=module <<'NODE'
-          import { readFileSync, existsSync } from 'node:fs';
-          const manifest=JSON.parse(readFileSync('.github/browser-checks.json','utf8'));
-          const expected='tests/browser/garden-trail-seven.spec.js';
-          if(manifest.base!==process.env.PR_BASE||!Array.isArray(manifest.tests)||
-             manifest.tests.length!==1||manifest.tests[0]!==expected||!existsSync(expected))
-            throw Error('Unexpected reviewed manifest');
-          NODE
-      - name: Run the ordinary source-diff scope selector
+          cache: npm
+      - name: Select this release only for published byte verification
+        id: live_scope
+        run: node scripts/pages-live-scope.mjs
+      - name: Select only the browser checks reviewed for this change
+        id: browser_scope
         run: node scripts/browser-scope.mjs
       - run: npm ci
-      - name: Ordinary syntax and content checks
-        run: npm run check
-      - name: Ordinary Node tests and protected build ledger
-        run: npm test
-      - name: Ordinary build output
-        run: npm run build
-
-  private_trail_diagnostic:
-    name: Type II browser diagnostics (not deployable)
-    needs: trail_preflight
+      - run: npm run check
+      - run: npm test
+      - run: npm run build
+      - name: Seal the tested build with its source identity
+        run: |
+          mkdir .verified-build
+          tar -cf .verified-build/dist.tar dist
+          printf '%s\n' "$GITHUB_SHA" > .verified-build/SOURCE_SHA
+          cd .verified-build
+          sha256sum dist.tar SOURCE_SHA > SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: verified-build-${{ github.sha }}
+          path: .verified-build/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
+  focused_browser:
+    name: reviewed-chrome-and-webkit
+    needs: build
+    if: needs.build.outputs.browser_tests != '[]'
     runs-on: ubuntu-24.04
-    timeout-minutes: 65
     container:
       image: mcr.microsoft.com/playwright:v1.64.1-noble
     steps:
-      - name: Fetch the same tested commit
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
-          ref: ${{ needs.trail_preflight.outputs.source_sha }}
-          persist-credentials: false
+          ref: ${{ github.sha }}
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Verify browser source equals hosted preflight source
-        env:
-          TESTED_SHA: ${{ needs.trail_preflight.outputs.source_sha }}
-        run: |
-          set -eu
-          test "$TESTED_SHA" = "$GITHUB_SHA"
-          test "$(git rev-parse --verify HEAD)" = "$TESTED_SHA"
+          cache: npm
       - run: npm ci
-      - name: Rebuild same-source browser fixture without transferring files
-        run: npm run build
+      - uses: actions/download-artifact@v4
+        with:
+          name: verified-build-${{ github.sha }}
+          path: .verified-build
+      - name: Restore the exact tested build
+        run: |
+          cd .verified-build
+          sha256sum --check SHA256SUMS
+          test "$(cat SOURCE_SHA)" = "$GITHUB_SHA"
+          tar -xf dist.tar -C ..
       - name: Require the browser image and installed Playwright versions to match
-        run: node -e "if(require('@playwright/test/package.json').version !== '1.64.1') throw Error('Update official browser image to match Playwright');"
-      - name: Install official Google Chrome using prepared dependencies
+        run: node -e "if(require('@playwright/test/package.json').version !== '1.64.1') throw Error('Update the official browser image to match Playwright');"
+      - name: Install actual Google Chrome using the prepared browser dependencies
         timeout-minutes: 5
         run: |
           curl --fail --location --retry 2 --max-time 120 https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb --output /tmp/google-chrome.deb
+          # Extract the official browser; desktop integration (xdg-utils) is not
+          # used in this headless container. Verify every runtime library exists.
           dpkg-deb --extract /tmp/google-chrome.deb /
           ldd /opt/google/chrome/chrome > /tmp/chrome-libraries.txt
+          cat /tmp/chrome-libraries.txt
           if grep -q 'not found' /tmp/chrome-libraries.txt; then exit 1; fi
           /opt/google/chrome/chrome --version
-      - name: Prepare real media device
+      - name: Provide native audio output for real media checks
         run: |
           apt-get update -qq
           apt-get install -y pulseaudio pulseaudio-utils ffmpeg
+          # Use temporary daemon state, not the container's mounted HOME.
           export PULSE_RUNTIME_PATH=/tmp/ci-pulse-runtime
           export PULSE_STATE_PATH=/tmp/ci-pulse-state
           mkdir -p "$PULSE_RUNTIME_PATH" "$PULSE_STATE_PATH" /tmp/ci-pulse-home
@@ -105,37 +105,421 @@ jobs:
           HOME=/tmp/ci-pulse-home pulseaudio --daemonize=yes --exit-idle-time=-1 --log-target=stderr
           pactl load-module module-null-sink sink_name=ci_audio sink_properties=device.description=CI_Audio
           pactl set-default-sink ci_audio
-      - name: Verify the 108 reviewed browser case declarations
-        id: ready
+          pactl info
+      - name: Run the selected checks on Chrome and Safari-compatible WebKit
+        env:
+          BROWSER_TESTS_JSON: ${{ needs.build.outputs.browser_tests }}
+          BROWSER_REASON: ${{ needs.build.outputs.browser_reason }}
+        run: node scripts/run-reviewed-browsers.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser-evidence-focused-${{ github.sha }}
+          path: |
+            focused-test-results/
+            playwright-report/
+          if-no-files-found: warn
+          retention-days: 14
+  browser:
+    if: github.event_name == 'workflow_dispatch' && inputs.full_browser
+    name: browser-${{ matrix.lane }}
+    needs: build
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        lane: [a, b, c, d]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: verified-build-${{ github.sha }}
+          path: .verified-build
+      - name: Verify and restore the exact build
         run: |
-          set -eu
-          for entry in roster:44 lane:14 palette:20 events:30; do
-            group="${entry%:*}"
-            count="${entry#*:}"
-            report="$(npx playwright test tests/browser/garden-trail-seven.spec.js --grep "@trail-$group" --project=chrome --project=webkit --list)"
-            printf '%s\n' "$report" | grep -Eq "^Total: $count tests in 1 file$"
-          done
-      - name: 'Type II roster: both portraits, rotation and native touch'
-        timeout-minutes: 15
-        if: ${{ !cancelled() && steps.ready.outcome == 'success' }}
+          cd .verified-build
+          sha256sum --check SHA256SUMS
+          test "$(cat SOURCE_SHA)" = "$GITHUB_SHA"
+          tar -xf dist.tar -C ..
+          test -f ../dist/.nojekyll
+      - run: npx playwright install --with-deps chromium webkit
+      - run: npx playwright install chrome
+      - name: Provide native CI audio output device
         run: |
-          # Keep test output and any failed fixture details runner-local.
-          npx playwright test tests/browser/garden-trail-seven.spec.js --grep '@trail-roster' --project=chrome --project=webkit --retries=0 --reporter=list > /tmp/type-ii-roster.log 2>&1
-      - name: 'Type II lane: surveyed dry bays and waiting'
-        timeout-minutes: 10
-        if: ${{ !cancelled() && steps.ready.outcome == 'success' }}
+          sudo apt-get update -qq
+          sudo apt-get install -y pulseaudio pulseaudio-utils
+          pulseaudio --start --exit-idle-time=-1
+          pactl load-module module-null-sink sink_name=ci_audio sink_properties=device.description=CI_Audio
+          pactl set-default-sink ci_audio
+          pactl info
+      - name: Preservation Box B, native safety and exact saved worlds
+        if: matrix.lane == 'b'
+        run: npx playwright test --config=playwright.preservation.config.js --project=chrome --project=webkit --retries=0 --output=preservation-test-results
+      - uses: actions/upload-artifact@v4
+        if: always() && matrix.lane == 'b'
+        with:
+          name: preservation-box-evidence-${{ github.sha }}
+          path: |
+            preservation-test-results/**/*.png
+            preservation-test-results/**/*.json
+          retention-days: 14
+      - name: Caretaker A signboard, contracts and exact saves
+        if: matrix.lane == 'b'
+        run: npx playwright test --config=playwright.caretaker.config.js --retries=0 --output=caretaker-test-results
+      - uses: actions/upload-artifact@v4
+        if: always() && matrix.lane == 'b'
+        with:
+          name: caretaker-evidence-${{ github.sha }}
+          path: |
+            caretaker-test-results/**/*.png
+            caretaker-test-results/**/*.json
+            caretaker-test-results/**/trace.zip
+            caretaker-test-results/**/error-context.md
+          retention-days: 14
+      - name: Garden Friends A cards, measured text, identities and exact saves
+        if: matrix.lane == 'c'
+        run: npx playwright test --config=playwright.garden-friends.config.js --project=chrome --project=webkit --retries=0 --output=garden-friends-test-results
+      - uses: actions/upload-artifact@v4
+        if: always() && matrix.lane == 'c'
+        with:
+          name: garden-friends-evidence-${{ github.sha }}
+          path: |
+            garden-friends-test-results/**/*.png
+            garden-friends-test-results/**/*.json
+          retention-days: 14
+      - name: Garden B booklet, all identities, notices and exact saves
+        if: matrix.lane == 'd'
+        run: npx playwright test --config=playwright.garden-about.config.js --project=chrome --project=webkit --retries=0 --output=garden-about-test-results
+      - uses: actions/upload-artifact@v4
+        if: always() && matrix.lane == 'd'
+        with:
+          name: garden-about-evidence-${{ github.sha }}
+          path: |
+            garden-about-test-results/**/*.png
+            garden-about-test-results/**/*.json
+          retention-days: 14
+      - name: Consultation letters A, native consent and exact save transitions
+        if: matrix.lane == 'a'
+        run: npx playwright test tests/browser/consultation-letter.spec.js --project=chrome --project=webkit --retries=0 --output=consultation-test-results
+      - name: Household daily Gold, migration backups and concurrent claims
+        if: matrix.lane == 'a'
+        run: npx playwright test tests/browser/household-income.spec.js --project=chrome --project=webkit --retries=0 --output=household-test-results
+      - name: Family care, ordinary rewards, narrow screens, focus and atomic saves
+        if: matrix.lane == 'b'
+        run: npx playwright test tests/browser/family-care.spec.js --project=chrome --project=webkit --retries=0 --output=family-care-test-results
+      - name: Cleanliness36h, integer progress, manual cleaning and durable reload
+        if: matrix.lane == 'a'
+        run: npx playwright test tests/browser/cleanliness-36h.spec.js --project=chrome --project=webkit --retries=0 --output=cleanliness-test-results
+      - name: Growth pace, original13 backups, inherited children and new eggs
+        if: matrix.lane == 'a'
+        run: npx playwright test tests/browser/growth-pace.spec.js --project=chrome --project=webkit --retries=0 --output=growth-test-results
+      - name: Historical file import cancellation, complete migration and export
+        if: matrix.lane == 'a'
+        run: npx playwright test tests/browser/fields.spec.js --grep 'v2 import cancellation' --project=chrome --project=webkit --retries=0 --output=historical-import-test-results
+      - name: Complete historical birds and single hatch across two tabs
+        if: matrix.lane == 'a'
+        run: npx playwright test tests/browser/care.spec.js tests/browser/game.spec.js tests/browser/life-care.spec.js --grep 'an existing v1 device|simultaneous tabs serialize|legacy v7' --project=chrome --project=webkit --retries=0 --output=growth-migration-test-results
+      - name: Lifecycle migration, old clocks and archived family
+        if: matrix.lane == 'a'
+        run: npx playwright test --config=playwright.lifecycle.config.js --retries=0 --output=lifecycle-test-results
+      - name: Gacha machines, fixed mechanism, skip and durable single draw
+        if: matrix.lane == 'a'
+        run: npx playwright test --config=playwright.gacha.config.js --retries=0 --output=gacha-test-results
+      - name: Nine friend cages and stable saved identities
+        if: matrix.lane == 'a'
+        run: npx playwright test --config=playwright.friend-cages.config.js
+      - name: Cage fixture placement and saved furnishings
+        if: matrix.lane == 'a'
+        run: npx playwright test tests/browser/cage-placement.spec.js --project=chrome --project=webkit --retries=0 --output=cage-test-results
+      - name: Phone and tablet native touch, PNG and saved visitor
+        if: matrix.lane == 'a'
+        run: npx playwright test tests/browser/mobile.spec.js --project=android-touch --project=iphone-touch --retries=0 --output=mobile-touch-test-results
+      - name: Game device announcements, portrait return, drafts and exact saves
+        if: matrix.lane == 'c'
+        run: npx playwright test tests/browser/game-device-policy.spec.js --project=chrome --project=webkit --retries=0 --output=game-device-policy-test-results
+      - name: Phone inputs, enlarged text, reduced height and unchanged saves
+        if: matrix.lane == 'c'
+        run: npx playwright test tests/browser/mobile-readable.spec.js --project=chrome --project=webkit --retries=0 --output=mobile-readable-test-results
+      - name: Portrait tablet workspaces, enlarged text and unchanged saves
+        if: matrix.lane == 'c'
+        run: npx playwright test tests/browser/game-tablet-layout.spec.js --project=chrome --project=webkit --retries=0 --output=game-tablet-test-results
+      - name: Trial startup, actions and save integrity (actual Chrome)
+        if: matrix.lane == 'c'
+        run: npx playwright test tests/browser/trial-smoke.spec.js tests/browser/care-gauges.spec.js tests/browser/owner-peek.spec.js tests/browser/full-stage.spec.js tests/browser/garden-social.spec.js tests/browser/garden-protagonist.spec.js tests/browser/garden-interaction.spec.js tests/browser/garden-selector-scroll.spec.js tests/browser/compact-music-settings.spec.js tests/browser/game-music.spec.js --project=chrome --retries=0 --output=trial-test-results
+      - name: Health notebook, independent clocks and saved hospital care
+        if: matrix.lane == 'c'
+        run: npx playwright test tests/browser/health-notebook.spec.js tests/browser/life-care.spec.js --project=chrome --project=webkit --retries=0 --output=health-test-results
+      - name: Settings switch notebook, keyboard focus and persistent music
+        if: matrix.lane == 'd'
+        run: npx playwright test tests/browser/settings-switchbook.spec.js --project=chrome --project=webkit --retries=0 --output=settings-test-results
+      - name: Approved menu icons, every destination and unchanged saves
+        if: matrix.lane == 'd'
+        run: npx playwright test tests/browser/life-menu-icons.spec.js --project=chrome --project=webkit --retries=0 --output=menu-test-results
+      - name: Roster face cards A, keyboard selection and unchanged saves
+        if: matrix.lane == 'b'
+        run: npx playwright test tests/browser/roster-cards.spec.js --project=chrome --project=webkit --retries=0 --output=roster-test-results
+      - name: Profile cards A, real identities, routes and unchanged saves
+        if: matrix.lane == 'b'
+        run: npx playwright test tests/browser/profile-cards.spec.js --project=chrome --project=webkit --retries=0 --output=profile-test-results
+      - name: Diary paper C, complete records, keyboard reading and unchanged saves
+        if: matrix.lane == 'd'
+        run: npx playwright test tests/browser/diary-paper.spec.js --project=chrome --project=webkit --retries=0 --output=diary-test-results
+      - name: New Ed founder, direct-line names and preserved existing saves
+        if: matrix.lane == 'd'
+        run: npx playwright test tests/browser/direct-line-names.spec.js --project=chrome --project=webkit --retries=0 --output=naming-test-results
+      - name: Nine memorial designs, fixed identity and preserved offerings
+        if: matrix.lane == 'a'
+        run: npx playwright test tests/browser/memorial-designs.spec.js --project=chrome --project=webkit --retries=0 --output=memorial-test-results
+      - name: Independent garden visits, legacy saves and notebook resume
+        if: matrix.lane == 'a'
+        run: npx playwright test tests/browser/garden-visits.spec.js --project=chrome --project=webkit --retries=0
+      - name: Hidden bird search hints, narrow screens and unchanged saves
+        if: matrix.lane == 'a'
+        run: npx playwright test tests/browser/encounter-search-hints.spec.js --project=chrome --project=webkit --retries=0 --output=unseen-postcard-test-results
+      - name: Family companion cards, atomic preferences and current outing
+        if: matrix.lane == 'b'
+        run: npx playwright test tests/browser/companion-cards.spec.js --project=chrome --project=webkit --retries=0 --output=companion-test-results
+      - name: Notebook card A, original photos and persistent friendship
+        if: matrix.lane == 'c'
+        run: npx playwright test tests/browser/notebook-card.spec.js --project=chrome --project=webkit --retries=0 --output=notebook-card-test-results
+      - name: Predator card A, original portraits and readable sources
+        if: matrix.lane == 'b'
+        run: npx playwright test tests/browser/predator-catalog-layout.spec.js --project=chrome --project=webkit --retries=0 --output=predator-card-test-results
+      - name: Family portrait cards, responsive zoom and unchanged saves
+        if: matrix.lane == 'a'
+        run: npx playwright test --config=playwright.family-alignment.config.js --retries=0 --output=family-test-results
+      - name: Relationship cards A, directed feelings and unchanged saves
+        if: matrix.lane == 'a'
+        run: npx playwright test tests/browser/relationship-cards.spec.js --project=chrome --project=webkit --retries=0 --output=relationship-test-results
+      - name: Garden bookmark C, selection rows and scene visibility
+        if: matrix.lane == 'c'
+        run: npx playwright test tests/browser/garden-bookmarks.spec.js --project=chrome --project=webkit --retries=0 --output=garden-bookmark-test-results
+      - name: Decoration guarantee, completion and save migration
+        if: matrix.lane == 'd'
+        run: npx playwright test tests/browser/decor-guarantee.spec.js --project=chrome --project=webkit --retries=0
+      - name: Help B guide, native disclosures and unchanged saves
+        if: matrix.lane == 'b'
+        run: npx playwright test --config=playwright.help-guide.config.js --project=chrome --project=webkit --retries=0 --output=help-guide-test-results
+      - uses: actions/upload-artifact@v4
+        if: always() && matrix.lane == 'b'
+        with:
+          name: help-guide-evidence-${{ github.sha }}
+          path: |
+            help-guide-test-results/**/*.png
+            help-guide-test-results/**/*.json
+          retention-days: 14
+      - name: Child-friendly game help, ruby and disclosure panels
+        if: matrix.lane == 'b'
+        run: npx playwright test tests/browser/game-help.spec.js --project=chrome --project=webkit --retries=0
+      - name: Game and site Home Screen targets, navigation and history
+        if: matrix.lane == 'b'
+        run: npx playwright test tests/browser/game-install.spec.js --project=chrome --project=webkit --retries=0 --output=game-install-test-results
+      - name: Game share cards before and after JavaScript
+        if: matrix.lane == 'c'
+        run: npx playwright test tests/browser/game-sharing.spec.js --project=chrome --project=webkit --retries=0
+      - name: Encyclopedia photographs and reduced-motion scroll
+        if: matrix.lane == 'b'
+        run: npx playwright test --config=playwright.editorial.config.js --output=editorial-test-results
+      - name: Site search on mobile WebKit and Chrome
+        if: matrix.lane == 'c'
+        run: npx playwright test --config=playwright.site-search.config.js --project=search-iphone --project=search-android --project=search-chrome --project=search-safari --output=search-test-results
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser-evidence-lane-${{ matrix.lane }}-${{ github.sha }}
+          path: |
+            playwright-report/
+            test-results/
+            companion-test-results/
+            cage-test-results/
+            trial-test-results/
+            family-care-test-results/
+            cleanliness-test-results/
+            growth-test-results/
+            historical-import-test-results/
+            growth-migration-test-results/
+            mobile-readable-test-results/
+            game-device-policy-test-results/
+            game-tablet-test-results/
+            mobile-touch-test-results/
+            health-test-results/
+            memorial-test-results/
+            naming-test-results/
+            roster-test-results/
+            profile-test-results/
+            diary-test-results/
+            consultation-test-results/
+            help-guide-test-results/
+            garden-about-test-results/
+            settings-test-results/
+            menu-test-results/
+            editorial-test-results/
+            search-test-results/
+            notebook-card-test-results/
+            unseen-postcard-test-results/
+            garden-bookmark-test-results/
+            predator-card-test-results/
+            relationship-test-results/
+            family-test-results/
+            game-install-test-results/
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        if: always() && matrix.lane == 'c'
+        with:
+          name: health-a-screenshots-${{ github.sha }}
+          path: health-test-results/**/*.png
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        if: always() && matrix.lane == 'd'
+        with:
+          name: settings-a-screenshots-${{ github.sha }}
+          path: settings-test-results/**/*.png
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        if: always() && matrix.lane == 'd'
+        with:
+          name: approved-menu-screenshots-${{ github.sha }}
+          path: menu-test-results/**/*.png
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        if: always() && matrix.lane == 'a'
+        with:
+          name: memorial-nine-screenshots-${{ github.sha }}
+          path: memorial-test-results/**/*.png
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        if: always() && matrix.lane == 'd'
+        with:
+          name: direct-line-naming-screenshots-${{ github.sha }}
+          path: naming-test-results/**/*.png
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        if: always() && matrix.lane == 'b'
+        with:
+          name: roster-card-screenshots-${{ github.sha }}
+          path: roster-test-results/**/*.png
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        if: always() && matrix.lane == 'b'
+        with:
+          name: profile-card-screenshots-${{ github.sha }}
+          path: profile-test-results/**/*.png
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        if: always() && matrix.lane == 'd'
+        with:
+          name: diary-paper-screenshots-${{ github.sha }}
+          path: diary-test-results/**/*.png
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        if: always() && matrix.lane == 'a'
+        with:
+          name: consultation-letter-evidence-${{ github.sha }}
+          path: |
+            consultation-test-results/**/*.png
+            consultation-test-results/**/*.json
+          retention-days: 14
+  verify:
+    if: always()
+    needs: [build, focused_browser, browser]
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Require every build and browser gate to succeed
+        env:
+          BUILD_RESULT: ${{ needs.build.result }}
+          FOCUSED_RESULT: ${{ needs.focused_browser.result }}
+          BROWSER_TESTS: ${{ needs.build.outputs.browser_tests }}
+          FULL_REQUESTED: ${{ github.event_name == 'workflow_dispatch' && inputs.full_browser }}
+          BROWSER_RESULT: ${{ needs.browser.result }}
         run: |
-          # Keep test output and any failed fixture details runner-local.
-          npx playwright test tests/browser/garden-trail-seven.spec.js --grep '@trail-lane' --project=chrome --project=webkit --retries=0 --reporter=list > /tmp/type-ii-lane.log 2>&1
-      - name: 'Type II flight: four original color assets and contact'
-        timeout-minutes: 12
-        if: ${{ !cancelled() && steps.ready.outcome == 'success' }}
+          test "$BUILD_RESULT" = success
+          if [ "$BROWSER_TESTS" = '[]' ]; then
+            test "$FOCUSED_RESULT" = skipped
+          else
+            test "$FOCUSED_RESULT" = success
+          fi
+          if [ "$FULL_REQUESTED" = true ]; then
+            test "$BROWSER_RESULT" = success
+          else
+            test "$BROWSER_RESULT" = skipped
+          fi
+      - name: Collect evidence without overwriting other lanes
+        if: always() && (needs.focused_browser.result != 'skipped' || needs.browser.result != 'skipped')
+        uses: actions/download-artifact@v4
+        with:
+          pattern: browser-evidence-*-${{ github.sha }}
+          path: browser-evidence
+          merge-multiple: false
+      - uses: actions/upload-artifact@v4
+        if: always() && (needs.focused_browser.result != 'skipped' || needs.browser.result != 'skipped')
+        with:
+          name: browser-evidence-${{ github.sha }}
+          path: browser-evidence/
+          retention-days: 14
+      - uses: actions/download-artifact@v4
+        with:
+          name: verified-build-${{ github.sha }}
+          path: .verified-build
+      - name: Verify and restore the exact build
         run: |
-          # Keep test output and any failed fixture details runner-local.
-          npx playwright test tests/browser/garden-trail-seven.spec.js --grep '@trail-palette' --project=chrome --project=webkit --retries=0 --reporter=list > /tmp/type-ii-palette.log 2>&1
-      - name: 'Type II events: visitor, predator and reduced motion'
-        timeout-minutes: 15
-        if: ${{ !cancelled() && steps.ready.outcome == 'success' }}
+          cd .verified-build
+          sha256sum --check SHA256SUMS
+          test "$(cat SOURCE_SHA)" = "$GITHUB_SHA"
+          tar -xf dist.tar -C ..
+          test -f ../dist/.nojekyll
+      - uses: actions/upload-pages-artifact@v3
+        if: github.ref == 'refs/heads/main'
+        with:
+          path: dist
+  deploy:
+    if: always() && needs.verify.result == 'success' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: verify
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/configure-pages@v5
+      - uses: actions/deploy-pages@v4
+        id: deployment
+        with:
+          timeout: 1800000
+  verify_live:
+    name: verify-published-bytes
+    needs: [build, verify, deploy]
+    if: needs.build.outputs.verify_live == 'true' && needs.verify.result == 'success' && needs.deploy.result == 'success' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/download-artifact@v4
+        with:
+          name: verified-build-${{ github.sha }}
+          path: .verified-build
+      - name: Verify and restore this run's sealed build
         run: |
-          # Keep test output and any failed fixture details runner-local.
-          npx playwright test tests/browser/garden-trail-seven.spec.js --grep '@trail-events' --project=chrome --project=webkit --retries=0 --reporter=list > /tmp/type-ii-events.log 2>&1
+          cd .verified-build
+          sha256sum --check SHA256SUMS
+          test "$(cat SOURCE_SHA)" = "$GITHUB_SHA"
+          tar -xf dist.tar -C ..
+          test -f ../dist/.nojekyll
+      - name: Compare every published file without exporting the build
+        run: node scripts/verify-pages-live.mjs

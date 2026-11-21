@@ -1,0 +1,141 @@
+name: Type II seven-garden diagnostics only
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+permissions:
+  contents: read
+jobs:
+  trail_preflight:
+    name: Type II normal hosted preflight (not deployable)
+    if: github.event.pull_request.draft && startsWith(github.head_ref, 'qa/type2-seven-')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    outputs:
+      source_sha: ${{ steps.source.outputs.sha }}
+    steps:
+      - name: Fetch the exact PR merge commit and history
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify checked-out merge commit
+        id: source
+        run: |
+          set -eu
+          sha="$(git rev-parse --verify HEAD)"
+          test "$sha" = "$GITHUB_SHA"
+          printf 'sha=%s\n' "$sha" >> "$GITHUB_OUTPUT"
+      - name: Verify reviewed live base is fetched
+        env:
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -eu
+          test "$PR_BASE" = '41bd702712ef9af1c1c80b6322f5351be1ef6bb8'
+          git cat-file -e "$PR_BASE^{commit}"
+      - name: Verify reviewed manifest path and exact seven-garden case
+        env:
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFileSync, existsSync } from 'node:fs';
+          const manifest=JSON.parse(readFileSync('.github/browser-checks.json','utf8'));
+          const expected='tests/browser/garden-trail-seven.spec.js';
+          if(manifest.base!==process.env.PR_BASE||!Array.isArray(manifest.tests)||
+             manifest.tests.length!==1||manifest.tests[0]!==expected||!existsSync(expected))
+            throw Error('Unexpected reviewed manifest');
+          NODE
+      - name: Run the ordinary source-diff scope selector
+        run: node scripts/browser-scope.mjs
+      - run: npm ci
+      - name: Ordinary syntax and content checks
+        run: npm run check
+      - name: Ordinary Node tests and protected build ledger
+        run: npm test
+      - name: Ordinary build output
+        run: npm run build
+
+  private_trail_diagnostic:
+    name: Type II browser diagnostics (not deployable)
+    needs: trail_preflight
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    container:
+      image: mcr.microsoft.com/playwright:v1.64.1-noble
+    steps:
+      - name: Fetch the same tested commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.trail_preflight.outputs.source_sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify browser source equals hosted preflight source
+        env:
+          TESTED_SHA: ${{ needs.trail_preflight.outputs.source_sha }}
+        run: |
+          set -eu
+          test "$TESTED_SHA" = "$GITHUB_SHA"
+          test "$(git rev-parse --verify HEAD)" = "$TESTED_SHA"
+      - run: npm ci
+      - name: Rebuild same-source browser fixture without transferring files
+        run: npm run build
+      - name: Require the browser image and installed Playwright versions to match
+        run: node -e "if(require('@playwright/test/package.json').version !== '1.64.1') throw Error('Update official browser image to match Playwright');"
+      - name: Install official Google Chrome using prepared dependencies
+        timeout-minutes: 5
+        run: |
+          curl --fail --location --retry 2 --max-time 120 https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb --output /tmp/google-chrome.deb
+          dpkg-deb --extract /tmp/google-chrome.deb /
+          ldd /opt/google/chrome/chrome > /tmp/chrome-libraries.txt
+          if grep -q 'not found' /tmp/chrome-libraries.txt; then exit 1; fi
+          /opt/google/chrome/chrome --version
+      - name: Prepare real media device
+        run: |
+          apt-get update -qq
+          apt-get install -y pulseaudio pulseaudio-utils ffmpeg
+          export PULSE_RUNTIME_PATH=/tmp/ci-pulse-runtime
+          export PULSE_STATE_PATH=/tmp/ci-pulse-state
+          mkdir -p "$PULSE_RUNTIME_PATH" "$PULSE_STATE_PATH" /tmp/ci-pulse-home
+          echo "PULSE_RUNTIME_PATH=$PULSE_RUNTIME_PATH" >> "$GITHUB_ENV"
+          HOME=/tmp/ci-pulse-home pulseaudio --daemonize=yes --exit-idle-time=-1 --log-target=stderr
+          pactl load-module module-null-sink sink_name=ci_audio sink_properties=device.description=CI_Audio
+          pactl set-default-sink ci_audio
+      - name: Verify the 108 reviewed browser case declarations
+        id: ready
+        run: |
+          set -eu
+          for entry in roster:44 lane:14 palette:20 events:30; do
+            group="${entry%:*}"
+            count="${entry#*:}"
+            report="$(npx playwright test tests/browser/garden-trail-seven.spec.js --grep "@trail-$group" --project=chrome --project=webkit --list)"
+            printf '%s\n' "$report" | grep -Eq "^Total: $count tests in 1 file$"
+          done
+      - name: 'Type II roster: both portraits, rotation and native touch'
+        timeout-minutes: 15
+        if: ${{ !cancelled() && steps.ready.outcome == 'success' }}
+        run: |
+          # Keep test output and any failed fixture details runner-local.
+          npx playwright test tests/browser/garden-trail-seven.spec.js --grep '@trail-roster' --project=chrome --project=webkit --retries=0 --reporter=list > /tmp/type-ii-roster.log 2>&1
+      - name: 'Type II lane: surveyed dry bays and waiting'
+        timeout-minutes: 10
+        if: ${{ !cancelled() && steps.ready.outcome == 'success' }}
+        run: |
+          # Keep test output and any failed fixture details runner-local.
+          npx playwright test tests/browser/garden-trail-seven.spec.js --grep '@trail-lane' --project=chrome --project=webkit --retries=0 --reporter=list > /tmp/type-ii-lane.log 2>&1
+      - name: 'Type II flight: four original color assets and contact'
+        timeout-minutes: 12
+        if: ${{ !cancelled() && steps.ready.outcome == 'success' }}
+        run: |
+          # Keep test output and any failed fixture details runner-local.
+          npx playwright test tests/browser/garden-trail-seven.spec.js --grep '@trail-palette' --project=chrome --project=webkit --retries=0 --reporter=list > /tmp/type-ii-palette.log 2>&1
+      - name: 'Type II events: visitor, predator and reduced motion'
+        timeout-minutes: 15
+        if: ${{ !cancelled() && steps.ready.outcome == 'success' }}
+        run: |
+          # Keep test output and any failed fixture details runner-local.
+          npx playwright test tests/browser/garden-trail-seven.spec.js --grep '@trail-events' --project=chrome --project=webkit --retries=0 --reporter=list > /tmp/type-ii-events.log 2>&1
