@@ -43,6 +43,13 @@ async function start(page,count,earned=false){
  expect(page.url()).toBe(base+'game/');
  await save(page,w);
  await page.reload();
+ const continueOnThisDevice=page.locator('.game-environment-notice[open]')
+  .getByRole('button',{name:'このまま遊ぶ',exact:true});
+ // The intro attribute alone can say done while the live device dialog blocks input.
+ const ready=page.locator('body[data-game-intro="done"][data-game-device]:not([data-game-view-blocked])');
+ await expect(continueOnThisDevice.or(ready).first()).toBeVisible();
+ if(await continueOnThisDevice.isVisible())await continueOnThisDevice.click();
+ await expect(ready).toBeVisible();
  await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');
  return w;
 }
