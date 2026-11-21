@@ -33,7 +33,7 @@ jobs:
           import { readFileSync, appendFileSync } from 'node:fs';
           const files = ['.github/browser-checks.json','.github/workflows/pages.yml','package.json','package-lock.json',
             'scripts/build.mjs','src/encounter-ui.js','src/garden-actor-motion.js','src/garden-trail-runtime.js','src/garden-trail-clearance.js',
-            'tests/browser/garden-trail-causal.spec.js','tests/browser/garden-trail-interior-native.spec.js','tests/fixtures/garden-terrain-browser.js'];
+            'tests/browser/garden-trail-causal.spec.js','tests/browser/garden-trail-interior-native.spec.js','tests/browser/garden-trail-interior-stages.spec.js','tests/fixtures/garden-terrain-browser.js'];
           const hash = createHash('sha256');
           for (const path of files) {
             const bytes = readFileSync(path);
@@ -106,7 +106,7 @@ jobs:
           import { readFileSync, appendFileSync } from 'node:fs';
           const files = ['.github/browser-checks.json','.github/workflows/pages.yml','package.json','package-lock.json',
             'scripts/build.mjs','src/encounter-ui.js','src/garden-actor-motion.js','src/garden-trail-runtime.js','src/garden-trail-clearance.js',
-            'tests/browser/garden-trail-causal.spec.js','tests/browser/garden-trail-interior-native.spec.js','tests/fixtures/garden-terrain-browser.js'];
+            'tests/browser/garden-trail-causal.spec.js','tests/browser/garden-trail-interior-native.spec.js','tests/browser/garden-trail-interior-stages.spec.js','tests/fixtures/garden-terrain-browser.js'];
           const hash = createHash('sha256');
           for (const path of files) {
             const bytes = readFileSync(path);
@@ -148,6 +148,11 @@ jobs:
           report="$(npx playwright test tests/browser/garden-trail-causal.spec.js --grep '@causal-maximum-fit' --project=chrome --project=webkit --list)"
           printf '%s\n' "$report" | grep -Eq "^Total: 2 tests in 1 file$"
 
+          for garden in 10 14; do
+            report="$(npx playwright test tests/browser/garden-trail-interior-stages.spec.js --grep "@interior-stages-$garden" --project=chrome --project=webkit --list)"
+            printf '%s\n' "$report" | grep -Eq "^Total: 2 tests in 1 file$"
+          done
+
       - name: '09 original strict acceptance in Chrome and WebKit'
         timeout-minutes: 4
         if: ${{ !cancelled() && steps.ready.outcome == 'success' }}
@@ -160,3 +165,331 @@ jobs:
         timeout-minutes: 4
         if: ${{ !cancelled() && steps.ready.outcome == 'success' }}
         run: npx playwright test tests/browser/garden-trail-interior-native.spec.js --grep '@interior-14' --project=chrome --project=webkit --retries=0 --reporter=list
+
+      - name: '#10 and #14 collect one play per real engine, fixed stage verdicts only'
+        id: interior_stages
+        timeout-minutes: 6
+        if: ${{ !cancelled() && steps.ready.outcome == 'success' }}
+        run: |
+          set -eu
+          stage_dir="$RUNNER_TEMP/type2-interior-stage-verdicts"
+          test ! -e "$stage_dir"
+          mkdir -m 700 "$stage_dir"
+          TYPE2_STAGE_STATUS_DIR="$stage_dir" npx playwright test tests/browser/garden-trail-interior-stages.spec.js --project=chrome --project=webkit --retries=0 --reporter=list
+          for pair in 10-chrome 10-webkit 14-chrome 14-webkit; do test -s "$stage_dir/$pair.json"; done
+      - name: '#10 chrome ready'
+        env:
+          TYPE2_CHECK_FILE: '10-chrome.json'
+          TYPE2_CHECK_KEY: 'ready'
+        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
+        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
+      - name: '#10 chrome native'
+        env:
+          TYPE2_CHECK_FILE: '10-chrome.json'
+          TYPE2_CHECK_KEY: 'native'
+        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
+        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
+      - name: '#10 chrome eligible'
+        env:
+          TYPE2_CHECK_FILE: '10-chrome.json'
+          TYPE2_CHECK_KEY: 'eligible'
+        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
+        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
+      - name: '#10 chrome pair-offered'
+        env:
+          TYPE2_CHECK_FILE: '10-chrome.json'
+          TYPE2_CHECK_KEY: 'pair-offered'
+        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
+        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
+      - name: '#10 chrome swept'
+        env:
+          TYPE2_CHECK_FILE: '10-chrome.json'
+          TYPE2_CHECK_KEY: 'swept'
+        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
+        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
+      - name: '#10 chrome sampled'
+        env:
+          TYPE2_CHECK_FILE: '10-chrome.json'
+          TYPE2_CHECK_KEY: 'sampled'
+        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
+        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
+      - name: '#10 chrome adapter'
+        env:
+          TYPE2_CHECK_FILE: '10-chrome.json'
+          TYPE2_CHECK_KEY: 'adapter'
+        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
+        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
+      - name: '#10 chrome ingress-reserved'
+        env:
+          TYPE2_CHECK_FILE: '10-chrome.json'
+          TYPE2_CHECK_KEY: 'ingress-reserved'
+        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
+        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
+      - name: '#10 chrome ingress-grounded'
+        env:
+          TYPE2_CHECK_FILE: '10-chrome.json'
+          TYPE2_CHECK_KEY: 'ingress-grounded'
+        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
+        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
+      - name: '#10 chrome flight-reserved'
+        env:
+          TYPE2_CHECK_FILE: '10-chrome.json'
+          TYPE2_CHECK_KEY: 'flight-reserved'
+        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
+        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
+      - name: '#10 chrome phases'
+        env:
+          TYPE2_CHECK_FILE: '10-chrome.json'
+          TYPE2_CHECK_KEY: 'phases'
+        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
+        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
+      - name: '#10 chrome paint'
+        env:
+          TYPE2_CHECK_FILE: '10-chrome.json'
+          TYPE2_CHECK_KEY: 'paint'
+        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
+        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
+      - name: '#10 chrome landing'
+        env:
+          TYPE2_CHECK_FILE: '10-chrome.json'
+          TYPE2_CHECK_KEY: 'landing'
+        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
+        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
+      - name: '#10 webkit ready'
+        env:
+          TYPE2_CHECK_FILE: '10-webkit.json'
+          TYPE2_CHECK_KEY: 'ready'
+        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
+        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
+      - name: '#10 webkit native'
+        env:
+          TYPE2_CHECK_FILE: '10-webkit.json'
+          TYPE2_CHECK_KEY: 'native'
+        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
+        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
+      - name: '#10 webkit eligible'
+        env:
+          TYPE2_CHECK_FILE: '10-webkit.json'
+          TYPE2_CHECK_KEY: 'eligible'
+        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
+        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
+      - name: '#10 webkit pair-offered'
+        env:
+          TYPE2_CHECK_FILE: '10-webkit.json'
+          TYPE2_CHECK_KEY: 'pair-offered'
+        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
+        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
+      - name: '#10 webkit swept'
+        env:
+          TYPE2_CHECK_FILE: '10-webkit.json'
+          TYPE2_CHECK_KEY: 'swept'
+        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
+        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
+      - name: '#10 webkit sampled'
+        env:
+          TYPE2_CHECK_FILE: '10-webkit.json'
+          TYPE2_CHECK_KEY: 'sampled'
+        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
+        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
+      - name: '#10 webkit adapter'
+        env:
+          TYPE2_CHECK_FILE: '10-webkit.json'
+          TYPE2_CHECK_KEY: 'adapter'
+        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
+        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
+      - name: '#10 webkit ingress-reserved'
+        env:
+          TYPE2_CHECK_FILE: '10-webkit.json'
+          TYPE2_CHECK_KEY: 'ingress-reserved'
+        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
+        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
+      - name: '#10 webkit ingress-grounded'
+        env:
+          TYPE2_CHECK_FILE: '10-webkit.json'
+          TYPE2_CHECK_KEY: 'ingress-grounded'
+        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
+        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
+      - name: '#10 webkit flight-reserved'
+        env:
+          TYPE2_CHECK_FILE: '10-webkit.json'
+          TYPE2_CHECK_KEY: 'flight-reserved'
+        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
+        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
+      - name: '#10 webkit phases'
+        env:
+          TYPE2_CHECK_FILE: '10-webkit.json'
+          TYPE2_CHECK_KEY: 'phases'
+        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
+        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
+      - name: '#10 webkit paint'
+        env:
+          TYPE2_CHECK_FILE: '10-webkit.json'
+          TYPE2_CHECK_KEY: 'paint'
+        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
+        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
+      - name: '#10 webkit landing'
+        env:
+          TYPE2_CHECK_FILE: '10-webkit.json'
+          TYPE2_CHECK_KEY: 'landing'
+        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
+        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
+      - name: '#14 chrome ready'
+        env:
+          TYPE2_CHECK_FILE: '14-chrome.json'
+          TYPE2_CHECK_KEY: 'ready'
+        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
+        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
+      - name: '#14 chrome native'
+        env:
+          TYPE2_CHECK_FILE: '14-chrome.json'
+          TYPE2_CHECK_KEY: 'native'
+        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
+        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
+      - name: '#14 chrome eligible'
+        env:
+          TYPE2_CHECK_FILE: '14-chrome.json'
+          TYPE2_CHECK_KEY: 'eligible'
+        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
+        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
+      - name: '#14 chrome pair-offered'
+        env:
+          TYPE2_CHECK_FILE: '14-chrome.json'
+          TYPE2_CHECK_KEY: 'pair-offered'
+        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
+        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
+      - name: '#14 chrome swept'
+        env:
+          TYPE2_CHECK_FILE: '14-chrome.json'
+          TYPE2_CHECK_KEY: 'swept'
+        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
+        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
+      - name: '#14 chrome sampled'
+        env:
+          TYPE2_CHECK_FILE: '14-chrome.json'
+          TYPE2_CHECK_KEY: 'sampled'
+        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
+        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
+      - name: '#14 chrome adapter'
+        env:
+          TYPE2_CHECK_FILE: '14-chrome.json'
+          TYPE2_CHECK_KEY: 'adapter'
+        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
+        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
+      - name: '#14 chrome ingress-reserved'
+        env:
+          TYPE2_CHECK_FILE: '14-chrome.json'
+          TYPE2_CHECK_KEY: 'ingress-reserved'
+        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
+        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
+      - name: '#14 chrome ingress-grounded'
+        env:
+          TYPE2_CHECK_FILE: '14-chrome.json'
+          TYPE2_CHECK_KEY: 'ingress-grounded'
+        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
+        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
+      - name: '#14 chrome flight-reserved'
+        env:
+          TYPE2_CHECK_FILE: '14-chrome.json'
+          TYPE2_CHECK_KEY: 'flight-reserved'
+        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
+        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
+      - name: '#14 chrome phases'
+        env:
+          TYPE2_CHECK_FILE: '14-chrome.json'
+          TYPE2_CHECK_KEY: 'phases'
+        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
+        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
+      - name: '#14 chrome paint'
+        env:
+          TYPE2_CHECK_FILE: '14-chrome.json'
+          TYPE2_CHECK_KEY: 'paint'
+        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
+        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
+      - name: '#14 chrome landing'
+        env:
+          TYPE2_CHECK_FILE: '14-chrome.json'
+          TYPE2_CHECK_KEY: 'landing'
+        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
+        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
+      - name: '#14 webkit ready'
+        env:
+          TYPE2_CHECK_FILE: '14-webkit.json'
+          TYPE2_CHECK_KEY: 'ready'
+        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
+        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
+      - name: '#14 webkit native'
+        env:
+          TYPE2_CHECK_FILE: '14-webkit.json'
+          TYPE2_CHECK_KEY: 'native'
+        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
+        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
+      - name: '#14 webkit eligible'
+        env:
+          TYPE2_CHECK_FILE: '14-webkit.json'
+          TYPE2_CHECK_KEY: 'eligible'
+        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
+        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
+      - name: '#14 webkit pair-offered'
+        env:
+          TYPE2_CHECK_FILE: '14-webkit.json'
+          TYPE2_CHECK_KEY: 'pair-offered'
+        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
+        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
+      - name: '#14 webkit swept'
+        env:
+          TYPE2_CHECK_FILE: '14-webkit.json'
+          TYPE2_CHECK_KEY: 'swept'
+        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
+        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
+      - name: '#14 webkit sampled'
+        env:
+          TYPE2_CHECK_FILE: '14-webkit.json'
+          TYPE2_CHECK_KEY: 'sampled'
+        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
+        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
+      - name: '#14 webkit adapter'
+        env:
+          TYPE2_CHECK_FILE: '14-webkit.json'
+          TYPE2_CHECK_KEY: 'adapter'
+        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
+        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
+      - name: '#14 webkit ingress-reserved'
+        env:
+          TYPE2_CHECK_FILE: '14-webkit.json'
+          TYPE2_CHECK_KEY: 'ingress-reserved'
+        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
+        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
+      - name: '#14 webkit ingress-grounded'
+        env:
+          TYPE2_CHECK_FILE: '14-webkit.json'
+          TYPE2_CHECK_KEY: 'ingress-grounded'
+        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
+        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
+      - name: '#14 webkit flight-reserved'
+        env:
+          TYPE2_CHECK_FILE: '14-webkit.json'
+          TYPE2_CHECK_KEY: 'flight-reserved'
+        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
+        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
+      - name: '#14 webkit phases'
+        env:
+          TYPE2_CHECK_FILE: '14-webkit.json'
+          TYPE2_CHECK_KEY: 'phases'
+        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
+        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
+      - name: '#14 webkit paint'
+        env:
+          TYPE2_CHECK_FILE: '14-webkit.json'
+          TYPE2_CHECK_KEY: 'paint'
+        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
+        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
+      - name: '#14 webkit landing'
+        env:
+          TYPE2_CHECK_FILE: '14-webkit.json'
+          TYPE2_CHECK_KEY: 'landing'
+        if: ${{ !cancelled() && steps.interior_stages.outcome == 'success' }}
+        run: node -e 'const fs=require("fs"),path=require("path");const s=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"type2-interior-stage-verdicts",process.env.TYPE2_CHECK_FILE),"utf8"));const v=s[process.env.TYPE2_CHECK_KEY];process.exit(v==="pass"||v==="direct"?0:1);'
+
+      - name: Remove the bounded scratch verdicts
+        if: ${{ always() }}
+        run: rm -f "$RUNNER_TEMP/type2-interior-stage-verdicts/10-chrome.json" "$RUNNER_TEMP/type2-interior-stage-verdicts/10-webkit.json" "$RUNNER_TEMP/type2-interior-stage-verdicts/14-chrome.json" "$RUNNER_TEMP/type2-interior-stage-verdicts/14-webkit.json"
