@@ -230,10 +230,9 @@ export function createGardenActorMotion(root){
   // This branch uses translation-invariant measurements because the pane,
   // backdrop and bird model share one fixed projection. Obstacles are only
   // clipped out after proving their real bounds never enter the pane.
-  const shared=terrain.number===7&&stage.closest('[data-garden-shared-play="proof"]')&&
-   Math.abs(s.width-390)<.1&&Math.abs(s.height-235)<.1&&Math.abs(p.width-700)<.1;
+  const roomOwner=terrain.number===7?stage.closest('[data-garden-shared-play="proof"]'):null;
+  const shared=roomOwner&&Math.abs(s.width-390)<.1&&Math.abs(s.height-235)<.1&&Math.abs(p.width-700)<.1;
   const sharedRoom=shared&&[8,10].includes(definitions.length);
-  const roomOwner=stage.closest('[data-garden-shared-play="proof"]');
   const abandonShared=reason=>{
    roomOwner.dataset.gardenSharedStatus=reason;
    roomOwner.dataset.gardenSharedPlay='fallback';

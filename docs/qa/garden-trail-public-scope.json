@@ -23,7 +23,7 @@
     },
     "src/garden-actor-motion.js": {
       "before": "2dfdb5f374f29fa1af3af667be36c9857714e2b849b2da34e67a615234a4dc7c",
-      "after": "fabcaa006e70e452307ce8c6fcba10ebd35e084f5e38198aaf857165f44d5093"
+      "after": "14d6f6879643ca671c9502ea5795fcd738fd13112ae3544f560e9c1b7386ed51"
     },
     "src/garden-actor-state.js": {
       "before": "311bb2ced9b28ce172627f8ac81de9f647420e01d0d5f9706c925e2f86c42301",
