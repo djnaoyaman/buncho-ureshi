@@ -2091,6 +2091,21 @@ body[data-world="buncho"] .game-app[data-panel="garden"] .game-garden-care [data
  body[data-world="buncho"][data-scene-controls="closed"]:has(.game-room[data-home-crowded="true"]) .game-scene-controls-toggle .game-scene-mode-icon{width:28px;height:28px}
 }
 
+
+/* #34 landscape: keep all closed story controls in the genuine side rail,
+   outside the 375px courtyard. Expanded details keep their native layout. */
+@media (min-width:600px) and (min-height:375px) and (orientation:landscape) {
+ body[data-world="buncho"] .game-encounter-host .finch-garden[data-garden-masked-play="candidate"] > .finch-garden-stage[data-garden-count="10"][data-garden-masked-pane="eligible"] ~ .leaf-gift[data-garden-details]:not(.leaf-gift-diary):not([open]) {
+  --masked-story-slot:0px;
+  top:calc(var(--garden-jog-top) + var(--garden-jog-height) + 1px + var(--masked-story-slot));
+  right:var(--garden-story-right);
+  bottom:auto;
+  left:auto;
+ }
+ body[data-world="buncho"] .game-encounter-host .finch-garden[data-garden-masked-play="candidate"] > .finch-garden-stage[data-garden-count="10"][data-garden-masked-pane="eligible"] ~ .leaf-gift[data-garden-details="expedition"]:not([open]) {--masked-story-slot:54px}
+ body[data-world="buncho"] .game-encounter-host .finch-garden[data-garden-masked-play="candidate"] > .finch-garden-stage[data-garden-count="10"][data-garden-masked-pane="eligible"] ~ .leaf-gift[data-garden-details="showcase"]:not([open]) {--masked-story-slot:108px}
+}
+
 /* 10 小さな舞台: decorative miniature props, existing navigation semantics.
    PNG + ordinary gradients work on iOS 15; no relational-selector dependency. */
 body[data-world="buncho"] .game-app[data-panel="garden"] .game-field-nav button {

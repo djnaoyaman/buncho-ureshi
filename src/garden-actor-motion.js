@@ -12,6 +12,20 @@ const sharedStageLeases=new WeakSet();
 export const hasSharedStageLease=stage=>!!stage&&sharedStageLeases.has(stage);
 
 
+// Distinct #34 cold policy: the nominated actor starts at its authored
+// gate and the destination remains open. Dissimilar guest and resident
+// sprites are packed with measured per-actor domains, not roster order.
+export function planMaskedPaneSeats({actors,lead,gate,parking,preferred,canPlace,standingPairFits,standingClass,admit}){
+ if(actors.length!==10||!lead||!actors.includes(lead)||!gate||parking.length<9)return null;
+ const prefers=new Map(preferred);prefers.set(lead.id,gate);
+ return packTrailStandingSeats({actors,seats:[gate,...parking],preferred:prefers,standingPairFits,standingClass,
+  canPlace(a,n,partial){
+   return (a===lead?n===gate:n!==gate)&&canPlace(a,n,partial);
+  },
+  accept:admit,maxChecks:26000,maxBranches:2200,maxProbes:5
+ });
+}
+
 // Cold #34 only: a tap-safe standing pack can still leave no pocket because
 // native motion uses the larger swept shapes. Try a bounded one-seat
 // alternative before first paint, and never displace a live occupant.
@@ -117,7 +131,7 @@ export function trail7IdleDisposition({ground,nominal,centerOutside,controlConta
 }
 
 export function createGardenActorMotion(root){
- let axisIdleHold=null,sharedAdmission=null;
+ let axisIdleHold=null,sharedAdmission=null,maskedLegacy=null;
  const samePoint=(a,b)=>a?.length===2&&b?.length===2&&a.every((x,i)=>Math.abs(x-b[i])<1e-8);
  let trailRuntime=null,nextTrail=0,trailRetry=false,trailMeasurement=null,trailPads=[];
  const bindings=new Map(),routeCache=new WeakMap();let model=null,key='',canonicalRetryKey=null,pinnedTrail=null,geometryKey='',rosterKey='',footholds=[],layoutWidth=64,standingOnly=false,geometry=null,terrain=null,overlayStyle=null,rejected=null,paintedWideCrop=null;
@@ -192,6 +206,14 @@ export function createGardenActorMotion(root){
     trailRuntime=createGardenTrailRuntime(stage.dataset.gardenId,model,pinnedTrail??undefined);
    }
   }
+  // A same-world redraw can replace the section markup before the
+  // runtime sees it. Keep an already chosen #34 fallback in cover before
+  // the new section is sampled; do not clear or move its existing actors.
+  if(maskedLegacy&&maskedLegacy.key!==nextKey)maskedLegacy=null;
+  if(terrain.number===34&&maskedLegacy?.key===nextKey){
+   const incoming=stage.closest('[data-garden-masked-play="candidate"]');
+   if(incoming){incoming.dataset.gardenMaskedPlay='fallback';incoming.dataset.gardenSharedStatus=maskedLegacy.reason;}
+  }
   const pairedVariant=!!pinnedTrail;
   // One canonical restart is allowed before binding any actor or reserving a
   // route. The chosen profile is never swapped on subsequent joins/rebinds.
@@ -257,7 +279,8 @@ export function createGardenActorMotion(root){
   const sharedRoom=shared&&expectedCount;
   const abandonShared=reason=>{
    roomOwner.dataset.gardenSharedStatus=reason;
-   if(masked)roomOwner.dataset.gardenMaskedPlay='fallback';else roomOwner.dataset.gardenSharedPlay='fallback';
+   if(masked){maskedLegacy={key:nextKey,reason};roomOwner.dataset.gardenMaskedPlay='fallback';}
+   else roomOwner.dataset.gardenSharedPlay='fallback';
    dispose();
    return this.step(elapsed,active,overrides,{settle,geometryOnly,predator});
   };
@@ -269,6 +292,12 @@ export function createGardenActorMotion(root){
   if(supportedRoom&&!shared&&!model.actors.size)return abandonShared('projection');
   // A retained ordinary pack cannot be assigned new places merely because
   // this replacement owner advertises the proof pane. No mid-session upgrade.
+  if(masked&&supportedRoom&&model.actors.size&&!sharedAdmission){
+   maskedLegacy={key:nextKey,reason:'retained-unproven'};
+   roomOwner.dataset.gardenMaskedPlay='fallback';
+   roomOwner.dataset.gardenSharedStatus=maskedLegacy.reason;
+   return this.step(elapsed,active,overrides,{settle,geometryOnly,predator});
+  }
   if(supportedRoom&&model.actors.size&&!sharedAdmission){
    roomOwner.dataset.gardenSharedStatus='retained-unproven';
    return false;
@@ -521,7 +550,8 @@ export function createGardenActorMotion(root){
   const routeFits=a=>!a.route||routeSamples(a).every(f=>pointFits(a,f.p,f.height));
   if(sharedRoom){
    if(!fixedFlight.size&&geometry.obstacles.length)return abandonShared('chrome');
-   if(!fixedFlight.size&&[...sharedGates,...sharedParking].some(n=>!safePoint(n.p,actorWidth,actorWidth*1000/850)))
+   if(!fixedFlight.size&&(!masked&&[...sharedGates,...sharedParking].some(n=>!safePoint(n.p,actorWidth,actorWidth*1000/850))||
+     masked&&sharedGates.some(n=>!safePoint(n.p,actorWidth,actorWidth*1000/850))))
     return abandonShared('seat');
    for(const n of [...sharedGates,...sharedParking]){
     if(!trailPads.some(x=>x.id===n.id))trailPads.push(n);
@@ -531,7 +561,7 @@ export function createGardenActorMotion(root){
   let planned=null,coldSharedAdmission=null,reboundShared=false;
   if(sharedAdmission&&roomOwner&&(revalidateSharedOcclusion||roomOwner!==sharedAdmission.owner||resized||changedBindings||populationChanged)){
    const current=[...model.actors.values()],plan=new Map(),lifts=new Map();
-   const allowed=new Map([...sharedGates,...sharedParking].map(n=>[n.id,n.p]));
+   const allowed=new Map([...sharedGates,...sharedParking,...(masked?sharedAdmission.maskedPoints?.values()??[]:[])].map(n=>[n.id,n.p]));
    const prior=sharedAdmission;
    const valid=sharedRoom&&prior.signature===JSON.stringify([p.width,p.height,localRect(geometry.clip)])&&
     current.length===prior.seats.size&&current.length===definitions.length&&
@@ -574,6 +604,64 @@ export function createGardenActorMotion(root){
    }};
    if(peers.size){
     planned=assignTrailSeats(input);
+   }else if(masked&&sharedRoom){
+    const lead=roster.find(d=>d.initialFlight&&d.movable);
+    const preferred=new Map(),parking=[],known=new Set();
+    const add=(point,node=null)=>{
+     const k=point.join(':');if(known.has(k)||!safePoint(point,actorWidth,actorWidth*1000/850))return;
+     known.add(k);parking.push(node??{id:'masked-park:'+k,p:point});
+    };
+    sharedParking.forEach(n=>add(n.p,n));
+    // A sparse deterministic lattice near the surveyed parking row is
+    // only a list of hypotheses. Native footprints own every final check.
+    for(const [dx,dy]of [[-9,0],[9,0],[0,-4],[0,4],[-18,0],[18,0],[-9,-4],[9,4],[0,-8],[0,8]]){
+     for(const [x,y]of profile.parking){
+      if(parking.length>=50)break;
+      add(sharedAt([x+dx,y+dy]));
+     }
+    }
+    // Filter each peer using the one exact planned native flight before
+    // packing. Otherwise five near-identical shelves can all impinge on
+    // the same wing sweep and spend all complete native probe slots.
+    if(!lead)return abandonShared('seat');
+    const gateProbe=createGardenActors(key,elapsed);
+    gateProbe.reconcile([{...lead,canFly:true}],[sharedGates[0]]);
+    const gateRuntime=createGardenTrailRuntime(stage.dataset.gardenId,gateProbe,terrain);
+    gateRuntime.sync({generation:key,measurement});
+    const [source,target]=sharedGates;
+    const predicted=gateProbe.previewPath(lead.id,target,[source.p,target.p],'fly',{width:p.width,planeHeight:p.height,height:terrain.height});
+    if(!predicted||!routeFits(predicted)||!gateRuntime.recoveryFits(predicted,target,new Map()))return abandonShared('route');
+    const clearance=new Map();
+    const canKeepRunway=(a,n)=>{
+     if(a===lead)return true;
+     const k=JSON.stringify([a.id,n.id]);
+     if(!clearance.has(k)){
+      const peer={...a,p:n.p,route:null};
+      clearance.set(k,gateRuntime.recoveryFits(predicted,target,new Map([[a.id,peer]])));
+     }
+     return clearance.get(k);
+    };
+    const trialFor=plan=>{
+     const probe=createGardenActors(key,elapsed);
+     const probeRoster=roster.map(d=>d===lead?{...d,canFly:true}:d);
+     probe.reconcile(probeRoster,[...plan.values()],(a,n)=>plan.get(a.id)===n);
+     if(probe.actors.size!==roster.length)return false;
+     const trial=createGardenTrailRuntime(stage.dataset.gardenId,probe,terrain);
+     trial.sync({generation:key,measurement});
+     return !!trial.sharedPaneFlight(sharedGates,{paintable:routeFits});
+    };
+    let swarmCanFly=false;
+    planned=planMaskedPaneSeats({actors:roster,lead,gate:sharedGates[0],parking,preferred,
+     canPlace:(a,n,peers)=>canKeepRunway(a,n)&&input.canPlace(a,n,peers),standingPairFits:trailRuntime.standingPairFits,
+     standingClass:a=>measurement?.footprints.get(a.id),admit(plan){
+      if(!trialFor(plan))return false;
+      swarmCanFly=true;
+      return nativeTrailHits(plan,{requireNative:true});
+     }});
+    if(!planned)return abandonShared(swarmCanFly?'hit':'seat');
+    addTrailContacts(planned);
+    coldSharedAdmission={owner:roomOwner,lead:lead.id,seats:new Map([...planned].map(([id,n])=>[id,n.id])),
+     maskedPoints:new Map(planned),signature:JSON.stringify([p.width,p.height,localRect(geometry.clip)])};
    }else if(sharedRoom){
     const lead=roster.find(d=>d.initialFlight&&d.movable)??roster.find(d=>d.movable);
     const plan=new Map([[lead?.id,sharedGates[0]]]);
