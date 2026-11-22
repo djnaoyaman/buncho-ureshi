@@ -54,11 +54,15 @@ const snapshot=page=>page.evaluate(()=>{
  return {ready:stage.dataset.sceneState,mode:root.dataset.gardenMaskedPlay,status:root.dataset.gardenSharedStatus,
   imageReady:source.complete&&source.naturalWidth>0,source:source.currentSrc,world:root.dataset.gardenWorld,
   activeBefore:!window.__masked34||(window.__masked34.stage===stage&&window.__masked34.native.every((n,i)=>n===native[i])),
-  camera:[p.width,p.height,a.width,a.height,a.left-p.left,a.top-p.top].map(x=>Math.round(x*100)/100),controls,birds};
+  camera:[p.width,p.height,a.width,a.height,a.left-p.left,a.top-p.top],controls,birds};
 });
 function verify(s,expectedIds,expectedSource){
  expect(s.mode).toBe('candidate');expect(s.status).toBe('admitted');expect(s.ready).toBe('ready');expect(s.imageReady).toBe(true);
- expect(s.camera).toEqual([375,157,750,1334.04,-180,-731.33]);
+ const artHeight=750*1672/940;
+ const authoredCamera=[375,157,750,artHeight,-180,157*.78-.64*artHeight];
+ // At most two CSS layout quanta (1/64 px each), independent of fit or viewport.
+ for(const [i,expected] of authoredCamera.entries())
+  expect(Math.abs(s.camera[i]-expected),`fixed camera component ${i}: ${s.camera[i]}`).toBeLessThanOrEqual(1/32);
  expect(s.activeBefore).toBe(true);
  if(expectedSource)expect(s.source).toBe(expectedSource);
  const ids=s.birds.map(b=>b.id);
@@ -100,6 +104,7 @@ for(const [first,second] of pairs)test(`#34 fixed courtyard, ${first.width}×${f
   expect(before,'a bird should be visibly in flight before rotation').toBeTruthy();
   await page.setViewportSize(second);
   const exact=await take();verify(exact,ids,initial.source);expect(exact.world).toBe(initial.world);
+  for(const [i,n] of initial.camera.entries())expect(Math.abs(exact.camera[i]-n),`camera drift after rotation: ${i}`).toBeLessThanOrEqual(1/32);
   const current=exact.birds.find(b=>b.id===before.id);
   expect([current.phase,current.node,current.target,current.x,current.y,current.wing]).toEqual([before.phase,before.node,before.target,before.x,before.y,true]);
   const phases=[], samples=[];
@@ -128,6 +133,7 @@ for(const [first,second] of pairs)test(`#34 fixed courtyard, ${first.width}×${f
  }finally{
   const receipt=capture.find(s=>s.status!=='admitted'||s.birds.some(b=>!b.hit)||s.controls.some(c=>!c.hidden&&(!c.own||!c.disjoint)))??capture.at(-1);
   if(receipt){
+   if(capture[0])info.annotations.push({type:'qa-34-camera',description:capture[0].camera.map(n=>n.toFixed(5)).join(':')});
    const failed=receipt.controls.find(c=>!c.hidden&&(!c.own||!c.disjoint));
    const names=['previous','next','jog-action','jog-surface','observe','book','scene','home'];
    const token=failed?names[receipt.controls.indexOf(failed)]:'none';

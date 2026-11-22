@@ -3,8 +3,8 @@ import {NOW,worldFor,load} from '../fixtures/garden-about-world.js';
 import {setup,readyGardenSnapshot} from '../fixtures/garden-terrain-browser.js';
 const pane='.finch-garden-stage .finch-garden-carousel', bird='[data-actor-state]';
 const control='.finch-garden > header > button,.finch-garden-scroll,[data-jog-center],.finch-garden-dock > details > summary';
-const read=page=>page.locator(pane).evaluate((p,selectors)=>{
- const {bird,control}=selectors,rect=n=>n.getBoundingClientRect();
+const read=(page,which)=>page.locator(pane).evaluate((p,selectors)=>{
+ const {bird,control,which}=selectors,rect=n=>n.getBoundingClientRect();
  const pageView=rect(p),image=rect(p.querySelector('.finch-garden-image-plane')),stage=p.closest('.finch-garden-stage');
  const m=stage.closest('.finch-garden');
  const own=(el,r)=>el.contains(document.elementFromPoint((r.left+r.right)/2,(r.top+r.bottom)/2));
@@ -14,7 +14,10 @@ const read=page=>page.locator(pane).evaluate((p,selectors)=>{
   return {kind,height:r.height,width:r.width,own:own(el,r),disjoint:r.bottom<=pageView.top||r.top>=pageView.bottom||r.right<=pageView.left||r.left>=pageView.right};
  });
  const receipt=window.__sharedLaunchReceipt?.snapshot();
- return {receipt,mode:m.dataset.gardenSharedPlay,status:m.dataset.gardenSharedStatus, ready:stage.dataset.sceneState,motion:stage.dataset.actorMotion,
+ if(which==='first')window.__sharedFirstRead=stage;
+ const sameStage=window.__sharedFirstRead===stage;
+ const blockers=!!stage.querySelector('[data-crow-phase],.finch-crow-scale-scene,.finch-raptor-scale-scene')||document.body.hasAttribute('data-game-view-blocked')||!!document.querySelector('.game-raptor-return-dialog[open]');
+ return {receipt,sameStage,blockers,mode:m.dataset.gardenSharedPlay,status:m.dataset.gardenSharedStatus, ready:stage.dataset.sceneState,motion:stage.dataset.actorMotion,
   count:Number(stage.dataset.gardenCount),nativeCount:p.querySelectorAll('.finch-garden-image-plane > button').length, width:pageView.width,height:pageView.height,
   projection:[image.width,image.height,image.left-pageView.left,image.top-pageView.top],
   controls, birds:[...stage.querySelectorAll(bird)].map(el=>{const r=rect(el);
@@ -23,7 +26,7 @@ const read=page=>page.locator(pane).evaluate((p,selectors)=>{
    const air=!!pose&&!!wingRect&&wingRect.width>0&&wingRect.height>0&&getComputedStyle(wing).visibility==='visible';
    return {kind:'bird',air,node:el.dataset.actorNode,id:el.dataset.gardenActorId||el.dataset.gardenVisitingFriend||el.dataset.encounterOpen,width:r.width,height:r.height,own:own(el,r),
    x:el.style.left,y:el.style.top,state:el.dataset.actorState,phase:el.dataset.actorPhase,landing:el.dataset.actorLanding};})};
-},{bird,control});
+},{bird,control,which});
 async function seedMissedAmbientDraw(page){
  const {createGardenPredatorClock,PREDATOR_ENTRY_RULES}=await load('garden-predator-clock.js');
  const wallNow=NOW+1000,rule=PREDATOR_ENTRY_RULES;
@@ -55,11 +58,13 @@ for(const [density,count] of [['dense',8],['maximum',10]])test(`zebra shared pan
  const stage=x=>enumStatus.has(x.status)?x.status:'unknown';
  const room=x=>x.nativeCount===count?'expected':x.nativeCount<count?'short':'extra';
  const actor=x=>!x.motion?'no-motion':x.motion.startsWith('trail-')?'trail':'other-motion';
- const first=await read(page);
+ const first=await read(page,'first');
  // This boundary is fixed before looking at clips/hits, and does not wait
  // for admission. Scope to the first real actionable geometry opportunity.
  await page.clock.runFor(34);
  const before=await read(page);
+ const evidence=s=>[s.nativeCount,s.birds.length,s.motion?.startsWith('trail-')?'trail':s.motion||'none',s.ready==='ready'?'ready':'loading',s.blockers?'blocked':'open'].join(':');
+ info.annotations.push({type:'qa-07-first-vs-frame',description:`${evidence(first)}:${evidence(before)}:${before.sameStage?'same':'new'}`});
  const mark=page.locator(`${pane} ${bird}`);await mark.evaluateAll(nodes=>{
   window.__sharedNodes=nodes;
   const owner=()=>document.querySelector('.finch-garden[data-garden-shared-play]');

@@ -27,6 +27,8 @@ export default class Verdict{
   if(!row)return;
   row.status=result.status;
   const schema=[
+   ['qa-34-camera',/^-?\d{1,4}\.\d{5}(?::-?\d{1,4}\.\d{5}){5}$/],
+   ['qa-07-first-vs-frame',/^(?:(?:10|[0-9]):(?:10|[0-9]):(?:trail|none|geometry-blocked|insufficient-space|active|held):(?:ready|loading):(?:blocked|open):){2}(?:same|new)$/],
    ['qa-34-fixed-room',/^(?:admitted|measuring|projection|chrome|seat|hit|route|roster|unknown|retained-invalid|retained-unproven):(?:10|[0-9]):(?:none|previous|next|jog-action|jog-surface|observe|book|scene|home)$/],
    ['qa-07-shared-flight',/^(?:8|10):(?:none|active|hidden-or-reduced|disabled|blocked|interacting|sheet|detached):(?:elapsed|short|stalled):(?:authored|no-gate|other|none):(?:no-renderer|ready|atlas-ready|atlas-bad|atlas-pending|none):(?:routed|ready|not-ready|missing|none):(?:held|wait|free|none):(?:precondition|no-source|begin-denied|sweep-denied|clearance-denied|paint-denied|adapter-denied|launched|none)$/],
    ['qa-07-close-prior',/^(?:unobserved|(?:admitted|measuring|retained-invalid|projection|chrome|seat|hit|route|roster|unknown):(?:ready|other-media):(?:busy|idle):(?:modal|no-modal):(?:blocked|unblocked):(?:risk|no-risk)(?::(?:same|changed)){4})$/],
