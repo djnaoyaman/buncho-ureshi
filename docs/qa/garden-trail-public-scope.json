@@ -77,6 +77,14 @@
     "src/game.css": {
       "before": "052b95d390ff69e638e0a3a00d69ac0d660de8820ee517cea27d6ff2719f589a",
       "after": "bc855f594cbd67f924d7676e6c0db3061b1c9de117c3d519b20fef67ae8045bc"
+    },
+    "src/encounter-controller.js": {
+      "before": "abb6da46ed67c7bd43834c438b0be224cbea9c646e116b6ee633dfcda51e82b4",
+      "after": "aefd111fff59989355d7876a8e9301003eff9c026f0e87204f04fd7a6c723a48"
+    },
+    "src/encounter-media.js": {
+      "before": "14a075be7cead4957f0a43563a8c2b0a484b63a61b4ae32d536aa2a5b81d007d",
+      "after": "9fe39e53e764851809a7d1834fc2702a53aaa2f0c69c3622b845245060d6659f"
     }
   }
 }
