@@ -57,6 +57,19 @@ function assertNative(s,count,ids=null,phase='native'){
     misses.some(b=>b.actorState==='fly'||b.actorState==='hop')?'moving':'ground',
     misses.some(b=>b.pointerEvents==='none'||b.visibility==='hidden'||b.display==='none')?'noninteractive':'interactive',
     String(misses.length)].join(':')});
+  const c=s.clip34,b=misses[0],p=b.point,r=b.rect;
+  const inside=v=>!v?'unknown':p.x>=v.left&&p.x<v.right&&p.y>=v.top&&p.y<v.bottom?'in':'out';
+  const painted=c?.slide&&{
+   left:Math.max(0,c.stage.left,c.slide.left),top:Math.max(0,c.stage.top,c.slide.top),
+   right:Math.min(s.viewport.width,c.stage.right,c.slide.right),bottom:Math.min(s.viewport.height,c.stage.bottom,c.slide.bottom)};
+  const client=c&&{left:0,top:0,right:c.clientWidth,bottom:c.clientHeight};
+  const visual=c?.visual?.scale===1?c.visual:null;
+  const rectState=!painted?'unknown':r.right<=painted.left||r.left>=painted.right||r.bottom<=painted.top||r.top>=painted.bottom?'hidden':
+   r.left>=painted.left&&r.right<=painted.right&&r.top>=painted.top&&r.bottom<=painted.bottom?'whole':'partial';
+  const movers=s.birds.filter(a=>a.actorTarget&&(a.actorState==='fly'||a.actorState==='hop'));
+  test.info().annotations.push({type:'qa-landscape34-clip',
+   description:[inside(painted),inside(visual),inside(client),rectState,
+    String(movers.length),b.actorTarget?'reservation':'no-reservation'].join(':')});
  }
  assertGardenIdentities(s.birds,count,ids);
  for(const b of s.birds){
