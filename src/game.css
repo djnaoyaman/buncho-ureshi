@@ -2265,12 +2265,12 @@ body[data-world="buncho"] .game-field-nav .game-nav-miniature-label { flex:0 0 a
   --garden-jog-height:62px;
  }
  body[data-world="buncho"] .game-encounter-host .finch-garden[data-garden-masked-play="candidate"] .finch-garden-selector-wrap .finch-garden-selector[data-garden-jog] button[data-jog-center] {height:44px;min-height:44px}
- .finch-garden[data-garden-masked-play="candidate"] .finch-garden-stage[data-garden-count="10"]:not(:has(.finch-crow-scale-scene,.finch-raptor-scale-scene)) > .finch-garden-carousel {
+ .finch-garden[data-garden-masked-play="candidate"] .finch-garden-stage[data-garden-count="10"][data-garden-masked-pane="eligible"] > .finch-garden-carousel {
   position:absolute; inset:0 auto auto 50%; inline-size:375px;block-size:157px;
   transform:translateX(-50%);
   top:clamp(calc(150px + env(safe-area-inset-top,0px)),calc((100% - 157px)/2),calc(100% - 225px - env(safe-area-inset-bottom,0px)));
  }
- .finch-garden[data-garden-masked-play="candidate"] .finch-garden-stage[data-garden-count="10"]:not(:has(.finch-crow-scale-scene,.finch-raptor-scale-scene)) .finch-garden-image-plane {
+ .finch-garden[data-garden-masked-play="candidate"] .finch-garden-stage[data-garden-count="10"][data-garden-masked-pane="eligible"] .finch-garden-image-plane {
   inline-size:750px;block-size:1334.042553px;left:-180px;top:-731.326809px;
  }
 }

@@ -15,7 +15,7 @@
   "changedSource": {
     "src/encounter-ui.js": {
       "before": "7b3df2bbc75cc95a262763cc6cb79dc9c8cd9fecce08ae87eaf1348bd5594936",
-      "after": "b80c4f40aa04527956ed9fd0a61d767a9b043369fdcf96f0095558990f18ada6"
+      "after": "4c525384cdbb5c583a167548fcec92eaf0838dde115049c2a4ae7c06a0d46b25"
     },
     "src/garden-actor-flight.js": {
       "before": "256f270a396a15374829257a8265216c20290a8a594977ce200412664d1a5e91",
@@ -76,7 +76,7 @@
   "privateDiagnosticSource": {
     "src/game.css": {
       "before": "052b95d390ff69e638e0a3a00d69ac0d660de8820ee517cea27d6ff2719f589a",
-      "after": "15bae85348a1984972712b99bbc8f9a87c2790200aa428a57c495059b3a413c9"
+      "after": "4c00e4aad671500e86a903baa6602932cb702382b4a4ec4ccf666982da3f4b06"
     },
     "src/encounter-controller.js": {
       "before": "abb6da46ed67c7bd43834c438b0be224cbea9c646e116b6ee633dfcda51e82b4",
@@ -92,7 +92,7 @@
     },
     "src/encounter-ui.js": {
       "before": "3b0c1c344139b47146056d99163c79f7e54841d90526038b87eae9e42cd0d253",
-      "after": "b80c4f40aa04527956ed9fd0a61d767a9b043369fdcf96f0095558990f18ada6"
+      "after": "4c525384cdbb5c583a167548fcec92eaf0838dde115049c2a4ae7c06a0d46b25"
     },
     "src/garden-trail-runtime.js": {
       "before": "225cf71d54d0d92622863f2f1f09ee2b2ae7caf5b6ec2c0123849713a6a96512",
