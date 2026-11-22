@@ -101,7 +101,17 @@ export function clippedTrail7CoverRecovery({gardenNumber,changedAxis,actors,rout
  return replace();
 }
 
+// Classification uses real control clipping/ownership, not the nominal label
+// skirt. Only already offscreen grounded centers may receive a new contact.
+export function trail7IdleDisposition({ground,nominal,centerOutside,controlContained,nativeHit}){
+ if(!ground)return 'deny';
+ if(nominal)return 'retain';
+ if(centerOutside)return 'rehome';
+ return controlContained&&nativeHit?'hold':'deny';
+}
+
 export function createGardenActorMotion(root){
+ let axisIdleHold=null;
  let trailRuntime=null,nextTrail=0,trailRetry=false,trailMeasurement=null,trailPads=[];
  const bindings=new Map(),routeCache=new WeakMap();let model=null,key='',canonicalRetryKey=null,pinnedTrail=null,geometryKey='',rosterKey='',footholds=[],layoutWidth=64,standingOnly=false,geometry=null,terrain=null,overlayStyle=null,rejected=null,paintedWideCrop=null;
  const routeSamples=a=>{
@@ -115,7 +125,7 @@ export function createGardenActorMotion(root){
   if(b.pose){b.pose.style.visibility=b.poseVisibility;b.pose.removeAttribute('data-terrain-flight-active');}
   for(const attr of ['data-actor-state','data-actor-phase','data-actor-node','data-actor-landing'])b.node.removeAttribute(attr);
  };
- const dispose=()=>{if(overlayStyle){const [node,value]=overlayStyle;value?node.style.setProperty('--game-viewport-height',value):node.style.removeProperty('--game-viewport-height');overlayStyle=null;}for(const b of bindings.values())restore(b);bindings.clear();model?.clear();model=null;trailRuntime=null;nextTrail=0;trailRetry=false;trailMeasurement=null;trailPads=[];key='';canonicalRetryKey=null;pinnedTrail=null;geometryKey='';rosterKey='';rejected=null;paintedWideCrop=null;};
+ const dispose=()=>{axisIdleHold=null;if(overlayStyle){const [node,value]=overlayStyle;value?node.style.setProperty('--game-viewport-height',value):node.style.removeProperty('--game-viewport-height');overlayStyle=null;}for(const b of bindings.values())restore(b);bindings.clear();model?.clear();model=null;trailRuntime=null;nextTrail=0;trailRetry=false;trailMeasurement=null;trailPads=[];key='';canonicalRetryKey=null;pinnedTrail=null;geometryKey='';rosterKey='';rejected=null;paintedWideCrop=null;};
  const body=(p,width,height,lift=0)=>({left:geometry.plane.left+p[0]*geometry.plane.width-width*.54,top:geometry.plane.top+p[1]*geometry.plane.height-height*.975-lift,
   right:geometry.plane.left+p[0]*geometry.plane.width+width*.46,bottom:geometry.plane.top+p[1]*geometry.plane.height+height*.025-lift});
  function safePoint(p,width,height,lift=0,flight=false){
@@ -391,7 +401,7 @@ export function createGardenActorMotion(root){
    model.reconcile(roster.filter(d=>fixedFlight.has(d.id)),[]);
    trailRuntime.sync({generation:key,measurement,predator});
   }
-  const nativeTrailHits=(plan,{requireNative=false,lifts=null}={})=>{
+  const nativeTrailHits=(plan,{requireNative=false,lifts=null,heldIds=null}={})=>{
    // Regular motion may defer while blocked. An emergency cover replacement
    // must get a real input verdict, even if the animation clock is held.
    const doc=root.ownerDocument,hitApi=typeof doc.elementFromPoint==='function';
@@ -411,6 +421,15 @@ export function createGardenActorMotion(root){
      const {node}=bindings.get(id),r=rect(node);
      const hit=root.ownerDocument.elementFromPoint(r.left+r.width/2,r.top+r.height/2);
      if(r.width<43.99||r.height<43.99||!hit||!node.contains(hit))return false;
+     if(heldIds?.has(id)){
+      const c=geometry.clip;
+      if(r.left<c.left||r.right>c.right||r.top<c.top||r.bottom>c.bottom)return false;
+      const sprite=bindings.get(id)?.sprite;
+      if(sprite){
+       const q=rect(sprite);
+       if(q.left<c.left||q.right>c.right||q.top<c.top||q.bottom>c.bottom)return false;
+      }
+     }
     }
     return true;
    }finally{
@@ -517,8 +536,15 @@ export function createGardenActorMotion(root){
      separated(n.p,[f.p[0],f.p[1]-f.height],b.width,b.height)));
   },routeFits));
   const environment={safe:safeRoute,height:terrain.height,width:p.width};
+  const heldIdleFits=a=>{
+   const held=axisIdleHold;
+   if(!held||held.signature!==signature||held.stage!==stage||held.world!==key||a.route||
+      a.phase!=='ground'||a.height!==0||!wideCrop||predator||settle)return false;
+   const seat=held.seats.get(a.id);
+   return !!seat&&seat.node===bindings.get(a.id)?.node&&seat.site===a.node&&seat.p===a.p;
+  };
   const fitsNow=()=>model.actors.size===roster.length&&[...model.actors.values()].every(a=>
-   safePoint(a.p,bindings.get(a.id).width,bindings.get(a.id).height,a.height*p.height,a.state==='fly'));
+   heldIdleFits(a)||safePoint(a.p,bindings.get(a.id).width,bindings.get(a.id).height,a.height*p.height,a.state==='fly'));
   // Do not preserve a partially applicable flight generation. The selected
   // footholds are already pairwise-separated. In this fallback standing
   // positions cannot depend on old airborne reservations.
@@ -564,8 +590,20 @@ export function createGardenActorMotion(root){
      return Number.isFinite(x+y)&&(x<c.left||x>=c.right||y<c.top||y>=c.bottom);
     };
     if(centerOutside(mover))return false;
-    const bad=actors.filter(a=>a!==mover&&!actorSafe(a));
-    if(!bad.length||bad.some(a=>a.phase!=='ground'||a.height!==0||!centerOutside(a)))return false;
+    const members=actors.filter(a=>a!==mover&&!actorSafe(a)),bad=[],heldIds=new Set();
+    for(const a of members){
+     const b=bindings.get(a.id);if(!b||!inside(a.p,terrain.surface))return false;
+     const r=body(a.p,b.width,b.height),c=geometry.clip;
+     const policy=trail7IdleDisposition({
+      ground:!a.route&&a.phase==='ground'&&a.height===0,nominal:false,centerOutside:centerOutside(a),
+      controlContained:b.width>=43.99&&b.height>=43.99&&r.left>=c.left&&r.right<=c.right&&r.top>=c.top&&r.bottom<=c.bottom,
+      nativeHit:true, // provisional; accept() requires an actual current native hit
+     });
+     if(policy==='deny')return false;
+     if(policy==='rehome')bad.push(a);
+     else heldIds.add(a.id);
+    }
+    if(!bad.length)return false;
     const affected=new Set(bad.map(a=>a.id)),seats=layoutNodes.filter(n=>n.id!=='bay'&&!model.reservations.has(n.id));
     const landings=seats.filter(n=>!actors.some(a=>a.node===n.id)).sort((a,b)=>
      Math.hypot(a.p[0]-mover.p[0],a.p[1]-mover.p[1])-Math.hypot(b.p[0]-mover.p[0],b.p[1]-mover.p[1]));
@@ -584,14 +622,19 @@ export function createGardenActorMotion(root){
       },
       accept(candidate){
        return trailRuntime.recoveryFits(pending,n,peers(candidate))&&
-        nativeTrailHits(candidate,{requireNative:true,lifts:new Map([[mover.id,mover.height]])});
+        nativeTrailHits(candidate,{requireNative:true,lifts:new Map([[mover.id,mover.height]]),heldIds});
       }});
      if(!plan)continue;
      const changed=new Map([...plan].filter(([id])=>affected.has(id)));
      if(model.commitAxisRecovery(mover.id,n,changed,projected=>{
       const replacement=projected.get(mover.id);
-      return [...projected.values()].every(actorSafe)&&routeFits(replacement)&&trailRuntime.recoveryFits(replacement,n,projected);
-     }))return true;
+      return [...projected.values()].every(a=>heldIds.has(a.id)||actorSafe(a))&&routeFits(replacement)&&trailRuntime.recoveryFits(replacement,n,projected);
+     })){
+      axisIdleHold={signature,stage,world:key,seats:new Map([...heldIds].map(id=>{
+       const a=model.actors.get(id);return [id,{node:bindings.get(id).node,site:a.node,p:a.p}];
+      }))};
+      return true;
+     }
     }
     return false;
    };

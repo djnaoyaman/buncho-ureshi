@@ -56,8 +56,16 @@ async function wireDense07(page){
     "    if(centerOutside(mover)){mark(3,'mover-outside');return false;}"
   ],
   [
-    "    if(!bad.length||bad.some(a=>a.phase!=='ground'||a.height!==0||!centerOutside(a)))return false;",
-    "    if(!bad.length||bad.some(a=>a.phase!=='ground'||a.height!==0||!centerOutside(a))){mark(4,!bad.length?'no-bad-idle':'bad-idle-still-visible');return false;}"
+    "     const b=bindings.get(a.id);if(!b||!inside(a.p,terrain.surface))return false;",
+    "     const b=bindings.get(a.id);if(!b||!inside(a.p,terrain.surface)){mark(4,'idle-contact-denied');return false;}"
+  ],
+  [
+    "     if(policy==='deny')return false;",
+    "     if(policy==='deny'){mark(4,a.route||a.phase!=='ground'||a.height!==0?'idle-not-ground':'idle-visible-box');return false;}"
+  ],
+  [
+    "    if(!bad.length)return false;",
+    "    if(!bad.length){mark(4,'no-bad-idle');return false;}"
   ],
   [
     "    for(const n of landings.slice(0,12)){",
@@ -72,8 +80,8 @@ async function wireDense07(page){
     "       mark(10,'nominal-seat');\n       if(!b||!safePoint(s.p,b.width,b.height))return false;\n       mark(11,'measured-seat');\n       const ok=trailRuntime.canPlace(a,s,peers(partial));\n       if(ok)mark(12,'pack-incomplete');\n       return ok;"
   ],
   [
-    "       return trailRuntime.recoveryFits(pending,n,peers(candidate))&&\n        nativeTrailHits(candidate,{requireNative:true,lifts:new Map([[mover.id,mover.height]])});",
-    "       mark(13,'peer-sweep');\n       if(!trailRuntime.recoveryFits(pending,n,peers(candidate)))return false;\n       mark(14,'native-hit');\n       return nativeTrailHits(candidate,{requireNative:true,lifts:new Map([[mover.id,mover.height]])});"
+    "       return trailRuntime.recoveryFits(pending,n,peers(candidate))&&\n        nativeTrailHits(candidate,{requireNative:true,lifts:new Map([[mover.id,mover.height]]),heldIds});",
+    "       mark(13,'peer-sweep');\n       if(!trailRuntime.recoveryFits(pending,n,peers(candidate)))return false;\n       mark(14,'native-hit');\n       return nativeTrailHits(candidate,{requireNative:true,lifts:new Map([[mover.id,mover.height]]),heldIds});"
   ],
   [
     "     if(!plan)continue;",
@@ -84,8 +92,8 @@ async function wireDense07(page){
     "      mark(16,'atomic-validation');const replacement=projected.get(mover.id);"
   ],
   [
-    "     }))return true;",
-    "     })){mark(17,'committed');return true;}"
+    "     })){\n      axisIdleHold=",
+    "     })){\n      mark(17,'committed');axisIdleHold="
   ]
 ];
   // Restrict all replacements to the actual checked-in trial function.
