@@ -26,11 +26,22 @@ export default class Verdict{
   const row=this.rows.get(test.id);
   if(!row)return;
   row.status=result.status;
+  const schema=[
+   ['qa-viewport',/^[0-3]:(?:wide|tall):(?:outside|occluded):(?:not-ready|count-change|outside|occluded|native-clean):(?:trail-active|trail-held|trail-standing|trail-needs-recovery|trail-blocked-geometry|trail-blocked-placement|geometry-blocked|insufficient-space|active|held|static|grounded|other):(?:trail-active|trail-held|trail-standing|trail-needs-recovery|trail-blocked-geometry|trail-blocked-placement|geometry-blocked|insufficient-space|active|held|static|grounded|other):(?:lead|other):(?:none|peer|controls|loading|other)$/],
+   ['qa-booklet-input',/^(?:split|locator):(?:no-key|summary-key|other-key):(?:focused|unfocused):(?:replaced|same):(?:opened|no-open):(?:still-open|closed):(?:modal|no-modal)$/],
+
+   ['qa-ground-dry',/^(?:initial|during):(?:native|actor-ground|actor-air):(?:ulp-edge|css-edge|off-edge|unparseable)$/],
+   ['qa-ground-media',/^(?:reduce|restore):(?:event|no-event):(?:match|mismatch|missing):(?:match|mismatch):(?:active|held|other)$/],
+  ];
+  for(const [type,validator] of schema){
+   const a=(result.annotations??test.annotations).find(a=>a.type===type&&validator.test(a.description??''));
+   if(a)(row.receipt??={})[type]=a.description;
+  }
   if(row.status!=='passed'&&row.status!=='skipped')row.fault=result.errors.map(fault).find(Boolean)??null;
  }
  onEnd(result){
   const rows=[...(this.rows??new Map()).values()];
-  const body={v:1,engine:process.env.QA_ENGINE,shard:Number(process.env.QA_SHARD),status:result.status,infrastructure:this.infrastructure??0,rows};
+  const body={v:1,engine:process.env.QA_ENGINE,input:process.env.BOOKLET_OPEN_STYLE,status:result.status,infrastructure:this.infrastructure??0,rows};
   writeFileSync('compact-browser-verdict.json',JSON.stringify(body)+'\n');
   console.log(JSON.stringify({engine:body.engine,shard:body.shard,status:body.status,selected:rows.length,infrastructure:body.infrastructure}));
  }

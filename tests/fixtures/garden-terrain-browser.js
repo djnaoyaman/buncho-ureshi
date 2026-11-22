@@ -40,29 +40,33 @@ export async function setup(page,id,width=390,motion=true,sparse=false,{nativeSo
   await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-scene-state','ready');
   if(afterOpenMs)await page.clock.runFor(afterOpenMs);
 }
-export async function measure(page){return page.locator('.finch-garden-image-plane').evaluate(e=>{
+export async function measure(page,receipt=false){return page.locator('.finch-garden-image-plane').evaluate((e,receipt)=>{
   const p=e.getBoundingClientRect();return [...e.querySelectorAll(':scope > button')].map(n=>{
     const r=n.getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2),sprite=n.querySelector('.garden-bird-sprite');
     return {id:n.dataset.gardenFriend||n.dataset.gardenHousehold||n.dataset.encounterOpen||n.dataset.gardenVisitingFriend||n.dataset.encounterPage,width:r.width,height:r.height,hit:!!hit&&n.contains(hit),
+      ...(receipt?{groundReceipt:{actor:n.hasAttribute('data-actor-state'),
+       air:!!n.dataset.actorPhase&&n.dataset.actorPhase!=='ground'}}:{}),
       point:[parseFloat(n.style.left)/100,parseFloat(n.style.top)/100],style:n.getAttribute('style'),src:sprite?.querySelector('img')?.getAttribute('src'),filter:sprite?getComputedStyle(sprite).filter:'none',plane:[p.width,p.height]};
   });
-});}
+},receipt);}
 
 // Query readiness and geometry in one browser task. Locator.evaluate first
 // obtains an ElementHandle; a committed-world redraw can detach it before the
 // measurement runs. Never poll for a successful hit: an occluded ready bird
 // must be returned with hit:false so the caller's assertion fails.
-export async function measureReady(page){
- let result;await expect.poll(async()=>{result=await page.evaluate(()=>{
+export async function measureReady(page,receipt=false){
+ let result;await expect.poll(async()=>{result=await page.evaluate(receipt=>{
   const stage=document.querySelector('.finch-garden-stage');
   if(stage?.dataset.sceneState!=='ready')return false;
   const e=stage.querySelector('.finch-garden-image-plane');if(!e)return false;
   const p=e.getBoundingClientRect();return [...e.querySelectorAll(':scope > button')].map(n=>{
    const r=n.getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2),sprite=n.querySelector('.garden-bird-sprite');
    return {id:n.dataset.gardenFriend||n.dataset.gardenHousehold||n.dataset.encounterOpen||n.dataset.gardenVisitingFriend||n.dataset.encounterPage,width:r.width,height:r.height,hit:!!hit&&n.contains(hit),
-    point:[parseFloat(n.style.left)/100,parseFloat(n.style.top)/100],style:n.getAttribute('style'),src:sprite?.querySelector('img')?.getAttribute('src'),filter:sprite?getComputedStyle(sprite).filter:'none',plane:[p.width,p.height],motion:stage.dataset.actorMotion||stage.dataset.terrainMotion};
+    ...(receipt?{groundReceipt:{actor:n.hasAttribute('data-actor-state'),
+       air:!!n.dataset.actorPhase&&n.dataset.actorPhase!=='ground'}}:{}),
+      point:[parseFloat(n.style.left)/100,parseFloat(n.style.top)/100],style:n.getAttribute('style'),src:sprite?.querySelector('img')?.getAttribute('src'),filter:sprite?getComputedStyle(sprite).filter:'none',plane:[p.width,p.height],motion:stage.dataset.actorMotion||stage.dataset.terrainMotion};
   });
- });return result!==false;},{timeout:10000}).toBe(true);
+ },receipt);return result!==false;},{timeout:10000}).toBe(true);
  return result;
 }
 

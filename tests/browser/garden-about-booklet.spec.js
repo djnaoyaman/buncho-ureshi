@@ -44,7 +44,48 @@ async function enterVisibleGarden(page){
  await expect(page.locator('.finch-garden-stage')).toHaveAttribute('data-scene-state','ready');
 }
 const about=page=>page.locator('.finch-garden-dock > [data-garden-details=about]');
-async function open(page){const a=about(page);await a.locator(':scope > summary').focus();await page.keyboard.press('Enter');await expect(a).toHaveAttribute('open','');return a;}
+const openStyle=process.env.BOOKLET_OPEN_STYLE||'split';
+if(!['split','locator'].includes(openStyle))throw new Error('Unexpected BOOKLET_OPEN_STYLE');
+test.beforeEach(async({page})=>{
+ await page.addInitScript(()=>{
+  const events=[];
+  Object.defineProperty(window,'__bookletInputEvidence',{value:events});
+  const summary=()=>document.querySelector('.finch-garden-dock > [data-garden-details=about] > summary');
+  let previous=null,generation=0;
+  const sample=event=>{
+   const n=summary(),active=document.activeElement;
+   if(n!==previous){generation++;previous=n;}
+   events.push({e:event?.type||'mutation',generation,activeSummary:active===n,
+    summary:!!n,open:n?.parentElement?.open??null,targetSummary:!!n&&event?.target===n,
+    detailsTarget:!!n&&event?.target===n.parentElement,key:event?.key??null,
+    trusted:event?.isTrusted??null,modal:!!document.querySelector('dialog[open]')});
+   if(events.length>45)events.shift();
+  };
+  for(const e of ['focusin','keydown','keyup','toggle'])document.addEventListener(e,sample,true);
+  new MutationObserver(()=>{if(summary()!==previous)sample();}).observe(document,{childList:true,subtree:true});
+ });
+});
+async function open(page){
+ const a=about(page),summary=a.locator(':scope > summary');
+ try{
+  if(openStyle==='split'){await summary.focus();await page.keyboard.press('Enter');}
+  else await summary.press('Enter');
+  await expect(a).toHaveAttribute('open','');
+  return a;
+ }catch(error){
+  const events=await page.evaluate(()=>window.__bookletInputEvidence??[]).catch(()=>[]);
+  const down=events.findLastIndex(x=>x.e==='keydown'&&x.key==='Enter'&&x.trusted);
+  const last=events[down], after=down<0?[]:events.slice(down);
+  const verdict=[openStyle,down<0?'no-key':last.targetSummary?'summary-key':'other-key',
+   last?.activeSummary?'focused':'unfocused',
+   last&&after.some(x=>x.generation!==last.generation)?'replaced':'same',
+   after.some(x=>x.e==='toggle'&&x.detailsTarget&&x.open)?'opened':'no-open',
+   after.at(-1)?.open?'still-open':'closed',
+   after.at(-1)?.modal?'modal':'no-modal'].join(':');
+  test.info().annotations.push({type:'qa-booklet-input',description:verdict});
+  throw error;
+ }
+}
 const layouts=[...GARDENS.map(g=>({garden:g,size:[320,740]})),...[ [390,844],[844,390],[1440,1000] ].map(size=>({garden:GARDENS.find(g=>g.id==='kazaguruma'),size}))];
 for(const {garden,size} of layouts)test('layout '+garden.id+' '+size.join('x'),async({page},info)=>{
  await page.setViewportSize({width:size[0],height:size[1]});await setup(page,'solo',garden.id);const a=await open(page);
