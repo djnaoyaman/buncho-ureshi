@@ -45,6 +45,19 @@ function assertNative(s,count,ids=null,phase='native'){
   s.birds.some(b=>b.rect.width<43.99||b.rect.height<43.99)?'size':
   s.birds.some(b=>!b.centerInViewport)?'viewport':s.birds.some(b=>!b.hit)?'occluded':'native-ok';
  record(phase,verdict,s);
+ if(phase==='landscape'&&s.gardenId==='bird-masked-finch'&&count===10&&verdict==='occluded'){
+  // Receipt only: classify the SAME ready sample. No new evaluation / geometry retry.
+  const misses=s.birds.filter(b=>!b.hit);
+  const motions={'insufficient-space':'insufficient', 'trail-blocked-placement':'placement',
+   'trail-blocked-geometry':'geometry', 'trail-needs-recovery':'recovery',
+   'geometry-blocked':'final-geometry','trail-active':'active','trail-held':'held','trail-standing':'standing'};
+  const groups=new Set(misses.map(b=>b.front?.group??'none'));
+  test.info().annotations.push({type:'qa-landscape34',
+   description:[motions[s.motion]??'other',groups.size===1?[...groups][0]:'mixed',
+    misses.some(b=>b.actorState==='fly'||b.actorState==='hop')?'moving':'ground',
+    misses.some(b=>b.pointerEvents==='none'||b.visibility==='hidden'||b.display==='none')?'noninteractive':'interactive',
+    String(misses.length)].join(':')});
+ }
  assertGardenIdentities(s.birds,count,ids);
  for(const b of s.birds){
   expect(b.rect.width,JSON.stringify(b)).toBeGreaterThanOrEqual(43.99);
@@ -79,13 +92,19 @@ async function visitorSnapshot(page){return page.evaluate(()=>{
   worldId:scene?.closest('.finch-garden')?.dataset.gardenWorld,birds};
 });}
 async function nextFly(page,who='b1',ticks=140){
- const bird=page.locator('[data-garden-household='+who+']');
  for(let i=0;i<ticks;i++){
   await page.clock.runFor(120);
-  if(await bird.count()===0)record("next-fly","b1-absent",await snapshotGarden(page));
-  const flight=await bird.evaluate(b=>({phase:b.dataset.actorPhase, source:b.dataset.actorNode, target:b.dataset.actorLanding}));
+  const flight=await page.evaluate(who=>{
+   const d=[...document.querySelectorAll('[data-garden-household]')].find(b=>b.dataset.gardenHousehold===who)?.dataset;
+   return d?{phase:d.actorPhase,source:d.actorNode,target:d.actorLanding}:null;
+  },who);
+  if(!flight){
+   record("next-fly","b1-absent",await snapshotGarden(page));
+   throw Error('native household actor absent while awaiting real flight');
+  }
   if(flight.phase==='rise'||flight.phase==='flap')return flight;
  }
+ record("next-fly","no-fly",await snapshotGarden(page));
  throw Error('no natural flight observed: '+await stage(page).getAttribute('data-actor-motion'));
 }
 async function mutationInIndependentStore(page,{kind,id}){

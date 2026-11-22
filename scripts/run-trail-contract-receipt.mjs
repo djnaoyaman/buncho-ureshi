@@ -10,6 +10,8 @@ const hard=[
 ];
 const profiles={
  'visitor-fix':{control:'visitor-ready',count:7,choices:[visitor]},
+ 'visitor-quiet':{control:'both',count:7,choices:[visitor]},
+ landscape:{control:'quiet',count:1,choices:['#34 native 10: real taps, two portraits, rotate without losing actors']},
  observe:{control:'observe',count:21,choices:[visitor,predator,...hard]},
  quiet:{control:'quiet',count:14,choices:[visitor,...hard]},
 };

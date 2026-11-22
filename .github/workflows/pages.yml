@@ -133,7 +133,7 @@ jobs:
       fail-fast: false
       matrix:
         engine: [chrome, webkit]
-        profile: [visitor-fix, observe, quiet]
+        profile: [visitor-quiet, landscape]
     container:
       image: mcr.microsoft.com/playwright:v1.64.1-noble
     steps:

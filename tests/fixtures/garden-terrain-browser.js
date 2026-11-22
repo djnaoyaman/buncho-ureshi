@@ -100,7 +100,10 @@ export function assertGardenIdentities(birds,count,previousIds=null){
 // scene with a zero-size/offscreen/occluded bird must remain a failing sample.
 export async function snapshotGarden(page){return page.evaluate(()=>{
  const stage=document.querySelector('.finch-garden-stage'),plane=stage?.querySelector('.finch-garden-image-plane'),overlay=document.querySelector('.game-panel-overlay[data-scene=true]');
- const describe=n=>n?{tag:n.tagName,id:n.id,class:n.className,household:n.dataset?.gardenHousehold,friend:n.dataset?.gardenFriend}:null;
+ const describe=n=>n?{tag:n.tagName,id:n.id,class:n.className,household:n.dataset?.gardenHousehold,friend:n.dataset?.gardenFriend,
+  group:n.closest('dialog[open]')?'dialog':n.closest('.finch-garden-image-plane > button')?'bird':
+   n.closest('.finch-garden-dock,.game-field-nav,.game-scene-controls-toggle,.game-main-nav,.game-nav')?'control':
+   n.closest('.finch-garden-image-plane')?'plane':n.closest('.finch-garden-stage')?'stage':'other'}:null;
  const viewport={width:innerWidth,height:innerHeight,visualHeight:visualViewport?.height,visualTop:visualViewport?.offsetTop,scale:visualViewport?.scale};
  const birds=[...(plane?.querySelectorAll(':scope > button')||[])].map(n=>{
   const r=n.getBoundingClientRect(),x=r.x+r.width/2,y=r.y+r.height/2,hit=document.elementFromPoint(x,y),style=getComputedStyle(n);

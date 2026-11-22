@@ -27,7 +27,8 @@ export default class Verdict{
   if(!row)return;
   row.status=result.status;
   const schema=[
-   ['qa-trail-contract',/^(?:native|landscape|portrait|movement|lane|lane-final|visitor|next-fly|palette):(?:count-(?:down|up)|blank|duplicate|order|replacement|size|viewport|occluded|native-ok|b1-absent|bay-first|fly-before-bay-peer-(?:gate|elsewhere)|bayless-(?:gate-clear|peer-gate|peer-elsewhere)|bay-and-cross|bay-no-cross|no-bay):(?:loading|ready|other):(?:clear|(?:raptor|crow)-warning|raptor-visit|crow-(?:visit|quiet)):(?:shelter|open)$/],
+   ['qa-trail-contract',/^(?:native|landscape|portrait|movement|lane|lane-final|visitor|next-fly|palette):(?:count-(?:down|up)|blank|duplicate|order|replacement|size|viewport|occluded|native-ok|b1-absent|no-fly|bay-first|fly-before-bay-peer-(?:gate|elsewhere)|bayless-(?:gate-clear|peer-gate|peer-elsewhere)|bay-and-cross|bay-no-cross|no-bay):(?:loading|ready|other):(?:clear|(?:raptor|crow)-warning|raptor-visit|crow-(?:visit|quiet)):(?:shelter|open)$/],
+   ['qa-landscape34',/^(?:insufficient|placement|geometry|recovery|final-geometry|active|held|standing|other):(?:dialog|bird|control|plane|stage|other|none|mixed):(?:moving|ground):(?:noninteractive|interactive):(?:[1-9]|10)$/],
    ['qa-ground-dry',/^(?:initial|during):(?:native|actor-ground|actor-air):(?:ulp-edge|css-edge|off-edge|unparseable)$/],
    ['qa-ground-media',/^(?:reduce|restore):(?:event|no-event):(?:match|mismatch|missing):(?:match|mismatch):(?:active|held|other)$/],
   ];
@@ -39,7 +40,7 @@ export default class Verdict{
  }
  onEnd(result){
   const rows=[...(this.rows??new Map()).values()];
-  const profile=['visitor-fix','observe','quiet'].includes(process.env.QA_TRAIL_PROFILE)?process.env.QA_TRAIL_PROFILE:null;
+  const profile=['visitor-fix','visitor-quiet','landscape','observe','quiet'].includes(process.env.QA_TRAIL_PROFILE)?process.env.QA_TRAIL_PROFILE:null;
   const body={v:1,engine:process.env.QA_ENGINE,shard:Number(process.env.QA_SHARD),...(profile?{profile}:{}),
    status:result.status,infrastructure:this.infrastructure??0,rows};
   writeFileSync('compact-browser-verdict.json',JSON.stringify(body)+'\n');
