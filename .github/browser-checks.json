@@ -4,7 +4,8 @@
     "tests/browser/garden-about-booklet.spec.js",
     "tests/browser/garden-ground-motion.spec.js",
     "tests/browser/garden-viewport-sync.spec.js",
-    "tests/browser/garden-zebra-shared-pane.spec.js"
+    "tests/browser/garden-zebra-shared-pane.spec.js",
+    "tests/browser/garden-zebra-shared-pane-ab.spec.js"
   ],
-  "reason": "Never-merge geometry diagnostic: two exact #07 shared-pane native flight/rotation cases; retain the three reviewed legacy browser files for the unchanged historical lanes."
+  "reason": "Never-merge #07 shared-pane A/B: exact product bytes; passive native receipt at ordinary startup and within the normal missed ambient draw retry. Keep all previously reviewed browser paths."
 }

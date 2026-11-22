@@ -61,7 +61,7 @@ jobs:
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
-      matrix: ${{ fromJSON(github.head_ref == 'qa/type2-postfilm-geometry-receipts' && '{"include":[{"engine":"chrome","input":"shared-pane"},{"engine":"webkit","input":"shared-pane"}]}' || '{"include":[{"engine":"chrome","input":"split"},{"engine":"webkit","input":"split"},{"engine":"webkit","input":"locator"}]}') }}
+      matrix: ${{ fromJSON(github.head_ref == 'qa/type2-postfilm-geometry-receipts' && '{"include":[{"engine":"chrome","input":"shared-ab-original"},{"engine":"chrome","input":"shared-ab-missed"},{"engine":"webkit","input":"shared-ab-original"},{"engine":"webkit","input":"shared-ab-missed"}]}' || '{"include":[{"engine":"chrome","input":"split"},{"engine":"webkit","input":"split"},{"engine":"webkit","input":"locator"}]}') }}
     container:
       image: mcr.microsoft.com/playwright:v1.64.1-noble
     steps:
