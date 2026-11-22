@@ -5,16 +5,31 @@ import {encounterSystem} from '../../src/encounters.js';
 import {engine} from '../fixtures/garden-about-world.js';
 async function snapshotGarden(page,measureClip=false){return page.evaluate(measureClip=>{
  const stage=document.querySelector('.finch-garden-stage'),plane=stage?.querySelector('.finch-garden-image-plane'),overlay=document.querySelector('.game-panel-overlay[data-scene=true]');
- const describe=n=>n?{tag:n.tagName,id:n.id,class:n.className,household:n.dataset?.gardenHousehold,friend:n.dataset?.gardenFriend}:null;
+ const describe=n=>n?{tag:n.tagName,id:n.id,class:n.className,household:n.dataset?.gardenHousehold,friend:n.dataset?.gardenFriend,
+  group:n.closest('dialog[open]')?'dialog':n.closest('.finch-garden-image-plane > button')?'bird':
+   n.closest('.finch-garden-dock,.game-field-nav,.game-scene-controls-toggle,.game-main-nav,.game-nav')?'control':
+   n.closest('.finch-garden-image-plane')?'plane':n.closest('.finch-garden-stage')?'stage':
+   'other'}:null;
  const viewport={width:innerWidth,height:innerHeight,visualHeight:visualViewport?.height,visualTop:visualViewport?.offsetTop,scale:visualViewport?.scale};
  const clip34=measureClip&&stage?(()=>{
   const s=stage.getBoundingClientRect(), slide=(stage.closest('.finch-garden-slide')??stage.querySelector('.finch-garden-slide'))?.getBoundingClientRect(),v=visualViewport,d=document.documentElement;
   return {stage:s.toJSON(),slide:slide?.toJSON()??null,clientWidth:d.clientWidth,clientHeight:d.clientHeight,
    visual:v?{left:v.offsetLeft,top:v.offsetTop,right:v.offsetLeft+v.width,bottom:v.offsetTop+v.height,scale:v.scale}:null};
  })():null;
+ const missAncestry=(n,x,y)=>{
+  let edge=false,shape=false,inert=false;
+  for(let e=n;e;e=e.parentElement){
+   const s=getComputedStyle(e),r=e.getBoundingClientRect(),lr=r.left+e.clientLeft,tr=r.top+e.clientTop;
+   const clips=o=>['auto','hidden','scroll','clip'].includes(o);
+   edge||=clips(s.overflowX)&&(x<lr||x>=lr+e.clientWidth)||clips(s.overflowY)&&(y<tr||y>=tr+e.clientHeight);
+   shape||=s.clipPath!=='none'||s.maskImage!=='none'||(clips(s.overflowX)||clips(s.overflowY))&&s.borderRadius.split(/[ /]+/).some(v=>parseFloat(v)>0);
+   inert||=e.inert||s.contentVisibility==='hidden';
+  }
+  return [edge?'edge':'no-edge',shape?'shape':'no-shape',inert?'inert':'not-inert'].join(':');
+ };
  const birds=[...(plane?.querySelectorAll(':scope > button')||[])].map(n=>{
   const r=n.getBoundingClientRect(),x=r.x+r.width/2,y=r.y+r.height/2,hit=document.elementFromPoint(x,y),style=getComputedStyle(n);
-  return {actorState:n.dataset.actorState,actorPhase:n.dataset.actorPhase,actorNode:n.dataset.actorNode,actorTarget:n.dataset.actorLanding,actorStyle:n.getAttribute('style'),id:n.dataset.gardenHousehold||n.dataset.gardenFriend||n.dataset.encounterOpen||n.dataset.gardenVisitingFriend||n.dataset.encounterPage,connected:n.isConnected,rect:r.toJSON(),point:{x,y},centerInViewport:x>=0&&x<innerWidth&&y>=0&&y<innerHeight,hit:!!hit&&n.contains(hit),front:describe(hit),stack:document.elementsFromPoint(x,y).slice(0,5).map(describe),visibility:style.visibility,display:style.display,pointerEvents:style.pointerEvents};
+  return {actorState:n.dataset.actorState,actorPhase:n.dataset.actorPhase,actorNode:n.dataset.actorNode,actorTarget:n.dataset.actorLanding,actorStyle:n.getAttribute('style'),id:n.dataset.gardenHousehold||n.dataset.gardenFriend||n.dataset.encounterOpen||n.dataset.gardenVisitingFriend||n.dataset.encounterPage,connected:n.isConnected,rect:r.toJSON(),point:{x,y},centerInViewport:x>=0&&x<innerWidth&&y>=0&&y<innerHeight,hit:!!hit&&n.contains(hit),front:describe(hit),missAncestry:measureClip&&!(hit&&n.contains(hit))?missAncestry(n,x,y):null,stack:document.elementsFromPoint(x,y).slice(0,5).map(describe),visibility:style.visibility,display:style.display,pointerEvents:style.pointerEvents};
  });
  const markerCrow=document.querySelector('[data-crow-phase]')?.dataset.crowPhase;
  const markerRaptor=document.querySelector('[data-raptor-notice]')?.dataset.raptorPhase;
@@ -53,6 +68,9 @@ function assertNative(s,count,ids=null,phase='native'){
  if(phase==='landscape'&&s.gardenId==='bird-masked-finch'&&count===10&&verdict==='occluded'){
   // Receipt only: classify the SAME ready sample. No new evaluation / geometry retry.
   const misses=s.birds.filter(b=>!b.hit);
+  const a=misses[0].missAncestry;
+  if(!a)throw new Error('landscape34 hit ancestry was not captured');
+  test.info().annotations.push({type:'qa-landscape34-ancestry',description:a});
   const motions={'insufficient-space':'insufficient', 'trail-blocked-placement':'placement',
    'trail-blocked-geometry':'geometry', 'trail-needs-recovery':'recovery',
    'geometry-blocked':'final-geometry','trail-active':'active','trail-held':'held','trail-standing':'standing'};

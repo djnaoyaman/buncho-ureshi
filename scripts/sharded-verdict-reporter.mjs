@@ -30,6 +30,7 @@ export default class Verdict{
    ['qa-trail-contract',/^(?:native|landscape|portrait|movement|lane|lane-final|visitor|next-fly|palette):(?:count-(?:down|up)|blank|duplicate|order|replacement|size|viewport|occluded|native-ok|b1-absent|no-fly|bay-first|fly-before-bay-peer-(?:gate|elsewhere)|bayless-(?:gate-clear|peer-gate|peer-elsewhere)|bay-and-cross|bay-no-cross|no-bay):(?:loading|ready|other):(?:clear|(?:raptor|crow)-warning|raptor-visit|crow-(?:visit|quiet)):(?:shelter|open)$/],
    ['qa-landscape34',/^(?:insufficient|placement|geometry|recovery|final-geometry|active|held|standing|other):(?:dialog|bird|control|plane|stage|other|none|mixed):(?:moving|ground):(?:noninteractive|interactive):(?:[1-9]|10)$/],
    ['qa-landscape34-clip',/^(?:in|out|unknown):(?:in|out|unknown):(?:in|out|unknown):(?:hidden|whole|partial|unknown):(?:[0-9]|10):(?:reservation|no-reservation)$/],
+   ['qa-landscape34-ancestry',/^(?:edge|no-edge):(?:shape|no-shape):(?:inert|not-inert)$/],
    ['qa-ground-dry',/^(?:initial|during):(?:native|actor-ground|actor-air):(?:ulp-edge|css-edge|off-edge|unparseable)$/],
    ['qa-ground-media',/^(?:reduce|restore):(?:event|no-event):(?:match|mismatch|missing):(?:match|mismatch):(?:active|held|other)$/],
   ];
