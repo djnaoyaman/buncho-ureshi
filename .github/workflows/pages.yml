@@ -61,7 +61,7 @@ jobs:
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
-      matrix: ${{ fromJSON(github.head_ref == 'qa/type2-postfilm-geometry-receipts' && '{"include":[{"engine":"chrome","input":"shared-ab-original"},{"engine":"chrome","input":"shared-retain"},{"engine":"webkit","input":"shared-ab-original"},{"engine":"webkit","input":"shared-retain"}]}' || '{"include":[{"engine":"chrome","input":"split"},{"engine":"webkit","input":"split"},{"engine":"webkit","input":"locator"}]}') }}
+      matrix: ${{ fromJSON(github.head_ref == 'qa/type2-postfilm-geometry-receipts' && '{"include":[{"engine":"chrome","input":"shared-ab-original"},{"engine":"chrome","input":"shared-retain"},{"engine":"webkit","input":"shared-ab-original"},{"engine":"webkit","input":"shared-retain"},{"engine":"chrome","input":"masked-fixed"},{"engine":"webkit","input":"masked-fixed"}]}' || '{"include":[{"engine":"chrome","input":"split"},{"engine":"webkit","input":"split"},{"engine":"webkit","input":"locator"}]}') }}
     container:
       image: mcr.microsoft.com/playwright:v1.64.1-noble
     steps:

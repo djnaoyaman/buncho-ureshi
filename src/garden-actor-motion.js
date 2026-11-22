@@ -237,21 +237,35 @@ export function createGardenActorMotion(root){
   // This branch uses translation-invariant measurements because the pane,
   // backdrop and bird model share one fixed projection. Obstacles are only
   // clipped out after proving their real bounds never enter the pane.
-  const roomOwner=terrain.number===7?stage.closest('[data-garden-shared-play="proof"]'):null;
-  const revalidateSharedOcclusion=!!roomOwner&&hasSharedStageLease(stage)&&roomOwner.dataset.gardenSharedStatus==='retained-invalid';
-  const shared=roomOwner&&Math.abs(s.width-390)<.1&&Math.abs(s.height-235)<.1&&Math.abs(p.width-700)<.1;
-  const sharedRoom=shared&&[8,10].includes(definitions.length);
+  const masked=terrain.number===34;
+  const roomOwner=masked?stage.closest('[data-garden-masked-play="candidate"]'):
+   terrain.number===7?stage.closest('[data-garden-shared-play="proof"]'):null;
+  const revalidateSharedOcclusion=!masked&&!!roomOwner&&hasSharedStageLease(stage)&&roomOwner.dataset.gardenSharedStatus==='retained-invalid';
+  const profile=masked?{
+   width:375,height:157,artWidth:750,artLeft:-180,artTop:157*.78-.64*(750*1672/940),counts:[10],minHeight:375,
+   gates:[[42,125],[106,125]],
+   parking:[[170,53.5],[215.2,53.5],[260.4,53.5],[305.6,53.5],[350.8,53.5],[170,125],[215.2,125],[260.4,125],[305.6,125]]
+  }:{
+   width:390,height:235,artWidth:700,counts:[8,10],minHeight:390,
+   gates:[[90,140],[172,140]],parking:[[257,54],[305,54],[353,54],[257,129],[305,129],[353,129],[257,204],[305,204],[353,204]]
+  };
+  const expectedCount=profile.counts.includes(definitions.length);
+  const near=(a,b)=>Math.abs(a-b)<.1;
+  const shared=roomOwner&&near(s.width,profile.width)&&near(s.height,profile.height)&&near(p.width,profile.artWidth)&&
+   (!masked||(near(p.left-s.left,profile.artLeft)&&near(p.top-s.top,profile.artTop)&&
+    near(geometry.clip.left,s.left)&&near(geometry.clip.top,s.top)&&near(geometry.clip.right,s.right)&&near(geometry.clip.bottom,s.bottom)));
+  const sharedRoom=shared&&expectedCount;
   const abandonShared=reason=>{
    roomOwner.dataset.gardenSharedStatus=reason;
-   roomOwner.dataset.gardenSharedPlay='fallback';
+   if(masked)roomOwner.dataset.gardenMaskedPlay='fallback';else roomOwner.dataset.gardenSharedPlay='fallback';
    dispose();
    return this.step(elapsed,active,overrides,{settle,geometryOnly,predator});
   };
   if(roomOwner&&!roomOwner.dataset.gardenSharedStatus){
-   roomOwner.dataset.gardenSharedStatus=![8,10].includes(definitions.length)?'roster':
-    shared?'measuring':'projection';
+   roomOwner.dataset.gardenSharedStatus=!expectedCount?'roster':shared?'measuring':'projection';
   }
-  const supportedRoom=roomOwner&&[8,10].includes(definitions.length)&&win.innerWidth>=390&&win.innerHeight>=390;
+  const supportedRoom=roomOwner&&expectedCount&&win.innerWidth>=profile.width&&win.innerHeight>=profile.minHeight&&
+   (!masked||!stage.querySelector('.finch-crow-scale-scene,.finch-raptor-scale-scene'));
   if(supportedRoom&&!shared&&!model.actors.size)return abandonShared('projection');
   // A retained ordinary pack cannot be assigned new places merely because
   // this replacement owner advertises the proof pane. No mid-session upgrade.
@@ -259,14 +273,16 @@ export function createGardenActorMotion(root){
    roomOwner.dataset.gardenSharedStatus='retained-unproven';
    return false;
   }
-  const sharedAt=([x,y])=>[(geometry.clip.left+x-p.left)/p.width,(geometry.clip.top+y-p.top)/p.height];
-  const sharedGates=sharedRoom?[[90,140],[172,140]].map((q,i)=>({id:'shared-gate-'+i,p:sharedAt(q)})):[];
-  const sharedParking=sharedRoom?[[257,54],[305,54],[353,54],[257,129],[305,129],[353,129],[257,204],[305,204],[353,204]]
-   .map((q,i)=>({id:'shared-park-'+i,p:sharedAt(q)})):[];
+  // Contacts for #34 are tied to this garden's source camera, not to the
+  // responsive clip. CSS/native boxes still admit or reject the exact route.
+  const sharedAt=([x,y])=>masked?[(x-profile.artLeft)/profile.artWidth,(y-profile.artTop)/(profile.artWidth*1672/940)]:
+   [(geometry.clip.left+x-p.left)/p.width,(geometry.clip.top+y-p.top)/p.height];
+  const sharedGates=sharedRoom?profile.gates.map((q,i)=>({id:'shared-gate-'+i,p:sharedAt(q)})):[];
+  const sharedParking=sharedRoom?profile.parking.map((q,i)=>({id:'shared-park-'+i,p:sharedAt(q)})):[];
   if(shared)geometry.obstacles=geometry.obstacles.filter(o=>overlap(o,geometry.clip));
   const local=v=>Math.round(v*100)/100;
   const localRect=o=>[local(o.left-p.left),local(o.top-p.top),local(o.right-p.left),local(o.bottom-p.top)];
-  const signature=shared?JSON.stringify(['shared07',definitions.length,p.width,p.height,localRect(geometry.clip),
+  const signature=shared?JSON.stringify([masked?'shared34':'shared07',definitions.length,p.width,p.height,localRect(geometry.clip),
    geometry.obstacles.map(localRect),trailRuntime?root.ownerDocument.fonts?.status:null]):
    JSON.stringify([definitions.length,p.width,p.height,p.left,p.top,geometry.clip,geometry.obstacles.map(o=>[o.left,o.top,o.right,o.bottom]),trailRuntime?root.ownerDocument.fonts?.status:null]);
   const resized=signature!==geometryKey;
@@ -488,7 +504,21 @@ export function createGardenActorMotion(root){
     safePoint:q=>safePoint(q,actorWidth,actorWidth*1000/850)}):
    surveyedBandTrailSeats(terrain.number,{...measured,...measurement,knownSeats:layoutNodes,
     safePoint:q=>safePoint(q,actorWidth,actorWidth*1000/850)})):null;
-  const routeFits=a=>!a.route||routeSamples(a).every(f=>safePoint(f.p,bindings.get(a.id).width,bindings.get(a.id).height,f.height*p.height,a.state==='fly'));
+  if(masked&&sharedRoom)standingOnly=false; // authored seats are checked independently of the legacy cover pack
+  // #34 uses a smaller stage. Its real measured mirrored art and touch box
+  // need to fit, not the legacy nominal body plus an arbitrary extra wing.
+  // The adapter still checks the *entire* measured route against all peers,
+  // reserved controls, dry terrain and the fixed play pane before committing.
+  const pointFits=(a,q,h)=>{
+   const b=bindings.get(a.id);if(!b)return false;
+   if(!masked||!sharedRoom||a.state!=='fly')return safePoint(q,b.width,b.height,h*p.height,a.state==='fly');
+   const f=measurement?.flightFootprints.get(a.id);if(!f||!inside(q,terrain.surface))return false;
+   const x=p.left+q[0]*p.width,y=p.top+(q[1]-h)*p.height,c=geometry.clip;
+   const box={left:x+f.left,top:y+f.top,right:x+f.right,bottom:y+f.bottom};
+   return box.left>=c.left+2&&box.right<=c.right-2&&box.top>=c.top+2&&box.bottom<=c.bottom-2&&
+     !geometry.obstacles.some(o=>overlap(box,o));
+  };
+  const routeFits=a=>!a.route||routeSamples(a).every(f=>pointFits(a,f.p,f.height));
   if(sharedRoom){
    if(!fixedFlight.size&&geometry.obstacles.length)return abandonShared('chrome');
    if(!fixedFlight.size&&[...sharedGates,...sharedParking].some(n=>!safePoint(n.p,actorWidth,actorWidth*1000/850)))
@@ -518,8 +548,8 @@ export function createGardenActorMotion(root){
          !trailRuntime.recoveryFits(a,destination,model.actors))return false;
      }else if(!samePoint(a.p,allowed.get(a.node)))return false;
      const b=bindings.get(a.id),lift=a.height*p.height;
-     if(!b||!safePoint(a.p,b.width,b.height,lift,a.state==='fly'))return false;
-     plan.set(a.id,{id:a.node,p:a.p});lifts.set(a.id,lift);
+     if(!b||!pointFits(a,a.p,a.height))return false;
+     plan.set(a.id,{id:a.node,p:a.p});lifts.set(a.id,masked?a.height:lift);
      return true;
     });
    if(!valid||!nativeTrailHits(plan,{requireNative:true,lifts})){
@@ -644,7 +674,7 @@ export function createGardenActorMotion(root){
    return !!seat&&seat.node===bindings.get(a.id)?.node&&seat.site===a.node&&seat.p===a.p;
   };
   const fitsNow=()=>model.actors.size===roster.length&&[...model.actors.values()].every(a=>
-   heldIdleFits(a)||safePoint(a.p,bindings.get(a.id).width,bindings.get(a.id).height,a.height*p.height,a.state==='fly'));
+   heldIdleFits(a)||pointFits(a,a.p,a.height));
   // Do not preserve a partially applicable flight generation. The selected
   // footholds are already pairwise-separated. In this fallback standing
   // positions cannot depend on old airborne reservations.
@@ -869,9 +899,11 @@ export function createGardenActorMotion(root){
   if((coldSharedAdmission||reboundShared)&&sharedAdmission){
    sharedAdmission.owner=roomOwner;
    roomOwner.dataset.gardenSharedStatus='admitted';
-   if(sharedAdmission.stage&&sharedAdmission.stage!==stage)sharedStageLeases.delete(sharedAdmission.stage);
-   sharedAdmission.stage=stage;
-   sharedStageLeases.add(stage);
+   if(!masked){
+    if(sharedAdmission.stage&&sharedAdmission.stage!==stage)sharedStageLeases.delete(sharedAdmission.stage);
+    sharedAdmission.stage=stage;
+    sharedStageLeases.add(stage);
+   }
   }
   geometryKey=signature;rosterKey=nextRosterKey;paintedWideCrop=wideCrop;
   stage.dataset.actorMotion=trailRuntime?(standingOnly?'trail-standing':active?'trail-active':'trail-held'):active?'active':'held';

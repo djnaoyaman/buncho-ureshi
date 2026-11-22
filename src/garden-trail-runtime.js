@@ -97,7 +97,8 @@ export function createGardenTrailRuntime(id,model,terrain=trailTerrainFor(id)){
   // dry contacts. It still owns a reservation and passes the same entire
   // wing/body sweep, clipping, and native UI checks as a lane crossing.
   sharedPaneFlight(gates,{paintable}){
-   if(terrain.number!==7||!proven||![8,10].includes(model.actors.size)||!Array.isArray(gates)||gates.length!==2||
+   const controlledCapacity=terrain.number===7?[8,10]:terrain.number===34?[10]:[];
+   if(!controlledCapacity.includes(model.actors.size)||!proven||!Array.isArray(gates)||gates.length!==2||
       typeof paintable!=='function'||[...model.actors.values()].some(a=>a.route))return null;
    const [west,east]=gates;
    for(const [from,to]of [[west,east],[east,west]]){

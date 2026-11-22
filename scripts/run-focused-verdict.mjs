@@ -5,13 +5,17 @@ const allowed=['tests/browser/garden-about-booklet.spec.js','tests/browser/garde
 const shared='tests/browser/garden-zebra-shared-pane.spec.js';
 const sharedAB='tests/browser/garden-zebra-shared-pane-ab.spec.js';
 const retain='tests/browser/garden-zebra-ready-stage-retain.spec.js';
+const masked='tests/browser/garden-masked-fixed-pane.spec.js';
 const engine=process.env.QA_ENGINE, input=process.env.BOOKLET_OPEN_STYLE;
 const ab=['shared-ab-original','shared-ab-missed'].includes(input);
 const sharedLane=input==='shared-pane'||ab;
 const retentionLane=input==='shared-retain';
-const requested=JSON.stringify(files);
+const maskedLane=input==='masked-fixed';
+const fullManifest=JSON.stringify([...allowed,shared,sharedAB,retain,masked]);
+const complete=JSON.stringify(files)===fullManifest;
+const requested=JSON.stringify(complete?files.slice(0,-1):files);
 const retainedManifest=JSON.stringify([...allowed,shared,sharedAB,retain]);
-if((retentionLane?requested!==retainedManifest:requested!==JSON.stringify(ab?[...allowed,shared,sharedAB]:sharedLane?[...allowed,shared]:allowed)&&!(ab&&requested===retainedManifest))||!['chrome','webkit'].includes(engine)||!['split','locator','axis','comparison','shared-pane','shared-ab-original','shared-ab-missed','shared-retain'].includes(input))throw Error('Invalid focused diagnostic lane.');
+if((maskedLane?!complete:retentionLane?requested!==retainedManifest:requested!==JSON.stringify(ab?[...allowed,shared,sharedAB]:sharedLane?[...allowed,shared]:allowed)&&!(ab&&requested===retainedManifest))||!['chrome','webkit'].includes(engine)||!['split','locator','axis','comparison','shared-pane','shared-ab-original','shared-ab-missed','shared-retain','masked-fixed'].includes(input))throw Error('Invalid focused diagnostic lane.');
 const booklet=['layout bird-scaly-breasted-munia 320x740','assigned credit and audio continuity 375 fixed'];
 const other=['safe roster bird-zebra-finch dense','ground holds and resumes java-rice','viewport synchronization java-rice dense','viewport synchronization bird-diamond-firetail (?:false|dense)','viewport synchronization bird-zebra-finch (?:true|dense)'];
 const axis=['viewport synchronization bird-zebra-finch dense'];
@@ -23,11 +27,12 @@ const comparison=[
 ];
 const sharedTitles=[8,10].map(count=>`zebra shared pane retains the native ${count}-bird flight across rotation`);
 const retentionTitles=['zebra companion UI redraw retains the original ready stage and shared flight','zebra busy garden action replaces the stage and reenables every native bird'];
-const selection=retentionLane?retentionTitles:sharedLane?sharedTitles:input==='axis'?axis:input==='comparison'?comparison:input==='locator'?booklet:[...booklet,...other];
+const maskedTitles=['375×667 to 667×375','667×375 to 402×874','402×874 to 874×402'].map(pair=>`#34 fixed courtyard, ${pair}, real flight and taps`);
+const selection=maskedLane?maskedTitles:retentionLane?retentionTitles:sharedLane?sharedTitles:input==='axis'?axis:input==='comparison'?comparison:input==='locator'?booklet:[...booklet,...other];
 // Playwright imports selected files before filtering titles. Keep the
 // booklet's split/locator setup contract out of the new geometry lanes.
-const expected=(sharedLane||retentionLane)?2:input==='axis'?1:input==='comparison'?9:null;
-const selectedFiles=retentionLane?[retain]:ab?[sharedAB]:sharedLane?[shared]:input==='axis'?[allowed[2]]:input==='comparison'?allowed.slice(1):files;
+const expected=maskedLane?3:(sharedLane||retentionLane)?2:input==='axis'?1:input==='comparison'?9:null;
+const selectedFiles=maskedLane?[masked]:retentionLane?[retain]:ab?[sharedAB]:sharedLane?[shared]:input==='axis'?[allowed[2]]:input==='comparison'?allowed.slice(1):files;
 const common=['playwright','test',...selectedFiles,'--config=playwright.verdict.config.js','--project='+engine,
  '--grep','(?:'+selection.join('|')+')$','--retries=0','--output=focused-test-results'];
 if(expected!==null){
@@ -42,7 +47,7 @@ if(expected!==null){
  const tests=s=>(s.specs??[]).flatMap(sp=>sp.tests??[]).concat((s.suites??[]).flatMap(tests));
  const cases=tests(report);
  if(report.errors?.length||cases.length!==expected||cases.some(t=>t.projectName!==engine))stop('discovery-selection');
- if(sharedLane||retentionLane){
+ if(sharedLane||retentionLane||maskedLane){
   const specs=s=>(s.specs??[]).concat((s.suites??[]).flatMap(specs));
   const titles=specs(report).map(t=>t.title).sort();
   if(JSON.stringify(titles)!==JSON.stringify([...selection].sort()))stop('discovery-titles');

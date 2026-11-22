@@ -15,7 +15,7 @@
   "changedSource": {
     "src/encounter-ui.js": {
       "before": "7b3df2bbc75cc95a262763cc6cb79dc9c8cd9fecce08ae87eaf1348bd5594936",
-      "after": "3b0c1c344139b47146056d99163c79f7e54841d90526038b87eae9e42cd0d253"
+      "after": "b80c4f40aa04527956ed9fd0a61d767a9b043369fdcf96f0095558990f18ada6"
     },
     "src/garden-actor-flight.js": {
       "before": "256f270a396a15374829257a8265216c20290a8a594977ce200412664d1a5e91",
@@ -23,7 +23,7 @@
     },
     "src/garden-actor-motion.js": {
       "before": "2dfdb5f374f29fa1af3af667be36c9857714e2b849b2da34e67a615234a4dc7c",
-      "after": "69f0ba2046b209128dad32aa030e32ba7b4b00598bd221c09afc25a41787b5dc"
+      "after": "eb61fe07d320bee8e95c4d48c203eb727da20bdda90c9c23699d9b16823f8d76"
     },
     "src/garden-actor-state.js": {
       "before": "311bb2ced9b28ce172627f8ac81de9f647420e01d0d5f9706c925e2f86c42301",
@@ -40,7 +40,7 @@
     "src/garden-trail-adapter.js": "f5bafebee0ba6a85b3c1dc2da95feaa71dca4685c2ef03dc89a1e9db607f05a5",
     "src/garden-trail-clearance.js": "11d79a1a758fa0e7c6d3bd51f3fd87f5d0eea0b1e0bd53ae8c6d4b2a9c737c90",
     "src/garden-trail-lane.js": "b7fc52dd1335bf6166b1f6e03d49eeeb4c715c5034cc8e3dbd4965d2870178e5",
-    "src/garden-trail-runtime.js": "225cf71d54d0d92622863f2f1f09ee2b2ae7caf5b6ec2c0123849713a6a96512"
+    "src/garden-trail-runtime.js": "0a3ab62e9ec757ba955f0dd61be50acee8f0f5c5258fb108c1a9ac43dd69de4e"
   },
   "historicalFormalReviewedDraft": "4caaccc2cef57a62c51c25d0e5c4803098ef1d3d",
   "compositionStatus": "Exact final formal candidate on published post-film main; verification required; not release evidence.",
@@ -76,7 +76,7 @@
   "privateDiagnosticSource": {
     "src/game.css": {
       "before": "052b95d390ff69e638e0a3a00d69ac0d660de8820ee517cea27d6ff2719f589a",
-      "after": "bc855f594cbd67f924d7676e6c0db3061b1c9de117c3d519b20fef67ae8045bc"
+      "after": "15bae85348a1984972712b99bbc8f9a87c2790200aa428a57c495059b3a413c9"
     },
     "src/encounter-controller.js": {
       "before": "abb6da46ed67c7bd43834c438b0be224cbea9c646e116b6ee633dfcda51e82b4",
@@ -88,7 +88,15 @@
     },
     "src/garden-actor-motion.js": {
       "before": "84f1d61a4b73d5bc64e123304183a4c8dd03207d395963e3578744dcb0080571",
-      "after": "69f0ba2046b209128dad32aa030e32ba7b4b00598bd221c09afc25a41787b5dc"
+      "after": "eb61fe07d320bee8e95c4d48c203eb727da20bdda90c9c23699d9b16823f8d76"
+    },
+    "src/encounter-ui.js": {
+      "before": "3b0c1c344139b47146056d99163c79f7e54841d90526038b87eae9e42cd0d253",
+      "after": "b80c4f40aa04527956ed9fd0a61d767a9b043369fdcf96f0095558990f18ada6"
+    },
+    "src/garden-trail-runtime.js": {
+      "before": "225cf71d54d0d92622863f2f1f09ee2b2ae7caf5b6ec2c0123849713a6a96512",
+      "after": "0a3ab62e9ec757ba955f0dd61be50acee8f0f5c5258fb108c1a9ac43dd69de4e"
     }
   }
 }
