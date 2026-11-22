@@ -1,4 +1,5 @@
 import {spawnSync} from 'node:child_process';
+import {writeFileSync} from 'node:fs';
 const files=JSON.parse(process.env.BROWSER_TESTS_JSON||'[]');
 const allowed=['tests/browser/garden-about-booklet.spec.js','tests/browser/garden-ground-motion.spec.js','tests/browser/garden-viewport-sync.spec.js'];
 const engine=process.env.QA_ENGINE, input=process.env.BOOKLET_OPEN_STYLE;
@@ -13,5 +14,24 @@ const comparison=[
  'atomic snapshot exposes a ready occluded target without waiting for success','atomic snapshot exposes ready zero geometry and offscreen targets',
 ];
 const selection=input==='axis'?axis:input==='comparison'?comparison:input==='locator'?booklet:[...booklet,...other];
-const result=spawnSync('npx',['playwright','test',...files,'--config=playwright.verdict.config.js','--project='+engine,'--grep','(?:'+selection.join('|')+')$','--retries=0','--reporter=./scripts/sharded-verdict-reporter.mjs','--output=focused-test-results'],{stdio:'inherit'});
+// Playwright imports selected files before filtering titles. Keep the
+// booklet's split/locator setup contract out of the new geometry lanes.
+const expected=input==='axis'?1:input==='comparison'?9:null;
+const selectedFiles=input==='axis'?[allowed[2]]:input==='comparison'?allowed.slice(1):files;
+const common=['playwright','test',...selectedFiles,'--config=playwright.verdict.config.js','--project='+engine,
+ '--grep','(?:'+selection.join('|')+')$','--retries=0','--output=focused-test-results'];
+if(expected!==null){
+ const list=spawnSync('npx',[...common,'--list','--reporter=json'],{encoding:'utf8',maxBuffer:1024*1024,timeout:30000});
+ const stop=phase=>{
+  const r={v:1,engine,input,status:'failed',infrastructure:1,phase,rows:[]};
+  writeFileSync('compact-browser-verdict.json',JSON.stringify(r)+'\n');
+  console.error(phase);process.exit(1);
+ };
+ if(list.error||list.status!==0)stop('discovery-command');
+ let report;try{report=JSON.parse(list.stdout);}catch{stop('discovery-format');}
+ const tests=s=>(s.specs??[]).flatMap(sp=>sp.tests??[]).concat((s.suites??[]).flatMap(tests));
+ const cases=tests(report);
+ if(report.errors?.length||cases.length!==expected||cases.some(t=>t.projectName!==engine))stop('discovery-selection');
+}
+const result=spawnSync('npx',[...common,'--reporter=./scripts/sharded-verdict-reporter.mjs'],{stdio:'inherit'});
 if(result.error)throw result.error;process.exit(result.status??1);
