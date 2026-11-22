@@ -15,7 +15,7 @@
   "changedSource": {
     "src/encounter-ui.js": {
       "before": "7b3df2bbc75cc95a262763cc6cb79dc9c8cd9fecce08ae87eaf1348bd5594936",
-      "after": "673425871ce9f89d79365a3fbbb8707570addc1b1fe014f0832044b4f8152833"
+      "after": "3b0c1c344139b47146056d99163c79f7e54841d90526038b87eae9e42cd0d253"
     },
     "src/garden-actor-flight.js": {
       "before": "256f270a396a15374829257a8265216c20290a8a594977ce200412664d1a5e91",
@@ -23,7 +23,7 @@
     },
     "src/garden-actor-motion.js": {
       "before": "2dfdb5f374f29fa1af3af667be36c9857714e2b849b2da34e67a615234a4dc7c",
-      "after": "4414d08cbc007aecb4800d48f14fe07a827d6f6bf0144f20fd738879f197a3e2"
+      "after": "fabcaa006e70e452307ce8c6fcba10ebd35e084f5e38198aaf857165f44d5093"
     },
     "src/garden-actor-state.js": {
       "before": "311bb2ced9b28ce172627f8ac81de9f647420e01d0d5f9706c925e2f86c42301",
@@ -40,7 +40,7 @@
     "src/garden-trail-adapter.js": "f5bafebee0ba6a85b3c1dc2da95feaa71dca4685c2ef03dc89a1e9db607f05a5",
     "src/garden-trail-clearance.js": "11d79a1a758fa0e7c6d3bd51f3fd87f5d0eea0b1e0bd53ae8c6d4b2a9c737c90",
     "src/garden-trail-lane.js": "b7fc52dd1335bf6166b1f6e03d49eeeb4c715c5034cc8e3dbd4965d2870178e5",
-    "src/garden-trail-runtime.js": "6f5c52dcb1bb7ac716cac6ea5e90468e82f017b87f42e393b5c0d84ff2a11b01"
+    "src/garden-trail-runtime.js": "225cf71d54d0d92622863f2f1f09ee2b2ae7caf5b6ec2c0123849713a6a96512"
   },
   "historicalFormalReviewedDraft": "4caaccc2cef57a62c51c25d0e5c4803098ef1d3d",
   "compositionStatus": "Exact final formal candidate on published post-film main; verification required; not release evidence.",
@@ -72,5 +72,11 @@
       "formalBrowsersPending": true
     },
     "mandatoryBrowserManifestSha256": "255a9d6afdf612d71cd848ae34a0680c68fc61b5149902fc8eb8ecbc4fd22726"
+  },
+  "privateDiagnosticSource": {
+    "src/game.css": {
+      "before": "052b95d390ff69e638e0a3a00d69ac0d660de8820ee517cea27d6ff2719f589a",
+      "after": "676bc1841348a85ef518a99870c10430cf3baba471f0a645c66c45524abb561d"
+    }
   }
 }

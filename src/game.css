@@ -2236,3 +2236,23 @@ body[data-world="buncho"] .game-field-nav button { display:inline-flex; align-it
 body[data-world="buncho"] .game-field-nav .game-nav-miniature { display:block; width:26px; height:26px; object-fit:contain; flex:0 0 26px; pointer-events:none; }
 body[data-world="buncho"] .game-field-nav .game-nav-miniature-label { flex:0 0 auto; text-decoration:inherit; text-underline-offset:inherit; }
 @media (max-width:360px) { body[data-world="buncho"] .game-field-nav .game-nav-miniature { width:24px; height:24px; flex-basis:24px; } }
+
+/* #07 invariant-play-pane proof; target viewport range only.
+   Camera uses same 390x235 local clip and 941:1672 image scale on both axes. */
+@media (min-width:390px) and (min-height:390px) {
+ body[data-world="buncho"] .game-encounter-host .finch-garden[data-garden-shared-play="proof"] {
+  --garden-jog-top:calc(48px + env(safe-area-inset-top,0px));
+  --garden-jog-height:44px;
+ }
+ body[data-world="buncho"] .game-encounter-host .finch-garden[data-garden-shared-play="proof"] > header {top:env(safe-area-inset-top,0px)}
+ body[data-world="buncho"] .game-encounter-host .finch-garden[data-garden-shared-play="proof"] [data-jog-center] {height:44px;min-height:44px}
+ body[data-world="buncho"] .game-panel-overlay[data-scene="true"] .finch-garden[data-garden-shared-play="proof"] .finch-garden-dock {padding-block:2px}
+ .finch-garden[data-garden-shared-play="proof"] .finch-garden-stage > .finch-garden-carousel {
+  position:absolute; inset:0 auto auto 50%; inline-size:390px;block-size:235px;
+  transform:translateX(-50%);
+  top:clamp(96px,calc((100% - 235px)/2),calc(100% - 297px));
+ }
+ .finch-garden[data-garden-shared-play="proof"] .finch-garden-stage .finch-garden-image-plane {
+  inline-size:700px;block-size:1243.78321px;left:calc(50% - 350px);top:calc(50% - 820.89692px);
+ }
+}

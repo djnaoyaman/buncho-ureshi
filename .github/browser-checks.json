@@ -3,7 +3,8 @@
   "tests": [
     "tests/browser/garden-about-booklet.spec.js",
     "tests/browser/garden-ground-motion.spec.js",
-    "tests/browser/garden-viewport-sync.spec.js"
+    "tests/browser/garden-viewport-sync.spec.js",
+    "tests/browser/garden-zebra-shared-pane.spec.js"
   ],
-  "reason": "Never-merge test-only #07 first-frame recovery discriminator and separate painted viewport/ground controls; exact three approved browser files, no game changes."
+  "reason": "Never-merge geometry diagnostic: two exact #07 shared-pane native flight/rotation cases; retain the three reviewed legacy browser files for the unchanged historical lanes."
 }
