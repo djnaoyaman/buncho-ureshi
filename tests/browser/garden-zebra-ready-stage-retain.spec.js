@@ -25,11 +25,43 @@ test('zebra companion UI redraw retains the original ready stage and shared flig
    stage,actor,paint:actor.querySelector('.garden-actor-flight'),book:document.querySelector('[data-encounter-back]'),states:[],opened:false,closed:false
   };
   const capture=window.__readyRedraw;
+  const host=stage.closest('.game-encounter-host');
+  const panel=host.querySelector('.finch-companion-settings');
+  const closed=e=>e.target===panel&&(e.newState==='closed'||e.newState==null&&!panel.open);
   document.addEventListener('toggle',e=>{
-   if(!e.target.matches?.('.finch-companion-settings'))return;
-   if(e.newState==='open'||e.newState==null&&e.target.open)capture.opened=true;
-   if(e.newState==='closed'||e.newState==null&&!e.target.open)capture.closed=true;
+   if(e.target!==panel)return;
+   if(e.newState==='open'||e.newState==null&&panel.open)capture.opened=true;
+   if(!closed(e))return;
+   capture.closed=true;
+   const owner=stage.closest('.finch-garden'),status=owner?.dataset.gardenSharedStatus;
+   const flag=new Set(['admitted','measuring','retained-invalid','projection','chrome','seat','hit','route','roster']);
+   capture.authority=live=>{
+    const o=live?.closest('.finch-garden');
+    const ids=[...live?.querySelectorAll('.finch-garden-image-plane > button')??[]]
+     .map(n=>n.dataset.gardenActorId||n.dataset.gardenVisitingFriend||n.dataset.encounterOpen||n.dataset.encounterPage).sort();
+    return {world:o?.dataset.gardenWorld,garden:live?.dataset.gardenId,source:live?.querySelector('.finch-garden-background')?.getAttribute('src'),ids:JSON.stringify(ids)};
+   };
+   capture.oldAuthority=capture.authority(stage);
+   capture.beforeClose=[
+    flag.has(status)?status:'unknown',
+    stage.dataset.sceneState==='ready'?'ready':'other-media',
+    host.getAttribute('aria-busy')==='true'?'busy':'idle',
+    document.querySelector('dialog:modal,.game-bird-sheet[open]')?'modal':'no-modal',
+    document.body.hasAttribute('data-game-view-blocked')?'blocked':'unblocked',
+    document.querySelector('[data-crow-phase],[data-raptor-phase],.finch-raptor-scale-scene,.finch-crow-scale-scene')?'risk':'no-risk'
+   ].join(':');
   },true);
+  // Controller's capture listener was registered on this same native host
+  // before this listener. Its synchronous close rerender has returned when
+  // the promise resolves. There is no film-clock advance or arbitrary wait.
+  capture.afterClose=new Promise(resolve=>{
+   const listener=e=>{
+    if(!closed(e))return;
+    host.removeEventListener('toggle',listener,true);
+    resolve();
+   };
+   host.addEventListener('toggle',listener,true);
+  });
   new MutationObserver(records=>{for(const record of records)capture.states.push(record.oldValue);})
    .observe(stage,{attributes:true,attributeFilter:['data-scene-state'],attributeOldValue:true});
  });
@@ -43,16 +75,22 @@ test('zebra companion UI redraw retains the original ready stage and shared flig
  expect(held.id).toBe(airborne.id);expect(held.landing).toBe(airborne.landing);
  await summary.click();
  await expect(panel).not.toHaveAttribute('open','');
+ await page.evaluate(()=>window.__readyRedraw.afterClose);
  const nativeReceipt=await page.evaluate(()=>{
   const q=window.__readyRedraw,stage=document.querySelector('.finch-garden-stage');
   const same=stage===q.stage,book=q.book!==document.querySelector('[data-encounter-back]'),actor=q.actor.isConnected,
     paint=q.actor.contains(q.paint),neverLost=q.states.every(s=>s==='ready'),ready=stage.dataset.sceneState==='ready';
   return {ok:same&&book&&actor&&paint&&neverLost&&ready,
+   blockedStage:q.beforeClose?(q.beforeClose+':'+['world','garden','source','ids']
+    .map(k=>q.oldAuthority[k]===q.authority(stage)[k]?'same':'changed').join(':')):'unobserved',
    flags:[same?'same-stage':'new-stage',book?'new-book':'same-book',actor?'actor-live':'actor-gone',
     paint?'art-kept':'art-gone',neverLost?'no-reset':'reset',ready?'ready':'not-ready',
     q.opened?'saw-open':'no-open',q.closed?'saw-close':'no-close'].join(':')};
  });
- if(!nativeReceipt.ok)info.annotations.push({type:'qa-07-shared-close',description:nativeReceipt.flags});
+ if(!nativeReceipt.ok){
+  info.annotations.push({type:'qa-07-shared-close',description:nativeReceipt.flags});
+  info.annotations.push({type:'qa-07-close-prior',description:nativeReceipt.blockedStage});
+ }
  expect(nativeReceipt.ok).toBe(true);
  const rebound=await read(page);
  expect(rebound.id).toBe(airborne.id);expect(rebound.landing).toBe(airborne.landing);
