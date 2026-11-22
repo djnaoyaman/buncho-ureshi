@@ -6,6 +6,12 @@ import {createGardenTrailRuntime} from './garden-trail-runtime.js';
 import {assignTrailSeats,contourTrailStandingSeats,landscapeTrailStandingSeats,measuredNativeFoot,packTrailStandingSeats,pitchTrailStandingSeats,surveyedBandTrailSeats} from './garden-trail-clearance.js';
 import {createActorFlight} from './garden-actor-flight.js';
 
+// Proof of prior successful native placement on this exact connected stage,
+// not proof of a currently exposed hit or cleared live flight.
+const sharedStageLeases=new WeakSet();
+export const hasSharedStageLease=stage=>!!stage&&sharedStageLeases.has(stage);
+
+
 // Cold #34 only: a tap-safe standing pack can still leave no pocket because
 // native motion uses the larger swept shapes. Try a bounded one-seat
 // alternative before first paint, and never displace a live occupant.
@@ -126,7 +132,7 @@ export function createGardenActorMotion(root){
   if(b.pose){b.pose.style.visibility=b.poseVisibility;b.pose.removeAttribute('data-terrain-flight-active');}
   for(const attr of ['data-actor-state','data-actor-phase','data-actor-node','data-actor-landing'])b.node.removeAttribute(attr);
  };
- const dispose=()=>{axisIdleHold=null;sharedAdmission=null;if(overlayStyle){const [node,value]=overlayStyle;value?node.style.setProperty('--game-viewport-height',value):node.style.removeProperty('--game-viewport-height');overlayStyle=null;}for(const b of bindings.values())restore(b);bindings.clear();model?.clear();model=null;trailRuntime=null;nextTrail=0;trailRetry=false;trailMeasurement=null;trailPads=[];key='';canonicalRetryKey=null;pinnedTrail=null;geometryKey='';rosterKey='';rejected=null;paintedWideCrop=null;};
+ const dispose=()=>{axisIdleHold=null;if(sharedAdmission?.stage)sharedStageLeases.delete(sharedAdmission.stage);sharedAdmission=null;if(overlayStyle){const [node,value]=overlayStyle;value?node.style.setProperty('--game-viewport-height',value):node.style.removeProperty('--game-viewport-height');overlayStyle=null;}for(const b of bindings.values())restore(b);bindings.clear();model?.clear();model=null;trailRuntime=null;nextTrail=0;trailRetry=false;trailMeasurement=null;trailPads=[];key='';canonicalRetryKey=null;pinnedTrail=null;geometryKey='';rosterKey='';rejected=null;paintedWideCrop=null;};
  const body=(p,width,height,lift=0)=>({left:geometry.plane.left+p[0]*geometry.plane.width-width*.54,top:geometry.plane.top+p[1]*geometry.plane.height-height*.975-lift,
   right:geometry.plane.left+p[0]*geometry.plane.width+width*.46,bottom:geometry.plane.top+p[1]*geometry.plane.height+height*.025-lift});
  function safePoint(p,width,height,lift=0,flight=false){
@@ -232,6 +238,7 @@ export function createGardenActorMotion(root){
   // backdrop and bird model share one fixed projection. Obstacles are only
   // clipped out after proving their real bounds never enter the pane.
   const roomOwner=terrain.number===7?stage.closest('[data-garden-shared-play="proof"]'):null;
+  const revalidateSharedOcclusion=!!roomOwner&&hasSharedStageLease(stage)&&roomOwner.dataset.gardenSharedStatus==='retained-invalid';
   const shared=roomOwner&&Math.abs(s.width-390)<.1&&Math.abs(s.height-235)<.1&&Math.abs(p.width-700)<.1;
   const sharedRoom=shared&&[8,10].includes(definitions.length);
   const abandonShared=reason=>{
@@ -267,6 +274,7 @@ export function createGardenActorMotion(root){
   // unsupported footprint remove the *whole* old presentation, not just its
   // diagnostics, and only try again when the measured inputs/stage change.
   const reject=reason=>{
+   sharedStageLeases.delete(stage);
    for(const b of bindings.values())restore(b);
    bindings.clear();geometryKey='';rosterKey='';
    rejected={stage,signature,roster:nextRosterKey};
@@ -428,7 +436,7 @@ export function createGardenActorMotion(root){
    }
   };
   const hadTrail=!!trailRuntime&&[...model.actors.values()].some(a=>a.route);
-  if(trailRuntime&&(resized||populationChanged||changedBindings||!trailMeasurement||shared&&(p.left!==trailMeasurement.plane.left||p.top!==trailMeasurement.plane.top)))trailMeasurement=measureTrail();
+  if(trailRuntime&&(resized||populationChanged||changedBindings||!trailMeasurement||revalidateSharedOcclusion||shared&&(p.left!==trailMeasurement.plane.left||p.top!==trailMeasurement.plane.top)))trailMeasurement=measureTrail();
   const measurement=trailRuntime?trailMeasurement:null;
   if(trailRuntime){
    // Apply the authoritative removals even when no seat can be allocated to
@@ -491,7 +499,7 @@ export function createGardenActorMotion(root){
    }
   }
   let planned=null,coldSharedAdmission=null,reboundShared=false;
-  if(sharedAdmission&&roomOwner&&(roomOwner!==sharedAdmission.owner||resized||changedBindings||populationChanged)){
+  if(sharedAdmission&&roomOwner&&(revalidateSharedOcclusion||roomOwner!==sharedAdmission.owner||resized||changedBindings||populationChanged)){
    const current=[...model.actors.values()],plan=new Map(),lifts=new Map();
    const allowed=new Map([...sharedGates,...sharedParking].map(n=>[n.id,n.p]));
    const prior=sharedAdmission;
@@ -861,6 +869,9 @@ export function createGardenActorMotion(root){
   if((coldSharedAdmission||reboundShared)&&sharedAdmission){
    sharedAdmission.owner=roomOwner;
    roomOwner.dataset.gardenSharedStatus='admitted';
+   if(sharedAdmission.stage&&sharedAdmission.stage!==stage)sharedStageLeases.delete(sharedAdmission.stage);
+   sharedAdmission.stage=stage;
+   sharedStageLeases.add(stage);
   }
   geometryKey=signature;rosterKey=nextRosterKey;paintedWideCrop=wideCrop;
   stage.dataset.actorMotion=trailRuntime?(standingOnly?'trail-standing':active?'trail-active':'trail-held'):active?'active':'held';

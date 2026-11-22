@@ -15,6 +15,7 @@ import {createGardenCrowClock,arriveGardenCrow,crowCoolingDown,crowScene,petGard
 import {renderCrowNotebook,renderCrowFriendship} from './garden-crow-ui.js';
 import {mountEncounterMedia} from './encounter-media.js';
 import {mountGardenBirdMotion} from './garden-bird-motion.js';
+import {hasSharedStageLease} from './garden-actor-motion.js';
 import {encounterSystem} from './encounters.js';
 import {renderEncounterNotebook,renderEncounterPage,renderEncounterScene,renderFinchGarden,renderEncounterFriendship} from './encounter-ui.js';
 // Narrow presentation proof. Compare authoritative parsed markup before any
@@ -23,7 +24,8 @@ export function retainReadyGardenStage(old,next,prior){
  return !!old&&!!next&&!!prior&&old.garden===next.garden&&old.garden==='bird-zebra-finch'&&
   !!old.world&&old.world===next.world&&old.world===prior.world&&
   old.garden===prior.garden&&next.signature===prior.signature&&
-  old.source===next.source&&!!old.source&&old.ready&&old.admitted&&old.proof&&next.proof&&
+  old.source===next.source&&!!old.source&&old.ready&&old.proof&&next.proof&&
+  (old.admitted||old.exactCompanionClose&&old.admissionLease&&old.occlusionPending)&&
   old.motion&&next.motion&&!old.blocked&&!next.blocked&&!old.risk&&!next.risk;
 }
 function keepDirectChild(live,draft,kept,placeholder){
@@ -95,7 +97,7 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
   const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const jogFeedback=createGardenJogFeedback({Context:win.AudioContext||win.webkitAudioContext,navigator:win.navigator,getSound,isActive:()=>alive&&root.isConnected&&mode==='garden'&&doc.visibilityState!=='hidden'&&!Array.from(doc.querySelectorAll('dialog[open]')).some(dialog=>!dialog.contains(root))});
   const jog=mountGardenJog(root,{items:GARDENS,getCommitted:()=>getWorld().encounters.garden.id,isBusy:()=>busy,onCommit:id=>garden(id),onGesture:e=>{if(e.isTrusted)jogFeedback.gesture({release:e.type==='pointerup'||e.type==='touchend'});},onStep:()=>jogFeedback.step(),onSettled:()=>jogFeedback.settled(),onCancel:()=>jogFeedback.cancel()});
-  function render({focus=false}={}){
+  function render({focus=false,closedCompanion=null}={}){
     if(!alive)return;petResponse.cancel();const w=getWorld();syncCrowContext(w);if(mode!=='garden'||w.worldId!==worldId)jogFeedback.cancel();
     if(companionDraft&&(mode!=='garden'||companionDraft.worldId!==w.worldId||companionDraft.gardenId!==w.encounters.garden.id))discardCompanions();
     if(mode!=='garden'||w.paused||w.worldId!==worldId||doc.querySelector('.game-bird-sheet[open]'))stopCrow();
@@ -143,10 +145,17 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
       const blocked=busy||root.getAttribute('aria-busy')==='true'||!root.isConnected||doc.hidden||
         doc.body.hasAttribute('data-game-view-blocked')||
         !!root.closest('[inert]')||!!doc.querySelector('dialog:modal,.game-bird-sheet[open]');
-      const motion=w.settings.motion!==false&&!win.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+      const motion=!w.paused&&w.settings.motion!==false&&!win.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+      // Only the actual native close handler grants this alternate
+      // lifecycle path. No arbitrary refresh or unrelated submenu does.
+      const exactCompanionClose=!!closedCompanion&&!closedCompanion.open&&
+       closedCompanion.closest('.finch-garden')===oldGarden&&!oldGarden?.querySelector('details[open]');
+
       const state=(owner,stage)=>({world:owner?.dataset.gardenWorld,garden:stage?.dataset.gardenId,
         source:mediaSource(stage),motion,blocked,risk:risky,proof:owner?.dataset.gardenSharedPlay==='proof',
         admitted:owner?.dataset.gardenSharedStatus==='admitted',
+        exactCompanionClose,admissionLease:hasSharedStageLease(stage),
+        occlusionPending:owner?.dataset.gardenSharedStatus==='retained-invalid',
         ready:stage?.dataset.sceneState==='ready'&&stage?.querySelector('.finch-garden-carousel')?.getAttribute('aria-busy')==='false'});
       const upcoming=fresh?{...state(next,fresh),signature:fresh.outerHTML}:null;
       if(oldGarden?.parentNode===root&&next?.parentNode===tpl.content&&old?.parentNode===oldGarden&&fresh?.parentNode===next&&
@@ -436,7 +445,7 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
   const companionToggle=event=>{
     const detail=event.target;
     if(!detail.matches?.('.finch-companion-settings')||!root.contains(detail)||!alive)return;
-    if(!detail.open){const restoreFocus=detail.contains(doc.activeElement);discardCompanions();render();if(restoreFocus)root.querySelector('[data-companion-summary]')?.focus({preventScroll:true});return;}
+    if(!detail.open){const restoreFocus=detail.contains(doc.activeElement);discardCompanions();render({closedCompanion:detail});if(restoreFocus)root.querySelector('[data-companion-summary]')?.focus({preventScroll:true});return;}
     if(!companionDraft){companionDraft=createCompanionDraft(getWorld());companionMessage='';}
   };
   const storyToggle=event=>{const d=event.target;if(d.matches?.('details[name=garden-story]')&&d.open&&root.contains(d)&&d.querySelector('summary')===doc.activeElement)d.querySelector('[data-garden-story-close]')?.focus({preventScroll:true});};
