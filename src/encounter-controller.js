@@ -28,6 +28,14 @@ export function retainReadyGardenStage(old,next,prior){
   (old.admitted||old.exactCompanionClose&&old.admissionLease&&old.occlusionPending)&&
   old.motion&&next.motion&&!old.blocked&&!next.blocked&&!old.risk&&!next.risk;
 }
+// The proven #34 fixed pane may retain exact nodes during an ordinary,
+// same-roster redraw. It never inherits #07's special companion-close rule.
+export function retainReadyMaskedGardenStage(old,next,prior){
+ return !!old&&!!next&&!!prior&&old.garden==='bird-masked-finch'&&old.garden===next.garden&&old.garden===prior.garden&&
+  !!old.world&&old.world===next.world&&old.world===prior.world&&!!next.signature&&next.signature===prior.signature&&
+  old.source===next.source&&!!old.source&&old.ready&&old.masked&&next.masked&&old.admitted&&old.admissionLease&&
+  old.motion&&next.motion&&!old.blocked&&!next.blocked&&!old.risk&&!next.risk;
+}
 function keepDirectChild(live,draft,kept,placeholder){
  for(const node of [...live.childNodes])if(node!==kept)node.remove();
  for(const node of [...draft.childNodes]){
@@ -129,7 +137,8 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
     onCrowWarning(!!crowClock.warning);
     media.preserve();
     const html=(mode==='raptors'?renderRaptorNotebook(w,{base,id:pageId}):mode==='crows'?renderCrowNotebook(w,{base,id:pageId}):mode==='event'?renderEncounterScene(w,{system,base}):mode==='garden'?renderFinchGarden(w,{system,base,selectedBirdId:getSelectedBirdId(),crowWarning:crowClock.warning,companionDraft,companionMessage,expeditionCelebration,showcaseCelebration}):mode==='entry'?renderEncounterPage(w,pageId,{system,base,showPhoto}):renderEncounterNotebook(w,{system,base}))+`<p class="finch-notice" role="status">${escape(notice)}</p><button type="button" class="finch-media-retry" data-media-retry hidden>絵をもう一度読み込む</button>`;
-    if(mode==='garden'&&w.encounters.garden.id==='bird-zebra-finch'){
+    const sharedGarden=mode==='garden'?w.encounters.garden.id:null;
+    if(sharedGarden==='bird-zebra-finch'||sharedGarden==='bird-masked-finch'){
       const tpl=doc.createElement('template');tpl.innerHTML=html;
       const next=tpl.content.querySelector('.finch-garden'),fresh=next?.querySelector(':scope > .finch-garden-stage');
       const old=oldGarden?.querySelector(':scope > .finch-garden-stage');
@@ -153,13 +162,14 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
 
       const state=(owner,stage)=>({world:owner?.dataset.gardenWorld,garden:stage?.dataset.gardenId,
         source:mediaSource(stage),motion,blocked,risk:risky,proof:owner?.dataset.gardenSharedPlay==='proof',
+        masked:owner?.dataset.gardenMaskedPlay==='candidate',
         admitted:owner?.dataset.gardenSharedStatus==='admitted',
         exactCompanionClose,admissionLease:hasSharedStageLease(stage),
         occlusionPending:owner?.dataset.gardenSharedStatus==='retained-invalid',
         ready:stage?.dataset.sceneState==='ready'&&stage?.querySelector('.finch-garden-carousel')?.getAttribute('aria-busy')==='false'});
       const upcoming=fresh?{...state(next,fresh),signature:fresh.outerHTML}:null;
       if(oldGarden?.parentNode===root&&next?.parentNode===tpl.content&&old?.parentNode===oldGarden&&fresh?.parentNode===next&&
-         retainReadyGardenStage(state(oldGarden,old),upcoming,rawSharedStage)){
+         (sharedGarden==='bird-masked-finch'?retainReadyMaskedGardenStage:retainReadyGardenStage)(state(oldGarden,old),upcoming,rawSharedStage)){
         // Keep the actual stage and actors continuously connected. Only the
         // incoming chrome and authoritative revision/labels are replaced.
         const inherited=new Set(['data-garden-shared-status']);

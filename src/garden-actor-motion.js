@@ -607,18 +607,19 @@ export function createGardenActorMotion(root){
    }else if(masked&&sharedRoom){
     const lead=roster.find(d=>d.initialFlight&&d.movable);
     const preferred=new Map(),parking=[],known=new Set();
-    const add=(point,node=null)=>{
+    const add=point=>{
      const k=point.join(':');if(known.has(k)||!safePoint(point,actorWidth,actorWidth*1000/850))return;
-     known.add(k);parking.push(node??{id:'masked-park:'+k,p:point});
+     known.add(k);parking.push({id:'masked-park:'+k,p:point});
     };
-    sharedParking.forEach(n=>add(n.p,n));
-    // A sparse deterministic lattice near the surveyed parking row is
-    // only a list of hypotheses. Native footprints own every final check.
-    for(const [dx,dy]of [[-9,0],[9,0],[0,-4],[0,4],[-18,0],[18,0],[-9,-4],[9,4],[0,-8],[0,8]]){
-     for(const [x,y]of profile.parking){
-      if(parking.length>=50)break;
-      add(sharedAt([x+dx,y+dy]));
-     }
+    // Survey the upper dry ledge and lower bank independently. Nearby
+    // shifts on one row compete for the same bird-sized space and can exhaust
+    // the pack search before it considers a complete ten-bird arrangement.
+    // These are hypotheses only; exact route, footprint and hit tests follow.
+    for(const x of [170,215.2,260.4,305.6,350.8]){
+     for(const y of [58,65,72,79])add(sharedAt([x,y]));
+    }
+    for(const x of [145,194,243,292,341]){
+     for(const y of [124,132])add(sharedAt([x,y]));
     }
     // Filter each peer using the one exact planned native flight before
     // packing. Otherwise five near-identical shelves can all impinge on
@@ -650,14 +651,39 @@ export function createGardenActorMotion(root){
      trial.sync({generation:key,measurement});
      return !!trial.sharedPaneFlight(sharedGates,{paintable:routeFits});
     };
-    let swarmCanFly=false;
-    planned=planMaskedPaneSeats({actors:roster,lead,gate:sharedGates[0],parking,preferred,
+    let swarmCanFly=false,completeMaskedTrials=0;
+    const acceptMaskedPlan=plan=>{
+     if(completeMaskedTrials>=5)return false;
+     completeMaskedTrials++;
+     if(!trialFor(plan))return false;
+     swarmCanFly=true;
+     return nativeTrailHits(plan,{requireNative:true});
+    };
+    // Pack broad visitor art into separated lower-bank contacts before trying
+    // nearby individual alternatives. The lead and empty landing are not moved.
+    // Keep the original full standing, sweep and DOM hit checks on each plan.
+    const widthOf=d=>{
+     const q=measurement?.footprints.get(d.id);
+     return q?q.right-q.left:Infinity;
+    };
+    const peersInOrder=roster.filter(d=>d!==lead)
+      .sort((a,b)=>widthOf(a)-widthOf(b)||a.id.localeCompare(b.id));
+    for(const [upper,lower] of [[53.5,125],[55.5,128],[53.5,129],[53,130]]){
+     const contacts=[...[170,215.2,260.4,305.6,350.8].map(x=>[x,upper]),
+      ...[170,224,278,332].map(x=>[x,lower])].map(point=>{
+      const q=sharedAt(point);return {id:'masked-park:'+q.join(':'),p:q};
+     });
+     for(const peers of [peersInOrder,[...peersInOrder.slice(0,7),peersInOrder[8],peersInOrder[7]]]){
+      const plan=new Map([[lead.id,source],...peers.map((actor,index)=>[actor.id,contacts[index]])]);
+      if(roster.every(d=>canKeepRunway(d,plan.get(d.id))&&input.canPlace(d,plan.get(d.id),plan))&&acceptMaskedPlan(plan)){
+       planned=plan;break;
+      }
+     }
+     if(planned)break;
+    }
+    if(!planned)planned=planMaskedPaneSeats({actors:roster,lead,gate:sharedGates[0],parking,preferred,
      canPlace:(a,n,peers)=>canKeepRunway(a,n)&&input.canPlace(a,n,peers),standingPairFits:trailRuntime.standingPairFits,
-     standingClass:a=>measurement?.footprints.get(a.id),admit(plan){
-      if(!trialFor(plan))return false;
-      swarmCanFly=true;
-      return nativeTrailHits(plan,{requireNative:true});
-     }});
+     standingClass:a=>measurement?.footprints.get(a.id),admit:acceptMaskedPlan});
     if(!planned)return abandonShared(swarmCanFly?'hit':'seat');
     addTrailContacts(planned);
     coldSharedAdmission={owner:roomOwner,lead:lead.id,seats:new Map([...planned].map(([id,n])=>[id,n.id])),
@@ -988,11 +1014,11 @@ export function createGardenActorMotion(root){
   if((coldSharedAdmission||reboundShared)&&sharedAdmission){
    sharedAdmission.owner=roomOwner;
    roomOwner.dataset.gardenSharedStatus='admitted';
-   if(!masked){
-    if(sharedAdmission.stage&&sharedAdmission.stage!==stage)sharedStageLeases.delete(sharedAdmission.stage);
-    sharedAdmission.stage=stage;
-    sharedStageLeases.add(stage);
-   }
+   // Both admitted proof panes own an exact stage. #34's controller
+   // consumes this lease only for clean same-markup redraws.
+   if(sharedAdmission.stage&&sharedAdmission.stage!==stage)sharedStageLeases.delete(sharedAdmission.stage);
+   sharedAdmission.stage=stage;
+   sharedStageLeases.add(stage);
   }
   geometryKey=signature;rosterKey=nextRosterKey;paintedWideCrop=wideCrop;
   stage.dataset.actorMotion=trailRuntime?(standingOnly?'trail-standing':active?'trail-active':'trail-held'):active?'active':'held';

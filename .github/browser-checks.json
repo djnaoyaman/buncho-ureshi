@@ -9,5 +9,5 @@
     "tests/browser/garden-zebra-ready-stage-retain.spec.js",
     "tests/browser/garden-masked-fixed-pane.spec.js"
   ],
-  "reason": "Never merge: preserve the four #07 rotation and companion/transaction cases per engine, and add three independent #34 surveyed courtyard rotation directions with real ten-bird native hits and landing on the same verified build."
+  "reason": "Never merge: keep all existing focused native checks. Re-evaluate #34 authored, measured contacts and exact stage retention using the same six real rotation, tap, and landing checks, while preserving all eight #07 tests."
 }

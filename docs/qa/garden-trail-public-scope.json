@@ -23,7 +23,7 @@
     },
     "src/garden-actor-motion.js": {
       "before": "2dfdb5f374f29fa1af3af667be36c9857714e2b849b2da34e67a615234a4dc7c",
-      "after": "7231330c04dfc1878247364509bb11147fbfaf65ab3f6e340bbc7b385e493f12"
+      "after": "8b0429695082f2a7c94938b0d41e4e1d70bcf0a8b32667efe846df8adf31db6f"
     },
     "src/garden-actor-state.js": {
       "before": "311bb2ced9b28ce172627f8ac81de9f647420e01d0d5f9706c925e2f86c42301",
@@ -80,7 +80,7 @@
     },
     "src/encounter-controller.js": {
       "before": "abb6da46ed67c7bd43834c438b0be224cbea9c646e116b6ee633dfcda51e82b4",
-      "after": "33601d33d83c52dee2b5a5aa331e8ea1131a7df2c5604871b25516b8f1b02ad5"
+      "after": "e2d9b6adb8d70f61f95f70ed4c60c391df0fbeb0a8ead7d9b9a4a164f1c341a0"
     },
     "src/encounter-media.js": {
       "before": "14a075be7cead4957f0a43563a8c2b0a484b63a61b4ae32d536aa2a5b81d007d",
@@ -88,7 +88,7 @@
     },
     "src/garden-actor-motion.js": {
       "before": "84f1d61a4b73d5bc64e123304183a4c8dd03207d395963e3578744dcb0080571",
-      "after": "7231330c04dfc1878247364509bb11147fbfaf65ab3f6e340bbc7b385e493f12"
+      "after": "8b0429695082f2a7c94938b0d41e4e1d70bcf0a8b32667efe846df8adf31db6f"
     },
     "src/encounter-ui.js": {
       "before": "3b0c1c344139b47146056d99163c79f7e54841d90526038b87eae9e42cd0d253",
