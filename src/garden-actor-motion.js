@@ -547,9 +547,10 @@ export function createGardenActorMotion(root){
          !samePoint(a.route.to,destination.p)||!routeFits(a)||
          !trailRuntime.recoveryFits(a,destination,model.actors))return false;
      }else if(!samePoint(a.p,allowed.get(a.node)))return false;
-     const b=bindings.get(a.id),lift=a.height*p.height;
+     const b=bindings.get(a.id);
      if(!b||!pointFits(a,a.p,a.height))return false;
-     plan.set(a.id,{id:a.node,p:a.p});lifts.set(a.id,masked?a.height:lift);
+     // nativeTrailHits projects normalized actor altitude into pixels.
+     plan.set(a.id,{id:a.node,p:a.p});lifts.set(a.id,a.height);
      return true;
     });
    if(!valid||!nativeTrailHits(plan,{requireNative:true,lifts})){

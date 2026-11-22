@@ -23,7 +23,7 @@
     },
     "src/garden-actor-motion.js": {
       "before": "2dfdb5f374f29fa1af3af667be36c9857714e2b849b2da34e67a615234a4dc7c",
-      "after": "eb61fe07d320bee8e95c4d48c203eb727da20bdda90c9c23699d9b16823f8d76"
+      "after": "6c05ac72893f95f34c93ea43a81366daa44f8b3093f1a0a8e324206dd9f390bb"
     },
     "src/garden-actor-state.js": {
       "before": "311bb2ced9b28ce172627f8ac81de9f647420e01d0d5f9706c925e2f86c42301",
@@ -88,7 +88,7 @@
     },
     "src/garden-actor-motion.js": {
       "before": "84f1d61a4b73d5bc64e123304183a4c8dd03207d395963e3578744dcb0080571",
-      "after": "eb61fe07d320bee8e95c4d48c203eb727da20bdda90c9c23699d9b16823f8d76"
+      "after": "6c05ac72893f95f34c93ea43a81366daa44f8b3093f1a0a8e324206dd9f390bb"
     },
     "src/encounter-ui.js": {
       "before": "3b0c1c344139b47146056d99163c79f7e54841d90526038b87eae9e42cd0d253",
