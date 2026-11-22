@@ -124,6 +124,75 @@ jobs:
           path: compact-browser-verdict.json
           if-no-files-found: error
           retention-days: 7
+  trail_contract_receipt:
+    name: trail-receipt-${{ matrix.engine }}-${{ matrix.profile }}
+    needs: build
+    if: github.event_name == 'pull_request' && github.head_ref == 'qa/type2-postfilm-trail-receipts' && github.base_ref == 'qa/type2-postfilm-shard-verdict'
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chrome, webkit]
+        profile: [landscape]
+    container:
+      image: mcr.microsoft.com/playwright:v1.64.1-noble
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: verified-build-${{ github.sha }}
+          path: .verified-build
+      - name: Restore the exact tested build
+        run: |
+          cd .verified-build
+          sha256sum --check SHA256SUMS
+          test "$(cat SOURCE_SHA)" = "$GITHUB_SHA"
+          tar -xf dist.tar -C ..
+      - name: Require the browser image and installed Playwright versions to match
+        run: node -e "if(require('@playwright/test/package.json').version !== '1.64.1') throw Error('Update the official browser image to match Playwright');"
+      - name: Install actual Google Chrome using the prepared browser dependencies
+        timeout-minutes: 5
+        run: |
+          curl --fail --location --retry 2 --max-time 120 https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb --output /tmp/google-chrome.deb
+          # Extract the official browser; desktop integration (xdg-utils) is not
+          # used in this headless container. Verify every runtime library exists.
+          dpkg-deb --extract /tmp/google-chrome.deb /
+          ldd /opt/google/chrome/chrome > /tmp/chrome-libraries.txt
+          cat /tmp/chrome-libraries.txt
+          if grep -q 'not found' /tmp/chrome-libraries.txt; then exit 1; fi
+          /opt/google/chrome/chrome --version
+      - name: Provide native audio output for real media checks
+        run: |
+          apt-get update -qq
+          apt-get install -y pulseaudio pulseaudio-utils ffmpeg
+          # Use temporary daemon state, not the container's mounted HOME.
+          export PULSE_RUNTIME_PATH=/tmp/ci-pulse-runtime
+          export PULSE_STATE_PATH=/tmp/ci-pulse-state
+          mkdir -p "$PULSE_RUNTIME_PATH" "$PULSE_STATE_PATH" /tmp/ci-pulse-home
+          echo "PULSE_RUNTIME_PATH=$PULSE_RUNTIME_PATH" >> "$GITHUB_ENV"
+          HOME=/tmp/ci-pulse-home pulseaudio --daemonize=yes --exit-idle-time=-1 --log-target=stderr
+          pactl load-module module-null-sink sink_name=ci_audio sink_properties=device.description=CI_Audio
+          pactl set-default-sink ci_audio
+          pactl info
+      - name: Run only the private trail contracts for this profile
+        env:
+          QA_ENGINE: ${{ matrix.engine }}
+          QA_TRAIL_PROFILE: ${{ matrix.profile }}
+        run: node scripts/run-trail-contract-receipt.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: trail-contract-${{ matrix.engine }}-${{ matrix.profile }}-${{ github.sha }}
+          path: compact-browser-verdict.json
+          if-no-files-found: error
+          retention-days: 7
   browser:
     if: github.event_name == 'workflow_dispatch' && inputs.full_browser
     name: browser-${{ matrix.lane }}

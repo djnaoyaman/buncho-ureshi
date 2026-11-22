@@ -1,5 +1,5 @@
 {
-  "base": "3da7e1c2e200758a936878659450455c0d158368",
+  "base": "beb921492ab8b7c0127a23bd64fdea50ca256924",
   "tests": [
     "tests/browser/flight-integrity.spec.js",
     "tests/browser/garden-actors.spec.js",
@@ -17,7 +17,8 @@
     "tests/browser/garden-compact-rotation-identity.spec.js",
     "tests/browser/garden-trail-seven.spec.js",
     "tests/browser/garden-trail-maximum-native.spec.js",
-    "tests/browser/raptor-collection-film.spec.js"
+    "tests/browser/raptor-collection-film.spec.js",
+    "tests/browser/garden-trail-postfilm-receipt.spec.js"
   ],
-  "reason": "Non-merging diagnostic of the exact formal candidate: unchanged 17 checked suites, real Chrome and WebKit, no retries. Prospective compact verdict only."
+  "reason": "Non-merging #277 trail contract diagnosis. Preserve all 17 formal browser suites and review the added private native event receipt against this exact base. The separately guarded Chrome/WebKit profiles do not authorize a release."
 }

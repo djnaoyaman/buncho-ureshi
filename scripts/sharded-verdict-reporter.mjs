@@ -26,11 +26,28 @@ export default class Verdict{
   const row=this.rows.get(test.id);
   if(!row)return;
   row.status=result.status;
+  const schema=[
+   ['qa-trail-contract',/^(?:native|landscape|portrait|movement|lane|lane-final|visitor|next-fly|palette):(?:count-(?:down|up)|blank|duplicate|order|replacement|size|viewport|occluded|native-ok|b1-absent|no-fly|bay-first|fly-before-bay-peer-(?:gate|elsewhere)|bayless-(?:gate-clear|peer-gate|peer-elsewhere)|bay-and-cross|bay-no-cross|no-bay):(?:loading|ready|other):(?:clear|(?:raptor|crow)-warning|raptor-visit|crow-(?:visit|quiet)):(?:shelter|open)$/],
+   ['qa-landscape34',/^(?:insufficient|placement|geometry|recovery|final-geometry|active|held|standing|other):(?:dialog|bird|control|plane|stage|other|none|mixed):(?:moving|ground):(?:noninteractive|interactive):(?:[1-9]|10)$/],
+   ['qa-landscape34-clip',/^(?:in|out|unknown):(?:in|out|unknown):(?:in|out|unknown):(?:hidden|whole|partial|unknown):(?:[0-9]|10):(?:reservation|no-reservation)$/],
+   ['qa-landscape34-front',/^(?:none|bird-sheet|raptor-dialog|other-modal|garden-overlay|peer-bird|own-control|control-wrapper|header|plane|stage|scenery|garden-child|other-dialog|other):(?:modal-present|no-modal)$/],
+   ['qa-landscape34-paint',/^(?:none|front-in|front-out):(?:bird-pass|bird-pointer):(?:bird-visible|bird-hidden):(?:bird-zero|bird-alpha):(?:no-front-paint|front-pass|front-paint):(?:z-auto|z-above|z-below|z-equal):(?:bird-in-stack|bird-not-in-stack):(?:none|bird-sheet|raptor-dialog|other-modal|garden-overlay|peer-bird|own-control|control-wrapper|header|plane|stage|scenery|garden-child|other-dialog|other):(?:none|bird-sheet|raptor-dialog|other-modal|garden-overlay|peer-bird|own-control|control-wrapper|header|plane|stage|scenery|garden-child|other-dialog|other)$/],
+   ['qa-landscape34-layer',/^(?:(?:selector-wrap|overlay-head|story|encounter-host|panel|other):untested|(?:selector-wrap|overlay-head):(?:native-control|gesture-nav|unlisted-child)|(?:selector-wrap|overlay-head):(?:restored|still-covered):(?:control-lost|controls-kept))$/],
+   ['qa-landscape34-ancestry',/^(?:edge|no-edge):(?:shape|no-shape):(?:inert|not-inert)$/],
+   ['qa-ground-dry',/^(?:initial|during):(?:native|actor-ground|actor-air):(?:ulp-edge|css-edge|off-edge|unparseable)$/],
+   ['qa-ground-media',/^(?:reduce|restore):(?:event|no-event):(?:match|mismatch|missing):(?:match|mismatch):(?:active|held|other)$/],
+  ];
+  for(const [type,validator] of schema){
+   const a=(result.annotations??test.annotations).find(a=>a.type===type&&validator.test(a.description??''));
+   if(a)(row.receipt??={})[type]=a.description;
+  }
   if(row.status!=='passed'&&row.status!=='skipped')row.fault=result.errors.map(fault).find(Boolean)??null;
  }
  onEnd(result){
   const rows=[...(this.rows??new Map()).values()];
-  const body={v:1,engine:process.env.QA_ENGINE,shard:Number(process.env.QA_SHARD),status:result.status,infrastructure:this.infrastructure??0,rows};
+  const profile=['visitor-fix','visitor-quiet','landscape','observe','quiet'].includes(process.env.QA_TRAIL_PROFILE)?process.env.QA_TRAIL_PROFILE:null;
+  const body={v:1,engine:process.env.QA_ENGINE,shard:Number(process.env.QA_SHARD),...(profile?{profile}:{}),
+   status:result.status,infrastructure:this.infrastructure??0,rows};
   writeFileSync('compact-browser-verdict.json',JSON.stringify(body)+'\n');
   console.log(JSON.stringify({engine:body.engine,shard:body.shard,status:body.status,selected:rows.length,infrastructure:body.infrastructure}));
  }
