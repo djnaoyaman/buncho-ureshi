@@ -27,8 +27,10 @@ export default class Verdict{
   if(!row)return;
   row.status=result.status;
   const schema=[
+   ['qa-07-shared-flight',/^(?:8|10):(?:none|active|hidden-or-reduced|disabled|blocked|interacting|sheet|detached):(?:elapsed|short|stalled):(?:authored|no-gate|other|none):(?:no-renderer|ready|atlas-ready|atlas-bad|atlas-pending|none):(?:routed|ready|not-ready|missing|none):(?:held|wait|free|none):(?:precondition|no-source|begin-denied|sweep-denied|clearance-denied|paint-denied|adapter-denied|launched|none)$/],
    ['qa-07-shared-room',/^(?:8|10):(?:admitted|projection|chrome|seat|hit|route|measuring|roster|unknown)$/],
    ['qa-07-shared-ready',/^(?:8|10):(?:admitted|projection|chrome|seat|hit|route|measuring|roster|unknown):(?:admitted|projection|chrome|seat|hit|route|measuring|roster|unknown):(?:expected|short|extra):(?:no-motion|trail|other-motion):(?:clean|(?:bird|book|scroll|jog|dock)-(?:width|height|hit))$/],
+   ['qa-07-shared-launch',/^(?:8|10):(?:sampled-rise-(?:painted|unpainted)|between-samples-rise|shared-route-only|other-flight|no-observed-flight):(?:air-seen|air-unseen):(?:replaced|same):(?:lead-missing|atlas-missing|atlas-not-loaded|atlas-and-wing-shell|atlas-only)$/],
    ['qa-07-axis',/^[0-3]:(?:unobserved|(?:recovery|no-recovery):(?:yes|no):(?:yes|no):(?:yes|no):(?:yes|no):(?:yes|no))$/],
    ['qa-viewport',/^[0-3]:(?:wide|tall):(?:outside|occluded):(?:not-ready|count-change|outside|occluded|native-clean):(?:trail-active|trail-held|trail-standing|trail-needs-recovery|trail-blocked-geometry|trail-blocked-placement|geometry-blocked|insufficient-space|active|held|static|grounded|other):(?:trail-active|trail-held|trail-standing|trail-needs-recovery|trail-blocked-geometry|trail-blocked-placement|geometry-blocked|insufficient-space|active|held|static|grounded|other):(?:lead|other):(?:none|peer|controls|loading|other)$/],
    ['qa-booklet-input',/^(?:split|locator):(?:no-key|summary-key|other-key):(?:focused|unfocused):(?:replaced|same):(?:opened|no-open):(?:still-open|closed):(?:modal|no-modal)$/],
