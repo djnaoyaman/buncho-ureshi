@@ -15,13 +15,41 @@ import {createGardenCrowClock,arriveGardenCrow,crowCoolingDown,crowScene,petGard
 import {renderCrowNotebook,renderCrowFriendship} from './garden-crow-ui.js';
 import {mountEncounterMedia} from './encounter-media.js';
 import {mountGardenBirdMotion} from './garden-bird-motion.js';
+import {hasSharedStageLease} from './garden-actor-motion.js';
 import {encounterSystem} from './encounters.js';
 import {renderEncounterNotebook,renderEncounterPage,renderEncounterScene,renderFinchGarden,renderEncounterFriendship} from './encounter-ui.js';
+// Narrow presentation proof. Compare authoritative parsed markup before any
+// actor style, shadow, flight renderer or media-ready attribute can mutate it.
+export function retainReadyGardenStage(old,next,prior){
+ return !!old&&!!next&&!!prior&&old.garden===next.garden&&old.garden==='bird-zebra-finch'&&
+  !!old.world&&old.world===next.world&&old.world===prior.world&&
+  old.garden===prior.garden&&next.signature===prior.signature&&
+  old.source===next.source&&!!old.source&&old.ready&&old.proof&&next.proof&&
+  (old.admitted||old.exactCompanionClose&&old.admissionLease&&old.occlusionPending)&&
+  old.motion&&next.motion&&!old.blocked&&!next.blocked&&!old.risk&&!next.risk;
+}
+// The proven #34 fixed pane may retain exact nodes during an ordinary,
+// same-roster redraw. It never inherits #07's special companion-close rule.
+export function retainReadyMaskedGardenStage(old,next,prior){
+ return !!old&&!!next&&!!prior&&old.garden==='bird-masked-finch'&&old.garden===next.garden&&old.garden===prior.garden&&
+  !!old.world&&old.world===next.world&&old.world===prior.world&&!!next.signature&&next.signature===prior.signature&&
+  old.source===next.source&&!!old.source&&old.ready&&old.masked&&next.masked&&old.admitted&&old.admissionLease&&
+  old.motion&&next.motion&&!old.blocked&&!next.blocked&&!old.risk&&!next.risk;
+}
+function keepDirectChild(live,draft,kept,placeholder){
+ for(const node of [...live.childNodes])if(node!==kept)node.remove();
+ for(const node of [...draft.childNodes]){
+  if(node===placeholder)break;
+  live.insertBefore(node,kept);
+ }
+ for(const node of [...draft.childNodes])if(node!==placeholder)live.append(node);
+}
 /** Host injects its single existing transaction store. Never creates a second save/backend. */
 export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()=>null,onHouseholdBird=()=>{},onGarden=async()=>{},onGardenChanged=()=>{},onCrowWarning=()=>{},onHome=()=>{},onDiary=()=>{},onReward=()=>{},meetFriend=null,completeEncounter=null,system=encounterSystem,initialMode='notebook',base='/buncho-ureshi/',crowRandom=Math.random,sharedPredatorClock=false,petNow=()=>performance.now(),getSound=()=>true}={}){
   if(typeof getWorld!=='function'||typeof transact!=='function')throw new Error('図鑑の保存先が必要です。');
   let alive=true,busy=false,mode=initialMode==='garden'?'garden':'notebook',pageId=null,showPhoto=false,generation=0,notice='',worldId=getWorld().worldId,revealGardenId=null,renderedView=null;
   let rub=null,petFlight=false,petTimer=null;
+  let rawSharedStage=null;
   // Earn at most one point per second of active input, never idle time.
   const petClock=createPettingClock(petNow);
   let expeditionCelebration=null,showcaseCelebration=null;
@@ -77,7 +105,7 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
   const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const jogFeedback=createGardenJogFeedback({Context:win.AudioContext||win.webkitAudioContext,navigator:win.navigator,getSound,isActive:()=>alive&&root.isConnected&&mode==='garden'&&doc.visibilityState!=='hidden'&&!Array.from(doc.querySelectorAll('dialog[open]')).some(dialog=>!dialog.contains(root))});
   const jog=mountGardenJog(root,{items:GARDENS,getCommitted:()=>getWorld().encounters.garden.id,isBusy:()=>busy,onCommit:id=>garden(id),onGesture:e=>{if(e.isTrusted)jogFeedback.gesture({release:e.type==='pointerup'||e.type==='touchend'});},onStep:()=>jogFeedback.step(),onSettled:()=>jogFeedback.settled(),onCancel:()=>jogFeedback.cancel()});
-  function render({focus=false}={}){
+  function render({focus=false,closedCompanion=null}={}){
     if(!alive)return;petResponse.cancel();const w=getWorld();syncCrowContext(w);if(mode!=='garden'||w.worldId!==worldId)jogFeedback.cancel();
     if(companionDraft&&(mode!=='garden'||companionDraft.worldId!==w.worldId||companionDraft.gardenId!==w.encounters.garden.id))discardCompanions();
     if(mode!=='garden'||w.paused||w.worldId!==worldId||doc.querySelector('.game-bird-sheet[open]'))stopCrow();
@@ -108,7 +136,50 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
     const showcaseFocus=focused?.hasAttribute?.('data-showcase-item')?'item':focused?.dataset?.showcaseActor;
     onCrowWarning(!!crowClock.warning);
     media.preserve();
-    root.innerHTML=(mode==='raptors'?renderRaptorNotebook(w,{base,id:pageId}):mode==='crows'?renderCrowNotebook(w,{base,id:pageId}):mode==='event'?renderEncounterScene(w,{system,base}):mode==='garden'?renderFinchGarden(w,{system,base,selectedBirdId:getSelectedBirdId(),crowWarning:crowClock.warning,companionDraft,companionMessage,expeditionCelebration,showcaseCelebration}):mode==='entry'?renderEncounterPage(w,pageId,{system,base,showPhoto}):renderEncounterNotebook(w,{system,base}))+`<p class="finch-notice" role="status">${escape(notice)}</p><button type="button" class="finch-media-retry" data-media-retry hidden>絵をもう一度読み込む</button>`;
+    const html=(mode==='raptors'?renderRaptorNotebook(w,{base,id:pageId}):mode==='crows'?renderCrowNotebook(w,{base,id:pageId}):mode==='event'?renderEncounterScene(w,{system,base}):mode==='garden'?renderFinchGarden(w,{system,base,selectedBirdId:getSelectedBirdId(),crowWarning:crowClock.warning,companionDraft,companionMessage,expeditionCelebration,showcaseCelebration}):mode==='entry'?renderEncounterPage(w,pageId,{system,base,showPhoto}):renderEncounterNotebook(w,{system,base}))+`<p class="finch-notice" role="status">${escape(notice)}</p><button type="button" class="finch-media-retry" data-media-retry hidden>絵をもう一度読み込む</button>`;
+    const sharedGarden=mode==='garden'?w.encounters.garden.id:null;
+    if(sharedGarden==='bird-zebra-finch'||sharedGarden==='bird-masked-finch'){
+      const tpl=doc.createElement('template');tpl.innerHTML=html;
+      const next=tpl.content.querySelector('.finch-garden'),fresh=next?.querySelector(':scope > .finch-garden-stage');
+      const old=oldGarden?.querySelector(':scope > .finch-garden-stage');
+      const mediaSource=stage=>{
+        const img=stage?.querySelector('.finch-garden-background');
+        return img&&!img.hasAttribute('data-garden-landscape')?img.getAttribute('src'):null;
+      };
+      const risky=!!(crowClock.warning||crowScene(w)||w.encounters.raptor?.active||
+        doc.querySelector('[data-crow-phase],[data-raptor-phase],.finch-raptor-scale-scene,.finch-crow-scale-scene'));
+      // A busy render disables controls across the entire host. Rebuild
+      // when entering or leaving it, so retained native buttons cannot latch
+      // disabled. Ordinary idle->idle redraws keep the original stage.
+      const blocked=busy||root.getAttribute('aria-busy')==='true'||!root.isConnected||doc.hidden||
+        doc.body.hasAttribute('data-game-view-blocked')||
+        !!root.closest('[inert]')||!!doc.querySelector('dialog:modal,.game-bird-sheet[open]');
+      const motion=!w.paused&&w.settings.motion!==false&&!win.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+      // Only the actual native close handler grants this alternate
+      // lifecycle path. No arbitrary refresh or unrelated submenu does.
+      const exactCompanionClose=!!closedCompanion&&!closedCompanion.open&&
+       closedCompanion.closest('.finch-garden')===oldGarden&&!oldGarden?.querySelector('details[open]');
+
+      const state=(owner,stage)=>({world:owner?.dataset.gardenWorld,garden:stage?.dataset.gardenId,
+        source:mediaSource(stage),motion,blocked,risk:risky,proof:owner?.dataset.gardenSharedPlay==='proof',
+        masked:owner?.dataset.gardenMaskedPlay==='candidate',
+        admitted:owner?.dataset.gardenSharedStatus==='admitted',
+        exactCompanionClose,admissionLease:hasSharedStageLease(stage),
+        occlusionPending:owner?.dataset.gardenSharedStatus==='retained-invalid',
+        ready:stage?.dataset.sceneState==='ready'&&stage?.querySelector('.finch-garden-carousel')?.getAttribute('aria-busy')==='false'});
+      const upcoming=fresh?{...state(next,fresh),signature:fresh.outerHTML}:null;
+      if(oldGarden?.parentNode===root&&next?.parentNode===tpl.content&&old?.parentNode===oldGarden&&fresh?.parentNode===next&&
+         (sharedGarden==='bird-masked-finch'?retainReadyMaskedGardenStage:retainReadyGardenStage)(state(oldGarden,old),upcoming,rawSharedStage)){
+        // Keep the actual stage and actors continuously connected. Only the
+        // incoming chrome and authoritative revision/labels are replaced.
+        const inherited=new Set(['data-garden-shared-status']);
+        for(const attr of [...oldGarden.attributes])if(!next.hasAttribute(attr.name)&&!inherited.has(attr.name))oldGarden.removeAttribute(attr.name);
+        for(const attr of next.attributes)if(oldGarden.getAttribute(attr.name)!==attr.value)oldGarden.setAttribute(attr.name,attr.value);
+        keepDirectChild(oldGarden,next,old,fresh);
+        keepDirectChild(root,tpl.content,oldGarden,next);
+      }else root.replaceChildren(tpl.content);
+      rawSharedStage=upcoming;
+    }else{rawSharedStage=null;root.innerHTML=html;}
     root.querySelectorAll('[data-expedition-actor]').forEach((select,i)=>{if([...select.options].some(o=>o.value===expeditionActors[i]))select.value=expeditionActors[i];if(expeditionFocus===select.dataset.expeditionActor)select.focus({preventScroll:true});});
     root.querySelectorAll('[data-showcase-actor],[data-showcase-item]').forEach((select,i)=>{if([...select.options].some(o=>o.value===showcaseSelection[i]))select.value=showcaseSelection[i];if(showcaseFocus===(select.hasAttribute('data-showcase-item')?'item':select.dataset.showcaseActor))select.focus({preventScroll:true});});
     syncStoryFriendPortraits(root);
@@ -384,7 +455,7 @@ export function mountEncounterPanel(root,{getWorld,transact,getSelectedBirdId=()
   const companionToggle=event=>{
     const detail=event.target;
     if(!detail.matches?.('.finch-companion-settings')||!root.contains(detail)||!alive)return;
-    if(!detail.open){const restoreFocus=detail.contains(doc.activeElement);discardCompanions();render();if(restoreFocus)root.querySelector('[data-companion-summary]')?.focus({preventScroll:true});return;}
+    if(!detail.open){const restoreFocus=detail.contains(doc.activeElement);discardCompanions();render({closedCompanion:detail});if(restoreFocus)root.querySelector('[data-companion-summary]')?.focus({preventScroll:true});return;}
     if(!companionDraft){companionDraft=createCompanionDraft(getWorld());companionMessage='';}
   };
   const storyToggle=event=>{const d=event.target;if(d.matches?.('details[name=garden-story]')&&d.open&&root.contains(d)&&d.querySelector('summary')===doc.activeElement)d.querySelector('[data-garden-story-close]')?.focus({preventScroll:true});};

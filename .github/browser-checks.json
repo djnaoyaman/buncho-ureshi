@@ -1,9 +1,13 @@
 {
-  "base": "beb921492ab8b7c0127a23bd64fdea50ca256924",
+  "base": "b087175b27896edf199dff3950918e63d2330939",
   "tests": [
     "tests/browser/garden-about-booklet.spec.js",
     "tests/browser/garden-ground-motion.spec.js",
-    "tests/browser/garden-viewport-sync.spec.js"
+    "tests/browser/garden-viewport-sync.spec.js",
+    "tests/browser/garden-zebra-shared-pane.spec.js",
+    "tests/browser/garden-zebra-shared-pane-ab.spec.js",
+    "tests/browser/garden-zebra-ready-stage-retain.spec.js",
+    "tests/browser/garden-masked-fixed-pane.spec.js"
   ],
-  "reason": "Non-merging native classification of exact observed test failures only; first oracles remain unchanged."
+  "reason": "Never merge: keep all existing focused native checks. Re-evaluate #34 authored, measured contacts and exact stage retention using the same six real rotation, tap, and landing checks, while preserving all eight #07 tests."
 }

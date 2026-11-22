@@ -12,15 +12,233 @@ async function delayViewport(page){await page.addInitScript(()=>{
  };
  window.__releaseViewport=()=>{window.__holdViewport=false;for(const call of window.__pendingViewport||[])call();window.__pendingViewport=[];};
 });}
+// Two observers can post a geometry frame; cross the documented paint
+// boundary once while the delayed shell resize remains locked.
+const renderedViewport=page=>page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+async function wireDense07(page){
+ await page.route(/\/src\/garden-actor-motion\.js(?:\?.*)?$/,async r=>{
+  const x=await r.fetch(),body=await x.text();
+  const anchor='   const tryTrail7AxisContinuation=()=>{';
+  expect(body.split(anchor)).toHaveLength(2);
+  const instrumentation=`   if(terrain.number===7&&roster.length===8&&wideCrop&&resized){
+    const current=[...model.actors.values()],moving=current.filter(a=>a.route),c=geometry.clip;
+    const outside=a=>{
+     const b=bindings.get(a.id);if(!b)return false;
+     const r=body(a.p,b.width,b.height,a.height*p.height),x=(r.left+r.right)/2,y=(r.top+r.bottom)/2;
+     return Number.isFinite(x+y)&&(x<c.left||x>=c.right||y<c.top||y>=c.bottom);
+    };
+    const idleClipped=current.some(a=>!a.route&&outside(a));
+    const kind=recoveryIds.size?'recovery':'no-recovery';
+    if(idleClipped||recoveryIds.size)globalThis.__qa07Axis??={
+     branch:kind, groundClipped:idleClipped,
+     visibleMover:moving.some(a=>!outside(a)), futureInvalid:moving.some(a=>!routeFits(a)),
+     exactAxis:paintedWideCrop===false&&!populationChanged&&!predator&&!settle,
+     mixedEligible:!recoveryIds.size&&moving.length>0&&moving.every(routeFits)&&idleClipped
+    };
+   }
+`;
+  let instrumented=body;
+  const trialEdits=[
+  [
+    "   const tryTrail7AxisContinuation=()=>{",
+    "   const tryTrail7AxisContinuation=()=>{\n    const exact=terrain.number===7&&roster.length===8&&resized&&wideCrop&&paintedWideCrop===false;\n    let mark=(rank,stage)=>{\n     if(!exact)return;\n     const saved=globalThis.__qa07Transaction;\n     if(!saved||saved.rank<rank)globalThis.__qa07Transaction={rank,stage};\n    };\n    mark(0,'scope');"
+  ],
+  [
+    "       !wideCrop||predator||settle||state.active||recoveryIds.size!==1)return false;",
+    "       !wideCrop||predator||settle||state.active||recoveryIds.size!==1){\n     mark(1,state.active?'lane-lock':recoveryIds.size!==1?'disposition-count':'scope');return false;\n    }"
+  ],
+  [
+    "    if(moving.length!==1||!recoveryIds.has(mover.id)||routeFits(mover))return false;",
+    "    if(moving.length!==1||!recoveryIds.has(mover.id)||routeFits(mover)){mark(2,moving.length!==1?'mover-count':!recoveryIds.has(mover.id)?'other-disposition':'existing-route-fits');return false;}"
+  ],
+  [
+    "    if(centerOutside(mover))return false;",
+    "    if(centerOutside(mover)){mark(3,'mover-outside');return false;}"
+  ],
+  [
+    "     const b=bindings.get(a.id);if(!b||!inside(a.p,terrain.surface))return false;",
+    "     const b=bindings.get(a.id);if(!b||!inside(a.p,terrain.surface)){mark(4,'idle-contact-denied');return false;}"
+  ],
+  [
+    "     if(policy==='deny')return false;",
+    "     if(policy==='deny'){mark(4,a.route||a.phase!=='ground'||a.height!==0?'idle-not-ground':'idle-visible-box');return false;}"
+  ],
+  [
+    "    if(!bad.length)return false;",
+    "    if(!bad.length){mark(4,'no-bad-idle');return false;}"
+  ],
+  [
+    "    for(const n of landings.slice(0,12)){",
+    "    mark(5,'no-landing');\n    for(const n of landings.slice(0,12)){"
+  ],
+  [
+    "     if(!pending||!routeFits(pending)||!trailRuntime.recoveryFits(pending,n,new Map()))continue;",
+    "     mark(6,'preview-denied');\n     if(!pending)continue;\n     mark(7,actorSafe(pending)?'nominal-sweep':'current-envelope');\n     if(!routeFits(pending))continue;\n     mark(8,'measured-sweep');\n     if(!trailRuntime.recoveryFits(pending,n,new Map()))continue;\n     mark(9,'pack-unentered');"
+  ],
+  [
+    "       return !!b&&safePoint(s.p,b.width,b.height)&&trailRuntime.canPlace(a,s,peers(partial));",
+    "       mark(10,'nominal-seat');\n       if(!b||!safePoint(s.p,b.width,b.height))return false;\n       mark(11,'measured-seat');\n       const ok=trailRuntime.canPlace(a,s,peers(partial));\n       if(ok)mark(12,'pack-incomplete');\n       return ok;"
+  ],
+  [
+    "       return trailRuntime.recoveryFits(pending,n,peers(candidate))&&\n        nativeTrailHits(candidate,{requireNative:true,lifts:new Map([[mover.id,mover.height]]),heldIds});",
+    "       mark(13,'peer-sweep');\n       if(!trailRuntime.recoveryFits(pending,n,peers(candidate)))return false;\n       mark(14,'native-hit');\n       return nativeTrailHits(candidate,{requireNative:true,lifts:new Map([[mover.id,mover.height]]),heldIds});"
+  ],
+  [
+    "     if(!plan)continue;",
+    "     if(!plan)continue;mark(15,'atomic-precondition');"
+  ],
+  [
+    "      const replacement=projected.get(mover.id);",
+    "      mark(16,'atomic-validation');const replacement=projected.get(mover.id);"
+  ],
+  [
+    "     })){\n      axisIdleHold=",
+    "     })){\n      mark(17,'committed');axisIdleHold="
+  ]
+];
+  const movingPaintProbe=String.raw`
+     if(exact&&!globalThis.__qa07Paint){
+      const b=bindings.get(mover.id),doc=stage.ownerDocument,c=geometry.clip,button=rect(b.node);
+      const liveAir=b.flight?.node&&getComputedStyle(b.flight.node).visibility==='visible';
+      const art=liveAir?b.flight.node:b.pose,bounds=art?rect(art):null;
+      const edge=(q,pad=0)=>q.left<c.left+pad?'left':q.right>c.right-pad?'right':q.top<c.top+pad?'top':q.bottom>c.bottom-pad?'bottom':'inside';
+      const x=(button.left+button.right)/2,y=(button.top+button.bottom)/2;
+      const hit=doc.elementFromPoint(x,y);
+      const owner=hit?.closest('[data-garden-actor-id],.garden-bird');
+      const phys=(q,margin)=>edge(q,margin)!=='inside'?edge(q,margin):geometry.obstacles.some(o=>overlap(q,o))?'control':'inside';
+      const nominal=f=>{
+       const q=body(f.p,b.width,b.height,f.height*p.height),pad=b.width*.65;
+       if(!inside(f.p,terrain.surface))return 'dry';
+       const current=phys(q,2);
+       if(current!=='inside')return 'body-'+current;
+       const full={left:q.left-pad,right:q.right+pad,top:q.top-b.height*.12,bottom:q.bottom+20};
+       const failure=phys(full,2);
+       return failure==='inside'?'inside':'skirt-'+failure;
+      };
+      const frames=model.sampleRoute(pending,97),shape=measurement.flightFootprints.get(mover.id);
+      // Future check is a projected full-wing support (actual measured paint dimensions
+      // with modeled lift), not an observation of a future browser frame.
+      const future=f=>{
+       if(!inside(f.p,terrain.surface))return 'dry';
+       const [a,z]=f.p,px=geometry.plane.left+a*geometry.plane.width,py=geometry.plane.top+z*geometry.plane.height-f.height*p.height;
+       if(!shape)return 'unmeasured';
+       return phys({left:px+shape.left,right:px+shape.right,top:py+shape.top,bottom:py+shape.bottom},2);
+      };
+      if(!globalThis.__qa07Control){
+       const named=[
+        ['header','.finch-garden > header'],['selector','.finch-garden-selector-wrap'],
+        ['jog','.garden-jog-cylinder > button[data-jog-center]'],['panel','.finch-garden-dock'],
+        ['family','.finch-garden-family'],['summary','.finch-garden > details > summary,.leaf-gift > summary'],
+        ['detail','.finch-garden-dock details[open]'],['notice','.finch-garden [data-garden-encounter-notice] button'],
+        ['toggle','.game-scene-controls-toggle']
+       ].flatMap(([name,sel])=>[...doc.querySelectorAll(sel)].map(el=>[name,rect(el)]));
+       const conflict=q=>{
+        const block=geometry.obstacles.find(o=>overlap(q,o));
+        if(!block)return 'clear';
+        return named.find(([,z])=>z.width>0&&z.height>0&&['left','right','top','bottom'].every(k=>Math.abs(block[k]-z[k])<.1))?.[0]??'other';
+       };
+       const direct=(where)=>body(where.p,b.width,b.height,where.height*p.height);
+       const start=model.frame(mover),next=model.frame(mover,mover.end);
+       const r=mover.route,owns=model.reservations.get(r.target)===mover.id;
+       const same=(v,w)=>v.every((x,i)=>Math.abs(x-w[i])<1e-8);
+       const near=(v,w)=>Math.hypot((v[0]-w[0])*p.width,(v[1]-w[1])*p.height);
+       const phase=where=>['feet','contact','fold','brake','ground'].includes(where.phase)?where.phase:'other';
+       const remaining=Array.from({length:33},(_,i)=>model.frame(mover,model.time+Math.max(0,mover.end-model.time)*i/32));
+       const stationary=mover.state==='fly'&&!r.reroute&&model.time-mover.since>=.88*r.duration&&
+        remaining.every(f=>f.height===0&&same(f.p,r.to));
+       const targetSafe=safePoint(r.to,b.width,b.height);
+       const measuredTarget=trailRuntime.recoveryFits({...mover,p:r.to,height:0,route:null,state:'rest'},
+        {id:r.target,p:r.to},model.actors);
+       const nativeSame=nativeTrailHits(new Map([[mover.id,{id:r.target,p:r.to}]]),{requireNative:true,heldIds:new Set([mover.id])});
+       globalThis.__qa07Control=[
+        conflict(button),bounds?conflict(bounds):'other',conflict(direct(start)),conflict(direct(next)),
+        owns?'owned':'unowned',phase(start),phase(next),
+        stationary?'fixed-zero':near(start.p,r.to)<=1?'near':'moving',
+        remaining.every(f=>safePoint(f.p,b.width,b.height,f.height*p.height))?'body-clear':'body-denied',
+        targetSafe?'target-clear':'target-denied',measuredTarget?'measured-clear':'measured-denied',nativeSame?'target-hit':'target-nohit'
+       ].join(':');
+      }
+      const ix=frames.findIndex((f,i)=>i>0&&future(f)!=='inside');
+      const u=Math.max(0,Math.min(1,(model.time-mover.since)/mover.route.duration));
+      globalThis.__qa07Paint=[
+       edge(button),bounds?edge(bounds):'unmeasured',
+       hit&&b.node.contains(hit)?'own':!hit?'none':owner?'peer':'other',
+       liveAir?'air':'pose',mover.height<=.002?'low':mover.height<.035?'mid':'high',
+       u<.15?'start':u<.75?'middle':'end',nominal(frames[0]),
+       ix<0?'clear':ix<=6?'early':ix<=36?'middle':'late',
+       ix<0?'inside':future(frames[ix]),
+       trailRuntime.recoveryFits(pending,n,new Map())?'safe':'denied'
+      ].join(':');
+     }
+`;
+  const paintedAnchor="     mark(7,actorSafe(pending)?'nominal-sweep':'current-envelope');";
+  // Restrict all replacements to the actual checked-in trial function.
+  const geometryAnchor="  const signature=JSON.stringify(";
+  const structuralExperiment=String.raw`
+  // Experiment scoped to the exact #07 test, not production. Keep the full
+  // rectangles for both painted header children plus every other guard.
+  if(terrain.number===7&&definitions.length===8&&!predator&&!settle&&
+     geometry.clip.right-geometry.clip.left>geometry.clip.bottom-geometry.clip.top){
+   const header=root.querySelector('.finch-garden > header');
+   if(header&&header.children.length===2&&header.children[0].matches('h3')&&
+      header.children[1].matches('button[data-encounter-back]')){
+    const style=win.getComputedStyle(header);
+    const emptyContent=which=>['none','normal'].includes(win.getComputedStyle(header,which).content);
+    const h=rect(header);
+    const index=geometry.obstacles.findIndex(o=>['left','right','top','bottom'].every(k=>o[k]===h[k]));
+    // The wrapper participates in layout only. If future chrome gives it
+    // paint, hit ownership or children, keep the original conservative box.
+    if(index>=0&&h.width>0&&h.height>0&&style.pointerEvents==='none'&&
+       style.backgroundColor==='rgba(0, 0, 0, 0)'&&style.backgroundImage==='none'&&
+       style.boxShadow==='none'&&style.outlineStyle==='none'&&
+       ['Top','Right','Bottom','Left'].every(side=>parseFloat(style['border'+side+'Width'])===0)&&
+       emptyContent('::before')&&emptyContent('::after')){
+     const title=rect(header.children[0]),back=rect(header.children[1]);
+     const full=[title,back].filter(x=>x.width>0&&x.height>0);
+     if(back.width>=44&&back.height>=44&&full.length>0){
+      geometry.obstacles.splice(index,1,...full);
+      globalThis.__qa07Header='fragments';
+     }
+    }
+   }
+  }
+`;
+  expect(instrumented.split(geometryAnchor)).toHaveLength(2);
+  instrumented=instrumented.replace(geometryAnchor,structuralExperiment+geometryAnchor);
+  const start=instrumented.indexOf(anchor),end=instrumented.indexOf('   if(recoveryIds.size&&tryTrail7AxisContinuation()){',start);
+  expect(start).toBeGreaterThanOrEqual(0);expect(end).toBeGreaterThan(start);
+  let trial=instrumented.slice(start,end);
+  for(const [from,to]of trialEdits){expect(trial.split(from)).toHaveLength(2);trial=trial.replace(from,to);}
+  expect(trial.split(paintedAnchor)).toHaveLength(2);
+  trial=trial.replace(paintedAnchor,movingPaintProbe+paintedAnchor);
+  instrumented=instrumented.slice(0,start)+instrumentation+trial+instrumented.slice(end);
+  await r.fulfill({response:x,body:instrumented});
+ });
+}
 for(const id of ['java-rice','bird-diamond-firetail','bird-zebra-finch','kazaguruma','yuyake','bird-gouldian-finch'])for(const density of [true,false,'dense'])test(`viewport synchronization ${id} ${density}`,async({page},info)=>{
+ const lane=process.env.BOOKLET_OPEN_STYLE,axis=lane==='axis'&&id==='bird-zebra-finch'&&density==='dense';
+ if(axis)await wireDense07(page);
  await delayViewport(page);await setup(page,id,390,true,density);await page.clock.resume();
  let cycle=-1;
  for(const width of [844,390,844,390]){
   cycle++;
   await page.evaluate(()=>window.__holdViewport=true);
   await page.setViewportSize({width,height:width===844?390:844});
+  if(lane==='comparison')await renderedViewport(page);
   const sample=await readyGardenSnapshot(page,info,'viewport-samples');
   expect(Math.abs(sample.overlay.height-sample.viewport.height)).toBeLessThan(2);
+  if(axis&&width===844){
+   const header=await page.evaluate(()=>{
+    const b=document.querySelector('.finch-garden > header > button[data-encounter-back]');
+    const r=b?.getBoundingClientRect();
+    const hit=r?document.elementFromPoint((r.left+r.right)/2,(r.top+r.bottom)/2):null;
+    return {mode:globalThis.__qa07Header??'original',back:!!r&&r.width>=44&&r.height>=44&&!!hit&&b.contains(hit)};
+   });
+   info.annotations.push({type:'qa-07-header',description:`${cycle}:${header.mode}:${header.back?'own':'miss'}`});
+   expect(header.mode).toBe('fragments');
+   expect(header.back).toBe(true);
+  }
+
   const failed=sample.birds.find(b=>!b.centerInViewport||!b.hit);
   if(failed){
    // Keep the notification lock asserted. Sample only once after the two real
@@ -34,6 +252,17 @@ for(const id of ['java-rice','bird-diamond-firetail','bird-zebra-finch','kazagur
    const front=!f?'none':f.household||f.friend||c.includes('finch-garden-visitor')?'peer':/dock|selector|controls-toggle|summary/.test(c+' '+f.tag)?'controls':c.includes('loading')?'loading':'other';
    const status={cycle,orientation:width===844?'wide':'tall',before:verdict(sample),after:verdict(next),beforeMode:mode(sample),afterMode:mode(next),firstVictim:failed.id==='b1'?'lead':'other',front};
    info.annotations.push({type:'qa-viewport',description:Object.values(status).join(':')});
+   if(axis){
+    const a=await page.evaluate(()=>globalThis.__qa07Axis??null);
+    const attempt=await page.evaluate(()=>globalThis.__qa07Transaction?.stage??'unobserved');
+    info.annotations.push({type:'qa-07-transaction',description:`${cycle}:${attempt}`});
+    const paint=await page.evaluate(()=>globalThis.__qa07Paint??'unobserved');
+    info.annotations.push({type:'qa-07-current-paint',description:`${cycle}:${paint}`});
+    const control=await page.evaluate(()=>globalThis.__qa07Control??'unobserved');
+    info.annotations.push({type:'qa-07-control',description:`${cycle}:${control}`});
+    const b=v=>v?'yes':'no';
+    info.annotations.push({type:'qa-07-axis',description:a?[cycle,a.branch,b(a.groundClipped),b(a.visibleMover),b(a.futureInvalid),b(a.exactAxis),b(a.mixedEligible)].join(':'):`${cycle}:unobserved`});
+   }
   }
   for(const b of sample.birds){expect(b.centerInViewport,JSON.stringify(sample)).toBe(true);expect(b.hit,JSON.stringify(sample)).toBe(true);}
   await page.locator('.finch-garden-household').first().click();await expect(page.getByRole('dialog',{name:'エド',exact:true})).toBeVisible();

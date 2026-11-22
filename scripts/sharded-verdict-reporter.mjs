@@ -27,6 +27,17 @@ export default class Verdict{
   if(!row)return;
   row.status=result.status;
   const schema=[
+   ['qa-34-camera',/^-?\d{1,4}\.\d{5}(?::-?\d{1,4}\.\d{5}){5}$/],
+   ['qa-07-first-vs-frame',/^(?:(?:10|[0-9]):(?:10|[0-9]):(?:trail|none|geometry-blocked|insufficient-space|active|held):(?:ready|loading):(?:blocked|open):){2}(?:same|new)$/],
+   ['qa-34-fixed-room',/^(?:admitted|measuring|projection|chrome|seat|hit|route|roster|unknown|retained-invalid|retained-unproven):(?:10|[0-9]):(?:none|previous|next|jog-action|jog-surface|observe|book|scene|home)$/],
+   ['qa-07-shared-flight',/^(?:8|10):(?:none|active|hidden-or-reduced|disabled|blocked|interacting|sheet|detached):(?:elapsed|short|stalled):(?:authored|no-gate|other|none):(?:no-renderer|ready|atlas-ready|atlas-bad|atlas-pending|none):(?:routed|ready|not-ready|missing|none):(?:held|wait|free|none):(?:precondition|no-source|begin-denied|sweep-denied|clearance-denied|paint-denied|adapter-denied|launched|none)$/],
+   ['qa-07-close-prior',/^(?:unobserved|(?:admitted|measuring|retained-invalid|projection|chrome|seat|hit|route|roster|unknown):(?:ready|other-media):(?:busy|idle):(?:modal|no-modal):(?:blocked|unblocked):(?:risk|no-risk)(?::(?:same|changed)){4})$/],
+   ['qa-07-shared-close',/^(?:same-stage|new-stage):(?:new-book|same-book):(?:actor-live|actor-gone):(?:art-kept|art-gone):(?:no-reset|reset):(?:ready|not-ready):(?:saw-open|no-open):(?:saw-close|no-close)$/],
+   ['qa-07-shared-room',/^(?:8|10):(?:admitted|projection|chrome|seat|hit|route|measuring|roster|unknown)$/],
+   ['qa-07-shared-ready',/^(?:8|10):(?:admitted|projection|chrome|seat|hit|route|measuring|roster|unknown):(?:admitted|projection|chrome|seat|hit|route|measuring|roster|unknown):(?:expected|short|extra):(?:no-motion|trail|other-motion):(?:clean|(?:bird|book|scroll|jog|dock)-(?:width|height|hit))$/],
+   ['qa-07-shared-launch',/^(?:8|10):(?:sampled-rise-(?:painted|unpainted)|between-samples-rise|shared-route-only|other-flight|no-observed-flight):(?:air-seen|air-unseen):(?:replaced|same):(?:lead-missing|atlas-missing|atlas-not-loaded|atlas-and-wing-shell|atlas-only)$/],
+   ['qa-07-shared-warning',/^(?:8|10):(?:predator|no-predator):(?:loading|no-loading):(?:system|no-system):(?:resumed-route|no-ready-rebind)$/],
+   ['qa-07-axis',/^[0-3]:(?:unobserved|(?:recovery|no-recovery):(?:yes|no):(?:yes|no):(?:yes|no):(?:yes|no):(?:yes|no))$/],
    ['qa-viewport',/^[0-3]:(?:wide|tall):(?:outside|occluded):(?:not-ready|count-change|outside|occluded|native-clean):(?:trail-active|trail-held|trail-standing|trail-needs-recovery|trail-blocked-geometry|trail-blocked-placement|geometry-blocked|insufficient-space|active|held|static|grounded|other):(?:trail-active|trail-held|trail-standing|trail-needs-recovery|trail-blocked-geometry|trail-blocked-placement|geometry-blocked|insufficient-space|active|held|static|grounded|other):(?:lead|other):(?:none|peer|controls|loading|other)$/],
    ['qa-booklet-input',/^(?:split|locator):(?:no-key|summary-key|other-key):(?:focused|unfocused):(?:replaced|same):(?:opened|no-open):(?:still-open|closed):(?:modal|no-modal)$/],
 
