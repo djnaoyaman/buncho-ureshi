@@ -1,5 +1,5 @@
 {
-  "base": "41736e849645a97ad334a731a0044ce1e5814f0e",
+  "base": "3da7e1c2e200758a936878659450455c0d158368",
   "tests": [
     "tests/browser/flight-integrity.spec.js",
     "tests/browser/garden-actors.spec.js",
@@ -19,5 +19,5 @@
     "tests/browser/garden-trail-maximum-native.spec.js",
     "tests/browser/raptor-collection-film.spec.js"
   ],
-  "reason": "既存14検査と猛禽類エンディング検査を維持。狭い道7庭の正式動作を、既存のChrome・WebKit条件で検証する。来訪で再描画した画面のみ、確実に表示可能になってから同じ個体・着地点と実タップを1回確認する。縦画面の最大10羽の安全な経路・実タップ検査も維持する。"
+  "reason": "Non-merging diagnostic of the exact formal candidate: unchanged 17 checked suites, real Chrome and WebKit, no retries. Prospective compact verdict only."
 }
