@@ -27,6 +27,7 @@ export default class Verdict{
   if(!row)return;
   row.status=result.status;
   const schema=[
+   ['qa-07-current-paint',/^[0-3]:(?:unobserved|(?:inside|left|right|top|bottom):(?:inside|left|right|top|bottom|unmeasured):(?:own|none|peer|other):(?:air|pose):(?:low|mid|high):(?:start|middle|end):(?:inside|dry|(?:body|skirt)-(?:left|right|top|bottom|control)):(?:clear|early|middle|late):(?:inside|left|right|top|bottom|dry|control|unmeasured):(?:safe|denied))$/],
    ['qa-07-transaction',/^[0-3]:(?:unobserved|scope|lane-lock|disposition-count|mover-count|other-disposition|existing-route-fits|mover-outside|no-bad-idle|bad-idle-still-visible|idle-contact-denied|idle-not-ground|idle-visible-box|no-landing|preview-denied|nominal-sweep|current-envelope|measured-sweep|pack-unentered|nominal-seat|measured-seat|pack-incomplete|peer-sweep|native-hit|atomic-precondition|atomic-validation|committed)$/],
    ['qa-07-axis',/^[0-3]:(?:unobserved|(?:recovery|no-recovery):(?:yes|no):(?:yes|no):(?:yes|no):(?:yes|no):(?:yes|no))$/],
    ['qa-viewport',/^[0-3]:(?:wide|tall):(?:outside|occluded):(?:not-ready|count-change|outside|occluded|native-clean):(?:trail-active|trail-held|trail-standing|trail-needs-recovery|trail-blocked-geometry|trail-blocked-placement|geometry-blocked|insufficient-space|active|held|static|grounded|other):(?:trail-active|trail-held|trail-standing|trail-needs-recovery|trail-blocked-geometry|trail-blocked-placement|geometry-blocked|insufficient-space|active|held|static|grounded|other):(?:lead|other):(?:none|peer|controls|loading|other)$/],

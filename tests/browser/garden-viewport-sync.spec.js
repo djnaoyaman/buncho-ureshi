@@ -96,11 +96,55 @@ async function wireDense07(page){
     "     })){\n      mark(17,'committed');axisIdleHold="
   ]
 ];
+  const movingPaintProbe=String.raw`
+     if(exact&&!globalThis.__qa07Paint){
+      const b=bindings.get(mover.id),doc=stage.ownerDocument,c=geometry.clip,button=rect(b.node);
+      const liveAir=b.flight?.node&&getComputedStyle(b.flight.node).visibility==='visible';
+      const art=liveAir?b.flight.node:b.pose,bounds=art?rect(art):null;
+      const edge=(q,pad=0)=>q.left<c.left+pad?'left':q.right>c.right-pad?'right':q.top<c.top+pad?'top':q.bottom>c.bottom-pad?'bottom':'inside';
+      const x=(button.left+button.right)/2,y=(button.top+button.bottom)/2;
+      const hit=doc.elementFromPoint(x,y);
+      const owner=hit?.closest('[data-garden-actor-id],.garden-bird');
+      const phys=(q,margin)=>edge(q,margin)!=='inside'?edge(q,margin):geometry.obstacles.some(o=>overlap(q,o))?'control':'inside';
+      const nominal=f=>{
+       const q=body(f.p,b.width,b.height,f.height*p.height),pad=b.width*.65;
+       if(!inside(f.p,terrain.surface))return 'dry';
+       const current=phys(q,2);
+       if(current!=='inside')return 'body-'+current;
+       const full={left:q.left-pad,right:q.right+pad,top:q.top-b.height*.12,bottom:q.bottom+20};
+       const failure=phys(full,2);
+       return failure==='inside'?'inside':'skirt-'+failure;
+      };
+      const frames=model.sampleRoute(pending,97),shape=measurement.flightFootprints.get(mover.id);
+      // Future check is a projected full-wing support (actual measured paint dimensions
+      // with modeled lift), not an observation of a future browser frame.
+      const future=f=>{
+       if(!inside(f.p,terrain.surface))return 'dry';
+       const [a,z]=f.p,px=geometry.plane.left+a*geometry.plane.width,py=geometry.plane.top+z*geometry.plane.height-f.height*p.height;
+       if(!shape)return 'unmeasured';
+       return phys({left:px+shape.left,right:px+shape.right,top:py+shape.top,bottom:py+shape.bottom},2);
+      };
+      const ix=frames.findIndex((f,i)=>i>0&&future(f)!=='inside');
+      const u=Math.max(0,Math.min(1,(model.time-mover.since)/mover.route.duration));
+      globalThis.__qa07Paint=[
+       edge(button),bounds?edge(bounds):'unmeasured',
+       hit&&b.node.contains(hit)?'own':!hit?'none':owner?'peer':'other',
+       liveAir?'air':'pose',mover.height<=.002?'low':mover.height<.035?'mid':'high',
+       u<.15?'start':u<.75?'middle':'end',nominal(frames[0]),
+       ix<0?'clear':ix<=6?'early':ix<=36?'middle':'late',
+       ix<0?'inside':future(frames[ix]),
+       trailRuntime.recoveryFits(pending,n,new Map())?'safe':'denied'
+      ].join(':');
+     }
+`;
+  const paintedAnchor="     mark(7,actorSafe(pending)?'nominal-sweep':'current-envelope');";
   // Restrict all replacements to the actual checked-in trial function.
   const start=instrumented.indexOf(anchor),end=instrumented.indexOf('   if(recoveryIds.size&&tryTrail7AxisContinuation()){',start);
   expect(start).toBeGreaterThanOrEqual(0);expect(end).toBeGreaterThan(start);
   let trial=instrumented.slice(start,end);
   for(const [from,to]of trialEdits){expect(trial.split(from)).toHaveLength(2);trial=trial.replace(from,to);}
+  expect(trial.split(paintedAnchor)).toHaveLength(2);
+  trial=trial.replace(paintedAnchor,movingPaintProbe+paintedAnchor);
   instrumented=instrumented.slice(0,start)+instrumentation+trial+instrumented.slice(end);
   await r.fulfill({response:x,body:instrumented});
  });
@@ -134,6 +178,8 @@ for(const id of ['java-rice','bird-diamond-firetail','bird-zebra-finch','kazagur
     const a=await page.evaluate(()=>globalThis.__qa07Axis??null);
     const attempt=await page.evaluate(()=>globalThis.__qa07Transaction?.stage??'unobserved');
     info.annotations.push({type:'qa-07-transaction',description:`${cycle}:${attempt}`});
+    const paint=await page.evaluate(()=>globalThis.__qa07Paint??'unobserved');
+    info.annotations.push({type:'qa-07-current-paint',description:`${cycle}:${paint}`});
     const b=v=>v?'yes':'no';
     info.annotations.push({type:'qa-07-axis',description:a?[cycle,a.branch,b(a.groundClipped),b(a.visibleMover),b(a.futureInvalid),b(a.exactAxis),b(a.mixedEligible)].join(':'):`${cycle}:unobserved`});
    }
