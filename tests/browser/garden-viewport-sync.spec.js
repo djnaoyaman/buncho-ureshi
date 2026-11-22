@@ -37,7 +37,64 @@ async function wireDense07(page){
     };
    }
 `;
-  await r.fulfill({response:x,body:body.replace(anchor,instrumentation+anchor)});
+  let instrumented=body;
+  const trialEdits=[
+  [
+    "   const tryTrail7AxisContinuation=()=>{",
+    "   const tryTrail7AxisContinuation=()=>{\n    const exact=terrain.number===7&&roster.length===8&&resized&&wideCrop&&paintedWideCrop===false;\n    let mark=(rank,stage)=>{\n     if(!exact)return;\n     const saved=globalThis.__qa07Transaction;\n     if(!saved||saved.rank<rank)globalThis.__qa07Transaction={rank,stage};\n    };\n    mark(0,'scope');"
+  ],
+  [
+    "       !wideCrop||predator||settle||state.active||recoveryIds.size!==1)return false;",
+    "       !wideCrop||predator||settle||state.active||recoveryIds.size!==1){\n     mark(1,state.active?'lane-lock':recoveryIds.size!==1?'disposition-count':'scope');return false;\n    }"
+  ],
+  [
+    "    if(moving.length!==1||!recoveryIds.has(mover.id)||routeFits(mover))return false;",
+    "    if(moving.length!==1||!recoveryIds.has(mover.id)||routeFits(mover)){mark(2,moving.length!==1?'mover-count':!recoveryIds.has(mover.id)?'other-disposition':'existing-route-fits');return false;}"
+  ],
+  [
+    "    if(centerOutside(mover))return false;",
+    "    if(centerOutside(mover)){mark(3,'mover-outside');return false;}"
+  ],
+  [
+    "    if(!bad.length||bad.some(a=>a.phase!=='ground'||a.height!==0||!centerOutside(a)))return false;",
+    "    if(!bad.length||bad.some(a=>a.phase!=='ground'||a.height!==0||!centerOutside(a))){mark(4,!bad.length?'no-bad-idle':'bad-idle-still-visible');return false;}"
+  ],
+  [
+    "    for(const n of landings.slice(0,12)){",
+    "    mark(5,'no-landing');\n    for(const n of landings.slice(0,12)){"
+  ],
+  [
+    "     if(!pending||!routeFits(pending)||!trailRuntime.recoveryFits(pending,n,new Map()))continue;",
+    "     mark(6,'preview-denied');\n     if(!pending)continue;\n     mark(7,actorSafe(pending)?'nominal-sweep':'current-envelope');\n     if(!routeFits(pending))continue;\n     mark(8,'measured-sweep');\n     if(!trailRuntime.recoveryFits(pending,n,new Map()))continue;\n     mark(9,'pack-unentered');"
+  ],
+  [
+    "       return !!b&&safePoint(s.p,b.width,b.height)&&trailRuntime.canPlace(a,s,peers(partial));",
+    "       mark(10,'nominal-seat');\n       if(!b||!safePoint(s.p,b.width,b.height))return false;\n       mark(11,'measured-seat');\n       const ok=trailRuntime.canPlace(a,s,peers(partial));\n       if(ok)mark(12,'pack-incomplete');\n       return ok;"
+  ],
+  [
+    "       return trailRuntime.recoveryFits(pending,n,peers(candidate))&&\n        nativeTrailHits(candidate,{requireNative:true,lifts:new Map([[mover.id,mover.height]])});",
+    "       mark(13,'peer-sweep');\n       if(!trailRuntime.recoveryFits(pending,n,peers(candidate)))return false;\n       mark(14,'native-hit');\n       return nativeTrailHits(candidate,{requireNative:true,lifts:new Map([[mover.id,mover.height]])});"
+  ],
+  [
+    "     if(!plan)continue;",
+    "     if(!plan)continue;mark(15,'atomic-precondition');"
+  ],
+  [
+    "      const replacement=projected.get(mover.id);",
+    "      mark(16,'atomic-validation');const replacement=projected.get(mover.id);"
+  ],
+  [
+    "     }))return true;",
+    "     })){mark(17,'committed');return true;}"
+  ]
+];
+  // Restrict all replacements to the actual checked-in trial function.
+  const start=instrumented.indexOf(anchor),end=instrumented.indexOf('   if(recoveryIds.size&&tryTrail7AxisContinuation()){',start);
+  expect(start).toBeGreaterThanOrEqual(0);expect(end).toBeGreaterThan(start);
+  let trial=instrumented.slice(start,end);
+  for(const [from,to]of trialEdits){expect(trial.split(from)).toHaveLength(2);trial=trial.replace(from,to);}
+  instrumented=instrumented.slice(0,start)+instrumentation+trial+instrumented.slice(end);
+  await r.fulfill({response:x,body:instrumented});
  });
 }
 for(const id of ['java-rice','bird-diamond-firetail','bird-zebra-finch','kazaguruma','yuyake','bird-gouldian-finch'])for(const density of [true,false,'dense'])test(`viewport synchronization ${id} ${density}`,async({page},info)=>{
@@ -67,6 +124,8 @@ for(const id of ['java-rice','bird-diamond-firetail','bird-zebra-finch','kazagur
    info.annotations.push({type:'qa-viewport',description:Object.values(status).join(':')});
    if(axis){
     const a=await page.evaluate(()=>globalThis.__qa07Axis??null);
+    const attempt=await page.evaluate(()=>globalThis.__qa07Transaction?.stage??'unobserved');
+    info.annotations.push({type:'qa-07-transaction',description:`${cycle}:${attempt}`});
     const b=v=>v?'yes':'no';
     info.annotations.push({type:'qa-07-axis',description:a?[cycle,a.branch,b(a.groundClipped),b(a.visibleMover),b(a.futureInvalid),b(a.exactAxis),b(a.mixedEligible)].join(':'):`${cycle}:unobserved`});
    }

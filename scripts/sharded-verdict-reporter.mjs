@@ -27,6 +27,7 @@ export default class Verdict{
   if(!row)return;
   row.status=result.status;
   const schema=[
+   ['qa-07-transaction',/^[0-3]:(?:unobserved|scope|lane-lock|disposition-count|mover-count|other-disposition|existing-route-fits|mover-outside|no-bad-idle|bad-idle-still-visible|no-landing|preview-denied|nominal-sweep|current-envelope|measured-sweep|pack-unentered|nominal-seat|measured-seat|pack-incomplete|peer-sweep|native-hit|atomic-precondition|atomic-validation|committed)$/],
    ['qa-07-axis',/^[0-3]:(?:unobserved|(?:recovery|no-recovery):(?:yes|no):(?:yes|no):(?:yes|no):(?:yes|no):(?:yes|no))$/],
    ['qa-viewport',/^[0-3]:(?:wide|tall):(?:outside|occluded):(?:not-ready|count-change|outside|occluded|native-clean):(?:trail-active|trail-held|trail-standing|trail-needs-recovery|trail-blocked-geometry|trail-blocked-placement|geometry-blocked|insufficient-space|active|held|static|grounded|other):(?:trail-active|trail-held|trail-standing|trail-needs-recovery|trail-blocked-geometry|trail-blocked-placement|geometry-blocked|insufficient-space|active|held|static|grounded|other):(?:lead|other):(?:none|peer|controls|loading|other)$/],
    ['qa-booklet-input',/^(?:split|locator):(?:no-key|summary-key|other-key):(?:focused|unfocused):(?:replaced|same):(?:opened|no-open):(?:still-open|closed):(?:modal|no-modal)$/],
