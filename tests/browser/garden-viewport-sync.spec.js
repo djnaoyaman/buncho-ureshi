@@ -18,7 +18,7 @@ const renderedViewport=page=>page.evaluate(()=>new Promise(resolve=>requestAnima
 async function wireDense07(page){
  await page.route(/\/src\/garden-actor-motion\.js(?:\?.*)?$/,async r=>{
   const x=await r.fetch(),body=await x.text();
-  const anchor='   if(recoveryIds.size){';
+  const anchor='   const tryTrail7AxisContinuation=()=>{';
   expect(body.split(anchor)).toHaveLength(2);
   const instrumentation=`   if(terrain.number===7&&roster.length===8&&wideCrop&&resized){
     const current=[...model.actors.values()],moving=current.filter(a=>a.route),c=geometry.clip;

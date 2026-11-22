@@ -100,6 +100,16 @@ export function createGardenActors(seed='',initialTime=0){
  // Affected-only recovery. Never release the old native destination until
  // replacement is validated and atomically acquired. A same-target reduced
  // motion completion may finish visually without changing gameplay clocks.
+ function previewAxisRecovery(a,node){
+  if(!a?.route||a.route.trailRecovery||!node)return null;
+  const current=frame(a),next=frame(a,time+1),route={
+   from:[...current.p],to:[...node.p],target:node.id,duration:950,reroute:true,trailRecovery:true,
+   velocity:current.p.map((v,i)=>next.p[i]-v),
+   height0:current.height,heightVelocity:next.height-current.height
+  };
+  const candidate={...a,p:current.p,height:current.height,since:time,route,state:'fly',end:time+route.duration};
+  return candidate;
+ }
  function recoverTrailPath(id,node,{safe,reduced=false}){
   const a=actors.get(id);
   if(!a?.route||!node||typeof safe!=='function')return false;
@@ -176,7 +186,31 @@ export function createGardenActors(seed='',initialTime=0){
   }
   return true;
  }
- return {actors,reservations,reconcile,advance,begin,previewPath,beginHopPath,beginFlightPath,recoverTrailPath,frame,reflow,reroute,placeStanding,
+ // Exact-axis trial: idle placements and one protected continuous recovery
+ // are accepted together, or live IDs, timers and reservations stay intact.
+ function commitAxisRecovery(id,landing,placements,validate){
+  const mover=actors.get(id),candidate=previewAxisRecovery(mover,landing);
+  if(!candidate||!placements.size||typeof validate!=='function')return false;
+  const prior=candidate.route;
+  if(!prior.to.every(Number.isFinite)||!landing.id||
+   (reservations.has(landing.id)&&reservations.get(landing.id)!==id)||
+   [...actors.values()].some(a=>a.node===landing.id))return false;
+  const projected=new Map(actors);projected.set(id,candidate);
+  const writes=[],occupied=new Set([landing.id]);
+  for(const [key,n] of placements){
+   const a=actors.get(key);
+   if(!a||a.route||a.phase!=='ground'||a.height!==0||!n?.id||!Array.isArray(n.p)||n.p.length!==2||
+      !n.p.every(Number.isFinite)||reservations.has(n.id)||occupied.has(n.id))return false;
+   const q=[...n.p];occupied.add(n.id);writes.push([a,n.id,q]);
+   projected.set(key,{...a,node:n.id,p:q});
+  }
+  if(new Set([...projected.values()].map(a=>a.node)).size!==actors.size||!validate(projected))return false;
+  reservations.set(landing.id,id);
+  for(const [key,owner] of reservations)if(owner===id&&key!==landing.id)reservations.delete(key);
+  for(const [a,n,p] of writes){a.node=n;a.p=p;}
+  Object.assign(mover,candidate);return true;
+ }
+ return {previewAxisRecovery,commitAxisRecovery,actors,reservations,reconcile,advance,begin,previewPath,beginHopPath,beginFlightPath,recoverTrailPath,frame,reflow,reroute,placeStanding,
   sampleRoute(a,count=49){
    if(a.route.flightPath)count=Math.max(count,Math.ceil(a.route.flightPath.distance/2),97);
    if(a.route.hops){

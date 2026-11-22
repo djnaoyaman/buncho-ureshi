@@ -23,11 +23,11 @@
     },
     "src/garden-actor-motion.js": {
       "before": "2dfdb5f374f29fa1af3af667be36c9857714e2b849b2da34e67a615234a4dc7c",
-      "after": "6903dbc958d1dff872ef2504c988d07f61f9f952a1df0ea25b7e49d9ef9bd70d"
+      "after": "08f53dccfec911d95dafaf5e3bf858737be5cf4141a22cc0d5bda7549f6099e3"
     },
     "src/garden-actor-state.js": {
       "before": "311bb2ced9b28ce172627f8ac81de9f647420e01d0d5f9706c925e2f86c42301",
-      "after": "c6a85ad17adf3023b30be3188747885841ec3fc9a83d5a369d4dbe67562c1afc"
+      "after": "f86bb401d42ca7566b165c34a94b5a3cef4ce934dea08bd8c939a96b734baef7"
     },
     "src/garden-bird-motion.js": {
       "before": "1a7d3da97648b4e548c2223462e033a07552624597481f75ed47e7a9da6760c3",
@@ -40,7 +40,7 @@
     "src/garden-trail-adapter.js": "f5bafebee0ba6a85b3c1dc2da95feaa71dca4685c2ef03dc89a1e9db607f05a5",
     "src/garden-trail-clearance.js": "11d79a1a758fa0e7c6d3bd51f3fd87f5d0eea0b1e0bd53ae8c6d4b2a9c737c90",
     "src/garden-trail-lane.js": "b7fc52dd1335bf6166b1f6e03d49eeeb4c715c5034cc8e3dbd4965d2870178e5",
-    "src/garden-trail-runtime.js": "b709b1a671b67a2151def0e544c669452739ab1873066a42c8a6897b2b3a68d4"
+    "src/garden-trail-runtime.js": "6f5c52dcb1bb7ac716cac6ea5e90468e82f017b87f42e393b5c0d84ff2a11b01"
   },
   "historicalFormalReviewedDraft": "4caaccc2cef57a62c51c25d0e5c4803098ef1d3d",
   "compositionStatus": "Exact final formal candidate on published post-film main; verification required; not release evidence.",

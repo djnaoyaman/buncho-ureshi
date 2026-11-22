@@ -252,6 +252,9 @@ export function createGardenTrailRuntime(id,model,terrain=trailTerrainFor(id)){
   standingPairFits(a,aNode,b,bNode){
    return !!proven&&!proven.placementConflicts({...a,p:aNode.p,route:null},{...b,p:bNode.p,route:null});
   },
+  recoveryFits(a,n,peers){
+   return !!proven&&proven.safe(a,n,a.state,peers);
+  },
   canPlace(actor,node,peers){
    if(!proven||!proven.canStand(actor,node.p))return false;
    const candidate={...actor,p:node.p,route:null},s=proven.sweptRoute(candidate);

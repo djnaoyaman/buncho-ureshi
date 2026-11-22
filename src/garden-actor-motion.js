@@ -391,7 +391,7 @@ export function createGardenActorMotion(root){
    model.reconcile(roster.filter(d=>fixedFlight.has(d.id)),[]);
    trailRuntime.sync({generation:key,measurement,predator});
   }
-  const nativeTrailHits=(plan,{requireNative=false}={})=>{
+  const nativeTrailHits=(plan,{requireNative=false,lifts=null}={})=>{
    // Regular motion may defer while blocked. An emergency cover replacement
    // must get a real input verdict, even if the animation clock is held.
    const doc=root.ownerDocument,hitApi=typeof doc.elementFromPoint==='function';
@@ -405,7 +405,7 @@ export function createGardenActorMotion(root){
      saved.set(b.node,b.node.getAttribute('style'));
      Object.assign(b.node.style,{width:b.width+'px',height:b.height+'px',
       left:n.p[0]*100+'%',top:n.p[1]*100+'%',marginBlockStart:'0px',
-      transform:'translate(-54%,-97.5%)',zIndex:String(Math.round(n.p[1]*1000)),transition:'none'});
+      transform:'translate(-54%,-97.5%)'+(lifts?' translateY('+(-(lifts.get(id)||0)*p.height)+'px)':''),zIndex:String(Math.round(n.p[1]*1000)),transition:'none'});
     }
     for(const [id]of plan){
      const {node}=bindings.get(id),r=rect(node);
@@ -549,7 +549,55 @@ export function createGardenActorMotion(root){
    const state=trailRuntime.sync({generation:key,measurement,predator:predator||settle,...(pairedFlight?{paintable:routeFits}:{})});
    const recoveryIds=new Set(state.disposition.map(x=>x.id));
    if(settle||hadTrail&&resized&&!routesFit)for(const a of model.actors.values())if(a.route&&(settle||!routeFits(a)))recoveryIds.add(a.id);
-   if(recoveryIds.size){
+   const tryTrail7AxisContinuation=()=>{
+    if(terrain.number!==7||roster.length!==8||populationChanged||!resized||paintedWideCrop!==false||
+       !wideCrop||predator||settle||state.active||recoveryIds.size!==1)return false;
+    const actors=[...model.actors.values()],moving=actors.filter(a=>a.route),mover=moving[0];
+    if(moving.length!==1||!recoveryIds.has(mover.id)||routeFits(mover))return false;
+    const actorSafe=a=>{
+     const b=bindings.get(a.id);
+     return !!b&&safePoint(a.p,b.width,b.height,a.height*p.height,a.state==='fly');
+    };
+    const centerOutside=a=>{
+     const b=bindings.get(a.id);if(!b)return false;
+     const r=body(a.p,b.width,b.height,a.height*p.height),c=geometry.clip,x=(r.left+r.right)/2,y=(r.top+r.bottom)/2;
+     return Number.isFinite(x+y)&&(x<c.left||x>=c.right||y<c.top||y>=c.bottom);
+    };
+    if(centerOutside(mover))return false;
+    const bad=actors.filter(a=>a!==mover&&!actorSafe(a));
+    if(!bad.length||bad.some(a=>a.phase!=='ground'||a.height!==0||!centerOutside(a)))return false;
+    const affected=new Set(bad.map(a=>a.id)),seats=layoutNodes.filter(n=>n.id!=='bay'&&!model.reservations.has(n.id));
+    const landings=seats.filter(n=>!actors.some(a=>a.node===n.id)).sort((a,b)=>
+     Math.hypot(a.p[0]-mover.p[0],a.p[1]-mover.p[1])-Math.hypot(b.p[0]-mover.p[0],b.p[1]-mover.p[1]));
+    for(const n of landings.slice(0,12)){
+     const pending=model.previewAxisRecovery(mover,n);
+     if(!pending||!routeFits(pending)||!trailRuntime.recoveryFits(pending,n,new Map()))continue;
+     const retained=new Map(actors.filter(a=>!affected.has(a.id)).map(a=>[a.id,{id:a.node,p:a.p}]));
+     const peers=partial=>new Map([...partial].map(([id,s])=>{
+      const a=model.actors.get(id);
+      return [id,id===mover.id?pending:affected.has(id)?{...a,p:s.p,node:s.id}:a];
+     }));
+     const plan=assignTrailSeats({actors,seats:seats.filter(s=>s.id!==n.id),retained,maxTries:320,maxProbes:3,
+      canPlace(a,s,partial){
+       const b=bindings.get(a.id);
+       return !!b&&safePoint(s.p,b.width,b.height)&&trailRuntime.canPlace(a,s,peers(partial));
+      },
+      accept(candidate){
+       return trailRuntime.recoveryFits(pending,n,peers(candidate))&&
+        nativeTrailHits(candidate,{requireNative:true,lifts:new Map([[mover.id,mover.height]])});
+      }});
+     if(!plan)continue;
+     const changed=new Map([...plan].filter(([id])=>affected.has(id)));
+     if(model.commitAxisRecovery(mover.id,n,changed,projected=>{
+      const replacement=projected.get(mover.id);
+      return [...projected.values()].every(actorSafe)&&routeFits(replacement)&&trailRuntime.recoveryFits(replacement,n,projected);
+     }))return true;
+    }
+    return false;
+   };
+   if(recoveryIds.size&&tryTrail7AxisContinuation()){
+    routesFit=true;standingOnly=false;nextTrail=Math.max(nextTrail,elapsed+1600);
+   }else if(recoveryIds.size){
     const blocked=trailRuntime.recover([...recoveryIds],{reduced:settle});
     routesFit=[...model.actors.values()].every(routeFits);
     if(blocked.length||!routesFit||!fitsNow()){
