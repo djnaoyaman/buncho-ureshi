@@ -173,6 +173,38 @@ async function wireDense07(page){
 `;
   const paintedAnchor="     mark(7,actorSafe(pending)?'nominal-sweep':'current-envelope');";
   // Restrict all replacements to the actual checked-in trial function.
+  const geometryAnchor="  const signature=JSON.stringify(";
+  const structuralExperiment=String.raw`
+  // Experiment scoped to the exact #07 test, not production. Keep the full
+  // rectangles for both painted header children plus every other guard.
+  if(terrain.number===7&&definitions.length===8&&!predator&&!settle&&
+     geometry.clip.right-geometry.clip.left>geometry.clip.bottom-geometry.clip.top){
+   const header=root.querySelector('.finch-garden > header');
+   if(header&&header.children.length===2&&header.children[0].matches('h3')&&
+      header.children[1].matches('button[data-encounter-back]')){
+    const style=win.getComputedStyle(header);
+    const emptyContent=which=>['none','normal'].includes(win.getComputedStyle(header,which).content);
+    const h=rect(header);
+    const index=geometry.obstacles.findIndex(o=>['left','right','top','bottom'].every(k=>o[k]===h[k]));
+    // The wrapper participates in layout only. If future chrome gives it
+    // paint, hit ownership or children, keep the original conservative box.
+    if(index>=0&&h.width>0&&h.height>0&&style.pointerEvents==='none'&&
+       style.backgroundColor==='rgba(0, 0, 0, 0)'&&style.backgroundImage==='none'&&
+       style.boxShadow==='none'&&style.outlineStyle==='none'&&
+       ['Top','Right','Bottom','Left'].every(side=>parseFloat(style['border'+side+'Width'])===0)&&
+       emptyContent('::before')&&emptyContent('::after')){
+     const title=rect(header.children[0]),back=rect(header.children[1]);
+     const full=[title,back].filter(x=>x.width>0&&x.height>0);
+     if(back.width>=44&&back.height>=44&&full.length>0){
+      geometry.obstacles.splice(index,1,...full);
+      globalThis.__qa07Header='fragments';
+     }
+    }
+   }
+  }
+`;
+  expect(instrumented.split(geometryAnchor)).toHaveLength(2);
+  instrumented=instrumented.replace(geometryAnchor,structuralExperiment+geometryAnchor);
   const start=instrumented.indexOf(anchor),end=instrumented.indexOf('   if(recoveryIds.size&&tryTrail7AxisContinuation()){',start);
   expect(start).toBeGreaterThanOrEqual(0);expect(end).toBeGreaterThan(start);
   let trial=instrumented.slice(start,end);
@@ -195,6 +227,18 @@ for(const id of ['java-rice','bird-diamond-firetail','bird-zebra-finch','kazagur
   if(lane==='comparison')await renderedViewport(page);
   const sample=await readyGardenSnapshot(page,info,'viewport-samples');
   expect(Math.abs(sample.overlay.height-sample.viewport.height)).toBeLessThan(2);
+  if(axis&&width===844){
+   const header=await page.evaluate(()=>{
+    const b=document.querySelector('.finch-garden > header > button[data-encounter-back]');
+    const r=b?.getBoundingClientRect();
+    const hit=r?document.elementFromPoint((r.left+r.right)/2,(r.top+r.bottom)/2):null;
+    return {mode:globalThis.__qa07Header??'original',back:!!r&&r.width>=44&&r.height>=44&&!!hit&&b.contains(hit)};
+   });
+   info.annotations.push({type:'qa-07-header',description:`${cycle}:${header.mode}:${header.back?'own':'miss'}`});
+   expect(header.mode).toBe('fragments');
+   expect(header.back).toBe(true);
+  }
+
   const failed=sample.birds.find(b=>!b.centerInViewport||!b.hit);
   if(failed){
    // Keep the notification lock asserted. Sample only once after the two real
