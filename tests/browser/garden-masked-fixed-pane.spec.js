@@ -1,6 +1,6 @@
 import {test,expect} from '@playwright/test';
 import {setup} from '../fixtures/garden-terrain-browser.js';
-import {NOW,engine,crow,raptor} from '../fixtures/garden-about-world.js';
+import {NOW,worldFor,load} from '../fixtures/garden-about-world.js';
 
 const garden='bird-masked-finch', stage='.finch-garden-stage';
 const pairs=[
@@ -8,13 +8,25 @@ const pairs=[
  [{width:667,height:375},{width:402,height:874}],
  [{width:402,height:874},{width:874,height:402}]
 ];
-function quietUnrelatedArrivals(w){
- const past=NOW-60000,token=()=>({...raptor.raptorToken(w),gardenId:garden});
- expect(raptor.arriveGardenRaptor(w,'black-kite',past,token()).changed).toBe(true);
- for(let ms=2000;ms<=raptor.RAPTOR_RULES.visitMs;ms+=2000)
-  expect(engine.advanceGardenRaptor(w,2000,past+ms,raptor.raptorToken(w)).changed).toBe(true);
- expect(crow.arriveGardenCrow(w,'large-billed-crow',past,token()).changed).toBe(true);
- expect(crow.crowScene(w,NOW)).toBeNull();expect(raptor.raptorScene(w)).toBeNull();
+async function seedMissedAmbientDraw(page){
+ const {createGardenPredatorClock,PREDATOR_ENTRY_RULES}=await load('garden-predator-clock.js');
+ const wallNow=NOW+1000,rule=PREDATOR_ENTRY_RULES;
+ let journal;
+ // A real historical miss, with no visit, companion mutation or warning.
+ // The native game still runs its own real clocks and guarded future draws.
+ const clock=createGardenPredatorClock({random:()=>1,persist:value=>{journal=value;return true;}});
+ const steps=Math.ceil(rule.dwellMs/rule.maxSampleGapMs);
+ for(let i=0;i<=steps;i++){
+  const now=rule.dwellMs*i/steps;
+  expect(clock.sample({key:'masked-courtyard-historical-miss',eligible:true,now,wallNow:wallNow-rule.dwellMs+now})).toBeNull();
+ }
+ expect(journal).toEqual({version:1,lastDraw:wallNow,pending:null});
+ const {worldId}=worldFor('attending',garden);
+ await page.addInitScript(({worldId,journal})=>{
+  const key='buncho-predator-attempt-v1:'+worldId;
+  if(!sessionStorage.getItem(key))sessionStorage.setItem(key,JSON.stringify(journal));
+ },{worldId,journal});
+ return w=>expect(w.worldId).toBe(worldId);
 }
 const snapshot=page=>page.evaluate(()=>{
  const stage=document.querySelector('.finch-garden-stage'),root=stage.closest('.finch-garden');
@@ -70,7 +82,8 @@ test.use({hasTouch:true});
 test.setTimeout(120000);
 for(const [first,second] of pairs)test(`#34 fixed courtyard, ${first.width}×${first.height} to ${second.width}×${second.height}, real flight and taps`,async({page},info)=>{
  const capture=[];
- await setup(page,garden,first.width,true,'maximum',{height:first.height,nativeSource:true,afterOpenMs:0,prepareWorld:quietUnrelatedArrivals});
+ const prepareWorld=await seedMissedAmbientDraw(page);
+ await setup(page,garden,first.width,true,'maximum',{height:first.height,nativeSource:true,afterOpenMs:0,prepareWorld});
  // One authored frame after scene media readiness; never poll for a hit.
  await page.clock.runFor(34);
  const take=async()=>{const s=await snapshot(page);capture.push(s);return s;};
