@@ -12,13 +12,44 @@ async function delayViewport(page){await page.addInitScript(()=>{
  };
  window.__releaseViewport=()=>{window.__holdViewport=false;for(const call of window.__pendingViewport||[])call();window.__pendingViewport=[];};
 });}
+// Two observers can post a geometry frame; cross the documented paint
+// boundary once while the delayed shell resize remains locked.
+const renderedViewport=page=>page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+async function wireDense07(page){
+ await page.route(/\/src\/garden-actor-motion\.js(?:\?.*)?$/,async r=>{
+  const x=await r.fetch(),body=await x.text();
+  const anchor='   if(recoveryIds.size){';
+  expect(body.split(anchor)).toHaveLength(2);
+  const instrumentation=`   if(terrain.number===7&&roster.length===8&&wideCrop&&resized){
+    const current=[...model.actors.values()],moving=current.filter(a=>a.route),c=geometry.clip;
+    const outside=a=>{
+     const b=bindings.get(a.id);if(!b)return false;
+     const r=body(a.p,b.width,b.height,a.height*p.height),x=(r.left+r.right)/2,y=(r.top+r.bottom)/2;
+     return Number.isFinite(x+y)&&(x<c.left||x>=c.right||y<c.top||y>=c.bottom);
+    };
+    const idleClipped=current.some(a=>!a.route&&outside(a));
+    const kind=recoveryIds.size?'recovery':'no-recovery';
+    if(idleClipped||recoveryIds.size)globalThis.__qa07Axis??={
+     branch:kind, groundClipped:idleClipped,
+     visibleMover:moving.some(a=>!outside(a)), futureInvalid:moving.some(a=>!routeFits(a)),
+     exactAxis:paintedWideCrop===false&&!populationChanged&&!predator&&!settle,
+     mixedEligible:!recoveryIds.size&&moving.length>0&&moving.every(routeFits)&&idleClipped
+    };
+   }
+`;
+  await r.fulfill({response:x,body:body.replace(anchor,instrumentation+anchor)});
+ });
+}
 for(const id of ['java-rice','bird-diamond-firetail','bird-zebra-finch','kazaguruma','yuyake','bird-gouldian-finch'])for(const density of [true,false,'dense'])test(`viewport synchronization ${id} ${density}`,async({page},info)=>{
+ const lane=process.env.BOOKLET_OPEN_STYLE,axis=lane==='axis'&&id==='bird-zebra-finch'&&density==='dense';
+ if(axis)await wireDense07(page);
  await delayViewport(page);await setup(page,id,390,true,density);await page.clock.resume();
  let cycle=-1;
  for(const width of [844,390,844,390]){
   cycle++;
   await page.evaluate(()=>window.__holdViewport=true);
   await page.setViewportSize({width,height:width===844?390:844});
+  if(lane==='comparison')await renderedViewport(page);
   const sample=await readyGardenSnapshot(page,info,'viewport-samples');
   expect(Math.abs(sample.overlay.height-sample.viewport.height)).toBeLessThan(2);
   const failed=sample.birds.find(b=>!b.centerInViewport||!b.hit);
@@ -34,6 +65,11 @@ for(const id of ['java-rice','bird-diamond-firetail','bird-zebra-finch','kazagur
    const front=!f?'none':f.household||f.friend||c.includes('finch-garden-visitor')?'peer':/dock|selector|controls-toggle|summary/.test(c+' '+f.tag)?'controls':c.includes('loading')?'loading':'other';
    const status={cycle,orientation:width===844?'wide':'tall',before:verdict(sample),after:verdict(next),beforeMode:mode(sample),afterMode:mode(next),firstVictim:failed.id==='b1'?'lead':'other',front};
    info.annotations.push({type:'qa-viewport',description:Object.values(status).join(':')});
+   if(axis){
+    const a=await page.evaluate(()=>globalThis.__qa07Axis??null);
+    const b=v=>v?'yes':'no';
+    info.annotations.push({type:'qa-07-axis',description:a?[cycle,a.branch,b(a.groundClipped),b(a.visibleMover),b(a.futureInvalid),b(a.exactAxis),b(a.mixedEligible)].join(':'):`${cycle}:unobserved`});
+   }
   }
   for(const b of sample.birds){expect(b.centerInViewport,JSON.stringify(sample)).toBe(true);expect(b.hit,JSON.stringify(sample)).toBe(true);}
   await page.locator('.finch-garden-household').first().click();await expect(page.getByRole('dialog',{name:'エド',exact:true})).toBeVisible();

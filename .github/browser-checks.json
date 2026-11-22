@@ -1,9 +1,9 @@
 {
-  "base": "beb921492ab8b7c0127a23bd64fdea50ca256924",
+  "base": "b087175b27896edf199dff3950918e63d2330939",
   "tests": [
     "tests/browser/garden-about-booklet.spec.js",
     "tests/browser/garden-ground-motion.spec.js",
     "tests/browser/garden-viewport-sync.spec.js"
   ],
-  "reason": "Non-merging native classification of exact observed test failures only; first oracles remain unchanged."
+  "reason": "Never-merge test-only #07 first-frame recovery discriminator and separate painted viewport/ground controls; exact three approved browser files, no game changes."
 }

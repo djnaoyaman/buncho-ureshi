@@ -2,9 +2,16 @@ import {spawnSync} from 'node:child_process';
 const files=JSON.parse(process.env.BROWSER_TESTS_JSON||'[]');
 const allowed=['tests/browser/garden-about-booklet.spec.js','tests/browser/garden-ground-motion.spec.js','tests/browser/garden-viewport-sync.spec.js'];
 const engine=process.env.QA_ENGINE, input=process.env.BOOKLET_OPEN_STYLE;
-if(JSON.stringify(files)!==JSON.stringify(allowed)||!['chrome','webkit'].includes(engine)||!['split','locator'].includes(input))throw Error('Invalid focused diagnostic lane.');
+if(JSON.stringify(files)!==JSON.stringify(allowed)||!['chrome','webkit'].includes(engine)||!['split','locator','axis','comparison'].includes(input))throw Error('Invalid focused diagnostic lane.');
 const booklet=['layout bird-scaly-breasted-munia 320x740','assigned credit and audio continuity 375 fixed'];
 const other=['safe roster bird-zebra-finch dense','ground holds and resumes java-rice','viewport synchronization java-rice dense','viewport synchronization bird-diamond-firetail (?:false|dense)','viewport synchronization bird-zebra-finch (?:true|dense)'];
-const selection=input==='locator'?booklet:[...booklet,...other];
+const axis=['viewport synchronization bird-zebra-finch dense'];
+const comparison=[
+ 'safe roster bird-zebra-finch dense','ground holds and resumes java-rice',
+ 'viewport synchronization java-rice dense','viewport synchronization bird-diamond-firetail (?:false|dense)','viewport synchronization bird-zebra-finch true',
+ 'old pixel-height control exposes the original offscreen hit while notification is pending',
+ 'atomic snapshot exposes a ready occluded target without waiting for success','atomic snapshot exposes ready zero geometry and offscreen targets',
+];
+const selection=input==='axis'?axis:input==='comparison'?comparison:input==='locator'?booklet:[...booklet,...other];
 const result=spawnSync('npx',['playwright','test',...files,'--config=playwright.verdict.config.js','--project='+engine,'--grep','(?:'+selection.join('|')+')$','--retries=0','--reporter=./scripts/sharded-verdict-reporter.mjs','--output=focused-test-results'],{stdio:'inherit'});
 if(result.error)throw result.error;process.exit(result.status??1);
