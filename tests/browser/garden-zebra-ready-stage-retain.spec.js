@@ -8,7 +8,7 @@ const read=page=>page.locator('.finch-garden-stage').evaluate(stage=>{
    air:!!air&&getComputedStyle(air).visibility==='visible',own:contains};
 });
 
-test('zebra companion UI redraw retains the original ready stage and shared flight',async({page})=>{
+test('zebra companion UI redraw retains the original ready stage and shared flight',async({page},info)=>{
  await setup(page,'bird-zebra-finch',390,true,'dense',{nativeSource:true,afterOpenMs:0});
  await page.clock.runFor(34);
  await expect(page.locator('.finch-garden')).toHaveAttribute('data-garden-shared-status','admitted');
@@ -22,9 +22,14 @@ test('zebra companion UI redraw retains the original ready stage and shared flig
  await page.locator('.finch-garden-stage').evaluate(stage=>{
   const actor=stage.querySelector('[data-actor-phase=rise][data-actor-landing]');
   window.__readyRedraw={
-   stage,actor,paint:actor.querySelector('.garden-actor-flight'),book:document.querySelector('[data-encounter-back]'),states:[]
+   stage,actor,paint:actor.querySelector('.garden-actor-flight'),book:document.querySelector('[data-encounter-back]'),states:[],opened:false,closed:false
   };
   const capture=window.__readyRedraw;
+  document.addEventListener('toggle',e=>{
+   if(!e.target.matches?.('.finch-companion-settings'))return;
+   if(e.newState==='open'||e.newState==null&&e.target.open)capture.opened=true;
+   if(e.newState==='closed'||e.newState==null&&!e.target.open)capture.closed=true;
+  },true);
   new MutationObserver(records=>{for(const record of records)capture.states.push(record.oldValue);})
    .observe(stage,{attributes:true,attributeFilter:['data-scene-state'],attributeOldValue:true});
  });
@@ -38,10 +43,17 @@ test('zebra companion UI redraw retains the original ready stage and shared flig
  expect(held.id).toBe(airborne.id);expect(held.landing).toBe(airborne.landing);
  await summary.click();
  await expect(panel).not.toHaveAttribute('open','');
- expect(await page.evaluate(()=>{
+ const nativeReceipt=await page.evaluate(()=>{
   const q=window.__readyRedraw,stage=document.querySelector('.finch-garden-stage');
-  return stage===q.stage&&q.book!==document.querySelector('[data-encounter-back]')&&q.actor.isConnected&&q.actor.contains(q.paint)&&q.states.every(s=>s==='ready')&&stage.dataset.sceneState==='ready';
- })).toBe(true);
+  const same=stage===q.stage,book=q.book!==document.querySelector('[data-encounter-back]'),actor=q.actor.isConnected,
+    paint=q.actor.contains(q.paint),neverLost=q.states.every(s=>s==='ready'),ready=stage.dataset.sceneState==='ready';
+  return {ok:same&&book&&actor&&paint&&neverLost&&ready,
+   flags:[same?'same-stage':'new-stage',book?'new-book':'same-book',actor?'actor-live':'actor-gone',
+    paint?'art-kept':'art-gone',neverLost?'no-reset':'reset',ready?'ready':'not-ready',
+    q.opened?'saw-open':'no-open',q.closed?'saw-close':'no-close'].join(':')};
+ });
+ if(!nativeReceipt.ok)info.annotations.push({type:'qa-07-shared-close',description:nativeReceipt.flags});
+ expect(nativeReceipt.ok).toBe(true);
  const rebound=await read(page);
  expect(rebound.id).toBe(airborne.id);expect(rebound.landing).toBe(airborne.landing);
  let contact=false,fold=false;
