@@ -10,6 +10,35 @@ async function snapshotGarden(page,measureClip=false){return page.evaluate(measu
    n.closest('.finch-garden-dock,.game-field-nav,.game-scene-controls-toggle,.game-main-nav,.game-nav')?'control':
    n.closest('.finch-garden-image-plane')?'plane':n.closest('.finch-garden-stage')?'stage':
    'other'}:null;
+ const classifyFront=n=>{
+  if(!n)return 'none';
+  const dialog=n.closest('dialog[open]');
+  if(dialog?.matches('.game-bird-sheet'))return 'bird-sheet';
+  if(dialog?.matches('.game-raptor-return-dialog'))return 'raptor-dialog';
+  if(dialog?.matches(':modal'))return 'other-modal';
+  if(n===overlay)return 'garden-overlay';
+  if(n.closest('.finch-garden-image-plane > button'))return 'peer-bird';
+  if(n.closest('.finch-garden-dock,.game-field-nav,.game-scene-controls-toggle,.game-main-nav,.game-nav'))
+   return n.closest('button,summary,input,a[href]')?'own-control':'control-wrapper';
+  if(n.closest('.finch-garden > header'))return 'header';
+  if(n.closest('.finch-garden-image-plane'))return 'plane';
+  if(n===stage)return 'stage';
+  if(n.closest('.finch-garden-stage'))return 'scenery';
+  if(dialog===overlay&&overlay)return 'garden-child';
+  return dialog?'other-dialog':'other';
+ };
+ const hitPaint=(n,hit,x,y,stack)=>{
+  const s=getComputedStyle(n), t=hit&&getComputedStyle(hit), r=hit?.getBoundingClientRect();
+  const same=stack.filter(a=>n.contains(a)).length>0;
+  return [!r?'none':x>=r.left&&x<r.right&&y>=r.top&&y<r.bottom?'front-in':'front-out',
+   s.pointerEvents==='none'?'bird-pass':'bird-pointer',s.visibility==='visible'?'bird-visible':'bird-hidden',
+   Number(s.opacity)===0?'bird-zero':'bird-alpha', !t?'no-front-paint':
+    t.pointerEvents==='none'||t.visibility!=='visible'||Number(t.opacity)===0?'front-pass':'front-paint',
+   !t||s.zIndex==='auto'||t.zIndex==='auto'?'z-auto':Number(s.zIndex)>Number(t.zIndex)?'z-above':
+    Number(s.zIndex)<Number(t.zIndex)?'z-below':'z-equal',
+   same?'bird-in-stack':'bird-not-in-stack',
+   ...[1,2].map(i=>classifyFront(stack[i]))].join(':');
+ };
  const viewport={width:innerWidth,height:innerHeight,visualHeight:visualViewport?.height,visualTop:visualViewport?.offsetTop,scale:visualViewport?.scale};
  const clip34=measureClip&&stage?(()=>{
   const s=stage.getBoundingClientRect(), slide=(stage.closest('.finch-garden-slide')??stage.querySelector('.finch-garden-slide'))?.getBoundingClientRect(),v=visualViewport,d=document.documentElement;
@@ -28,8 +57,8 @@ async function snapshotGarden(page,measureClip=false){return page.evaluate(measu
   return [edge?'edge':'no-edge',shape?'shape':'no-shape',inert?'inert':'not-inert'].join(':');
  };
  const birds=[...(plane?.querySelectorAll(':scope > button')||[])].map(n=>{
-  const r=n.getBoundingClientRect(),x=r.x+r.width/2,y=r.y+r.height/2,hit=document.elementFromPoint(x,y),style=getComputedStyle(n);
-  return {actorState:n.dataset.actorState,actorPhase:n.dataset.actorPhase,actorNode:n.dataset.actorNode,actorTarget:n.dataset.actorLanding,actorStyle:n.getAttribute('style'),id:n.dataset.gardenHousehold||n.dataset.gardenFriend||n.dataset.encounterOpen||n.dataset.gardenVisitingFriend||n.dataset.encounterPage,connected:n.isConnected,rect:r.toJSON(),point:{x,y},centerInViewport:x>=0&&x<innerWidth&&y>=0&&y<innerHeight,hit:!!hit&&n.contains(hit),front:describe(hit),missAncestry:measureClip&&!(hit&&n.contains(hit))?missAncestry(n,x,y):null,stack:document.elementsFromPoint(x,y).slice(0,5).map(describe),visibility:style.visibility,display:style.display,pointerEvents:style.pointerEvents};
+  const r=n.getBoundingClientRect(),x=r.x+r.width/2,y=r.y+r.height/2,hit=document.elementFromPoint(x,y),style=getComputedStyle(n),stack=document.elementsFromPoint(x,y).slice(0,5);
+  return {actorState:n.dataset.actorState,actorPhase:n.dataset.actorPhase,actorNode:n.dataset.actorNode,actorTarget:n.dataset.actorLanding,actorStyle:n.getAttribute('style'),id:n.dataset.gardenHousehold||n.dataset.gardenFriend||n.dataset.encounterOpen||n.dataset.gardenVisitingFriend||n.dataset.encounterPage,connected:n.isConnected,rect:r.toJSON(),point:{x,y},centerInViewport:x>=0&&x<innerWidth&&y>=0&&y<innerHeight,hit:!!hit&&n.contains(hit),front:describe(hit),frontDetail:measureClip&&!(hit&&n.contains(hit))?classifyFront(hit):null,missAncestry:measureClip&&!(hit&&n.contains(hit))?missAncestry(n,x,y):null,hitPaint:measureClip&&!(hit&&n.contains(hit))?hitPaint(n,hit,x,y,stack):null,stack:stack.map(describe),visibility:style.visibility,display:style.display,pointerEvents:style.pointerEvents};
  });
  const markerCrow=document.querySelector('[data-crow-phase]')?.dataset.crowPhase;
  const markerRaptor=document.querySelector('[data-raptor-notice]')?.dataset.raptorPhase;
@@ -37,7 +66,7 @@ async function snapshotGarden(page,measureClip=false){return page.evaluate(measu
   markerRaptor==='visiting'?'raptor-visit':markerCrow==='warning'?'crow-warning':
   markerCrow==='visiting'?'crow-visit':markerCrow==='quiet'?'crow-quiet':'clear';
  const shelter=!!document.querySelector('[data-garden-encounter-notice="sheltering"]');
- return {event,shelter,gardenId:stage?.dataset.gardenId,worldId:stage?.closest('.finch-garden')?.dataset.gardenWorld,time:performance.now(),viewport,cssHeight:document.body.style.getPropertyValue('--game-viewport-height'),overlay:overlay?.getBoundingClientRect().toJSON(),plane:plane?.getBoundingClientRect().toJSON(),ready:stage?.dataset.sceneState,clip34,motion:stage?.dataset.actorMotion||stage?.dataset.terrainMotion,revision:document.querySelector('.finch-garden')?.dataset.gardenRevision,birds};
+ return {event,shelter,gardenId:stage?.dataset.gardenId,worldId:stage?.closest('.finch-garden')?.dataset.gardenWorld,time:performance.now(),viewport,cssHeight:document.body.style.getPropertyValue('--game-viewport-height'),overlay:overlay?.getBoundingClientRect().toJSON(),plane:plane?.getBoundingClientRect().toJSON(),ready:stage?.dataset.sceneState,clip34,modalOpen:measureClip&&!!document.querySelector('dialog:modal'),motion:stage?.dataset.actorMotion||stage?.dataset.terrainMotion,revision:document.querySelector('.finch-garden')?.dataset.gardenRevision,birds};
 },measureClip);}
 const colors=['white','sakura','cinnamon','silver'];
 const stage=page=>page.locator('.finch-garden-stage');
@@ -68,7 +97,12 @@ function assertNative(s,count,ids=null,phase='native'){
  if(phase==='landscape'&&s.gardenId==='bird-masked-finch'&&count===10&&verdict==='occluded'){
   // Receipt only: classify the SAME ready sample. No new evaluation / geometry retry.
   const misses=s.birds.filter(b=>!b.hit);
-  const a=misses[0].missAncestry;
+  const first=misses[0];
+  if(!first.frontDetail)throw new Error('landscape34 front detail was not captured');
+  test.info().annotations.push({type:'qa-landscape34-front',description:first.frontDetail+':'+(s.modalOpen?'modal-present':'no-modal')});
+  if(!first.hitPaint)throw new Error('landscape34 hit paint was not captured');
+  test.info().annotations.push({type:'qa-landscape34-paint',description:first.hitPaint});
+  const a=first.missAncestry;
   if(!a)throw new Error('landscape34 hit ancestry was not captured');
   test.info().annotations.push({type:'qa-landscape34-ancestry',description:a});
   const motions={'insufficient-space':'insufficient', 'trail-blocked-placement':'placement',
