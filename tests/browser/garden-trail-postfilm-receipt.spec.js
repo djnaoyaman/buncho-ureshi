@@ -3,10 +3,15 @@ import {setup,assertGardenIdentities} from '../fixtures/garden-terrain-browser.j
 import {GARDEN_TRAIL_TERRAIN} from '../../src/data/garden-trail-terrain.js';
 import {encounterSystem} from '../../src/encounters.js';
 import {engine} from '../fixtures/garden-about-world.js';
-async function snapshotGarden(page){return page.evaluate(()=>{
+async function snapshotGarden(page,measureClip=false){return page.evaluate(measureClip=>{
  const stage=document.querySelector('.finch-garden-stage'),plane=stage?.querySelector('.finch-garden-image-plane'),overlay=document.querySelector('.game-panel-overlay[data-scene=true]');
  const describe=n=>n?{tag:n.tagName,id:n.id,class:n.className,household:n.dataset?.gardenHousehold,friend:n.dataset?.gardenFriend}:null;
  const viewport={width:innerWidth,height:innerHeight,visualHeight:visualViewport?.height,visualTop:visualViewport?.offsetTop,scale:visualViewport?.scale};
+ const clip34=measureClip&&stage?(()=>{
+  const s=stage.getBoundingClientRect(), slide=(stage.closest('.finch-garden-slide')??stage.querySelector('.finch-garden-slide'))?.getBoundingClientRect(),v=visualViewport,d=document.documentElement;
+  return {stage:s.toJSON(),slide:slide?.toJSON()??null,clientWidth:d.clientWidth,clientHeight:d.clientHeight,
+   visual:v?{left:v.offsetLeft,top:v.offsetTop,right:v.offsetLeft+v.width,bottom:v.offsetTop+v.height,scale:v.scale}:null};
+ })():null;
  const birds=[...(plane?.querySelectorAll(':scope > button')||[])].map(n=>{
   const r=n.getBoundingClientRect(),x=r.x+r.width/2,y=r.y+r.height/2,hit=document.elementFromPoint(x,y),style=getComputedStyle(n);
   return {actorState:n.dataset.actorState,actorPhase:n.dataset.actorPhase,actorNode:n.dataset.actorNode,actorTarget:n.dataset.actorLanding,actorStyle:n.getAttribute('style'),id:n.dataset.gardenHousehold||n.dataset.gardenFriend||n.dataset.encounterOpen||n.dataset.gardenVisitingFriend||n.dataset.encounterPage,connected:n.isConnected,rect:r.toJSON(),point:{x,y},centerInViewport:x>=0&&x<innerWidth&&y>=0&&y<innerHeight,hit:!!hit&&n.contains(hit),front:describe(hit),stack:document.elementsFromPoint(x,y).slice(0,5).map(describe),visibility:style.visibility,display:style.display,pointerEvents:style.pointerEvents};
@@ -17,8 +22,8 @@ async function snapshotGarden(page){return page.evaluate(()=>{
   markerRaptor==='visiting'?'raptor-visit':markerCrow==='warning'?'crow-warning':
   markerCrow==='visiting'?'crow-visit':markerCrow==='quiet'?'crow-quiet':'clear';
  const shelter=!!document.querySelector('[data-garden-encounter-notice="sheltering"]');
- return {event,shelter,gardenId:stage?.dataset.gardenId,worldId:stage?.closest('.finch-garden')?.dataset.gardenWorld,time:performance.now(),viewport,cssHeight:document.body.style.getPropertyValue('--game-viewport-height'),overlay:overlay?.getBoundingClientRect().toJSON(),plane:plane?.getBoundingClientRect().toJSON(),ready:stage?.dataset.sceneState,motion:stage?.dataset.actorMotion||stage?.dataset.terrainMotion,revision:document.querySelector('.finch-garden')?.dataset.gardenRevision,birds};
-});}
+ return {event,shelter,gardenId:stage?.dataset.gardenId,worldId:stage?.closest('.finch-garden')?.dataset.gardenWorld,time:performance.now(),viewport,cssHeight:document.body.style.getPropertyValue('--game-viewport-height'),overlay:overlay?.getBoundingClientRect().toJSON(),plane:plane?.getBoundingClientRect().toJSON(),ready:stage?.dataset.sceneState,clip34,motion:stage?.dataset.actorMotion||stage?.dataset.terrainMotion,revision:document.querySelector('.finch-garden')?.dataset.gardenRevision,birds};
+},measureClip);}
 const colors=['white','sakura','cinnamon','silver'];
 const stage=page=>page.locator('.finch-garden-stage');
 const pilot={nativeSource:true,height:874,afterOpenMs:0};
@@ -58,6 +63,7 @@ function assertNative(s,count,ids=null,phase='native'){
     misses.some(b=>b.pointerEvents==='none'||b.visibility==='hidden'||b.display==='none')?'noninteractive':'interactive',
     String(misses.length)].join(':')});
   const c=s.clip34,b=misses[0],p=b.point,r=b.rect;
+  if(!c?.stage||!c?.slide||!(c.clientWidth>0)||!(c.clientHeight>0))throw new Error("landscape34 clip collector did not capture the scoped ready frame");
   const inside=v=>!v?'unknown':p.x>=v.left&&p.x<v.right&&p.y>=v.top&&p.y<v.bottom?'in':'out';
   const painted=c?.slide&&{
    left:Math.max(0,c.stage.left,c.slide.left),top:Math.max(0,c.stage.top,c.slide.top),
@@ -79,10 +85,10 @@ function assertNative(s,count,ids=null,phase='native'){
   expect(b.hit,JSON.stringify({bird:b,motion:s.motion})).toBe(true);
  }
 }
-async function stable(page,width=402,height=874){
+async function stable(page,width=402,height=874,measureClip=false){
  await page.setViewportSize({width,height});await page.clock.runFor(1000);
  await expect(stage(page)).toHaveAttribute('data-scene-state','ready');
- return snapshotGarden(page);
+ return snapshotGarden(page,measureClip);
 }
 // #08 only: hit geometry and live route identity in one browser task.
 async function visitorSnapshot(page){return page.evaluate(()=>{
@@ -167,7 +173,7 @@ for(const [id,g] of Object.entries(GARDEN_TRAIL_TERRAIN)){
    await expect(page.getByRole('dialog',{name:'エド',exact:true})).toBeVisible();
    await page.getByRole('button',{name:'文鳥の操作をとじる',exact:true}).tap();
   }
-  assertNative(await stable(page,667,375),count,ids,"landscape");
+  assertNative(await stable(page,667,375,id==='bird-masked-finch'&&count===10),count,ids,"landscape");
   assertNative(await stable(page,402,874),count,ids,"portrait");
   if(count){
    let moving=false;
