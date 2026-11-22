@@ -55,15 +55,17 @@ jobs:
           if-no-files-found: error
           retention-days: 14
   focused_browser:
-    name: reviewed-${{ matrix.engine }}-${{ matrix.shard }}
+    name: reviewed-${{ matrix.engine }}-${{ matrix.input }}
     needs: build
-    if: github.event_name == 'pull_request' && github.head_ref == 'qa/type2-postfilm-shard-verdict' && github.base_ref == 'release/type2-after-film-reviewed' && needs.build.outputs.browser_tests != '[]'
+    if: github.event_name == 'pull_request' && github.head_ref == 'qa/type2-postfilm-focused-receipts' && github.base_ref == 'qa/type2-postfilm-shard-verdict' && needs.build.outputs.browser_tests != '[]'
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
-        engine: [chrome, webkit]
-        shard: [1, 2, 3, 4, 5, 6]
+        include:
+          - {engine: chrome, input: split}
+          - {engine: webkit, input: split}
+          - {engine: webkit, input: locator}
     container:
       image: mcr.microsoft.com/playwright:v1.64.1-noble
     steps:
@@ -115,12 +117,12 @@ jobs:
         env:
           BROWSER_TESTS_JSON: ${{ needs.build.outputs.browser_tests }}
           QA_ENGINE: ${{ matrix.engine }}
-          QA_SHARD: ${{ matrix.shard }}
-        run: node scripts/run-sharded-verdict.mjs
+          BOOKLET_OPEN_STYLE: ${{ matrix.input }}
+        run: node scripts/run-focused-verdict.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: browser-evidence-${{ matrix.engine }}-${{ matrix.shard }}-${{ github.sha }}
+          name: browser-evidence-${{ matrix.engine }}-${{ matrix.input }}-${{ github.sha }}
           path: compact-browser-verdict.json
           if-no-files-found: error
           retention-days: 7
