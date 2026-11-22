@@ -39,6 +39,31 @@ async function snapshotGarden(page,measureClip=false){return page.evaluate(measu
    same?'bird-in-stack':'bird-not-in-stack',
    ...[1,2].map(i=>classifyFront(stack[i]))].join(':');
  };
+ // Reversible comparison in the rejected frame only. Never changes native verdict or motion.
+ const compareLayer=(n,hit,x,y)=>{
+  const sel='.finch-garden-selector-wrap,.game-overlay-head';
+  const wrap=hit?.closest(sel);
+  const tag=wrap?.matches('.finch-garden-selector-wrap')?'selector-wrap':wrap?'overlay-head':
+   hit?.closest('.leaf-gift')?'story':hit?.closest('.game-encounter-host')?'encounter-host':
+   hit?.closest('.game-panel')?'panel':'other';
+  if(hit!==wrap||!wrap)return tag+':untested';
+  const old=wrap.getAttribute('style');
+  // Scope to the actual noninteractive wrapper, not the nav or its scroll surface.
+  const keep=[...wrap.querySelectorAll('button,summary,input,a[href],nav[data-garden-jog]')].map(e=>{
+   const box=e.getBoundingClientRect(),cx=(box.left+box.right)/2,cy=(box.top+box.bottom)/2;
+   return {e,cx,cy,owned:e.contains(document.elementFromPoint(cx,cy)),old:e.getAttribute('style')};
+  });
+  try{
+   wrap.style.setProperty('pointer-events','none','important');
+   for(const {e} of keep)e.style.setProperty('pointer-events','auto','important');
+   const restored=n.contains(document.elementFromPoint(x,y));
+   const nativeLost=keep.some(({e,cx,cy,owned})=>owned&&!e.contains(document.elementFromPoint(cx,cy)));
+   return tag+':'+(restored?'restored':'still-covered')+':'+(nativeLost?'control-lost':'controls-kept');
+  }finally{
+   const reset=(e,value)=>value===null?e.removeAttribute('style'):e.setAttribute('style',value);
+   reset(wrap,old); for(const {e,old} of keep)reset(e,old);
+  }
+ };
  const viewport={width:innerWidth,height:innerHeight,visualHeight:visualViewport?.height,visualTop:visualViewport?.offsetTop,scale:visualViewport?.scale};
  const clip34=measureClip&&stage?(()=>{
   const s=stage.getBoundingClientRect(), slide=(stage.closest('.finch-garden-slide')??stage.querySelector('.finch-garden-slide'))?.getBoundingClientRect(),v=visualViewport,d=document.documentElement;
@@ -56,8 +81,10 @@ async function snapshotGarden(page,measureClip=false){return page.evaluate(measu
   }
   return [edge?'edge':'no-edge',shape?'shape':'no-shape',inert?'inert':'not-inert'].join(':');
  };
+ let probe=null;
  const birds=[...(plane?.querySelectorAll(':scope > button')||[])].map(n=>{
   const r=n.getBoundingClientRect(),x=r.x+r.width/2,y=r.y+r.height/2,hit=document.elementFromPoint(x,y),style=getComputedStyle(n),stack=document.elementsFromPoint(x,y).slice(0,5);
+  if(measureClip&&!probe&&!(hit&&n.contains(hit)))probe=()=>compareLayer(n,hit,x,y);
   return {actorState:n.dataset.actorState,actorPhase:n.dataset.actorPhase,actorNode:n.dataset.actorNode,actorTarget:n.dataset.actorLanding,actorStyle:n.getAttribute('style'),id:n.dataset.gardenHousehold||n.dataset.gardenFriend||n.dataset.encounterOpen||n.dataset.gardenVisitingFriend||n.dataset.encounterPage,connected:n.isConnected,rect:r.toJSON(),point:{x,y},centerInViewport:x>=0&&x<innerWidth&&y>=0&&y<innerHeight,hit:!!hit&&n.contains(hit),front:describe(hit),frontDetail:measureClip&&!(hit&&n.contains(hit))?classifyFront(hit):null,missAncestry:measureClip&&!(hit&&n.contains(hit))?missAncestry(n,x,y):null,hitPaint:measureClip&&!(hit&&n.contains(hit))?hitPaint(n,hit,x,y,stack):null,stack:stack.map(describe),visibility:style.visibility,display:style.display,pointerEvents:style.pointerEvents};
  });
  const markerCrow=document.querySelector('[data-crow-phase]')?.dataset.crowPhase;
@@ -66,7 +93,8 @@ async function snapshotGarden(page,measureClip=false){return page.evaluate(measu
   markerRaptor==='visiting'?'raptor-visit':markerCrow==='warning'?'crow-warning':
   markerCrow==='visiting'?'crow-visit':markerCrow==='quiet'?'crow-quiet':'clear';
  const shelter=!!document.querySelector('[data-garden-encounter-notice="sheltering"]');
- return {event,shelter,gardenId:stage?.dataset.gardenId,worldId:stage?.closest('.finch-garden')?.dataset.gardenWorld,time:performance.now(),viewport,cssHeight:document.body.style.getPropertyValue('--game-viewport-height'),overlay:overlay?.getBoundingClientRect().toJSON(),plane:plane?.getBoundingClientRect().toJSON(),ready:stage?.dataset.sceneState,clip34,modalOpen:measureClip&&!!document.querySelector('dialog:modal'),motion:stage?.dataset.actorMotion||stage?.dataset.terrainMotion,revision:document.querySelector('.finch-garden')?.dataset.gardenRevision,birds};
+ const layerTrial=probe?.()??null;
+ return {event,shelter,layerTrial,gardenId:stage?.dataset.gardenId,worldId:stage?.closest('.finch-garden')?.dataset.gardenWorld,time:performance.now(),viewport,cssHeight:document.body.style.getPropertyValue('--game-viewport-height'),overlay:overlay?.getBoundingClientRect().toJSON(),plane:plane?.getBoundingClientRect().toJSON(),ready:stage?.dataset.sceneState,clip34,modalOpen:measureClip&&!!document.querySelector('dialog:modal'),motion:stage?.dataset.actorMotion||stage?.dataset.terrainMotion,revision:document.querySelector('.finch-garden')?.dataset.gardenRevision,birds};
 },measureClip);}
 const colors=['white','sakura','cinnamon','silver'];
 const stage=page=>page.locator('.finch-garden-stage');
@@ -98,6 +126,8 @@ function assertNative(s,count,ids=null,phase='native'){
   // Receipt only: classify the SAME ready sample. No new evaluation / geometry retry.
   const misses=s.birds.filter(b=>!b.hit);
   const first=misses[0];
+  if(!s.layerTrial)throw new Error('scoped layer comparison not captured');
+  test.info().annotations.push({type:'qa-landscape34-layer',description:s.layerTrial});
   if(!first.frontDetail)throw new Error('landscape34 front detail was not captured');
   test.info().annotations.push({type:'qa-landscape34-front',description:first.frontDetail+':'+(s.modalOpen?'modal-present':'no-modal')});
   if(!first.hitPaint)throw new Error('landscape34 hit paint was not captured');
