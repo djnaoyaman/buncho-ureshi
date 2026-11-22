@@ -111,7 +111,8 @@ export function trail7IdleDisposition({ground,nominal,centerOutside,controlConta
 }
 
 export function createGardenActorMotion(root){
- let axisIdleHold=null;
+ let axisIdleHold=null,sharedAdmission=null;
+ const samePoint=(a,b)=>a?.length===2&&b?.length===2&&a.every((x,i)=>Math.abs(x-b[i])<1e-8);
  let trailRuntime=null,nextTrail=0,trailRetry=false,trailMeasurement=null,trailPads=[];
  const bindings=new Map(),routeCache=new WeakMap();let model=null,key='',canonicalRetryKey=null,pinnedTrail=null,geometryKey='',rosterKey='',footholds=[],layoutWidth=64,standingOnly=false,geometry=null,terrain=null,overlayStyle=null,rejected=null,paintedWideCrop=null;
  const routeSamples=a=>{
@@ -125,7 +126,7 @@ export function createGardenActorMotion(root){
   if(b.pose){b.pose.style.visibility=b.poseVisibility;b.pose.removeAttribute('data-terrain-flight-active');}
   for(const attr of ['data-actor-state','data-actor-phase','data-actor-node','data-actor-landing'])b.node.removeAttribute(attr);
  };
- const dispose=()=>{axisIdleHold=null;if(overlayStyle){const [node,value]=overlayStyle;value?node.style.setProperty('--game-viewport-height',value):node.style.removeProperty('--game-viewport-height');overlayStyle=null;}for(const b of bindings.values())restore(b);bindings.clear();model?.clear();model=null;trailRuntime=null;nextTrail=0;trailRetry=false;trailMeasurement=null;trailPads=[];key='';canonicalRetryKey=null;pinnedTrail=null;geometryKey='';rosterKey='';rejected=null;paintedWideCrop=null;};
+ const dispose=()=>{axisIdleHold=null;sharedAdmission=null;if(overlayStyle){const [node,value]=overlayStyle;value?node.style.setProperty('--game-viewport-height',value):node.style.removeProperty('--game-viewport-height');overlayStyle=null;}for(const b of bindings.values())restore(b);bindings.clear();model?.clear();model=null;trailRuntime=null;nextTrail=0;trailRetry=false;trailMeasurement=null;trailPads=[];key='';canonicalRetryKey=null;pinnedTrail=null;geometryKey='';rosterKey='';rejected=null;paintedWideCrop=null;};
  const body=(p,width,height,lift=0)=>({left:geometry.plane.left+p[0]*geometry.plane.width-width*.54,top:geometry.plane.top+p[1]*geometry.plane.height-height*.975-lift,
   right:geometry.plane.left+p[0]*geometry.plane.width+width*.46,bottom:geometry.plane.top+p[1]*geometry.plane.height+height*.025-lift});
  function safePoint(p,width,height,lift=0,flight=false){
@@ -243,8 +244,14 @@ export function createGardenActorMotion(root){
    roomOwner.dataset.gardenSharedStatus=![8,10].includes(definitions.length)?'roster':
     shared?'measuring':'projection';
   }
-  if(roomOwner&&!shared&&[8,10].includes(definitions.length)&&win.innerWidth>=390&&win.innerHeight>=390&&!model.actors.size)
-   return abandonShared('projection');
+  const supportedRoom=roomOwner&&[8,10].includes(definitions.length)&&win.innerWidth>=390&&win.innerHeight>=390;
+  if(supportedRoom&&!shared&&!model.actors.size)return abandonShared('projection');
+  // A retained ordinary pack cannot be assigned new places merely because
+  // this replacement owner advertises the proof pane. No mid-session upgrade.
+  if(supportedRoom&&model.actors.size&&!sharedAdmission){
+   roomOwner.dataset.gardenSharedStatus='retained-unproven';
+   return false;
+  }
   const sharedAt=([x,y])=>[(geometry.clip.left+x-p.left)/p.width,(geometry.clip.top+y-p.top)/p.height];
   const sharedGates=sharedRoom?[[90,140],[172,140]].map((q,i)=>({id:'shared-gate-'+i,p:sharedAt(q)})):[];
   const sharedParking=sharedRoom?[[257,54],[305,54],[353,54],[257,129],[305,129],[353,129],[257,204],[305,204],[353,204]]
@@ -483,7 +490,38 @@ export function createGardenActorMotion(root){
     if(!layoutNodes.some(x=>x.id===n.id))layoutNodes.push(n);
    }
   }
-  let planned=null;
+  let planned=null,coldSharedAdmission=null,reboundShared=false;
+  if(sharedAdmission&&roomOwner&&(roomOwner!==sharedAdmission.owner||resized||changedBindings||populationChanged)){
+   const current=[...model.actors.values()],plan=new Map(),lifts=new Map();
+   const allowed=new Map([...sharedGates,...sharedParking].map(n=>[n.id,n.p]));
+   const prior=sharedAdmission;
+   const valid=sharedRoom&&prior.signature===JSON.stringify([p.width,p.height,localRect(geometry.clip)])&&
+    current.length===prior.seats.size&&current.length===definitions.length&&
+    current.every(a=>{
+     if(!ids.has(a.id)||!prior.seats.has(a.id))return false;
+     const lead=a.id===prior.lead;
+     if(!lead&&(a.route||a.node!==prior.seats.get(a.id)))return false;
+     if(lead&&!sharedGates.some(n=>n.id===a.node))return false;
+     if(a.route){
+      const destination=sharedGates.find(n=>n.id===a.route.target);
+      if(!destination||a.state!=='fly'||a.route.target===a.node||
+         model.reservations.get(destination.id)!==a.id||!samePoint(a.route.from,allowed.get(a.node))||
+         !samePoint(a.route.to,destination.p)||!routeFits(a)||
+         !trailRuntime.recoveryFits(a,destination,model.actors))return false;
+     }else if(!samePoint(a.p,allowed.get(a.node)))return false;
+     const b=bindings.get(a.id),lift=a.height*p.height;
+     if(!b||!safePoint(a.p,b.width,b.height,lift,a.state==='fly'))return false;
+     plan.set(a.id,{id:a.node,p:a.p});lifts.set(a.id,lift);
+     return true;
+    });
+   if(!valid||!nativeTrailHits(plan,{requireNative:true,lifts})){
+    roomOwner.dataset.gardenSharedStatus='retained-invalid';
+    // Never silently seed another pack or certify a different placement.
+    // Existing actors/reservations are untouched by failed revalidation.
+    return false;
+   }
+   reboundShared=true;
+  }
   if(trailRuntime&&roster.some(d=>!fixedFlight.has(d.id))){
    const peers=new Map([...model.actors].filter(([id])=>ids.has(id))),byId=new Map(roster.map(d=>[d.id,d]));
    const retained=new Map([...peers].map(([id,a])=>[id,{id:a.node,p:a.p}]));
@@ -511,7 +549,8 @@ export function createGardenActorMotion(root){
     trial.sync({generation:key,measurement});
     if(probe.actors.size!==roster.length||!trial.sharedPaneFlight(sharedGates,{paintable:routeFits}))
      return abandonShared('route');
-    roomOwner.dataset.gardenSharedStatus='admitted';
+    coldSharedAdmission={owner:roomOwner,lead:lead.id,seats:new Map([...plan].map(([id,n])=>[id,n.id])),
+     signature:JSON.stringify([p.width,p.height,localRect(geometry.clip)])};
     planned=plan;
    }else{
     const measured={...input,standingPairFits:trailRuntime.standingPairFits,standingClass:a=>measurement?.footprints.get(a.id)};
@@ -579,7 +618,7 @@ export function createGardenActorMotion(root){
    if(responsive)addTrailContacts(plan);
    return true;
   };
-  const reflowed=!resized||(trailRuntime?(hadTrail?[...model.actors.values()].every(routeFits):trailStandingReflow()):model.reflow(layoutNodes,(a,n)=>{
+  const reflowed=reboundShared||!resized||(trailRuntime?(hadTrail?[...model.actors.values()].every(routeFits):trailStandingReflow()):model.reflow(layoutNodes,(a,n)=>{
    const b=bindings.get(a.id);
    if(!safePoint(n.p,b.width,b.height))return false;
    // A paused flight remains a real occupied corridor. Responsive reflow may
@@ -739,7 +778,16 @@ export function createGardenActorMotion(root){
      model.advance(elapsed,layoutNodes,{...environment,safe:()=>false});
      const pairedFlight=roster.length===2&&!!bay&&(pairedVariant||[12,28].includes(terrain.number));
      const lane=trailRuntime.sync({generation:key,measurement,predator,...(pairedFlight?{paintable:routeFits}:{})}).active;
-     if(pairedFlight&&lane?.phase==='ready'&&elapsed<nextTrail){
+     const authoredShared=sharedRoom&&[...model.actors.values()].some(a=>sharedGates.some(g=>g.id===a.node));
+     if(authoredShared){
+      // Keep the measured source and peer pack intact while the decoder
+      // warms, while a real route runs, or if the current geometry denies
+      // a flight. A broad ground hop could permanently drain the source.
+      if(elapsed>=nextTrail){
+       const started=!lane&&trailRuntime.sharedPaneFlight(sharedGates,{paintable:routeFits});
+       trailRetry=false;nextTrail=elapsed+(started?9000:240);
+      }
+     }else if(pairedFlight&&lane?.phase==='ready'&&elapsed<nextTrail){
       // A real grounded partner has freed the exit. Use the same rechecked
       // ticket; do not wait for a new request or downgrade it to walking.
       const admitted=trailRuntime.run();
@@ -758,7 +806,6 @@ export function createGardenActorMotion(root){
          requestOrder=[];
        }
       }
-      if(sharedRoom&&!started)started=trailRuntime.sharedPaneFlight(sharedGates,{paintable:routeFits});
       if(!started)for(const a of requestOrder)if(!a.route&&a.movable&&(a.node==='A'||a.node==='B')){
        if(a.initialFlight&&!a.canFly&&model.time<a.initialFlightDeadline)continue;
        const pairedBay=pairedFlight&&[...model.actors.values()].some(b=>b.id!==a.id&&b.node===(a.node==='A'?'B':'A')&&!b.route);
@@ -808,6 +855,12 @@ export function createGardenActorMotion(root){
    }
    b.flight?.paint(a,model.time);
    if(b.label){b.label.style.visibility=a.state==='fly'?'hidden':'';b.label.style.maxWidth=b.width+'px';}
+  }
+  // Commit only a safe painted native layout, not merely a forecast.
+  if(coldSharedAdmission)sharedAdmission=coldSharedAdmission;
+  if((coldSharedAdmission||reboundShared)&&sharedAdmission){
+   sharedAdmission.owner=roomOwner;
+   roomOwner.dataset.gardenSharedStatus='admitted';
   }
   geometryKey=signature;rosterKey=nextRosterKey;paintedWideCrop=wideCrop;
   stage.dataset.actorMotion=trailRuntime?(standingOnly?'trail-standing':active?'trail-active':'trail-held'):active?'active':'held';

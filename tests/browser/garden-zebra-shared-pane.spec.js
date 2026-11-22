@@ -15,7 +15,11 @@ const read=page=>page.locator(pane).evaluate((p,selectors)=>{
  return {mode:m.dataset.gardenSharedPlay,status:m.dataset.gardenSharedStatus, ready:stage.dataset.sceneState,motion:stage.dataset.actorMotion,
   count:Number(stage.dataset.gardenCount),nativeCount:p.querySelectorAll('.finch-garden-image-plane > button').length, width:pageView.width,height:pageView.height,
   projection:[image.width,image.height,image.left-pageView.left,image.top-pageView.top],
-  controls, birds:[...stage.querySelectorAll(bird)].map(el=>{const r=rect(el);return {kind:'bird',id:el.dataset.gardenActorId||el.dataset.gardenVisitingFriend||el.dataset.encounterOpen,width:r.width,height:r.height,own:own(el,r),
+  controls, birds:[...stage.querySelectorAll(bird)].map(el=>{const r=rect(el);
+   const wing=el.querySelector('.garden-actor-flight'),pose=el.querySelector('[data-terrain-flight-active]');
+   const wingRect=wing?.getBoundingClientRect();
+   const air=!!pose&&!!wingRect&&wingRect.width>0&&wingRect.height>0&&getComputedStyle(wing).visibility==='visible';
+   return {kind:'bird',air,node:el.dataset.actorNode,id:el.dataset.gardenActorId||el.dataset.gardenVisitingFriend||el.dataset.encounterOpen,width:r.width,height:r.height,own:own(el,r),
    x:el.style.left,y:el.style.top,state:el.dataset.actorState,phase:el.dataset.actorPhase,landing:el.dataset.actorLanding};})};
 },{bird,control});
 for(const [density,count] of [['dense',8],['maximum',10]])test(`zebra shared pane retains the native ${count}-bird flight across rotation`,async({page},info)=>{
@@ -59,6 +63,9 @@ for(const [density,count] of [['dense',8],['maximum',10]])test(`zebra shared pan
   flying=birds.find(a=>a.state==='fly'&&a.phase==='rise'&&/^shared-gate-/.test(a.landing));
  }
  expect(flying,'one real shared flight reaches rise').toBeTruthy();
+ const source=before.birds.find(a=>a.node==='shared-gate-0');
+ expect(source?.id).toBe(flying.id);
+ expect(flying.air).toBe(true);
  await page.setViewportSize({width:844,height:390});
  const after=await read(page);expect(after.projection).toEqual(before.projection);
  const retained=after.birds.find(a=>a.id===flying.id);
