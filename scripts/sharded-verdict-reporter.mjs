@@ -27,6 +27,7 @@ export default class Verdict{
   if(!row)return;
   row.status=result.status;
   const schema=[
+   ['qa-07-control',/^[0-3]:(?:unobserved|(?:(?:clear|header|selector|jog|panel|family|summary|detail|notice|toggle|other):){4}(?:owned|unowned):(?:feet|contact|fold|brake|ground|other):(?:feet|contact|fold|brake|ground|other):(?:fixed-zero|near|moving):body-(?:clear|denied):target-(?:clear|denied):measured-(?:clear|denied):target-(?:hit|nohit))$/],
    ['qa-07-current-paint',/^[0-3]:(?:unobserved|(?:inside|left|right|top|bottom):(?:inside|left|right|top|bottom|unmeasured):(?:own|none|peer|other):(?:air|pose):(?:low|mid|high):(?:start|middle|end):(?:inside|dry|(?:body|skirt)-(?:left|right|top|bottom|control)):(?:clear|early|middle|late):(?:inside|left|right|top|bottom|dry|control|unmeasured):(?:safe|denied))$/],
    ['qa-07-transaction',/^[0-3]:(?:unobserved|scope|lane-lock|disposition-count|mover-count|other-disposition|existing-route-fits|mover-outside|no-bad-idle|bad-idle-still-visible|idle-contact-denied|idle-not-ground|idle-visible-box|no-landing|preview-denied|nominal-sweep|current-envelope|measured-sweep|pack-unentered|nominal-seat|measured-seat|pack-incomplete|peer-sweep|native-hit|atomic-precondition|atomic-validation|committed)$/],
    ['qa-07-axis',/^[0-3]:(?:unobserved|(?:recovery|no-recovery):(?:yes|no):(?:yes|no):(?:yes|no):(?:yes|no):(?:yes|no))$/],

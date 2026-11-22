@@ -124,6 +124,40 @@ async function wireDense07(page){
        if(!shape)return 'unmeasured';
        return phys({left:px+shape.left,right:px+shape.right,top:py+shape.top,bottom:py+shape.bottom},2);
       };
+      if(!globalThis.__qa07Control){
+       const named=[
+        ['header','.finch-garden > header'],['selector','.finch-garden-selector-wrap'],
+        ['jog','.garden-jog-cylinder > button[data-jog-center]'],['panel','.finch-garden-dock'],
+        ['family','.finch-garden-family'],['summary','.finch-garden > details > summary,.leaf-gift > summary'],
+        ['detail','.finch-garden-dock details[open]'],['notice','.finch-garden [data-garden-encounter-notice] button'],
+        ['toggle','.game-scene-controls-toggle']
+       ].flatMap(([name,sel])=>[...doc.querySelectorAll(sel)].map(el=>[name,rect(el)]));
+       const conflict=q=>{
+        const block=geometry.obstacles.find(o=>overlap(q,o));
+        if(!block)return 'clear';
+        return named.find(([,z])=>z.width>0&&z.height>0&&['left','right','top','bottom'].every(k=>Math.abs(block[k]-z[k])<.1))?.[0]??'other';
+       };
+       const direct=(where)=>body(where.p,b.width,b.height,where.height*p.height);
+       const start=model.frame(mover),next=model.frame(mover,mover.end);
+       const r=mover.route,owns=model.reservations.get(r.target)===mover.id;
+       const same=(v,w)=>v.every((x,i)=>Math.abs(x-w[i])<1e-8);
+       const near=(v,w)=>Math.hypot((v[0]-w[0])*p.width,(v[1]-w[1])*p.height);
+       const phase=where=>['feet','contact','fold','brake','ground'].includes(where.phase)?where.phase:'other';
+       const remaining=Array.from({length:33},(_,i)=>model.frame(mover,model.time+Math.max(0,mover.end-model.time)*i/32));
+       const stationary=mover.state==='fly'&&!r.reroute&&model.time-mover.since>=.88*r.duration&&
+        remaining.every(f=>f.height===0&&same(f.p,r.to));
+       const targetSafe=safePoint(r.to,b.width,b.height);
+       const measuredTarget=trailRuntime.recoveryFits({...mover,p:r.to,height:0,route:null,state:'rest'},
+        {id:r.target,p:r.to},model.actors);
+       const nativeSame=nativeTrailHits(new Map([[mover.id,{id:r.target,p:r.to}]]),{requireNative:true,heldIds:new Set([mover.id])});
+       globalThis.__qa07Control=[
+        conflict(button),bounds?conflict(bounds):'other',conflict(direct(start)),conflict(direct(next)),
+        owns?'owned':'unowned',phase(start),phase(next),
+        stationary?'fixed-zero':near(start.p,r.to)<=1?'near':'moving',
+        remaining.every(f=>safePoint(f.p,b.width,b.height,f.height*p.height))?'body-clear':'body-denied',
+        targetSafe?'target-clear':'target-denied',measuredTarget?'measured-clear':'measured-denied',nativeSame?'target-hit':'target-nohit'
+       ].join(':');
+      }
       const ix=frames.findIndex((f,i)=>i>0&&future(f)!=='inside');
       const u=Math.max(0,Math.min(1,(model.time-mover.since)/mover.route.duration));
       globalThis.__qa07Paint=[
@@ -180,6 +214,8 @@ for(const id of ['java-rice','bird-diamond-firetail','bird-zebra-finch','kazagur
     info.annotations.push({type:'qa-07-transaction',description:`${cycle}:${attempt}`});
     const paint=await page.evaluate(()=>globalThis.__qa07Paint??'unobserved');
     info.annotations.push({type:'qa-07-current-paint',description:`${cycle}:${paint}`});
+    const control=await page.evaluate(()=>globalThis.__qa07Control??'unobserved');
+    info.annotations.push({type:'qa-07-control',description:`${cycle}:${control}`});
     const b=v=>v?'yes':'no';
     info.annotations.push({type:'qa-07-axis',description:a?[cycle,a.branch,b(a.groundClipped),b(a.visibleMover),b(a.futureInvalid),b(a.exactAxis),b(a.mixedEligible)].join(':'):`${cycle}:unobserved`});
    }
