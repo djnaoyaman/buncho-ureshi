@@ -9,20 +9,41 @@ const read=page=>page.locator(pane).evaluate((p,selectors)=>{
  const own=(el,r)=>el.contains(document.elementFromPoint((r.left+r.right)/2,(r.top+r.bottom)/2));
  const controls=[...m.querySelectorAll(control)].filter(n=>n.getClientRects().length).map(el=>{
   const r=rect(el);
-  return {height:r.height,width:r.width,own:own(el,r),disjoint:r.bottom<=pageView.top||r.top>=pageView.bottom||r.right<=pageView.left||r.left>=pageView.right};
+  const kind=el.matches('[data-encounter-back]')?'book':el.matches('[data-garden-scroll]')?'scroll':el.matches('[data-jog-center]')?'jog':'dock';
+  return {kind,height:r.height,width:r.width,own:own(el,r),disjoint:r.bottom<=pageView.top||r.top>=pageView.bottom||r.right<=pageView.left||r.left>=pageView.right};
  });
- return {mode:m.dataset.gardenSharedPlay,status:m.dataset.gardenSharedStatus, width:pageView.width,height:pageView.height,
+ return {mode:m.dataset.gardenSharedPlay,status:m.dataset.gardenSharedStatus, ready:stage.dataset.sceneState,motion:stage.dataset.actorMotion,
+  count:Number(stage.dataset.gardenCount),nativeCount:p.querySelectorAll('.finch-garden-image-plane > button').length, width:pageView.width,height:pageView.height,
   projection:[image.width,image.height,image.left-pageView.left,image.top-pageView.top],
-  controls, birds:[...stage.querySelectorAll(bird)].map(el=>{const r=rect(el);return {id:el.dataset.gardenActorId||el.dataset.gardenVisitingFriend||el.dataset.encounterOpen,width:r.width,height:r.height,own:own(el,r),
+  controls, birds:[...stage.querySelectorAll(bird)].map(el=>{const r=rect(el);return {kind:'bird',id:el.dataset.gardenActorId||el.dataset.gardenVisitingFriend||el.dataset.encounterOpen,width:r.width,height:r.height,own:own(el,r),
    x:el.style.left,y:el.style.top,state:el.dataset.actorState,phase:el.dataset.actorPhase,landing:el.dataset.actorLanding};})};
 },{bird,control});
 for(const [density,count] of [['dense',8],['maximum',10]])test(`zebra shared pane retains the native ${count}-bird flight across rotation`,async({page},info)=>{
- await setup(page,'bird-zebra-finch',390,true,density,{nativeSource:true});
+ await setup(page,'bird-zebra-finch',390,true,density,{nativeSource:true,afterOpenMs:0});
  await readyGardenSnapshot(page,info,'shared-pane-ready');
- const mark=page.locator(`${pane} ${bird}`);await mark.evaluateAll(nodes=>{window.__sharedNodes=nodes;});
+ const enumStatus=new Set(['admitted','projection','chrome','seat','hit','route','measuring','roster']);
+ const stage=x=>enumStatus.has(x.status)?x.status:'unknown';
+ const room=x=>x.nativeCount===count?'expected':x.nativeCount<count?'short':'extra';
+ const actor=x=>!x.motion?'no-motion':x.motion.startsWith('trail-')?'trail':'other-motion';
+ const first=await read(page);
+ // This boundary is fixed before looking at clips/hits, and does not wait
+ // for admission. Scope to the first real actionable geometry opportunity.
+ await page.clock.runFor(34);
  const before=await read(page);
- const enumStatus=new Set(['admitted','projection','chrome','seat','hit','route']);
- info.annotations.push({type:'qa-07-shared-room',description:`${count}:${enumStatus.has(before.status)?before.status:'unknown'}`});
+ const mark=page.locator(`${pane} ${bird}`);await mark.evaluateAll(nodes=>{window.__sharedNodes=nodes;});
+ const firstFault=x=>{
+  const hit=[...x.birds,...x.controls].find(v=>v.width<43.99||v.height<43.99||!v.own);
+  return !hit?'clean':hit.kind+'-'+(hit.width<43.99?'width':hit.height<43.99?'height':'hit');
+ };
+ info.annotations.push({type:'qa-07-shared-room',description:`${count}:${stage(before)}`});
+ info.annotations.push({type:'qa-07-shared-ready',description:`${count}:${stage(first)}:${stage(before)}:${room(before)}:${actor(before)}:${firstFault(before)}`});
+ // The lifecycle may cross before reaching any actor step, but a first
+ // fully admitted native frame remains a hard oracle even if later fits.
+ if(first.status==='admitted'){
+  expect(first.birds).toHaveLength(count);
+  expect(firstFault(first)).toBe('clean');
+ }
+ expect(before.count).toBe(count);expect(before.nativeCount).toBe(count);
  expect(before.mode).toBe('proof');expect(before.status).toBe('admitted');
  expect(before.width).toBeCloseTo(390,1);expect(before.height).toBeCloseTo(235,1);expect(before.birds).toHaveLength(count);
  expect(before.controls.length).toBeGreaterThanOrEqual(5);

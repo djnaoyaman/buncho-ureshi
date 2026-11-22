@@ -239,6 +239,10 @@ export function createGardenActorMotion(root){
    dispose();
    return this.step(elapsed,active,overrides,{settle,geometryOnly,predator});
   };
+  if(roomOwner&&!roomOwner.dataset.gardenSharedStatus){
+   roomOwner.dataset.gardenSharedStatus=![8,10].includes(definitions.length)?'roster':
+    shared?'measuring':'projection';
+  }
   if(roomOwner&&!shared&&[8,10].includes(definitions.length)&&win.innerWidth>=390&&win.innerHeight>=390&&!model.actors.size)
    return abandonShared('projection');
   const sharedAt=([x,y])=>[(geometry.clip.left+x-p.left)/p.width,(geometry.clip.top+y-p.top)/p.height];

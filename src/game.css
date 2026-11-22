@@ -2245,7 +2245,7 @@ body[data-world="buncho"] .game-field-nav .game-nav-miniature-label { flex:0 0 a
   --garden-jog-height:44px;
  }
  body[data-world="buncho"] .game-encounter-host .finch-garden[data-garden-shared-play="proof"] > header {top:env(safe-area-inset-top,0px)}
- body[data-world="buncho"] .game-encounter-host .finch-garden[data-garden-shared-play="proof"] [data-jog-center] {height:44px;min-height:44px}
+ body[data-world="buncho"] .game-encounter-host .finch-garden[data-garden-shared-play="proof"] .finch-garden-selector-wrap .finch-garden-selector[data-garden-jog] button[data-jog-center] {height:44px;min-height:44px}
  body[data-world="buncho"] .game-panel-overlay[data-scene="true"] .finch-garden[data-garden-shared-play="proof"] .finch-garden-dock {padding-block:2px}
  .finch-garden[data-garden-shared-play="proof"] .finch-garden-stage > .finch-garden-carousel {
   position:absolute; inset:0 auto auto 50%; inline-size:390px;block-size:235px;
