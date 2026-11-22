@@ -66,8 +66,8 @@ test('rotation-input and fit successors pin exactly the reviewed raw changes in 
 });
 
 test('Type II formal candidate source successor pins the exact reviewed files and preserves historic ledger chain',()=>{
- assert.equal(trail.baseCommit,'41bd702712ef9af1c1c80b6322f5351be1ef6bb8');
- assert.equal(trail.baseTree,'578b65e9aba3aa9e6925ae41d4cf3db5554b97fc');
+ assert.equal(trail.baseCommit,'41736e849645a97ad334a731a0044ce1e5814f0e');
+ assert.equal(trail.baseTree,'7d15ce555a5e6a840bc43cc14e246e2d0116d6d1');
  assert.deepEqual(Object.keys(trail.changedSource),['src/encounter-ui.js', 'src/garden-actor-flight.js', 'src/garden-actor-motion.js', 'src/garden-actor-state.js', 'src/garden-bird-motion.js']);
  assert.deepEqual(trail.gardens,[7,8,10,12,14,28,34]);
  assert.deepEqual(Object.keys(trail.newSource),['src/data/garden-trail-terrain.js', 'src/garden-actor-path.js', 'src/garden-trail-adapter.js', 'src/garden-trail-clearance.js', 'src/garden-trail-lane.js', 'src/garden-trail-runtime.js']);
