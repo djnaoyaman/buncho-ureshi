@@ -46,22 +46,27 @@ async function snapshotGarden(page,measureClip=false){return page.evaluate(measu
   const tag=wrap?.matches('.finch-garden-selector-wrap')?'selector-wrap':wrap?'overlay-head':
    hit?.closest('.leaf-gift')?'story':hit?.closest('.game-encounter-host')?'encounter-host':
    hit?.closest('.game-panel')?'panel':'other';
-  if(hit!==wrap||!wrap)return tag+':untested';
-  const old=wrap.getAttribute('style');
+  if(!wrap)return tag+':untested';
+  // An ARIA-hidden decorative child inside the jog still belongs to its real gesture surface.
+  const input=hit.closest('button,summary,input,a[href],[contenteditable],[role="button"],[tabindex]');
+  if(input&&wrap.contains(input))return tag+':native-control';
+  if(hit.closest('[data-garden-jog]'))return tag+':gesture-nav';
+  if(hit!==wrap&&!hit.matches('span[aria-hidden="true"],small[aria-hidden="true"],svg[aria-hidden="true"]'))return tag+':unlisted-child';
+  const shell=[...new Set([wrap,hit])].map(e=>({e,old:e.getAttribute('style')}));
   // Scope to the actual noninteractive wrapper, not the nav or its scroll surface.
   const keep=[...wrap.querySelectorAll('button,summary,input,a[href],nav[data-garden-jog]')].map(e=>{
    const box=e.getBoundingClientRect(),cx=(box.left+box.right)/2,cy=(box.top+box.bottom)/2;
    return {e,cx,cy,owned:e.contains(document.elementFromPoint(cx,cy)),old:e.getAttribute('style')};
   });
   try{
-   wrap.style.setProperty('pointer-events','none','important');
+   for(const {e} of shell)e.style.setProperty('pointer-events','none','important');
    for(const {e} of keep)e.style.setProperty('pointer-events','auto','important');
    const restored=n.contains(document.elementFromPoint(x,y));
    const nativeLost=keep.some(({e,cx,cy,owned})=>owned&&!e.contains(document.elementFromPoint(cx,cy)));
    return tag+':'+(restored?'restored':'still-covered')+':'+(nativeLost?'control-lost':'controls-kept');
   }finally{
    const reset=(e,value)=>value===null?e.removeAttribute('style'):e.setAttribute('style',value);
-   reset(wrap,old); for(const {e,old} of keep)reset(e,old);
+   for(const {e,old} of [...shell,...keep])reset(e,old);
   }
  };
  const viewport={width:innerWidth,height:innerHeight,visualHeight:visualViewport?.height,visualTop:visualViewport?.offsetTop,scale:visualViewport?.scale};
