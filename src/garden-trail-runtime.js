@@ -96,6 +96,22 @@ export function createGardenTrailRuntime(id,model,terrain=trailTerrainFor(id)){
   // unavailable, allow a shorter curved native flight between two measured
   // dry contacts. It still owns a reservation and passes the same entire
   // wing/body sweep, clipping, and native UI checks as a lane crossing.
+  sharedPaneFlight(gates,{paintable}){
+   const controlledCapacity=terrain.number===7?[8,10]:terrain.number===34?[10]:[];
+   if(!controlledCapacity.includes(model.actors.size)||!proven||!Array.isArray(gates)||gates.length!==2||
+      typeof paintable!=='function'||[...model.actors.values()].some(a=>a.route))return null;
+   const [west,east]=gates;
+   for(const [from,to]of [[west,east],[east,west]]){
+    const a=[...model.actors.values()].find(a=>a.node===from.id&&a.movable&&a.canFly&&a.phase==='ground'&&a.height===0);
+    if(!a||a.p[0]!==from.p[0]||a.p[1]!==from.p[1]||model.reservations.has(to.id))continue;
+    const env=makeEnvironment((candidate,node,kind,peers)=>{
+     const sweep=proven.sweptRoute(candidate);
+     return !!sweep&&proven.safe(candidate,node,kind,peers)&&paintable(candidate)&&adapter.canPlace({spans:sweep});
+    });
+    if(model.beginFlightPath(a.id,to,[from.p,to.p],env))return {id:a.id,target:to.id,action:'fly'};
+   }
+   return null;
+  },
   singletonFlight(seats,{paintable=()=>true,keepVisitorSeat=false}={}){
    const roster=[...model.actors.values()],a=roster[0];
    if(!proven||roster.length!==1||!a.movable||!a.canFly||a.route||a.phase!=='ground')return null;
@@ -251,6 +267,9 @@ export function createGardenTrailRuntime(id,model,terrain=trailTerrainFor(id)){
   },
   standingPairFits(a,aNode,b,bNode){
    return !!proven&&!proven.placementConflicts({...a,p:aNode.p,route:null},{...b,p:bNode.p,route:null});
+  },
+  recoveryFits(a,n,peers){
+   return !!proven&&proven.safe(a,n,a.state,peers);
   },
   canPlace(actor,node,peers){
    if(!proven||!proven.canStand(actor,node.p))return false;

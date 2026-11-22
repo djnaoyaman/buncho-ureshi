@@ -22,7 +22,7 @@ async function stable(page,width=402,height=874){
  await expect(stage(page)).toHaveAttribute('data-scene-state','ready');
  return snapshotGarden(page);
 }
-// #08 only: hit geometry and live route identity in one browser task.
+// Sample ready hit geometry and live route identity in one browser task.
 async function visitorSnapshot(page){return page.evaluate(()=>{
  const scene=document.querySelector('.finch-garden-stage');
  const plane=scene?.querySelector('.finch-garden-image-plane');
@@ -45,6 +45,19 @@ async function nextFly(page,who='b1',ticks=140){
  }
  throw Error('no natural flight observed: '+await stage(page).getAttribute('data-actor-motion'));
 }
+// Keep the actual visitor injection behind one observed native takeoff.
+async function nextVisitorFly(page,who='b1',ticks=140){
+ for(let i=0;i<ticks;i++){
+  await page.clock.runFor(120);
+  const flight=await page.evaluate(who=>{
+   const d=[...document.querySelectorAll('[data-garden-household]')].find(b=>b.dataset.gardenHousehold===who)?.dataset;
+   return d?{phase:d.actorPhase,source:d.actorNode,target:d.actorLanding}:null;
+  },who);
+  if(!flight)throw Error('native household actor absent while awaiting real flight');
+  if(flight.phase==='rise'||flight.phase==='flap')return flight;
+ }
+ throw Error('no natural flight observed: '+await stage(page).getAttribute('data-actor-motion'));
+}
 async function mutationInIndependentStore(page,{kind,id}){
  // This is a second real IndexedDB store client in the controlled fixture,
  // using the shipping guarded encounter/raptor APIs, not direct mock DOM.
@@ -57,7 +70,11 @@ async function mutationInIndependentStore(page,{kind,id}){
    if(kind==='visitor'){
     const {encounterSystem}=await import(new URL('src/encounters.js',base));
     const entry=encounterSystem.catalog.find(e=>e.gardenEvent.gardenIds.includes(id));
-    await store.transact(w=>{outcome=encounterSystem.observeGarden(w,entry.gardenEvent.scene,{worldId:w.worldId,revision:w.revision});return w;});
+    await store.transact(w=>{
+     outcome=encounterSystem.observeGarden(w,entry.gardenEvent.scene,{worldId:w.worldId,revision:w.revision});
+     outcome={...outcome,world:w.worldId,garden:w.encounters.garden.id,arrivedId:w.encounters.queue[0]??null,expectedId:entry.id};
+     return w;
+    });
    }else{
     const {arriveGardenRaptor,raptorToken}=await import(new URL('src/garden-raptors.js',base));
     await store.transact(w=>{outcome=arriveGardenRaptor(w,'black-kite',Date.now(),{...raptorToken(w),gardenId:id});return w;});
@@ -145,9 +162,11 @@ for(const [id,g] of Object.entries(GARDEN_TRAIL_TERRAIN)){
   assertNative(end,1,['b1']);expect(end.birds[0].actorNode).not.toBe(contact);
  });
  for(const kind of ['visitor','predator'])test(`${key} real store ${kind} interrupts active native flight safely`,{tag:"@trail-events"},async({page})=>{
-  await setup(page,id,402,true,true,pilot);await stable(page);
-  const pending=await nextFly(page);
-  const beforeArrival=g.number===8&&kind==='visitor'?await visitorSnapshot(page):null;
+  // Isolate the deliberate visitor from independent random predator arrivals.
+  const visitor=kind==='visitor';
+  await setup(page,id,402,true,true,visitor?{...pilot,quietPredators:true}:pilot);await stable(page);
+  const pending=visitor?await nextVisitorFly(page):await nextFly(page);
+  const beforeArrival=visitor?await visitorSnapshot(page):null;
   if(beforeArrival){
    expect(beforeArrival.ready).toBe('ready');
    expect(beforeArrival.gardenId).toBe(id);
@@ -160,24 +179,20 @@ for(const [id,g] of Object.entries(GARDEN_TRAIL_TERRAIN)){
   if(kind==='visitor'){
    expect(result.arrived).toBe(true);
    await expect(stage(page).locator('.finch-garden-visitor')).toHaveCount(1);
-   let mixed=beforeArrival?await visitorSnapshot(page):await snapshotGarden(page);
-   if(beforeArrival){
-    // Arrival rebuilds the real stage. Input is only supported after it is
-    // media-ready; do not wait/retry for a good size, position or hit.
-    if(mixed.ready==='loading'){
-     await expect(stage(page)).toHaveAttribute('data-scene-state','ready');
-     mixed=await visitorSnapshot(page);
-    }
-    expect(mixed.ready).toBe('ready');
-    expect([mixed.worldId,mixed.gardenId]).toEqual([beforeArrival.worldId,beforeArrival.gardenId]);
-    expect(mixed.birds.find(b=>b.id==='b1')).toMatchObject({
-     actorNode:pending.source,actorTarget:pending.target,actorState:'fly'});
-   }
+   expect([result.world,result.garden,result.arrivedId]).toEqual([beforeArrival.worldId,id,result.expectedId]);
+   // Wait only for the actual rebuilt scene's media, and then sample once.
+   await expect(stage(page)).toHaveAttribute('data-scene-state','ready');
+   const mixed=await visitorSnapshot(page);
+   expect(mixed.ready).toBe('ready');
+   expect([mixed.worldId,mixed.gardenId]).toEqual([beforeArrival.worldId,beforeArrival.gardenId]);
+   expect(mixed.birds.find(b=>b.id==='b1')).toMatchObject({
+    actorNode:pending.source,actorTarget:pending.target,actorState:'fly'});
    assertNative(mixed,2);
-   expect(mixed.birds.find(b=>b.id==='b1')?.actorNode).toBe(pending.source);
-   const guest=mixed.birds.find(b=>b.id!=='b1');
+   const guest=mixed.birds.find(b=>b.id===result.expectedId);
+   expect(guest).toBeTruthy();
    await page.touchscreen.tap(guest.point.x,guest.point.y);
-   await expect(page.locator('[data-encounter-instance]')).toBeVisible();
+   const entry=encounterSystem.catalog.find(e=>e.id===result.expectedId);
+   await expect(page.locator('[data-encounter-instance] h3')).toHaveText(entry.eventTitle);
   }else{
    // True hostile arrival opens a blocking return-choice modal; the
    // background overlay button is intentionally not a tap target yet.

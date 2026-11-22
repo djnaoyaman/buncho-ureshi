@@ -17,7 +17,9 @@
     "tests/browser/garden-compact-rotation-identity.spec.js",
     "tests/browser/garden-trail-seven.spec.js",
     "tests/browser/garden-trail-maximum-native.spec.js",
-    "tests/browser/raptor-collection-film.spec.js"
+    "tests/browser/raptor-collection-film.spec.js",
+    "tests/browser/garden-masked-fixed-pane.spec.js",
+    "tests/browser/garden-zebra-ready-stage-retain.spec.js"
   ],
-  "reason": "既存14検査と猛禽類エンディング検査を維持。狭い道7庭の正式動作を、既存のChrome・WebKit条件で検証する。来訪で再描画した画面のみ、確実に表示可能になってから同じ個体・着地点と実タップを1回確認する。縦画面の最大10羽の安全な経路・実タップ検査も維持する。"
+  "reason": "既存17ファイルの検査を維持。庭タイプ②の最大10羽、庭#34で飛行中の端末回転・着地・実タップ、庭#07で操作画面開閉と実イベントの描画保持をChromeとWebKitの両方で確認する。"
 }

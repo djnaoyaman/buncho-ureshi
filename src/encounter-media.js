@@ -93,7 +93,12 @@ export function mountEncounterMedia(root) {
     }, { root: root.querySelector('.finch-catalog') || root, rootMargin: '120px' });
     for (let img of root.querySelectorAll('img[data-media-src]:not([data-white-flight-frame]), .finch-garden-stage img:not([data-white-flight-frame])')) {
       const key = img.dataset.mediaSrc || img.getAttribute('src');
-      const old = retained.get(key)?.shift();
+      // A proof-preserved branch stays connected throughout a controller
+      // redraw. Never steal its same-src image for another fresh element.
+      const pool = retained.get(key);
+      let index = pool?.indexOf(img) ?? -1;
+      if (index < 0 && pool) index = pool.findIndex(candidate => !root.contains(candidate));
+      const old = index >= 0 ? pool.splice(index, 1)[0] : null;
       if (old && old !== img) {
         // Reuse the decoded bytes, never the old discovery/pose/accessibility state.
         const loading = new Set(['src', 'data-media-result', 'data-media-started']);
