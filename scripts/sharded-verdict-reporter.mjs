@@ -26,11 +26,22 @@ export default class Verdict{
   const row=this.rows.get(test.id);
   if(!row)return;
   row.status=result.status;
+  const schema=[
+   ['qa-trail-contract',/^(?:native|landscape|portrait|movement|lane|lane-final|visitor|next-fly|palette):(?:count-(?:down|up)|blank|duplicate|order|replacement|size|viewport|occluded|native-ok|b1-absent|bay-first|fly-before-bay-peer-(?:gate|elsewhere)|bayless-(?:gate-clear|peer-gate|peer-elsewhere)|bay-and-cross|bay-no-cross|no-bay):(?:loading|ready|other):(?:clear|(?:raptor|crow)-warning|raptor-visit|crow-(?:visit|quiet)):(?:shelter|open)$/],
+   ['qa-ground-dry',/^(?:initial|during):(?:native|actor-ground|actor-air):(?:ulp-edge|css-edge|off-edge|unparseable)$/],
+   ['qa-ground-media',/^(?:reduce|restore):(?:event|no-event):(?:match|mismatch|missing):(?:match|mismatch):(?:active|held|other)$/],
+  ];
+  for(const [type,validator] of schema){
+   const a=(result.annotations??test.annotations).find(a=>a.type===type&&validator.test(a.description??''));
+   if(a)(row.receipt??={})[type]=a.description;
+  }
   if(row.status!=='passed'&&row.status!=='skipped')row.fault=result.errors.map(fault).find(Boolean)??null;
  }
  onEnd(result){
   const rows=[...(this.rows??new Map()).values()];
-  const body={v:1,engine:process.env.QA_ENGINE,shard:Number(process.env.QA_SHARD),status:result.status,infrastructure:this.infrastructure??0,rows};
+  const profile=['visitor-fix','observe','quiet'].includes(process.env.QA_TRAIL_PROFILE)?process.env.QA_TRAIL_PROFILE:null;
+  const body={v:1,engine:process.env.QA_ENGINE,shard:Number(process.env.QA_SHARD),...(profile?{profile}:{}),
+   status:result.status,infrastructure:this.infrastructure??0,rows};
   writeFileSync('compact-browser-verdict.json',JSON.stringify(body)+'\n');
   console.log(JSON.stringify({engine:body.engine,shard:body.shard,status:body.status,selected:rows.length,infrastructure:body.infrastructure}));
  }
