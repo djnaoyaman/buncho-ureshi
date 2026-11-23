@@ -1,0 +1,282 @@
+import {inside} from './garden-terrain-plan.js';
+import {trailTerrainFor} from './data/garden-trail-terrain.js';
+import {createGardenTrailAdapter} from './garden-trail-adapter.js';
+import {createTrailClearance} from './garden-trail-clearance.js';
+import {conflictSweeps,sweptHopSpans} from './garden-actor-path.js';
+
+// Native host coordinator, before renderer activation. Uses the same native
+// state machine, render timings and individual object references as Type①.
+export function createGardenTrailRuntime(id,model,terrain=trailTerrainFor(id)){
+ if(!terrain)throw Error('Unsuitable garden');
+ const [A,B]=terrain.entryCandidates,[bay]=terrain.pullouts;
+ const points=bay?{A,B,bay}:{A,B};
+ const nodes=Object.fromEntries(Object.entries(points).map(([id,p])=>[id,{id,p}]));
+ let current=null,proven=null,epoch=null,lastLocal=null,localFlightId=null,visitorReadyFlight=null,interior=null,interiorMiss=null,paintCurrent=()=>true;
+ const pairedFlight=[12,28].includes(terrain.number)||['paired-north','paired-upward','paired-inner'].includes(terrain.variant);
+ const allowInterior=terrain.number===10||terrain.number===14;
+ const kind=action=>action==='fly'?'fly':'hop';
+ const makeEnvironment=safe=>({safe,width:current.plane.width,planeHeight:current.plane.height,height:.043});
+ const adapter=createGardenTrailAdapter(id,{terrain,
+  intersectsLane(a){
+   // Reserve against the largest observed shape, not a fixed nominal 44px.
+   return !proven||proven.intersectsLane(a,current.envelope);
+  },
+  validate({id,action,kind:phase,path,to,actors,prospectiveYieldId,parkedBay}){
+   if(!proven)return false;
+   const a=actors.get(id),node=nodes[to],mode=kind(action);
+   if(!a||!node)return false;
+   if(a.route) return a.route.target===to&&proven.safe(a,node,mode,actors);
+   const tentative=model.previewPath(id,node,path,mode,makeEnvironment(()=>false));
+   if(!tentative)return false;
+   if(pairedFlight&&parkedBay){
+    const peer={...parkedBay.actor,p:parkedBay.p,node:'bay',state:'rest',phase:'ground',height:0,route:null};
+    const projected=new Map(actors);projected.set(peer.id,peer);
+    // Verify the same full projected grounded peer and browser renderer
+    // before asking that peer to yield. This is planning, not a reservation.
+    return proven.canStand(peer,peer.p)&&proven.safe(tentative,node,mode,projected)&&paintCurrent(tentative);
+   }
+   return proven.safe(tentative,node,mode,actors,{prospectiveYieldId:phase==='cross'?prospectiveYieldId:null});
+  },
+  protects(proposal,{path,lock}){
+   if(!lock)return false;
+   if(!proposal?.spans)return true;
+   const e=current.envelope,plane=current.plane;
+   const box=([x,y],lift)=>({left:plane.left+x*plane.width+e.left,right:plane.left+x*plane.width+e.right,
+    top:plane.top+y*plane.height+e.top-lift,bottom:plane.top+y*plane.height+e.bottom-lift});
+   const lane=sweptHopSpans(path,box,.043*plane.height);
+   for(const s of [lock.from,lock.to,lock.partner?'bay':null])if(points[s])lane.push(box(points[s],0));
+   return conflictSweeps(lane,proposal.spans);
+  }
+ });
+ return {
+  nodes:Object.values(nodes),
+  sync({generation,measurement,actors=[...model.actors.values()],predator=false,paintable=()=>true}){
+   // Host must disposition any prior active routes before advancing epochs;
+   // a null/unsafe measurement pauses new movement, not natural game events.
+   if(current!==measurement||actors.length!==1||predator)interiorMiss=null;
+   // A routine native redraw may resample the identical standing contact.
+   // Keep the plan for the same bird until it can revalidate the latest layout.
+   const [solo]=actors;
+   if(interior&&(actors.length!==1||predator||!measurement?.envelope||solo.id!==interior.id||
+      (solo.route?solo.route.target!==interior.source:solo.node!==interior.source)))interior=null;
+   epoch=generation;current=measurement;paintCurrent=paintable;
+   proven=current?.envelope?createTrailClearance(id,current,terrain):null;
+   const state=adapter.sync({epoch,actors,predator:predator||!proven});
+   const local=actors.find(a=>a.id===localFlightId);
+   if(!local?.route)localFlightId=null;
+   if(local?.route!==visitorReadyFlight)visitorReadyFlight=null;
+   // Only the exact #08 short reservation may survive one stationary
+   // visitor joining. Recheck the whole preserved sweep using real shapes.
+   const lawfulVisitor=!predator&&terrain.number===8&&!!visitorReadyFlight&&actors.length===2&&!!proven&&
+    actors.some(a=>a.id!==local.id&&a.id.startsWith('guest:')&&!a.route)&&
+    proven.safe(local,{id:local.route.target,p:local.route.to},'fly',new Map(actors.map(a=>[a.id,a])));
+   if(localFlightId&&(predator||!proven||actors.length!==1&&!lawfulVisitor)&&!state.disposition.some(x=>x.id===localFlightId)){
+    state.disposition.push({id:localFlightId,kind:'native-safe-recovery'});
+   }
+   return state;
+  },
+  request(id,action){return !!proven&&adapter.enqueue(id,action);},
+  run({paintable=()=>true}={}){
+   if(!proven)return null;
+   const d=adapter.admit();if(!d)return null;
+   const isEdgeSoloFlight=terrain.number===10&&model.actors.size===1&&d.action==='fly';
+   // In #10 the measured wing sweep can fit while the existing sampled
+   // renderer box cannot. Refuse through the normal lane handshake before
+   // any reservation; the host can then try its measured interior fallback.
+   const pairedBayFlight=pairedFlight&&!!bay&&model.actors.size===2&&d.kind==='cross'&&d.action==='fly'&&
+    [...model.actors.values()].some(a=>a.id!==d.id&&a.node==='bay'&&!a.route);
+   const env=makeEnvironment((a,n,k,others)=>proven.safe(a,n,k,others)&&
+    (!isEdgeSoloFlight||paintable(a))&&(!pairedBayFlight||paintCurrent(a)));
+   const start=c=>kind(c.action)==='fly'
+     ?model.beginFlightPath(c.id,nodes[c.target],c.path,env)
+     :model.beginHopPath(c.id,nodes[c.target],c.path,env);
+   return adapter.commit(d,start,id=>model.actors.get(id))?d:null;
+  },
+  // Only in an otherwise empty garden: when the main gated route is
+  // unavailable, allow a shorter curved native flight between two measured
+  // dry contacts. It still owns a reservation and passes the same entire
+  // wing/body sweep, clipping, and native UI checks as a lane crossing.
+  sharedPaneFlight(gates,{paintable}){
+   const controlledCapacity=terrain.number===7?[8,10]:terrain.number===34?[10]:[];
+   if(!controlledCapacity.includes(model.actors.size)||!proven||!Array.isArray(gates)||gates.length!==2||
+      typeof paintable!=='function'||[...model.actors.values()].some(a=>a.route))return null;
+   const [west,east]=gates;
+   for(const [from,to]of [[west,east],[east,west]]){
+    const a=[...model.actors.values()].find(a=>a.node===from.id&&a.movable&&a.canFly&&a.phase==='ground'&&a.height===0);
+    if(!a||a.p[0]!==from.p[0]||a.p[1]!==from.p[1]||model.reservations.has(to.id))continue;
+    const env=makeEnvironment((candidate,node,kind,peers)=>{
+     const sweep=proven.sweptRoute(candidate);
+     return !!sweep&&proven.safe(candidate,node,kind,peers)&&paintable(candidate)&&adapter.canPlace({spans:sweep});
+    });
+    if(model.beginFlightPath(a.id,to,[from.p,to.p],env))return {id:a.id,target:to.id,action:'fly'};
+   }
+   return null;
+  },
+  singletonFlight(seats,{paintable=()=>true,keepVisitorSeat=false}={}){
+   const roster=[...model.actors.values()],a=roster[0];
+   if(!proven||roster.length!==1||!a.movable||!a.canFly||a.route||a.phase!=='ground')return null;
+   const plane=current.plane;
+   const distance=n=>Math.hypot((a.p[0]-n.p[0])*plane.width,(a.p[1]-n.p[1])*plane.height);
+   const targets=seats.filter(n=>n.id!==a.node&&n.id!=='bay'&&distance(n)>=64&&distance(n)<=148);
+   targets.sort((x,y)=>Math.abs(distance(x)-96)-Math.abs(distance(y)-96));
+   // A conservative geometry-only forecast: do not add a bird, reserve the
+   // spare spot, or change the world's independent guest arrival decision.
+   const forecastId='__trail08-forecast-only';
+   const forecast=keepVisitorSeat&&terrain.number===8&&createTrailClearance(id,{
+    ...current,footprints:new Map([...current.footprints,[forecastId,current.envelope]])
+   });
+   if(keepVisitorSeat&&!forecast)return null;
+   const env=makeEnvironment((candidate,node,k,others)=>{
+    if(!proven.safe(candidate,node,k,others)||!paintable(candidate))return false;
+    const spans=proven.sweptRoute(candidate);
+    if(!spans||!adapter.canPlace({spans}))return false;
+    return !forecast||seats.some(seat=>{
+     if([a.node,node.id,'bay'].includes(seat.id))return false;
+     const spare={id:forecastId,p:seat.p,route:null};
+     const sweep=forecast.sweptRoute(spare);
+     return !!sweep&&forecast.canStand(spare,seat.p)&&!conflictSweeps(spans,sweep);
+    });
+   });
+   for(const n of targets)if(model.beginFlightPath(a.id,n,[a.p,n.p],env)){
+    localFlightId=a.id;
+    visitorReadyFlight=forecast?model.actors.get(a.id).route:null;
+    return {id:a.id,target:n.id,action:'fly'};
+   }
+   return null;
+  },
+  // Two edge-gated surveys can have a legal standing contact where their
+  // full flight envelope cannot launch. Find a dry interior pair, optionally
+  // moving the same bird there via a separately reserved native ingress hop.
+  singletonInterior({paintable=()=>true,resumeOnly=false}={}){
+   const [a]=model.actors.values();
+   if(!allowInterior||!proven||model.actors.size!==1||!a?.movable)return null;
+   const pending=interior?.id===a.id&&(a.route?.target??a.node)===interior.source;
+   if(pending&&(a.route||!a.canFly||a.phase!=='ground'||model.time<a.cooldown))return {id:a.id,action:'wait'};
+   if((resumeOnly&&!pending)||!a.canFly||a.route||a.phase!=='ground')return null;
+   const plane=current.plane,here={id:a.node,p:a.p};
+   const delta=(u,v)=>Math.hypot((u.p[0]-v.p[0])*plane.width,(u.p[1]-v.p[1])*plane.height);
+   const permitted=(c,n,k,peers)=>{
+    if(!proven.safe(c,n,k,peers)||!paintable(c))return false;
+    const spans=proven.sweptRoute(c);
+    return !!spans&&adapter.canPlace({spans});
+   };
+   const env=makeEnvironment(permitted);
+   const fly=n=>{
+    if(!model.beginFlightPath(a.id,n,[a.p,n.p],env))return null;
+    localFlightId=a.id;return {id:a.id,target:n.id,action:'fly'};
+   };
+   if(pending){
+    const {target}=interior;interior=null;
+    const launched=fly(target);if(launched||resumeOnly)return launched;
+   }
+   if(model.time<a.cooldown||interiorMiss===a.node)return null;
+   const xs=terrain.surface.map(p=>p[0]*plane.width),ys=terrain.surface.map(p=>p[1]*plane.height);
+   const sites=[];
+   // The 24px projection is deterministic and only produces contacts inside
+   // the existing survey. Keep at most two interleaved projected grids.
+   for(const offset of [0,12])
+    for(let y=Math.min(...ys)+offset;y<Math.max(...ys);y+=24)
+     for(let x=Math.min(...xs)+offset;x<Math.max(...xs);x+=24){
+      const p=[x/plane.width,y/plane.height];
+      if(inside(p,terrain.surface)&&proven.canStand(a,p))sites.push({id:'interior:'+p.join(':'),p});
+     }
+   const sources=sites.filter(n=>delta(here,n)>=16&&delta(here,n)<=68)
+    .sort((u,v)=>delta(here,u)-delta(here,v));
+   const targets=from=>sites.filter(n=>delta(from,n)>=64&&delta(from,n)<=148)
+    .sort((u,v)=>Math.abs(delta(from,u)-96)-Math.abs(delta(from,v)-96));
+   for(const n of targets(here)){const direct=fly(n);if(direct)return direct;}
+   for(const ingress of sources){
+    const hop=model.previewPath(a.id,ingress,[a.p,ingress.p],'hop',env);
+    if(!hop||!permitted(hop,ingress,'hop',model.actors))continue;
+    for(const target of targets(ingress)){
+     const flight=model.previewPath(a.id,target,[ingress.p,target.p],'fly',env,ingress);
+     if(!flight||!permitted(flight,target,'fly',model.actors))continue;
+     if(!model.beginHopPath(a.id,ingress,[a.p,ingress.p],env))continue;
+     localFlightId=a.id;
+     interior={id:a.id,source:ingress.id,target};
+     return {id:a.id,target:ingress.id,action:'hop',ingress:true};
+    }
+   }
+   interiorMiss=a.node;
+   return null;
+  },
+  // When the whole narrow crossing is unavailable, try a smaller native
+  // ground route without stealing any protected corridor or landing point.
+  // There is no hop if no actual idle actor, alternate seat, or UI clearance.
+  localHop(seats,{minDistance=16,maxDistance=68,singletonIngress=false,pocket=false,paintable=()=>true}={}){
+   if(!proven)return null;
+   const roster=[...model.actors.values()];
+   if(!roster.length||pocket&&(terrain.number!==34||roster.length!==10))return null;
+   const terminal=id=>id==='A'||id==='B';
+   if(singletonIngress&&(roster.length!==1||terminal(roster[0].node)))return null;
+   const first=(roster.findIndex(a=>a.id===lastLocal)+1)%roster.length;
+   const rotated=roster.slice(first).concat(roster.slice(0,first));
+   const delta=(a,b)=>Math.hypot((a[0]-b[0])*current.plane.width,(a[1]-b[1])*current.plane.height);
+   const env=makeEnvironment((candidate,node,k,others)=>{
+    if(!proven.safe(candidate,node,k,others)||pocket&&!paintable(candidate))return false;
+    const spans=proven.sweptRoute(candidate);
+    return !!spans&&adapter.canPlace({spans});
+   });
+   for(const a of rotated){
+    if(!a.movable||a.route||a.phase!=='ground')continue;
+    // If the authored 24px pad sampling misses a tight pocket, offer short
+    // native contacts in live screen space. Nothing is reserved until the
+    // same measured whole sweep (and renderer preflight) succeeds.
+    const contacts=pocket?[]:seats;
+    if(pocket){
+     const {width,height}=current.plane;
+     for(const d of [8,12,16,20,24,28,32,36])for(let i=0;i<16;i++){
+      const angle=i*Math.PI/8,p=[a.p[0]+Math.cos(angle)*d/width,a.p[1]+Math.sin(angle)*d/height];
+      if(!proven.canStand(a,p))continue;
+      contacts.push({id:'pocket:'+p.join(':'),p});
+     }
+    }
+    const alternatives=contacts.filter(n=>n.id!==a.node&&n.id!=='bay'&&
+      !(nodes[n.id]&&nodes[a.node]&&!(singletonIngress&&terminal(n.id)))&&delta(a.p,n.p)>=minDistance&&delta(a.p,n.p)<=maxDistance)
+      .sort((a1,b1)=>(singletonIngress?Number(terminal(b1.id))-Number(terminal(a1.id)):0)||
+        delta(a.p,a1.p)-delta(a.p,b1.p));
+    for(const n of alternatives)if(model.beginHopPath(a.id,n,[a.p,n.p],env)){lastLocal=a.id;return {id:a.id,target:n.id,action:'hop'};}
+   }
+   return null;
+  },
+  standingFits(){
+   if(!proven)return false;
+   const existing=[...model.actors.values()];
+   const placed=[];
+   for(const a of existing){
+    if(a.route||!proven.canStand(a,a.p)||placed.some(p=>proven.placementConflicts(a,p)))return false;
+    placed.push(a);
+   }
+   return true;
+  },
+  recover(actorIds,{reduced=false}={}){
+   if(!proven)return actorIds.slice();
+   const blocked=[];
+   for(const id of actorIds){
+    const a=model.actors.get(id);
+    if(!a?.route||a.route.trailRecovery&&!reduced)continue;
+    // Short presentation hops can reserve a surveyed pad outside A/B/bay.
+    // Its coordinates are frozen into the native route when it is admitted;
+    // the current measured clearance below still validates any recovery.
+    const target=nodes[a.route.target]??{id:a.route.target,p:a.route.to};
+    const contact=nodes[a.node]??{id:a.node,p:a.route.from};
+    const choices=reduced?[target]:[target,contact];
+    if(!choices.filter(Boolean).some(n=>model.recoverTrailPath(id,n,{reduced,safe:(b,node,k,peers)=>proven.safe(b,node,k,peers)})))blocked.push(id);
+   }
+   return blocked;
+  },
+  standingPairFits(a,aNode,b,bNode){
+   return !!proven&&!proven.placementConflicts({...a,p:aNode.p,route:null},{...b,p:bNode.p,route:null});
+  },
+  recoveryFits(a,n,peers){
+   return !!proven&&proven.safe(a,n,a.state,peers);
+  },
+  canPlace(actor,node,peers){
+   if(!proven||!proven.canStand(actor,node.p))return false;
+   const candidate={...actor,p:node.p,route:null},s=proven.sweptRoute(candidate);
+   if(!s)return false;
+   for(const p of peers.values())if(p.id!==actor.id&&proven.placementConflicts(candidate,p))return false;
+   return adapter.canPlace({spans:s});
+  }
+ };
+}

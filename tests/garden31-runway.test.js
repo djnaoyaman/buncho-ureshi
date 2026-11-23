@@ -1,6 +1,12 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import {createHash} from 'node:crypto';
 import {GARDEN35_MUSIC} from '../src/data/garden35-music.js';import {gardenMusicTracks} from '../src/game-music.js';
 const read=p=>readFileSync(new URL('../'+p,import.meta.url)),hash=b=>createHash('sha256').update(b).digest('hex'),r=JSON.parse(read('docs/qa/garden31-runway.json'));
+const trail=JSON.parse(read('docs/qa/garden-trail-public-scope.json'));
+function assertScopedCurrent(file,prior){
+ const step=trail.changedSource[file];
+ if(step)assert.equal(step.before,prior,file);
+ assert.equal(hash(read(file)),step?.after||prior,file);
+}
 test('hanadokei uses the exact approved Runway-derived MP3 with explicit period and entry guard',()=>{
  const m=GARDEN35_MUSIC.hanadokei,t=gardenMusicTracks().find(t=>t.gardenId==='hanadokei'),bytes=read('public/'+r.asset);
  assert.equal(m.themeId,'garden-hanadokei');assert.equal(m.title,'まるい冠の花庭');assert.equal(m.asset,r.asset);assert.equal(hash(bytes),r.sha256);assert.equal(bytes.length,r.bytes);assert.ok(bytes.length<1_500_000);
@@ -18,7 +24,7 @@ test('prior garden assignments remain exact except separately verified Runway su
  assert.deepEqual(Object.keys(rotation.changedSource),['src/game.js','src/garden-actor-motion.js','src/garden-bird-motion.js']);
  assert.deepEqual(Object.keys(actors.changedSource),['src/encounter-ui.js','src/garden-bird-motion.js']);
  assert.deepEqual(Object.keys(motion.changedSource),['src/encounter-ui.js','src/garden-bird-motion.js']);
- for(const [file,expected] of Object.entries(audit.unchangedSource)){const successor=ui.changedSource[file];if(successor)assert.equal(successor.before,expected,file);const next=motion.changedSource[file];if(next)assert.equal(next.before,successor?.after||expected,file);const actor=actors.changedSource[file];if(actor)assert.equal(actor.before,next?.after||successor?.after||expected,file);const prior=actor?.after||next?.after||successor?.after||expected;const rotationStep=rotation.changedSource[file];if(rotationStep)assert.equal(rotationStep.before,prior,file);const intermediate=rotationStep?.after||prior;const fitStep=fit.changedSource[file];if(fitStep)assert.equal(fitStep.before,intermediate,file);assert.equal(hash(read(file)),fitStep?.after||intermediate,file);}
+ for(const [file,expected] of Object.entries(audit.unchangedSource)){const successor=ui.changedSource[file];if(successor)assert.equal(successor.before,expected,file);const next=motion.changedSource[file];if(next)assert.equal(next.before,successor?.after||expected,file);const actor=actors.changedSource[file];if(actor)assert.equal(actor.before,next?.after||successor?.after||expected,file);const prior=actor?.after||next?.after||successor?.after||expected;const rotationStep=rotation.changedSource[file];if(rotationStep)assert.equal(rotationStep.before,prior,file);const intermediate=rotationStep?.after||prior;const fitStep=fit.changedSource[file];if(fitStep)assert.equal(fitStep.before,intermediate,file);assertScopedCurrent(file,fitStep?.after||intermediate);}
  assert.match(read('src/garden-about-booklet.js').toString(),/renderGardenTrackCredit/);
 });
 
@@ -38,7 +44,7 @@ test('rotation-input and fit successors pin exactly the reviewed raw changes in 
   assert.deepEqual(Object.keys(step),['before','after'],file);
   assert.equal(step.before,before,file);
   assert.notEqual(step.after,before,file);
-  assert.equal(hash(read(file)),step.after,file);
+  assertScopedCurrent(file,step.after);
  }
  assert.equal(rotation.baseTree,'30c8cfebf0196ff5d2f6f47385e1c2a1ea01122b');
  assert.equal(rotation.productTree,'ea1b6b972b9551b86f428036f303ddc86f9a355f');
@@ -55,6 +61,21 @@ test('rotation-input and fit successors pin exactly the reviewed raw changes in 
   assert.notEqual(step.after,before,file);
   const fitStep=fit.changedSource[file];
   if(fitStep)assert.equal(fitStep.before,step.after,file);
-  assert.equal(hash(read(file)),fitStep?.after||step.after,file);
+  assertScopedCurrent(file,fitStep?.after||step.after);
+ }
+});
+
+test('Type II formal candidate source successor pins the exact reviewed files and preserves historic ledger chain',()=>{
+ assert.equal(trail.baseCommit,'41736e849645a97ad334a731a0044ce1e5814f0e');
+ assert.equal(trail.baseTree,'7d15ce555a5e6a840bc43cc14e246e2d0116d6d1');
+ assert.deepEqual(Object.keys(trail.changedSource),['src/encounter-ui.js', 'src/garden-actor-flight.js', 'src/garden-actor-motion.js', 'src/garden-actor-state.js', 'src/garden-bird-motion.js']);
+ assert.deepEqual(trail.gardens,[7,8,10,12,14,28,34]);
+ assert.deepEqual(Object.keys(trail.newSource),['src/data/garden-trail-terrain.js', 'src/garden-actor-path.js', 'src/garden-trail-adapter.js', 'src/garden-trail-clearance.js', 'src/garden-trail-lane.js', 'src/garden-trail-runtime.js']);
+ for(const [f,digest] of Object.entries(trail.newSource))assert.equal(hash(read(f)),digest,f);
+ for(const [f,entry] of Object.entries(trail.changedSource)){
+  assert.deepEqual(Object.keys(entry),['before','after'],f);
+  assert.match(entry.before,/^[0-9a-f]{64}$/);
+  assert.notEqual(entry.before,entry.after,f);
+  assert.equal(hash(read(f)),entry.after,f);
  }
 });

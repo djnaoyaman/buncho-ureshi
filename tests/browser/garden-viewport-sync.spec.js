@@ -12,11 +12,15 @@ async function delayViewport(page){await page.addInitScript(()=>{
  };
  window.__releaseViewport=()=>{window.__holdViewport=false;for(const call of window.__pendingViewport||[])call();window.__pendingViewport=[];};
 });}
+// Two observers can post a geometry frame; cross the documented paint
+// boundary once while the delayed shell resize remains locked.
+const renderedViewport=page=>page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
 for(const id of ['java-rice','bird-diamond-firetail','bird-zebra-finch','kazaguruma','yuyake','bird-gouldian-finch'])for(const density of [true,false,'dense'])test(`viewport synchronization ${id} ${density}`,async({page},info)=>{
  await delayViewport(page);await setup(page,id,390,true,density);await page.clock.resume();
  for(const width of [844,390,844,390]){
   await page.evaluate(()=>window.__holdViewport=true);
   await page.setViewportSize({width,height:width===844?390:844});
+  await renderedViewport(page);
   const sample=await readyGardenSnapshot(page,info,'viewport-samples');
   expect(Math.abs(sample.overlay.height-sample.viewport.height)).toBeLessThan(2);
   for(const b of sample.birds){expect(b.centerInViewport,JSON.stringify(sample)).toBe(true);expect(b.hit,JSON.stringify(sample)).toBe(true);}
