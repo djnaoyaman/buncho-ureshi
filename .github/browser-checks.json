@@ -1,5 +1,5 @@
 {
-  "base": "8a9194947c0a0bd11c06ee829a677badd0cc97b8",
-  "tests": ["tests/browser/garden-flat-seven.spec.js"],
-  "reason": "旧タイプ②の7庭だけを既存の平地型へ切り替える。各庭の単独文鳥で自律飛行・接地と実タップを、最大10羽で個体IDと320/375/402px幅のタップをChrome/WebKitで確認。全保存・来訪・天敵のルールは変更しない。"
+  "base": "ff05b8f930c3c55af045056cc9dd1121fa788e01",
+  "tests": ["tests/browser/garden-flat-remaining.spec.js"],
+  "reason": "既存の平地型を新たに12庭へ適用するため、各庭の単独文鳥の自律飛行・着地と実タップ、最大10羽の表示と3種のスマホ幅の実タップ、水辺の星くずのミサゴ来訪・帰宅をChrome/WebKitで確認。画像・ゲームルール・保存処理・他の庭の設定は変更しない。"
 }
