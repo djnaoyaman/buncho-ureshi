@@ -7,7 +7,8 @@ const options=height=>({nativeSource:true,quietPredators:true,height,afterOpenMs
 const assertExposed=s=>{
  expect(s.motion,JSON.stringify(s)).toBe('active');
  for(const b of s.birds){
-  expect(b.rect.width,b.id).toBeGreaterThanOrEqual(44);
+  // Transformed 44px boxes can read as 43.999992px in both engines.
+  expect(b.rect.width,b.id).toBeGreaterThanOrEqual(44-0.0001);
   expect(b.centerInViewport,JSON.stringify(b)).toBe(true);
   expect(b.hit,JSON.stringify(b)).toBe(true);
  }
@@ -18,8 +19,10 @@ for(const id of Object.keys(GARDEN_TRAIL_TERRAIN)){
   await setup(page,id,375,true,true,options(667));
   await expect(page.locator('.finch-garden-stage')).not.toHaveAttribute('data-garden-trail','true');
   const phases=new Set(),snapshots=[];
-  for(let i=0;i<72;i++){
-   await page.clock.runFor(150);
+  // A 150ms read can step over the final 4% fold phase entirely.
+  // Observe write transitions at 25ms, without making taps or geometry retryable.
+  for(let i=0;i<432;i++){
+   await page.clock.runFor(25);
    const s=await snapshotGarden(page);
    assertGardenIdentities(s.birds,1,['b1']);assertExposed(s);
    const b=s.birds[0];
