@@ -2,9 +2,12 @@ import test from 'node:test';import assert from 'node:assert/strict';import {rea
 import {GARDEN35_MUSIC} from '../src/data/garden35-music.js';import {gardenMusicTracks} from '../src/game-music.js';
 const read=p=>readFileSync(new URL('../'+p,import.meta.url)),hash=b=>createHash('sha256').update(b).digest('hex'),rows=JSON.parse(read('docs/qa/gardens30-35-runway.json'));
 const trail=JSON.parse(read('docs/qa/garden-trail-public-scope.json'));
+const flat=JSON.parse(read('docs/qa/garden-flat-seven-scope.json'));
 function assertScopedCurrent(file,prior){
  const step=trail.changedSource[file];
  if(step)assert.equal(step.before,prior,file);
+ const successor=flat.changedSource[file];
+ if(successor)assert.equal(successor.before,step?.after||prior,file);
  let content=read(file);
  if(file==='public/audio/gardens35/bach-bwv645-license.html'){
   // Only the requested shared telemetry loader may differ from the original license.
@@ -14,7 +17,7 @@ function assertScopedCurrent(file,prior){
   content=html.replace(tag,'');
   assert.ok(!/<script\b/i.test(content),'no other executable additions to the license');
  }
- assert.equal(hash(content),step?.after||prior,file);
+ assert.equal(hash(content),successor?.after||step?.after||prior,file);
 }
 for(const r of rows)test(`approved Runway recording and guarded MP3 routing: ${r.gardenId}`,()=>{
  const m=GARDEN35_MUSIC[r.gardenId],t=gardenMusicTracks().find(t=>t.gardenId===r.gardenId),bytes=read('public/'+r.asset);
