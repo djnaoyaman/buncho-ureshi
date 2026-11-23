@@ -6,10 +6,10 @@ import {createGardenTrailAdapter} from '../src/garden-trail-adapter.js';
 import {inside} from '../src/garden-terrain-plan.js';
 const point=(id,p)=>({id,p,phase:'ground',height:0,route:null,movable:true,canFly:true});
 const geometry={intersectsLane:()=>false,validate:()=>true,protects:(p,{lock})=>!!lock&&p.slot===lock.to};
-test('all seven surveyed trail shapes stay outside the eleven Type① cases and preserve authored polygons',()=>{
+test('all seven archived trail profiles preserve their authored polygons after switching to Type I',()=>{
  assert.deepEqual(Object.values(GARDEN_TRAIL_TERRAIN).map(g=>g.number),[7,8,10,12,14,28,34]);
  for(const [id,g] of Object.entries(GARDEN_TRAIL_TERRAIN)){
-  assert.equal(GARDEN_ACTOR_TERRAIN[id],undefined);
+  assert.ok(GARDEN_ACTOR_TERRAIN[id],id);
   const [A,B]=g.entryCandidates,p=[A,...g.lane,B];
   for(let i=1;i<p.length;i++)for(let j=0;j<=100;j++)assert(inside(p[i-1].map((v,k)=>v+(p[i][k]-v)*j/100),g.surface),id);
  }
@@ -74,21 +74,29 @@ test('ten-slot seating keeps current nine slots untouched or refuses the arrival
  assert.equal(retained.size,9);
 });
 
-test('production defaults select exactly seven surveyed trail gardens',async()=>{
- const {renderGardenStage}=await import('../src/encounter-ui.js');
+test('production routes all seven former trail gardens through their own flat profile with native controls',async()=>{
+ const {renderGardenStage,renderFinchGarden}=await import('../src/encounter-ui.js');
  const {worldFor,GARDENS}=await import('./fixtures/garden-about-world.js');
  const {actorTerrainForStage}=await import('../src/garden-actor-motion.js');
- const enabled=[];
+ assert.equal(Object.keys(GARDEN_ACTOR_TERRAIN).length,18);
+ const converted=[];
  for(const {id} of GARDENS){
-  const world=worldFor('attending',id),before=JSON.stringify(world),profile=GARDEN_TRAIL_TERRAIN[id];
-  const html=renderGardenStage(world,{now:world.wallMs}),marked=html.includes('data-garden-trail="true"');
-  assert.equal(marked,!!profile,id);
+  const world=worldFor('attending',id),before=JSON.stringify(world),former=GARDEN_TRAIL_TERRAIN[id];
+  const html=renderGardenStage(world),oldMode=html.includes('data-garden-trail="true"');
+  const profile=GARDEN_ACTOR_TERRAIN[id]||null;
+  assert.equal(oldMode,!profile&&!!former,id);
+  assert.equal(actorTerrainForStage({dataset:{gardenId:id}}),profile,id);
+  if(former){
+   converted.push(former.number);
+   assert.ok(profile&&!profile.trail,id);
+   assert.notEqual(profile.surface,former.surface,id);
+   assert.ok(profile.entries.every(p=>inside(p,profile.surface)),id);
+   assert.match(html,/data-garden-actor-id="b1"/);
+   assert.doesNotMatch(renderFinchGarden(world),/data-garden-(?:shared-play|masked-play|masked-pane)=/);
+  }
   assert.equal(JSON.stringify(world),before,id);
-  const type=actorTerrainForStage({dataset:{gardenId:id,...(marked?{gardenTrail:'true'}:{})}});
-  if(profile){enabled.push(profile.number);assert.equal(type.number,profile.number,id);assert.equal(type.trail,true,id);assert.equal(type.surface,profile.surface,id);assert.match(html,/data-garden-actor-id="b1"/);}
-  else assert.equal(type,GARDEN_ACTOR_TERRAIN[id]||null,id);
  }
- assert.deepEqual(enabled,[7,8,10,12,14,28,34]);
+ assert.deepEqual(converted,[7,8,10,12,14,28,34]);
  assert.equal(actorTerrainForStage({dataset:{gardenId:'unknown-garden',gardenTrail:'true'}}),null);
 });
 

@@ -7,7 +7,7 @@ const baseline=JSON.parse(readFileSync(new URL('../docs/qa/garden-actors-native-
 test('all 35 native garden buttons, labels, scene and control markup retain the public base; only scoped presentation identity attributes are added',()=>{
  assert.equal(Object.keys(baseline.rows).length,35);
  for(const g of GARDENS){const w=worldFor('attending',g.id),before=JSON.stringify(w),html=renderGardenStage(w);
-  const isTrail=!!trailTerrainFor(g.id);
+  const isTrail=!actorTerrainFor(g.id)&&!!trailTerrainFor(g.id);
   assert.equal(html.includes('data-garden-trail="true"'),isTrail,g.id);
   const normalized=html.replace(/ data-garden-actor-(?:id|lead|flight)="[^"]*"/g,'').replace(' data-garden-trail="true"','');
   assert.equal(createHash('sha256').update(normalized).digest('hex'),baseline.rows[g.id],g.id);
