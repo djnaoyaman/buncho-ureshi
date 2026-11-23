@@ -2,10 +2,13 @@ import test from 'node:test';import assert from 'node:assert/strict';import {rea
 import {GARDEN35_MUSIC} from '../src/data/garden35-music.js';import {gardenMusicTracks} from '../src/game-music.js';
 const read=p=>readFileSync(new URL('../'+p,import.meta.url)),hash=b=>createHash('sha256').update(b).digest('hex'),r=JSON.parse(read('docs/qa/garden31-runway.json'));
 const trail=JSON.parse(read('docs/qa/garden-trail-public-scope.json'));
+const flat=JSON.parse(read('docs/qa/garden-flat-seven-scope.json'));
 function assertScopedCurrent(file,prior){
  const step=trail.changedSource[file];
  if(step)assert.equal(step.before,prior,file);
- assert.equal(hash(read(file)),step?.after||prior,file);
+ const successor=flat.changedSource[file];
+ if(successor)assert.equal(successor.before,step?.after||prior,file);
+ assert.equal(hash(read(file)),successor?.after||step?.after||prior,file);
 }
 test('hanadokei uses the exact approved Runway-derived MP3 with explicit period and entry guard',()=>{
  const m=GARDEN35_MUSIC.hanadokei,t=gardenMusicTracks().find(t=>t.gardenId==='hanadokei'),bytes=read('public/'+r.asset);
@@ -76,6 +79,21 @@ test('Type II formal candidate source successor pins the exact reviewed files an
   assert.deepEqual(Object.keys(entry),['before','after'],f);
   assert.match(entry.before,/^[0-9a-f]{64}$/);
   assert.notEqual(entry.before,entry.after,f);
-  assert.equal(hash(read(f)),entry.after,f);
+  const successor=flat.changedSource[f];
+  if(successor)assert.equal(successor.before,entry.after,f);
+  assert.equal(hash(read(f)),successor?.after||entry.after,f);
+ }
+});
+
+test('approved flat successor pins exactly two runtime files and preserves the old trail record',()=>{
+ assert.equal(flat.baseCommit,'8a9194947c0a0bd11c06ee829a677badd0cc97b8');
+ assert.deepEqual(flat.gardens,trail.gardens);
+ assert.deepEqual(Object.keys(flat.changedSource),['src/encounter-ui.js','src/data/garden-actor-terrain.js']);
+ assert.equal(flat.changedSource['src/encounter-ui.js'].before,trail.changedSource['src/encounter-ui.js'].after);
+ for(const [file,entry] of Object.entries(flat.changedSource)){
+  assert.deepEqual(Object.keys(entry),['before','after'],file);
+  assert.match(entry.before,/^[0-9a-f]{64}$/);
+  assert.notEqual(entry.before,entry.after,file);
+  assert.equal(hash(read(file)),entry.after,file);
  }
 });

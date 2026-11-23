@@ -1,0 +1,22 @@
+{
+  "baseCommit": "8a9194947c0a0bd11c06ee829a677badd0cc97b8",
+  "gardens": [
+    7,
+    8,
+    10,
+    12,
+    14,
+    28,
+    34
+  ],
+  "changedSource": {
+    "src/encounter-ui.js": {
+      "before": "4c525384cdbb5c583a167548fcec92eaf0838dde115049c2a4ae7c06a0d46b25",
+      "after": "3ffd835f359a193f5a0e63c03f0720c5ec689a596702da6c01673c1c77913dbf"
+    },
+    "src/data/garden-actor-terrain.js": {
+      "before": "20e26aa00cddc9061213b10de4ab64a3acae4a281e1f32cdf1e4cb900b36b14d",
+      "after": "6862e6ee48ac91fd8b6885008ebfcfa2aa89c1e745a734999fb1c2a474a2416c"
+    }
+  }
+}
