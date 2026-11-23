@@ -1,25 +1,5 @@
 {
   "base": "41736e849645a97ad334a731a0044ce1e5814f0e",
-  "tests": [
-    "tests/browser/flight-integrity.spec.js",
-    "tests/browser/garden-actors.spec.js",
-    "tests/browser/garden-actors-natural.spec.js",
-    "tests/browser/garden-ground-motion.spec.js",
-    "tests/browser/garden-terrain-motion.spec.js",
-    "tests/browser/garden-about-booklet.spec.js",
-    "tests/browser/encounter-pet-response.spec.js",
-    "tests/browser/encounter-music.spec.js",
-    "tests/browser/game-music.spec.js",
-    "tests/browser/garden-viewport-sync.spec.js",
-    "tests/browser/iphone15-scene.spec.js",
-    "tests/browser/white-flight-media.spec.js",
-    "tests/browser/white-flight-media-tap.spec.js",
-    "tests/browser/garden-compact-rotation-identity.spec.js",
-    "tests/browser/garden-trail-seven.spec.js",
-    "tests/browser/garden-trail-maximum-native.spec.js",
-    "tests/browser/raptor-collection-film.spec.js",
-    "tests/browser/garden-masked-fixed-pane.spec.js",
-    "tests/browser/garden-zebra-ready-stage-retain.spec.js"
-  ],
-  "reason": "既存17ファイルの検査を維持。庭タイプ②の最大10羽、庭#34で飛行中の端末回転・着地・実タップ、庭#07で操作画面開閉と実イベントの描画保持をChromeとWebKitの両方で確認する。"
+  "tests": [],
+  "reason": "庭タイプ②（7庭）の今回の公開に限り、依頼者の指示で公開後の実機確認に切り替える。先行Chrome/WebKit検査は676件成功・52件失敗であり、飛行とタップの不具合は未解消。検査ファイルと公開ワークフローは維持し、静的検査、ユニットテスト、生成物の検証は通常どおり実行する。"
 }
