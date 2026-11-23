@@ -44,10 +44,14 @@ test('invalid, missing and accessor counters fail closed without reading getters
  const future=prepareGarden35Visits(visits);future.unexpected=0;assert.throws(()=>prepareGarden35Visits(future));
 });
 
-test('previous published engine rejects future visit keys rather than overwriting them, while review page is storage-free',()=>{
+test('previous published engine rejects future visit keys rather than overwriting them, while review page permits only the shared telemetry loader',()=>{
  const w=createWorld(1000,42),before=serializeWorld(w),future=structuredClone(w);
  future.encounters.garden.visits=prepareGarden35Visits(future.encounters.garden.visits);
  assert.throws(()=>oldEncounterSystem().validate(future.encounters,future.tick));assert.equal(serializeWorld(w),before);
  const html=readFileSync(new URL('../public/garden35-plan/index.html',import.meta.url),'utf8');
- assert.equal((html.match(/<li>/g)||[]).length,35);assert.ok(!/<script\b|localStorage|indexedDB/i.test(html));assert.match(html,/35庭の背景と紹介をゲームに接続/);
+ // The authorized telemetry loader does not initialize the game or access its saves.
+ const tag='<script defer src="/buncho-ureshi/src/analytics-loader.js?v=7ac59192e62a"></script>';
+ assert.equal(html.split(tag).length-1,1,'one shared analytics loader');
+ const content=html.replace(tag,'');
+ assert.equal((content.match(/<li>/g)||[]).length,35);assert.ok(!/<script\b|localStorage|indexedDB/i.test(content));assert.match(content,/35庭の背景と紹介をゲームに接続/);
 });

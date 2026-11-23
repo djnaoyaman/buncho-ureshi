@@ -5,7 +5,16 @@ const trail=JSON.parse(read('docs/qa/garden-trail-public-scope.json'));
 function assertScopedCurrent(file,prior){
  const step=trail.changedSource[file];
  if(step)assert.equal(step.before,prior,file);
- assert.equal(hash(read(file)),step?.after||prior,file);
+ let content=read(file);
+ if(file==='public/audio/gardens35/bach-bwv645-license.html'){
+  // Only the requested shared telemetry loader may differ from the original license.
+  const tag='<script defer src="/buncho-ureshi/src/analytics-loader.js?v=7ac59192e62a"></script>';
+  const html=content.toString('utf8');
+  assert.equal(html.split(tag).length-1,1,'one shared analytics loader');
+  content=html.replace(tag,'');
+  assert.ok(!/<script\b/i.test(content),'no other executable additions to the license');
+ }
+ assert.equal(hash(content),step?.after||prior,file);
 }
 for(const r of rows)test(`approved Runway recording and guarded MP3 routing: ${r.gardenId}`,()=>{
  const m=GARDEN35_MUSIC[r.gardenId],t=gardenMusicTracks().find(t=>t.gardenId===r.gardenId),bytes=read('public/'+r.asset);
