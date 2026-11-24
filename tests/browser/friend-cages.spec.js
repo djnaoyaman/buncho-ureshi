@@ -82,7 +82,19 @@ for(const [width,height] of [[320,568],[390,844],[844,390],[1440,900]])test(`nin
   await expect(room).toHaveAttribute('data-field','park');
   await expect(room).not.toHaveAttribute('data-friend-camera','');
   await expect(reset).toHaveCount(0);
-  const art=await readScene(page);await swipe(page,width,1);expect((await readScene(page)).art.left).toBeCloseTo(art.art.left,0);
+  // Fixed blank coordinates can miss the park's native hit layout. Start
+  // the real drag on a visible bird, a valid camera start in a friend room.
+  const art=await readScene(page),hit=await room.locator('[data-game-scene-select]').evaluateAll(birds=>{
+   for(const b of birds){
+    const r=b.getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2,target=x<innerWidth/2?innerWidth-10:10;
+    if(b.contains(document.elementFromPoint(x,y)))return {x,y,target};
+   }
+   return null;
+  });
+  expect(hit,'native park bird with a clear gesture destination').not.toBeNull();
+  await page.mouse.move(hit.x,hit.y);await page.mouse.down();await page.mouse.move(hit.target,hit.y,{steps:7});await page.mouse.up();
+  expect((await readScene(page)).art.left).toBeCloseTo(art.art.left,0);
+  await expect(page.locator('.game-bird-sheet[open]')).toHaveCount(0);
   expect((await record(page)).birds).toEqual(w.birds);
  }
 });
