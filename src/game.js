@@ -676,8 +676,8 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     const bowlShift=nestCamera&&kind==='wide'&&pan>0?Math.max(0,bowlCenter+bowlWidth/2-centerCrop-(planeWidth*.78-left)+12):0;
     return {width,height,planeWidth,planeHeight,top,left,pan,bowlShift};
   }
-  function visibleFieldPositions(birds,kind,place){
-    const g=roomGeometry(kind),fraction=g.width/g.planeWidth,positions=fieldPositions(birds,place==='friend'?'wide':kind,place,fraction);
+  function visibleFieldPositions(birds,kind,place,forCamera=false){
+    const g=roomGeometry(kind,forCamera),fraction=g.width/g.planeWidth,positions=fieldPositions(birds,place==='friend'?'wide':kind,place,fraction);
     return new Map([...positions].map(([id,p])=>[id,p.interactive?{...p,x:g.left/g.planeWidth+p.x*fraction,width:p.width*fraction}:p]));
   }
   // Keep the caption in a free viewport band, including crowded perch rows.
@@ -723,7 +723,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     // Compact mode may simplify adult perches, but must not hide newborns.
     const shown=compactLayout?.matches?active.filter(b=>b.id===current?.id||(hasNestlings&&['egg','chick'].includes(b.stage))):active;
     const cageGuests=world.field.place==='home'?encounterCageActors(world):[],actors=[...shown,...cageGuests];
-    const positions=visibleFieldPositions(actors,'wide',world.field.place),mobilePositions=visibleFieldPositions(actors,'tall',world.field.place);
+    const positions=visibleFieldPositions(actors,'wide',world.field.place,!!scene),mobilePositions=visibleFieldPositions(actors,'tall',world.field.place,!!scene);
     // Short screens crop the upper perches. Keep the selected family bird and
     // its invited guests together on the existing lower, visible floor contacts.
     if(compactLayout?.matches&&cageGuests.length)for(const [kind,map] of [['wide',positions],['tall',mobilePositions]]){
