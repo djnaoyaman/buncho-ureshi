@@ -1,7 +1,10 @@
 {
-  "base": "963bdd1a32666f0e3458ee542897be30ccdafa52",
+  "base": "985f4a022566920f2b5f4388736972cd8dc5ce22",
   "tests": [
+    "tests/browser/garden-home-journey.spec.js",
+    "tests/browser/home-camera.spec.js",
+    "tests/browser/friend-camera-pilot.spec.js",
     "tests/browser/garden-raptor-capacity.spec.js"
   ],
-  "reason": "水辺の星くずの定員描画と本物の猛禽素材を、非攻撃ケストレル、ミサゴと本来の警戒状態で検証。保存や危険度計算を変更しない。"
+  "reason": "庭のおうちへで自宅と巣の初期表示に戻る動線のみ。320/390pxで、友達宅からの帰宅、庭を閉じるだけの操作、スワイプ直後と次の観察タップ、保存、既存の猛禽をChrome/WebKitで確認。"
 }
