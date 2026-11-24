@@ -293,12 +293,12 @@ test('only the Yoriso-i original foreground is repainted, without changing the s
  for(const item of GARDEN35_PLAN){
   const w=worldFor('attending',item.id),save=JSON.stringify(w),html=renderGardenStage(w);
   assert.equal(JSON.stringify(w),save,item.id);
-  const paint=html.match(/<img class="garden-actor-foreground"[^>]*>/g)||[];
+  const paint=html.match(/<span class="garden-actor-foreground"[^>]*><\/span>/g)||[];
   if(item.id!=='onsen'){assert.equal(paint.length,0,item.id);continue;}
   assert.equal(paint.length,1);
   const original=html.match(/<img class="finch-garden-background"[^>]* src="([^"]+)"/)[1];
-  assert.equal(paint[0].match(/ src="([^"]+)"/)[1],original);
-  assert.match(paint[0],/aria-hidden="true" alt=""/);
+  assert.equal(paint[0].match(/background-image:url\(&quot;([^&]+)&quot;\)/)[1],original);
+  assert.match(paint[0],/aria-hidden="true"/);
   assert.match(paint[0],/pointer-events:none/);
   assert.match(html,/data-garden-actor-id="b1"/);
  }

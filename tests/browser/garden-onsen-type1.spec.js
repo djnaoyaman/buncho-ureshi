@@ -84,14 +84,15 @@ test('courtyard branch paints the exact original pixels over an overlap and neve
  await setup(page,'onsen',320,true,true,options(568));
  const mask=page.locator('.garden-actor-foreground');
  await expect(mask).toHaveCount(1);await expect(mask).toHaveCSS('pointer-events','none');
- await expect.poll(()=>mask.evaluate(n=>n.complete&&n.naturalWidth===1024)).toBe(true);
+ await expect(page.locator('.finch-garden-background')).toHaveJSProperty('naturalWidth',1024);
  const coords=await mask.evaluate(m=>{
-  const b=m.previousElementSibling?.parentElement.querySelector('.finch-garden-background');
-  if(!b||m.currentSrc!==b.currentSrc)throw Error('not the original image');
+  const b=m.parentElement.querySelector('.finch-garden-background');
+  if(!b||!getComputedStyle(m).backgroundImage.includes(b.currentSrc))throw Error('not the original image');
   const r=m.getBoundingClientRect(),q=b.getBoundingClientRect();
   if(r.left!==q.left||r.top!==q.top||r.width!==q.width||r.height!==q.height)throw Error('foreground did not use the original image projection');
   const plane=m.parentElement;
   for(const e of plane.querySelectorAll(':scope > button,.garden-actor-shadow'))e.style.visibility='hidden';
+  m.style.visibility='hidden';
   return [1020,1074].map(y=>[Math.round(r.left+r.width*.5),Math.round(r.top+r.height*y/1536)]);
  });
  async function getPixels(){
@@ -100,6 +101,7 @@ test('courtyard branch paints the exact original pixels over an overlap and neve
  }
  const original=await getPixels();
  await mask.evaluate(m=>{
+  m.style.visibility='';
   const probe=document.createElement('span');
   probe.style.cssText='position:absolute;left:47%;top:60%;width:6%;height:15%;z-index:1001;background:rgb(239,17,227);pointer-events:auto';
   probe.id='foreground-pixel-probe';

@@ -9,13 +9,13 @@ test('all 35 native garden buttons, labels, scene and control markup retain the 
  for(const g of GARDENS){const w=worldFor('attending',g.id),before=JSON.stringify(w),html=renderGardenStage(w);
   const isTrail=!actorTerrainFor(g.id)&&!!trailTerrainFor(g.id);
   assert.equal(html.includes('data-garden-trail="true"'),isTrail,g.id);
-  const overlays=html.match(/<img class="garden-actor-foreground"[^>]*>/g)||[];
+  const overlays=html.match(/<span class="garden-actor-foreground"[^>]*><\/span>/g)||[];
   assert.equal(overlays.length,g.id==='onsen'?1:0,g.id+' sealed foreground scope');
   if(overlays.length){
    const art=html.match(/<img class="finch-garden-background"[^>]* src="([^"]+)"/)[1];
-   assert.equal(overlays[0].match(/ src="([^"]+)"/)[1],art);
-   assert.match(overlays[0],/aria-hidden="true" alt=""/);
-   assert.match(overlays[0],/pointer-events:none;z-index:1100;clip-path:polygon/);
+   assert.equal(overlays[0].match(/background-image:url\(&quot;([^&]+)&quot;\)/)[1],art);
+   assert.match(overlays[0],/aria-hidden="true"/);
+   assert.match(overlays[0],/pointer-events:none;z-index:1100;[^"]*clip-path:polygon/);
   }
   const normalized=(overlays.length?html.replace(overlays[0],''):html).replace(/ data-garden-actor-(?:id|lead|flight)="[^"]*"/g,'').replace(' data-garden-trail="true"','');
   assert.equal(createHash('sha256').update(normalized).digest('hex'),baseline.rows[g.id],g.id);
