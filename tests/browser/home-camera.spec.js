@@ -49,9 +49,15 @@ for(const [width,height] of [[320,568],[390,844]])test(`home ${width}: authentic
  const moved=await snapshot(page);expect(moved.r.x).toBeGreaterThan(start.r.x+9);
  expect(moved.dock).toEqual(start.dock);
  expect(moved.birds[0].box.x-start.birds[0].box.x).toBeCloseTo(moved.r.x-start.r.x,0);
- for(let i=0;i<3;i++)await drag(page,25,150,width-25);
+ // A visible fixed reset button occupies the upper right. Start both
+ // gestures on the actual room, not on a control layered above it.
+ const roomGestureY=()=>page.evaluate(w=>{
+  const room=document.querySelector('.game-main .game-room[data-field="home"]');
+  return [205,230,260,290,320,365].find(y=>[25,w-25].every(x=>document.elementFromPoint(x,y)?.closest('.game-room')===room));
+ },width);
+ for(let i=0;i<3;i++){const y=await roomGestureY();expect(y,'left swipe must start in the scene').toBeDefined();await drag(page,25,y,width-25);}
  const left=await snapshot(page);expect(left.r.x).toBeCloseTo(0,0);
- for(let i=0;i<4;i++)await drag(page,width-25,150,25);
+ for(let i=0;i<4;i++){const y=await roomGestureY();expect(y,'right swipe must start in the scene').toBeDefined();await drag(page,width-25,y,25);}
  const right=await snapshot(page);expect(right.r.right).toBeCloseTo(width,0);
  expect(right.dock).toEqual(start.dock);
  const reset=page.locator('[data-home-camera-reset]');await expect(reset).toBeVisible();await reset.click();
