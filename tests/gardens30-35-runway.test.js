@@ -3,6 +3,7 @@ import {GARDEN35_MUSIC} from '../src/data/garden35-music.js';import {gardenMusic
 const read=p=>readFileSync(new URL('../'+p,import.meta.url)),hash=b=>createHash('sha256').update(b).digest('hex'),rows=JSON.parse(read('docs/qa/gardens30-35-runway.json'));
 const trail=JSON.parse(read('docs/qa/garden-trail-public-scope.json'));
 const flat=JSON.parse(read('docs/qa/garden-flat-seven-scope.json'));
+const platforms=JSON.parse(read('docs/qa/garden-mossy-log-scope.json'));
 function assertScopedCurrent(file,prior){
  const step=trail.changedSource[file];
  if(step)assert.equal(step.before,prior,file);
@@ -17,7 +18,9 @@ function assertScopedCurrent(file,prior){
   content=html.replace(tag,'');
   assert.ok(!/<script\b/i.test(content),'no other executable additions to the license');
  }
- assert.equal(hash(content),successor?.after||step?.after||prior,file);
+ const platform=platforms.changedSource[file];
+ if(platform)assert.equal(platform.before,successor?.after||step?.after||prior,file);
+ assert.equal(hash(content),platform?.after||successor?.after||step?.after||prior,file);
 }
 for(const r of rows)test(`approved Runway recording and guarded MP3 routing: ${r.gardenId}`,()=>{
  const m=GARDEN35_MUSIC[r.gardenId],t=gardenMusicTracks().find(t=>t.gardenId===r.gardenId),bytes=read('public/'+r.asset);

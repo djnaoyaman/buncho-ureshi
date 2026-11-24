@@ -335,10 +335,21 @@ export function createGardenActorMotion(root){
    // retaining the identical physical footprint and obstacle checks.
    const rows=definitions.length>6?terrain.denseRows.flatMap((y,i,all)=>i+1<all.length?[y,(y+all[i+1])/2]:[y]):terrain.rows;
    const order=definitions.length>6?rows.flatMap((_,r)=>[2,0,4,1,3].map(c=>[c,r])):[[2,0],[1,1],[3,1],[1,2],[3,2],[0,0],[4,0],[0,2],[4,2],[2,1],[2,2],[1,0],[3,0],[0,1],[4,1]];
-   for(const [column,row]of order){const x=terrain.columns[column],y=rows[row],point=[x,y];if(safePoint(point,width,height))footholds.push({id:x+':'+y,p:point});}
+   // An irregular but audited horizontal surface can provide explicit
+   // contacts without inventing another policy for motion or button size.
+   const points=(definitions.length>6?terrain.denseContacts:terrain.contacts)??order.map(([column,row])=>[terrain.columns[column],rows[row]]);
+   for(const point of points)if(safePoint(point,width,height))footholds.push({id:point.join(':'),p:point});
    if(trailRuntime)footholds=[...trailRuntime.nodes.filter(n=>n.id!=='bay'&&safePoint(n.p,width,height)),...footholds];
    // Select alternating depth positions, retaining space for a second row.
    footholds=selectFootholds(footholds,definitions.length,(a,b)=>separated(a.p,b.p,width,height));layoutWidth=width;
+   if(terrain.denseContacts&&definitions.length>6&&footholds.length>definitions.length){
+    const [lead,...others]=footholds;
+    // Existing occupants are retained. In a fresh compact roster leave one
+    // nearby row contact open when present, then validate with safeRoute.
+    const nearby=others.filter(n=>Math.abs(n.p[1]-lead.p[1])<.005)
+     .sort((a,b)=>Math.abs(a.p[0]-lead.p[0])-Math.abs(b.p[0]-lead.p[0]))[0];
+    if(nearby)footholds.push(footholds.splice(footholds.indexOf(nearby),1)[0]);
+   }
    if(footholds.length>=definitions.length)break;
    }
    if(footholds.length<definitions.length){
