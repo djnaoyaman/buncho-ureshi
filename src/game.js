@@ -199,6 +199,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
   function careRubKey(ev){if(ev.target.closest?.('[data-care-rub]')&&['Enter',' '].includes(ev.key)&&ev.repeat)ev.preventDefault();}
 
   const pointerStart=ev=>{
+    if(!pressedPointers.size)homeSuppress=0;
     pressedPointers.add(ev.pointerId);
     const surface=ev.target.closest?.('.game-profile,.game-bird-sheet,.game-bird-carousel');
     if(pressedPointers.size!==1){birdSwipe=null;homePointer=null;clearCareRub();return;}
