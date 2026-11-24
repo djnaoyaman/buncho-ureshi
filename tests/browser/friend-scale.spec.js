@@ -26,14 +26,20 @@ async function open(page,cage,count){
  const welcome=page.locator('#game-welcome-close');if(await welcome.isVisible())await welcome.click();
  await expect(page.locator(ROOM)).toHaveAttribute('data-friend-cage',String(cage.id));
 }
-const measure=room=>room.evaluate(async r=>{
- const img=r.querySelector('.game-habitat img');await img.decode();const rb=r.getBoundingClientRect();
+const measure=async room=>{
+ // A resize can replace the room node during image decode. Decode first,
+ // then resolve the current room again and measure it synchronously.
+ await room.locator('.game-habitat img').evaluate(img=>img.decode());
+ await expect(room).toBeVisible();
+ return room.evaluate(r=>{
+ const img=r.querySelector('.game-habitat img'),rb=r.getBoundingClientRect();
  const bounds=[...r.querySelectorAll('.game-room-bird')].map(b=>{
   const box=b.querySelector('.game-sprite').getBoundingClientRect(),style=getComputedStyle(b),anchor=b.getAttribute('data-anchor');
   return {width:box.width/rb.width,left:box.left,right:box.right,top:box.top,bottom:box.bottom,contact:parseFloat(style.getPropertyValue('--bird-y')),anchor};
  });
- return {art:{width:img.width,height:img.height,src:img.currentSrc},pixelWidth:rb.width,pixelHeight:rb.height,bounds};
-});
+ return {art:{width:img.width,height:img.height,src:img.currentSrc,decoded:img.complete&&img.naturalWidth>0},pixelWidth:rb.width,pixelHeight:rb.height,bounds};
+ });
+};
 test.beforeEach(async ({page})=>{
  await page.addInitScript(n=>{Date.now=()=>n;localStorage.setItem('buncho.music.v1','{"enabled":false}');localStorage.setItem('buncho.care-sound-choice.v1','{"explicit":true,"enabled":false}');},NOW);
  await page.goto('robots.txt');
@@ -46,6 +52,9 @@ for(const cage of FRIEND_CAGES)test('art and bird are proportionate for '+cage.t
   await page.setViewportSize({width,height});
   const actual=await measure(room);
   expect(actual.art.src).toContain(cage.file);
+  expect(actual.art.decoded).toBe(true);
+  expect(actual.pixelWidth).toBeGreaterThan(0);
+  expect(actual.pixelHeight).toBeGreaterThan(0);
   expect(actual.pixelWidth/actual.pixelHeight).toBeCloseTo(1.6,2);
   expect(actual.art.width).toBeCloseTo(actual.pixelWidth,0);
   expect(actual.bounds).toHaveLength(1);
