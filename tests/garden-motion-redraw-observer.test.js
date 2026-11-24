@@ -2,14 +2,18 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Window } from 'happy-dom';
 import { mountGardenBirdMotion, renderGardenBirdSprite } from '../src/garden-bird-motion.js';
+import {actorTerrainFor} from '../src/data/garden-actor-terrain.js';
+
+const legacyPoseGarden='legacy-pose-fixture';
 
 const rect = (left, top, width, height) => ({ left, top, right:left+width, bottom:top+height, width, height });
 
-// Keep this legacy-pose regression on an unmodified garden. Type-one ready-media
+// Keep this legacy-pose regression on an unconfigured synthetic stage. Type-one ready-media
 // and preserved-actor redraws are covered by garden-actors browser tests.
 // Real browsers report both the removed stage's zero size and the newly observed
 // stage's initial size. Neither notification means presentation time was paused.
 for (const width of [320,390]) test(`${width}px friend-only poses advance through repeated stage ResizeObserver notifications`, async t => {
+  assert.equal(actorTerrainFor(legacyPoseGarden),null,'requires the legacy pose path');
   const window = new Window(), document = window.document, root = document.createElement('section');
   document.body.append(root);
   const intervals = new Map(), notifications = [];
@@ -29,7 +33,7 @@ for (const width of [320,390]) test(`${width}px friend-only poses advance throug
     ? ['gf-komugi-2','gf-hanadokei-2','gf-komorebi-1','gf-mizukagami-1']
     : ['gf-mizukagami-1','gf-kazaguruma-1','gf-komorebi-2','gf-onsen-2'];
   function render(){
-    root.innerHTML=`<section class="finch-garden" data-garden-world="same-world"><div class="finch-garden-stage" data-garden-id="mizukagami"><div class="finch-garden-slide"><div class="finch-garden-image-plane">${ids.map(id=>`<button class="finch-garden-friend">${renderGardenBirdSprite('white',id)}</button>`).join('')}</div></div></div></section>`;
+    root.innerHTML=`<section class="finch-garden" data-garden-world="same-world"><div class="finch-garden-stage" data-garden-id="${legacyPoseGarden}"><div class="finch-garden-slide"><div class="finch-garden-image-plane">${ids.map(id=>`<button class="finch-garden-friend">${renderGardenBirdSprite('white',id)}</button>`).join('')}</div></div></div></section>`;
     for(const node of root.querySelectorAll('.finch-garden-stage,.finch-garden-slide'))node.getBoundingClientRect=()=>rect(0,0,width,844);
     root.querySelectorAll('button').forEach((node,index)=>{node.getBoundingClientRect=()=>rect(index%2?width-110:40,index<2?240:370,64,75);});
   }
