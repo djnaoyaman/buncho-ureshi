@@ -17,10 +17,16 @@ const friendshipFilm=JSON.parse(read('docs/qa/garden-friendship-movie-scope.json
 const moreFriendshipFilms=JSON.parse(read('docs/qa/garden-friendship-movie-expansion-scope.json'));
 const friendshipLogo=JSON.parse(read('docs/qa/garden-friendship-movie-logo09-scope.json'));
 const newFriendship=JSON.parse(read('docs/qa/garden-friendship-movie-gouldian-crossbill-scope.json'));
+const friendScale=JSON.parse(read('docs/qa/friend-cage-scale-scope.json'));
+function afterFriendScale(file,prior){
+ const change=friendScale.changedSource[file];
+ if(change)assert.equal(change.before,prior,file);
+ return change?.after??prior;
+}
 function afterFriendshipMovie(file,prior){
  const change=friendshipFilm.changedSource[file];
  if(change)assert.equal(change.before,prior,file);
- return change?.after||prior;
+ return afterFriendScale(file,change?.after||prior);
 }
 function afterHomeJourney(file,prior){
  const change=homeJourney.changedSource[file];
@@ -266,7 +272,7 @@ test('friendship-film successor pins only the reviewed runtime and approved exac
   const successor=moreFriendshipFilms.changedSource[path];if(successor)assert.equal(successor.before,edge.after,path);
   const logo=friendshipLogo.changedSource[path];if(logo)assert.equal(logo.before,successor?.after??edge.after,path);
   const latest=newFriendship.changedSource[path];if(latest)assert.equal(latest.before,logo?.after??successor?.after??edge.after,path);
-  assert.equal(hash(read(path)),latest?.after??logo?.after??successor?.after??edge.after,path);
+  assert.equal(hash(read(path)),afterFriendScale(path,latest?.after??logo?.after??successor?.after??edge.after),path);
  }
  for(const [path,sha] of Object.entries(friendshipFilm.media))assert.equal(hash(read(path)),sha,path);
 });

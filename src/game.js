@@ -22,7 +22,7 @@ import {allBirds,activateBird} from './world-birds.js';
 import {GACHA_MACHINES,gachaMachine} from './gacha-machines.js';
 import {mountGachaMotion,primeGachaAudio} from './gacha-motion.js';
 import {careGuidance,cleaningGuidance,careIsSettled} from './care-guidance.js';
-import {friendCage} from './friend-cages.js';
+import {friendCage,friendCagePositions} from './friend-cages.js';
 import {renderPreservationBox} from './preservation-box.js';
 import {renderConsultationLetter} from './consultation-letter.js';
 import { renderDiaryPaper } from './diary-paper.js';
@@ -259,7 +259,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
   const poseFor=(bird,positions,birds)=>homeResponsePose(currentHomeResponse(),bird)||homeIdlePose(world,bird,poseClock.elapsed,homeAtmosphere(world,{selectedId:selected,panel,error:!!error,memory:store.mode==='memory',ending:!!endingPlayer?.active()}).visible)||birdPose(bird,{worldId:world.worldId,elapsed:poseClock.elapsed,positions,birds});
   function updatePoses(force=false){
     syncAtmosphereMotion();poseClock.advance(poseEnabled());if((!force&&!poseEnabled())||!alive||!root.isConnected||panel!=='garden')return;
-    const allBirds=fieldBirds(world),birds=compactLayout?.matches?[allBirds.find(b=>b.id===selected)||allBirds[0]].filter(Boolean):allBirds,positions=fieldPositions(birds,globalThis.matchMedia?.('(max-width: 600px)').matches?'tall':'wide',world.field.place);
+    const allBirds=fieldBirds(world),birds=compactLayout?.matches?[allBirds.find(b=>b.id===selected)||allBirds[0]].filter(Boolean):allBirds,kind=poseLayout?.matches?'tall':'wide',cage=world.field.place==='friend'?friendCage(world,world.field.hostId):null,positions=cage?friendCagePositions(birds,cage):fieldPositions(birds,kind,world.field.place);
     refreshPoseSubtrees(root,birds,bird=>poseFor(bird,positions,birds),birdSvg);
   }
   const reframePoses=()=>updatePoses(true);
@@ -697,7 +697,8 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     return {width,height,planeWidth,planeHeight,top,left,pan,bowlShift};
   }
   function visibleFieldPositions(birds,kind,place,forCamera=false){
-    const g=roomGeometry(kind,forCamera),fraction=g.width/g.planeWidth,positions=fieldPositions(birds,place==='friend'?'wide':kind,place,fraction);
+    if(place==='friend'){const cage=friendCage(world,world.field.hostId);if(cage)return friendCagePositions(birds,cage);}
+    const g=roomGeometry(kind,forCamera),fraction=g.width/g.planeWidth,positions=fieldPositions(birds,kind,place,fraction);
     return new Map([...positions].map(([id,p])=>[id,p.interactive?{...p,x:g.left/g.planeWidth+p.x*fraction,width:p.width*fraction}:p]));
   }
   // Keep the caption in a free viewport band, including crowded perch rows.
