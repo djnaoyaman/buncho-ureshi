@@ -2298,7 +2298,7 @@ body[data-world="buncho"] .game-main .game-home-camera-reset{position:absolute;t
 .game-home-camera-reset[hidden]{display:none!important}
 @media(max-height:500px){body[data-world="buncho"] .game-main .game-home-camera-reset{top:calc(52px + env(safe-area-inset-top,0px))}}
 
-/* Pilot: the first friend cage uses its own scrollable artwork plane;
-   preserve the default centering of all other friend cages. */
-body[data-world="buncho"] .game-main .game-room[data-field="friend"][data-friend-cage="1"]{transform:translateX(calc(-50% - var(--home-camera-delta, 0px)));touch-action:pan-y pinch-zoom}
-body[data-world="buncho"] .game-main .game-room[data-field="friend"][data-friend-cage="1"] .game-habitat img{user-select:none;-webkit-user-drag:none}
+/* Visits pan their existing artwork and birds as one plane. Keep center as
+   the default; use cover to preserve each original artwork aspect exactly. */
+body[data-world="buncho"] .game-main .game-room[data-field="friend"][data-friend-camera]{transform:translateX(calc(-50% - var(--home-camera-delta, 0px)));touch-action:pan-y pinch-zoom}
+body[data-world="buncho"] .game-main .game-room[data-field="friend"][data-friend-camera] .game-habitat img{object-fit:cover;user-select:none;-webkit-user-drag:none}
