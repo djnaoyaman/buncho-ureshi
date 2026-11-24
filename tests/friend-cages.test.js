@@ -30,12 +30,16 @@ test('archiving a friend preserves its cage, visit and entire saved world',()=>{
 test('camera rollout keeps the exact nine original friend cage art files',async()=>{
  const read=file=>readFile(new URL('../'+file,import.meta.url));
  const pilot=JSON.parse(await read('docs/qa/friend-camera-pilot-scope.json')),rollout=JSON.parse(await read('docs/qa/friend-camera-rollout-scope.json'));
+ const journey=JSON.parse(await read('docs/qa/garden-home-journey-scope.json'));
+ assert.deepEqual(Object.keys(journey.changedSource),['src/game.js']);
  const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
  assert.deepEqual(rollout.enabledFriendCages,FRIEND_CAGES.map(c=>c.id));
  assert.deepEqual(Object.keys(rollout.changedSource),['src/game.js','src/game.css']);
  for(const [file,digest] of Object.entries(rollout.changedSource)){
   assert.equal(digest.before,pilot.changedSource[file].after,file);
-  assert.equal(sha(await read(file)),digest.after,file);
+  const successor=journey.changedSource[file];
+  if(successor)assert.equal(successor.before,digest.after,file);
+  assert.equal(sha(await read(file)),successor?.after||digest.after,file);
  }
  assert.deepEqual(Object.keys(rollout.media),FRIEND_CAGES.map(c=>'public/game-art/'+c.file));
  for(const [file,digest] of Object.entries(rollout.media))assert.equal(sha(await read(file)),digest,file);

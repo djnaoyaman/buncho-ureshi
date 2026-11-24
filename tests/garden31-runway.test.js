@@ -12,6 +12,12 @@ const homeCamera=JSON.parse(read('docs/qa/home-camera-scope.json'));
 const friendCamera=JSON.parse(read('docs/qa/friend-camera-pilot-scope.json'));
 const friendRollout=JSON.parse(read('docs/qa/friend-camera-rollout-scope.json'));
 const raptorCapacity=JSON.parse(read('docs/qa/garden-raptor-capacity-scope.json'));
+const homeJourney=JSON.parse(read('docs/qa/garden-home-journey-scope.json'));
+function afterHomeJourney(file,prior){
+ const change=homeJourney.changedSource[file];
+ if(change)assert.equal(change.before,prior,file);
+ return change?.after||prior;
+}
 function afterRaptorCapacity(file,prior){
  const change=raptorCapacity.changedSource[file];
  if(change)assert.equal(change.before,prior,file);
@@ -28,7 +34,7 @@ function afterLevels(file,prior){
  if(friend)assert.equal(friend.before,own,file);
  const pilot=friend?.after||own, rollout=friendRollout.changedSource[file];
  if(rollout)assert.equal(rollout.before,pilot,file);
- return afterRaptorCapacity(file,rollout?.after||pilot);
+ return afterHomeJourney(file,afterRaptorCapacity(file,rollout?.after||pilot));
 }
 
 function assertScopedCurrent(file,prior){
@@ -219,7 +225,7 @@ test('only the measured original home camera and egg/chick presentation extend c
  assert.equal(homeCamera.home,'field-home');
  assert.deepEqual(Object.keys(homeCamera.changedSource),['src/game.js','src/game.css','src/field-visuals.js']);
  assert.equal(homeCamera.changedSource['src/game.js'].before,JSON.parse(read('docs/qa/garden-rotation-input-scope.json')).changedSource['src/game.js'].after);
- for(const [f,v]of Object.entries(homeCamera.changedSource)){assert.notEqual(v.before,v.after,f);assert.equal(hash(read(f)),friendRollout.changedSource[f]?.after||friendCamera.changedSource[f]?.after||v.after,f);}
+ for(const [f,v]of Object.entries(homeCamera.changedSource)){assert.notEqual(v.before,v.after,f);assert.equal(hash(read(f)),afterHomeJourney(f,friendRollout.changedSource[f]?.after||friendCamera.changedSource[f]?.after||v.after),f);}
  for(const [f,v]of Object.entries(homeCamera.media))assert.equal(hash(read(f)),v,f);
  assert.equal(homeCamera.greenAlphaPixelsRemoved,33);
 });
@@ -231,4 +237,14 @@ test('raptor occupancy repair changes only the renderer, not rules or art',()=>{
  assert.equal(raptorCapacity.changedSource[renderer].before,courtyard.changedSource[renderer].after);
  assert.equal(hash(read(renderer)),raptorCapacity.changedSource[renderer].after);
  for(const [f,v]of Object.entries(raptorCapacity.unchangedPredatorSources))assert.equal(hash(read(f)),v,f);
+});
+
+test('explicit garden return pins only its navigation source, after the unchanged camera rollout',()=>{
+ assert.equal(homeJourney.baseCommit,'985f4a022566920f2b5f4388736972cd8dc5ce22');
+ assert.deepEqual(Object.keys(homeJourney.changedSource),['src/game.js']);
+ const file='src/game.js', edge=homeJourney.changedSource[file];
+ assert.deepEqual(Object.keys(edge),['before','after']);
+ assert.equal(edge.before,friendRollout.changedSource[file].after);
+ assert.notEqual(edge.after,edge.before);
+ assert.equal(hash(read(file)),edge.after,file);
 });
