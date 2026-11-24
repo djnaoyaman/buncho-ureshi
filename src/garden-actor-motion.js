@@ -348,7 +348,8 @@ export function createGardenActorMotion(root){
    const contacts=support=>{
     const rows=definitions.length>6?support.denseRows.flatMap((y,i,all)=>i+1<all.length?[y,(y+all[i+1])/2]:[y]):support.rows;
     const order=definitions.length>6?rows.flatMap((_,r)=>[2,0,4,1,3].map(c=>[c,r])):[[2,0],[1,1],[3,1],[1,2],[3,2],[0,0],[4,0],[0,2],[4,2],[2,1],[2,2],[1,0],[3,0],[0,1],[4,1]];
-    return order.map(([column,row])=>[support.columns[column],rows[row]])
+    const calibrated=definitions.length>6?support.denseContacts:support.contacts;
+    return (calibrated??order.map(([column,row])=>[support.columns[column],rows[row]]))
      .filter(point=>safePoint(point,width,height)).map(p=>({id:p.join(':'),p}));
    };
    const [primary,...secondaries]=actorSupports(terrain).map(contacts);
@@ -360,13 +361,13 @@ export function createGardenActorMotion(root){
    if(trailRuntime)footholds=[...trailRuntime.nodes.filter(n=>n.id!=='bay'&&safePoint(n.p,width,height)),...footholds];
    // Select alternating depth positions, retaining space for a second row.
    footholds=selectFootholds(footholds,definitions.length,(a,b)=>separated(a.p,b.p,width,height));layoutWidth=width;
-   if(terrain.additionalSurfaces&&definitions.length>6&&footholds.length>definitions.length){
+   if((terrain.additionalSurfaces||terrain.denseContacts)&&definitions.length>6&&footholds.length>definitions.length){
     // With a spare seat, leave a same-row neighbor of the lead open. A spare
     // seat behind a full row often has no route in a narrow stepped garden.
     // Reconciliation preserves already occupied seats; safeRoute is still
     // authoritative, and a truly full group keeps every legal seat.
     const [lead,...others]=footholds;
-    const nearby=others.filter(n=>n.p[1]===lead.p[1])
+    const nearby=others.filter(n=>Math.abs(n.p[1]-lead.p[1])<.005)
      .sort((a,b)=>Math.abs(a.p[0]-lead.p[0])-Math.abs(b.p[0]-lead.p[0]))[0];
     if(nearby)footholds.push(footholds.splice(footholds.indexOf(nearby),1)[0]);
    }
