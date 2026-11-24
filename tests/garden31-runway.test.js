@@ -3,6 +3,7 @@ import {GARDEN35_MUSIC} from '../src/data/garden35-music.js';import {gardenMusic
 const read=p=>readFileSync(new URL('../'+p,import.meta.url)),hash=b=>createHash('sha256').update(b).digest('hex'),r=JSON.parse(read('docs/qa/garden31-runway.json'));
 const trail=JSON.parse(read('docs/qa/garden-trail-public-scope.json'));
 const flat=JSON.parse(read('docs/qa/garden-flat-seven-scope.json'));
+const remaining=JSON.parse(read('docs/qa/garden-flat-remaining-scope.json'));
 function assertScopedCurrent(file,prior){
  const step=trail.changedSource[file];
  if(step)assert.equal(step.before,prior,file);
@@ -94,6 +95,22 @@ test('approved flat successor pins exactly two runtime files and preserves the o
   assert.deepEqual(Object.keys(entry),['before','after'],file);
   assert.match(entry.before,/^[0-9a-f]{64}$/);
   assert.notEqual(entry.before,entry.after,file);
-  assert.equal(hash(read(file)),entry.after,file);
+  const latest=remaining.changedSource[file];
+  if(latest)assert.equal(latest.before,entry.after,file);
+  assert.equal(hash(read(file)),latest?.after||entry.after,file);
  }
+});
+
+
+test('remaining open-ground release extends the prior ledger for only the surveyed terrain module',()=>{
+ const path='src/data/garden-actor-terrain.js';
+ assert.equal(remaining.baseCommit,'ff05b8f930c3c55af045056cc9dd1121fa788e01');
+ assert.deepEqual(remaining.gardens,[2,5,9,13,17,19,22,23,24,25,30,35]);
+ assert.deepEqual(remaining.heldGardens,[16,18,27,32,33]);
+ assert.deepEqual(Object.keys(remaining.changedSource),[path]);
+ const edge=remaining.changedSource[path];
+ assert.deepEqual(Object.keys(edge),['before','after']);
+ assert.equal(edge.before,flat.changedSource[path].after);
+ assert.notEqual(edge.after,edge.before);
+ assert.equal(hash(read(path)),edge.after);
 });

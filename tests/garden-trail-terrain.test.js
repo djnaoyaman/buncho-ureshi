@@ -78,7 +78,7 @@ test('production routes all seven former trail gardens through their own flat pr
  const {renderGardenStage,renderFinchGarden}=await import('../src/encounter-ui.js');
  const {worldFor,GARDENS}=await import('./fixtures/garden-about-world.js');
  const {actorTerrainForStage}=await import('../src/garden-actor-motion.js');
- assert.equal(Object.keys(GARDEN_ACTOR_TERRAIN).length,18);
+ assert.equal(Object.keys(GARDEN_ACTOR_TERRAIN).length,30);
  const converted=[];
  for(const {id} of GARDENS){
   const world=worldFor('attending',id),before=JSON.stringify(world),former=GARDEN_TRAIL_TERRAIN[id];
@@ -235,4 +235,30 @@ test('native snapshot identifies returning and previously met visitors, but reje
   assert.throws(()=>assertGardenIdentities(duplicate,2),/duplicate native bird identity/);
  }finally{await win.happyDOM.close();}
  function awaitedIdentity(snapshot){return JSON.parse(JSON.stringify(snapshot.birds));}
+});
+
+test('the twelve new flat surfaces apply their own source polygon without adding other gardens or changing the save',async()=>{
+ const {GARDEN35_PLAN}=await import('../src/data/garden35-plan.js');
+ const {renderGardenStage}=await import('../src/encounter-ui.js');
+ const {actorTerrainForStage}=await import('../src/garden-actor-motion.js');
+ const {worldFor}=await import('./fixtures/garden-about-world.js');
+ const add=[2,5,9,13,17,19,22,23,24,25,30,35];
+ const hold=[16,18,27,32,33];
+ const distinct=new Set();
+ for(const item of GARDEN35_PLAN){
+  const p=GARDEN_ACTOR_TERRAIN[item.id];
+  if(hold.includes(item.number))assert.equal(p,undefined,item.name);
+  if(!add.includes(item.number))continue;
+  assert.ok(p && !p.trail,item.name);
+  const encoded=JSON.stringify(p.surface);
+  assert.ok(!distinct.has(encoded),item.name);distinct.add(encoded);
+  for(const point of p.surface)for(const c of point)assert.ok(c>0&&c<1,item.name);
+  assert.ok(p.entries.every(point=>inside(point,p.surface)),item.name);
+  assert.ok(p.rows.every(y=>inside([p.columns[2],y],p.surface)),item.name);
+  const w=worldFor('attending',item.id), before=JSON.stringify(w);
+  assert.match(renderGardenStage(w),/data-garden-actor-id="b1"/,item.name);
+  assert.equal(actorTerrainForStage({dataset:{gardenId:item.id}}),p,item.name);
+  assert.equal(JSON.stringify(w),before,item.name);
+ }
+ assert.equal(distinct.size,12);
 });
