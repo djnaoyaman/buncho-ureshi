@@ -159,10 +159,9 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
   const interactionActive=()=>pressedPointers.size>0||formFocused();
   let birdSwipe=null,careRub=null,suppressSwipeClickUntil=0,familyZoom=1,familyZoomManual=false;
   let homePan=null,homePointer=null,homePanWorld=null,homeSuppress=0;
-  const friendCameraCage=1;
-  const cameraRoomSelector='.game-room:is([data-field="home"],[data-field="friend"][data-friend-cage="1"])';
+  const cameraRoomSelector='.game-room:is([data-field="home"],[data-field="friend"][data-friend-camera])';
   const cameraScene=(cage=world.field.place==='friend'?friendCage(world,world.field.hostId):null)=>
-    world.field.place==='home'?world.worldId+':home':cage?.id===friendCameraCage?world.worldId+':friend:'+world.field.hostId:null;
+    world.field.place==='home'?world.worldId+':home':cage?world.worldId+':friend:'+world.field.hostId:null;
   const activeHome=()=>!sheetOpen&&panel==='garden'&&!!cameraScene();
   const currentHomeRoom=()=>root.querySelector('.game-main '+cameraRoomSelector);
   const homeKind=()=>globalThis.matchMedia?.('(max-width: 600px)').matches?'tall':'wide';
@@ -737,7 +736,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
         perched.forEach((actor,i)=>{const row=Math.floor(i/columns),count=Math.min(columns,perched.length-row*columns),x=(i%columns+1)/(count+1),foot=rows===1?geometry.height*(geometry.width<=600&&geometry.height<=280 ? .57 : .68):geometry.height*.46+row*Math.max(90,geometry.height*.23);map.set(actor.id,{...map.get(actor.id),x:geometry.left/geometry.planeWidth+x*fraction,y:(Math.min(geometry.height-26,foot)-geometry.top)/geometry.planeHeight});});
       }
     }
-    return `${fieldNavigation()}<div class="game-room" style="--nest-camera-pan:${camera.pan}px;--nest-bowl-shift:${camera.bowlShift}px${scene?`;--home-camera-delta:${homeDelta}px`:''}" data-atmosphere="${atmosphere.state}" data-atmosphere-motion="${atmosphere.animate}" data-home-response="${atmosphere.visible?currentHomeResponse()?.kind||'':''}" data-home-response-phase="${currentHomeResponse()?.phase||''}" data-selected-atmosphere="${atmosphere.selectedState}" data-has-nestlings="${hasNestlings}" data-nest-bowl-shift="${camera.bowlShift>0}" data-compact="${!!compactLayout?.matches}" data-many-guests="${cageGuests.length>2}" data-home-crowded="${world.field.place==='home'&&(actors.filter(actor=>!['egg','chick'].includes(actor.stage)).length>8||(compactLayout?.matches&&cageGuests.length>0))}" data-field="${world.field.place}" data-friend-cage="${cage?.id??''}" aria-label="${escape(fieldTitle())}。イラストのゲーム用風景です。">
+    return `${fieldNavigation()}<div class="game-room" style="--nest-camera-pan:${camera.pan}px;--nest-bowl-shift:${camera.bowlShift}px${scene?`;--home-camera-delta:${homeDelta}px`:''}" data-atmosphere="${atmosphere.state}" data-atmosphere-motion="${atmosphere.animate}" data-home-response="${atmosphere.visible?currentHomeResponse()?.kind||'':''}" data-home-response-phase="${currentHomeResponse()?.phase||''}" data-selected-atmosphere="${atmosphere.selectedState}" data-has-nestlings="${hasNestlings}" data-nest-bowl-shift="${camera.bowlShift>0}" data-compact="${!!compactLayout?.matches}" data-many-guests="${cageGuests.length>2}" data-home-crowded="${world.field.place==='home'&&(actors.filter(actor=>!['egg','chick'].includes(actor.stage)).length>8||(compactLayout?.matches&&cageGuests.length>0))}" data-field="${world.field.place}" data-friend-cage="${cage?.id??''}"${cage?' data-friend-camera':''} aria-label="${escape(fieldTitle())}。イラストのゲーム用風景です。">
       ${world.field.place==='home'?renderHomeScene({base:GAME_ART,furniture:sceneFurniture(null,true,atmosphere.visible?atmosphere:null),atmosphere}):world.field.place==='friend'?`<picture class="game-habitat"><img src="${GAME_ART}${cage.file}" alt="" aria-hidden="true" width="1600" height="1000" decoding="async"></picture>`:`<picture class="game-habitat"><source media="(max-width: 600px)" srcset="${GAME_ART}field-park-tall.webp"><img src="${GAME_ART}field-park-wide.webp" alt="" aria-hidden="true" width="1600" height="1000" decoding="async"></picture>`}
       ${gemCollectibles()}<span class="game-floor-soil" style="--care-soil-opacity:${careFloorOpacity(getCleanliness(world)).toFixed(3)}" aria-hidden="true"></span>
       ${shown.map(b=>{

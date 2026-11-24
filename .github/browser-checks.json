@@ -1,8 +1,9 @@
 {
-  "base": "6e9e7418a886ff2bd7e2a9e05028059dfad4bd33",
+  "base": "d314236678fe07cb199881ec285106147049722b",
   "tests": [
     "tests/browser/friend-camera-pilot.spec.js",
+    "tests/browser/friend-cages.spec.js",
     "tests/browser/home-camera.spec.js"
   ],
-  "reason": "既存のバウハウス型に限定した任意の横移動とリセット。見え方・左右境界・固定操作・保存・帰宅・他の型の回帰をChromeとWebKitのスマホ幅で確認。"
+  "reason": "友達のおうち9種類の元絵と中央の初期構図、縦長端末での左右操作・鳥のタップ・保存不変、横長での覆いと自宅・公園の回帰をChromeとWebKitで確認。"
 }

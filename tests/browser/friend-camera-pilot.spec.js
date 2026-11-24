@@ -19,7 +19,7 @@ const drag=async(page,width,dir)=>{
  expect(y,'both gesture endpoints are real uncovered scene').toBeDefined();
  await page.mouse.move(x,y);await page.mouse.down();await page.mouse.move(target,y,{steps:12});await page.mouse.up();
 };
-for(const [width,height] of [[320,568],[390,844]])test(`only Bauhaus pans and returns without save or visit changes at ${width}`,async({page})=>{
+for(const [width,height] of [[320,568],[390,844]])test(`Bauhaus pans and returns without save or visit changes at ${width}`,async({page})=>{
  await page.setViewportSize({width,height});await page.emulateMedia({reducedMotion:'reduce'});
  await page.addInitScript(n=>{Date.now=()=>n;localStorage.setItem('buncho.music.v1','{"enabled":false}');localStorage.setItem('buncho.care-sound-choice.v1','{"explicit":true,"enabled":false}');},NOW);
  await page.goto('');
@@ -46,13 +46,14 @@ for(const [width,height] of [[320,568],[390,844]])test(`only Bauhaus pans and re
  if(!await nav.isVisible())await page.locator('.game-scene-controls-toggle').tap();
  await nav.tap();await expect(room).toHaveAttribute('data-field','home');await expect(reset).toBeHidden();
  expect(await saved(page)).toMatchObject({field:{place:'home'},birds:before.birds});
- // Load an existing different cage via the ordinary startup route. Its fixed
- // centered artwork must neither inherit the pilot offset nor receive controls.
+ // Load a different host via the ordinary startup route. It starts centered,
+ // then independently receives the shared camera.
  const other=await saved(page);travelTo(other,'friend',second.id);await saved(page,validateWorld(other));await page.reload();
  await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');
  if(await page.locator('#game-welcome-close').isVisible())await page.locator('#game-welcome-close').click();
  if(await page.locator('body').getAttribute('data-scene-controls')==='open')await page.locator('.game-scene-controls-toggle').tap();
- await expect(room).toHaveAttribute('data-friend-cage','2');await expect(reset).toHaveCount(0);
- const unmodified=await view(page);await drag(page,width,1);expect((await view(page)).x).toBeCloseTo(unmodified.x,0);
+ await expect(room).toHaveAttribute('data-friend-cage','2');await expect(reset).toBeHidden();
+ const next=await view(page);expect(next.x).toBeCloseTo((width-next.width)/2,0);
+ await drag(page,width,1);await expect(reset).toBeVisible();expect((await view(page)).x).toBeGreaterThan(next.x);
  expect((await saved(page)).birds).toEqual(before.birds);
 });
