@@ -24,6 +24,12 @@ const FRIENDSHIP_MOVIES=Object.freeze({
   bird:'ギンパラ',title:'ギンパラと なかよしになった記念',file:'friendship-tricolored-munia-v1.mp4',
   source:'https://commons.wikimedia.org/wiki/File:A_Tricolored_Munia_(Finch)_Preening.webm',
   license:'https://creativecommons.org/licenses/by/2.0/',licenseLabel:'CC BY 2.0',creator:'Hari K Patibanda',place:'原典に記載なし'
+ }),
+ 'gouldian-finch':Object.freeze({
+  bird:'コキンチョウ',title:'コキンチョウと なかよしになった記念',file:'friendship-gouldian-finch-v1.mp4',
+  source:'https://pixabay.com/videos/bird-gouldian-finch-multicoloured-174987/',
+  license:'https://pixabay.com/service/terms/',licenseLabel:'Pixabay Content License',creator:'NickyPe',place:'原典に記載なし',
+  edit:'原速の5.25秒の抜粋を使い、書き下ろしのことば・音楽・演出を加えて15秒の作品に仕上げています。'
  })
 });
 export function unlockedFriendshipMovies(w){
@@ -34,7 +40,7 @@ export function newlyUnlockedFriendshipMovies(previousIds,expectedWorld,next){
  return next.worldId===expectedWorld?unlockedFriendshipMovies(next).filter(id=>!previousIds.includes(id)):[];
 }
 function friendshipMovieCredit(film){
- return `<p>撮影地：${film.place}。ゲームの庭を撮ったものではありません。映像：${film.creator}（<a href="${film.source}">原典</a>／<a href="${film.license}">${film.licenseLabel}</a>）。縦向きに切り出し、文字と音楽を加えています。</p>`;
+ return `<p>撮影地：${film.place}。ゲームの庭を撮ったものではありません。映像：${film.creator}（<a href="${film.source}">原典</a>／<a href="${film.license}">${film.licenseLabel}</a>）。${film.edit??'縦向きに切り出し、文字と音楽を加えています。'}</p>`;
 }
 const movieButton=(id,label)=>`<button type="button" data-friendship-movie-open="${id}"><span aria-hidden="true">▶</span> ${label}</button>`;
 export function renderFriendshipMovieCard(w,id){

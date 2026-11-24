@@ -1,0 +1,12 @@
+{
+  "baseCommit": "ffc207f9eddf564f849651dc01de50163b38afe1",
+  "changedSource": {
+    "src/collection-ending-player.js": {
+      "before": "2712ff466012e6f99a7b79a92fb93ba52609d639ad2416d62c9b9e888c8bf143",
+      "after": "26c8a07414b01de4961141e57838986213342d7430bba52d0cc61e88ec928e1c"
+    }
+  },
+  "media": {
+    "public/game-endings/friendship-gouldian-finch-v1.mp4": "d9a6769d50ef959c861acd2ce19c6ee9f0ca64a606bce858ba3b598c06dcbbfc"
+  }
+}

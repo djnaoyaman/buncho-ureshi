@@ -15,6 +15,7 @@ const raptorCapacity=JSON.parse(read('docs/qa/garden-raptor-capacity-scope.json'
 const homeJourney=JSON.parse(read('docs/qa/garden-home-journey-scope.json'));
 const friendshipFilm=JSON.parse(read('docs/qa/garden-friendship-movie-scope.json'));
 const moreFriendshipFilms=JSON.parse(read('docs/qa/garden-friendship-movie-expansion-scope.json'));
+const gouldianFriendshipFilm=JSON.parse(read('docs/qa/garden-friendship-movie-gouldian-scope.json'));
 function afterFriendshipMovie(file,prior){
  const change=friendshipFilm.changedSource[file];
  if(change)assert.equal(change.before,prior,file);
@@ -262,7 +263,8 @@ test('friendship-film successor pins only the reviewed runtime and approved exac
  for(const [path,edge] of Object.entries(friendshipFilm.changedSource)){
   assert.deepEqual(Object.keys(edge),['before','after']);assert.match(edge.before,/^[0-9a-f]{64}$/);assert.notEqual(edge.before,edge.after,path);
   const successor=moreFriendshipFilms.changedSource[path];if(successor)assert.equal(successor.before,edge.after,path);
-  assert.equal(hash(read(path)),successor?.after??edge.after,path);
+  const gouldian=gouldianFriendshipFilm.changedSource[path];if(gouldian)assert.equal(gouldian.before,successor?.after??edge.after,path);
+  assert.equal(hash(read(path)),gouldian?.after??successor?.after??edge.after,path);
  }
  for(const [path,sha] of Object.entries(friendshipFilm.media))assert.equal(hash(read(path)),sha,path);
 });
@@ -272,4 +274,11 @@ test('three additional mini films only extend the existing player catalog',()=>{
  assert.deepEqual(Object.keys(moreFriendshipFilms.changedSource),['src/collection-ending-player.js']);
  assert.equal(Object.keys(moreFriendshipFilms.media).length,3);
  for(const [path,sha] of Object.entries(moreFriendshipFilms.media))assert.equal(hash(read(path)),sha,path);
+});
+
+test('the edited Gouldian finch film only extends the existing player catalog',()=>{
+ assert.equal(gouldianFriendshipFilm.baseCommit,'ffc207f9eddf564f849651dc01de50163b38afe1');
+ assert.deepEqual(Object.keys(gouldianFriendshipFilm.changedSource),['src/collection-ending-player.js']);
+ assert.deepEqual(Object.keys(gouldianFriendshipFilm.media),['public/game-endings/friendship-gouldian-finch-v1.mp4']);
+ for(const [path,sha] of Object.entries(gouldianFriendshipFilm.media))assert.equal(hash(read(path)),sha,path);
 });
