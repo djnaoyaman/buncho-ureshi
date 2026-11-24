@@ -5,7 +5,7 @@ import {readFileSync} from 'node:fs';
 import {createWorld,validateWorld} from '../src/engine.js';
 import {encounterSystem} from '../src/encounters.js';
 import {renderFriendshipMovieCard,renderFriendshipMovieDiary,unlockedFriendshipMovies,newlyUnlockedFriendshipMovies} from '../src/collection-ending-player.js';
-const id='eurasian-tree-sparrow',other='gouldian-finch',at=Date.UTC(2026,10,18,9);
+const id='eurasian-tree-sparrow',other='zebra-finch',at=Date.UTC(2026,10,18,9);
 const fixture=(points,bird=id)=>{const w=createWorld(at,2026);w.encounters.nextId=2;w.encounters.discoveries=[{id:bird,firstTick:0,lastTick:0,visits:1,instanceId:1}];w.encounters.friendship=[{id:bird,petPoints:points-10}];return validateWorld(w);};
 test('only an earned native friendship crosses the documented milestone',()=>{
  const w=fixture(99),baseline=unlockedFriendshipMovies(w);
@@ -44,4 +44,13 @@ for (const [bird,title,license,digest] of [
  const bytes=readFileSync(new URL('../public/game-endings/friendship-'+bird+'-v1.mp4',import.meta.url));
  assert.equal(bytes.subarray(4,8).toString(),'ftyp');
  assert.equal(createHash('sha256').update(bytes).digest('hex'),digest);
+});
+
+for(const [bird,license,place] of [['gouldian-finch','Pixabay Content License','原典に記載なし'],['red-crossbill','Public Domain','ロングマイア・メドウ']])test(bird+' uses the native milestone and shows exact attribution',()=>{
+ const w=fixture(99,bird);
+ assert.deepEqual(unlockedFriendshipMovies(w),[]);
+ assert.equal(encounterSystem.pet(w,bird,1,{worldId:w.worldId,revision:w.revision}).changed,true);
+ assert.deepEqual(newlyUnlockedFriendshipMovies([],w.worldId,w),[bird]);
+ const html=renderFriendshipMovieCard(w,bird);
+ assert.ok(html.includes(license));assert.ok(html.includes(place));assert.ok(!html.includes('CC BY'));
 });

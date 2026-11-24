@@ -1,0 +1,17 @@
+{
+  "baseCommit": "53ea9cef2e28af24d58b5d32104c7cd9b19cb092",
+  "changedSource": {
+    "src/collection-ending-player.js": {
+      "before": "919e5ebf731c920774edb3e642fc8d766c5923397ee06af206a72b532cf139de",
+      "after": "a5821e5fe7a765789dee522ac053dae3c02b8d1d86152c79bc2e95bc660963e9"
+    }
+  },
+  "media": {
+    "public/game-endings/friendship-gouldian-finch-logo09.mp4": {
+      "sha256": "1f62fbd67a6b5a319f25674d16e01d501b50a6017c35ab941d6fbe34b41cf2e2"
+    },
+    "public/game-endings/friendship-red-crossbill-logo09.mp4": {
+      "sha256": "33e887416c62aae127d97e7fdde66610fd32b0bee380667922b23b011e1974ab"
+    }
+  }
+}

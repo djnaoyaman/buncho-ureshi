@@ -1,8 +1,8 @@
 {
-  "base": "ffc207f9eddf564f849651dc01de50163b38afe1",
+  "base": "53ea9cef2e28af24d58b5d32104c7cd9b19cb092",
   "tests": [
     "tests/browser/friendship-movie.spec.js",
     "tests/browser/garden-home-journey.spec.js"
   ],
-  "reason": "既存4種の承認済み新ロゴ版だけを新URLへ切替。実際の確定99→100、任意再生、図鑑・日記、4本の改版ファイル名と実デコード、保存不変、従来の帰宅をChrome/WebKitで確認。"
+  "reason": "完成したコキンチョウ・イスカのロゴ09版のみを追加。各種の確定99→100、任意再生、図鑑・日記、原典リンクと実デコード、保存不変、帰宅をChrome/WebKitで検証。"
 }

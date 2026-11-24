@@ -1,6 +1,6 @@
 import {test,expect} from '@playwright/test';
 import {createWorld,validateWorld} from '../../src/engine.js';
-const at=Date.UTC(2026,10,18,9),id='eurasian-tree-sparrow',other='gouldian-finch',media='friendship-eurasian-tree-sparrow-logo09.mp4';
+const at=Date.UTC(2026,10,18,9),id='eurasian-tree-sparrow',other='zebra-finch',media='friendship-eurasian-tree-sparrow-logo09.mp4';
 function fixture(points,pilot=id){
  const w=createWorld(at,2026);w.paused=true;w.settings.motion=false;w.encounters.nextId=3;
  w.encounters.discoveries=[pilot,other].map((id,i)=>({id,firstTick:0,lastTick:0,visits:1,instanceId:i+1}));
@@ -72,7 +72,7 @@ test('recorded 100+ unlocks the bird card but does not create an offer; unrelate
  await expect(page.locator('[data-friendship-movie-open]')).toHaveCount(0);
  expect((await record(page)).encounters.friendship).toEqual(w.encounters.friendship);
 });
-for(const [pilot,license] of [['eurasian-bullfinch','3.0'],['hawfinch','3.0'],['tricolored-munia','2.0']]){
+for(const [pilot,license] of [['eurasian-bullfinch','3.0'],['hawfinch','3.0'],['tricolored-munia','2.0'],['gouldian-finch','pixabay'],['red-crossbill','nps']]){
  test(pilot+' own bird entry links exact edition and decodes without playing',async({page})=>{
   await start(page,390,844,99,pilot);await bird(page,pilot);
   const card=page.locator('.game-friendship-movie-card');
@@ -83,7 +83,13 @@ for(const [pilot,license] of [['eurasian-bullfinch','3.0'],['hawfinch','3.0'],['
   await expect(page.locator(offer)).toBeVisible();
   await expect(page.locator(dialog)).toHaveCount(0);
   await page.locator('[data-friendship-movie-dismiss]').click();
-  await expect(card.getByRole('link',{name:'CC BY '+license,exact:true})).toHaveAttribute('href','https://creativecommons.org/licenses/by/'+license+'/');
+  if(license==='pixabay'){
+   await expect(card.getByRole('link',{name:'Pixabay Content License',exact:true})).toHaveAttribute('href','https://pixabay.com/service/terms/');
+   await expect(card).toContainText('撮影地：原典に記載なし');
+  }else if(license==='nps'){
+   await expect(card.getByRole('link',{name:'Public Domain（原典の権利表示）',exact:true})).toHaveAttribute('href','https://www.nps.gov/media/video/view.htm?id=7aee6259-50b8-49e3-8536-d78ab098df87');
+   await expect(card).toContainText('ロングマイア・メドウ');
+  }else await expect(card.getByRole('link',{name:'CC BY '+license,exact:true})).toHaveAttribute('href','https://creativecommons.org/licenses/by/'+license+'/');
   await expect(page.locator(offer)).toHaveCount(0);
   await card.locator('[data-friendship-movie-open="'+pilot+'"]').click();
   const video=page.locator(dialog+' video');await expect(video).toBeVisible();
