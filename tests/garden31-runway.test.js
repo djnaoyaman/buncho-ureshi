@@ -15,6 +15,7 @@ const raptorCapacity=JSON.parse(read('docs/qa/garden-raptor-capacity-scope.json'
 const homeJourney=JSON.parse(read('docs/qa/garden-home-journey-scope.json'));
 const friendshipFilm=JSON.parse(read('docs/qa/garden-friendship-movie-scope.json'));
 const moreFriendshipFilms=JSON.parse(read('docs/qa/garden-friendship-movie-expansion-scope.json'));
+const friendshipLogo=JSON.parse(read('docs/qa/garden-friendship-movie-logo09-scope.json'));
 function afterFriendshipMovie(file,prior){
  const change=friendshipFilm.changedSource[file];
  if(change)assert.equal(change.before,prior,file);
@@ -262,7 +263,8 @@ test('friendship-film successor pins only the reviewed runtime and approved exac
  for(const [path,edge] of Object.entries(friendshipFilm.changedSource)){
   assert.deepEqual(Object.keys(edge),['before','after']);assert.match(edge.before,/^[0-9a-f]{64}$/);assert.notEqual(edge.before,edge.after,path);
   const successor=moreFriendshipFilms.changedSource[path];if(successor)assert.equal(successor.before,edge.after,path);
-  assert.equal(hash(read(path)),successor?.after??edge.after,path);
+  const logo=friendshipLogo.changedSource[path];if(logo)assert.equal(logo.before,successor?.after??edge.after,path);
+  assert.equal(hash(read(path)),logo?.after??successor?.after??edge.after,path);
  }
  for(const [path,sha] of Object.entries(friendshipFilm.media))assert.equal(hash(read(path)),sha,path);
 });
@@ -272,4 +274,24 @@ test('three additional mini films only extend the existing player catalog',()=>{
  assert.deepEqual(Object.keys(moreFriendshipFilms.changedSource),['src/collection-ending-player.js']);
  assert.equal(Object.keys(moreFriendshipFilms.media).length,3);
  for(const [path,sha] of Object.entries(moreFriendshipFilms.media))assert.equal(hash(read(path)),sha,path);
+});
+
+test('approved logo09 only changes the four movie URLs, not the player or original assets',()=>{
+ assert.equal(friendshipLogo.baseCommit,'ffc207f9eddf564f849651dc01de50163b38afe1');
+ const file='src/collection-ending-player.js';
+ assert.deepEqual(Object.keys(friendshipLogo.changedSource),[file]);
+ assert.equal(Object.keys(friendshipLogo.media).length,4);
+ let reverted=read(file).toString("utf8");
+ for(const [path,spec] of Object.entries(friendshipLogo.media)){
+  const old=spec.original;
+  assert.notEqual(path,old);
+  const previous=friendshipFilm.media[old]??moreFriendshipFilms.media[old];
+  assert.ok(previous,old);
+  assert.equal(hash(read(old)),previous,old);
+  assert.equal(hash(read(path)),spec.sha256,path);
+  const replacement=path.split('/').at(-1);
+  assert.equal(reverted.split(replacement).length,2,replacement);
+  reverted=reverted.replace(replacement,old.split('/').at(-1));
+ }
+ assert.equal(hash(reverted),friendshipLogo.changedSource[file].before,file);
 });

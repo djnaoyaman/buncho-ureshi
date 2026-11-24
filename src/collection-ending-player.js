@@ -6,22 +6,22 @@ const TITLES={'garden-tour':'どこへ行っても、帰る場所',garden:'<ruby
 /** Read existing friendship evidence. Opening or playing a mini film does not write a save. */
 const FRIENDSHIP_MOVIES=Object.freeze({
  'eurasian-tree-sparrow':Object.freeze({
-  bird:'スズメ',title:'スズメと なかよしになった記念',file:'friendship-eurasian-tree-sparrow-v2.mp4',
+  bird:'スズメ',title:'スズメと なかよしになった記念',file:'friendship-eurasian-tree-sparrow-logo09.mp4',
   source:'https://commons.wikimedia.org/wiki/File:Eurasian_tree_sparrows_(Passer_montanus)_in_Japan.webm',
   license:'https://creativecommons.org/licenses/by/4.0/',licenseLabel:'CC BY 4.0',creator:'The Nature Box',place:'城北中央公園（東京都、2016年）'
  }),
  'eurasian-bullfinch':Object.freeze({
-  bird:'ウソ',title:'ウソと なかよしになった記念',file:'friendship-eurasian-bullfinch-v1.mp4',
+  bird:'ウソ',title:'ウソと なかよしになった記念',file:'friendship-eurasian-bullfinch-logo09.mp4',
   source:'https://commons.wikimedia.org/wiki/File:Male_bullfinch_(Pyrrhula_pyrrhula)_feeding_on_sunflower_seed.webm',
   license:'https://creativecommons.org/licenses/by/3.0/',licenseLabel:'CC BY 3.0',creator:'Tony Whitehead',place:'英国（2010年12月27日）'
  }),
  'hawfinch':Object.freeze({
-  bird:'シメ',title:'シメと なかよしになった記念',file:'friendship-hawfinch-v1.mp4',
+  bird:'シメ',title:'シメと なかよしになった記念',file:'friendship-hawfinch-logo09.mp4',
   source:'https://commons.wikimedia.org/wiki/File:Hawfinch_(Coccothraustes_coccothraustes).webm',
   license:'https://creativecommons.org/licenses/by/3.0/',licenseLabel:'CC BY 3.0',creator:'Lubo Ondrasko',place:'原典に記載なし'
  }),
  'tricolored-munia':Object.freeze({
-  bird:'ギンパラ',title:'ギンパラと なかよしになった記念',file:'friendship-tricolored-munia-v1.mp4',
+  bird:'ギンパラ',title:'ギンパラと なかよしになった記念',file:'friendship-tricolored-munia-logo09.mp4',
   source:'https://commons.wikimedia.org/wiki/File:A_Tricolored_Munia_(Finch)_Preening.webm',
   license:'https://creativecommons.org/licenses/by/2.0/',licenseLabel:'CC BY 2.0',creator:'Hari K Patibanda',place:'原典に記載なし'
  })

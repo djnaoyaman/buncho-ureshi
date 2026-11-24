@@ -1,8 +1,8 @@
 {
-  "base": "39a1d7ea4bf16a6a7cb9697b185f4c267d40a4a1",
+  "base": "ffc207f9eddf564f849651dc01de50163b38afe1",
   "tests": [
     "tests/browser/friendship-movie.spec.js",
     "tests/browser/garden-home-journey.spec.js"
   ],
-  "reason": "ウソ・シメ・ギンパラのみ。各種の確定99→100、非自動再生、図鑑と日記、ライセンス、実デコード、保存不変をスズメ・帰宅の既存経路とともにChrome/WebKitで検証。"
+  "reason": "既存4種の承認済み新ロゴ版だけを新URLへ切替。実際の確定99→100、任意再生、図鑑・日記、4本の改版ファイル名と実デコード、保存不変、従来の帰宅をChrome/WebKitで確認。"
 }
