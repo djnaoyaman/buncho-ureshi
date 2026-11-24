@@ -6,6 +6,13 @@ const flat=JSON.parse(read('docs/qa/garden-flat-seven-scope.json'));
 const remaining=JSON.parse(read('docs/qa/garden-flat-remaining-scope.json'));
 const shelves=JSON.parse(read('docs/qa/garden-flat-phase2-scope.json'));
 const platforms=JSON.parse(read('docs/qa/garden-mossy-log-scope.json'));
+const levels=JSON.parse(read('docs/qa/garden-flat-platforms-scope.json'));
+function afterLevels(file,prior){
+ const next=levels.changedSource[file];
+ if(next)assert.equal(next.before,prior,file);
+ return next?.after||prior;
+}
+
 function assertScopedCurrent(file,prior){
  const step=trail.changedSource[file];
  if(step)assert.equal(step.before,prior,file);
@@ -13,7 +20,7 @@ function assertScopedCurrent(file,prior){
  if(successor)assert.equal(successor.before,step?.after||prior,file);
  const platform=platforms.changedSource[file];
  if(platform)assert.equal(platform.before,successor?.after||step?.after||prior,file);
- assert.equal(hash(read(file)),platform?.after||successor?.after||step?.after||prior,file);
+ assert.equal(hash(read(file)),afterLevels(file,platform?.after||successor?.after||step?.after||prior),file);
 }
 test('hanadokei uses the exact approved Runway-derived MP3 with explicit period and entry guard',()=>{
  const m=GARDEN35_MUSIC.hanadokei,t=gardenMusicTracks().find(t=>t.gardenId==='hanadokei'),bytes=read('public/'+r.asset);
@@ -88,7 +95,7 @@ test('Type II formal candidate source successor pins the exact reviewed files an
   if(successor)assert.equal(successor.before,entry.after,f);
   const platform=platforms.changedSource[f];
   if(platform)assert.equal(platform.before,successor?.after||entry.after,f);
-  assert.equal(hash(read(f)),platform?.after||successor?.after||entry.after,f);
+  assert.equal(hash(read(f)),afterLevels(f,platform?.after||successor?.after||entry.after),f);
  }
 });
 
@@ -107,7 +114,7 @@ test('approved flat successor pins exactly two runtime files and preserves the o
   if(shelf)assert.equal(shelf.before,latest?.after||entry.after,file);
   const platform=platforms.changedSource[file];
   if(platform)assert.equal(platform.before,shelf?.after||latest?.after||entry.after,file);
-  assert.equal(hash(read(file)),platform?.after||shelf?.after||latest?.after||entry.after,file);
+  assert.equal(hash(read(file)),afterLevels(file,platform?.after||shelf?.after||latest?.after||entry.after),file);
  }
 });
 
@@ -125,7 +132,7 @@ test('remaining open-ground release extends the prior ledger for only the survey
  const successor=shelves.changedSource[path];
  assert.equal(successor.before,edge.after);
  assert.equal(platforms.changedSource[path].before,successor.after);
- assert.equal(hash(read(path)),platforms.changedSource[path].after);
+ assert.equal(hash(read(path)),afterLevels(path,platforms.changedSource[path].after));
 });
 
 
@@ -140,7 +147,7 @@ test('stone-shelf release extends the exact prior terrain ledger only',()=>{
  assert.equal(edge.before,remaining.changedSource[path].after);
  assert.notEqual(edge.after,edge.before);
  assert.equal(platforms.changedSource[path].before,edge.after);
- assert.equal(hash(read(path)),platforms.changedSource[path].after);
+ assert.equal(hash(read(path)),afterLevels(path,platforms.changedSource[path].after));
 });
 
 
@@ -153,6 +160,20 @@ test('mossy log extends the prior ledgers for exactly terrain data and shared pr
  assert.equal(platforms.changedSource[motion].before,trail.changedSource[motion].after);
  for(const [f,edge] of Object.entries(platforms.changedSource)){
   assert.deepEqual(Object.keys(edge),['before','after']);assert.notEqual(edge.before,edge.after);
+  assert.equal(hash(read(f)),afterLevels(f,edge.after),f);
+ }
+});
+
+
+test('stepped surfaces extend the mossy log ledger for exactly the shared presentation and terrain',()=>{
+ const data='src/data/garden-actor-terrain.js',motion='src/garden-actor-motion.js';
+ assert.equal(levels.baseCommit,'c4efd7dc4aa3fdc281b5508ce1e591aaa76e2f56');
+ assert.deepEqual(levels.gardens,[27,33]);assert.deepEqual(levels.heldGardens,[32]);
+ assert.deepEqual(Object.keys(levels.changedSource),[data,motion]);
+ for(const [f,edge] of Object.entries(levels.changedSource)){
+  assert.deepEqual(Object.keys(edge),['before','after']);
+  assert.notEqual(edge.before,edge.after);
+  assert.equal(edge.before,platforms.changedSource[f].after);
   assert.equal(hash(read(f)),edge.after,f);
  }
 });

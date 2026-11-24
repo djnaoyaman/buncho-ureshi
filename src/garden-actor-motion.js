@@ -77,6 +77,12 @@ export function actorTerrainForStage(stage){
  const [rows,denseRows,columns]=seating;
  return {...trail,trail:true,height:.043,rows,denseRows,columns};
 }
+// Opt-in disjoint real ground surfaces use the same Type I runner. A seat or
+// landing is always on one audited support; a route may not bridge their cliff.
+export const actorSupports=terrain=>[terrain,...(terrain.additionalSurfaces||[])];
+export const actorSupportAt=(terrain,point)=>inside(point,terrain.surface)?terrain:
+ terrain.additionalSurfaces?.find(s=>inside(point,s.surface))||null;
+
 const selector=':scope > .finch-garden-friend,:scope > .finch-garden-household,:scope > .finch-garden-visitor';
 const rect=n=>n.getBoundingClientRect();
 const overlap=(a,b)=>a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top;
@@ -150,9 +156,14 @@ export function createGardenActorMotion(root){
  const body=(p,width,height,lift=0)=>({left:geometry.plane.left+p[0]*geometry.plane.width-width*.54,top:geometry.plane.top+p[1]*geometry.plane.height-height*.975-lift,
   right:geometry.plane.left+p[0]*geometry.plane.width+width*.46,bottom:geometry.plane.top+p[1]*geometry.plane.height+height*.025-lift});
  function safePoint(p,width,height,lift=0,flight=false){
-  if(!inside(p,terrain.surface))return false;
+  if(!actorSupportAt(terrain,p))return false;
   const r=body(p,width,height,lift),pad=flight?width*.65:0,c=geometry.clip;
-  return r.left-pad>=c.left+2&&r.right+pad<=c.right-2&&r.top-(flight?height*.12:0)>=c.top+2&&r.bottom+20<=c.bottom-2
+  const artTop=r.top-(flight?height*.12:0);
+  if(terrain.foregroundClearance){
+   const q=geometry.plane,artBox={left:(r.left-pad-q.left)/q.width,right:(r.right+pad-q.left)/q.width,top:(artTop-q.top)/q.height,bottom:(r.bottom-q.top)/q.height};
+   if(terrain.foregroundClearance.some(area=>overlap(artBox,area)))return false;
+  }
+  return r.left-pad>=c.left+2&&r.right+pad<=c.right-2&&artTop>=c.top+2&&r.bottom+20<=c.bottom-2
    &&!geometry.obstacles.some(o=>overlap({...r,left:r.left-pad,right:r.right+pad,bottom:r.bottom+20},o));
  }
  // Footprint ownership is separate from image overlap. Keep an exposed central
@@ -168,9 +179,10 @@ export function createGardenActorMotion(root){
   const obstacles=[...actors.values()].filter(other=>other.id!==actor.id).flatMap(other=>[
    other.p,...(other.route?routeSamples(other).flatMap(f=>[f.p,[f.p[0],f.p[1]-f.height]]):[]),
   ]);
+  const support=terrain.additionalSurfaces?actorSupportAt(terrain,candidate.route.from):null;
   for(let i=0;i<=48;i++){
    const t=i/48,q=model.frame(candidate,candidate.since+t*candidate.route.duration),p=q.p,h=q.height*geometry.plane.height;
-   if(!safePoint(p,b.width,b.height,h,kind==='fly'))return false;
+   if((support&&actorSupportAt(terrain,p)!==support)||!safePoint(p,b.width,b.height,h,kind==='fly'))return false;
    for(const q of obstacles){
     // The native tap target follows altitude, not just the ground projection.
     const lifted=[p[0],p[1]-h/geometry.plane.height];
@@ -333,19 +345,28 @@ export function createGardenActorMotion(root){
    footholds=[];
    // Dense scenes may use intermediate points on the same surveyed surface,
    // retaining the identical physical footprint and obstacle checks.
-   const rows=definitions.length>6?terrain.denseRows.flatMap((y,i,all)=>i+1<all.length?[y,(y+all[i+1])/2]:[y]):terrain.rows;
-   const order=definitions.length>6?rows.flatMap((_,r)=>[2,0,4,1,3].map(c=>[c,r])):[[2,0],[1,1],[3,1],[1,2],[3,2],[0,0],[4,0],[0,2],[4,2],[2,1],[2,2],[1,0],[3,0],[0,1],[4,1]];
-   // An irregular but audited horizontal surface can provide explicit
-   // contacts without inventing another policy for motion or button size.
-   const points=(definitions.length>6?terrain.denseContacts:terrain.contacts)??order.map(([column,row])=>[terrain.columns[column],rows[row]]);
-   for(const point of points)if(safePoint(point,width,height))footholds.push({id:point.join(':'),p:point});
+   const contacts=support=>{
+    const rows=definitions.length>6?support.denseRows.flatMap((y,i,all)=>i+1<all.length?[y,(y+all[i+1])/2]:[y]):support.rows;
+    const order=definitions.length>6?rows.flatMap((_,r)=>[2,0,4,1,3].map(c=>[c,r])):[[2,0],[1,1],[3,1],[1,2],[3,2],[0,0],[4,0],[0,2],[4,2],[2,1],[2,2],[1,0],[3,0],[0,1],[4,1]];
+    const calibrated=definitions.length>6?support.denseContacts:support.contacts;
+    return (calibrated??order.map(([column,row])=>[support.columns[column],rows[row]]))
+     .filter(point=>safePoint(point,width,height)).map(p=>({id:p.join(':'),p}));
+   };
+   const [primary,...secondaries]=actorSupports(terrain).map(contacts);
+   // Leave the accustomed leading bird on its upper surface, then include
+   // two visible alternate support contacts rather than silently flattening
+   // the garden. A clipped or dock-covered support contributes no seats.
+   footholds=[...primary.slice(0,1),...secondaries.flatMap(s=>s.slice(0,2)),
+    ...primary.slice(1),...secondaries.flatMap(s=>s.slice(2))];
    if(trailRuntime)footholds=[...trailRuntime.nodes.filter(n=>n.id!=='bay'&&safePoint(n.p,width,height)),...footholds];
    // Select alternating depth positions, retaining space for a second row.
    footholds=selectFootholds(footholds,definitions.length,(a,b)=>separated(a.p,b.p,width,height));layoutWidth=width;
-   if(terrain.denseContacts&&definitions.length>6&&footholds.length>definitions.length){
+   if((terrain.additionalSurfaces||terrain.denseContacts)&&definitions.length>6&&footholds.length>definitions.length){
+    // With a spare seat, leave a same-row neighbor of the lead open. A spare
+    // seat behind a full row often has no route in a narrow stepped garden.
+    // Reconciliation preserves already occupied seats; safeRoute is still
+    // authoritative, and a truly full group keeps every legal seat.
     const [lead,...others]=footholds;
-    // Existing occupants are retained. In a fresh compact roster leave one
-    // nearby row contact open when present, then validate with safeRoute.
     const nearby=others.filter(n=>Math.abs(n.p[1]-lead.p[1])<.005)
      .sort((a,b)=>Math.abs(a.p[0]-lead.p[0])-Math.abs(b.p[0]-lead.p[0]))[0];
     if(nearby)footholds.push(footholds.splice(footholds.indexOf(nearby),1)[0]);
@@ -357,10 +378,11 @@ export function createGardenActorMotion(root){
     // Compact standing-only recovery: Project a few staggered screen grids
     // onto this surveyed surface; never grow the polygon to manufacture room.
     const dx=Math.ceil(width*.76)+2,dy=Math.ceil(height*.64)+2,c=geometry.clip;
-    const minX=Math.max(c.left, p.left+Math.min(...terrain.surface.map(n=>n[0]))*p.width);
-    const maxX=Math.min(c.right, p.left+Math.max(...terrain.surface.map(n=>n[0]))*p.width);
-    const minY=Math.max(c.top, p.top+Math.min(...terrain.surface.map(n=>n[1]))*p.height);
-    const maxY=Math.min(c.bottom, p.top+Math.max(...terrain.surface.map(n=>n[1]))*p.height);
+    const vertices=actorSupports(terrain).flatMap(s=>s.surface);
+    const minX=Math.max(c.left, p.left+Math.min(...vertices.map(n=>n[0]))*p.width);
+    const maxX=Math.min(c.right, p.left+Math.max(...vertices.map(n=>n[0]))*p.width);
+    const minY=Math.max(c.top, p.top+Math.min(...vertices.map(n=>n[1]))*p.height);
+    const maxY=Math.min(c.bottom, p.top+Math.max(...vertices.map(n=>n[1]))*p.height);
     for(const iy of [0,1,2])for(const ix of [0,1,2]){
      if(footholds.length>=capacity)break;
      const slots=[];

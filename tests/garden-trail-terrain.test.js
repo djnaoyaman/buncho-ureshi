@@ -78,7 +78,7 @@ test('production routes all seven former trail gardens through their own flat pr
  const {renderGardenStage,renderFinchGarden}=await import('../src/encounter-ui.js');
  const {worldFor,GARDENS}=await import('./fixtures/garden-about-world.js');
  const {actorTerrainForStage}=await import('../src/garden-actor-motion.js');
- assert.equal(Object.keys(GARDEN_ACTOR_TERRAIN).length,32);
+ assert.equal(Object.keys(GARDEN_ACTOR_TERRAIN).length,34);
  const converted=[];
  for(const {id} of GARDENS){
   const world=worldFor('attending',id),before=JSON.stringify(world),former=GARDEN_TRAIL_TERRAIN[id];
@@ -243,7 +243,7 @@ test('the twelve new flat surfaces apply their own source polygon without adding
  const {actorTerrainForStage}=await import('../src/garden-actor-motion.js');
  const {worldFor}=await import('./fixtures/garden-about-world.js');
  const add=[2,5,9,13,17,19,22,23,24,25,30,35];
- const hold=[27,32,33];
+ const hold=[32];
  const distinct=new Set();
  for(const item of GARDEN35_PLAN){
   const p=GARDEN_ACTOR_TERRAIN[item.id];
@@ -288,4 +288,21 @@ test('the surveyed log never uses its side, roots, or lower soil as an authored 
  assert.equal(inside([.45,.8],log.surface),false);
  assert.equal(new Set(log.denseContacts.map(p=>p.join(':'))).size,log.denseContacts.length);
  assert.ok(log.denseContacts.length>10);
+ assert.equal(GARDEN_ACTOR_TERRAIN.yuyake.denseContacts.length,16);
+});
+
+
+test('stepped gardens keep both approved supports, reject a sheer gap, and never manufacture a contact',async()=>{
+ const {terrainFor}=await import('../src/garden-terrain-plan.js');
+ const {actorSupports, actorSupportAt}=await import('../src/garden-actor-motion.js');
+ for(const id of ['bird-white-winged-crossbill','bali-terrace']){
+  const active=GARDEN_ACTOR_TERRAIN[id], old=terrainFor(id);
+  assert.equal(actorSupports(active).length,2,id);
+  assert.deepEqual(actorSupports(active).map(s=>s.surface),Object.values(old.surfaces),id);
+  assert.equal(actorSupportAt(active,[.5,.69]),active,id);
+  assert.equal(actorSupportAt(active,[.6,.90]),active.additionalSurfaces[0],id);
+  assert.equal(actorSupportAt(active,[.5,.795]),null,id);
+  assert.ok(active.foregroundClearance.every(a=>a.left<a.right&&a.top<a.bottom),id);
+ }
+ assert.equal(actorSupports(GARDEN_ACTOR_TERRAIN['java-rice']).length,1);
 });

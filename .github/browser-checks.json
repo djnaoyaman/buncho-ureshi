@@ -1,8 +1,9 @@
 {
-  "base": "62609c8d7ae4667b028ae01b95dc63c74ac5f0c9",
+  "base": "c4efd7dc4aa3fdc281b5508ce1e591aaa76e2f56",
   "tests": [
-    "tests/browser/garden-mossy-log-type1.spec.js",
-    "tests/browser/garden-bullfinch-type1.spec.js"
+    "tests/browser/garden-flat-platforms.spec.js",
+    "tests/browser/garden-bullfinch-type1.spec.js",
+    "tests/browser/garden-mossy-log-type1.spec.js"
   ],
-  "reason": "金いろの森の食卓の倒木の苔の上面のみ平地型に適用。1羽の飛行素材・接地、7〜9羽の移動、3幅で最大10羽のタップと既存の石棚をChrome/WebKitで確認。絵・ルール・保存は不変。"
+  "reason": "上下段の既存着地面を保って平地型を白い翼のトウヒ園と赤と緑の島庭に適用。単羽の飛行素材と接地、7〜9羽の実移動、3幅で最大10羽のタップと下段の利用を確認。先行の石棚と苔の倒木もChrome/WebKitで回帰確認。絵・ルール・保存は不変。"
 }
