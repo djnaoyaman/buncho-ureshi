@@ -68,3 +68,17 @@ test('ベニスズメ uses the authentic exact edition, native milestone and act
  const bytes=readFileSync(new URL('../public/game-endings/friendship-red-avadavat-logo09.mp4',import.meta.url));
  assert.equal(createHash('sha256').update(bytes).digest('hex'),'59f684bd6457a6633d4ac786b1b297987b818f2da2f6c2f4f0960f3b4265b437');
 });
+
+test('マヒワ uses exact edited edition and accurately displays source and license',()=>{
+ const bird='eurasian-siskin',w=fixture(99,bird);
+ assert.deepEqual(unlockedFriendshipMovies(w),[]);
+ assert.equal(encounterSystem.pet(w,bird,1,{worldId:w.worldId,revision:w.revision}).changed,true);
+ assert.deepEqual(newlyUnlockedFriendshipMovies([],w.worldId,w),[bird]);
+ const html=renderFriendshipMovieCard(w,bird);
+ assert.match(html,/jLasWilson/);assert.match(html,/原典に記載なし/);
+ assert.ok(html.includes('https://pixabay.com/videos/siskins-garden-birds-bird-feeder-2226/'));
+ assert.ok(html.includes('href="https://pixabay.com/service/terms/">Pixabay Content License</a>'));
+ assert.ok(html.includes('5.25秒'));assert.ok(!html.includes('CC BY'));
+ const bytes=readFileSync(new URL('../public/game-endings/friendship-eurasian-siskin-logo09.mp4',import.meta.url));
+ assert.equal(createHash('sha256').update(bytes).digest('hex'),'41b79719ff2f7d8555bbcee13aabc44cc17f8805a7e09be4d34a9d7b9a1257db');
+});

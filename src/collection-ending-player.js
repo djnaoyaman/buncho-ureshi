@@ -42,6 +42,12 @@ const FRIENDSHIP_MOVIES=Object.freeze({
   source:'https://www.flickr.com/photos/krishnacolor/51482148959/',
   license:'https://creativecommons.org/licenses/by/2.0/',licenseLabel:'CC BY 2.0',creator:'Hari K Patibanda',place:'インド・テランガーナ州',
   edit:'原速の映像を縦向きに切り出し、書き下ろしのことばと音楽を加えています。'
+ }),
+ 'eurasian-siskin':Object.freeze({
+  bird:'マヒワ',title:'マヒワと なかよしになった記念',file:'friendship-eurasian-siskin-logo09.mp4',
+  source:'https://pixabay.com/videos/siskins-garden-birds-bird-feeder-2226/',
+  license:'https://pixabay.com/service/terms/',licenseLabel:'Pixabay Content License',creator:'jLasWilson',place:'原典に記載なし',
+  edit:'原速の5.25秒の抜粋を使い、書き下ろしのことば・音楽・演出を加えて15秒の作品に仕上げています。'
  })
 });
 export function unlockedFriendshipMovies(w){
