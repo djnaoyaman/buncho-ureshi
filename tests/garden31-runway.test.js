@@ -8,12 +8,15 @@ const shelves=JSON.parse(read('docs/qa/garden-flat-phase2-scope.json'));
 const platforms=JSON.parse(read('docs/qa/garden-mossy-log-scope.json'));
 const levels=JSON.parse(read('docs/qa/garden-flat-platforms-scope.json'));
 const courtyard=JSON.parse(read('docs/qa/garden-flat-onsen-scope.json'));
+const homeCamera=JSON.parse(read('docs/qa/home-camera-scope.json'));
 function afterLevels(file,prior){
  const next=levels.changedSource[file];
  if(next)assert.equal(next.before,prior,file);
  const base=next?.after||prior, layer=courtyard.changedSource[file];
  if(layer)assert.equal(layer.before,base,file);
- return layer?.after||base;
+ const released=layer?.after||base,home=homeCamera.changedSource[file];
+ if(home)assert.equal(home.before,released,file);
+ return home?.after||released;
 }
 
 function assertScopedCurrent(file,prior){
@@ -196,4 +199,15 @@ test('Yoriso-i courtyard releases only the lower courtyard geometry and decorati
   assert.equal(hash(read(file)),edge.after,file);
  }
  assert.equal(hash(read('public/game-art/gardens35/bird-garden-32.webp')),courtyard.originalArtSha256);
+});
+
+
+test('only the measured original home camera and egg/chick presentation extend current shared sources',()=>{
+ assert.equal(homeCamera.baseCommit,'4ba348598a1f4c87aff07bf35774b31e84ef4311');
+ assert.equal(homeCamera.home,'field-home');
+ assert.deepEqual(Object.keys(homeCamera.changedSource),['src/game.js','src/game.css','src/field-visuals.js']);
+ assert.equal(homeCamera.changedSource['src/game.js'].before,JSON.parse(read('docs/qa/garden-rotation-input-scope.json')).changedSource['src/game.js'].after);
+ for(const [f,v]of Object.entries(homeCamera.changedSource)){assert.notEqual(v.before,v.after,f);assert.equal(hash(read(f)),v.after,f);}
+ for(const [f,v]of Object.entries(homeCamera.media))assert.equal(hash(read(f)),v,f);
+ assert.equal(homeCamera.greenAlphaPixelsRemoved,33);
 });

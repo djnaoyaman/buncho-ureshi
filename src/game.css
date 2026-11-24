@@ -2289,3 +2289,11 @@ body[data-world="buncho"] .game-field-nav .game-nav-miniature-label { flex:0 0 a
   inline-size:750px;block-size:1334.042553px;left:-180px;top:-731.326809px;
  }
 }
+
+/* Explicit home-only camera moves the same room, furniture and bird plane.
+   It never changes a menu location, a game coordinate, or another habitat. */
+body[data-world="buncho"] .game-main .game-room[data-field="home"][data-has-nestlings]{transform:translateX(calc(-50% - var(--home-camera-delta, 0px)));touch-action:pan-y pinch-zoom}
+body[data-world="buncho"] .game-main .game-room[data-field="home"] .game-habitat img{user-select:none;-webkit-user-drag:none}
+body[data-world="buncho"] .game-main .game-home-camera-reset{position:absolute;top:calc(120px + env(safe-area-inset-top,0px));right:10px;z-index:43;min-height:44px;font-size:12px;background:#fff6dc}
+.game-home-camera-reset[hidden]{display:none!important}
+@media(max-height:500px){body[data-world="buncho"] .game-main .game-home-camera-reset{top:calc(52px + env(safe-area-inset-top,0px))}}
