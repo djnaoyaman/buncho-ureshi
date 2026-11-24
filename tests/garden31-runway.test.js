@@ -4,6 +4,7 @@ const read=p=>readFileSync(new URL('../'+p,import.meta.url)),hash=b=>createHash(
 const trail=JSON.parse(read('docs/qa/garden-trail-public-scope.json'));
 const flat=JSON.parse(read('docs/qa/garden-flat-seven-scope.json'));
 const remaining=JSON.parse(read('docs/qa/garden-flat-remaining-scope.json'));
+const shelves=JSON.parse(read('docs/qa/garden-flat-phase2-scope.json'));
 function assertScopedCurrent(file,prior){
  const step=trail.changedSource[file];
  if(step)assert.equal(step.before,prior,file);
@@ -97,7 +98,9 @@ test('approved flat successor pins exactly two runtime files and preserves the o
   assert.notEqual(entry.before,entry.after,file);
   const latest=remaining.changedSource[file];
   if(latest)assert.equal(latest.before,entry.after,file);
-  assert.equal(hash(read(file)),latest?.after||entry.after,file);
+  const shelf=shelves.changedSource[file];
+  if(shelf)assert.equal(shelf.before,latest?.after||entry.after,file);
+  assert.equal(hash(read(file)),shelf?.after||latest?.after||entry.after,file);
  }
 });
 
@@ -111,6 +114,22 @@ test('remaining open-ground release extends the prior ledger for only the survey
  const edge=remaining.changedSource[path];
  assert.deepEqual(Object.keys(edge),['before','after']);
  assert.equal(edge.before,flat.changedSource[path].after);
+ assert.notEqual(edge.after,edge.before);
+ const successor=shelves.changedSource[path];
+ assert.equal(successor.before,edge.after);
+ assert.equal(hash(read(path)),successor.after);
+});
+
+
+test('stone-shelf release extends the exact prior terrain ledger only',()=>{
+ const path='src/data/garden-actor-terrain.js';
+ assert.equal(shelves.baseCommit,'ec0d4142f8e0b676243271d3f51cbcbdcc2ae568');
+ assert.deepEqual(shelves.gardens,[18]);
+ assert.deepEqual(shelves.heldGardens,[16,27,32,33]);
+ assert.deepEqual(Object.keys(shelves.changedSource),[path]);
+ const edge=shelves.changedSource[path];
+ assert.deepEqual(Object.keys(edge),['before','after']);
+ assert.equal(edge.before,remaining.changedSource[path].after);
  assert.notEqual(edge.after,edge.before);
  assert.equal(hash(read(path)),edge.after);
 });
