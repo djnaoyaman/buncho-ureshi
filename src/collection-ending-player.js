@@ -36,6 +36,12 @@ const FRIENDSHIP_MOVIES=Object.freeze({
   source:'https://www.nps.gov/media/video/view.htm?id=7aee6259-50b8-49e3-8536-d78ab098df87',
   license:'https://www.nps.gov/media/video/view.htm?id=7aee6259-50b8-49e3-8536-d78ab098df87',licenseLabel:'Public Domain（原典の権利表示）',creator:'U.S. National Park Service',place:'米国マウントレーニア国立公園 ロングマイア・メドウ（2021年8月）',
   edit:'原速の映像を縦向きに切り出し、書き下ろしのことばと音楽を加えています。'
+ }),
+ 'red-avadavat':Object.freeze({
+  bird:'ベニスズメ',title:'ベニスズメと なかよしになった記念',file:'friendship-red-avadavat-logo09.mp4',
+  source:'https://www.flickr.com/photos/krishnacolor/51482148959/',
+  license:'https://creativecommons.org/licenses/by/2.0/',licenseLabel:'CC BY 2.0',creator:'Hari K Patibanda',place:'インド・テランガーナ州',
+  edit:'原速の映像を縦向きに切り出し、書き下ろしのことばと音楽を加えています。'
  })
 });
 export function unlockedFriendshipMovies(w){

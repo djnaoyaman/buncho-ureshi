@@ -1,0 +1,12 @@
+{
+  "baseCommit": "f70b4437a578e28c3598adc5f183ba433aaa0894",
+  "changedSource": {
+    "src/collection-ending-player.js": {
+      "before": "a5821e5fe7a765789dee522ac053dae3c02b8d1d86152c79bc2e95bc660963e9",
+      "after": "8376883ae327eddb95f4faf5fc6889a979b1320e848972d23bc791fa7dff952f"
+    }
+  },
+  "media": {
+    "public/game-endings/friendship-red-avadavat-logo09.mp4": "59f684bd6457a6633d4ac786b1b297987b818f2da2f6c2f4f0960f3b4265b437"
+  }
+}

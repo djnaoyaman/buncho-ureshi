@@ -16,6 +16,7 @@ const homeJourney=JSON.parse(read('docs/qa/garden-home-journey-scope.json'));
 const friendshipFilm=JSON.parse(read('docs/qa/garden-friendship-movie-scope.json'));
 const moreFriendshipFilms=JSON.parse(read('docs/qa/garden-friendship-movie-expansion-scope.json'));
 const friendshipLogo=JSON.parse(read('docs/qa/garden-friendship-movie-logo09-scope.json'));
+const avadavat=JSON.parse(read('docs/qa/friendship-movie-red-avadavat-scope.json'));
 const newFriendship=JSON.parse(read('docs/qa/garden-friendship-movie-gouldian-crossbill-scope.json'));
 const friendScale=JSON.parse(read('docs/qa/friend-cage-scale-scope.json'));
 function afterFriendScale(file,prior){
@@ -272,7 +273,8 @@ test('friendship-film successor pins only the reviewed runtime and approved exac
   const successor=moreFriendshipFilms.changedSource[path];if(successor)assert.equal(successor.before,edge.after,path);
   const logo=friendshipLogo.changedSource[path];if(logo)assert.equal(logo.before,successor?.after??edge.after,path);
   const latest=newFriendship.changedSource[path];if(latest)assert.equal(latest.before,logo?.after??successor?.after??edge.after,path);
-  assert.equal(hash(read(path)),afterFriendScale(path,latest?.after??logo?.after??successor?.after??edge.after),path);
+  const added=avadavat.changedSource[path];if(added)assert.equal(added.before,latest?.after??logo?.after??successor?.after??edge.after,path);
+  assert.equal(hash(read(path)),afterFriendScale(path,added?.after??latest?.after??logo?.after??successor?.after??edge.after),path);
  }
  for(const [path,sha] of Object.entries(friendshipFilm.media))assert.equal(hash(read(path)),sha,path);
 });
@@ -290,6 +292,8 @@ test('approved logo09 only changes the four movie URLs, not the player or origin
  assert.deepEqual(Object.keys(friendshipLogo.changedSource),[file]);
  assert.equal(Object.keys(friendshipLogo.media).length,4);
  let reverted=read(file).toString("utf8");
+ assert.equal(hash(reverted),avadavat.changedSource[file].after,file);
+ reverted=reverted.replace(/,\n 'red-avadavat':Object\.freeze\(\{[\s\S]*?\n \}\)/,'');
  assert.equal(hash(reverted),newFriendship.changedSource[file].after,file);
  reverted=reverted.replace(/,\n 'gouldian-finch':Object\.freeze\(\{[\s\S]*?\n \}\),\n 'red-crossbill':Object\.freeze\(\{[\s\S]*?\n \}\)/,'');
  reverted=reverted.replace("\${film.edit??'縦向きに切り出し、文字と音楽を加えています。'}", '縦向きに切り出し、文字と音楽を加えています。');

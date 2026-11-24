@@ -1,9 +1,8 @@
 {
-  "base": "652f626d85c2ebb2b89553234f9fce80dc0bd56e",
+  "base": "f70b4437a578e28c3598adc5f183ba433aaa0894",
   "tests": [
-    "tests/browser/friend-scale.spec.js",
-    "tests/browser/friend-camera-pilot.spec.js",
+    "tests/browser/friendship-movie.spec.js",
     "tests/browser/garden-home-journey.spec.js"
   ],
-  "reason": "友達9軒について背景と鳥の縮尺、縦横画面、最大12羽、スワイプ・タップ・帰宅・休止した検査用保存の不変を検証する。映画は変えない。"
+  "reason": "完成したベニスズメのロゴ09版のみを追加。各種の確定99→100、任意再生、図鑑・日記、原典リンクと実デコード、保存不変、帰宅をChrome/WebKitで検証。"
 }
