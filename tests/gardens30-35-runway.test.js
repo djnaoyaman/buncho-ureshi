@@ -7,10 +7,6 @@ const platforms=JSON.parse(read('docs/qa/garden-mossy-log-scope.json'));
 const levels=JSON.parse(read('docs/qa/garden-flat-platforms-scope.json'));
 const courtyard=JSON.parse(read('docs/qa/garden-flat-onsen-scope.json'));
 const homeCamera=JSON.parse(read('docs/qa/home-camera-scope.json'));
-const homeCamera=JSON.parse(read('docs/qa/home-camera-scope.json'));
-const homeCamera=JSON.parse(read('docs/qa/home-camera-scope.json'));
-const homeCamera=JSON.parse(read('docs/qa/home-camera-scope.json'));
-const homeCamera=JSON.parse(read('docs/qa/home-camera-scope.json'));
 function afterLevels(file,prior){
  const next=levels.changedSource[file];
  if(next)assert.equal(next.before,prior,file);
