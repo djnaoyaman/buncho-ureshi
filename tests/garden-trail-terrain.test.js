@@ -78,7 +78,7 @@ test('production routes all seven former trail gardens through their own flat pr
  const {renderGardenStage,renderFinchGarden}=await import('../src/encounter-ui.js');
  const {worldFor,GARDENS}=await import('./fixtures/garden-about-world.js');
  const {actorTerrainForStage}=await import('../src/garden-actor-motion.js');
- assert.equal(Object.keys(GARDEN_ACTOR_TERRAIN).length,32);
+ assert.equal(Object.keys(GARDEN_ACTOR_TERRAIN).length,33);
  const converted=[];
  for(const {id} of GARDENS){
   const world=worldFor('attending',id),before=JSON.stringify(world),former=GARDEN_TRAIL_TERRAIN[id];
@@ -243,7 +243,7 @@ test('the twelve new flat surfaces apply their own source polygon without adding
  const {actorTerrainForStage}=await import('../src/garden-actor-motion.js');
  const {worldFor}=await import('./fixtures/garden-about-world.js');
  const add=[2,5,9,13,17,19,22,23,24,25,30,35];
- const hold=[27,32,33];
+ const hold=[27,33];
  const distinct=new Set();
  for(const item of GARDEN35_PLAN){
   const p=GARDEN_ACTOR_TERRAIN[item.id];
@@ -288,4 +288,28 @@ test('the surveyed log never uses its side, roots, or lower soil as an authored 
  assert.equal(inside([.45,.8],log.surface),false);
  assert.equal(new Set(log.denseContacts.map(p=>p.join(':'))).size,log.denseContacts.length);
  assert.ok(log.denseContacts.length>10);
+});
+
+test('only the Yoriso-i original foreground is repainted, without changing the source background, tap identity, or save',async()=>{
+ const {renderGardenStage}=await import('../src/encounter-ui.js');
+ const {GARDEN35_PLAN}=await import('../src/data/garden35-plan.js');
+ const {worldFor}=await import('./fixtures/garden-about-world.js');
+ const profile=GARDEN_ACTOR_TERRAIN.onsen;
+ assert.ok(profile.height>=.01,'do not pass the branch gate by suppressing flight height');
+ assert.ok(profile.entries.every(q=>inside(q,profile.surface)));
+ assert.ok(inside([.5,.661],profile.foreground));
+ assert.ok(!inside([.5,.704],profile.foreground));
+ assert.ok(!profile.denseRows.some(y=>inside([.5,y],profile.foreground)));
+ for(const item of GARDEN35_PLAN){
+  const w=worldFor('attending',item.id),save=JSON.stringify(w),html=renderGardenStage(w);
+  assert.equal(JSON.stringify(w),save,item.id);
+  const paint=html.match(/<span class="garden-actor-foreground"[^>]*><\/span>/g)||[];
+  if(item.id!=='onsen'){assert.equal(paint.length,0,item.id);continue;}
+  assert.equal(paint.length,1);
+  const original=html.match(/<img class="finch-garden-background"[^>]* src="([^"]+)"/)[1];
+  assert.equal(paint[0].match(/background-image:url\(&quot;([^&]+)&quot;\)/)[1],original);
+  assert.match(paint[0],/aria-hidden="true"/);
+  assert.match(paint[0],/pointer-events:none/);
+  assert.match(html,/data-garden-actor-id="b1"/);
+ }
 });
