@@ -1,8 +1,8 @@
 {
-  "base": "f70b4437a578e28c3598adc5f183ba433aaa0894",
+  "base": "6b30cd8e49f162980aec7007f5c72220d7115cfa",
   "tests": [
     "tests/browser/friendship-movie.spec.js",
     "tests/browser/garden-home-journey.spec.js"
   ],
-  "reason": "完成したベニスズメのロゴ09版のみを追加。各種の確定99→100、任意再生、図鑑・日記、原典リンクと実デコード、保存不変、帰宅をChrome/WebKitで検証。"
+  "reason": "完成したマヒワのロゴ09版のみを追加。各種の確定99→100、任意再生、図鑑・日記、原典リンクと実デコード、保存不変、帰宅をChrome/WebKitで検証。"
 }

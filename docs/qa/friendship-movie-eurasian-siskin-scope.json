@@ -1,0 +1,12 @@
+{
+  "baseCommit": "6b30cd8e49f162980aec7007f5c72220d7115cfa",
+  "changedSource": {
+    "src/collection-ending-player.js": {
+      "before": "8376883ae327eddb95f4faf5fc6889a979b1320e848972d23bc791fa7dff952f",
+      "after": "05cc0afe19e3af366492fbf28a46a0a0bc7711c7e3be024d2ef954299982a64b"
+    }
+  },
+  "media": {
+    "public/game-endings/friendship-eurasian-siskin-logo09.mp4": "41b79719ff2f7d8555bbcee13aabc44cc17f8805a7e09be4d34a9d7b9a1257db"
+  }
+}
