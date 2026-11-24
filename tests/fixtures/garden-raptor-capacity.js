@@ -24,6 +24,9 @@ export function gardenRaptorCapacity({species='common-kestrel',knownVisitor=fals
   if(knownVisitor&&!getGardenVisitingBird(w))continue;
   const arrival=arriveGardenRaptor(w,species,RAPTOR_CAPACITY_NOW,t());
   if(!arrival.changed||arrival.hostile!==warning||w.encounters.raptor.active.targetBirdId!=='b1')throw Error('unexpected raptor in capacity fixture');
+  // The session was saved after the second arrival. Avoid normal load-time
+  // clock catch-up advancing bird social life before the presentation assertion.
+  w.lastUpdated=RAPTOR_CAPACITY_NOW;
   w.field={place:'park',hostId:null,enteredTick:w.tick};
   return {w:validateWorld(w),companionId:companion?.id,nativeId:native.id,visitorId:getGardenVisitingBird(w)?.id??null};
  }
