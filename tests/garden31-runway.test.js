@@ -6,6 +6,7 @@ const flat=JSON.parse(read('docs/qa/garden-flat-seven-scope.json'));
 const remaining=JSON.parse(read('docs/qa/garden-flat-remaining-scope.json'));
 const shelves=JSON.parse(read('docs/qa/garden-flat-phase2-scope.json'));
 const platforms=JSON.parse(read('docs/qa/garden-mossy-log-scope.json'));
+const courtyard=JSON.parse(read('docs/qa/garden-flat-onsen-scope.json'));
 function assertScopedCurrent(file,prior){
  const step=trail.changedSource[file];
  if(step)assert.equal(step.before,prior,file);
@@ -13,7 +14,9 @@ function assertScopedCurrent(file,prior){
  if(successor)assert.equal(successor.before,step?.after||prior,file);
  const platform=platforms.changedSource[file];
  if(platform)assert.equal(platform.before,successor?.after||step?.after||prior,file);
- assert.equal(hash(read(file)),platform?.after||successor?.after||step?.after||prior,file);
+ const layer=courtyard.changedSource[file];
+ if(layer)assert.equal(layer.before,platform?.after||successor?.after||step?.after||prior,file);
+ assert.equal(hash(read(file)),layer?.after||platform?.after||successor?.after||step?.after||prior,file);
 }
 test('hanadokei uses the exact approved Runway-derived MP3 with explicit period and entry guard',()=>{
  const m=GARDEN35_MUSIC.hanadokei,t=gardenMusicTracks().find(t=>t.gardenId==='hanadokei'),bytes=read('public/'+r.asset);
@@ -88,7 +91,9 @@ test('Type II formal candidate source successor pins the exact reviewed files an
   if(successor)assert.equal(successor.before,entry.after,f);
   const platform=platforms.changedSource[f];
   if(platform)assert.equal(platform.before,successor?.after||entry.after,f);
-  assert.equal(hash(read(f)),platform?.after||successor?.after||entry.after,f);
+  const layer=courtyard.changedSource[f];
+  if(layer)assert.equal(layer.before,platform?.after||successor?.after||entry.after,f);
+  assert.equal(hash(read(f)),layer?.after||platform?.after||successor?.after||entry.after,f);
  }
 });
 
@@ -107,7 +112,9 @@ test('approved flat successor pins exactly two runtime files and preserves the o
   if(shelf)assert.equal(shelf.before,latest?.after||entry.after,file);
   const platform=platforms.changedSource[file];
   if(platform)assert.equal(platform.before,shelf?.after||latest?.after||entry.after,file);
-  assert.equal(hash(read(file)),platform?.after||shelf?.after||latest?.after||entry.after,file);
+  const layer=courtyard.changedSource[file];
+  if(layer)assert.equal(layer.before,platform?.after||shelf?.after||latest?.after||entry.after,file);
+  assert.equal(hash(read(file)),layer?.after||platform?.after||shelf?.after||latest?.after||entry.after,file);
  }
 });
 
@@ -125,7 +132,8 @@ test('remaining open-ground release extends the prior ledger for only the survey
  const successor=shelves.changedSource[path];
  assert.equal(successor.before,edge.after);
  assert.equal(platforms.changedSource[path].before,successor.after);
- assert.equal(hash(read(path)),platforms.changedSource[path].after);
+ assert.equal(courtyard.changedSource[path].before,platforms.changedSource[path].after);
+ assert.equal(hash(read(path)),courtyard.changedSource[path].after);
 });
 
 
@@ -140,7 +148,8 @@ test('stone-shelf release extends the exact prior terrain ledger only',()=>{
  assert.equal(edge.before,remaining.changedSource[path].after);
  assert.notEqual(edge.after,edge.before);
  assert.equal(platforms.changedSource[path].before,edge.after);
- assert.equal(hash(read(path)),platforms.changedSource[path].after);
+ assert.equal(courtyard.changedSource[path].before,platforms.changedSource[path].after);
+ assert.equal(hash(read(path)),courtyard.changedSource[path].after);
 });
 
 
@@ -153,6 +162,23 @@ test('mossy log extends the prior ledgers for exactly terrain data and shared pr
  assert.equal(platforms.changedSource[motion].before,trail.changedSource[motion].after);
  for(const [f,edge] of Object.entries(platforms.changedSource)){
   assert.deepEqual(Object.keys(edge),['before','after']);assert.notEqual(edge.before,edge.after);
-  assert.equal(hash(read(f)),edge.after,f);
+  const layer=courtyard.changedSource[f];
+  if(layer)assert.equal(layer.before,edge.after,f);
+  assert.equal(hash(read(f)),layer?.after||edge.after,f);
  }
+});
+
+test('Yoriso-i courtyard releases only the lower courtyard geometry and decorative foreground',()=>{
+ const data='src/data/garden-actor-terrain.js', renderer='src/encounter-ui.js';
+ assert.equal(courtyard.baseCommit,'c4efd7dc4aa3fdc281b5508ce1e591aaa76e2f56');
+ assert.deepEqual(courtyard.gardens,[32]);
+ assert.deepEqual(courtyard.heldGardens,[27,33]);
+ assert.deepEqual(Object.keys(courtyard.changedSource),[renderer,data]);
+ assert.equal(courtyard.changedSource[renderer].before,flat.changedSource[renderer].after);
+ assert.equal(courtyard.changedSource[data].before,platforms.changedSource[data].after);
+ for(const [file,edge] of Object.entries(courtyard.changedSource)){
+  assert.notEqual(edge.after,edge.before,file);
+  assert.equal(hash(read(file)),edge.after,file);
+ }
+ assert.equal(hash(read('public/game-art/gardens35/bird-garden-32.webp')),courtyard.originalArtSha256);
 });
