@@ -75,15 +75,15 @@ export function homeRoomHopClear(from,to,neighbors,clip){
  return sweep.left>=clip.left&&sweep.right<=clip.right&&sweep.top>=clip.top&&sweep.bottom<=clip.bottom&&!neighbors.some(box=>overlaps(sweep,box));
 }
 function homeNestScale(young,tall,projection){
- const y=tall?.578:.580, aspect=tall?.75:1.6;
+ const floor=.592, top=.522, aspect=tall?.75:1.6;
  const columns=young.length<=4?Math.min(2,young.length):Math.ceil(young.length/3),rows=Math.ceil(young.length/columns);
- const stepX=.115/columns,stepY=.074/rows;
+ const stepX=.107/columns,stepY=(floor-top)/rows;
  const reference=(tall?.16:.105)*Math.min(1,Math.max(0,projection));
  const normal=b=>reference*HOME_VISIBLE_STAGE_HEIGHT.adult*HOME_NEST_VISUAL_RATIO[b.stage]/HOME_VISIBLE_STAGE_HEIGHT[b.stage];
  const max=Math.max(...young.map(normal)),scale=max?Math.min(1,stepX*.87/max,stepY*.86*.85/aspect/max):1;
  return young.map((b,i)=>{
   const row=Math.floor(i/columns),count=Math.min(columns,young.length-row*columns);
-  return [b.id,{id:'nest-'+i,x:.835+(i%columns-(count-1)/2)*stepX,y:y+(row-(rows-1)/2)*stepY,
+  return [b.id,{id:'nest-'+i,x:.835+(i%columns-(count-1)/2)*stepX,y:floor-(rows-1-row)*stepY,
    width:normal(b)*scale,depth:1,zone:'nest',interactive:false}];
  });
 }
