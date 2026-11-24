@@ -5,12 +5,15 @@ const trail=JSON.parse(read('docs/qa/garden-trail-public-scope.json'));
 const flat=JSON.parse(read('docs/qa/garden-flat-seven-scope.json'));
 const remaining=JSON.parse(read('docs/qa/garden-flat-remaining-scope.json'));
 const shelves=JSON.parse(read('docs/qa/garden-flat-phase2-scope.json'));
+const platforms=JSON.parse(read('docs/qa/garden-flat-platforms-scope.json'));
 function assertScopedCurrent(file,prior){
  const step=trail.changedSource[file];
  if(step)assert.equal(step.before,prior,file);
  const successor=flat.changedSource[file];
  if(successor)assert.equal(successor.before,step?.after||prior,file);
- assert.equal(hash(read(file)),successor?.after||step?.after||prior,file);
+ const platform=platforms.changedSource[file];
+ if(platform)assert.equal(platform.before,successor?.after||step?.after||prior,file);
+ assert.equal(hash(read(file)),platform?.after||successor?.after||step?.after||prior,file);
 }
 test('hanadokei uses the exact approved Runway-derived MP3 with explicit period and entry guard',()=>{
  const m=GARDEN35_MUSIC.hanadokei,t=gardenMusicTracks().find(t=>t.gardenId==='hanadokei'),bytes=read('public/'+r.asset);
@@ -83,7 +86,9 @@ test('Type II formal candidate source successor pins the exact reviewed files an
   assert.notEqual(entry.before,entry.after,f);
   const successor=flat.changedSource[f];
   if(successor)assert.equal(successor.before,entry.after,f);
-  assert.equal(hash(read(f)),successor?.after||entry.after,f);
+  const platform=platforms.changedSource[f];
+  if(platform)assert.equal(platform.before,successor?.after||entry.after,f);
+  assert.equal(hash(read(f)),platform?.after||successor?.after||entry.after,f);
  }
 });
 
@@ -100,7 +105,9 @@ test('approved flat successor pins exactly two runtime files and preserves the o
   if(latest)assert.equal(latest.before,entry.after,file);
   const shelf=shelves.changedSource[file];
   if(shelf)assert.equal(shelf.before,latest?.after||entry.after,file);
-  assert.equal(hash(read(file)),shelf?.after||latest?.after||entry.after,file);
+  const platform=platforms.changedSource[file];
+  if(platform)assert.equal(platform.before,shelf?.after||latest?.after||entry.after,file);
+  assert.equal(hash(read(file)),platform?.after||shelf?.after||latest?.after||entry.after,file);
  }
 });
 
@@ -117,7 +124,8 @@ test('remaining open-ground release extends the prior ledger for only the survey
  assert.notEqual(edge.after,edge.before);
  const successor=shelves.changedSource[path];
  assert.equal(successor.before,edge.after);
- assert.equal(hash(read(path)),successor.after);
+ assert.equal(platforms.changedSource[path].before,successor.after);
+ assert.equal(hash(read(path)),platforms.changedSource[path].after);
 });
 
 
@@ -131,5 +139,20 @@ test('stone-shelf release extends the exact prior terrain ledger only',()=>{
  assert.deepEqual(Object.keys(edge),['before','after']);
  assert.equal(edge.before,remaining.changedSource[path].after);
  assert.notEqual(edge.after,edge.before);
- assert.equal(hash(read(path)),edge.after);
+ assert.equal(platforms.changedSource[path].before,edge.after);
+ assert.equal(hash(read(path)),platforms.changedSource[path].after);
+});
+
+
+test('stepped surfaces extend the prior ledgers for exactly terrain data and shared presentation only',()=>{
+ const data='src/data/garden-actor-terrain.js', motion='src/garden-actor-motion.js';
+ assert.equal(platforms.baseCommit,'62609c8d7ae4667b028ae01b95dc63c74ac5f0c9');
+ assert.deepEqual(platforms.gardens,[27,33]);assert.deepEqual(platforms.heldGardens,[16,32]);
+ assert.deepEqual(Object.keys(platforms.changedSource),[data,motion]);
+ assert.equal(platforms.changedSource[data].before,shelves.changedSource[data].after);
+ assert.equal(platforms.changedSource[motion].before,trail.changedSource[motion].after);
+ for(const [f,edge] of Object.entries(platforms.changedSource)){
+  assert.deepEqual(Object.keys(edge),['before','after']);assert.notEqual(edge.before,edge.after);
+  assert.equal(hash(read(f)),edge.after,f);
+ }
 });

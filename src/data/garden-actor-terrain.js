@@ -195,5 +195,28 @@ export const GARDEN_ACTOR_TERRAIN = Object.freeze({
     height:0.04,
     note:"芽吹きの口笛庭。石棚の上だけ。手前の段差をまたがず、同じ石棚での短い飛行と小跳び。",
   },
+
+  'bird-white-winged-crossbill': {
+    surface:[[.16,.646],[.39,.644],[.61,.638],[.87,.649],[.86,.693],[.64,.711],[.42,.731],[.16,.722]],
+    rows:[.662,.689,.715],columns:[.268,.374,.48,.586,.692],denseRows:[.6465,.706],
+    entries:[[.36,.67],[.81,.68]],height:.055,
+    additionalSurfaces:[{
+      surface:[[.16,.857],[.36,.839],[.60,.824],[.78,.842],[.80,.906],[.55,.935],[.16,.933]],
+      rows:[.859,.878,.909],columns:[.27,.38,.50,.62,.73],denseRows:[.847,.868,.890,.919],
+    }],
+    foregroundClearance:[{left:0,right:.193,top:.552,bottom:.710}],
+    note:'白い翼のトウヒ園。高い森床と下の道。段差と左の前景枝を避け、動くのは同じ高さの面内だけ。',
+  },
+  'bali-terrace': {
+    surface:[[.14,.657],[.87,.654],[.86,.723],[.68,.729],[.28,.745],[.14,.727]],
+    rows:[.673,.696,.722],columns:[.24,.37,.50,.63,.76],denseRows:[.661,.721],
+    entries:[[.29,.68],[.82,.68]],height:.055,
+    additionalSurfaces:[{
+      surface:[[.25,.899],[.51,.866],[.64,.855],[.81,.890],[.81,.960],[.29,.960]],
+      rows:[.879,.908,.935],columns:[.34,.42,.52,.63,.74],denseRows:[.873,.895,.916,.941],
+    }],
+    foregroundClearance:[{left:0,right:.168,top:.523,bottom:.630}],
+    note:'赤と緑の島庭。石棚と下の芝。崖面と左の前景の葉を避け、動くのは同じ高さの面内だけ。',
+  },
 });
 export const actorTerrainFor = id => GARDEN_ACTOR_TERRAIN[id] || null;

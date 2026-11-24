@@ -1,7 +1,8 @@
 {
-  "base": "ec0d4142f8e0b676243271d3f51cbcbdcc2ae568",
+  "base": "62609c8d7ae4667b028ae01b95dc63c74ac5f0c9",
   "tests": [
+    "tests/browser/garden-flat-platforms.spec.js",
     "tests/browser/garden-bullfinch-type1.spec.js"
   ],
-  "reason": "既存の平地型を別途調査した石棚だけに適用。各3画面幅で単羽飛行・着地の実描画と最大10羽のタップをChrome/WebKit確認。絵・ルール・他の庭のデータは変更しない。"
+  "reason": "上下段の既存の着地面・枝葉との距離を保持して平地型を白い翼のトウヒ園と赤と緑の島庭に適用。1羽の飛行素材・接地、7〜9羽の実移動、3幅で最大10羽のタップと下段の露出、既存の石棚をChrome/WebKitで確認。絵・ルール・保存は不変。"
 }
