@@ -9,6 +9,12 @@ const courtyard=JSON.parse(read('docs/qa/garden-flat-onsen-scope.json'));
 const homeCamera=JSON.parse(read('docs/qa/home-camera-scope.json'));
 const friendCamera=JSON.parse(read('docs/qa/friend-camera-pilot-scope.json'));
 const friendRollout=JSON.parse(read('docs/qa/friend-camera-rollout-scope.json'));
+const raptorCapacity=JSON.parse(read('docs/qa/garden-raptor-capacity-scope.json'));
+function afterRaptorCapacity(file,prior){
+ const change=raptorCapacity.changedSource[file];
+ if(change)assert.equal(change.before,prior,file);
+ return change?.after||prior;
+}
 function afterLevels(file,prior){
  const next=levels.changedSource[file];
  if(next)assert.equal(next.before,prior,file);
@@ -20,7 +26,7 @@ function afterLevels(file,prior){
  if(friend)assert.equal(friend.before,own,file);
  const pilot=friend?.after||own, rollout=friendRollout.changedSource[file];
  if(rollout)assert.equal(rollout.before,pilot,file);
- return rollout?.after||pilot;
+ return afterRaptorCapacity(file,rollout?.after||pilot);
 }
 
 function assertScopedCurrent(file,prior){

@@ -1,9 +1,7 @@
 {
-  "base": "d314236678fe07cb199881ec285106147049722b",
+  "base": "963bdd1a32666f0e3458ee542897be30ccdafa52",
   "tests": [
-    "tests/browser/friend-camera-pilot.spec.js",
-    "tests/browser/friend-cages.spec.js",
-    "tests/browser/home-camera.spec.js"
+    "tests/browser/garden-raptor-capacity.spec.js"
   ],
-  "reason": "友達のおうち9種類の元絵と中央の初期構図、縦長端末での左右操作・鳥のタップ・保存不変、横長での覆いと自宅・公園の回帰をChromeとWebKitで確認。"
+  "reason": "水辺の星くずの定員描画と本物の猛禽素材を、非攻撃ケストレル、ミサゴと本来の警戒状態で検証。保存や危険度計算を変更しない。"
 }

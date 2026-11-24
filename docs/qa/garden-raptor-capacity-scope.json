@@ -1,0 +1,17 @@
+{
+  "baseCommit": "963bdd1a32666f0e3458ee542897be30ccdafa52",
+  "changedSource": {
+    "src/encounter-ui.js": {
+      "before": "de18ab1a31e22c092a6e0b61d3c4cac5d7977a4c640fc8067efbddcfd32b26f7",
+      "after": "2ef0989287206784794897fc2b5f94f8cd491c05b7b1bf30b515f6b2eacef1d1"
+    }
+  },
+  "unchangedPredatorSources": {
+    "src/garden-raptors.js": "f848e834a1ea80f1610e456e119e9ec3484fd627adbdaba75c6f9335ca98cdf8",
+    "src/garden-predator-clock.js": "ccaca8ef116fd3d7082be705e2fdeae90070d6dad91d3dbd709ede68f238a4d0",
+    "src/garden-raptor-controller.js": "92091f9c924a8384041d5dd5537fdc014cef85e601182cc25433fae427b1f4d0",
+    "src/garden-raptor-ui.js": "5a4af5de2d61e9c22ceba78de4dd92fa8bf7cfb0669bcbffc4a1773164764e28",
+    "public/game-art/raptors/common-kestrel.webp": "0d896433f0b34084a204ce0650bc77bd87ad1d26c2d2159f669c3da0f62be0c6",
+    "public/game-art/raptors/osprey.webp": "f83a86eba0828cd6fcb3da28579031b8f4f73c470647ce5e8b5eef8bedcfbbe2"
+  }
+}

@@ -11,6 +11,12 @@ const courtyard=JSON.parse(read('docs/qa/garden-flat-onsen-scope.json'));
 const homeCamera=JSON.parse(read('docs/qa/home-camera-scope.json'));
 const friendCamera=JSON.parse(read('docs/qa/friend-camera-pilot-scope.json'));
 const friendRollout=JSON.parse(read('docs/qa/friend-camera-rollout-scope.json'));
+const raptorCapacity=JSON.parse(read('docs/qa/garden-raptor-capacity-scope.json'));
+function afterRaptorCapacity(file,prior){
+ const change=raptorCapacity.changedSource[file];
+ if(change)assert.equal(change.before,prior,file);
+ return change?.after||prior;
+}
 function afterLevels(file,prior){
  const next=levels.changedSource[file];
  if(next)assert.equal(next.before,prior,file);
@@ -22,7 +28,7 @@ function afterLevels(file,prior){
  if(friend)assert.equal(friend.before,own,file);
  const pilot=friend?.after||own, rollout=friendRollout.changedSource[file];
  if(rollout)assert.equal(rollout.before,pilot,file);
- return rollout?.after||pilot;
+ return afterRaptorCapacity(file,rollout?.after||pilot);
 }
 
 function assertScopedCurrent(file,prior){
@@ -188,7 +194,7 @@ test('stepped surfaces extend the mossy log ledger for exactly the shared presen
   assert.equal(edge.before,platforms.changedSource[f].after);
   const layer=courtyard.changedSource[f];
   if(layer)assert.equal(layer.before,edge.after,f);
-  assert.equal(hash(read(f)),layer?.after||edge.after,f);
+  assert.equal(hash(read(f)),afterRaptorCapacity(f,layer?.after||edge.after),f);
  }
 });
 
@@ -202,7 +208,7 @@ test('Yoriso-i courtyard releases only the lower courtyard geometry and decorati
  assert.equal(courtyard.changedSource[data].before,levels.changedSource[data].after);
  for(const [file,edge] of Object.entries(courtyard.changedSource)){
   assert.notEqual(edge.after,edge.before,file);
-  assert.equal(hash(read(file)),edge.after,file);
+  assert.equal(hash(read(file)),afterRaptorCapacity(file,edge.after),file);
  }
  assert.equal(hash(read('public/game-art/gardens35/bird-garden-32.webp')),courtyard.originalArtSha256);
 });
@@ -216,4 +222,13 @@ test('only the measured original home camera and egg/chick presentation extend c
  for(const [f,v]of Object.entries(homeCamera.changedSource)){assert.notEqual(v.before,v.after,f);assert.equal(hash(read(f)),friendRollout.changedSource[f]?.after||friendCamera.changedSource[f]?.after||v.after,f);}
  for(const [f,v]of Object.entries(homeCamera.media))assert.equal(hash(read(f)),v,f);
  assert.equal(homeCamera.greenAlphaPixelsRemoved,33);
+});
+
+test('raptor occupancy repair changes only the renderer, not rules or art',()=>{
+ const renderer='src/encounter-ui.js';
+ assert.match(raptorCapacity.baseCommit,/^[0-9a-f]{40}$/);
+ assert.deepEqual(Object.keys(raptorCapacity.changedSource),[renderer]);
+ assert.equal(raptorCapacity.changedSource[renderer].before,courtyard.changedSource[renderer].after);
+ assert.equal(hash(read(renderer)),raptorCapacity.changedSource[renderer].after);
+ for(const [f,v]of Object.entries(raptorCapacity.unchangedPredatorSources))assert.equal(hash(read(f)),v,f);
 });
