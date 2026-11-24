@@ -52,9 +52,45 @@ export function furnitureSvg(slot, color='#a6c6b2', tier=1,atmosphere=null) {
   return `<svg viewBox="0 0 200 180" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" data-item-art="atelier-v3" data-form="${furnitureFormIndex(c)}">${defs}${waterSurface(styleArtwork(slot,furnitureFormIndex(c),level,formArtwork(slot,furnitureFormIndex(c),level,{g,c:body,pale,deep,edge,ivory},{bowl,shadow,grainFraction}),{g,c:body,ivory}))}${feedScatter(slot,atmosphere)}</svg>`;
 }
 
+// Measured alpha bounds at alpha >= 128: adult 1241px × 1000/1359;
+ // chick 1018px × .70; the egg's painted SVG path spans 735px.
+export const HOME_VISIBLE_STAGE_HEIGHT=Object.freeze({adult:1241/1359,chick:1018*.70/1000,egg:.735});
+export const HOME_NEST_VISUAL_RATIO=Object.freeze({chick:.62,egg:.23});
+export function homeCropOffset(camera,manual){
+ const limit=Math.max(0,camera.planeWidth-camera.width);
+ return manual==null?camera.left:Math.max(0,Math.min(limit,manual*limit));
+}
+export function homeRoomSweep(from,to){
+ if(![from,to].every(r=>r&&Number.isFinite(r.left+r.right+r.top+r.bottom)))return null;
+ // FLIP uses the newly rendered sprite even at the old position. Protect
+ // the larger size and the full travel envelope, including the two arc lifts.
+ const w=Math.max(from.right-from.left,to.right-to.left),h=Math.max(from.bottom-from.top,to.bottom-to.top);
+ return {left:Math.min(from.left,to.left),right:Math.max(from.left,to.left)+w,
+  top:Math.min(from.top,to.top,from.top*.55+to.top*.45-14,from.top*.12+to.top*.88-5),bottom:Math.max(from.top,to.top)+h};
+}
+export function homeRoomHopClear(from,to,neighbors,clip){
+ const sweep=homeRoomSweep(from,to);
+ if(!sweep||!clip||!Number.isFinite(clip.left+clip.right+clip.top+clip.bottom))return false;
+ const overlaps=(a,b)=>a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top;
+ return sweep.left>=clip.left&&sweep.right<=clip.right&&sweep.top>=clip.top&&sweep.bottom<=clip.bottom&&!neighbors.some(box=>overlaps(sweep,box));
+}
+function homeNestScale(young,tall,projection){
+ const y=tall?.578:.580, aspect=tall?.75:1.6;
+ const columns=young.length<=4?Math.min(2,young.length):Math.ceil(young.length/3),rows=Math.ceil(young.length/columns);
+ const stepX=.115/columns,stepY=.074/rows;
+ const reference=(tall?.16:.105)*Math.min(1,Math.max(0,projection));
+ const normal=b=>reference*HOME_VISIBLE_STAGE_HEIGHT.adult*HOME_NEST_VISUAL_RATIO[b.stage]/HOME_VISIBLE_STAGE_HEIGHT[b.stage];
+ const max=Math.max(...young.map(normal)),scale=max?Math.min(1,stepX*.87/max,stepY*.86*.85/aspect/max):1;
+ return young.map((b,i)=>{
+  const row=Math.floor(i/columns),count=Math.min(columns,young.length-row*columns);
+  return [b.id,{id:'nest-'+i,x:.835+(i%columns-(count-1)/2)*stepX,y:y+(row-(rows-1)/2)*stepY,
+   width:normal(b)*scale,depth:1,zone:'nest',interactive:false}];
+ });
+}
+
 /** Twelve intentional foot contacts, not population-dependent rows. Visible
  * perches below provide an exact physical support on both scene backgrounds. */
-export function fieldPositions(birds,variant='wide',place='home') {
+export function fieldPositions(birds,variant='wide',place='home',projection=1) {
   const tall=variant==='tall',park=place==='park',positions=new Map();
   let mature=birds.filter(b=>!['egg','chick'].includes(b.stage));
   const paired=[],used=new Set();
@@ -69,7 +105,8 @@ export function fieldPositions(birds,variant='wide',place='home') {
   // Leave room below each bird for its role and visiting species name. Wide
   // rooms use tighter vertical rows, especially for grandfathered large families.
   const matureWidth=mature.length===1?(tall?.24:.17):tall?.16:mature.length>12?.06:mature.length>4?.09:.105;
-  mature.forEach((b,i)=>{const a=mature.length===1?contacts[9]:contacts[i];positions.set(b.id,{id:`field-contact-${i}`,x:a[0],y:a[1],width:matureWidth,depth:1,zone:b.action.kind,interactive:true});});
+  mature.forEach((b,i)=>{const a=mature.length===1?contacts[9]:contacts[i];positions.set(b.id,{id:`field-contact-${i}`,x:a[0],y:a[1],width:matureWidth*(place==='home'&&b.stage==='juvenile'?.92:1),depth:1,zone:b.action.kind,interactive:true});});
+  if(place==='home'&&young.length){for(const [id,pos] of homeNestScale(young,tall,projection))positions.set(id,pos);return positions;}
   const nestY=tall?.578:.580,columns=Math.min(4,Math.max(2,young.length)),rows=Math.ceil(young.length/columns)||1;
   // The woven nest opening is part of the fixed backdrop, not the viewport.
   // Keep even the largest legacy clutch inside its inner bowl, clear of the rim.

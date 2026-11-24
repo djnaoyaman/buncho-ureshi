@@ -1,0 +1,25 @@
+{
+  "baseCommit": "4ba348598a1f4c87aff07bf35774b31e84ef4311",
+  "home": "field-home",
+  "changedSource": {
+    "src/game.js": {
+      "before": "62c74dbcd2b7306f8556c221cee4aad45fb468b1624e9d511257922c762873a8",
+      "after": "b1db7b631d1a177cb339efae9bba001c19e1eea203a19dd0551b4dacea8d63e5"
+    },
+    "src/game.css": {
+      "before": "bc30157ba3db57b8ac284fd03ffd878a36417f54926bc894fba2323a9e207fb4",
+      "after": "74821b7db5d7cee95ddef70fb88a603877e57eab6ca388536925e98fd7ecff7e"
+    },
+    "src/field-visuals.js": {
+      "before": "139622d37e7c69067477f675b34258afa702e870c8446143407e959a4f1185f0",
+      "after": "b192f032f73f39c79c144b07d4b83a36edc565ffe6b7c715cdcdf507aebb8d6d"
+    }
+  },
+  "media": {
+    "public/game-art/chick.webp": "0294d453d0fed515c0ea6143e2e0abfc045bf75f0a34e3533b0f7a4f1d35da6f",
+    "public/game-art/home-chick-dehalo-v1.webp": "cf6833e950c36ec7d3e5864ca0000858bd7a924b0a306f2e7709b8959e6a6b98",
+    "public/game-art/field-home-tall.webp": "5ce059767c1a6727f22327b7dc753c614532ed6906fcc1387706429e9d791d79",
+    "public/game-art/field-home-wide.webp": "2a22c997f33da84121a7725222b26a79c39446e76359c5e667407a30609b6c72"
+  },
+  "greenAlphaPixelsRemoved": 33
+}

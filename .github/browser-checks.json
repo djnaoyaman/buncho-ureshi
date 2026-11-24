@@ -1,7 +1,8 @@
 {
-  "base": "706f71b25579b6841446beb8ac0a93b3b68a9dea",
+  "base": "4ba348598a1f4c87aff07bf35774b31e84ef4311",
   "tests": [
-    "tests/browser/garden-onsen-type1.spec.js"
+    "tests/browser/home-camera.spec.js",
+    "tests/browser/nestling-visibility.spec.js"
   ],
-  "reason": "寄りそいの中庭のみ。枝の描画順、石畳への自律飛行、狭幅での8羽の実飛行と最大10羽の入力をChrome/WebKitで確認。ゲームルール、保存、他庭の挙動は変更なし。"
+  "reason": "既存のおうち一種類だけに任意の横スワイプと巣の実寸基準を追加。スマホ幅の初期画像デコード・固定メニュー・端クランプ・操作の分離・既存の誕生/成長/来訪操作をChromeとSafari互換WebKitで確認。庭および友達のおうちは対象外。"
 }
