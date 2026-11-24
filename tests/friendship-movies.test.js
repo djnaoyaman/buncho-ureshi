@@ -54,3 +54,17 @@ for(const [bird,license,place] of [['gouldian-finch','Pixabay Content License','
  const html=renderFriendshipMovieCard(w,bird);
  assert.ok(html.includes(license));assert.ok(html.includes(place));assert.ok(!html.includes('CC BY'));
 });
+
+test('ベニスズメ uses the authentic exact edition, native milestone and actual author',()=>{
+ const bird='red-avadavat',w=fixture(99,bird);
+ assert.deepEqual(unlockedFriendshipMovies(w),[]);
+ assert.equal(encounterSystem.pet(w,bird,1,{worldId:w.worldId,revision:w.revision}).changed,true);
+ assert.deepEqual(newlyUnlockedFriendshipMovies([],w.worldId,w),[bird]);
+ const html=renderFriendshipMovieCard(w,bird);
+ assert.match(html,/Hari K Patibanda/);
+ assert.match(html,/テランガーナ州/);
+ assert.ok(html.includes('https://www.flickr.com/photos/krishnacolor/51482148959/'));
+ assert.ok(html.includes('href="https://creativecommons.org/licenses/by/2.0/">CC BY 2.0</a>'));
+ const bytes=readFileSync(new URL('../public/game-endings/friendship-red-avadavat-logo09.mp4',import.meta.url));
+ assert.equal(createHash('sha256').update(bytes).digest('hex'),'59f684bd6457a6633d4ac786b1b297987b818f2da2f6c2f4f0960f3b4265b437');
+});
