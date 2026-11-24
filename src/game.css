@@ -2311,3 +2311,7 @@ body[data-world="buncho"] .game-main .game-home-camera-reset{position:absolute;t
    the default; use cover to preserve each original artwork aspect exactly. */
 body[data-world="buncho"] .game-main .game-room[data-field="friend"][data-friend-camera]{transform:translateX(calc(-50% - var(--home-camera-delta, 0px)));touch-action:pan-y pinch-zoom}
 body[data-world="buncho"] .game-main .game-room[data-field="friend"][data-friend-camera] .game-habitat img{object-fit:cover;user-select:none;-webkit-user-drag:none}
+
+/* The visual stays on the artwork scale; enlarge the tap area, not the bird. */
+body[data-world="buncho"] .game-main .game-room[data-field="friend"][data-friend-camera] .game-room-bird:not(.game-nestling){width:var(--bird-width);min-width:0;min-height:0}
+body[data-world="buncho"] .game-main .game-room[data-field="friend"][data-friend-camera] .game-room-bird:not(.game-nestling)::before{content:'';position:absolute;left:50%;top:50%;width:max(100%,44px);height:max(100%,44px);transform:translate(-50%,-50%)}

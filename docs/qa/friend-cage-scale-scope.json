@@ -1,0 +1,28 @@
+{
+  "baseCommit": "652f626d85c2ebb2b89553234f9fce80dc0bd56e",
+  "changedSource": {
+    "src/game.js": {
+      "before": "a12de659760de528903669972ece980ce164d8f45e18a25d47faa4b09aad6716",
+      "after": "812a71c49c4b29d42dd01c56a038ef2567de6ce67b322ca989fee62011938aa7"
+    },
+    "src/game.css": {
+      "before": "ab52799088aae86dfb891ea68d1a19e322f2f6b389410777903b9a10ea81486a",
+      "after": "ab0b4e03532f54d9aff80ce8daf22ec3efeae3eb7fa8d836037471c167d6e269"
+    },
+    "src/friend-cages.js": {
+      "before": "d53b7d4c84b0ebdf6ab59efb41b10edfc372dfa244089875b88317f626789c60",
+      "after": "0bb5b5af05c19a5aa060e51aa988661cbe0c5a92c2478fdb5e4cbe184d7157aa"
+    }
+  },
+  "unchangedMedia": {
+    "public/game-art/friend-cages/cage-01-v1.webp": "9a78bf5c32cf6d6ea32e5ff1abf14c60cf5a0799ed6ecff8df8df27f5377e02b",
+    "public/game-art/friend-cages/cage-02-v1.webp": "4c392453680c0187d32734afefed0703ac87e2201df599d84a5b4dbf6dbc46de",
+    "public/game-art/friend-cages/cage-03-v1.webp": "40ef4cfad232bad3e22734d70c0aabca6be2a7548b49f15e0ddd6065089093cb",
+    "public/game-art/friend-cages/cage-04-v1.webp": "1aa25c6c6a20abc6836ba328f6d375f597e1ea57487a6871afbb3761927ce869",
+    "public/game-art/friend-cages/cage-05-v1.webp": "68709aeed9e0fefe2df5d1b4085e4f7ab20d0c71d9cda4ce6ae941af67698f4a",
+    "public/game-art/friend-cages/cage-06-v1.webp": "945959470e13d48139a759a9c6a85cc9177b141e1975fef5267c39c640142fee",
+    "public/game-art/friend-cages/cage-07-v1.webp": "05c674c706af0e82bb513b0f8adcda2ab5e1278f9ba8a7e14f27e5f1b6e72d5d",
+    "public/game-art/friend-cages/cage-08-v1.webp": "ab5949486552cd9e92ebf6c0b5aeb65986e270d5cd01c274170a4d3b83178257",
+    "public/game-art/friend-cages/cage-09-v1.webp": "468602dfbfe0e9ed935f9432ae78a8d08581ab8390222fdccb6b5309fbf9fdf1"
+  }
+}

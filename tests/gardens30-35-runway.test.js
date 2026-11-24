@@ -12,8 +12,9 @@ const friendRollout=JSON.parse(read('docs/qa/friend-camera-rollout-scope.json'))
 const raptorCapacity=JSON.parse(read('docs/qa/garden-raptor-capacity-scope.json'));
 const journey=JSON.parse(read('docs/qa/garden-home-journey-scope.json'));
 const friendshipFilm=JSON.parse(read('docs/qa/garden-friendship-movie-scope.json'));
+const friendScale=JSON.parse(read('docs/qa/friend-cage-scale-scope.json'));
 function afterNewerPresentation(file,prior){
- for(const release of [journey,friendshipFilm]){
+ for(const release of [journey,friendshipFilm,friendScale]){
   const change=release.changedSource[file];
   if(change){assert.equal(change.before,prior,file);prior=change.after;}
  }
