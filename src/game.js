@@ -648,7 +648,11 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     return `<nav class="game-bottom-dock" data-home-dock="${home}" aria-label="庭のあそび"><button data-game-panel="decorate" aria-pressed="${panel==='decorate'}">${icon('<path d="M5 12h22v15H5zM3 12l13-8 13 8M11 27v-9h10v9"/>')}<span>お飾り<br>ガチャ</span></button><button id="game-open-bird" data-game-open-bird>${icon('<path d="M24 10c-.2-3.3-2.5-5-5.5-5-3.7 0-6 3-6 6.5C9.5 13 7 16 6 19l-3 5 6-2c2 3 7 4 11 1 3-2 4.5-6 4-9m0-4 5 2-5 2zM12 24v4h-2m7-3v3h2"/><path d="M11 15c4-2 8 0 7 4-2 2-6 3-9 1"/><circle cx="20.5" cy="10" r="1" fill="currentColor" stroke="none"/>')}<span>ふれあう</span></button><button data-game-panel="family" aria-pressed="${panel==='family'}">${icon('<circle cx="10" cy="9" r="4"/><circle cx="23" cy="9" r="4"/><path d="M10 13v5h13v-5M16 18v5"/><circle cx="16" cy="27" r="3"/>')}<span>家族</span></button><button id="game-nav-open" data-game-open-menu>${icon('<circle cx="8" cy="8" r="2"/><circle cx="16" cy="8" r="2"/><circle cx="24" cy="8" r="2"/><circle cx="8" cy="16" r="2"/><circle cx="16" cy="16" r="2"/><circle cx="24" cy="16" r="2"/><circle cx="8" cy="24" r="2"/><circle cx="16" cy="24" r="2"/><circle cx="24" cy="24" r="2"/>')}<span>メニュー</span></button></nav>`;
   }
   function roomGeometry(kind){
-    const win=root.ownerDocument.defaultView,width=win.innerWidth||390,height=Number.parseFloat(document.body.style.getPropertyValue('--game-viewport-height'))||win.innerHeight||844,ratio=kind==='tall'?.75:1.6;
+    const win=root.ownerDocument.defaultView,width=win.innerWidth||390,ratio=kind==='tall'?.75:1.6;
+    const viewportHeight=document.body.style.getPropertyValue('--game-viewport-height').trim();
+    // The chrome uses 100dvh when unobscured. Never read that as 100 pixels.
+    const pixelHeight=world.field.place!=='home'||/^[0-9]+(?:\.[0-9]+)?px$/.test(viewportHeight)?Number.parseFloat(viewportHeight):0;
+    const height=pixelHeight||win.innerHeight||844;
     const planeWidth=Math.max(width,height*(world.field.place==='friend'?1.6:ratio)),planeHeight=Math.max(height,width/(world.field.place==='friend'?1.6:ratio)),top=Math.max(height-planeHeight,Math.min(0,height*.7-planeHeight*.79));
     // A family nest must remain visible before selecting its eggs or chicks.
     // Share the actual camera crop with every viewport-relative scene actor.
