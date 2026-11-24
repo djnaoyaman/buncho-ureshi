@@ -1,8 +1,7 @@
 {
-  "base": "4ba348598a1f4c87aff07bf35774b31e84ef4311",
+  "base": "6e9e7418a886ff2bd7e2a9e05028059dfad4bd33",
   "tests": [
-    "tests/browser/home-camera.spec.js",
-    "tests/browser/nestling-visibility.spec.js"
+    "tests/browser/garden-raptor-capacity.spec.js"
   ],
-  "reason": "既存のおうち一種類だけに任意の横スワイプと巣の実寸基準を追加。スマホ幅の初期画像デコード・固定メニュー・端クランプ・操作の分離・既存の誕生/成長/来訪操作をChromeとSafari互換WebKitで確認。庭および友達のおうちは対象外。"
+  "reason": "水辺の星くずの定員描画と本物の猛禽素材を、非攻撃ケストレル、ミサゴと本来の警戒状態で検証。保存や危険度計算を変更しない。"
 }

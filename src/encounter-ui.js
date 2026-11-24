@@ -106,10 +106,13 @@ export function renderGardenStage(w,{system=encounterSystem,base='/buncho-ureshi
  const backdrop=()=>art?`<img class="finch-garden-background"${responsive} src="${esc(artSrc)}" decoding="async" fetchpriority="high" alt="${esc(place.description)}" width="${bg.width}" height="${bg.height}" draggable="false">`:place.objects.map((name,i)=>`<span class="garden-prop garden-prop-${i}" aria-hidden="true"><span>${esc(name)}</span></span>`).join('');
  const offsets=place.id==='mizukagami'?[[-1.15,-.65],[1.15,-.65],[-1.15,.15],[1.15,.15]]:[[-1.2,-.55],[1.2,-.55],[-1.2,.75],[1.2,.75]];
  const eligible=b=>b.home==='resident'&&['juvenile','adult'].includes(b.stage);
- const protagonist=getProtagonistBird(w),lead=protagonist&&eligible(protagonist)&&companions.some(b=>b.birdId===protagonist.id)?protagonist:null;
+ const protagonist=getProtagonistBird(w);
  const allHouseholdBirds=companions;
  const householdBirds=raptor?.hostile?[]:raptor?allHouseholdBirds.filter(b=>b.birdId!==raptorTarget(w)?.id):crow?.retreat?(crow.phase==='visiting'?[]:allHouseholdBirds.filter(b=>b.birdId===crow.targetBirdId)):crow?.phase==='visiting'?allHouseholdBirds.filter(b=>b.birdId!==crow.targetBirdId):allHouseholdBirds;
  const householdIds=new Set(householdBirds.map(b=>b.birdId));
+ // A raptor or crow scene can represent the protagonist separately. Only
+ // reserve the household contact if that bird is drawn in the household row.
+ const lead=protagonist&&eligible(protagonist)&&householdIds.has(protagonist.id)?protagonist:null;
  const friends=(crow?.retreat||raptor?.hostile?[]:gardenFriendRoster(w,place.id)).filter(f=>!f.birdId||!householdIds.has(f.birdId));
  const g=w.encounters.garden, waiting=w.encounters.active?.id||w.encounters.queue[0], lingering=!waiting?g.lastGuest:null;
  const guestId=!raptor?.hostile&&!crow?.retreat&&g.guestGardenId===place.id?(waiting||lingering):null,guest=guestId&&system.catalog.find(e=>e.id===guestId);
