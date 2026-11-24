@@ -1,0 +1,31 @@
+{
+  "baseCommit": "ffc207f9eddf564f849651dc01de50163b38afe1",
+  "changedSource": {
+    "src/collection-ending-player.js": {
+      "before": "2712ff466012e6f99a7b79a92fb93ba52609d639ad2416d62c9b9e888c8bf143",
+      "after": "919e5ebf731c920774edb3e642fc8d766c5923397ee06af206a72b532cf139de"
+    }
+  },
+  "media": {
+    "public/game-endings/friendship-eurasian-bullfinch-logo09.mp4": {
+      "original": "public/game-endings/friendship-eurasian-bullfinch-v1.mp4",
+      "sha256": "5bad89151a60c931d4cb10597686dc1a2c8ee27196fffcfd1b3c38db86ed6a73",
+      "packetAudioSha256": "5c2dd0d6324c0150b0500861b66c5cdf49d0244dd628abb906117d24b2a9b428"
+    },
+    "public/game-endings/friendship-eurasian-tree-sparrow-logo09.mp4": {
+      "original": "public/game-endings/friendship-eurasian-tree-sparrow-v2.mp4",
+      "sha256": "57f1ed6c52139a45bebdc4642b09742f4036fd771e4cfdf9040a3b820219b121",
+      "packetAudioSha256": "5c2dd0d6324c0150b0500861b66c5cdf49d0244dd628abb906117d24b2a9b428"
+    },
+    "public/game-endings/friendship-hawfinch-logo09.mp4": {
+      "original": "public/game-endings/friendship-hawfinch-v1.mp4",
+      "sha256": "5394428a22a9511c90191818f7952f1d43874259c9929bb80e0fe9ea3ac49e44",
+      "packetAudioSha256": "5c2dd0d6324c0150b0500861b66c5cdf49d0244dd628abb906117d24b2a9b428"
+    },
+    "public/game-endings/friendship-tricolored-munia-logo09.mp4": {
+      "original": "public/game-endings/friendship-tricolored-munia-v1.mp4",
+      "sha256": "3d0b960924e5f9014d23d926806bf39e6513da80da8db6630ea1ed7437857025",
+      "packetAudioSha256": "5c2dd0d6324c0150b0500861b66c5cdf49d0244dd628abb906117d24b2a9b428"
+    }
+  }
+}

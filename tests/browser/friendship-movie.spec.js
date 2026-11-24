@@ -1,6 +1,6 @@
 import {test,expect} from '@playwright/test';
 import {createWorld,validateWorld} from '../../src/engine.js';
-const at=Date.UTC(2026,10,18,9),id='eurasian-tree-sparrow',other='gouldian-finch',media='friendship-eurasian-tree-sparrow-v2.mp4';
+const at=Date.UTC(2026,10,18,9),id='eurasian-tree-sparrow',other='gouldian-finch',media='friendship-eurasian-tree-sparrow-logo09.mp4';
 function fixture(points,pilot=id){
  const w=createWorld(at,2026);w.paused=true;w.settings.motion=false;w.encounters.nextId=3;
  w.encounters.discoveries=[pilot,other].map((id,i)=>({id,firstTick:0,lastTick:0,visits:1,instanceId:i+1}));
@@ -34,7 +34,7 @@ async function petForOnePoint(page){
 async function bird(page,id){await menu(page,'notebook');await page.locator(`[data-encounter-page="${id}"]`).click();}
 const offer='[data-friendship-movie-offer]',pilotOpen=`[data-friendship-movie-open="${id}"]`,dialog='[data-friendship-movie]';
 test('committed 99 to 100 offers once without opening; rewatch decodes exact portrait MP4',async({page})=>{
- const requests=[];page.on('request',r=>{if(r.url().includes(media))requests.push(r.url())});
+ const requests=[];page.on('request',r=>{if(r.url().includes('friendship-'+id+'-'))requests.push(r.url())});
  await start(page,320,568,99);await bird(page,id);
  await expect(page.locator('[data-finch-points]')).toHaveText('99');
  await expect(page.locator(pilotOpen)).toHaveCount(0);
@@ -52,6 +52,8 @@ test('committed 99 to 100 offers once without opening; rewatch decodes exact por
   return {width:v.videoWidth,height:v.videoHeight,seconds:v.duration,paused:v.paused};
  });
  expect(metadata).toEqual({width:720,height:1280,seconds:15,paused:true});
+ expect(requests.length).toBeGreaterThan(0);
+ expect(requests.every(url=>new URL(url).pathname.endsWith('/'+media))).toBe(true);
  const before=await record(page);await page.locator(dialog+' [data-ending-close]').click();
  await expect(page.locator(dialog)).toHaveCount(0);
  expect(await record(page)).toEqual(before);
@@ -88,7 +90,7 @@ for(const [pilot,license] of [['eurasian-bullfinch','3.0'],['hawfinch','3.0'],['
   expect(await video.evaluate(async v=>{
    if(v.readyState<1)await new Promise((resolve,reject)=>{v.addEventListener('loadedmetadata',resolve,{once:true});v.addEventListener('error',()=>reject(new Error('Failed media decode')),{once:true});v.preload='metadata';v.load()});
    return {file:new URL(v.currentSrc).pathname.split('/').at(-1),width:v.videoWidth,height:v.videoHeight,seconds:v.duration,paused:v.paused};
-  })).toEqual({file:'friendship-'+pilot+'-v1.mp4',width:720,height:1280,seconds:15,paused:true});
+  })).toEqual({file:'friendship-'+pilot+'-logo09.mp4',width:720,height:1280,seconds:15,paused:true});
   const before=await record(page);await page.locator(dialog+' [data-ending-close]').click();
   expect(await record(page)).toEqual(before);
   await page.locator('.game-panel-overlay[open] [data-game-close-panel]').click();
