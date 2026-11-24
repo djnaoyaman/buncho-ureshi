@@ -22,6 +22,15 @@ async function start(page,width,height,points,pilot=id){
  if(await page.locator('#game-welcome-close').isVisible())await page.locator('#game-welcome-close').click();
  return w;
 }
+async function petForOnePoint(page){
+ const rub=page.locator('[data-encounter-rub]');
+ // Native keyboard petting counts a full second of repeated input, not one tap.
+ await rub.press('Enter');
+ await page.waitForTimeout(525);
+ await rub.press('Enter');
+ await page.waitForTimeout(525);
+ await rub.press('Enter');
+}
 async function bird(page,id){await menu(page,'notebook');await page.locator(`[data-encounter-page="${id}"]`).click();}
 const offer='[data-friendship-movie-offer]',pilotOpen=`[data-friendship-movie-open="${id}"]`,dialog='[data-friendship-movie]';
 test('committed 99 to 100 offers once without opening; rewatch decodes exact portrait MP4',async({page})=>{
@@ -30,7 +39,7 @@ test('committed 99 to 100 offers once without opening; rewatch decodes exact por
  await expect(page.locator('[data-finch-points]')).toHaveText('99');
  await expect(page.locator(pilotOpen)).toHaveCount(0);
  expect(requests).toEqual([]);
- await page.locator('[data-encounter-rub]').press('Enter');
+ await petForOnePoint(page);
  await expect(page.locator('[data-finch-points]')).toHaveText('100');
  await expect(page.locator(offer)).toBeVisible();
  await expect(page.locator(dialog)).toHaveCount(0);expect(requests).toEqual([]);
@@ -67,7 +76,7 @@ for(const [pilot,license] of [['eurasian-bullfinch','3.0'],['hawfinch','3.0'],['
   const card=page.locator('.game-friendship-movie-card');
   await expect(page.locator('[data-finch-points]')).toHaveText('99');
   await expect(card.locator('[data-friendship-movie-open]')).toHaveCount(0);
-  await page.locator('[data-encounter-rub]').press('Enter');
+  await petForOnePoint(page);
   await expect(page.locator('[data-finch-points]')).toHaveText('100');
   await expect(page.locator(offer)).toBeVisible();
   await expect(page.locator(dialog)).toHaveCount(0);
