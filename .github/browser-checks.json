@@ -1,5 +1,7 @@
 {
-  "base": "ff05b8f930c3c55af045056cc9dd1121fa788e01",
-  "tests": ["tests/browser/garden-flat-remaining.spec.js"],
-  "reason": "既存の平地型を新たに12庭へ適用するため、各庭の単独文鳥の自律飛行・着地と実タップ、最大10羽の表示と3種のスマホ幅の実タップ、水辺の星くずのミサゴ来訪・帰宅をChrome/WebKitで確認。画像・ゲームルール・保存処理・他の庭の設定は変更しない。"
+  "base": "ec0d4142f8e0b676243271d3f51cbcbdcc2ae568",
+  "tests": [
+    "tests/browser/garden-bullfinch-type1.spec.js"
+  ],
+  "reason": "既存の平地型を別途調査した石棚だけに適用。各3画面幅で単羽飛行・着地の実描画と最大10羽のタップをChrome/WebKit確認。絵・ルール・他の庭のデータは変更しない。"
 }

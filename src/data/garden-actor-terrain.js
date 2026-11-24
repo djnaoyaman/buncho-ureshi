@@ -186,5 +186,14 @@ export const GARDEN_ACTOR_TERRAIN = Object.freeze({
     entries:[[.18,.7],[.85,.7]], height:.046,
     note:'金いろの高原窓。崖の縁や手前の草地ではなく、中央の明るい石面。',
   },
+  'bird-eurasian-bullfinch': {
+    surface:[[0.14,0.548],[0.89,0.548],[0.86,0.609],[0.69,0.642],[0.51,0.659],[0.27,0.642],[0.14,0.622]],
+    rows:[0.56,0.593,0.625],
+    columns:[0.265,0.3825,0.5,0.6175,0.735],
+    denseRows:[0.551,0.612,0.639],
+    entries:[[0.24,0.598],[0.78,0.59]],
+    height:0.04,
+    note:"芽吹きの口笛庭。石棚の上だけ。手前の段差をまたがず、同じ石棚での短い飛行と小跳び。",
+  },
 });
 export const actorTerrainFor = id => GARDEN_ACTOR_TERRAIN[id] || null;
