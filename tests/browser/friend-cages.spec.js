@@ -79,6 +79,10 @@ for(const [width,height] of [[320,568],[390,844],[844,390],[1440,900]])test(`nin
  await page.reload();await expect(room).toHaveAttribute('data-friend-cage',String(friendCage(w,w.field.hostId).id));await expect(reset).toBeHidden();
  if(width===390){
   travelTo(w,'park');await record(page,w);await page.goto('game/');
+  // Rendering the room can precede dismissal of the startup hit overlay.
+  await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');
+  if(await page.locator('#game-welcome-close').isVisible())await page.locator('#game-welcome-close').click();
+  if(await page.locator('body').getAttribute('data-scene-controls')==='open')await page.locator('.game-scene-controls-toggle').tap();
   await expect(room).toHaveAttribute('data-field','park');
   await expect(room).not.toHaveAttribute('data-friend-camera','');
   await expect(reset).toHaveCount(0);
