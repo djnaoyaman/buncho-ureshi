@@ -1,8 +1,8 @@
 {
-  "base": "4ba348598a1f4c87aff07bf35774b31e84ef4311",
+  "base": "6e9e7418a886ff2bd7e2a9e05028059dfad4bd33",
   "tests": [
-    "tests/browser/home-camera.spec.js",
-    "tests/browser/nestling-visibility.spec.js"
+    "tests/browser/friend-camera-pilot.spec.js",
+    "tests/browser/home-camera.spec.js"
   ],
-  "reason": "既存のおうち一種類だけに任意の横スワイプと巣の実寸基準を追加。スマホ幅の初期画像デコード・固定メニュー・端クランプ・操作の分離・既存の誕生/成長/来訪操作をChromeとSafari互換WebKitで確認。庭および友達のおうちは対象外。"
+  "reason": "既存のバウハウス型に限定した任意の横移動とリセット。見え方・左右境界・固定操作・保存・帰宅・他の型の回帰をChromeとWebKitのスマホ幅で確認。"
 }

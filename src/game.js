@@ -159,27 +159,31 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
   const interactionActive=()=>pressedPointers.size>0||formFocused();
   let birdSwipe=null,careRub=null,suppressSwipeClickUntil=0,familyZoom=1,familyZoomManual=false;
   let homePan=null,homePointer=null,homePanWorld=null,homeSuppress=0;
-  const activeHome=()=>!sheetOpen&&panel==='garden'&&world.field.place==='home';
-  const currentHomeRoom=()=>root.querySelector('.game-main .game-room[data-field="home"]');
+  const friendCameraCage=1;
+  const cameraRoomSelector='.game-room:is([data-field="home"],[data-field="friend"][data-friend-cage="1"])';
+  const cameraScene=(cage=world.field.place==='friend'?friendCage(world,world.field.hostId):null)=>
+    world.field.place==='home'?world.worldId+':home':cage?.id===friendCameraCage?world.worldId+':friend:'+world.field.hostId:null;
+  const activeHome=()=>!sheetOpen&&panel==='garden'&&!!cameraScene();
+  const currentHomeRoom=()=>root.querySelector('.game-main '+cameraRoomSelector);
   const homeKind=()=>globalThis.matchMedia?.('(max-width: 600px)').matches?'tall':'wide';
   function liveHomeCamera(offset){
     const room=currentHomeRoom();if(!room||!activeHome())return;
-    const camera=roomGeometry(homeKind()),max=camera.planeWidth-camera.width;
+    const camera=roomGeometry(homeKind(),true),max=camera.planeWidth-camera.width;
     homePan=offset==null||max<=0?null:Math.min(1,Math.max(0,offset/max));
-    homePanWorld=world.worldId;
+    homePanWorld=cameraScene();
     room.style.setProperty('--home-camera-delta',`${homeCropOffset(camera,homePan)-camera.left}px`);
     const reset=root.querySelector('[data-home-camera-reset]');if(reset){reset.hidden=homePan==null;reset.dataset.current=String(homePan!=null);}
   }
   function moveHomeCamera(ev){
     const g=homePointer;if(!g||g.id!==ev.pointerId)return;
-    if(!g.room.isConnected||!activeHome()||g.world!==world.worldId){homePointer=null;return;}
+    if(!g.room.isConnected||!activeHome()||g.scene!==cameraScene()){homePointer=null;return;}
     const dx=ev.clientX-g.x,dy=ev.clientY-g.y;
     if(!g.drag&&Math.abs(dy)>9&&Math.abs(dy)>=Math.abs(dx))g.vertical=true;
     if(g.vertical||!g.drag&&Math.abs(dx)<10)return;
     if(!g.drag){g.drag=true;try{g.room.setPointerCapture?.(ev.pointerId);}catch{}}
     if(ev.cancelable)ev.preventDefault();liveHomeCamera(g.start-dx);
   }
-  function preventHomeNativeDrag(ev){if(activeHome()&&ev.target.closest?.('.game-room[data-field="home"]'))ev.preventDefault();}
+  function preventHomeNativeDrag(ev){if(activeHome()&&ev.target.closest?.(cameraRoomSelector))ev.preventDefault();}
   function clearCareRub(){const rub=careRub;careRub=null;rub?.target.removeAttribute('data-rubbing');if(rub?.target.hasPointerCapture?.(rub.id))try{rub.target.releasePointerCapture(rub.id);}catch{}}
   const insideCareBird=(target,x,y)=>{const box=(target.querySelector('.game-sprite')||target).getBoundingClientRect();return x>=box.left&&x<=box.right&&y>=box.top&&y<=box.bottom;};
   const careRubCurrent=rub=>alive&&rub.target.isConnected&&!rub.target.disabled&&rub.worldId===world.worldId&&rub.birdId===selected&&rub.generation===careGeneration&&sheetOpen;
@@ -210,11 +214,11 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
       careRub={target,id:ev.pointerId,x:ev.clientX,y:ev.clientY,distance:0,inside:true,worldId:world.worldId,birdId:selected,generation:careGeneration};
       target.dataset.rubbing='active';try{target.setPointerCapture?.(ev.pointerId);}catch{}return;
     }
-    const homeRoom=ev.target.closest?.('.game-room[data-field="home"]');
+    const homeRoom=ev.target.closest?.(cameraRoomSelector);
     if(homeRoom&&activeHome()&&ev.isPrimary!==false&&(ev.button===undefined||ev.button===0)&&
        !ev.target.closest('input,select,textarea,a,summary,label,button:not([data-game-scene-select]):not([data-cage-guest])')){
-      const camera=roomGeometry(homeKind());
-      if(camera.planeWidth-camera.width>1)homePointer={id:ev.pointerId,world:world.worldId,room:homeRoom,x:ev.clientX,y:ev.clientY,start:homeCropOffset(camera,homePanWorld===world.worldId?homePan:null),drag:false};
+      const camera=roomGeometry(homeKind(),true),scene=cameraScene();
+      if(camera.planeWidth-camera.width>1)homePointer={id:ev.pointerId,scene,room:homeRoom,x:ev.clientX,y:ev.clientY,start:homeCropOffset(camera,homePanWorld===scene?homePan:null),drag:false};
     }
     if(surface&&!ev.target.closest('button,input,select,textarea,a,summary,label')&&(ev.button===undefined||ev.button===0))birdSwipe={id:ev.pointerId,x:ev.clientX,y:ev.clientY,at:Date.now(),worldId:world.worldId,birdId:selected,surface};
   };
@@ -651,11 +655,11 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     const icon=path=>`<svg viewBox="0 0 32 32" width="26" height="26" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${path}</svg>`;
     return `<nav class="game-bottom-dock" data-home-dock="${home}" aria-label="庭のあそび"><button data-game-panel="decorate" aria-pressed="${panel==='decorate'}">${icon('<path d="M5 12h22v15H5zM3 12l13-8 13 8M11 27v-9h10v9"/>')}<span>お飾り<br>ガチャ</span></button><button id="game-open-bird" data-game-open-bird>${icon('<path d="M24 10c-.2-3.3-2.5-5-5.5-5-3.7 0-6 3-6 6.5C9.5 13 7 16 6 19l-3 5 6-2c2 3 7 4 11 1 3-2 4.5-6 4-9m0-4 5 2-5 2zM12 24v4h-2m7-3v3h2"/><path d="M11 15c4-2 8 0 7 4-2 2-6 3-9 1"/><circle cx="20.5" cy="10" r="1" fill="currentColor" stroke="none"/>')}<span>ふれあう</span></button><button data-game-panel="family" aria-pressed="${panel==='family'}">${icon('<circle cx="10" cy="9" r="4"/><circle cx="23" cy="9" r="4"/><path d="M10 13v5h13v-5M16 18v5"/><circle cx="16" cy="27" r="3"/>')}<span>家族</span></button><button id="game-nav-open" data-game-open-menu>${icon('<circle cx="8" cy="8" r="2"/><circle cx="16" cy="8" r="2"/><circle cx="24" cy="8" r="2"/><circle cx="8" cy="16" r="2"/><circle cx="16" cy="16" r="2"/><circle cx="24" cy="16" r="2"/><circle cx="8" cy="24" r="2"/><circle cx="16" cy="24" r="2"/><circle cx="24" cy="24" r="2"/>')}<span>メニュー</span></button></nav>`;
   }
-  function roomGeometry(kind){
+  function roomGeometry(kind,forCamera=false){
     const win=root.ownerDocument.defaultView,width=win.innerWidth||390,ratio=kind==='tall'?.75:1.6;
     const viewportHeight=document.body.style.getPropertyValue('--game-viewport-height').trim();
     // The chrome uses 100dvh when unobscured. Never read that as 100 pixels.
-    const pixelHeight=world.field.place!=='home'||/^[0-9]+(?:\.[0-9]+)?px$/.test(viewportHeight)?Number.parseFloat(viewportHeight):0;
+    const pixelHeight=(world.field.place!=='home'&&!forCamera)||/^[0-9]+(?:\.[0-9]+)?px$/.test(viewportHeight)?Number.parseFloat(viewportHeight):0;
     const height=pixelHeight||win.innerHeight||844;
     const planeWidth=Math.max(width,height*(world.field.place==='friend'?1.6:ratio)),planeHeight=Math.max(height,width/(world.field.place==='friend'?1.6:ratio)),top=Math.max(height-planeHeight,Math.min(0,height*.7-planeHeight*.79));
     // A family nest must remain visible before selecting its eggs or chicks.
@@ -711,9 +715,10 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     if(!preserveSelection&&!active.some(b=>b.id===selected)&&active.length){cancelCareEffects();selected=active[0].id;}
     const current=active.find(b=>b.id===selected)||active[0];
     const atmosphere=homeAtmosphere(world,{selectedId:selected,panel,error:!!error,memory:store.mode==='memory',ending:!!endingPlayer?.active(),hidden:document.hidden,motion:poseEnabled()});
-    const camera=roomGeometry((root.ownerDocument.defaultView.innerWidth||390)<=600?'tall':'wide');
-    if(homePanWorld!==world.worldId||world.field.place!=='home'){homePan=null;homePanWorld=world.worldId;}
-    const homeDelta=world.field.place==='home'?homeCropOffset(camera,homePan)-camera.left:0;
+    const cage=world.field.place==='friend'?friendCage(world,world.field.hostId):null,scene=cameraScene(cage);
+    const camera=roomGeometry((root.ownerDocument.defaultView.innerWidth||390)<=600?'tall':'wide',!!scene);
+    if(homePanWorld!==scene){homePan=null;homePanWorld=scene;}
+    const homeDelta=scene?homeCropOffset(camera,homePan)-camera.left:0;
     const hasNestlings=world.field.place==='home'&&active.some(b=>['egg','chick'].includes(b.stage));
     // Compact mode may simplify adult perches, but must not hide newborns.
     const shown=compactLayout?.matches?active.filter(b=>b.id===current?.id||(hasNestlings&&['egg','chick'].includes(b.stage))):active;
@@ -732,8 +737,8 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
         perched.forEach((actor,i)=>{const row=Math.floor(i/columns),count=Math.min(columns,perched.length-row*columns),x=(i%columns+1)/(count+1),foot=rows===1?geometry.height*(geometry.width<=600&&geometry.height<=280 ? .57 : .68):geometry.height*.46+row*Math.max(90,geometry.height*.23);map.set(actor.id,{...map.get(actor.id),x:geometry.left/geometry.planeWidth+x*fraction,y:(Math.min(geometry.height-26,foot)-geometry.top)/geometry.planeHeight});});
       }
     }
-    return `${fieldNavigation()}<div class="game-room" style="--nest-camera-pan:${camera.pan}px;--nest-bowl-shift:${camera.bowlShift}px${world.field.place==='home'?`;--home-camera-delta:${homeDelta}px`:''}" data-atmosphere="${atmosphere.state}" data-atmosphere-motion="${atmosphere.animate}" data-home-response="${atmosphere.visible?currentHomeResponse()?.kind||'':''}" data-home-response-phase="${currentHomeResponse()?.phase||''}" data-selected-atmosphere="${atmosphere.selectedState}" data-has-nestlings="${hasNestlings}" data-nest-bowl-shift="${camera.bowlShift>0}" data-compact="${!!compactLayout?.matches}" data-many-guests="${cageGuests.length>2}" data-home-crowded="${world.field.place==='home'&&(actors.filter(actor=>!['egg','chick'].includes(actor.stage)).length>8||(compactLayout?.matches&&cageGuests.length>0))}" data-field="${world.field.place}" data-friend-cage="${world.field.place==='friend'?friendCage(world,world.field.hostId).id:''}" aria-label="${escape(fieldTitle())}。イラストのゲーム用風景です。">
-      ${world.field.place==='home'?renderHomeScene({base:GAME_ART,furniture:sceneFurniture(null,true,atmosphere.visible?atmosphere:null),atmosphere}):world.field.place==='friend'?`<picture class="game-habitat"><img src="${GAME_ART}${friendCage(world,world.field.hostId).file}" alt="" aria-hidden="true" width="1600" height="1000" decoding="async"></picture>`:`<picture class="game-habitat"><source media="(max-width: 600px)" srcset="${GAME_ART}field-park-tall.webp"><img src="${GAME_ART}field-park-wide.webp" alt="" aria-hidden="true" width="1600" height="1000" decoding="async"></picture>`}
+    return `${fieldNavigation()}<div class="game-room" style="--nest-camera-pan:${camera.pan}px;--nest-bowl-shift:${camera.bowlShift}px${scene?`;--home-camera-delta:${homeDelta}px`:''}" data-atmosphere="${atmosphere.state}" data-atmosphere-motion="${atmosphere.animate}" data-home-response="${atmosphere.visible?currentHomeResponse()?.kind||'':''}" data-home-response-phase="${currentHomeResponse()?.phase||''}" data-selected-atmosphere="${atmosphere.selectedState}" data-has-nestlings="${hasNestlings}" data-nest-bowl-shift="${camera.bowlShift>0}" data-compact="${!!compactLayout?.matches}" data-many-guests="${cageGuests.length>2}" data-home-crowded="${world.field.place==='home'&&(actors.filter(actor=>!['egg','chick'].includes(actor.stage)).length>8||(compactLayout?.matches&&cageGuests.length>0))}" data-field="${world.field.place}" data-friend-cage="${cage?.id??''}" aria-label="${escape(fieldTitle())}。イラストのゲーム用風景です。">
+      ${world.field.place==='home'?renderHomeScene({base:GAME_ART,furniture:sceneFurniture(null,true,atmosphere.visible?atmosphere:null),atmosphere}):world.field.place==='friend'?`<picture class="game-habitat"><img src="${GAME_ART}${cage.file}" alt="" aria-hidden="true" width="1600" height="1000" decoding="async"></picture>`:`<picture class="game-habitat"><source media="(max-width: 600px)" srcset="${GAME_ART}field-park-tall.webp"><img src="${GAME_ART}field-park-wide.webp" alt="" aria-hidden="true" width="1600" height="1000" decoding="async"></picture>`}
       ${gemCollectibles()}<span class="game-floor-soil" style="--care-soil-opacity:${careFloorOpacity(getCleanliness(world)).toFixed(3)}" aria-hidden="true"></span>
       ${shown.map(b=>{
         const pos=positions.get(b.id),mobile=mobilePositions.get(b.id),isSelected=b.id===selected;
@@ -745,7 +750,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
       ${cageGuests.map(guest=>{const p=positions.get(guest.id),m=mobilePositions.get(guest.id);return renderEncounterCageGuest(guest.entry,{base:new URL('../',GAME_ART).href,style:`--bird-x:${p.x*100}%;--bird-y:${p.y*100}%;--bird-width:${p.width*100}%;--bird-depth:${Math.round(p.y*100)};--bird-tall-x:${m.x*100}%;--bird-tall-y:${m.y*100}%;--bird-tall-width:${m.width*100}%;--bird-tall-depth:${Math.round(m.y*100)};--foot-x:50%;--foot-y:100%`}).replace('</button>',`${homeBadge('お友達')}</button>`);}).join('')}
 
     </div>
-    ${world.field.place==='home'? `<button type="button" class="game-home-camera-reset" data-home-camera-reset ${homePan==null?'hidden':''}>${hasNestlings?'巣へ戻る':'元の位置へ'}</button>`:''}
+    ${scene? `<button type="button" class="game-home-camera-reset" data-home-camera-reset ${homePan==null?'hidden':''}>${hasNestlings?'巣へ戻る':'元の位置へ'}</button>`:''}
     <div class="game-scene-toolbar"><div class="game-scene-picker game-bird-carousel" aria-label="スワイプで文鳥を選ぶ">${birdSwitchControls()}<div class="game-bird-carousel-face" data-bird-id="${current?.id||''}">${current?smallBird(current):''}<div><strong>${current?escape(current.name):''}</strong><small>${current?colorName[current.color]+'・'+STAGES[current.stage]:''}</small></div></div></div>${world.field.place==='home'?gardenCare():''}</div>${secondaryMenu()}${bottomDock()}`;
   }
   function profile() {
@@ -1068,7 +1073,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
       input.focus({preventScroll:true});input.select();return;
     }
 
-    if(Date.now()<homeSuppress&&ev.detail!==0&&ev.target.closest?.('.game-room[data-field="home"]')){ev.preventDefault();return;}
+    if(Date.now()<homeSuppress&&ev.detail!==0&&ev.target.closest?.(cameraRoomSelector)){ev.preventDefault();return;}
     if(ev.target.closest?.('[data-home-camera-reset]')){liveHomeCamera(null);return;}
     if(Date.now()<suppressSwipeClickUntil){ev.preventDefault();return;}
     if(ev.target.matches('.game-bird-sheet')){const r=ev.target.getBoundingClientRect();if(ev.clientX<r.left||ev.clientX>r.right||ev.clientY<r.top||ev.clientY>r.bottom)closeBirdSheet();return;}
