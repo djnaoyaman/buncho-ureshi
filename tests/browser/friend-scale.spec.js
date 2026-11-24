@@ -50,7 +50,13 @@ for(const cage of FRIEND_CAGES)test('art and bird are proportionate for '+cage.t
  const stored=await snapshot(page);
  for(const [width,height] of [[390,844],[320,568],[844,390],[1280,800]]){
   await page.setViewportSize({width,height});
-  const actual=await measure(room);
+  // WebKit may replace the scene in a resize observer after visibility has
+  // already been checked. Accept only a fully rendered current geometry.
+  let actual;
+  await expect.poll(async()=>{
+   actual=await measure(room);
+   return actual.pixelWidth>0&&actual.pixelHeight>0&&actual.art.decoded&&actual.bounds.length===1;
+  },{message:`${cage.title} ${width}×${height}: active room must settle`,timeout:4000}).toBe(true);
   expect(actual.art.src).toContain(cage.file);
   expect(actual.art.decoded).toBe(true);
   expect(actual.pixelWidth).toBeGreaterThan(0);
