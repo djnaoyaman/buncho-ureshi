@@ -1,0 +1,14 @@
+{
+  "baseCommit": "39a1d7ea4bf16a6a7cb9697b185f4c267d40a4a1",
+  "changedSource": {
+    "src/collection-ending-player.js": {
+      "before": "ee92ccf8f856d39414ae9b641e1defb20acfa829aaccb3fb571a74aa3a7ea0d1",
+      "after": "2712ff466012e6f99a7b79a92fb93ba52609d639ad2416d62c9b9e888c8bf143"
+    }
+  },
+  "media": {
+    "public/game-endings/friendship-eurasian-bullfinch-v1.mp4": "4f6277b8b9990b85abdd1bfb5fb880553b113ef2d3e7eb8cf30c18b9657cd300",
+    "public/game-endings/friendship-hawfinch-v1.mp4": "90477ff3ae3eb3bb4d98a7f1de2800977e28815f1d790c02511892f434b4e7c7",
+    "public/game-endings/friendship-tricolored-munia-v1.mp4": "95f86d8fb0063630ab551172a21a3e23e5a4759e4c12179283a0cb6952db8cdc"
+  }
+}

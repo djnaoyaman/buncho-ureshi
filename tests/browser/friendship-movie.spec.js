@@ -1,10 +1,10 @@
 import {test,expect} from '@playwright/test';
 import {createWorld,validateWorld} from '../../src/engine.js';
-const at=Date.UTC(2026,10,18,9),id='eurasian-tree-sparrow',other='eurasian-bullfinch',media='friendship-eurasian-tree-sparrow-v2.mp4';
-function fixture(points){
+const at=Date.UTC(2026,10,18,9),id='eurasian-tree-sparrow',other='gouldian-finch',media='friendship-eurasian-tree-sparrow-v2.mp4';
+function fixture(points,pilot=id){
  const w=createWorld(at,2026);w.paused=true;w.settings.motion=false;w.encounters.nextId=3;
- w.encounters.discoveries=[id,other].map((id,i)=>({id,firstTick:0,lastTick:0,visits:1,instanceId:i+1}));
- w.encounters.friendship=[{id,petPoints:points-10},{id:other,petPoints:90}];return validateWorld(w);
+ w.encounters.discoveries=[pilot,other].map((id,i)=>({id,firstTick:0,lastTick:0,visits:1,instanceId:i+1}));
+ w.encounters.friendship=[{id:pilot,petPoints:points-10},{id:other,petPoints:90}];return validateWorld(w);
 }
 async function record(page,value){return page.evaluate(w=>new Promise((resolve,reject)=>{
  const r=indexedDB.open('buncho-ureshi-garden-v1',1);r.onupgradeneeded=()=>r.result.createObjectStore('world');r.onerror=()=>reject(r.error);
@@ -15,8 +15,8 @@ async function menu(page,id){
  if(!await button.isVisible())await toggle.click();
  await button.click();await page.locator('#game-menu-'+id).click();
 }
-async function start(page,width,height,points){
- const w=fixture(points);await page.setViewportSize({width,height});
+async function start(page,width,height,points,pilot=id){
+ const w=fixture(points,pilot);await page.setViewportSize({width,height});
  await page.addInitScript(n=>{Date.now=()=>n;localStorage.setItem('buncho.music.v1','{"enabled":false}');localStorage.setItem('buncho.care-sound-choice.v1','{"explicit":true,"enabled":false}');},at);
  await page.goto('');await record(page,w);await page.goto('game/');await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');
  if(await page.locator('#game-welcome-close').isVisible())await page.locator('#game-welcome-close').click();
@@ -30,10 +30,7 @@ test('committed 99 to 100 offers once without opening; rewatch decodes exact por
  await expect(page.locator('[data-finch-points]')).toHaveText('99');
  await expect(page.locator(pilotOpen)).toHaveCount(0);
  expect(requests).toEqual([]);
- const pet=page.locator('[data-encounter-rub]');await pet.press('Enter');
- // The first input starts the native clock; only continued active input earns a point.
- await page.waitForTimeout(525);await pet.press('Enter');
- await page.waitForTimeout(525);await pet.press('Enter');
+ await page.locator('[data-encounter-rub]').press('Enter');
  await expect(page.locator('[data-finch-points]')).toHaveText('100');
  await expect(page.locator(offer)).toBeVisible();
  await expect(page.locator(dialog)).toHaveCount(0);expect(requests).toEqual([]);
@@ -64,3 +61,28 @@ test('recorded 100+ unlocks the bird card but does not create an offer; unrelate
  await expect(page.locator('[data-friendship-movie-open]')).toHaveCount(0);
  expect((await record(page)).encounters.friendship).toEqual(w.encounters.friendship);
 });
+for(const [pilot,license] of [['eurasian-bullfinch','3.0'],['hawfinch','3.0'],['tricolored-munia','2.0']]){
+ test(pilot+' own bird entry links exact edition and decodes without playing',async({page})=>{
+  await start(page,390,844,99,pilot);await bird(page,pilot);
+  const card=page.locator('.game-friendship-movie-card');
+  await expect(page.locator('[data-finch-points]')).toHaveText('99');
+  await expect(card.locator('[data-friendship-movie-open]')).toHaveCount(0);
+  await page.locator('[data-encounter-rub]').press('Enter');
+  await expect(page.locator('[data-finch-points]')).toHaveText('100');
+  await expect(page.locator(offer)).toBeVisible();
+  await expect(page.locator(dialog)).toHaveCount(0);
+  await page.locator('[data-friendship-movie-dismiss]').click();
+  await expect(card.getByRole('link',{name:'CC BY '+license,exact:true})).toHaveAttribute('href','https://creativecommons.org/licenses/by/'+license+'/');
+  await expect(page.locator(offer)).toHaveCount(0);
+  await card.locator('[data-friendship-movie-open="'+pilot+'"]').click();
+  const video=page.locator(dialog+' video');await expect(video).toBeVisible();
+  expect(await video.evaluate(async v=>{
+   if(v.readyState<1)await new Promise((resolve,reject)=>{v.addEventListener('loadedmetadata',resolve,{once:true});v.addEventListener('error',()=>reject(new Error('Failed media decode')),{once:true});v.preload='metadata';v.load()});
+   return {file:new URL(v.currentSrc).pathname.split('/').at(-1),width:v.videoWidth,height:v.videoHeight,seconds:v.duration,paused:v.paused};
+  })).toEqual({file:'friendship-'+pilot+'-v1.mp4',width:720,height:1280,seconds:15,paused:true});
+  const before=await record(page);await page.locator(dialog+' [data-ending-close]').click();
+  expect(await record(page)).toEqual(before);
+  await page.locator('.game-panel-overlay[open] [data-game-close-panel]').click();
+  await menu(page,'diary');await expect(page.locator('[data-friendship-movie-open="'+pilot+'"]')).toBeVisible();
+ });
+}

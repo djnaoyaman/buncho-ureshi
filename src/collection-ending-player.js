@@ -8,7 +8,22 @@ const FRIENDSHIP_MOVIES=Object.freeze({
  'eurasian-tree-sparrow':Object.freeze({
   bird:'スズメ',title:'スズメと なかよしになった記念',file:'friendship-eurasian-tree-sparrow-v2.mp4',
   source:'https://commons.wikimedia.org/wiki/File:Eurasian_tree_sparrows_(Passer_montanus)_in_Japan.webm',
-  license:'https://creativecommons.org/licenses/by/4.0/',creator:'The Nature Box',place:'城北中央公園（東京都、2016年）'
+  license:'https://creativecommons.org/licenses/by/4.0/',licenseLabel:'CC BY 4.0',creator:'The Nature Box',place:'城北中央公園（東京都、2016年）'
+ }),
+ 'eurasian-bullfinch':Object.freeze({
+  bird:'ウソ',title:'ウソと なかよしになった記念',file:'friendship-eurasian-bullfinch-v1.mp4',
+  source:'https://commons.wikimedia.org/wiki/File:Male_bullfinch_(Pyrrhula_pyrrhula)_feeding_on_sunflower_seed.webm',
+  license:'https://creativecommons.org/licenses/by/3.0/',licenseLabel:'CC BY 3.0',creator:'Tony Whitehead',place:'英国（2010年12月27日）'
+ }),
+ 'hawfinch':Object.freeze({
+  bird:'シメ',title:'シメと なかよしになった記念',file:'friendship-hawfinch-v1.mp4',
+  source:'https://commons.wikimedia.org/wiki/File:Hawfinch_(Coccothraustes_coccothraustes).webm',
+  license:'https://creativecommons.org/licenses/by/3.0/',licenseLabel:'CC BY 3.0',creator:'Lubo Ondrasko',place:'原典に記載なし'
+ }),
+ 'tricolored-munia':Object.freeze({
+  bird:'ギンパラ',title:'ギンパラと なかよしになった記念',file:'friendship-tricolored-munia-v1.mp4',
+  source:'https://commons.wikimedia.org/wiki/File:A_Tricolored_Munia_(Finch)_Preening.webm',
+  license:'https://creativecommons.org/licenses/by/2.0/',licenseLabel:'CC BY 2.0',creator:'Hari K Patibanda',place:'原典に記載なし'
  })
 });
 export function unlockedFriendshipMovies(w){
@@ -19,7 +34,7 @@ export function newlyUnlockedFriendshipMovies(previousIds,expectedWorld,next){
  return next.worldId===expectedWorld?unlockedFriendshipMovies(next).filter(id=>!previousIds.includes(id)):[];
 }
 function friendshipMovieCredit(film){
- return `<p>撮影地：${film.place}。ゲームの庭を撮ったものではありません。映像：${film.creator}（<a href="${film.source}">原典</a>／<a href="${film.license}">CC BY 4.0</a>）。縦向きに切り出し、文字と音楽を加えています。</p>`;
+ return `<p>撮影地：${film.place}。ゲームの庭を撮ったものではありません。映像：${film.creator}（<a href="${film.source}">原典</a>／<a href="${film.license}">${film.licenseLabel}</a>）。縦向きに切り出し、文字と音楽を加えています。</p>`;
 }
 const movieButton=(id,label)=>`<button type="button" data-friendship-movie-open="${id}"><span aria-hidden="true">▶</span> ${label}</button>`;
 export function renderFriendshipMovieCard(w,id){

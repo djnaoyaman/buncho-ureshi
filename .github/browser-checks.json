@@ -1,8 +1,8 @@
 {
-  "base": "e3865934eb5a574f62b6b92c052d5525cf94fe95",
+  "base": "39a1d7ea4bf16a6a7cb9697b185f4c267d40a4a1",
   "tests": [
     "tests/browser/friendship-movie.spec.js",
     "tests/browser/garden-home-journey.spec.js"
   ],
-  "reason": "スズメの記念映像だけ。確定99→100のお知らせ・あとで・図鑑と日記・録画の実デコード・既存100・他種・保存・320/390pxの帰宅をChrome/WebKitで確認。"
+  "reason": "ウソ・シメ・ギンパラのみ。各種の確定99→100、非自動再生、図鑑と日記、ライセンス、実デコード、保存不変をスズメ・帰宅の既存経路とともにChrome/WebKitで検証。"
 }
