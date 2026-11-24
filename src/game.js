@@ -517,14 +517,34 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     }
   }
   function sheetCancel(ev){if(ev.target.matches('.game-successor-dialog')){ev.preventDefault();if(!successorBusy)closeSuccessorDialog();return;}if(ev.target.matches('.game-independence-dialog')){ev.preventDefault();if(!independenceBusy)closeIndependenceDialog();return;}if(ev.target.matches('.game-draw-result')){ev.preventDefault();dismissDrawResult();return;}if(ev.target.matches('.game-adoption-dialog')){ev.preventDefault();if(!adoptionBusy)closeAdoptionDialog();return;}if(ev.target.matches('.game-panel-overlay')){ev.preventDefault();closePanel();return;}if(ev.target.matches('.game-reset-dialog')){ev.preventDefault();if(!resetPending)closeResetDialog();return;}if(ev.target.matches('.game-bird-sheet')){ev.preventDefault();closeBirdSheet();}}
-  async function returnRaptorHome(isCurrent=()=>true){
+  async function returnRaptorHome(isCurrent=()=>true,resetCamera=false){
     if(!alive||!isCurrent())return false;
     const view=++fieldViewRequest,valid=()=>alive&&isCurrent()&&view===fieldViewRequest;
     cancelCareEffects();sheetOpen=false;closeResetDialog(false);closeAdoptionDialog(false);closeIndependenceDialog(false);drawResult=null;const draw=root.querySelector('.game-draw-result');if(draw?.open)draw.close();
     const committed=await mutate(w=>{if(w.encounters.raptor?.active)escapeGardenRaptor(w,raptorToken(w));travelTo(w,'home');encounterSystem.leaveGarden(w,{worldId:w.worldId,revision:w.revision});return w;},'おうちに戻ったよ。ここなら安心。',valid,{bump:false,advanceCurrent:false});
-    if(committed&&valid()){panel='garden';render();updateRaptorNotice(root,world);root.querySelector('[data-game-open-bird]')?.focus({preventScroll:true});}return committed;
+    if(committed&&valid()){if(resetCamera)homePan=null;panel='garden';render();updateRaptorNotice(root,world);root.querySelector('[data-game-open-bird]')?.focus({preventScroll:true});}return committed;
   }
-  async function closePanel(){if(independenceBusy||successorBusy)return;closeIndependenceDialog(false);closeSuccessorDialog(false);if(world.encounters.raptor?.active){await returnRaptorHome();return;}fieldViewRequest++;if(['outdoors','notebook'].includes(panel)&&world.encounters.garden.open){const expected={worldId:world.worldId,revision:world.revision};await mutate(w=>{encounterSystem.leaveGarden(w,expected);},'',()=>alive,{bump:false,advanceCurrent:false});}sheetOpen=false;cancelCareEffects();panel='garden';render();root.querySelector('[data-game-open-menu]')?.focus({preventScroll:true});}
+  async function closePanel({returnHome=false}={}){
+    if(independenceBusy||successorBusy)return;
+    closeIndependenceDialog(false);closeSuccessorDialog(false);
+    if(world.encounters.raptor?.active){await returnRaptorHome(undefined,returnHome);return;}
+    const from=panel,view=++fieldViewRequest;
+    if(returnHome){
+      const valid=()=>alive&&panel===from&&fieldViewRequest===view;
+      const committed=await mutate(w=>{
+        if(w.encounters.raptor?.active)escapeGardenRaptor(w,raptorToken(w));
+        travelTo(w,'home');
+        if(w.encounters.garden.open)encounterSystem.leaveGarden(w,{worldId:w.worldId,revision:w.revision});
+      },'',valid,{bump:false,advanceCurrent:false,renderAfter:false});
+      if(!valid())return;
+      if(!committed){render();return;}
+      homePan=null;
+    }else if(['outdoors','notebook'].includes(from)&&world.encounters.garden.open){
+      const expected={worldId:world.worldId,revision:world.revision};
+      await mutate(w=>{encounterSystem.leaveGarden(w,expected);},'',()=>alive,{bump:false,advanceCurrent:false});
+    }
+    sheetOpen=false;cancelCareEffects();panel='garden';render();root.querySelector('[data-game-open-menu]')?.focus({preventScroll:true});
+  }
   // Match the existing close handler: dismiss an overlay or name its actual destination.
   function panelCloseText(){
     if(world.encounters.raptor?.active||panel==='outdoors'||panel==='notebook'&&world.encounters.garden.open)return 'おうちへ';
@@ -1124,7 +1144,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     if(button.dataset.gemCollect){await collectGem(button);return;}
     if(button.hasAttribute('data-care-base')||button.hasAttribute('data-family-care')||button.hasAttribute('data-household-income')||button.hasAttribute('data-auto-gift')||button.hasAttribute('data-gold-buy')){await economyAction(button);return;}
     if(button.hasAttribute('data-game-open-menu')){const menu=root.querySelector('.game-secondary-menu');menu.open=!menu.open;if(menu.open)menu.querySelector('button')?.focus({preventScroll:true});return;}
-    if(button.hasAttribute('data-game-close-panel')){closePanel();return;}
+    if(button.hasAttribute('data-game-close-panel')){closePanel({returnHome:button.hasAttribute('data-home-icon')});return;}
     if(button.hasAttribute('data-game-close-bird')){closeBirdSheet();return;}
     if(button.hasAttribute('data-game-open-bird')){openBirdSheet(selected);return;}
     if(button.hasAttribute('data-game-close-menu')){closeGameMenu();return;}
