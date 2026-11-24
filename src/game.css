@@ -2297,3 +2297,8 @@ body[data-world="buncho"] .game-main .game-room[data-field="home"] .game-habitat
 body[data-world="buncho"] .game-main .game-home-camera-reset{position:absolute;top:calc(120px + env(safe-area-inset-top,0px));right:10px;z-index:43;min-height:44px;font-size:12px;background:#fff6dc}
 .game-home-camera-reset[hidden]{display:none!important}
 @media(max-height:500px){body[data-world="buncho"] .game-main .game-home-camera-reset{top:calc(52px + env(safe-area-inset-top,0px))}}
+
+/* Visits pan their existing artwork and birds as one plane. Keep center as
+   the default; use cover to preserve each original artwork aspect exactly. */
+body[data-world="buncho"] .game-main .game-room[data-field="friend"][data-friend-camera]{transform:translateX(calc(-50% - var(--home-camera-delta, 0px)));touch-action:pan-y pinch-zoom}
+body[data-world="buncho"] .game-main .game-room[data-field="friend"][data-friend-camera] .game-habitat img{object-fit:cover;user-select:none;-webkit-user-drag:none}
