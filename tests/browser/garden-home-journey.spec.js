@@ -7,6 +7,7 @@ async function setup(page,width,height){
  await page.emulateMedia({reducedMotion:'reduce'});
  await page.addInitScript(n=>{Date.now=()=>n;localStorage.setItem('buncho.music.v1','{"enabled":false}');localStorage.setItem('buncho.care-sound-choice.v1','{"explicit":true,"enabled":false}');},NOW);
  const w=createWorld(NOW,1701);w.paused=true;w.settings.motion=false;
+ w.encounters.gardenFriends.accompany=true;w.encounters.gardenFriends.companions=['b1'];
  const guest=createBird(w,{home:'departed',stage:'adult'}),chick=createBird(w,{home:'resident',stage:'chick'});
  await page.goto('');
  await page.evaluate(world=>new Promise((resolve,reject)=>{
