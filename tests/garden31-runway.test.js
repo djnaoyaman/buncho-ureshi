@@ -16,6 +16,7 @@ const homeJourney=JSON.parse(read('docs/qa/garden-home-journey-scope.json'));
 const friendshipFilm=JSON.parse(read('docs/qa/garden-friendship-movie-scope.json'));
 const moreFriendshipFilms=JSON.parse(read('docs/qa/garden-friendship-movie-expansion-scope.json'));
 const friendshipLogo=JSON.parse(read('docs/qa/garden-friendship-movie-logo09-scope.json'));
+const newFriendship=JSON.parse(read('docs/qa/garden-friendship-movie-gouldian-crossbill-scope.json'));
 function afterFriendshipMovie(file,prior){
  const change=friendshipFilm.changedSource[file];
  if(change)assert.equal(change.before,prior,file);
@@ -264,7 +265,8 @@ test('friendship-film successor pins only the reviewed runtime and approved exac
   assert.deepEqual(Object.keys(edge),['before','after']);assert.match(edge.before,/^[0-9a-f]{64}$/);assert.notEqual(edge.before,edge.after,path);
   const successor=moreFriendshipFilms.changedSource[path];if(successor)assert.equal(successor.before,edge.after,path);
   const logo=friendshipLogo.changedSource[path];if(logo)assert.equal(logo.before,successor?.after??edge.after,path);
-  assert.equal(hash(read(path)),logo?.after??successor?.after??edge.after,path);
+  const latest=newFriendship.changedSource[path];if(latest)assert.equal(latest.before,logo?.after??successor?.after??edge.after,path);
+  assert.equal(hash(read(path)),latest?.after??logo?.after??successor?.after??edge.after,path);
  }
  for(const [path,sha] of Object.entries(friendshipFilm.media))assert.equal(hash(read(path)),sha,path);
 });
@@ -282,6 +284,10 @@ test('approved logo09 only changes the four movie URLs, not the player or origin
  assert.deepEqual(Object.keys(friendshipLogo.changedSource),[file]);
  assert.equal(Object.keys(friendshipLogo.media).length,4);
  let reverted=read(file).toString("utf8");
+ assert.equal(hash(reverted),newFriendship.changedSource[file].after,file);
+ reverted=reverted.replace(/,\n 'gouldian-finch':Object\.freeze\(\{[\s\S]*?\n \}\),\n 'red-crossbill':Object\.freeze\(\{[\s\S]*?\n \}\)/,'');
+ reverted=reverted.replace("\${film.edit??'縦向きに切り出し、文字と音楽を加えています。'}", '縦向きに切り出し、文字と音楽を加えています。');
+ assert.equal(hash(reverted),friendshipLogo.changedSource[file].after,file);
  for(const [path,spec] of Object.entries(friendshipLogo.media)){
   const old=spec.original;
   assert.notEqual(path,old);
@@ -294,4 +300,11 @@ test('approved logo09 only changes the four movie URLs, not the player or origin
   reverted=reverted.replace(replacement,old.split('/').at(-1));
  }
  assert.equal(hash(reverted),friendshipLogo.changedSource[file].before,file);
+});
+
+test('only the two exact finished logo09 films extend the licensed library',()=>{
+ assert.equal(newFriendship.baseCommit,'53ea9cef2e28af24d58b5d32104c7cd9b19cb092');
+ assert.deepEqual(Object.keys(newFriendship.changedSource),['src/collection-ending-player.js']);
+ assert.deepEqual(Object.keys(newFriendship.media),['public/game-endings/friendship-gouldian-finch-logo09.mp4','public/game-endings/friendship-red-crossbill-logo09.mp4']);
+ for(const [f,row] of Object.entries(newFriendship.media))assert.equal(hash(read(f)),row.sha256,f);
 });
