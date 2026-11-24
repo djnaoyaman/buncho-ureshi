@@ -14,6 +14,7 @@ const friendRollout=JSON.parse(read('docs/qa/friend-camera-rollout-scope.json'))
 const raptorCapacity=JSON.parse(read('docs/qa/garden-raptor-capacity-scope.json'));
 const homeJourney=JSON.parse(read('docs/qa/garden-home-journey-scope.json'));
 const friendshipFilm=JSON.parse(read('docs/qa/garden-friendship-movie-scope.json'));
+const moreFriendshipFilms=JSON.parse(read('docs/qa/garden-friendship-movie-expansion-scope.json'));
 function afterFriendshipMovie(file,prior){
  const change=friendshipFilm.changedSource[file];
  if(change)assert.equal(change.before,prior,file);
@@ -260,7 +261,15 @@ test('friendship-film successor pins only the reviewed runtime and approved exac
  assert.deepEqual(Object.keys(friendshipFilm.changedSource),['src/game.js','src/encounter-ui.js','src/collection-ending-player.js','src/game.css']);
  for(const [path,edge] of Object.entries(friendshipFilm.changedSource)){
   assert.deepEqual(Object.keys(edge),['before','after']);assert.match(edge.before,/^[0-9a-f]{64}$/);assert.notEqual(edge.before,edge.after,path);
-  assert.equal(hash(read(path)),edge.after,path);
+  const successor=moreFriendshipFilms.changedSource[path];if(successor)assert.equal(successor.before,edge.after,path);
+  assert.equal(hash(read(path)),successor?.after??edge.after,path);
  }
  for(const [path,sha] of Object.entries(friendshipFilm.media))assert.equal(hash(read(path)),sha,path);
+});
+
+test('three additional mini films only extend the existing player catalog',()=>{
+ assert.equal(moreFriendshipFilms.baseCommit,'39a1d7ea4bf16a6a7cb9697b185f4c267d40a4a1');
+ assert.deepEqual(Object.keys(moreFriendshipFilms.changedSource),['src/collection-ending-player.js']);
+ assert.equal(Object.keys(moreFriendshipFilms.media).length,3);
+ for(const [path,sha] of Object.entries(moreFriendshipFilms.media))assert.equal(hash(read(path)),sha,path);
 });
