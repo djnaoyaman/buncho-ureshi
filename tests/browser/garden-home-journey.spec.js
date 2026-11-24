@@ -32,8 +32,19 @@ async function enterGarden(page){
 async function closeGarden(page){await page.locator('.game-panel-overlay[open] [data-game-close-panel]').tap();await expect(page.locator('.game-app')).toHaveAttribute('data-panel','garden');}
 async function friend(page,id){await tapNav(page,'[data-game-panel=friends]');await page.locator('[data-field-travel=friend][data-field-host="'+id+'"]').tap();await expect(page.locator(room)).toHaveAttribute('data-field','friend');}
 const snap=page=>page.locator(room).evaluate(e=>({shift:e.style.getPropertyValue('--home-camera-delta'),field:e.dataset.field,x:e.getBoundingClientRect().left,y:e.getBoundingClientRect().top,chick:[...e.querySelectorAll('.game-nestling')].map(n=>({id:n.dataset.birdId,l:n.getBoundingClientRect().left,r:n.getBoundingClientRect().right})),birds:[...e.querySelectorAll('.game-room-bird')].map(n=>n.dataset.birdId)}));
+
+const nativeBirdPoint=element=>{
+ const r=element.getBoundingClientRect();
+ for(const fy of [.5,.3,.7,.18,.82])for(const fx of [.5,.3,.7,.18,.82]){
+  const x=r.x+r.width*fx,y=r.y+r.height*fy;
+  if(element.contains(document.elementFromPoint(x,y)))return {x,y};
+ }
+ return null;
+};
 async function dragFromBird(page,width){
- const b=page.locator(room+' .game-room-bird.is-selected'), rect=await b.boundingBox(), x=rect.x+rect.width/2,y=rect.y+rect.height/2;
+ const b=page.locator(room+' .game-room-bird.is-selected');
+ await expect.poll(()=>b.evaluate(nativeBirdPoint),'native hit on the selected bird').not.toBeNull();
+ const {x,y}=await b.evaluate(nativeBirdPoint);
  const target=x<width/2?width-5:5;
  await page.mouse.move(x,y);await page.mouse.down();await page.mouse.move(target,y,{steps:12});await page.mouse.up();
  await expect(page.locator('.game-bird-sheet[open]')).toHaveCount(0);
@@ -53,6 +64,11 @@ for(const [width,height] of [[320,568],[390,844]])test('sequential journey and b
  await expect(page.locator('.finch-garden-stage [data-garden-household=b1]')).toBeVisible();
  await closeGarden(page);const direct=await snap(page);
  await friend(page,guest.id);
+ // On a short screen the expanded bird-picker covers the perched friend.
+ // Use the actual "look closely" control before starting a bird gesture.
+ const chrome=page.locator('.game-scene-controls-toggle');
+ if(await chrome.getAttribute('aria-expanded')==='true')await chrome.tap();
+ await expect(chrome).toHaveAttribute('aria-expanded','false');
  const atFriend=await snap(page);await dragFromBird(page,width);
  const pannedFriend=await snap(page);expect(pannedFriend.shift).not.toBe(atFriend.shift);
  await page.locator('[data-home-camera-reset]').tap();
