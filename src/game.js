@@ -4,7 +4,7 @@ import {renderLeafDiary} from './garden-leaf-event-ui.js';
 import { trackEvent } from './analytics.js';
 import {createGardenAnalytics,predatorSnapshot} from './garden-analytics.js';
 import {syncCollectionEndings} from './collection-endings.js';
-import {mountCollectionEndingPlayer,renderEndingDiary} from './collection-ending-player.js';
+import {mountCollectionEndingPlayer,renderEndingDiary,renderFriendshipMovieDiary,renderFriendshipMovieOffer,unlockedFriendshipMovies,newlyUnlockedFriendshipMovies} from './collection-ending-player.js';
 import {crowScene} from './garden-crows.js';
 import {mountRaptorReturnPrompt} from './garden-raptor-return-prompt.js';
 import {renderHomeScene} from './home-scene.js';
@@ -108,6 +108,7 @@ export function careFloorOpacity(cleanliness) {
 }
 export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () => {}, goArt = () => {}, audioFactory = createCareAudio, raptorRandom = Math.random, predatorRandom = Math.random } = {}) {
   let raptorReturnPrompt=null,endingPlayer=null,crowMusicWarning=false;
+  const friendshipMovieOffers=new Map();
   function syncEncounterMusic(){
     const outside=world.encounters.garden.open;
     document.dispatchEvent(new document.defaultView.CustomEvent('buncho-game-music-scene',{detail:{worldId:world.worldId,gardenId:outside?world.encounters.garden.id:null,paused:world.paused,encounter:world.encounters.raptor?.active?'raptor':outside&&(crowMusicWarning||crowScene(world)?.phase==='visiting')?'crow':null}}));
@@ -235,7 +236,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     clearTimeout(releaseTimer);
     // Native click/form submission follows pointerup; never replace its target
     // in the pointerup handler itself. Cancellation uses the same safe flush.
-    releaseTimer=setTimeout(()=>{if(alive&&refreshPending&&!busy&&!interactionActive())render();},0);
+    releaseTimer=setTimeout(()=>{if(alive&&refreshPending&&!busy&&!interactionActive())render();else if(alive)syncFriendshipMovieOffer();},0);
   };
   let encounterRoot=null,encounterController=null,encounterMode=null;
   let relationshipPage=0,relationshipFocusKey='';
@@ -303,7 +304,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     if(homeResponse&&(homeResponse.worldId!==w.worldId||homeResponse.revision!==w.revision))clearHomeResponse();
     const changedProtagonist=getProtagonistId(world)!==getProtagonistId(w),replacedWorld=world.worldId!==w.worldId;
     if(findBird(world,selected)?.name!==findBird(w,selected)?.name){lastReply='';replyBird=null;}
-    if (world.worldId !== w.worldId) { if(!resetPending)closeResetDialog(false);sheetOpen=false;sheetReturn=null;poseClock.reset();drafts.clear();nameSuggestionOrigins.clear();previewItem=null;drawResult=null;lastReply='';replyBird=null;cancelCareEffects();soundRequest++;soundChoice=null; }
+    if (world.worldId !== w.worldId) { friendshipMovieOffers.clear();if(!resetPending)closeResetDialog(false);sheetOpen=false;sheetReturn=null;poseClock.reset();drafts.clear();nameSuggestionOrigins.clear();previewItem=null;drawResult=null;lastReply='';replyBird=null;cancelCareEffects();soundRequest++;soundChoice=null; }
     world=w;
     if(changedProtagonist||replacedWorld){cancelCareEffects();selected=getProtagonistId(world);sheetOpen=false;sheetReturn=null;lastReply='';replyBird=null;}
     if(adoptionDialogToken&&(adoptionDialogToken.worldId!==w.worldId||w.adoption.pending?.birdId!==adoptionDialogToken.birdId))closeAdoptionDialog(false);
@@ -315,12 +316,12 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
   audio.setEnabled(careSoundEnabled());
   async function mutate(fn, success='', guard=()=>true, {bump=true,advancePaused=true,advanceCurrent=true,renderAfter=true}={}) {
     if(!alive||!guard())return false;
-    let committed=false,measurementBefore;
+    let committed=false,measurementBefore,friendshipCrossings=[];
     const expectedWorldId=world.worldId;
     busy++;error='';
-    try { latest(await store.transact(w=>{if(!guard())return w;if(w.worldId!==expectedWorldId)throw new Error('別のタブで別の庭が読み込まれました。画面の更新を待ってから、もう一度選んでください。');if(advanceCurrent&&(!w.paused||advancePaused))advanceTo(w,Date.now(),{present:!document.hidden});try{measurementBefore=predatorSnapshot(w);}catch{}const next=fn(w)||w;syncCollectionEndings(next);if(bump)bumpRevision(next);return next;})); committed=true;gardenAnalytics.committed(measurementBefore,world);if(alive&&guard()){if(success)setMessage(success);channel?.postMessage({revision:world.revision});} }
+    try { latest(await store.transact(w=>{if(!guard())return w;if(w.worldId!==expectedWorldId)throw new Error('別のタブで別の庭が読み込まれました。画面の更新を待ってから、もう一度選んでください。');if(advanceCurrent&&(!w.paused||advancePaused))advanceTo(w,Date.now(),{present:!document.hidden});try{measurementBefore=predatorSnapshot(w);}catch{}const priorFriendshipFilms=unlockedFriendshipMovies(w),priorWorldId=w.worldId;const next=fn(w)||w;friendshipCrossings=newlyUnlockedFriendshipMovies(priorFriendshipFilms,priorWorldId,next);syncCollectionEndings(next);if(bump)bumpRevision(next);return next;})); committed=true;gardenAnalytics.committed(measurementBefore,world);if(alive&&guard()){for(const id of friendshipCrossings)if(!friendshipMovieOffers.has(id))friendshipMovieOffers.set(id,{announced:false});if(success)setMessage(success);channel?.postMessage({revision:world.revision});} }
     catch(e){clearHomeResponse();error=e.message||'保存できませんでした。もう一度試してください。';}
-    finally{busy--;if(alive&&renderAfter)render();}
+    finally{busy--;if(alive&&renderAfter)render();else if(alive&&committed&&friendshipCrossings.length)syncFriendshipMovieOffer();}
     return committed;
   }
   function closeResetDialog(restore=true){
@@ -789,7 +790,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
   function resizeFamily(){if(panel==='family'){render();centerFamily();}else if(panel==='garden'&&!interactionActive())render();}
   function centerFamily(){const pan=root.querySelector('.game-family-pan'),canvas=root.querySelector('.game-family-canvas');if(pan&&canvas)pan.scrollLeft=Math.max(0,parseFloat(canvas.style.width)*familyZoom/2-pan.clientWidth/2);}
   function diary() {
-    return renderEndingDiary(world)+renderLeafDiary(world)+renderExpeditionDiary(world)+renderShowcaseDiary(world)+renderDiaryPaper(world, {portrait:b=>`<span class="game-mini-bird">${birdSvg(b.color,b.stage,'left')}</span>`})+(world.away.reports.length?`<details class="game-away-history" data-game-details="away-history"><summary>留守の小さな記録（直近7日）</summary><ul class="game-away-reports">${world.away.reports.map(r=>`<li><time datetime="${r.day}">${r.day}</time><span>${escape(awayText(r))}</span></li>`).join('')}</ul></details>`:'');
+    return renderEndingDiary(world)+renderFriendshipMovieDiary(world)+renderLeafDiary(world)+renderExpeditionDiary(world)+renderShowcaseDiary(world)+renderDiaryPaper(world, {portrait:b=>`<span class="game-mini-bird">${birdSvg(b.color,b.stage,'left')}</span>`})+(world.away.reports.length?`<details class="game-away-history" data-game-details="away-history"><summary>留守の小さな記録（直近7日）</summary><ul class="game-away-reports">${world.away.reports.map(r=>`<li><time datetime="${r.day}">${r.day}</time><span>${escape(awayText(r))}</span></li>`).join('')}</ul></details>`:'');
   }
   function roster() {
     const current=chosen();
@@ -946,7 +947,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     if(oldOverlayScroll!==undefined)overlay.scrollTop=oldOverlayScroll;
     if(sheetOpen)sheet.scrollTop=oldSheetScroll;
     raptorReturnPrompt?.sync();
-    endingPlayer?.sync();
+    endingPlayer?.sync();syncFriendshipMovieOffer();
   }
   function artPayload(b, e) { const family=[b,...b.parents.map(id=>findBird(world,id)),...(b.partner?[findBird(world,b.partner)]:[])].filter(Boolean); return {title:e?eventText(world,e):`${b.name}の家族`,name:b.name,names:family.map(x=>x.name),birds:family.map(x=>({id:x.id,name:x.name,color:x.color,stage:x.stage})),date:day(e?.tick??world.tick),event:e?.kind||'family',source:'game',caption:'おもちの文鳥ぐらし・ゲームの記念カード'}; }
   // Only our captured poll may advance this gesture's token. Never adopt an
@@ -1078,6 +1079,10 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
       const committed=await mutate(w=>{if(w.leafEvent?.entry?.gardenId!==gardenId||w.encounters.raptor?.active||w.paused)return w;result=encounterSystem.selectGarden(w,gardenId,expected);return w;},'',()=>alive,{bump:false,advanceCurrent:false});
       if(committed&&(result?.changed||result?.resumed)){sheetOpen=false;fieldViewRequest++;cancelCareEffects();panel='outdoors';render();focusPanel();}return;
     }
+    const movieDismiss=ev.target.closest?.('[data-friendship-movie-dismiss]');
+    if(movieDismiss){ev.preventDefault();friendshipMovieOffers.delete(movieDismiss.dataset.friendshipMovieDismiss);syncFriendshipMovieOffer();focusAfterFriendshipOffer(movieDismiss.dataset.friendshipMovieDismiss);return;}
+    const movieOpen=ev.target.closest?.('[data-friendship-movie-open]');
+    if(movieOpen){ev.preventDefault();const id=movieOpen.dataset.friendshipMovieOpen;if(await endingPlayer?.openFriendship(id,movieOpen)){friendshipMovieOffers.delete(id);movieOpen.closest('[data-friendship-movie-offer]')?.remove();}return;}
     const endingButton=ev.target.closest?.('[data-ending-replay]');if(endingButton){ev.preventDefault();void endingPlayer?.open(endingButton.dataset.endingReplay);return;}
     const suggestionButton=ev.target.closest?.('[data-game-name-suggest],[data-game-name-cancel]');
     if(suggestionButton){
@@ -1286,7 +1291,7 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
       }catch(e){if(alive){error=e.message;render();}}
       finally{busy--;if(pollFlight===flight)pollFlight=null;}
     })();
-    await flight.promise;endingPlayer?.sync();
+    await flight.promise;endingPlayer?.sync();syncFriendshipMovieOffer();
   }
   function rememberPresence(){if(!alive)return;const expected=world.worldId,at=Date.now();void store.transact(w=>{if(w.worldId===expected)notePresence(w,at);return w;}).catch(()=>{});}
   function observeVisibility(){if(document.hidden)rememberPresence();else void poll(true);}
@@ -1301,9 +1306,25 @@ export async function mountGame(root, { birdSvg = gameBirdSvg, goArticle = () =>
     const committed=await mutate(w=>{result=remainWithGardenRaptor(w,Date.now(),{...expected,revision:w.revision});return w;},'にわに残るよ。危なくなる前に、おうちへ帰ってね。',current,{bump:false,advanceCurrent:false});
     return committed&&result?.changed;
   }});
+  const canPresentEnding=()=>!busy&&!lifeBusy&&!interactionActive()&&!document.hidden&&!document.body.dataset.gameViewBlocked&&!['settings','health'].includes(panel)&&!sheetOpen&&!adoptionDialogToken&&!independenceDialogToken&&!successorDialogToken&&!resetPending&&!drawResult&&!world.encounters.raptor?.active&&!crowScene(world)&&!world.encounters.active&&!world.encounters.queue.length&&!['loading','shown'].includes(document.body.dataset.gameIntro);
+  function syncFriendshipMovieOffer(){
+    const old=root.querySelector('[data-friendship-movie-offer]');
+    if(!friendshipMovieOffers.size&&!old)return;
+    const id=unlockedFriendshipMovies(world).find(key=>friendshipMovieOffers.has(key));
+    if(!id||!canPresentEnding()||endingPlayer?.active()){if(!interactionActive())old?.remove();return;}
+    const surface=root.querySelector('.game-panel-overlay[open]')||root.querySelector('.game-main');
+    if(!surface||old?.parentElement===surface&&old.dataset.friendshipMovieOffer===id)return;
+    old?.remove();
+    const state=friendshipMovieOffers.get(id);
+    surface.insertAdjacentHTML('beforeend',renderFriendshipMovieOffer(id,{announce:!state.announced}));
+    state.announced=true;
+  }
+  function focusAfterFriendshipOffer(id){
+    (root.querySelector(`.game-friendship-movie-card [data-friendship-movie-open="${id}"]`)||root.querySelector('.game-panel-overlay[open] [data-game-close-panel]')||root.querySelector('[data-game-open-bird]'))?.focus({preventScroll:true});
+  }
   endingPlayer=mountCollectionEndingPlayer(root,{getWorld:()=>world,transact:async fn=>{
     const committed=await mutate(fn,'',()=>alive,{bump:false,advanceCurrent:false,renderAfter:false});if(!committed)throw new Error('保存できませんでした。');return world;
-  },canPresent:()=>!busy&&!lifeBusy&&!interactionActive()&&!document.hidden&&!document.body.dataset.gameViewBlocked&&!['settings','health'].includes(panel)&&!sheetOpen&&!adoptionDialogToken&&!independenceDialogToken&&!successorDialogToken&&!resetPending&&!drawResult&&!world.encounters.raptor?.active&&!crowScene(world)&&!world.encounters.active&&!world.encounters.queue.length&&!['loading','shown'].includes(document.body.dataset.gameIntro),onActive:value=>{if(value)cancelCareEffects();},onClose:()=>{if(alive)render();}});
+  },canPresent:canPresentEnding,onActive:value=>{if(value)cancelCareEffects();},onClose:session=>{if(!alive)return;if(session.friendship){syncFriendshipMovieOffer();if(document.activeElement===document.body)focusAfterFriendshipOffer(session.id);}else render();}});
   timer=setInterval(poll,3000);render();document.dispatchEvent(new document.defaultView.CustomEvent('buncho-game-ready'));
   const raptorController=mountGardenRaptors(root,{onActiveTime:delta=>gardenAnalytics.active(delta),getWorld:()=>world,random:raptorRandom,predatorRandom,canStartCrowWarning:()=>encounterController?.canStartCrowWarning()||false,startCrowWarning:id=>encounterController?.startCrowWarning(id)||false,isAvailable:()=>!busy&&!endingPlayer?.active(),hasCrowPending:()=>encounterController?.hasCrowPending()||false,transact:async operation=>{
     const committed=await mutate(operation,'',()=>alive,{bump:false,advanceCurrent:false,renderAfter:false});if(!committed)throw new Error('保存できませんでした。');return world;

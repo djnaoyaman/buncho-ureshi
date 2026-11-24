@@ -10,6 +10,15 @@ const homeCamera=JSON.parse(read('docs/qa/home-camera-scope.json'));
 const friendCamera=JSON.parse(read('docs/qa/friend-camera-pilot-scope.json'));
 const friendRollout=JSON.parse(read('docs/qa/friend-camera-rollout-scope.json'));
 const raptorCapacity=JSON.parse(read('docs/qa/garden-raptor-capacity-scope.json'));
+const journey=JSON.parse(read('docs/qa/garden-home-journey-scope.json'));
+const friendshipFilm=JSON.parse(read('docs/qa/garden-friendship-movie-scope.json'));
+function afterNewerPresentation(file,prior){
+ for(const release of [journey,friendshipFilm]){
+  const change=release.changedSource[file];
+  if(change){assert.equal(change.before,prior,file);prior=change.after;}
+ }
+ return prior;
+}
 function afterRaptorCapacity(file,prior){
  const change=raptorCapacity.changedSource[file];
  if(change)assert.equal(change.before,prior,file);
@@ -26,7 +35,7 @@ function afterLevels(file,prior){
  if(friend)assert.equal(friend.before,own,file);
  const pilot=friend?.after||own, rollout=friendRollout.changedSource[file];
  if(rollout)assert.equal(rollout.before,pilot,file);
- return afterRaptorCapacity(file,rollout?.after||pilot);
+ return afterNewerPresentation(file,afterRaptorCapacity(file,rollout?.after||pilot));
 }
 
 function assertScopedCurrent(file,prior){
