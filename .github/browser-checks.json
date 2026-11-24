@@ -1,9 +1,7 @@
 {
-  "base": "c4efd7dc4aa3fdc281b5508ce1e591aaa76e2f56",
+  "base": "706f71b25579b6841446beb8ac0a93b3b68a9dea",
   "tests": [
-    "tests/browser/garden-flat-platforms.spec.js",
-    "tests/browser/garden-bullfinch-type1.spec.js",
-    "tests/browser/garden-mossy-log-type1.spec.js"
+    "tests/browser/garden-onsen-type1.spec.js"
   ],
-  "reason": "上下段の既存着地面を保って平地型を白い翼のトウヒ園と赤と緑の島庭に適用。単羽の飛行素材と接地、7〜9羽の実移動、3幅で最大10羽のタップと下段の利用を確認。先行の石棚と苔の倒木もChrome/WebKitで回帰確認。絵・ルール・保存は不変。"
+  "reason": "寄りそいの中庭のみ。枝の描画順、石畳への自律飛行、狭幅での8羽の実飛行と最大10羽の入力をChrome/WebKitで確認。ゲームルール、保存、他庭の挙動は変更なし。"
 }

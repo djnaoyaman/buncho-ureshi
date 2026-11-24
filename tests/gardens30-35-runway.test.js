@@ -5,10 +5,13 @@ const trail=JSON.parse(read('docs/qa/garden-trail-public-scope.json'));
 const flat=JSON.parse(read('docs/qa/garden-flat-seven-scope.json'));
 const platforms=JSON.parse(read('docs/qa/garden-mossy-log-scope.json'));
 const levels=JSON.parse(read('docs/qa/garden-flat-platforms-scope.json'));
+const courtyard=JSON.parse(read('docs/qa/garden-flat-onsen-scope.json'));
 function afterLevels(file,prior){
  const next=levels.changedSource[file];
  if(next)assert.equal(next.before,prior,file);
- return next?.after||prior;
+ const base=next?.after||prior, layer=courtyard.changedSource[file];
+ if(layer)assert.equal(layer.before,base,file);
+ return layer?.after||base;
 }
 
 function assertScopedCurrent(file,prior){

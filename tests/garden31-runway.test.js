@@ -7,10 +7,13 @@ const remaining=JSON.parse(read('docs/qa/garden-flat-remaining-scope.json'));
 const shelves=JSON.parse(read('docs/qa/garden-flat-phase2-scope.json'));
 const platforms=JSON.parse(read('docs/qa/garden-mossy-log-scope.json'));
 const levels=JSON.parse(read('docs/qa/garden-flat-platforms-scope.json'));
+const courtyard=JSON.parse(read('docs/qa/garden-flat-onsen-scope.json'));
 function afterLevels(file,prior){
  const next=levels.changedSource[file];
  if(next)assert.equal(next.before,prior,file);
- return next?.after||prior;
+ const base=next?.after||prior, layer=courtyard.changedSource[file];
+ if(layer)assert.equal(layer.before,base,file);
+ return layer?.after||base;
 }
 
 function assertScopedCurrent(file,prior){
@@ -174,6 +177,23 @@ test('stepped surfaces extend the mossy log ledger for exactly the shared presen
   assert.deepEqual(Object.keys(edge),['before','after']);
   assert.notEqual(edge.before,edge.after);
   assert.equal(edge.before,platforms.changedSource[f].after);
-  assert.equal(hash(read(f)),edge.after,f);
+  const layer=courtyard.changedSource[f];
+  if(layer)assert.equal(layer.before,edge.after,f);
+  assert.equal(hash(read(f)),layer?.after||edge.after,f);
  }
+});
+
+test('Yoriso-i courtyard releases only the lower courtyard geometry and decorative foreground',()=>{
+ const data='src/data/garden-actor-terrain.js', renderer='src/encounter-ui.js';
+ assert.equal(courtyard.baseCommit,'706f71b25579b6841446beb8ac0a93b3b68a9dea');
+ assert.deepEqual(courtyard.gardens,[32]);
+ assert.deepEqual(courtyard.heldGardens,[]);
+ assert.deepEqual(Object.keys(courtyard.changedSource),[renderer,data]);
+ assert.equal(courtyard.changedSource[renderer].before,flat.changedSource[renderer].after);
+ assert.equal(courtyard.changedSource[data].before,levels.changedSource[data].after);
+ for(const [file,edge] of Object.entries(courtyard.changedSource)){
+  assert.notEqual(edge.after,edge.before,file);
+  assert.equal(hash(read(file)),edge.after,file);
+ }
+ assert.equal(hash(read('public/game-art/gardens35/bird-garden-32.webp')),courtyard.originalArtSha256);
 });
