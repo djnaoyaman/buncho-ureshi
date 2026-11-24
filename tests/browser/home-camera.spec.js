@@ -57,8 +57,15 @@ for(const [width,height] of [[320,568],[390,844]])test(`home ${width}: authentic
  },width);
  for(let i=0;i<3;i++){const y=await roomGestureY();expect(y,'left swipe must start in the scene').toBeDefined();await drag(page,25,y,width-25);}
  const left=await snapshot(page);expect(left.r.x).toBeCloseTo(0,0);
+ await page.evaluate(()=>{
+  window.homeGestureTrace=[];
+  for(const type of ['pointerdown','pointerup','pointercancel','gotpointercapture','lostpointercapture','dragstart','pointermove'])
+   document.addEventListener(type,e=>window.homeGestureTrace.push([e.type,e.clientX,e.clientY,e.target?.className?.baseVal||String(e.target?.className||'')]),true);
+ });
  for(let i=0;i<4;i++){const y=await roomGestureY();expect(y,'right swipe must start in the scene').toBeDefined();await drag(page,width-25,y,25);}
- const right=await snapshot(page);expect(right.r.right).toBeCloseTo(width,0);
+ const right=await snapshot(page);
+ const trace=await page.evaluate(()=>window.homeGestureTrace);
+ expect(right.r.right,JSON.stringify(trace)).toBeCloseTo(width,0);
  expect(right.dock).toEqual(start.dock);
  const reset=page.locator('[data-home-camera-reset]');await expect(reset).toBeVisible();await reset.click();
  const resetView=await snapshot(page);expect(resetView.r.x).toBeCloseTo(start.r.x,0);
