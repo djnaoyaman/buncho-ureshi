@@ -1,10 +1,8 @@
 {
-  "base": "985f4a022566920f2b5f4388736972cd8dc5ce22",
+  "base": "e3865934eb5a574f62b6b92c052d5525cf94fe95",
   "tests": [
-    "tests/browser/garden-home-journey.spec.js",
-    "tests/browser/home-camera.spec.js",
-    "tests/browser/friend-camera-pilot.spec.js",
-    "tests/browser/garden-raptor-capacity.spec.js"
+    "tests/browser/friendship-movie.spec.js",
+    "tests/browser/garden-home-journey.spec.js"
   ],
-  "reason": "庭のおうちへで自宅と巣の初期表示に戻る動線のみ。320/390pxで、友達宅からの帰宅、庭を閉じるだけの操作、スワイプ直後と次の観察タップ、保存、既存の猛禽をChrome/WebKitで確認。"
+  "reason": "スズメの記念映像だけ。確定99→100のお知らせ・あとで・図鑑と日記・録画の実デコード・既存100・他種・保存・320/390pxの帰宅をChrome/WebKitで確認。"
 }

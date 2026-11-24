@@ -1,0 +1,24 @@
+{
+  "baseCommit": "e3865934eb5a574f62b6b92c052d5525cf94fe95",
+  "changedSource": {
+    "src/game.js": {
+      "before": "d5e78ed7eb15056b7c96dd18d0ab5305eca1523790732928cef54bf2cc2d5b2f",
+      "after": "a12de659760de528903669972ece980ce164d8f45e18a25d47faa4b09aad6716"
+    },
+    "src/encounter-ui.js": {
+      "before": "2ef0989287206784794897fc2b5f94f8cd491c05b7b1bf30b515f6b2eacef1d1",
+      "after": "26d614ff8c460f31ac9aeec1e2a62f1e30f97843980bfc9c2351eb9faa7a3763"
+    },
+    "src/collection-ending-player.js": {
+      "before": "8d0a3e7cb020307f57d1db3a84fc8984dc27d85a64b9e946e23fe38bbc77c9f9",
+      "after": "ee92ccf8f856d39414ae9b641e1defb20acfa829aaccb3fb571a74aa3a7ea0d1"
+    },
+    "src/game.css": {
+      "before": "a0ac78b4e5f113b2cf6f99bed1e8f5fc24a9760ea40422276cf5ac3d0e425b41",
+      "after": "ab52799088aae86dfb891ea68d1a19e322f2f6b389410777903b9a10ea81486a"
+    }
+  },
+  "media": {
+    "public/game-endings/friendship-eurasian-tree-sparrow-v2.mp4": "29c1dcdd5cba472d884916aab2c3d13cd9710fdd594d3fac36c1df3bbcf49f56"
+  }
+}
