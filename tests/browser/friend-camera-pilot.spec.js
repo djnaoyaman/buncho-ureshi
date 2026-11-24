@@ -49,6 +49,9 @@ for(const [width,height] of [[320,568],[390,844]])test(`only Bauhaus pans and re
  // Load an existing different cage via the ordinary startup route. Its fixed
  // centered artwork must neither inherit the pilot offset nor receive controls.
  const other=await saved(page);travelTo(other,'friend',second.id);await saved(page,validateWorld(other));await page.reload();
+ await expect(page.locator('body')).toHaveAttribute('data-game-intro','done');
+ if(await page.locator('#game-welcome-close').isVisible())await page.locator('#game-welcome-close').click();
+ if(await page.locator('body').getAttribute('data-scene-controls')==='open')await page.locator('.game-scene-controls-toggle').tap();
  await expect(room).toHaveAttribute('data-friend-cage','2');await expect(reset).toHaveCount(0);
  const unmodified=await view(page);await drag(page,width,1);expect((await view(page)).x).toBeCloseTo(unmodified.x,0);
  expect((await saved(page)).birds).toEqual(before.birds);
