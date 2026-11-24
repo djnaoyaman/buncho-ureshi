@@ -1,7 +1,7 @@
 {
-  "base": "ec0d4142f8e0b676243271d3f51cbcbdcc2ae568",
+  "base": "62609c8d7ae4667b028ae01b95dc63c74ac5f0c9",
   "tests": [
-    "tests/browser/garden-bullfinch-type1.spec.js"
+    "tests/browser/garden-onsen-type1.spec.js"
   ],
-  "reason": "既存の平地型を別途調査した石棚だけに適用。各3画面幅で単羽飛行・着地の実描画と最大10羽のタップをChrome/WebKit確認。絵・ルール・他の庭のデータは変更しない。"
+  "reason": "寄りそいの中庭だけ。元画像の枝の遮蔽、石畳への飛行と着地、7～10羽の狭幅での動きと入力を Chrome/WebKit で確認。ゲームルール、ゲーム保存、他庭の挙動は変更なし。"
 }

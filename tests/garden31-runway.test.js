@@ -5,12 +5,15 @@ const trail=JSON.parse(read('docs/qa/garden-trail-public-scope.json'));
 const flat=JSON.parse(read('docs/qa/garden-flat-seven-scope.json'));
 const remaining=JSON.parse(read('docs/qa/garden-flat-remaining-scope.json'));
 const shelves=JSON.parse(read('docs/qa/garden-flat-phase2-scope.json'));
+const courtyard=JSON.parse(read('docs/qa/garden-flat-onsen-scope.json'));
 function assertScopedCurrent(file,prior){
  const step=trail.changedSource[file];
  if(step)assert.equal(step.before,prior,file);
  const successor=flat.changedSource[file];
  if(successor)assert.equal(successor.before,step?.after||prior,file);
- assert.equal(hash(read(file)),successor?.after||step?.after||prior,file);
+ const layer=courtyard.changedSource[file];
+ if(layer)assert.equal(layer.before,successor?.after||step?.after||prior,file);
+ assert.equal(hash(read(file)),layer?.after||successor?.after||step?.after||prior,file);
 }
 test('hanadokei uses the exact approved Runway-derived MP3 with explicit period and entry guard',()=>{
  const m=GARDEN35_MUSIC.hanadokei,t=gardenMusicTracks().find(t=>t.gardenId==='hanadokei'),bytes=read('public/'+r.asset);
@@ -83,7 +86,9 @@ test('Type II formal candidate source successor pins the exact reviewed files an
   assert.notEqual(entry.before,entry.after,f);
   const successor=flat.changedSource[f];
   if(successor)assert.equal(successor.before,entry.after,f);
-  assert.equal(hash(read(f)),successor?.after||entry.after,f);
+  const layer=courtyard.changedSource[f];
+  if(layer)assert.equal(layer.before,successor?.after||entry.after,f);
+  assert.equal(hash(read(f)),layer?.after||successor?.after||entry.after,f);
  }
 });
 
@@ -100,7 +105,9 @@ test('approved flat successor pins exactly two runtime files and preserves the o
   if(latest)assert.equal(latest.before,entry.after,file);
   const shelf=shelves.changedSource[file];
   if(shelf)assert.equal(shelf.before,latest?.after||entry.after,file);
-  assert.equal(hash(read(file)),shelf?.after||latest?.after||entry.after,file);
+  const layer=courtyard.changedSource[file];
+  if(layer)assert.equal(layer.before,shelf?.after||latest?.after||entry.after,file);
+  assert.equal(hash(read(file)),layer?.after||shelf?.after||latest?.after||entry.after,file);
  }
 });
 
@@ -117,7 +124,8 @@ test('remaining open-ground release extends the prior ledger for only the survey
  assert.notEqual(edge.after,edge.before);
  const successor=shelves.changedSource[path];
  assert.equal(successor.before,edge.after);
- assert.equal(hash(read(path)),successor.after);
+ assert.equal(courtyard.changedSource[path].before,successor.after);
+ assert.equal(hash(read(path)),courtyard.changedSource[path].after);
 });
 
 
@@ -131,5 +139,22 @@ test('stone-shelf release extends the exact prior terrain ledger only',()=>{
  assert.deepEqual(Object.keys(edge),['before','after']);
  assert.equal(edge.before,remaining.changedSource[path].after);
  assert.notEqual(edge.after,edge.before);
- assert.equal(hash(read(path)),edge.after);
+ assert.equal(courtyard.changedSource[path].before,edge.after);
+ assert.equal(hash(read(path)),courtyard.changedSource[path].after);
+});
+
+
+test('Yoriso-i courtyard releases only the lower courtyard geometry and decorative foreground',()=>{
+ const data='src/data/garden-actor-terrain.js', renderer='src/encounter-ui.js';
+ assert.equal(courtyard.baseCommit,'62609c8d7ae4667b028ae01b95dc63c74ac5f0c9');
+ assert.deepEqual(courtyard.gardens,[32]);
+ assert.deepEqual(courtyard.heldGardens,[16,27,33]);
+ assert.deepEqual(Object.keys(courtyard.changedSource),[renderer,data]);
+ assert.equal(courtyard.changedSource[renderer].before,flat.changedSource[renderer].after);
+ assert.equal(courtyard.changedSource[data].before,shelves.changedSource[data].after);
+ for(const [file,edge] of Object.entries(courtyard.changedSource)){
+  assert.notEqual(edge.after,edge.before,file);
+  assert.equal(hash(read(file)),edge.after,file);
+ }
+ assert.equal(hash(read('public/game-art/gardens35/bird-garden-32.webp')),courtyard.originalArtSha256);
 });
