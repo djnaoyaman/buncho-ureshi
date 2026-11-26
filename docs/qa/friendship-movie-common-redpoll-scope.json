@@ -1,0 +1,12 @@
+{
+  "baseCommit": "b96f2da62a7e05b6f5756fdf6e3c913b38c5c641",
+  "changedSource": {
+    "src/collection-ending-player.js": {
+      "before": "05cc0afe19e3af366492fbf28a46a0a0bc7711c7e3be024d2ef954299982a64b",
+      "after": "076730df3f2c785986b41aa1fcbd62cabab9f1970077156a9ff722b3235354ed"
+    }
+  },
+  "media": {
+    "public/game-endings/friendship-common-redpoll-logo09.mp4": "0dd3a7a67cc6cf39209c478e8866b37dec6b6ea25269c1ffb31d51e6b8db05c5"
+  }
+}

@@ -1,8 +1,8 @@
 {
-  "base": "6b30cd8e49f162980aec7007f5c72220d7115cfa",
+  "base": "b96f2da62a7e05b6f5756fdf6e3c913b38c5c641",
   "tests": [
     "tests/browser/friendship-movie.spec.js",
     "tests/browser/garden-home-journey.spec.js"
   ],
-  "reason": "完成したマヒワのロゴ09版のみを追加。各種の確定99→100、任意再生、図鑑・日記、原典リンクと実デコード、保存不変、帰宅をChrome/WebKitで検証。"
+  "reason": "ベニヒワのロゴ09実写のみ。99→100、任意再生、図鑑・日記、原典リンクと実デコード、保存不変、帰宅をChrome/WebKitで検証。"
 }

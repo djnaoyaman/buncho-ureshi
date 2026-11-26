@@ -72,7 +72,7 @@ test('recorded 100+ unlocks the bird card but does not create an offer; unrelate
  await expect(page.locator('[data-friendship-movie-open]')).toHaveCount(0);
  expect((await record(page)).encounters.friendship).toEqual(w.encounters.friendship);
 });
-for(const [pilot,license] of [['eurasian-bullfinch','3.0'],['hawfinch','3.0'],['tricolored-munia','2.0'],['gouldian-finch','pixabay'],['red-crossbill','nps'],['red-avadavat','2.0'],['eurasian-siskin','pixabay']]){
+for(const [pilot,license] of [['eurasian-bullfinch','3.0'],['hawfinch','3.0'],['tricolored-munia','2.0'],['gouldian-finch','pixabay'],['red-crossbill','nps'],['red-avadavat','2.0'],['eurasian-siskin','pixabay'],['common-redpoll','2.0']]){
  test(pilot+' own bird entry links exact edition and decodes without playing',async({page})=>{
   await start(page,390,844,99,pilot);await bird(page,pilot);
   const card=page.locator('.game-friendship-movie-card');
@@ -94,6 +94,10 @@ for(const [pilot,license] of [['eurasian-bullfinch','3.0'],['hawfinch','3.0'],['
   if(pilot==='red-avadavat'){
    await expect(card.getByRole('link',{name:'原典',exact:true})).toHaveAttribute('href','https://www.flickr.com/photos/krishnacolor/51482148959/');
    await expect(card).toContainText('インド・テランガーナ州');
+  }
+  if(pilot==='common-redpoll'){
+   await expect(card.getByRole('link',{name:'原典',exact:true})).toHaveAttribute('href','https://commons.wikimedia.org/wiki/File:Common_redpolls_(Acanthis_flammea).webm');
+   await expect(card).toContainText('ワショー郡ドライバレー');
   }
   await expect(page.locator(offer)).toHaveCount(0);
   await card.locator('[data-friendship-movie-open="'+pilot+'"]').click();
