@@ -82,3 +82,19 @@ test('マヒワ uses exact edited edition and accurately displays source and lic
  const bytes=readFileSync(new URL('../public/game-endings/friendship-eurasian-siskin-logo09.mp4',import.meta.url));
  assert.equal(createHash('sha256').update(bytes).digest('hex'),'41b79719ff2f7d8555bbcee13aabc44cc17f8805a7e09be4d34a9d7b9a1257db');
 });
+
+test('ベニヒワ merits precisely its own real-footage film and credits',()=>{
+ const bird='common-redpoll',w=fixture(99,bird);
+ assert.deepEqual(unlockedFriendshipMovies(w),[]);
+ assert.equal(encounterSystem.pet(w,bird,1,{worldId:w.worldId,revision:w.revision}).changed,true);
+ assert.deepEqual(newlyUnlockedFriendshipMovies([],w.worldId,w),[bird]);
+ const snapshot=structuredClone(w),html=renderFriendshipMovieCard(w,bird);
+ assert.match(html,/ベニヒワと なかよしになった記念/);
+ assert.match(html,/ワショー郡ドライバレー.*Seabamirum.*CC BY 2.0/);
+ assert.ok(html.includes('https://commons.wikimedia.org/wiki/File:Common_redpolls_(Acanthis_flammea).webm'));
+ assert.ok(html.includes('https://creativecommons.org/licenses/by/2.0/'));
+ assert.match(renderFriendshipMovieDiary(w),/data-friendship-movie-open="common-redpoll"/);
+ assert.deepEqual(w,snapshot);
+ const bytes=readFileSync(new URL('../public/game-endings/friendship-common-redpoll-logo09.mp4',import.meta.url));
+ assert.equal(createHash('sha256').update(bytes).digest('hex'),'0dd3a7a67cc6cf39209c478e8866b37dec6b6ea25269c1ffb31d51e6b8db05c5');
+});
