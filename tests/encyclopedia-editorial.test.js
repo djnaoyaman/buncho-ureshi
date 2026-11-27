@@ -72,3 +72,25 @@ test('prerendered encyclopedia and all articles exactly match their shared runti
   assert.equal(staticDoc.querySelector('.encyclopedia-story')?.outerHTML,parse(render(a)).querySelector('.encyclopedia-story').outerHTML,a.id);
  }
 });
+
+test('the 146 prerendered article TOC links resolve locally without site JavaScript', async()=>{
+ const origin='https://example.invalid';
+ let count=0;
+ for(const article of articles){
+  const path=ctx.url(`encyclopedia/${article.id}/`);
+  const doc=parse(await readFile(`dist/encyclopedia/${article.id}/index.html`,'utf8'));
+  const base=doc.querySelector('base')?.getAttribute('href');
+  assert.ok(base,article.id);
+  const documentBase=new URL(base,new URL(path,origin));
+  const wanted=article.id==='omochi'?['first','basic']:['first','basic','deep','sources'];
+  const anchors=[...doc.querySelectorAll('.article-toc a')];
+  assert.equal(anchors.length,wanted.length,article.id);
+  for(const [i,a] of anchors.entries()){
+   const id=wanted[i],resolved=new URL(a.getAttribute('href'),documentBase);
+   assert.equal(resolved.href,new URL(path+'#'+id,origin).href,article.id);
+   assert.ok(doc.getElementById(id),article.id);
+   count++;
+  }
+ }
+ assert.equal(count,146);
+});

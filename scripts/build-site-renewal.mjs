@@ -37,6 +37,16 @@ app=app.replace('document.querySelector("#article-grid").innerHTML =','document.
 const omochiVersion=hash((await readFile('site/omochi.js','utf8'))+(await readFile('site/omochi.css','utf8'))).slice(0,12);
 app=`import {renderOmochi} from "../site/omochi.js?v=${omochiVersion}";\n`+app;
 app=app.replace('view = omochi();',`view = renderOmochi({url,cssVersion:'${omochiVersion}'});`);
+// Site-only: a native TOC history step must not replace its current article DOM.
+const articleRender='function render(route) {';
+const replaceSiteView='  main.innerHTML = view;';
+const handleHistory='window.addEventListener("popstate", () => {';
+for(const needle of [articleRender,replaceSiteView,handleHistory]){
+ if(app.split(needle).length!==2)throw Error('Site article history insertion point changed: '+needle);
+}
+app=app.replace(articleRender,'let renderedArticleDocument=null;\n'+articleRender);
+app=app.replace(replaceSiteView,replaceSiteView+'\n  renderedArticleDocument = main.querySelector(".encyclopedia-story") ? location.pathname + location.search : null;');
+app=app.replace(handleHistory,handleHistory+'\n  if (renderedArticleDocument === location.pathname + location.search) return;');
 await writeFile('dist/src/site-app.js',app);
 const legacyHomeVersion=hash(await readFile('dist/src/home.js')).slice(0,12);
 await writeFile('dist/site/home.js',versionAssets(home.toString().replace('../src/home.js',`../src/home.js?v=${legacyHomeVersion}`)));

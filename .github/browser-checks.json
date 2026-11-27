@@ -1,7 +1,7 @@
 {
-  "base": "b2eaee1249568d3992e3241b0bfa3a7fd9c9847d",
+  "base": "786d8b67b35299a112b2eae0889b5b1e865dfe31",
   "tests": [
-    "tests/browser/friendship-movie.spec.js"
+    "tests/browser/encyclopedia-toc.spec.js"
   ],
-  "reason": "なかよし100の既存の読み込み検査に加え、公開済みの2作品を実際のカードと再生ボタンから再生し、描画されたフレーム、進む再生時刻、閉じた後の保存をChrome/WebKitで確認。実行コード・公開素材に変更なし。"
+  "reason": "図鑑37記事の同一ページ内目次だけを修正。ChromeとWebKitの390pxで水浴び・おもちの記事をJavaScriptあり／なしで開き、リンクを押して同じ記事に留まり、対象見出しが表示されることを確認する。ゲーム・画像・動画には変更なし。"
 }
