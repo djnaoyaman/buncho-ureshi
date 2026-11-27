@@ -143,7 +143,15 @@ export function mountCollectionEndingPlayer(root,{getWorld,transact,canPresent=(
    else if(v.webkitEnterFullscreen){v.webkitEnterFullscreen();}
   }catch{if(current)current.fullscreenPending=false;} // iOS may refuse until media metadata is ready; the full-screen dialog remains usable.
  }
- async function play({fullscreen=false}={}){const c=current,v=video,d=dialog;if(!v||!c||closing||retiring)return;if(fullscreen&&!d?.hasAttribute('data-independent-title-card'))enterFullscreen();try{if(v.error)v.load();await v.play();}catch{if(current!==c||video!==v)return;d?.removeAttribute('data-playing');message('▶ をおすと、エンディングが はじまるよ。');}}
+ // WebKit may defer playback of hidden media. Reveal the independent video in the user gesture, not in its playing handler.
+ function showIndependentFilm(d,show){d.toggleAttribute('data-film-started',show);const cover=d.querySelector('.game-ending-independent-cover');if(cover)cover.hidden=show;}
+ async function play({fullscreen=false}={}){
+  const c=current,v=video,d=dialog;if(!v||!c||closing||retiring)return;
+  const independent=d?.hasAttribute('data-independent-title-card');
+  if(independent){v.muted=true;showIndependentFilm(d,true);}else if(fullscreen)enterFullscreen();
+  try{if(v.error)v.load();await v.play();}
+  catch{if(current!==c||video!==v)return;if(independent)showIndependentFilm(d,false);d?.removeAttribute('data-playing');message('▶ をおすと、エンディングが はじまるよ。');}
+ }
  async function leaveFullscreen(c,d,v){
   await c?.fullscreenRequest;if(d?.contains(doc.fullscreenElement))await doc.exitFullscreen?.();
   if(v?.webkitDisplayingFullscreen)await new Promise((resolve,reject)=>{
@@ -189,10 +197,10 @@ export function mountCollectionEndingPlayer(root,{getWorld,transact,canPresent=(
    }
    if(id==='garden-tour'||id==='garden'||id==='crows'){dialog.dataset.film=id==='garden-tour'?'tour':id;const controls=doc.createElement('div');controls.className='game-ending-tour-controls';controls.append(dialog.querySelector('[role=status]'),dialog.querySelector('.game-ending-actions'));dialog.querySelector('.game-ending-screen').append(controls);}
    root.append(dialog);video=dialog.querySelector('video');video.tabIndex=0;video.volume=.5;video.src=new URL(`../game-endings/${file}`,import.meta.url).href;const session=current,media=video,isCurrent=()=>alive&&current===session&&video===media;
-   video.addEventListener('playing',()=>{if(!isCurrent()||closing)return;if(mini?.independentTitleCard){dialog.setAttribute('data-film-started','');dialog.querySelector('.game-ending-independent-cover').hidden=true;}dialog?.setAttribute('data-playing','');if(doc.activeElement?.matches('[data-ending-play]'))video?.focus({preventScroll:true});message('');void savePlayback('started').catch(()=>{if(isCurrent())message('きろくの ほぞんを まっています。');});});
+   video.addEventListener('playing',()=>{if(!isCurrent()||closing)return;dialog?.setAttribute('data-playing','');if(doc.activeElement?.matches('[data-ending-play]'))video?.focus({preventScroll:true});message('');void savePlayback('started').catch(()=>{if(isCurrent())message('きろくの ほぞんを まっています。');});});
    video.addEventListener('pause',()=>{if(!isCurrent())return;dialog?.removeAttribute('data-playing');});
    video.addEventListener('ended',()=>{if(!isCurrent())return;void close({playback:'completed'});});
-   video.addEventListener('error',()=>{if(!isCurrent())return;message('どうがを よみこめませんでした。つうしんを たしかめて、もういちど ▶ をおしてね。');});
+   video.addEventListener('error',()=>{if(!isCurrent())return;if(mini?.independentTitleCard)showIndependentFilm(dialog,false);message('どうがを よみこめませんでした。つうしんを たしかめて、もういちど ▶ をおしてね。');});
    dialog.addEventListener('click',ev=>{if(!isCurrent())return;ev.stopPropagation();if(ev.target.closest('[data-ending-play]'))void play({fullscreen:true});else if(ev.target.closest('[data-ending-fullscreen]'))enterFullscreen();else if(ev.target.closest('[data-ending-close],[data-ending-skip]'))void close();});
    dialog.addEventListener('cancel',ev=>{if(!isCurrent())return;ev.preventDefault();ev.stopPropagation();void close();});
    dialog.addEventListener('keydown',ev=>{if(!isCurrent())return;if(ev.key==='Escape'){ev.preventDefault();ev.stopPropagation();void close();}else if(ev.key==='Tab'){const controls=[...dialog.querySelectorAll('button,video')].filter(e=>!e.disabled&&(!mini?.independentTitleCard||win.getComputedStyle(e).visibility!=='hidden'));const i=controls.indexOf(doc.activeElement);if(ev.shiftKey&&i<=0){ev.preventDefault();controls.at(-1)?.focus();}else if(!ev.shiftKey&&i===controls.length-1){ev.preventDefault();controls[0]?.focus();}}});

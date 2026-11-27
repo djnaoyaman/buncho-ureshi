@@ -188,7 +188,12 @@ test('evening grosbeak separates the approved 09 title card from its attributed 
  await modal.locator('[data-ending-play]').click();
  await expect(video).toBeVisible();
  await expect(cover).toBeHidden();
- await expect.poll(()=>video.evaluate(v=>v.currentTime)).toBeGreaterThan(2);
+ try{
+  await expect.poll(()=>video.evaluate(v=>v.currentTime)).toBeGreaterThan(2);
+ }catch(error){
+  const media=await video.evaluate(v=>({time:v.currentTime,paused:v.paused,ready:v.readyState,network:v.networkState,buffered:Array.from({length:v.buffered.length},(_,i)=>[v.buffered.start(i),v.buffered.end(i)]),muted:v.muted,visibility:getComputedStyle(v).visibility,error:v.error?.message}));
+  console.error('Evening grosbeak playback state:',JSON.stringify(media));throw error;
+ }
  expect(await video.evaluate(v=>[v.videoWidth,v.videoHeight,v.duration])).toEqual([720,1280,15]);
  expect(req.length).toBeGreaterThan(0);
  await modal.locator('[data-ending-close]').click();
