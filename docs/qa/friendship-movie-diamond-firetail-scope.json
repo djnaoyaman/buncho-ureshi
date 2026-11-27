@@ -1,0 +1,13 @@
+{
+  "baseCommit": "f42b8caa4ac5a0549a32a6c381e9ffa5ee252728",
+  "changedSource": {
+    "src/collection-ending-player.js": {
+      "before": "2063a708520a1869873fc696bfa9865a1b9bc59fd9b319a2d44e27aa839e34c7",
+      "after": "ed81ff6ad95396cea2260861a0a69f3a8fd8f89f77e29c1a629383a3a5fc0898"
+    }
+  },
+  "media": {
+    "public/game-endings/friendship-diamond-firetail-logo09.mp4": "88ba893b86955674214331d528ab1bb81e9b11c01bd81b64fc4c6dce3f2d0dab"
+  },
+  "revert": ",\n 'diamond-firetail':Object.freeze({\n  bird:'ダイヤモンドフィンチ',title:'ダイヤモンドフィンチと なかよしになった記念',file:'friendship-diamond-firetail-logo09.mp4',\n  photoReferences:Object.freeze([\n   Object.freeze({credit:'Andrew Allen',source:'https://commons.wikimedia.org/wiki/File:Stagonopleura_guttata_49654460.jpg',license:'https://creativecommons.org/licenses/by/4.0/',label:'CC BY 4.0'}),\n   Object.freeze({credit:'aussiegall',source:'https://commons.wikimedia.org/wiki/File:Stagonopleura_guttata_-Auburn_Botanical_Gardens,_New_South_Wales,_Australia-8.jpg',license:'https://creativecommons.org/licenses/by/2.0/',label:'CC BY 2.0'})\n  ])\n })"
+}

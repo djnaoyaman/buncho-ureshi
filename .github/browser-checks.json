@@ -1,8 +1,8 @@
 {
-  "base": "b7b82f085b8c78e870711548fdeb3de585f89ca3",
+  "base": "f42b8caa4ac5a0549a32a6c381e9ffa5ee252728",
   "tests": [
     "tests/browser/friendship-movie.spec.js",
     "tests/browser/garden-home-journey.spec.js"
   ],
-  "reason": "キンカチョウの15秒生成映像、明示した写真出典、99→100、再生、日記、保存不変、既存導線。"
+  "reason": "ダイヤモンドフィンチの15秒生成映像・2点の出典・99→100・再生・日記・保存不変・既存導線。"
 }

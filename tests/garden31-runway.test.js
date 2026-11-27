@@ -17,6 +17,7 @@ const friendshipFilm=JSON.parse(read('docs/qa/garden-friendship-movie-scope.json
 const moreFriendshipFilms=JSON.parse(read('docs/qa/garden-friendship-movie-expansion-scope.json'));
 const friendshipLogo=JSON.parse(read('docs/qa/garden-friendship-movie-logo09-scope.json'));
 const siskin=JSON.parse(read('docs/qa/friendship-movie-eurasian-siskin-scope.json'));
+const diamond=JSON.parse(read('docs/qa/friendship-movie-diamond-firetail-scope.json'));
 const zebra=JSON.parse(read('docs/qa/friendship-movie-zebra-finch-scope.json'));
 const redpoll=JSON.parse(read('docs/qa/friendship-movie-common-redpoll-scope.json'));
 const avadavat=JSON.parse(read('docs/qa/friendship-movie-red-avadavat-scope.json'));
@@ -280,7 +281,8 @@ test('friendship-film successor pins only the reviewed runtime and approved exac
   const extra=siskin.changedSource[path];if(extra)assert.equal(extra.before,added?.after??latest?.after??logo?.after??successor?.after??edge.after,path);
   const newest=redpoll.changedSource[path];if(newest)assert.equal(newest.before,extra?.after,path);
   const generated=zebra.changedSource[path];if(generated)assert.equal(generated.before,newest?.after,path);
-  assert.equal(hash(read(path)),afterFriendScale(path,generated?.after??newest?.after??extra?.after??added?.after??latest?.after??logo?.after??successor?.after??edge.after),path);
+  const newestGenerated=diamond.changedSource[path];if(newestGenerated)assert.equal(newestGenerated.before,generated?.after,path);
+  assert.equal(hash(read(path)),afterFriendScale(path,newestGenerated?.after??generated?.after??newest?.after??extra?.after??added?.after??latest?.after??logo?.after??successor?.after??edge.after),path);
  }
  for(const [path,sha] of Object.entries(friendshipFilm.media))assert.equal(hash(read(path)),sha,path);
 });
@@ -298,6 +300,10 @@ test('approved logo09 only changes the four movie URLs, not the player or origin
  assert.deepEqual(Object.keys(friendshipLogo.changedSource),[file]);
  assert.equal(Object.keys(friendshipLogo.media).length,4);
  let reverted=read(file).toString("utf8");
+ assert.equal(hash(reverted),diamond.changedSource[file].after,file);
+ for(const [file,sha] of Object.entries(diamond.media))assert.equal(hash(read(file)),sha,file);
+ assert.ok(reverted.includes(diamond.revert));
+ reverted=reverted.replace(diamond.revert,"");
  assert.equal(hash(reverted),zebra.changedSource[file].after,file);
  for(const [file,sha] of Object.entries(zebra.media))assert.equal(hash(read(file)),sha,file);
  const [entry,credit,afterMsg,beforeMsg]=zebra.revert;
