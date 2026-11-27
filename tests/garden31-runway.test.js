@@ -17,6 +17,7 @@ const friendshipFilm=JSON.parse(read('docs/qa/garden-friendship-movie-scope.json
 const moreFriendshipFilms=JSON.parse(read('docs/qa/garden-friendship-movie-expansion-scope.json'));
 const friendshipLogo=JSON.parse(read('docs/qa/garden-friendship-movie-logo09-scope.json'));
 const siskin=JSON.parse(read('docs/qa/friendship-movie-eurasian-siskin-scope.json'));
+const evening=JSON.parse(read('docs/qa/friendship-movie-evening-grosbeak-scope.json'));
 const parrot=JSON.parse(read('docs/qa/friendship-movie-red-throated-parrotfinch-scope.json'));
 const diamond=JSON.parse(read('docs/qa/friendship-movie-diamond-firetail-scope.json'));
 const zebra=JSON.parse(read('docs/qa/friendship-movie-zebra-finch-scope.json'));
@@ -29,10 +30,15 @@ function afterFriendScale(file,prior){
  if(change)assert.equal(change.before,prior,file);
  return change?.after??prior;
 }
+function afterEvening(file,prior){
+ const change=evening.changedSource[file];
+ if(change)assert.equal(change.before,prior,file);
+ return change?.after??prior;
+}
 function afterFriendshipMovie(file,prior){
  const change=friendshipFilm.changedSource[file];
  if(change)assert.equal(change.before,prior,file);
- return afterFriendScale(file,change?.after||prior);
+ return afterEvening(file,afterFriendScale(file,parrot.changedSource[file]?.after??change?.after??prior));
 }
 function afterHomeJourney(file,prior){
  const change=homeJourney.changedSource[file];
@@ -284,7 +290,7 @@ test('friendship-film successor pins only the reviewed runtime and approved exac
   const generated=zebra.changedSource[path];if(generated)assert.equal(generated.before,newest?.after,path);
   const newestGenerated=diamond.changedSource[path];if(newestGenerated)assert.equal(newestGenerated.before,generated?.after,path);
   const parrotFilm=parrot.changedSource[path];if(parrotFilm)assert.equal(parrotFilm.before,newestGenerated?.after,path);
-  assert.equal(hash(read(path)),afterFriendScale(path,parrotFilm?.after??newestGenerated?.after??generated?.after??newest?.after??extra?.after??added?.after??latest?.after??logo?.after??successor?.after??edge.after),path);
+  assert.equal(hash(read(path)),afterEvening(path,afterFriendScale(path,parrotFilm?.after??newestGenerated?.after??generated?.after??newest?.after??extra?.after??added?.after??latest?.after??logo?.after??successor?.after??edge.after)),path);
  }
  for(const [path,sha] of Object.entries(friendshipFilm.media))assert.equal(hash(read(path)),sha,path);
 });
@@ -302,6 +308,13 @@ test('approved logo09 only changes the four movie URLs, not the player or origin
  assert.deepEqual(Object.keys(friendshipLogo.changedSource),[file]);
  assert.equal(Object.keys(friendshipLogo.media).length,4);
  let reverted=read(file).toString("utf8");
+ assert.equal(hash(reverted),evening.changedSource[file].after,file);
+ for(const [asset,sha] of Object.entries(evening.media))assert.equal(hash(read(asset)),sha,asset);
+ for(const {after,before} of [...evening.revert[file]].reverse()){
+  assert.equal(reverted.split(after).length,2,file);
+  reverted=reverted.replace(after,before);
+ }
+ assert.equal(hash(reverted),evening.changedSource[file].before,file);
  assert.equal(hash(reverted),parrot.changedSource[file].after,file);
  for(const [file,sha] of Object.entries(parrot.media))assert.equal(hash(read(file)),sha,file);
  assert.ok(reverted.includes(parrot.revert));
@@ -345,4 +358,18 @@ test('only the two exact finished logo09 films extend the licensed library',()=>
  assert.deepEqual(Object.keys(newFriendship.changedSource),['src/collection-ending-player.js']);
  assert.deepEqual(Object.keys(newFriendship.media),['public/game-endings/friendship-gouldian-finch-logo09.mp4','public/game-endings/friendship-red-crossbill-logo09.mp4']);
  for(const [f,row] of Object.entries(newFriendship.media))assert.equal(hash(read(f)),row.sha256,f);
+});
+
+test('independent title card extends only the reviewed ending player and stylesheet',()=>{
+ const files=['src/collection-ending-player.js','src/game.css'];
+ assert.deepEqual(Object.keys(evening.changedSource),files);
+ for(const file of files){
+  let source=read(file).toString();
+  assert.equal(hash(source),evening.changedSource[file].after,file);
+  for(const {after,before} of [...evening.revert[file]].reverse()){
+   assert.equal(source.split(after).length,2,file);
+   source=source.replace(after,before);
+  }
+  assert.equal(hash(source),evening.changedSource[file].before,file);
+ }
 });

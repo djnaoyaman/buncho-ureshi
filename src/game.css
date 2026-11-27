@@ -1821,6 +1821,10 @@ body[data-game-ending-active]{overflow:hidden}
 .game-ending-screen:fullscreen{width:100%;height:100%;max-width:none;max-height:none}
 .game-ending-dialog video{display:block;position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;border-radius:0;margin:0}
 .game-ending-dialog header{position:absolute;inset:0 0 auto;z-index:2;display:flex;justify-content:flex-end;padding:calc(env(safe-area-inset-top,0px) + 8px) calc(env(safe-area-inset-right,0px) + 8px) 0 calc(env(safe-area-inset-left,0px) + 8px);pointer-events:none}
+/* An individually licensed clip and the game's separate welcome card never share a video frame. */
+.game-ending-independent-cover{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#f3eedf}
+.game-ending-independent-cover[hidden]{display:none}
+.game-ending-dialog[data-independent-title-card]:not([data-film-started]) :is(video,[data-ending-fullscreen]){visibility:hidden}
 .game-ending-dialog h2{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 .game-ending-dialog button{min-height:44px;padding:.5rem .8rem;border:1px solid #fff8;border-radius:8px;font:inherit;background:#111d;color:#fff;pointer-events:auto}
 .game-ending-actions{position:absolute;z-index:2;bottom:calc(env(safe-area-inset-bottom,0px) + 64px);left:calc(env(safe-area-inset-left,0px) + 12px);right:calc(env(safe-area-inset-right,0px) + 12px);display:flex;justify-content:center;gap:8px;flex-wrap:wrap}

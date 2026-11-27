@@ -144,3 +144,22 @@ test('ヒノマルチョウ unlocks at 100 without autoplay and credits primary 
  assert.deepEqual(w,before);
  assert.equal(createHash('sha256').update(readFileSync(new URL('../public/game-endings/friendship-red-throated-parrotfinch-logo09.mp4',import.meta.url))).digest('hex'),'a6179e4ffcdedce47aaff3c9cb62a37b51727992119dc366598bee8749548452');
 });
+
+test('キビタイシメ uses the native milestone and independent CC BY-SA footage with attribution',()=>{
+ const id='evening-grosbeak',w=fixture(99,id);
+ assert.deepEqual(unlockedFriendshipMovies(w),[]);
+ assert.doesNotMatch(renderFriendshipMovieCard(w,id),/映像のみ|data-friendship-movie-open/);
+ assert.equal(encounterSystem.pet(w,id,1,{worldId:w.worldId,revision:w.revision}).changed,true);
+ assert.deepEqual(newlyUnlockedFriendshipMovies([],w.worldId,w),[id]);
+ const before=structuredClone(w),html=renderFriendshipMovieCard(w,id);
+ assert.match(html,/Cephas.*Hesperiphona vespertina CT1.*CC BY-SA 3[.]0/);
+ assert.match(html,/ゲームのタイトルカードは別の作品.*friendship-evening-grosbeak-cc-by-sa[.]mp4.*映像のみ/);
+ assert.doesNotMatch(html,/生成映像|音楽を加え/);
+ assert.match(renderFriendshipMovieDiary(w),/data-friendship-movie-open="evening-grosbeak"/);
+ assert.deepEqual(w,before);
+ const mp4=readFileSync(new URL('../public/game-endings/friendship-evening-grosbeak-cc-by-sa.mp4',import.meta.url));
+ assert.equal(mp4.length,3667816);
+ assert.equal(createHash('sha256').update(mp4).digest('hex'),'c04944f071b179850d90298032d8bbf76d93c881eda5a771188c57d74243c201');
+ const logo=readFileSync(new URL('../public/game-endings/friendship-evening-grosbeak-card-logo09.webp',import.meta.url));
+ assert.equal(logo.subarray(8,12).toString(),'WEBP');
+});
