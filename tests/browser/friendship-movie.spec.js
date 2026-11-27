@@ -1,5 +1,6 @@
 import {test,expect} from '@playwright/test';
 import {createWorld,validateWorld} from '../../src/engine.js';
+import {GAME_DEVICE_CHOICE_KEY} from '../../src/game-environment.js';
 const at=Date.UTC(2026,10,18,9),id='eurasian-tree-sparrow',other='masked-finch',media='friendship-eurasian-tree-sparrow-logo09.mp4';
 function fixture(points,pilot=id){
  const w=createWorld(at,2026);w.paused=true;w.settings.motion=false;w.encounters.nextId=3;
@@ -128,3 +129,35 @@ for(const [pilot,license] of [['eurasian-bullfinch','3.0'],['hawfinch','3.0'],['
   await menu(page,'diary');await expect(page.locator('[data-friendship-movie-open="'+pilot+'"]')).toBeVisible();
  });
 }
+
+test.describe('released mini films actually play',()=>{
+ const origin='https://djnaoyaman.github.io';
+ test.use({baseURL:origin+'/buncho-ureshi/',storageState:{cookies:[],origins:[{origin,localStorage:[{name:GAME_DEVICE_CHOICE_KEY,value:'continue'}]}]}});
+ for(const pilot of ['diamond-firetail','red-throated-parrotfinch']){
+  test(pilot+' plays visible frames through the published bird-card control',async({page},info)=>{
+   await start(page,390,844,100,pilot);await bird(page,pilot);
+   const before=await record(page), selector=`[data-friendship-movie="${pilot}"]`;
+   await page.locator(`.game-friendship-movie-card [data-friendship-movie-open="${pilot}"]`).click();
+   const d=page.locator(selector),v=d.locator('video');await expect(v).toBeVisible();
+   expect(await v.evaluate(el=>el.paused&&!el.autoplay&&el.currentTime===0)).toBe(true);
+   await d.locator('[data-ending-play]').click();
+   await expect.poll(()=>v.evaluate(el=>el.currentTime),{timeout:22000}).toBeGreaterThan(3.4);
+   const observed=await v.evaluate(el=>{
+    const canvas=document.createElement('canvas');canvas.width=96;canvas.height=170;
+    const ctx=canvas.getContext('2d');ctx.drawImage(el,0,0,96,170);
+    const patch=ctx.getImageData(12,32,72,100).data;
+    return {playing:!el.paused,dimensions:[el.videoWidth,el.videoHeight],seconds:el.duration,colors:new Set(patch).size,
+      time:el.currentTime,file:new URL(el.currentSrc).pathname.split('/').at(-1),publishedOrigin:new URL(el.currentSrc).hostname};
+   });
+   expect(observed).toMatchObject({playing:true,dimensions:[720,1280],seconds:15,file:`friendship-${pilot}-logo09.mp4`,publishedOrigin:'djnaoyaman.github.io'});
+   expect(observed.colors).toBeGreaterThan(12);
+   expect(observed.time).toBeGreaterThan(3.4);
+   await info.attach('visible decoded frame',{body:await v.screenshot(),contentType:'image/png'});
+   await info.attach('production playback evidence',{body:JSON.stringify(observed),contentType:'application/json'});
+   console.log('Verified production playback', info.project.name, pilot, JSON.stringify(observed));
+   await d.locator('[data-ending-close]').click();
+   await expect(d).toHaveCount(0);
+   expect(await record(page)).toEqual(before);
+  });
+ }
+});
