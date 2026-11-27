@@ -28,9 +28,11 @@ for(const javaScriptEnabled of [false,true]){
      const prior=anchors.at(-2);
      await page.goBack();
      await expect(page).toHaveURL(articleURL+'#'+prior);
-     await expect(story.locator(`#${prior}:target`)).toBeInViewport();
+     // Back restores the saved scroll offset, which may be the TOC after scrolling to the next link.
+     await expect(story.locator(`#${prior}:target`)).toHaveCount(1);
      await page.goForward();
      await expect(page).toHaveURL(articleURL+'#'+anchors.at(-1));
+     await expect(story.locator(`#${anchors.at(-1)}:target`)).toHaveCount(1);
      await story.locator('.breadcrumb a').click();
      await expect(page).toHaveURL(new URL('../',articleURL).href);
      await expect(page.locator('.encyclopedia-editorial')).toBeVisible();
