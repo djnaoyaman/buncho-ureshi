@@ -1,8 +1,7 @@
 {
-  "base": "9be0988cae3caa51bf023df2f22d14e021b3ada2",
+  "base": "b2eaee1249568d3992e3241b0bfa3a7fd9c9847d",
   "tests": [
-    "tests/browser/friendship-movie.spec.js",
-    "tests/browser/garden-home-journey.spec.js"
+    "tests/browser/friendship-movie.spec.js"
   ],
-  "reason": "ヒノマルチョウの縦15秒・出典区分・99→100・手動再生・日記・保存不変と庭から帰宅の回帰。"
+  "reason": "なかよし100の既存の読み込み検査に加え、公開済みの2作品を実際のカードと再生ボタンから再生し、描画されたフレーム、進む再生時刻、閉じた後の保存をChrome/WebKitで確認。実行コード・公開素材に変更なし。"
 }
