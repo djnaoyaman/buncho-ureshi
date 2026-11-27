@@ -1,6 +1,6 @@
 import {test,expect} from '@playwright/test';
 import {createWorld,validateWorld} from '../../src/engine.js';
-const at=Date.UTC(2026,10,18,9),id='eurasian-tree-sparrow',other='zebra-finch',media='friendship-eurasian-tree-sparrow-logo09.mp4';
+const at=Date.UTC(2026,10,18,9),id='eurasian-tree-sparrow',other='masked-finch',media='friendship-eurasian-tree-sparrow-logo09.mp4';
 function fixture(points,pilot=id){
  const w=createWorld(at,2026);w.paused=true;w.settings.motion=false;w.encounters.nextId=3;
  w.encounters.discoveries=[pilot,other].map((id,i)=>({id,firstTick:0,lastTick:0,visits:1,instanceId:i+1}));
@@ -72,7 +72,7 @@ test('recorded 100+ unlocks the bird card but does not create an offer; unrelate
  await expect(page.locator('[data-friendship-movie-open]')).toHaveCount(0);
  expect((await record(page)).encounters.friendship).toEqual(w.encounters.friendship);
 });
-for(const [pilot,license] of [['eurasian-bullfinch','3.0'],['hawfinch','3.0'],['tricolored-munia','2.0'],['gouldian-finch','pixabay'],['red-crossbill','nps'],['red-avadavat','2.0'],['eurasian-siskin','pixabay'],['common-redpoll','2.0']]){
+for(const [pilot,license] of [['eurasian-bullfinch','3.0'],['hawfinch','3.0'],['tricolored-munia','2.0'],['gouldian-finch','pixabay'],['red-crossbill','nps'],['red-avadavat','2.0'],['eurasian-siskin','pixabay'],['common-redpoll','2.0'],['zebra-finch','2.0']]){
  test(pilot+' own bird entry links exact edition and decodes without playing',async({page})=>{
   await start(page,390,844,99,pilot);await bird(page,pilot);
   const card=page.locator('.game-friendship-movie-card');
@@ -95,6 +95,10 @@ for(const [pilot,license] of [['eurasian-bullfinch','3.0'],['hawfinch','3.0'],['
    await expect(card.getByRole('link',{name:'原典',exact:true})).toHaveAttribute('href','https://www.flickr.com/photos/krishnacolor/51482148959/');
    await expect(card).toContainText('インド・テランガーナ州');
   }
+  if(pilot==='zebra-finch'){
+   await expect(card).toContainText('実写ではなく、写真を参考にした生成映像');
+   await expect(card.getByRole('link',{name:'CC0',exact:true})).toHaveAttribute('href','https://creativecommons.org/publicdomain/zero/1.0/');
+  }
   if(pilot==='common-redpoll'){
    await expect(card.getByRole('link',{name:'原典',exact:true})).toHaveAttribute('href','https://commons.wikimedia.org/wiki/File:Common_redpolls_(Acanthis_flammea).webm');
    await expect(card).toContainText('ワショー郡ドライバレー');
@@ -102,6 +106,7 @@ for(const [pilot,license] of [['eurasian-bullfinch','3.0'],['hawfinch','3.0'],['
   await expect(page.locator(offer)).toHaveCount(0);
   await card.locator('[data-friendship-movie-open="'+pilot+'"]').click();
   const video=page.locator(dialog+' video');await expect(video).toBeVisible();
+  if(pilot==='zebra-finch')await expect(page.locator(dialog+' [role=status]')).toContainText('写真を参考にした生成映像');
   expect(await video.evaluate(async v=>{
    if(v.readyState<1)await new Promise((resolve,reject)=>{v.addEventListener('loadedmetadata',resolve,{once:true});v.addEventListener('error',()=>reject(new Error('Failed media decode')),{once:true});v.preload='metadata';v.load()});
    return {file:new URL(v.currentSrc).pathname.split('/').at(-1),width:v.videoWidth,height:v.videoHeight,seconds:v.duration,paused:v.paused};

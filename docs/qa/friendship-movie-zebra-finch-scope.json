@@ -1,0 +1,18 @@
+{
+  "baseCommit": "b7b82f085b8c78e870711548fdeb3de585f89ca3",
+  "changedSource": {
+    "src/collection-ending-player.js": {
+      "before": "076730df3f2c785986b41aa1fcbd62cabab9f1970077156a9ff722b3235354ed",
+      "after": "2063a708520a1869873fc696bfa9865a1b9bc59fd9b319a2d44e27aa839e34c7"
+    }
+  },
+  "media": {
+    "public/game-endings/friendship-zebra-finch-logo09.mp4": "4603293423a989e63ec8ac58950063cc18937288a126e926ffdf1f7e87cdf5ce"
+  },
+  "revert": [
+    ",\n 'zebra-finch':Object.freeze({\n  bird:'キンカチョウ',title:'キンカチョウと なかよしになった記念',file:'friendship-zebra-finch-logo09.mp4',\n  photoReferences:Object.freeze([\n   Object.freeze({credit:\"Janet’s Photos 2012\",source:'https://commons.wikimedia.org/wiki/File:Taeniopygia_guttata_-Australia_-male-8a.jpg',license:'https://creativecommons.org/licenses/by/2.0/',label:'CC BY 2.0'}),\n   Object.freeze({credit:'PookieFugglestein（Broken Hill）',source:'https://commons.wikimedia.org/wiki/File:Zebra_Finch_in_hand.JPG',license:'https://creativecommons.org/publicdomain/zero/1.0/',label:'CC0'})\n  ])\n })",
+    " if(film.photoReferences)return `<p>実写ではなく、写真を参考にした生成映像です。参考写真：${film.photoReferences.map(ref=>`<a href=\"${ref.source}\">${ref.credit}</a>（<a href=\"${ref.license}\">${ref.label}</a>）`).join(\"、\")}。</p>`;\n",
+    "message(mini.photoReferences?'写真を参考にした生成映像と、音楽を使った短い作品です。':'実写と音楽を使った短い作品です。');",
+    "message('実写と音楽を使った短い作品です。');"
+  ]
+}
