@@ -24,6 +24,17 @@ for(const javaScriptEnabled of [false,true]){
      await expect(page).toHaveURL(articleURL+'#'+hash);
      await expect(story.locator(`#${hash}:target`)).toBeInViewport();
     }
+    if(javaScriptEnabled){
+     const prior=anchors.at(-2);
+     await page.goBack();
+     await expect(page).toHaveURL(articleURL+'#'+prior);
+     await expect(story.locator(`#${prior}:target`)).toBeInViewport();
+     await page.goForward();
+     await expect(page).toHaveURL(articleURL+'#'+anchors.at(-1));
+     await story.locator('.breadcrumb a').click();
+     await expect(page).toHaveURL(new URL('../',articleURL).href);
+     await expect(page.locator('.encyclopedia-editorial')).toBeVisible();
+    }
    });
   }
  });
