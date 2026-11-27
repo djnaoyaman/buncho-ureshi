@@ -40,6 +40,8 @@ export function renderEditorialArticle(a,legacy,ctx){
 
 export function renderArticleBase(a,ctx) {
  const {photos,articles,url,esc,birdVideo,favorites=[]}=ctx;
+ // The document base is the site root; the TOC must point to this article before JS loads.
+ const articlePath=esc(url(`encyclopedia/${a.id}/`));
  const heading=(category,title)=>`<header class="page-heading"><p class="eyebrow">${category}</p><h1>${title}</h1></header>`;
  const image=(id,cls='',eager=false)=>{const p=photos.find(p=>p.id===id);return p?`<img class="${cls}" src="${url(p.src.replace(/^\//,''))}" alt="${esc(p.alt)}" width="${p.width}" height="${p.height}" loading="${eager?'eager':'lazy'}">`:'';};
  const secureLicenseUrl=value=>value?.replace(/^http:\/\/creativecommons\.org\//,'https://creativecommons.org/');
@@ -52,7 +54,7 @@ function videoBlock() {
 }
 
 
-  const html = `<nav class="breadcrumb" aria-label="現在の場所"><a href="${url("encyclopedia/")}">図鑑</a><span aria-hidden="true">/</span>${esc(a.category)}</nav>${heading(esc(a.category), esc(a.title))}<div class="article-actions"><button id="favorite" aria-pressed="${favorites.includes(a.id)}">${favorites.includes(a.id) ? "♥ お気に入り" : "♡ お気に入りにする"}</button><button id="speak">解説をきく</button><button id="stop-speak">読み上げをとめる</button></div><nav class="article-toc" aria-label="この記事の目次"><a href="#first">まず見る</a><a href="#basic">基本を知る</a><a href="#deep">もっと調べる</a><a href="#sources">出典</a></nav><article class="article-body"><section id="first"><p class="eyebrow">01　まず見る</p><p class="article-summary">${a.summary}</p>${a.photos?.length ? `<figure class="article-hero">${image(a.photos[0], "", true)}<figcaption>${esc(photos.find((p) => p.id === a.photos[0])?.alt || "")}</figcaption></figure>` : `${birdSvg()}<p class="quiet">${birdPhotoCredit()}</p>`}</section>${["voice", "courtship"].includes(a.id) ? videoBlock() : ""}<section id="basic"><p class="eyebrow">02　基本を知る</p><h2>しくみを見てみよう</h2><div class="prose">${paragraphs(a.body)}</div></section><section id="deep"><p class="eyebrow">03　もっと調べる</p><h2>もう一歩、その先へ。</h2><div class="prose">${paragraphs(a.deep)}</div>${a.terms?.length ? `<dl class="glossary">${a.terms.map((t) => `<div><dt><ruby>${esc(t.term)}<rt>${esc(t.reading)}</rt></ruby></dt><dd>${esc(t.meaning)}</dd></div>`).join("")}</dl>` : ""}</section>${
+  const html = `<nav class="breadcrumb" aria-label="現在の場所"><a href="${url("encyclopedia/")}">図鑑</a><span aria-hidden="true">/</span>${esc(a.category)}</nav>${heading(esc(a.category), esc(a.title))}<div class="article-actions"><button id="favorite" aria-pressed="${favorites.includes(a.id)}">${favorites.includes(a.id) ? "♥ お気に入り" : "♡ お気に入りにする"}</button><button id="speak">解説をきく</button><button id="stop-speak">読み上げをとめる</button></div><nav class="article-toc" aria-label="この記事の目次"><a href="${articlePath}#first">まず見る</a><a href="${articlePath}#basic">基本を知る</a>${a.id === "omochi" ? "" : `<a href="${articlePath}#deep">もっと調べる</a><a href="${articlePath}#sources">出典</a>`}</nav><article class="article-body"><section id="first"><p class="eyebrow">01　まず見る</p><p class="article-summary">${a.summary}</p>${a.photos?.length ? `<figure class="article-hero">${image(a.photos[0], "", true)}<figcaption>${esc(photos.find((p) => p.id === a.photos[0])?.alt || "")}</figcaption></figure>` : `${birdSvg()}<p class="quiet">${birdPhotoCredit()}</p>`}</section>${["voice", "courtship"].includes(a.id) ? videoBlock() : ""}<section id="basic"><p class="eyebrow">02　基本を知る</p><h2>しくみを見てみよう</h2><div class="prose">${paragraphs(a.body)}</div></section><section id="deep"><p class="eyebrow">03　もっと調べる</p><h2>もう一歩、その先へ。</h2><div class="prose">${paragraphs(a.deep)}</div>${a.terms?.length ? `<dl class="glossary">${a.terms.map((t) => `<div><dt><ruby>${esc(t.term)}<rt>${esc(t.reading)}</rt></ruby></dt><dd>${esc(t.meaning)}</dd></div>`).join("")}</dl>` : ""}</section>${
     a.photos?.length > 1
       ? `<div class="photo-row">${a.photos
           .slice(1)
@@ -74,8 +76,6 @@ function videoBlock() {
   // A personal introduction is not a research article. Do not display empty
   // editorial scaffolding or internal production notes to readers.
   if(a.id==='omochi')return html
-    .replace(/<a href="#deep">.*?<\/a>/,'')
-    .replace(/<a href="#sources">.*?<\/a>/,'')
     .replace(/<section id="deep">[\s\S]*?<\/section>/,'')
     .replace(/<details id="sources"[\s\S]*?<\/details>/,'')
     .replace('<h2>しくみを見てみよう</h2>','<h2>おもちのこと</h2>');
