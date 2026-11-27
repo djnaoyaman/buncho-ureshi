@@ -62,6 +62,13 @@ const FRIENDSHIP_MOVIES=Object.freeze({
    Object.freeze({credit:"Janet’s Photos 2012",source:'https://commons.wikimedia.org/wiki/File:Taeniopygia_guttata_-Australia_-male-8a.jpg',license:'https://creativecommons.org/licenses/by/2.0/',label:'CC BY 2.0'}),
    Object.freeze({credit:'PookieFugglestein（Broken Hill）',source:'https://commons.wikimedia.org/wiki/File:Zebra_Finch_in_hand.JPG',license:'https://creativecommons.org/publicdomain/zero/1.0/',label:'CC0'})
   ])
+ }),
+ 'diamond-firetail':Object.freeze({
+  bird:'ダイヤモンドフィンチ',title:'ダイヤモンドフィンチと なかよしになった記念',file:'friendship-diamond-firetail-logo09.mp4',
+  photoReferences:Object.freeze([
+   Object.freeze({credit:'Andrew Allen',source:'https://commons.wikimedia.org/wiki/File:Stagonopleura_guttata_49654460.jpg',license:'https://creativecommons.org/licenses/by/4.0/',label:'CC BY 4.0'}),
+   Object.freeze({credit:'aussiegall',source:'https://commons.wikimedia.org/wiki/File:Stagonopleura_guttata_-Auburn_Botanical_Gardens,_New_South_Wales,_Australia-8.jpg',license:'https://creativecommons.org/licenses/by/2.0/',label:'CC BY 2.0'})
+  ])
  })
 });
 export function unlockedFriendshipMovies(w){

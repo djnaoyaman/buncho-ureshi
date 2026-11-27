@@ -72,7 +72,7 @@ test('recorded 100+ unlocks the bird card but does not create an offer; unrelate
  await expect(page.locator('[data-friendship-movie-open]')).toHaveCount(0);
  expect((await record(page)).encounters.friendship).toEqual(w.encounters.friendship);
 });
-for(const [pilot,license] of [['eurasian-bullfinch','3.0'],['hawfinch','3.0'],['tricolored-munia','2.0'],['gouldian-finch','pixabay'],['red-crossbill','nps'],['red-avadavat','2.0'],['eurasian-siskin','pixabay'],['common-redpoll','2.0'],['zebra-finch','2.0']]){
+for(const [pilot,license] of [['eurasian-bullfinch','3.0'],['hawfinch','3.0'],['tricolored-munia','2.0'],['gouldian-finch','pixabay'],['red-crossbill','nps'],['red-avadavat','2.0'],['eurasian-siskin','pixabay'],['common-redpoll','2.0'],['zebra-finch','2.0'],['diamond-firetail','4.0']]){
  test(pilot+' own bird entry links exact edition and decodes without playing',async({page})=>{
   await start(page,390,844,99,pilot);await bird(page,pilot);
   const card=page.locator('.game-friendship-movie-card');
@@ -95,6 +95,11 @@ for(const [pilot,license] of [['eurasian-bullfinch','3.0'],['hawfinch','3.0'],['
    await expect(card.getByRole('link',{name:'原典',exact:true})).toHaveAttribute('href','https://www.flickr.com/photos/krishnacolor/51482148959/');
    await expect(card).toContainText('インド・テランガーナ州');
   }
+  if(pilot==='diamond-firetail'){
+   await expect(card).toContainText('実写ではなく、写真を参考にした生成映像');
+   await expect(card.getByRole('link',{name:'Andrew Allen',exact:true})).toHaveAttribute('href','https://commons.wikimedia.org/wiki/File:Stagonopleura_guttata_49654460.jpg');
+   await expect(card.getByRole('link',{name:'CC BY 2.0',exact:true})).toHaveAttribute('href','https://creativecommons.org/licenses/by/2.0/');
+  }
   if(pilot==='zebra-finch'){
    await expect(card).toContainText('実写ではなく、写真を参考にした生成映像');
    await expect(card.getByRole('link',{name:'CC0',exact:true})).toHaveAttribute('href','https://creativecommons.org/publicdomain/zero/1.0/');
@@ -106,7 +111,7 @@ for(const [pilot,license] of [['eurasian-bullfinch','3.0'],['hawfinch','3.0'],['
   await expect(page.locator(offer)).toHaveCount(0);
   await card.locator('[data-friendship-movie-open="'+pilot+'"]').click();
   const video=page.locator(dialog+' video');await expect(video).toBeVisible();
-  if(pilot==='zebra-finch')await expect(page.locator(dialog+' [role=status]')).toContainText('写真を参考にした生成映像');
+  if(pilot==='zebra-finch'||pilot==='diamond-firetail')await expect(page.locator(dialog+' [role=status]')).toContainText('写真を参考にした生成映像');
   expect(await video.evaluate(async v=>{
    if(v.readyState<1)await new Promise((resolve,reject)=>{v.addEventListener('loadedmetadata',resolve,{once:true});v.addEventListener('error',()=>reject(new Error('Failed media decode')),{once:true});v.preload='metadata';v.load()});
    return {file:new URL(v.currentSrc).pathname.split('/').at(-1),width:v.videoWidth,height:v.videoHeight,seconds:v.duration,paused:v.paused};

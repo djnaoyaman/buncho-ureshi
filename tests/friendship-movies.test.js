@@ -114,3 +114,18 @@ test('キンカチョウ unlocks at 100 with honest generated provenance and two
  assert.deepEqual(w,before);
  assert.equal(createHash('sha256').update(readFileSync(new URL('../public/game-endings/friendship-zebra-finch-logo09.mp4',import.meta.url))).digest('hex'),'4603293423a989e63ec8ac58950063cc18937288a126e926ffdf1f7e87cdf5ce');
 });
+
+test('ダイヤモンドフィンチ unlocks at 100 with both of its own licensed photo references',()=>{
+ const id='diamond-firetail',w=fixture(99,id);
+ assert.deepEqual(unlockedFriendshipMovies(w),[]);
+ assert.doesNotMatch(renderFriendshipMovieCard(w,id),/data-friendship-movie-open/);
+ assert.equal(encounterSystem.pet(w,id,1,{worldId:w.worldId,revision:w.revision}).changed,true);
+ assert.deepEqual(newlyUnlockedFriendshipMovies([],w.worldId,w),[id]);
+ const before=structuredClone(w),html=renderFriendshipMovieCard(w,id);
+ assert.match(html,/実写ではなく、写真を参考にした生成映像/);
+ assert.match(html,/Stagonopleura_guttata_49654460[.]jpg.*aussiegall/);
+ assert.doesNotMatch(html,/撮影地：|Janet/);
+ assert.match(renderFriendshipMovieDiary(w),/data-friendship-movie-open="diamond-firetail"/);
+ assert.deepEqual(w,before);
+ assert.equal(createHash('sha256').update(readFileSync(new URL('../public/game-endings/friendship-diamond-firetail-logo09.mp4',import.meta.url))).digest('hex'),'88ba893b86955674214331d528ab1bb81e9b11c01bd81b64fc4c6dce3f2d0dab');
+});
