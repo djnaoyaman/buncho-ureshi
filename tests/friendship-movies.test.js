@@ -5,7 +5,7 @@ import {readFileSync} from 'node:fs';
 import {createWorld,validateWorld} from '../src/engine.js';
 import {encounterSystem} from '../src/encounters.js';
 import {renderFriendshipMovieCard,renderFriendshipMovieDiary,unlockedFriendshipMovies,newlyUnlockedFriendshipMovies} from '../src/collection-ending-player.js';
-const id='eurasian-tree-sparrow',other='zebra-finch',at=Date.UTC(2026,10,18,9);
+const id='eurasian-tree-sparrow',other='masked-finch',at=Date.UTC(2026,10,18,9);
 const fixture=(points,bird=id)=>{const w=createWorld(at,2026);w.encounters.nextId=2;w.encounters.discoveries=[{id:bird,firstTick:0,lastTick:0,visits:1,instanceId:1}];w.encounters.friendship=[{id:bird,petPoints:points-10}];return validateWorld(w);};
 test('only an earned native friendship crosses the documented milestone',()=>{
  const w=fixture(99),baseline=unlockedFriendshipMovies(w);
@@ -97,4 +97,20 @@ test('ベニヒワ merits precisely its own real-footage film and credits',()=>{
  assert.deepEqual(w,snapshot);
  const bytes=readFileSync(new URL('../public/game-endings/friendship-common-redpoll-logo09.mp4',import.meta.url));
  assert.equal(createHash('sha256').update(bytes).digest('hex'),'0dd3a7a67cc6cf39209c478e8866b37dec6b6ea25269c1ffb31d51e6b8db05c5');
+});
+
+test('キンカチョウ unlocks at 100 with honest generated provenance and two photo credits',()=>{
+ const id='zebra-finch',w=fixture(99,id);
+ assert.deepEqual(unlockedFriendshipMovies(w),[]);
+ assert.doesNotMatch(renderFriendshipMovieCard(w,id),/data-friendship-movie-open/);
+ assert.equal(encounterSystem.pet(w,id,1,{worldId:w.worldId,revision:w.revision}).changed,true);
+ assert.deepEqual(newlyUnlockedFriendshipMovies([],w.worldId,w),[id]);
+ const before=structuredClone(w),html=renderFriendshipMovieCard(w,id);
+ assert.match(html,/実写ではなく、写真を参考にした生成映像/);
+ assert.match(html,/Taeniopygia_guttata_-Australia_-male-8a\.jpg/);
+ assert.match(html,/Zebra_Finch_in_hand\.JPG/);
+ assert.doesNotMatch(html,/撮影地：/);
+ assert.match(renderFriendshipMovieDiary(w),/data-friendship-movie-open="zebra-finch"/);
+ assert.deepEqual(w,before);
+ assert.equal(createHash('sha256').update(readFileSync(new URL('../public/game-endings/friendship-zebra-finch-logo09.mp4',import.meta.url))).digest('hex'),'4603293423a989e63ec8ac58950063cc18937288a126e926ffdf1f7e87cdf5ce');
 });

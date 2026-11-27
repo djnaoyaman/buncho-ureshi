@@ -55,6 +55,13 @@ const FRIENDSHIP_MOVIES=Object.freeze({
   license:'https://creativecommons.org/licenses/by/2.0/',licenseLabel:'CC BY 2.0',creator:'Seabamirum',
   place:'米国ネバダ州ワショー郡ドライバレー（2012年12月28日）',
   edit:'原速の6.5秒を、2羽の体が切れない幅で縦型の画面に収め、書き下ろしのことばと音楽を加えています。'
+ }),
+ 'zebra-finch':Object.freeze({
+  bird:'キンカチョウ',title:'キンカチョウと なかよしになった記念',file:'friendship-zebra-finch-logo09.mp4',
+  photoReferences:Object.freeze([
+   Object.freeze({credit:"Janet’s Photos 2012",source:'https://commons.wikimedia.org/wiki/File:Taeniopygia_guttata_-Australia_-male-8a.jpg',license:'https://creativecommons.org/licenses/by/2.0/',label:'CC BY 2.0'}),
+   Object.freeze({credit:'PookieFugglestein（Broken Hill）',source:'https://commons.wikimedia.org/wiki/File:Zebra_Finch_in_hand.JPG',license:'https://creativecommons.org/publicdomain/zero/1.0/',label:'CC0'})
+  ])
  })
 });
 export function unlockedFriendshipMovies(w){
@@ -65,6 +72,7 @@ export function newlyUnlockedFriendshipMovies(previousIds,expectedWorld,next){
  return next.worldId===expectedWorld?unlockedFriendshipMovies(next).filter(id=>!previousIds.includes(id)):[];
 }
 function friendshipMovieCredit(film){
+ if(film.photoReferences)return `<p>実写ではなく、写真を参考にした生成映像です。参考写真：${film.photoReferences.map(ref=>`<a href="${ref.source}">${ref.credit}</a>（<a href="${ref.license}">${ref.label}</a>）`).join("、")}。</p>`;
  return `<p>撮影地：${film.place}。ゲームの庭を撮ったものではありません。映像：${film.creator}（<a href="${film.source}">原典</a>／<a href="${film.license}">${film.licenseLabel}</a>）。${film.edit??'縦向きに切り出し、文字と音楽を加えています。'}</p>`;
 }
 const movieButton=(id,label)=>`<button type="button" data-friendship-movie-open="${id}"><span aria-hidden="true">▶</span> ${label}</button>`;
@@ -158,7 +166,7 @@ export function mountCollectionEndingPlayer(root,{getWorld,transact,canPresent=(
    dialog.addEventListener('click',ev=>{if(!isCurrent())return;ev.stopPropagation();if(ev.target.closest('[data-ending-play]'))void play({fullscreen:true});else if(ev.target.closest('[data-ending-fullscreen]'))enterFullscreen();else if(ev.target.closest('[data-ending-close],[data-ending-skip]'))void close();});
    dialog.addEventListener('cancel',ev=>{if(!isCurrent())return;ev.preventDefault();ev.stopPropagation();void close();});
    dialog.addEventListener('keydown',ev=>{if(!isCurrent())return;if(ev.key==='Escape'){ev.preventDefault();ev.stopPropagation();void close();}else if(ev.key==='Tab'){const controls=[...dialog.querySelectorAll('button,video')].filter(e=>!e.disabled);const i=controls.indexOf(doc.activeElement);if(ev.shiftKey&&i<=0){ev.preventDefault();controls.at(-1)?.focus();}else if(!ev.shiftKey&&i===controls.length-1){ev.preventDefault();controls[0]?.focus();}}});
-   dialog.showModal();dialog.querySelector('[data-ending-play]').focus({preventScroll:true});if(mini){dialog.dataset.friendshipMovie=id;dialog.querySelector('[data-ending-play]').textContent='▶ 音と映像を再生';message('実写と音楽を使った短い作品です。');}else if(id==='garden-tour'){dialog.querySelector('[data-ending-play]').textContent='▶ 音声と映像を再生';message('35の庭を訪ねた記念の作品です。あなたの訪問順や個体を再現した映像ではありません。');}else if(id==='garden'){dialog.querySelector('[data-ending-play]').textContent='▶ 音声と映像を再生';message('▶ をおすと、35種の鳥との出会いを祝う作品がはじまります。ゲームの世界を描いた創作映像です。');}else if(id==='crows'){dialog.querySelector('[data-ending-play]').textContent='▶ 音声と映像を再生';message('▶ をおすと、5種のカラスとの出会いを祝う作品がはじまります。ゲームの世界を描いた創作映像です。');}else void play();return true;
+   dialog.showModal();dialog.querySelector('[data-ending-play]').focus({preventScroll:true});if(mini){dialog.dataset.friendshipMovie=id;dialog.querySelector('[data-ending-play]').textContent='▶ 音と映像を再生';message(mini.photoReferences?'写真を参考にした生成映像と、音楽を使った短い作品です。':'実写と音楽を使った短い作品です。');}else if(id==='garden-tour'){dialog.querySelector('[data-ending-play]').textContent='▶ 音声と映像を再生';message('35の庭を訪ねた記念の作品です。あなたの訪問順や個体を再現した映像ではありません。');}else if(id==='garden'){dialog.querySelector('[data-ending-play]').textContent='▶ 音声と映像を再生';message('▶ をおすと、35種の鳥との出会いを祝う作品がはじまります。ゲームの世界を描いた創作映像です。');}else if(id==='crows'){dialog.querySelector('[data-ending-play]').textContent='▶ 音声と映像を再生';message('▶ をおすと、5種のカラスとの出会いを祝う作品がはじまります。ゲームの世界を描いた創作映像です。');}else void play();return true;
   }catch{if(current)remove();return false;}
   finally{flight=false;if(!current&&claimed)void transactFor(worldId,w=>releaseCollectionEnding(w,id,owner)).catch(()=>{});}
  }
