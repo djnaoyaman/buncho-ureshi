@@ -129,3 +129,18 @@ test('ダイヤモンドフィンチ unlocks at 100 with both of its own license
  assert.deepEqual(w,before);
  assert.equal(createHash('sha256').update(readFileSync(new URL('../public/game-endings/friendship-diamond-firetail-logo09.mp4',import.meta.url))).digest('hex'),'88ba893b86955674214331d528ab1bb81e9b11c01bd81b64fc4c6dce3f2d0dab');
 });
+
+test('ヒノマルチョウ unlocks at 100 without autoplay and credits primary image and comparison separately',()=>{
+ const id='red-throated-parrotfinch',w=fixture(99,id);
+ assert.deepEqual(unlockedFriendshipMovies(w),[]);
+ assert.doesNotMatch(renderFriendshipMovieCard(w,id),/data-friendship-movie-open/);
+ assert.equal(encounterSystem.pet(w,id,1,{worldId:w.worldId,revision:w.revision}).changed,true);
+ assert.deepEqual(newlyUnlockedFriendshipMovies([],w.worldId,w),[id]);
+ const before=structuredClone(w),html=renderFriendshipMovieCard(w,id);
+ assert.match(html,/実写ではなく、写真を参考にした生成映像/);
+ assert.match(html,/324096623.*Ben Keen（映像のもとになった写真）.*CC0.*69886942.*Lennart Hudel（姿の確認に使った写真）.*CC BY 4[.]0/);
+ assert.doesNotMatch(html,/撮影地：|Andrew Allen/);
+ assert.match(renderFriendshipMovieDiary(w),/data-friendship-movie-open="red-throated-parrotfinch"/);
+ assert.deepEqual(w,before);
+ assert.equal(createHash('sha256').update(readFileSync(new URL('../public/game-endings/friendship-red-throated-parrotfinch-logo09.mp4',import.meta.url))).digest('hex'),'a6179e4ffcdedce47aaff3c9cb62a37b51727992119dc366598bee8749548452');
+});
