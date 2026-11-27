@@ -33,6 +33,7 @@ test('camera rollout keeps the exact nine original friend cage art files',async(
  const film=JSON.parse(await read('docs/qa/garden-friendship-movie-scope.json'));
  const journey=JSON.parse(await read('docs/qa/garden-home-journey-scope.json'));
  const scale=JSON.parse(await read('docs/qa/friend-cage-scale-scope.json'));
+ const evening=JSON.parse(await read('docs/qa/friendship-movie-evening-grosbeak-scope.json'));
  assert.deepEqual(Object.keys(journey.changedSource),['src/game.js']);
  const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
  assert.deepEqual(rollout.enabledFriendCages,FRIEND_CAGES.map(c=>c.id));
@@ -44,7 +45,9 @@ test('camera rollout keeps the exact nine original friend cage art files',async(
   const previous=successor?.after||digest.after,next=film.changedSource[file];
   if(next)assert.equal(next.before,previous,file);
   assert.equal(scale.changedSource[file].before,next?.after||previous,file);
-  assert.equal(sha(await read(file)),scale.changedSource[file].after,file);
+  const independentCover=evening.changedSource[file];
+  if(independentCover)assert.equal(independentCover.before,scale.changedSource[file].after,file);
+  assert.equal(sha(await read(file)),independentCover?.after??scale.changedSource[file].after,file);
  }
  assert.deepEqual(Object.keys(scale.changedSource),['src/game.js','src/game.css','src/friend-cages.js']);
  assert.equal(sha(await read('src/friend-cages.js')),scale.changedSource['src/friend-cages.js'].after);
