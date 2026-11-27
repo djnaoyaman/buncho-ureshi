@@ -1,0 +1,13 @@
+{
+  "baseCommit": "9be0988cae3caa51bf023df2f22d14e021b3ada2",
+  "changedSource": {
+    "src/collection-ending-player.js": {
+      "before": "ed81ff6ad95396cea2260861a0a69f3a8fd8f89f77e29c1a629383a3a5fc0898",
+      "after": "280a277003e8751ad336588159448259e5f03a941483298f3b2a16d4821bd2e1"
+    }
+  },
+  "media": {
+    "public/game-endings/friendship-red-throated-parrotfinch-logo09.mp4": "a6179e4ffcdedce47aaff3c9cb62a37b51727992119dc366598bee8749548452"
+  },
+  "revert": ",\n 'red-throated-parrotfinch':Object.freeze({\n  bird:'ヒノマルチョウ',title:'ヒノマルチョウと なかよしになった記念',file:'friendship-red-throated-parrotfinch-logo09.mp4',\n  photoReferences:Object.freeze([\n   Object.freeze({credit:'Ben Keen（映像のもとになった写真）',source:'https://www.inaturalist.org/observations/324096623',license:'https://creativecommons.org/publicdomain/zero/1.0/',label:'CC0'}),\n   Object.freeze({credit:'Lennart Hudel（姿の確認に使った写真）',source:'https://www.inaturalist.org/observations/69886942',license:'https://creativecommons.org/licenses/by/4.0/',label:'CC BY 4.0'})\n  ])\n })"
+}

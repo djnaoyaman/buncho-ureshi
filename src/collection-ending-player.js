@@ -69,6 +69,13 @@ const FRIENDSHIP_MOVIES=Object.freeze({
    Object.freeze({credit:'Andrew Allen',source:'https://commons.wikimedia.org/wiki/File:Stagonopleura_guttata_49654460.jpg',license:'https://creativecommons.org/licenses/by/4.0/',label:'CC BY 4.0'}),
    Object.freeze({credit:'aussiegall',source:'https://commons.wikimedia.org/wiki/File:Stagonopleura_guttata_-Auburn_Botanical_Gardens,_New_South_Wales,_Australia-8.jpg',license:'https://creativecommons.org/licenses/by/2.0/',label:'CC BY 2.0'})
   ])
+ }),
+ 'red-throated-parrotfinch':Object.freeze({
+  bird:'ヒノマルチョウ',title:'ヒノマルチョウと なかよしになった記念',file:'friendship-red-throated-parrotfinch-logo09.mp4',
+  photoReferences:Object.freeze([
+   Object.freeze({credit:'Ben Keen（映像のもとになった写真）',source:'https://www.inaturalist.org/observations/324096623',license:'https://creativecommons.org/publicdomain/zero/1.0/',label:'CC0'}),
+   Object.freeze({credit:'Lennart Hudel（姿の確認に使った写真）',source:'https://www.inaturalist.org/observations/69886942',license:'https://creativecommons.org/licenses/by/4.0/',label:'CC BY 4.0'})
+  ])
  })
 });
 export function unlockedFriendshipMovies(w){
