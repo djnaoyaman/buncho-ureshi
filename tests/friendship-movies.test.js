@@ -188,6 +188,6 @@ test('ギンザンマシコ credits its archive film and keeps the Logo09 card s
  assert.match(html,/Cephas/);
  assert.match(html,/friendship-pine-grosbeak-cc-by-sa[.]mp4/);
  assert.match(renderFriendshipMovieDiary(w),/data-friendship-movie-open="pine-grosbeak"/);
- for(const [file,sha] of Object.entries({"public/game-endings/friendship-pine-grosbeak-cc-by-sa.mp4": "f81c556a9cd48a601e371d6b50b56ea9c43b25b827790dc1b4e42613f71fb977", "public/game-endings/friendship-pine-grosbeak-card-logo09.webp": "c9183220ecb004522147dfce4be2897f80295edfbd12cde1102be0e5f25299ba"}))
+ for(const [file,sha] of Object.entries({"public/game-endings/friendship-pine-grosbeak-cc-by-sa.mp4": "3024d041eeb772d608fb60cb3696a22bb4f32a79ea20acab851b0c95ee6204b7", "public/game-endings/friendship-pine-grosbeak-card-logo09.webp": "c9183220ecb004522147dfce4be2897f80295edfbd12cde1102be0e5f25299ba"}))
   assert.equal(createHash('sha256').update(readFileSync(new URL('../'+file,import.meta.url))).digest('hex'),sha);
 });
