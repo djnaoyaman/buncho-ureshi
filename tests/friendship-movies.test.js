@@ -174,6 +174,6 @@ test('アトリ credits its archive film and keeps the Logo09 card separate',()=
  assert.match(html,/Marc Plomp.*Stichting Natuurbeelden/);
  assert.match(html,/friendship-brambling-cc-by-sa[.]mp4/);
  assert.match(renderFriendshipMovieDiary(w),/data-friendship-movie-open="brambling"/);
- for(const [file,sha] of Object.entries({"public/game-endings/friendship-brambling-cc-by-sa.mp4": "48bd2f05aed94067fed85a005e32807ffa13b9fea14090893a9b579051d340a8", "public/game-endings/friendship-brambling-card-logo09.webp": "4ef4548025664449b89cbb20a5e886928e25b6cdd52fe99901484bd3444c5b8c"}))
+ for(const [file,sha] of Object.entries({"public/game-endings/friendship-brambling-cc-by-sa.mp4": "83a32fbb123a83d1eea17125a71a6141792ee26097ce1917ef57d16f9aad3437", "public/game-endings/friendship-brambling-card-logo09.webp": "4ef4548025664449b89cbb20a5e886928e25b6cdd52fe99901484bd3444c5b8c"}))
   assert.equal(createHash('sha256').update(readFileSync(new URL('../'+file,import.meta.url))).digest('hex'),sha);
 });
