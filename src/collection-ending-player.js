@@ -79,6 +79,15 @@ const FRIENDSHIP_MOVIES=Object.freeze({
   place:'カナダ・ケベック州、カップ・トゥルマント国立野生生物保護区（2013年2月2日）',
   edit:'原速の19〜34秒を縦に切り出し、音声を除いています。映像部分は CC BY-SA 3.0 です。ゲームのタイトルカードは別の作品です。'
  }),
+ 'double-barred-finch':Object.freeze({
+  bird:'カノコスズメ',title:'カノコスズメと なかよしになった記念',file:'friendship-double-barred-finch-cc-by-sa.mp4',
+  independentTitleCard:'friendship-double-barred-finch-card-logo09.webp',
+  copy:'白い胸に、ふたつの輪。こっちを、ちらり。',
+  source:'https://commons.wikimedia.org/wiki/File:Double-barred_Finch94.ogv',sourceTitle:'Double-barred Finch94',
+  license:'https://creativecommons.org/licenses/by-sa/3.0/',licenseLabel:'CC BY-SA 3.0',creator:'Aviceda',
+  place:'オーストラリア・クイーンズランド州、サムソンベール湖（1994年10月）',
+  edit:'1994年の記録映像です。原速の17.7〜32.7秒を縦画面に合わせ、音声を除いています。映像部分は CC BY-SA 3.0 です。ゲームのタイトルカードは別の作品です。'
+ }),
  'red-throated-parrotfinch':Object.freeze({
   bird:'ヒノマルチョウ',title:'ヒノマルチョウと なかよしになった記念',file:'friendship-red-throated-parrotfinch-logo09.mp4',
   photoReferences:Object.freeze([
