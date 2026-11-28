@@ -70,6 +70,15 @@ const FRIENDSHIP_MOVIES=Object.freeze({
    Object.freeze({credit:'aussiegall',source:'https://commons.wikimedia.org/wiki/File:Stagonopleura_guttata_-Auburn_Botanical_Gardens,_New_South_Wales,_Australia-8.jpg',license:'https://creativecommons.org/licenses/by/2.0/',label:'CC BY 2.0'})
   ])
  }),
+ 'evening-grosbeak':Object.freeze({
+  bird:'キビタイシメ',title:'キビタイシメと なかよしになった記念',file:'friendship-evening-grosbeak-cc-by-sa.mp4',
+  independentTitleCard:'friendship-evening-grosbeak-card-logo09.webp',
+  copy:'黄色いまゆで、右、左。冬の枝で、きみを見つけた。',
+  source:'https://commons.wikimedia.org/wiki/File:Hesperiphona_vespertina_CT1.ogv',sourceTitle:'Hesperiphona vespertina CT1',
+  license:'https://creativecommons.org/licenses/by-sa/3.0/',licenseLabel:'CC BY-SA 3.0',creator:'Cephas',
+  place:'カナダ・ケベック州、カップ・トゥルマント国立野生生物保護区（2013年2月2日）',
+  edit:'原速の19〜34秒を縦に切り出し、音声を除いています。映像部分は CC BY-SA 3.0 です。ゲームのタイトルカードは別の作品です。'
+ }),
  'red-throated-parrotfinch':Object.freeze({
   bird:'ヒノマルチョウ',title:'ヒノマルチョウと なかよしになった記念',file:'friendship-red-throated-parrotfinch-logo09.mp4',
   photoReferences:Object.freeze([
@@ -87,7 +96,7 @@ export function newlyUnlockedFriendshipMovies(previousIds,expectedWorld,next){
 }
 function friendshipMovieCredit(film){
  if(film.photoReferences)return `<p>実写ではなく、写真を参考にした生成映像です。参考写真：${film.photoReferences.map(ref=>`<a href="${ref.source}">${ref.credit}</a>（<a href="${ref.license}">${ref.label}</a>）`).join("、")}。</p>`;
- return `<p>撮影地：${film.place}。ゲームの庭を撮ったものではありません。映像：${film.creator}（<a href="${film.source}">原典</a>／<a href="${film.license}">${film.licenseLabel}</a>）。${film.edit??'縦向きに切り出し、文字と音楽を加えています。'}</p>`;
+ return `<p>撮影地：${film.place}。ゲームの庭を撮ったものではありません。映像：${film.creator}（<a href="${film.source}">${film.sourceTitle??"原典"}</a>／<a href="${film.license}">${film.licenseLabel}</a>）。${film.edit??'縦向きに切り出し、文字と音楽を加えています。'}${film.independentTitleCard?` <a href="${new URL(`../game-endings/${film.file}`,import.meta.url).href}">映像のみ（MP4）</a>。`:''}</p>`;
 }
 const movieButton=(id,label)=>`<button type="button" data-friendship-movie-open="${id}"><span aria-hidden="true">▶</span> ${label}</button>`;
 export function renderFriendshipMovieCard(w,id){
@@ -134,7 +143,15 @@ export function mountCollectionEndingPlayer(root,{getWorld,transact,canPresent=(
    else if(v.webkitEnterFullscreen){v.webkitEnterFullscreen();}
   }catch{if(current)current.fullscreenPending=false;} // iOS may refuse until media metadata is ready; the full-screen dialog remains usable.
  }
- async function play({fullscreen=false}={}){const c=current,v=video,d=dialog;if(!v||!c||closing||retiring)return;if(fullscreen)enterFullscreen();try{if(v.error)v.load();await v.play();}catch{if(current!==c||video!==v)return;d?.removeAttribute('data-playing');message('▶ をおすと、エンディングが はじまるよ。');}}
+ // WebKit may defer playback of hidden media. Reveal the independent video in the user gesture, not in its playing handler.
+ function showIndependentFilm(d,show){d.toggleAttribute('data-film-started',show);const cover=d.querySelector('.game-ending-independent-cover');if(cover)cover.hidden=show;}
+ async function play({fullscreen=false}={}){
+  const c=current,v=video,d=dialog;if(!v||!c||closing||retiring)return;
+  const independent=d?.hasAttribute('data-independent-title-card');
+  if(independent){v.muted=true;showIndependentFilm(d,true);}else if(fullscreen)enterFullscreen();
+  try{if(v.error)v.load();await v.play();}
+  catch{if(current!==c||video!==v)return;if(independent)showIndependentFilm(d,false);d?.removeAttribute('data-playing');message('▶ をおすと、エンディングが はじまるよ。');}
+ }
  async function leaveFullscreen(c,d,v){
   await c?.fullscreenRequest;if(d?.contains(doc.fullscreenElement))await doc.exitFullscreen?.();
   if(v?.webkitDisplayingFullscreen)await new Promise((resolve,reject)=>{
@@ -171,16 +188,23 @@ export function mountCollectionEndingPlayer(root,{getWorld,transact,canPresent=(
    current={id,worldId,friendship:!!mini,acked:status.acknowledged||!claimed,recordable:!mini&&(status.acknowledged||claimed)};lastFocus=trigger||doc.activeElement;notify(true);
    dialog=doc.createElement('dialog');dialog.className='game-ending-dialog';dialog.setAttribute('aria-labelledby','game-ending-title');
    dialog.innerHTML=`<div class="game-ending-screen"><header><h2 id="game-ending-title">${title}</h2><button type="button" data-ending-close aria-label="${mini?'記念の映像を閉じる':'エンディングを閉じる'}">とじる</button></header><video controls playsinline preload="none" aria-label="${status.title}"></video><div class="game-ending-actions"><button type="button" data-ending-play>▶ <ruby>再生<rt>さいせい</rt></ruby></button><button type="button" data-ending-fullscreen><ruby>全画面<rt>ぜんがめん</rt></ruby></button><button type="button" data-ending-skip>あとで<ruby>見<rt>み</rt></ruby>る</button></div><p role="status" aria-live="polite"></p></div>`;
+   if(mini?.independentTitleCard){
+    dialog.setAttribute('data-independent-title-card','');
+    const cover=doc.createElement('img');cover.className='game-ending-independent-cover';
+    cover.src=new URL(`../game-endings/${mini.independentTitleCard}`,import.meta.url).href;
+    cover.alt=`なかよし100。 ${mini.bird}。 ${mini.copy}`;
+    dialog.querySelector('video').after(cover);
+   }
    if(id==='garden-tour'||id==='garden'||id==='crows'){dialog.dataset.film=id==='garden-tour'?'tour':id;const controls=doc.createElement('div');controls.className='game-ending-tour-controls';controls.append(dialog.querySelector('[role=status]'),dialog.querySelector('.game-ending-actions'));dialog.querySelector('.game-ending-screen').append(controls);}
    root.append(dialog);video=dialog.querySelector('video');video.tabIndex=0;video.volume=.5;video.src=new URL(`../game-endings/${file}`,import.meta.url).href;const session=current,media=video,isCurrent=()=>alive&&current===session&&video===media;
    video.addEventListener('playing',()=>{if(!isCurrent()||closing)return;dialog?.setAttribute('data-playing','');if(doc.activeElement?.matches('[data-ending-play]'))video?.focus({preventScroll:true});message('');void savePlayback('started').catch(()=>{if(isCurrent())message('きろくの ほぞんを まっています。');});});
    video.addEventListener('pause',()=>{if(!isCurrent())return;dialog?.removeAttribute('data-playing');});
    video.addEventListener('ended',()=>{if(!isCurrent())return;void close({playback:'completed'});});
-   video.addEventListener('error',()=>{if(!isCurrent())return;message('どうがを よみこめませんでした。つうしんを たしかめて、もういちど ▶ をおしてね。');});
+   video.addEventListener('error',()=>{if(!isCurrent())return;if(mini?.independentTitleCard)showIndependentFilm(dialog,false);message('どうがを よみこめませんでした。つうしんを たしかめて、もういちど ▶ をおしてね。');});
    dialog.addEventListener('click',ev=>{if(!isCurrent())return;ev.stopPropagation();if(ev.target.closest('[data-ending-play]'))void play({fullscreen:true});else if(ev.target.closest('[data-ending-fullscreen]'))enterFullscreen();else if(ev.target.closest('[data-ending-close],[data-ending-skip]'))void close();});
    dialog.addEventListener('cancel',ev=>{if(!isCurrent())return;ev.preventDefault();ev.stopPropagation();void close();});
-   dialog.addEventListener('keydown',ev=>{if(!isCurrent())return;if(ev.key==='Escape'){ev.preventDefault();ev.stopPropagation();void close();}else if(ev.key==='Tab'){const controls=[...dialog.querySelectorAll('button,video')].filter(e=>!e.disabled);const i=controls.indexOf(doc.activeElement);if(ev.shiftKey&&i<=0){ev.preventDefault();controls.at(-1)?.focus();}else if(!ev.shiftKey&&i===controls.length-1){ev.preventDefault();controls[0]?.focus();}}});
-   dialog.showModal();dialog.querySelector('[data-ending-play]').focus({preventScroll:true});if(mini){dialog.dataset.friendshipMovie=id;dialog.querySelector('[data-ending-play]').textContent='▶ 音と映像を再生';message(mini.photoReferences?'写真を参考にした生成映像と、音楽を使った短い作品です。':'実写と音楽を使った短い作品です。');}else if(id==='garden-tour'){dialog.querySelector('[data-ending-play]').textContent='▶ 音声と映像を再生';message('35の庭を訪ねた記念の作品です。あなたの訪問順や個体を再現した映像ではありません。');}else if(id==='garden'){dialog.querySelector('[data-ending-play]').textContent='▶ 音声と映像を再生';message('▶ をおすと、35種の鳥との出会いを祝う作品がはじまります。ゲームの世界を描いた創作映像です。');}else if(id==='crows'){dialog.querySelector('[data-ending-play]').textContent='▶ 音声と映像を再生';message('▶ をおすと、5種のカラスとの出会いを祝う作品がはじまります。ゲームの世界を描いた創作映像です。');}else void play();return true;
+   dialog.addEventListener('keydown',ev=>{if(!isCurrent())return;if(ev.key==='Escape'){ev.preventDefault();ev.stopPropagation();void close();}else if(ev.key==='Tab'){const controls=[...dialog.querySelectorAll('button,video')].filter(e=>!e.disabled&&(!mini?.independentTitleCard||win.getComputedStyle(e).visibility!=='hidden'));const i=controls.indexOf(doc.activeElement);if(ev.shiftKey&&i<=0){ev.preventDefault();controls.at(-1)?.focus();}else if(!ev.shiftKey&&i===controls.length-1){ev.preventDefault();controls[0]?.focus();}}});
+   dialog.showModal();dialog.querySelector('[data-ending-play]').focus({preventScroll:true});if(mini){dialog.dataset.friendshipMovie=id;dialog.querySelector('[data-ending-play]').textContent=mini.independentTitleCard?'▶ 15秒の映像を再生':'▶ 音と映像を再生';message(mini.independentTitleCard?`野鳥の実写・音声なし。撮影：${mini.creator}。`:mini.photoReferences?'写真を参考にした生成映像と、音楽を使った短い作品です。':'実写と音楽を使った短い作品です。');}else if(id==='garden-tour'){dialog.querySelector('[data-ending-play]').textContent='▶ 音声と映像を再生';message('35の庭を訪ねた記念の作品です。あなたの訪問順や個体を再現した映像ではありません。');}else if(id==='garden'){dialog.querySelector('[data-ending-play]').textContent='▶ 音声と映像を再生';message('▶ をおすと、35種の鳥との出会いを祝う作品がはじまります。ゲームの世界を描いた創作映像です。');}else if(id==='crows'){dialog.querySelector('[data-ending-play]').textContent='▶ 音声と映像を再生';message('▶ をおすと、5種のカラスとの出会いを祝う作品がはじまります。ゲームの世界を描いた創作映像です。');}else void play();return true;
   }catch{if(current)remove();return false;}
   finally{flight=false;if(!current&&claimed)void transactFor(worldId,w=>releaseCollectionEnding(w,id,owner)).catch(()=>{});}
  }

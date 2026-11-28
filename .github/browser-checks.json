@@ -1,7 +1,5 @@
 {
-  "base": "786d8b67b35299a112b2eae0889b5b1e865dfe31",
-  "tests": [
-    "tests/browser/encyclopedia-toc.spec.js"
-  ],
-  "reason": "図鑑37記事の同一ページ内目次だけを修正。ChromeとWebKitの390pxで水浴び・おもちの記事をJavaScriptあり／なしで開き、リンクを押して同じ記事に留まり、対象見出しが表示されることを確認する。ゲーム・画像・動画には変更なし。"
+  "base": "9c6c3ff043089309f30d0db4bbc05f94fa9796ce",
+  "tests": ["tests/browser/friendship-movie.spec.js"],
+  "reason": "キビタイシメの本編とロゴ09の別画面、レベル99から100への実遷移、初回再生、既存動画・日記・保存への影響をスマホ幅のChromeとWebKitで検査。"
 }
