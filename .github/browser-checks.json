@@ -1,5 +1,7 @@
 {
-  "base": "9c6c3ff043089309f30d0db4bbc05f94fa9796ce",
-  "tests": ["tests/browser/friendship-movie.spec.js"],
-  "reason": "キビタイシメの本編とロゴ09の別画面、レベル99から100への実遷移、初回再生、既存動画・日記・保存への影響をスマホ幅のChromeとWebKitで検査。"
+  "base": "49c15c463b1bbb8985bee841cf90dd08da7ba745",
+  "tests": [
+    "tests/browser/friendship-movie.spec.js"
+  ],
+  "reason": "アトリの独立実写とロゴ09、99→100、再生の時刻進行、著作者表示・日記と保存不変をスマホ幅のChrome/WebKitで検査。対照は既公開のキビタイシメと従来動画。"
 }

@@ -1,0 +1,21 @@
+{
+  "baseCommit": "49c15c463b1bbb8985bee841cf90dd08da7ba745",
+  "changedSource": {
+    "src/collection-ending-player.js": {
+      "before": "5902aaf498eb59eefce94f69f54b7f5fe98c89794c6998c11e4913e2b2fe6fcc",
+      "after": "e6b2f5aa6e6840bee9f50400a2fabf72702f8d66d1e9d333bc609efd74815668"
+    }
+  },
+  "media": {
+    "public/game-endings/friendship-brambling-cc-by-sa.mp4": "48bd2f05aed94067fed85a005e32807ffa13b9fea14090893a9b579051d340a8",
+    "public/game-endings/friendship-brambling-card-logo09.webp": "4ef4548025664449b89cbb20a5e886928e25b6cdd52fe99901484bd3444c5b8c"
+  },
+  "revert": {
+    "src/collection-ending-player.js": [
+      {
+        "before": "",
+        "after": " 'brambling':Object.freeze({\n  bird:'アトリ',title:'アトリと なかよしになった記念',file:'friendship-brambling-cc-by-sa.mp4',\n  independentTitleCard:'friendship-brambling-card-logo09.webp',\n  copy:'空に、だいだい色。枝の先から、こんにちは。',\n  source:'https://commons.wikimedia.org/wiki/File:Mannetje_en_vrouwtje_keep_in_de_bomen-4961694.webm',sourceTitle:'Mannetje en vrouwtje keep in de bomen',\n  license:'https://creativecommons.org/licenses/by-sa/3.0/nl/deed.en',licenseLabel:'CC BY-SA 3.0 NL',creator:'Natuur Digitaal (Marc Plomp)／Stichting Natuurbeelden',\n  place:'オランダ・テセル島、デ・コックスドルプ（2009年4月3日）',\n  edit:'原速の50〜65秒を縦に切り出し、音声を除いています。映像部分は CC BY-SA 3.0 NL です。ゲームのタイトルカードは別の作品です。'\n }),\n"
+      }
+    ]
+  }
+}

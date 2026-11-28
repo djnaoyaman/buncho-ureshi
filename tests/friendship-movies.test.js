@@ -163,3 +163,17 @@ test('キビタイシメ uses the native milestone and independent CC BY-SA foot
  const logo=readFileSync(new URL('../public/game-endings/friendship-evening-grosbeak-card-logo09.webp',import.meta.url));
  assert.equal(logo.subarray(8,12).toString(),'WEBP');
 });
+
+test('アトリ credits its archive film and keeps the Logo09 card separate',()=>{
+ const id='brambling',w=fixture(99,id);
+ assert.deepEqual(unlockedFriendshipMovies(w),[]);
+ assert.equal(encounterSystem.pet(w,id,1,{worldId:w.worldId,revision:w.revision}).changed,true);
+ assert.deepEqual(newlyUnlockedFriendshipMovies([],w.worldId,w),[id]);
+ const html=renderFriendshipMovieCard(w,id);
+ assert.match(html,/Mannetje_en_vrouwtje_keep_in_de_bomen-4961694.*CC BY-SA 3[.]0 NL/);
+ assert.match(html,/Marc Plomp.*Stichting Natuurbeelden/);
+ assert.match(html,/friendship-brambling-cc-by-sa[.]mp4/);
+ assert.match(renderFriendshipMovieDiary(w),/data-friendship-movie-open="brambling"/);
+ for(const [file,sha] of Object.entries({"public/game-endings/friendship-brambling-cc-by-sa.mp4": "48bd2f05aed94067fed85a005e32807ffa13b9fea14090893a9b579051d340a8", "public/game-endings/friendship-brambling-card-logo09.webp": "4ef4548025664449b89cbb20a5e886928e25b6cdd52fe99901484bd3444c5b8c"}))
+  assert.equal(createHash('sha256').update(readFileSync(new URL('../'+file,import.meta.url))).digest('hex'),sha);
+});

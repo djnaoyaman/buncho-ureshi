@@ -79,6 +79,15 @@ const FRIENDSHIP_MOVIES=Object.freeze({
   place:'カナダ・ケベック州、カップ・トゥルマント国立野生生物保護区（2013年2月2日）',
   edit:'原速の19〜34秒を縦に切り出し、音声を除いています。映像部分は CC BY-SA 3.0 です。ゲームのタイトルカードは別の作品です。'
  }),
+ 'brambling':Object.freeze({
+  bird:'アトリ',title:'アトリと なかよしになった記念',file:'friendship-brambling-cc-by-sa.mp4',
+  independentTitleCard:'friendship-brambling-card-logo09.webp',
+  copy:'空に、だいだい色。枝の先から、こんにちは。',
+  source:'https://commons.wikimedia.org/wiki/File:Mannetje_en_vrouwtje_keep_in_de_bomen-4961694.webm',sourceTitle:'Mannetje en vrouwtje keep in de bomen',
+  license:'https://creativecommons.org/licenses/by-sa/3.0/nl/deed.en',licenseLabel:'CC BY-SA 3.0 NL',creator:'Natuur Digitaal (Marc Plomp)／Stichting Natuurbeelden',
+  place:'オランダ・テセル島、デ・コックスドルプ（2009年4月3日）',
+  edit:'原速の50〜65秒を縦に切り出し、音声を除いています。映像部分は CC BY-SA 3.0 NL です。ゲームのタイトルカードは別の作品です。'
+ }),
  'red-throated-parrotfinch':Object.freeze({
   bird:'ヒノマルチョウ',title:'ヒノマルチョウと なかよしになった記念',file:'friendship-red-throated-parrotfinch-logo09.mp4',
   photoReferences:Object.freeze([
