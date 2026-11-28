@@ -164,16 +164,30 @@ test('キビタイシメ uses the native milestone and independent CC BY-SA foot
  assert.equal(logo.subarray(8,12).toString(),'WEBP');
 });
 
+test('カノコスズメ credits its archive film and keeps the Logo09 card separate',()=>{
+ const id='double-barred-finch',w=fixture(99,id);
+ assert.deepEqual(unlockedFriendshipMovies(w),[]);
+ assert.equal(encounterSystem.pet(w,id,1,{worldId:w.worldId,revision:w.revision}).changed,true);
+ assert.deepEqual(newlyUnlockedFriendshipMovies([],w.worldId,w),[id]);
+ const html=renderFriendshipMovieCard(w,id);
+ assert.match(html,/Double-barred_Finch94.*CC BY-SA 3[.]0/);
+ assert.match(html,/Aviceda.*CC BY-SA/);
+ assert.match(html,/friendship-double-barred-finch-cc-by-sa[.]mp4/);
+ assert.match(renderFriendshipMovieDiary(w),/data-friendship-movie-open="double-barred-finch"/);
+ for(const [file,sha] of Object.entries({"public/game-endings/friendship-double-barred-finch-cc-by-sa.mp4": "d1d49821c2237623901ee5868b068fa5b15cb7ba048768e7d9644e15d11fd5f7", "public/game-endings/friendship-double-barred-finch-card-logo09.webp": "8b5f202e5d2785bc42586feaf95bd6d2ec004009cba449cc65b726ea90de626e"}))
+  assert.equal(createHash('sha256').update(readFileSync(new URL('../'+file,import.meta.url))).digest('hex'),sha);
+});
+
 test('アトリ credits its archive film and keeps the Logo09 card separate',()=>{
  const id='brambling',w=fixture(99,id);
  assert.deepEqual(unlockedFriendshipMovies(w),[]);
  assert.equal(encounterSystem.pet(w,id,1,{worldId:w.worldId,revision:w.revision}).changed,true);
  assert.deepEqual(newlyUnlockedFriendshipMovies([],w.worldId,w),[id]);
  const html=renderFriendshipMovieCard(w,id);
- assert.match(html,/Mannetje_en_vrouwtje_keep_in_de_bomen-4961694.*CC BY-SA 3[.]0 NL/);
+ assert.match(html,/Keep_op_de_voerplek-4961722.*CC BY-SA 3[.]0 NL/);
  assert.match(html,/Marc Plomp.*Stichting Natuurbeelden/);
  assert.match(html,/friendship-brambling-cc-by-sa[.]mp4/);
  assert.match(renderFriendshipMovieDiary(w),/data-friendship-movie-open="brambling"/);
- for(const [file,sha] of Object.entries({"public/game-endings/friendship-brambling-cc-by-sa.mp4": "83a32fbb123a83d1eea17125a71a6141792ee26097ce1917ef57d16f9aad3437", "public/game-endings/friendship-brambling-card-logo09.webp": "4ef4548025664449b89cbb20a5e886928e25b6cdd52fe99901484bd3444c5b8c"}))
+ for(const [file,sha] of Object.entries({"public/game-endings/friendship-brambling-cc-by-sa.mp4": "32741565d3aeb3eadd360938b798ed8aa9a7c22b2deff635e4e135bee396a550", "public/game-endings/friendship-brambling-card-logo09.webp": "7674e5eaffc7b14e6193cfcea426bdf088530e128c49687a6dc961afe0657b13"}))
   assert.equal(createHash('sha256').update(readFileSync(new URL('../'+file,import.meta.url))).digest('hex'),sha);
 });

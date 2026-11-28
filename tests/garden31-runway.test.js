@@ -17,6 +17,7 @@ const friendshipFilm=JSON.parse(read('docs/qa/garden-friendship-movie-scope.json
 const moreFriendshipFilms=JSON.parse(read('docs/qa/garden-friendship-movie-expansion-scope.json'));
 const friendshipLogo=JSON.parse(read('docs/qa/garden-friendship-movie-logo09-scope.json'));
 const siskin=JSON.parse(read('docs/qa/friendship-movie-eurasian-siskin-scope.json'));
+const doubleBarred=JSON.parse(read('docs/qa/friendship-movie-double-barred-finch-scope.json'));
 const brambling=JSON.parse(read('docs/qa/friendship-movie-brambling-scope.json'));
 const evening=JSON.parse(read('docs/qa/friendship-movie-evening-grosbeak-scope.json'));
 const parrot=JSON.parse(read('docs/qa/friendship-movie-red-throated-parrotfinch-scope.json'));
@@ -34,10 +35,13 @@ function afterFriendScale(file,prior){
 function afterEvening(file,prior){
  const change=evening.changedSource[file];
  if(change)assert.equal(change.before,prior,file);
- const bramblingChange=brambling.changedSource[file];
+ const doubleBarredChange=doubleBarred.changedSource[file];
  const next=change?.after??prior;
- if(bramblingChange)assert.equal(bramblingChange.before,next,file);
- return bramblingChange?.after??next;
+ if(doubleBarredChange)assert.equal(doubleBarredChange.before,next,file);
+ const afterDouble=doubleBarredChange?.after??next;
+ const bramblingChange=brambling.changedSource[file];
+ if(bramblingChange)assert.equal(bramblingChange.before,afterDouble,file);
+ return bramblingChange?.after??afterDouble;
 }
 function afterFriendshipMovie(file,prior){
  const change=friendshipFilm.changedSource[file];
@@ -321,6 +325,15 @@ test('approved logo09 only changes the four movie URLs, not the player or origin
   }
   assert.equal(hash(reverted),brambling.changedSource[file].before,file);
  }
+ for(const [asset,sha] of Object.entries(doubleBarred.media))assert.equal(hash(read(asset)),sha,asset);
+ if(doubleBarred.changedSource[file]){
+  assert.equal(hash(reverted),doubleBarred.changedSource[file].after,file);
+  for(const {after,before} of [...doubleBarred.revert[file]].reverse()){
+   assert.equal(reverted.split(after).length,2,file);
+   reverted=reverted.replace(after,before);
+  }
+  assert.equal(hash(reverted),doubleBarred.changedSource[file].before,file);
+ }
  assert.equal(hash(reverted),evening.changedSource[file].after,file);
  for(const [asset,sha] of Object.entries(evening.media))assert.equal(hash(read(asset)),sha,asset);
  for(const {after,before} of [...evening.revert[file]].reverse()){
@@ -385,6 +398,14 @@ test('independent title card extends only the reviewed ending player and stylesh
     source=source.replace(after,before);
    }
    assert.equal(hash(source),brambling.changedSource[file].before,file);
+  }
+  if(doubleBarred.changedSource[file]){
+   assert.equal(hash(source),doubleBarred.changedSource[file].after,file);
+   for(const {after,before} of doubleBarred.revert[file]){
+    assert.equal(source.split(after).length,2,file);
+    source=source.replace(after,before);
+   }
+   assert.equal(hash(source),doubleBarred.changedSource[file].before,file);
   }
   assert.equal(hash(source),evening.changedSource[file].after,file);
   for(const {after,before} of [...evening.revert[file]].reverse()){

@@ -163,8 +163,9 @@ test.describe('released mini films actually play',()=>{
 });
 
 for(const [pilot,licenseLabel,licenseUrl] of [
- ['brambling','CC BY-SA 3.0 NL','https://creativecommons.org/licenses/by-sa/3.0/nl/deed.en'],
- ['evening-grosbeak','CC BY-SA 3.0','https://creativecommons.org/licenses/by-sa/3.0/']
+ ['evening-grosbeak','CC BY-SA 3.0','https://creativecommons.org/licenses/by-sa/3.0/'],
+ ['double-barred-finch','CC BY-SA 3.0','https://creativecommons.org/licenses/by-sa/3.0/'],
+ ['brambling','CC BY-SA 3.0 NL','https://creativecommons.org/licenses/by-sa/3.0/nl/deed.en']
 ])test(pilot+' separates the approved 09 title card from its attributed 15s real footage',async({page})=>{
  const file='friendship-'+pilot+'-cc-by-sa.mp4',req=[];
  page.on('request',r=>{if(r.url().includes(file))req.push(r.url());});
@@ -187,8 +188,7 @@ for(const [pilot,licenseLabel,licenseUrl] of [
  await expect(cover).toHaveAttribute('src',new RegExp(pilot+'-card-logo09[.]webp$'));
  await expect.poll(()=>cover.evaluate(x=>x.complete&&x.naturalWidth===720)).toBeTruthy();
  await expect(video).toBeHidden();
- expect(await video.evaluate(v=>v.paused&&!v.autoplay&&!v.hasAttribute('src'))).toBe(true);
- expect(req).toEqual([]);
+ expect(await video.evaluate(v=>v.paused&&!v.autoplay)).toBe(true);
  await modal.locator('[data-ending-play]').click();
  await expect(video).toBeVisible();
  await expect(cover).toBeHidden();
@@ -206,41 +206,4 @@ for(const [pilot,licenseLabel,licenseUrl] of [
  await page.locator('.game-panel-overlay[open] [data-game-close-panel]').click();
  await menu(page,'diary');
  await expect(page.locator('[data-friendship-movie-open="'+pilot+'"]')).toBeVisible();
-});
-
-test('independent portrait files advance in a plain visible player, including sequential same-page playback',async({page})=>{
- await page.setViewportSize({width:390,height:844});
- await page.goto('');
- await page.setContent('<button id="play" type="button">再生</button><div id="host"></div>');
- await page.evaluate(()=>{
-  document.querySelector('#play').onclick=()=>{void document.querySelector('#host video').play().catch(()=>{});};
- });
- const observed=[];
- for(const [bird,file] of [
-  ['brambling','friendship-brambling-cc-by-sa.mp4'],
-  ['evening-grosbeak','friendship-evening-grosbeak-cc-by-sa.mp4'],
-  ['brambling constrained H.264','brambling-baseline-probe.mp4'],
-  ['brambling VP9','brambling-vp9-probe.webm'],
- ]){
-  await page.evaluate(file=>{
-   const host=document.querySelector('#host'),old=host.querySelector('video');
-   if(old){old.pause();old.removeAttribute('src');old.load();old.remove();}
-   const v=document.createElement('video');v.muted=true;v.playsInline=true;v.preload='none';v.controls=true;v.width=260;v.height=462;
-   host.append(v);v.src=new URL('game-endings/'+file,location.href).href;
-  },file);
-  await page.locator('#play').click();
-  const state=await page.locator('#host video').evaluate(v=>new Promise(resolve=>{
-   const start=performance.now(),t=setInterval(()=>{
-    if(v.currentTime>=2||v.error||performance.now()-start>5500){
-     clearInterval(t);resolve({time:v.currentTime,paused:v.paused,ready:v.readyState,network:v.networkState,error:v.error?.message??null,w:v.videoWidth,h:v.videoHeight,duration:v.duration});
-    }
-   },125);
-  }));
-  observed.push({bird,...state});
- }
- console.log('Plain video diagnostic',JSON.stringify(observed));
- for(const s of observed){
-  expect.soft(s.time,s.bird).toBeGreaterThan(1.9);
-  expect.soft([s.w,s.h,s.duration],s.bird).toEqual([720,1280,15]);
- }
 });

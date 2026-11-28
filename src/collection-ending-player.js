@@ -79,14 +79,23 @@ const FRIENDSHIP_MOVIES=Object.freeze({
   place:'カナダ・ケベック州、カップ・トゥルマント国立野生生物保護区（2013年2月2日）',
   edit:'原速の19〜34秒を縦に切り出し、音声を除いています。映像部分は CC BY-SA 3.0 です。ゲームのタイトルカードは別の作品です。'
  }),
+ 'double-barred-finch':Object.freeze({
+  bird:'カノコスズメ',title:'カノコスズメと なかよしになった記念',file:'friendship-double-barred-finch-cc-by-sa.mp4',
+  independentTitleCard:'friendship-double-barred-finch-card-logo09.webp',
+  copy:'白い胸に、ふたつの輪。こっちを、ちらり。',
+  source:'https://commons.wikimedia.org/wiki/File:Double-barred_Finch94.ogv',sourceTitle:'Double-barred Finch94',
+  license:'https://creativecommons.org/licenses/by-sa/3.0/',licenseLabel:'CC BY-SA 3.0',creator:'Aviceda',
+  place:'オーストラリア・クイーンズランド州、サムソンベール湖（1994年10月）',
+  edit:'1994年の記録映像です。原速の17.7〜32.7秒を縦画面に合わせ、音声を除いています。映像部分は CC BY-SA 3.0 です。ゲームのタイトルカードは別の作品です。'
+ }),
  'brambling':Object.freeze({
   bird:'アトリ',title:'アトリと なかよしになった記念',file:'friendship-brambling-cc-by-sa.mp4',
   independentTitleCard:'friendship-brambling-card-logo09.webp',
-  copy:'空に、だいだい色。枝の先から、こんにちは。',
-  source:'https://commons.wikimedia.org/wiki/File:Mannetje_en_vrouwtje_keep_in_de_bomen-4961694.webm',sourceTitle:'Mannetje en vrouwtje keep in de bomen',
+  copy:'草の中に、だいだい色。ひと跳びして、もうひと粒。',
+  source:'https://commons.wikimedia.org/wiki/File:Keep_op_de_voerplek-4961722.webm',sourceTitle:'Keep op de voerplek',
   license:'https://creativecommons.org/licenses/by-sa/3.0/nl/deed.en',licenseLabel:'CC BY-SA 3.0 NL',creator:'Natuur Digitaal (Marc Plomp)／Stichting Natuurbeelden',
-  place:'オランダ・テセル島、デ・コックスドルプ（2009年4月3日）',
-  edit:'原速の50〜65秒を縦に切り出し、音声を除いています。映像部分は CC BY-SA 3.0 NL です。ゲームのタイトルカードは別の作品です。'
+  place:'オランダ（2009年の記録）',
+  edit:'原速の190〜205秒を縦画面に収め、音声を除いています。映像部分は CC BY-SA 3.0 NL です。ゲームのタイトルカードは別の作品です。'
  }),
  'red-throated-parrotfinch':Object.freeze({
   bird:'ヒノマルチョウ',title:'ヒノマルチョウと なかよしになった記念',file:'friendship-red-throated-parrotfinch-logo09.mp4',
@@ -157,10 +166,7 @@ export function mountCollectionEndingPlayer(root,{getWorld,transact,canPresent=(
  async function play({fullscreen=false}={}){
   const c=current,v=video,d=dialog;if(!v||!c||closing||retiring)return;
   const independent=d?.hasAttribute('data-independent-title-card');
-  if(independent){
-   showIndependentFilm(d,true);v.muted=true;
-   if(!v.hasAttribute('src'))v.src=c.deferredSource;
-  }else if(fullscreen)enterFullscreen();
+  if(independent){v.muted=true;showIndependentFilm(d,true);}else if(fullscreen)enterFullscreen();
   try{if(v.error)v.load();await v.play();}
   catch{if(current!==c||video!==v)return;if(independent)showIndependentFilm(d,false);d?.removeAttribute('data-playing');message('▶ をおすと、エンディングが はじまるよ。');}
  }
@@ -208,10 +214,7 @@ export function mountCollectionEndingPlayer(root,{getWorld,transact,canPresent=(
     dialog.querySelector('video').after(cover);
    }
    if(id==='garden-tour'||id==='garden'||id==='crows'){dialog.dataset.film=id==='garden-tour'?'tour':id;const controls=doc.createElement('div');controls.className='game-ending-tour-controls';controls.append(dialog.querySelector('[role=status]'),dialog.querySelector('.game-ending-actions'));dialog.querySelector('.game-ending-screen').append(controls);}
-   root.append(dialog);video=dialog.querySelector('video');video.tabIndex=0;video.volume=.5;
-   const source=new URL(`../game-endings/${file}`,import.meta.url).href;
-   if(mini?.independentTitleCard)current.deferredSource=source;else video.src=source;
-   const session=current,media=video,isCurrent=()=>alive&&current===session&&video===media;
+   root.append(dialog);video=dialog.querySelector('video');video.tabIndex=0;video.volume=.5;video.src=new URL(`../game-endings/${file}`,import.meta.url).href;const session=current,media=video,isCurrent=()=>alive&&current===session&&video===media;
    video.addEventListener('playing',()=>{if(!isCurrent()||closing)return;dialog?.setAttribute('data-playing','');if(doc.activeElement?.matches('[data-ending-play]'))video?.focus({preventScroll:true});message('');void savePlayback('started').catch(()=>{if(isCurrent())message('きろくの ほぞんを まっています。');});});
    video.addEventListener('pause',()=>{if(!isCurrent())return;dialog?.removeAttribute('data-playing');});
    video.addEventListener('ended',()=>{if(!isCurrent())return;void close({playback:'completed'});});

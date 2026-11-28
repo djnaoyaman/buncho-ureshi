@@ -1,5 +1,5 @@
 {
-  "base": "49c15c463b1bbb8985bee841cf90dd08da7ba745",
+  "base": "864f96f81d24ed625327dd78d7b2b61d73347c45",
   "tests": [
     "tests/browser/friendship-movie.spec.js"
   ],
