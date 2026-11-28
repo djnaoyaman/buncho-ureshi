@@ -1,0 +1,21 @@
+{
+  "baseCommit": "864f96f81d24ed625327dd78d7b2b61d73347c45",
+  "changedSource": {
+    "src/collection-ending-player.js": {
+      "before": "dc2af63044f1d7e93258ddd0f2ac9e6056eba4f3dc5f3c3a663882929ae26dc2",
+      "after": "37fef8ea1ff1e27f41e6645a23ec1607acb1b269a10235d75592158c6be7f38f"
+    }
+  },
+  "media": {
+    "public/game-endings/friendship-pine-grosbeak-cc-by-sa.mp4": "656aae905cf013d79a4ceb8a221ae533e67d960341614e4acfafb1f753ced3ae",
+    "public/game-endings/friendship-pine-grosbeak-card-logo09.webp": "c9183220ecb004522147dfce4be2897f80295edfbd12cde1102be0e5f25299ba"
+  },
+  "revert": {
+    "src/collection-ending-player.js": [
+      {
+        "before": "",
+        "after": " 'pine-grosbeak':Object.freeze({\n  bird:'ギンザンマシコ',title:'ギンザンマシコと なかよしになった記念',file:'friendship-pine-grosbeak-cc-by-sa.mp4',\n  independentTitleCard:'friendship-pine-grosbeak-card-logo09.webp',\n  copy:'ばら色の羽、きらり。ついばんで、ひょいっと顔を上げた。',\n  source:'https://commons.wikimedia.org/wiki/File:Pinicola_enucleator_CT2.ogv',sourceTitle:'Pinicola enucleator CT2',\n  license:'https://creativecommons.org/licenses/by-sa/3.0/',licenseLabel:'CC BY-SA 3.0',creator:'Cephas',\n  place:'カナダ・ケベック州カップ・トゥルマント（2013年2月4日）',\n  edit:'原速の15.05〜30.05秒を縦画面に収め、音声を除いています。映像部分は CC BY-SA 3.0 です。ゲームのタイトルカードは別の作品です。'\n }),\n"
+      }
+    ]
+  }
+}

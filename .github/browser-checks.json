@@ -1,7 +1,7 @@
 {
-  "base": "49c15c463b1bbb8985bee841cf90dd08da7ba745",
+  "base": "864f96f81d24ed625327dd78d7b2b61d73347c45",
   "tests": [
     "tests/browser/friendship-movie.spec.js"
   ],
-  "reason": "カノコスズメの独立実写とロゴ09、99→100、再生の時刻進行、著作者表示・日記と保存不変をスマホ幅のChrome/WebKitで検査。対照は既公開のキビタイシメと従来動画。"
+  "reason": "ギンザンマシコの独立実写とロゴ09、99→100、再生の時刻進行、著作者表示・日記と保存不変をスマホ幅のChrome/WebKitで検査。対照は既公開のキビタイシメと従来動画。"
 }

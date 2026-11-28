@@ -177,3 +177,17 @@ test('カノコスズメ credits its archive film and keeps the Logo09 card sepa
  for(const [file,sha] of Object.entries({"public/game-endings/friendship-double-barred-finch-cc-by-sa.mp4": "d1d49821c2237623901ee5868b068fa5b15cb7ba048768e7d9644e15d11fd5f7", "public/game-endings/friendship-double-barred-finch-card-logo09.webp": "8b5f202e5d2785bc42586feaf95bd6d2ec004009cba449cc65b726ea90de626e"}))
   assert.equal(createHash('sha256').update(readFileSync(new URL('../'+file,import.meta.url))).digest('hex'),sha);
 });
+
+test('ギンザンマシコ credits its archive film and keeps the Logo09 card separate',()=>{
+ const id='pine-grosbeak',w=fixture(99,id);
+ assert.deepEqual(unlockedFriendshipMovies(w),[]);
+ assert.equal(encounterSystem.pet(w,id,1,{worldId:w.worldId,revision:w.revision}).changed,true);
+ assert.deepEqual(newlyUnlockedFriendshipMovies([],w.worldId,w),[id]);
+ const html=renderFriendshipMovieCard(w,id);
+ assert.match(html,/Pinicola_enucleator_CT2.*CC BY-SA 3[.]0/);
+ assert.match(html,/Cephas/);
+ assert.match(html,/friendship-pine-grosbeak-cc-by-sa[.]mp4/);
+ assert.match(renderFriendshipMovieDiary(w),/data-friendship-movie-open="pine-grosbeak"/);
+ for(const [file,sha] of Object.entries({"public/game-endings/friendship-pine-grosbeak-cc-by-sa.mp4": "656aae905cf013d79a4ceb8a221ae533e67d960341614e4acfafb1f753ced3ae", "public/game-endings/friendship-pine-grosbeak-card-logo09.webp": "c9183220ecb004522147dfce4be2897f80295edfbd12cde1102be0e5f25299ba"}))
+  assert.equal(createHash('sha256').update(readFileSync(new URL('../'+file,import.meta.url))).digest('hex'),sha);
+});
