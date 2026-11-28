@@ -88,6 +88,15 @@ const FRIENDSHIP_MOVIES=Object.freeze({
   place:'オーストラリア・クイーンズランド州、サムソンベール湖（1994年10月）',
   edit:'1994年の記録映像です。原速の17.7〜32.7秒を縦画面に合わせ、音声を除いています。映像部分は CC BY-SA 3.0 です。ゲームのタイトルカードは別の作品です。'
  }),
+ 'pine-grosbeak':Object.freeze({
+  bird:'ギンザンマシコ',title:'ギンザンマシコと なかよしになった記念',file:'friendship-pine-grosbeak-cc-by-sa.mp4',
+  independentTitleCard:'friendship-pine-grosbeak-card-logo09.webp',
+  copy:'ばら色の羽、きらり。ついばんで、ひょいっと顔を上げた。',
+  source:'https://commons.wikimedia.org/wiki/File:Pinicola_enucleator_CT2.ogv',sourceTitle:'Pinicola enucleator CT2',
+  license:'https://creativecommons.org/licenses/by-sa/3.0/',licenseLabel:'CC BY-SA 3.0',creator:'Cephas',
+  place:'カナダ・ケベック州カップ・トゥルマント（2013年2月4日）',
+  edit:'原速の15.05〜30.05秒を縦画面に収め、音声を除いています。映像部分は CC BY-SA 3.0 です。ゲームのタイトルカードは別の作品です。'
+ }),
  'red-throated-parrotfinch':Object.freeze({
   bird:'ヒノマルチョウ',title:'ヒノマルチョウと なかよしになった記念',file:'friendship-red-throated-parrotfinch-logo09.mp4',
   photoReferences:Object.freeze([

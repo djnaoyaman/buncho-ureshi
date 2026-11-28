@@ -164,7 +164,8 @@ test.describe('released mini films actually play',()=>{
 
 for(const [pilot,licenseLabel,licenseUrl] of [
  ['evening-grosbeak','CC BY-SA 3.0','https://creativecommons.org/licenses/by-sa/3.0/'],
- ['double-barred-finch','CC BY-SA 3.0','https://creativecommons.org/licenses/by-sa/3.0/']
+ ['double-barred-finch','CC BY-SA 3.0','https://creativecommons.org/licenses/by-sa/3.0/'],
+ ['pine-grosbeak','CC BY-SA 3.0','https://creativecommons.org/licenses/by-sa/3.0/']
 ])test(pilot+' separates the approved 09 title card from its attributed 15s real footage',async({page})=>{
  const file='friendship-'+pilot+'-cc-by-sa.mp4',req=[];
  page.on('request',r=>{if(r.url().includes(file))req.push(r.url());});
