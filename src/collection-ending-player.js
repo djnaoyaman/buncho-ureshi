@@ -157,7 +157,10 @@ export function mountCollectionEndingPlayer(root,{getWorld,transact,canPresent=(
  async function play({fullscreen=false}={}){
   const c=current,v=video,d=dialog;if(!v||!c||closing||retiring)return;
   const independent=d?.hasAttribute('data-independent-title-card');
-  if(independent){v.muted=true;showIndependentFilm(d,true);}else if(fullscreen)enterFullscreen();
+  if(independent){
+   showIndependentFilm(d,true);v.muted=true;
+   if(!v.hasAttribute('src'))v.src=c.deferredSource;
+  }else if(fullscreen)enterFullscreen();
   try{if(v.error)v.load();await v.play();}
   catch{if(current!==c||video!==v)return;if(independent)showIndependentFilm(d,false);d?.removeAttribute('data-playing');message('▶ をおすと、エンディングが はじまるよ。');}
  }
@@ -205,7 +208,10 @@ export function mountCollectionEndingPlayer(root,{getWorld,transact,canPresent=(
     dialog.querySelector('video').after(cover);
    }
    if(id==='garden-tour'||id==='garden'||id==='crows'){dialog.dataset.film=id==='garden-tour'?'tour':id;const controls=doc.createElement('div');controls.className='game-ending-tour-controls';controls.append(dialog.querySelector('[role=status]'),dialog.querySelector('.game-ending-actions'));dialog.querySelector('.game-ending-screen').append(controls);}
-   root.append(dialog);video=dialog.querySelector('video');video.tabIndex=0;video.volume=.5;video.src=new URL(`../game-endings/${file}`,import.meta.url).href;const session=current,media=video,isCurrent=()=>alive&&current===session&&video===media;
+   root.append(dialog);video=dialog.querySelector('video');video.tabIndex=0;video.volume=.5;
+   const source=new URL(`../game-endings/${file}`,import.meta.url).href;
+   if(mini?.independentTitleCard)current.deferredSource=source;else video.src=source;
+   const session=current,media=video,isCurrent=()=>alive&&current===session&&video===media;
    video.addEventListener('playing',()=>{if(!isCurrent()||closing)return;dialog?.setAttribute('data-playing','');if(doc.activeElement?.matches('[data-ending-play]'))video?.focus({preventScroll:true});message('');void savePlayback('started').catch(()=>{if(isCurrent())message('きろくの ほぞんを まっています。');});});
    video.addEventListener('pause',()=>{if(!isCurrent())return;dialog?.removeAttribute('data-playing');});
    video.addEventListener('ended',()=>{if(!isCurrent())return;void close({playback:'completed'});});

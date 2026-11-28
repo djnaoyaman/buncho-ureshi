@@ -3,7 +3,7 @@
   "changedSource": {
     "src/collection-ending-player.js": {
       "before": "5902aaf498eb59eefce94f69f54b7f5fe98c89794c6998c11e4913e2b2fe6fcc",
-      "after": "e6b2f5aa6e6840bee9f50400a2fabf72702f8d66d1e9d333bc609efd74815668"
+      "after": "50a154f368190fc54c020de98d5ef54f906cb6233815f0b9ff4ab7cb5f0c361c"
     }
   },
   "media": {
@@ -15,6 +15,14 @@
       {
         "before": "",
         "after": " 'brambling':Object.freeze({\n  bird:'アトリ',title:'アトリと なかよしになった記念',file:'friendship-brambling-cc-by-sa.mp4',\n  independentTitleCard:'friendship-brambling-card-logo09.webp',\n  copy:'空に、だいだい色。枝の先から、こんにちは。',\n  source:'https://commons.wikimedia.org/wiki/File:Mannetje_en_vrouwtje_keep_in_de_bomen-4961694.webm',sourceTitle:'Mannetje en vrouwtje keep in de bomen',\n  license:'https://creativecommons.org/licenses/by-sa/3.0/nl/deed.en',licenseLabel:'CC BY-SA 3.0 NL',creator:'Natuur Digitaal (Marc Plomp)／Stichting Natuurbeelden',\n  place:'オランダ・テセル島、デ・コックスドルプ（2009年4月3日）',\n  edit:'原速の50〜65秒を縦に切り出し、音声を除いています。映像部分は CC BY-SA 3.0 NL です。ゲームのタイトルカードは別の作品です。'\n }),\n"
+      },
+      {
+        "before": "if(independent){v.muted=true;showIndependentFilm(d,true);}else if(fullscreen)enterFullscreen();",
+        "after": "if(independent){\n   showIndependentFilm(d,true);v.muted=true;\n   if(!v.hasAttribute('src'))v.src=c.deferredSource;\n  }else if(fullscreen)enterFullscreen();"
+      },
+      {
+        "before": "root.append(dialog);video=dialog.querySelector('video');video.tabIndex=0;video.volume=.5;video.src=new URL(`../game-endings/${file}`,import.meta.url).href;const session=current,media=video,isCurrent=()=>alive&&current===session&&video===media;",
+        "after": "root.append(dialog);video=dialog.querySelector('video');video.tabIndex=0;video.volume=.5;\n   const source=new URL(`../game-endings/${file}`,import.meta.url).href;\n   if(mini?.independentTitleCard)current.deferredSource=source;else video.src=source;\n   const session=current,media=video,isCurrent=()=>alive&&current===session&&video===media;"
       }
     ]
   }

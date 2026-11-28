@@ -187,7 +187,8 @@ for(const [pilot,licenseLabel,licenseUrl] of [
  await expect(cover).toHaveAttribute('src',new RegExp(pilot+'-card-logo09[.]webp$'));
  await expect.poll(()=>cover.evaluate(x=>x.complete&&x.naturalWidth===720)).toBeTruthy();
  await expect(video).toBeHidden();
- expect(await video.evaluate(v=>v.paused&&!v.autoplay)).toBe(true);
+ expect(await video.evaluate(v=>v.paused&&!v.autoplay&&!v.hasAttribute('src'))).toBe(true);
+ expect(req).toEqual([]);
  await modal.locator('[data-ending-play]').click();
  await expect(video).toBeVisible();
  await expect(cover).toBeHidden();
