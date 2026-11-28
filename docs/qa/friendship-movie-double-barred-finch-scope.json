@@ -1,0 +1,21 @@
+{
+  "baseCommit": "49c15c463b1bbb8985bee841cf90dd08da7ba745",
+  "changedSource": {
+    "src/collection-ending-player.js": {
+      "before": "5902aaf498eb59eefce94f69f54b7f5fe98c89794c6998c11e4913e2b2fe6fcc",
+      "after": "dc2af63044f1d7e93258ddd0f2ac9e6056eba4f3dc5f3c3a663882929ae26dc2"
+    }
+  },
+  "media": {
+    "public/game-endings/friendship-double-barred-finch-cc-by-sa.mp4": "d1d49821c2237623901ee5868b068fa5b15cb7ba048768e7d9644e15d11fd5f7",
+    "public/game-endings/friendship-double-barred-finch-card-logo09.webp": "8b5f202e5d2785bc42586feaf95bd6d2ec004009cba449cc65b726ea90de626e"
+  },
+  "revert": {
+    "src/collection-ending-player.js": [
+      {
+        "before": "",
+        "after": " 'double-barred-finch':Object.freeze({\n  bird:'カノコスズメ',title:'カノコスズメと なかよしになった記念',file:'friendship-double-barred-finch-cc-by-sa.mp4',\n  independentTitleCard:'friendship-double-barred-finch-card-logo09.webp',\n  copy:'白い胸に、ふたつの輪。こっちを、ちらり。',\n  source:'https://commons.wikimedia.org/wiki/File:Double-barred_Finch94.ogv',sourceTitle:'Double-barred Finch94',\n  license:'https://creativecommons.org/licenses/by-sa/3.0/',licenseLabel:'CC BY-SA 3.0',creator:'Aviceda',\n  place:'オーストラリア・クイーンズランド州、サムソンベール湖（1994年10月）',\n  edit:'1994年の記録映像です。原速の17.7〜32.7秒を縦画面に合わせ、音声を除いています。映像部分は CC BY-SA 3.0 です。ゲームのタイトルカードは別の作品です。'\n }),\n"
+      }
+    ]
+  }
+}

@@ -162,8 +162,11 @@ test.describe('released mini films actually play',()=>{
  }
 });
 
-test('evening grosbeak separates the approved 09 title card from its attributed 15s real footage',async({page})=>{
- const pilot='evening-grosbeak',file='friendship-evening-grosbeak-cc-by-sa.mp4',req=[];
+for(const [pilot,licenseLabel,licenseUrl] of [
+ ['evening-grosbeak','CC BY-SA 3.0','https://creativecommons.org/licenses/by-sa/3.0/'],
+ ['double-barred-finch','CC BY-SA 3.0','https://creativecommons.org/licenses/by-sa/3.0/']
+])test(pilot+' separates the approved 09 title card from its attributed 15s real footage',async({page})=>{
+ const file='friendship-'+pilot+'-cc-by-sa.mp4',req=[];
  page.on('request',r=>{if(r.url().includes(file))req.push(r.url());});
  await start(page,390,844,99,pilot);await bird(page,pilot);
  const card=page.locator('.game-friendship-movie-card'),open=card.locator('[data-friendship-movie-open="'+pilot+'"]');
@@ -175,13 +178,13 @@ test('evening grosbeak separates the approved 09 title card from its attributed 
  await expect(page.locator(dialog)).toHaveCount(0);
  expect(req).toEqual([]);
  await page.locator('[data-friendship-movie-dismiss]').click();
- await expect(card.getByRole('link',{name:'CC BY-SA 3.0',exact:true})).toHaveAttribute('href','https://creativecommons.org/licenses/by-sa/3.0/');
+ await expect(card.getByRole('link',{name:licenseLabel,exact:true})).toHaveAttribute('href',licenseUrl);
  await expect(card.getByRole('link',{name:'映像のみ（MP4）'})).toHaveAttribute('href',new RegExp(file+'$'));
  const before=await record(page);
  await open.click();
  const modal=page.locator(dialog),cover=modal.locator('.game-ending-independent-cover'),video=modal.locator('video');
  await expect(cover).toBeVisible();
- await expect(cover).toHaveAttribute('src',/evening-grosbeak-card-logo09[.]webp$/);
+ await expect(cover).toHaveAttribute('src',new RegExp(pilot+'-card-logo09[.]webp$'));
  await expect.poll(()=>cover.evaluate(x=>x.complete&&x.naturalWidth===720)).toBeTruthy();
  await expect(video).toBeHidden();
  expect(await video.evaluate(v=>v.paused&&!v.autoplay)).toBe(true);
@@ -192,7 +195,7 @@ test('evening grosbeak separates the approved 09 title card from its attributed 
   await expect.poll(()=>video.evaluate(v=>v.currentTime)).toBeGreaterThan(2);
  }catch(error){
   const media=await video.evaluate(v=>({time:v.currentTime,paused:v.paused,ready:v.readyState,network:v.networkState,buffered:Array.from({length:v.buffered.length},(_,i)=>[v.buffered.start(i),v.buffered.end(i)]),muted:v.muted,visibility:getComputedStyle(v).visibility,error:v.error?.message}));
-  console.error('Evening grosbeak playback state:',JSON.stringify(media));throw error;
+  console.error(pilot+' playback state:',JSON.stringify(media));throw error;
  }
  expect(await video.evaluate(v=>[v.videoWidth,v.videoHeight,v.duration])).toEqual([720,1280,15]);
  expect(req.length).toBeGreaterThan(0);
