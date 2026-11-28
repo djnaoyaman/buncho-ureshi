@@ -216,13 +216,18 @@ test('independent portrait files advance in a plain visible player, including se
   document.querySelector('#play').onclick=()=>{void document.querySelector('#host video').play().catch(()=>{});};
  });
  const observed=[];
- for(const bird of ['brambling','evening-grosbeak','brambling']){
-  await page.evaluate(bird=>{
+ for(const [bird,file] of [
+  ['brambling','friendship-brambling-cc-by-sa.mp4'],
+  ['evening-grosbeak','friendship-evening-grosbeak-cc-by-sa.mp4'],
+  ['brambling constrained H.264','brambling-baseline-probe.mp4'],
+  ['brambling VP9','brambling-vp9-probe.webm'],
+ ]){
+  await page.evaluate(file=>{
    const host=document.querySelector('#host'),old=host.querySelector('video');
    if(old){old.pause();old.removeAttribute('src');old.load();old.remove();}
    const v=document.createElement('video');v.muted=true;v.playsInline=true;v.preload='none';v.controls=true;v.width=260;v.height=462;
-   host.append(v);v.src=new URL('game-endings/friendship-'+bird+'-cc-by-sa.mp4',location.href).href;
-  },bird);
+   host.append(v);v.src=new URL('game-endings/'+file,location.href).href;
+  },file);
   await page.locator('#play').click();
   const state=await page.locator('#host video').evaluate(v=>new Promise(resolve=>{
    const start=performance.now(),t=setInterval(()=>{
