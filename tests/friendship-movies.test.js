@@ -158,8 +158,8 @@ test('キビタイシメ uses the native milestone and independent CC BY-SA foot
  assert.match(renderFriendshipMovieDiary(w),/data-friendship-movie-open="evening-grosbeak"/);
  assert.deepEqual(w,before);
  const mp4=readFileSync(new URL('../public/game-endings/friendship-evening-grosbeak-cc-by-sa.mp4',import.meta.url));
- assert.equal(mp4.length,3667816);
- assert.equal(createHash('sha256').update(mp4).digest('hex'),'c04944f071b179850d90298032d8bbf76d93c881eda5a771188c57d74243c201');
+ assert.equal(mp4.length,3656910);
+ assert.equal(createHash('sha256').update(mp4).digest('hex'),'95e5425e28fdb3679c5fbc1f75614f14b0b41691ab31c2714c42c10dc84730c8');
  const logo=readFileSync(new URL('../public/game-endings/friendship-evening-grosbeak-card-logo09.webp',import.meta.url));
  assert.equal(logo.subarray(8,12).toString(),'WEBP');
 });

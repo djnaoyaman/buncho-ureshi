@@ -12,7 +12,7 @@
   },
   "media": {
     "public/game-endings/friendship-evening-grosbeak-card-logo09.webp": "3eaab74c74c1d26380164f5a829e7a23f525ce4f653fd7ffb86a8797ebaa6b57",
-    "public/game-endings/friendship-evening-grosbeak-cc-by-sa.mp4": "c04944f071b179850d90298032d8bbf76d93c881eda5a771188c57d74243c201"
+    "public/game-endings/friendship-evening-grosbeak-cc-by-sa.mp4": "95e5425e28fdb3679c5fbc1f75614f14b0b41691ab31c2714c42c10dc84730c8"
   },
   "revert": {
     "src/collection-ending-player.js": [
