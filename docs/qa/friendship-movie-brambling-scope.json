@@ -1,13 +1,13 @@
 {
-  "baseCommit": "864f96f81d24ed625327dd78d7b2b61d73347c45",
+  "baseCommit": "e2147c67c089837bba2d1659b71bab5932805dfd",
   "changedSource": {
     "src/collection-ending-player.js": {
-      "before": "dc2af63044f1d7e93258ddd0f2ac9e6056eba4f3dc5f3c3a663882929ae26dc2",
-      "after": "ed29ca3ef56e887b92130b5fec7f6c7c8de1494df0d967f267191e10237cd4e0"
+      "before": "37fef8ea1ff1e27f41e6645a23ec1607acb1b269a10235d75592158c6be7f38f",
+      "after": "ff15b7ee105b3d6a645e4a3e23d5bc4904d6a1a205c32da085d4c92deaf55fe9"
     }
   },
   "media": {
-    "public/game-endings/friendship-brambling-cc-by-sa.mp4": "32741565d3aeb3eadd360938b798ed8aa9a7c22b2deff635e4e135bee396a550",
+    "public/game-endings/friendship-brambling-cc-by-sa.mp4": "37687bc34d52b4b3228fcfb86cfad7ad9bd65807f74abbab327226e5c8de88c8",
     "public/game-endings/friendship-brambling-card-logo09.webp": "7674e5eaffc7b14e6193cfcea426bdf088530e128c49687a6dc961afe0657b13"
   },
   "revert": {

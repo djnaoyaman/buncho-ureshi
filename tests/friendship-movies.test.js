@@ -178,6 +178,20 @@ test('カノコスズメ credits its archive film and keeps the Logo09 card sepa
   assert.equal(createHash('sha256').update(readFileSync(new URL('../'+file,import.meta.url))).digest('hex'),sha);
 });
 
+test('ギンザンマシコ credits its archive film and keeps the Logo09 card separate',()=>{
+ const id='pine-grosbeak',w=fixture(99,id);
+ assert.deepEqual(unlockedFriendshipMovies(w),[]);
+ assert.equal(encounterSystem.pet(w,id,1,{worldId:w.worldId,revision:w.revision}).changed,true);
+ assert.deepEqual(newlyUnlockedFriendshipMovies([],w.worldId,w),[id]);
+ const html=renderFriendshipMovieCard(w,id);
+ assert.match(html,/Pinicola_enucleator_CT2.*CC BY-SA 3[.]0/);
+ assert.match(html,/Cephas/);
+ assert.match(html,/friendship-pine-grosbeak-cc-by-sa[.]mp4/);
+ assert.match(renderFriendshipMovieDiary(w),/data-friendship-movie-open="pine-grosbeak"/);
+ for(const [file,sha] of Object.entries({"public/game-endings/friendship-pine-grosbeak-cc-by-sa.mp4": "3024d041eeb772d608fb60cb3696a22bb4f32a79ea20acab851b0c95ee6204b7", "public/game-endings/friendship-pine-grosbeak-card-logo09.webp": "c9183220ecb004522147dfce4be2897f80295edfbd12cde1102be0e5f25299ba"}))
+  assert.equal(createHash('sha256').update(readFileSync(new URL('../'+file,import.meta.url))).digest('hex'),sha);
+});
+
 test('アトリ credits its archive film and keeps the Logo09 card separate',()=>{
  const id='brambling',w=fixture(99,id);
  assert.deepEqual(unlockedFriendshipMovies(w),[]);
@@ -188,6 +202,6 @@ test('アトリ credits its archive film and keeps the Logo09 card separate',()=
  assert.match(html,/Marc Plomp.*Stichting Natuurbeelden/);
  assert.match(html,/friendship-brambling-cc-by-sa[.]mp4/);
  assert.match(renderFriendshipMovieDiary(w),/data-friendship-movie-open="brambling"/);
- for(const [file,sha] of Object.entries({"public/game-endings/friendship-brambling-cc-by-sa.mp4": "32741565d3aeb3eadd360938b798ed8aa9a7c22b2deff635e4e135bee396a550", "public/game-endings/friendship-brambling-card-logo09.webp": "7674e5eaffc7b14e6193cfcea426bdf088530e128c49687a6dc961afe0657b13"}))
+ for(const [file,sha] of Object.entries({"public/game-endings/friendship-brambling-cc-by-sa.mp4": "37687bc34d52b4b3228fcfb86cfad7ad9bd65807f74abbab327226e5c8de88c8", "public/game-endings/friendship-brambling-card-logo09.webp": "7674e5eaffc7b14e6193cfcea426bdf088530e128c49687a6dc961afe0657b13"}))
   assert.equal(createHash('sha256').update(readFileSync(new URL('../'+file,import.meta.url))).digest('hex'),sha);
 });
