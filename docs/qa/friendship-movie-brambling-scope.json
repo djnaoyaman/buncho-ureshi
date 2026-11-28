@@ -1,0 +1,21 @@
+{
+  "baseCommit": "e2147c67c089837bba2d1659b71bab5932805dfd",
+  "changedSource": {
+    "src/collection-ending-player.js": {
+      "before": "37fef8ea1ff1e27f41e6645a23ec1607acb1b269a10235d75592158c6be7f38f",
+      "after": "ff15b7ee105b3d6a645e4a3e23d5bc4904d6a1a205c32da085d4c92deaf55fe9"
+    }
+  },
+  "media": {
+    "public/game-endings/friendship-brambling-cc-by-sa.mp4": "37687bc34d52b4b3228fcfb86cfad7ad9bd65807f74abbab327226e5c8de88c8",
+    "public/game-endings/friendship-brambling-card-logo09.webp": "7674e5eaffc7b14e6193cfcea426bdf088530e128c49687a6dc961afe0657b13"
+  },
+  "revert": {
+    "src/collection-ending-player.js": [
+      {
+        "before": "",
+        "after": " 'brambling':Object.freeze({\n  bird:'アトリ',title:'アトリと なかよしになった記念',file:'friendship-brambling-cc-by-sa.mp4',\n  independentTitleCard:'friendship-brambling-card-logo09.webp',\n  copy:'草の中に、だいだい色。ひと跳びして、もうひと粒。',\n  source:'https://commons.wikimedia.org/wiki/File:Keep_op_de_voerplek-4961722.webm',sourceTitle:'Keep op de voerplek',\n  license:'https://creativecommons.org/licenses/by-sa/3.0/nl/deed.en',licenseLabel:'CC BY-SA 3.0 NL',creator:'Natuur Digitaal (Marc Plomp)／Stichting Natuurbeelden',\n  place:'オランダ（2009年の記録）',\n  edit:'原速の190〜205秒を縦画面に収め、音声を除いています。映像部分は CC BY-SA 3.0 NL です。ゲームのタイトルカードは別の作品です。'\n }),\n"
+      }
+    ]
+  }
+}

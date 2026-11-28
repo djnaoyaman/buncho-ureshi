@@ -191,3 +191,17 @@ test('ギンザンマシコ credits its archive film and keeps the Logo09 card s
  for(const [file,sha] of Object.entries({"public/game-endings/friendship-pine-grosbeak-cc-by-sa.mp4": "3024d041eeb772d608fb60cb3696a22bb4f32a79ea20acab851b0c95ee6204b7", "public/game-endings/friendship-pine-grosbeak-card-logo09.webp": "c9183220ecb004522147dfce4be2897f80295edfbd12cde1102be0e5f25299ba"}))
   assert.equal(createHash('sha256').update(readFileSync(new URL('../'+file,import.meta.url))).digest('hex'),sha);
 });
+
+test('アトリ credits its archive film and keeps the Logo09 card separate',()=>{
+ const id='brambling',w=fixture(99,id);
+ assert.deepEqual(unlockedFriendshipMovies(w),[]);
+ assert.equal(encounterSystem.pet(w,id,1,{worldId:w.worldId,revision:w.revision}).changed,true);
+ assert.deepEqual(newlyUnlockedFriendshipMovies([],w.worldId,w),[id]);
+ const html=renderFriendshipMovieCard(w,id);
+ assert.match(html,/Keep_op_de_voerplek-4961722.*CC BY-SA 3[.]0 NL/);
+ assert.match(html,/Marc Plomp.*Stichting Natuurbeelden/);
+ assert.match(html,/friendship-brambling-cc-by-sa[.]mp4/);
+ assert.match(renderFriendshipMovieDiary(w),/data-friendship-movie-open="brambling"/);
+ for(const [file,sha] of Object.entries({"public/game-endings/friendship-brambling-cc-by-sa.mp4": "37687bc34d52b4b3228fcfb86cfad7ad9bd65807f74abbab327226e5c8de88c8", "public/game-endings/friendship-brambling-card-logo09.webp": "7674e5eaffc7b14e6193cfcea426bdf088530e128c49687a6dc961afe0657b13"}))
+  assert.equal(createHash('sha256').update(readFileSync(new URL('../'+file,import.meta.url))).digest('hex'),sha);
+});

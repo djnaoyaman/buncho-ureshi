@@ -97,6 +97,15 @@ const FRIENDSHIP_MOVIES=Object.freeze({
   place:'カナダ・ケベック州カップ・トゥルマント（2013年2月4日）',
   edit:'原速の15.05〜30.05秒を縦画面に収め、音声を除いています。映像部分は CC BY-SA 3.0 です。ゲームのタイトルカードは別の作品です。'
  }),
+ 'brambling':Object.freeze({
+  bird:'アトリ',title:'アトリと なかよしになった記念',file:'friendship-brambling-cc-by-sa.mp4',
+  independentTitleCard:'friendship-brambling-card-logo09.webp',
+  copy:'草の中に、だいだい色。ひと跳びして、もうひと粒。',
+  source:'https://commons.wikimedia.org/wiki/File:Keep_op_de_voerplek-4961722.webm',sourceTitle:'Keep op de voerplek',
+  license:'https://creativecommons.org/licenses/by-sa/3.0/nl/deed.en',licenseLabel:'CC BY-SA 3.0 NL',creator:'Natuur Digitaal (Marc Plomp)／Stichting Natuurbeelden',
+  place:'オランダ（2009年の記録）',
+  edit:'原速の190〜205秒を縦画面に収め、音声を除いています。映像部分は CC BY-SA 3.0 NL です。ゲームのタイトルカードは別の作品です。'
+ }),
  'red-throated-parrotfinch':Object.freeze({
   bird:'ヒノマルチョウ',title:'ヒノマルチョウと なかよしになった記念',file:'friendship-red-throated-parrotfinch-logo09.mp4',
   photoReferences:Object.freeze([
